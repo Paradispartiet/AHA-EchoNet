@@ -1,0 +1,85 @@
+{
+  "schema": "aha_projection_product_agent_quality_review_v2",
+  "version": 2,
+  "reviewed_at": "2026-08-21",
+  "corpus": "tests/fixtures/aha-projection-product-evaluation-v2.json",
+  "human_review_ledger": "ops/evaluation/aha-projection-product-human-review-v2.json",
+  "status": "agent_remediation_implemented_independent_human_review_open",
+  "scope": {
+    "cases": 24,
+    "expected_visible": 21,
+    "expected_suppressed": 3,
+    "artifact_types": ["lists", "paths", "mindmap"],
+    "review_authority": "agent_quality_audit_only",
+    "independent_human_review_completed": false
+  },
+  "observation_probe": {
+    "pull_request": 882,
+    "disposition": "closed_without_merge",
+    "head_sha": "37927bfe98ff85788d8cbb91dcda37b105b0348e",
+    "workflow_run": 32447657645,
+    "workflow_job": 96670135932,
+    "purpose": "print_exact_read_only_product_outputs_and_semantic_document_shape"
+  },
+  "observed_defects": [
+    {
+      "id": "low_information_display_anchor",
+      "severity": "high",
+      "examples": ["Utforsk antall", "Utforsk alene", "Utforsk derfor", "Utforsk prosent", "Utforsk gjør"],
+      "finding": "Structurally valid shared-concept candidates could expose low-information token anchors as user-facing product titles and Mindmap roots."
+    },
+    {
+      "id": "generic_path_copy",
+      "severity": "high",
+      "finding": "All visible cases could receive the same five generic stage narratives even when the referenced source insights were different. Structural path quality therefore overstated human usefulness."
+    },
+    {
+      "id": "duplicate_exact_ref_products",
+      "severity": "medium",
+      "finding": "A shared-concept candidate and a resonance candidate could describe the same exact insight pair, producing duplicate Lists and duplicate Paths."
+    },
+    {
+      "id": "resonance_title_bloat",
+      "severity": "medium",
+      "finding": "Resonance titles could concatenate long insight titles directly and become poor navigation labels."
+    },
+    {
+      "id": "structural_quality_human_gap",
+      "severity": "high",
+      "finding": "Paths and Mindmaps with weak display semantics still received structural quality scores of 1.0 in the probe."
+    }
+  ],
+  "evaluation_limitations": {
+    "semantic_document_status": "claims_relations_shadow",
+    "semantic_document_quality_status": "shadow_claims_relations_pending",
+    "semantic_document_observed_arrays_empty": ["concepts", "claims", "relations", "tensions", "candidate_insights"],
+    "semantic_document_blocking_reasons": [
+      "dedicated_semantic_model_not_authoritative",
+      "synthesized_insight_quality_gate_not_implemented"
+    ],
+    "corpus_adapter": "The current evaluation test creates source-bound sentence insights and heuristic token concepts after AHASemanticDocument validation. This is useful for deterministic product regression, but it is not authoritative semantic extraction and cannot substitute for independent human review."
+  },
+  "remediation": {
+    "pull_request": 884,
+    "module": "js/ahaProjectionArtifactQualityV2.js",
+    "strategy": "read_only_source_bound_usefulness_refinement",
+    "rules": [
+      "Weak human-facing semantic anchors are replaced only with compact text derived from already referenced source-bound insights.",
+      "Every refined Path stage narrative is tied to the insight refId used by that stage.",
+      "Lists and Paths with the same exact ref set are deduplicated deterministically; explicit resonance is preferred over a weaker duplicate grouping.",
+      "Human-facing product titles are capped without changing semantic ids or refs.",
+      "Refinement must not mutate its input model.",
+      "Persistent write, remote write and automatic acceptance remain false."
+    ]
+  },
+  "release_boundary": {
+    "independent_human_review_required": true,
+    "minimum_acceptable_share": 0.8,
+    "critical_provenance_errors_allowed": 0,
+    "automatic_persistence_allowed": false,
+    "human_usefulness_gate": "open",
+    "projection_store_write_open": false,
+    "normal_chat_automatic_persistence_open": false,
+    "remote_write_open": false
+  }
+}
