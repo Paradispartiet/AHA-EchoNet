@@ -7,6 +7,7 @@ const context = { console, Map, Set, Array, Object, String, Number, JSON, Math }
 context.window = context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('js/ahaModuleApi.js', 'utf8'), context, { filename: 'js/ahaModuleApi.js' });
+vm.runInContext(fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8'), context, { filename: 'js/ahaChatIngestRuntime.js' });
 vm.runInContext(fs.readFileSync('js/ahaChatTextUtils.js', 'utf8'), context, { filename: 'js/ahaChatTextUtils.js' });
 
 const textUtils = context.AHAModuleApi.get('chat.textUtils', { version: 1 });
@@ -16,11 +17,12 @@ for (const name of ['shortHash', 'takeKeywords', 'sourceHash']) {
 }
 
 assert.equal(textUtils.sourceHash(''), '', 'empty source text must not get an identity');
-assert.equal(
+assert.notEqual(
   textUtils.sourceHash('  AHA\n  KILDE  '),
   textUtils.sourceHash('aha kilde'),
-  'source identity must normalize case and whitespace'
+  'authoritative source identity must hash the exact SemanticDocument source text'
 );
+assert.equal(textUtils.sourceHash('aha kilde'), context.AHASemanticDocument.sha256Hex('aha kilde'));
 assert.deepEqual(
   Array.from(textUtils.takeKeywords('Journalistikk journalistikk mediepolitikk regjering gjorde viktige saker', 5)),
   ['journalistikk', 'mediepolitikk', 'regjering', 'viktige', 'saker'],

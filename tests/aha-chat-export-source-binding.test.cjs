@@ -32,12 +32,15 @@ function loadExportApi() {
 }
 
 function baseDeps(overrides = {}) {
-  const currentHash = overrides.currentHash || "hash_current";
+  const currentHash = overrides.currentHash || "a".repeat(64);
   const sourceText = overrides.sourceText || "Norsk medietidsskrift lanserer konseptuelle artikler om begreper, offentlighet og medievitenskap.";
   return {
     loadAutoOutputs: () => ({
       sourceText,
       sourceTextHash: currentHash,
+      sourceSha256: currentHash,
+      analysisRunId: "run_current",
+      runId: "run_current",
       sourceTextPreview: sourceText.slice(0, 80),
       createdAt: "2026-06-29T09:00:00.000Z",
       payload: overrides.payload || {}
@@ -122,7 +125,7 @@ assert.equal(typeof api.createRuntime, "function");
 {
   const bundle = api.buildAhaAnalysisExportBundle(baseDeps({
     payload: {
-      sourceTextHash: "old_hash",
+      sourceTextHash: "b".repeat(64),
       ahaSer: { tema: "Gammelt tema som ikke hører til kilden" },
       reflection: "Dette er gammel analyse."
     }
@@ -132,7 +135,7 @@ assert.equal(typeof api.createRuntime, "function");
   assert.equal(bundle.quality.failClosed, true);
   assert.equal(JSON.stringify(bundle.sourceBinding.invalidFields.map((item) => item.field)), JSON.stringify(["rawAutoPayload"]));
   assert.equal(bundle.rawAutoPayload.source_binding.valid, false);
-  assert.equal(bundle.rejectedRawAutoPayload.sourceTextHash, "old_hash");
+  assert.equal(bundle.rejectedRawAutoPayload.sourceTextHash, "b".repeat(64));
   assert.equal(bundle.ahaSer.tema, "Konseptuelle artikler i medievitenskap");
   assert.equal(bundle.contractVersion, "aha_analysis_run_v1");
   assert.equal(bundle.analysisBinding.valid, false);
@@ -146,11 +149,11 @@ assert.equal(typeof api.createRuntime, "function");
     }
   }));
 
-  assert.equal(bundle.quality.status, "warning_unverified_binding");
-  assert.equal(bundle.quality.failClosed, false);
-  assert.equal(bundle.rawAutoPayload.source_binding.status, "inferred_from_auto_wrapper");
-  assert.equal(bundle.rawAutoPayload.source_binding.valid, true);
-  assert.equal(bundle.rejectedRawAutoPayload, null);
+  assert.equal(bundle.quality.status, "invalid_source_mismatch");
+  assert.equal(bundle.quality.failClosed, true);
+  assert.equal(bundle.rawAutoPayload.source_binding.status, "invalid_unbound_artifact");
+  assert.equal(bundle.rawAutoPayload.source_binding.valid, false);
+  assert.ok(bundle.rejectedRawAutoPayload);
 }
 
 {
@@ -158,7 +161,7 @@ assert.equal(typeof api.createRuntime, "function");
     payload: {},
     afterworks: [{
       id: "afterwork_1",
-      sourceTextHash: "hash_current",
+      sourceTextHash: "a".repeat(64),
       textType: "academic_article",
       summary: "Kildebundet etterarbeid",
       reflection: "Dette etterarbeidet matcher hash.",
@@ -170,9 +173,10 @@ assert.equal(typeof api.createRuntime, "function");
     }]
   }));
 
-  assert.equal(bundle.selectedAfterwork.source_binding.valid, true);
+  assert.equal(bundle.selectedAfterwork.source_binding.status, "historical_afterwork_excluded");
   assert.equal(bundle.afterwork.source_binding.valid, true);
-  assert.equal(bundle.afterwork.summary, "Kildebundet etterarbeid");
+  assert.doesNotMatch(bundle.afterwork.summary, /Kildebundet etterarbeid/);
+  assert.equal(bundle.relevantAfterworks.length, 1, "historical afterwork may remain diagnostic but must not be merged");
 }
 
 {
@@ -207,9 +211,9 @@ assert.equal(typeof api.createRuntime, "function");
   vm.runInContext(smokeCode, lateGuard.sandbox, { filename: "ahaChatPythonSmoke.js" });
   const bundle = runtime.buildAhaAnalysisExportBundle();
   assert.equal(bundle.quality.topicConsistency.checkedAt, "post_export_semantic_guard");
-  assert.equal(bundle.quality.failClosed, true);
-  assert.equal(bundle.analysisBinding.valid, false, "post-build semantic rejection must be re-finalized into the run contract");
-  assert.ok(bundle.invalidFields.some((item) => item.field === "topicConsistency"));
+  assert.equal(bundle.quality.failClosed, false);
+  assert.equal(bundle.analysisBinding.valid, true, "rejected topic fields must not invalidate correctly source-bound fields");
+  assert.ok(bundle.quality.rejectedTopicFields.some((item) => /canonicalAnalysis|ahaSer|afterwork/.test(item.field)), "topic rejection must identify concrete fields");
 }
 
 console.log("aha-chat-export-source-binding.test.cjs passed");

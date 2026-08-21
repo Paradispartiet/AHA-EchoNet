@@ -6,6 +6,7 @@ const context = { console, Map, Set, Array, Object, String, Number, JSON, Date, 
 context.window = context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('js/ahaModuleApi.js', 'utf8'), context, { filename: 'js/ahaModuleApi.js' });
+vm.runInContext(fs.readFileSync('js/ahaChatIngestRuntime.js', 'utf8'), context, { filename: 'js/ahaChatIngestRuntime.js' });
 vm.runInContext(fs.readFileSync('js/ahaChatTextUtils.js', 'utf8'), context, { filename: 'js/ahaChatTextUtils.js' });
 vm.runInContext(fs.readFileSync('js/ahaChatAutoOutputView.js', 'utf8'), context, { filename: 'js/ahaChatAutoOutputView.js' });
 
@@ -54,8 +55,12 @@ const payload = {
   conversationId: 'conversation_1',
   turnId: 'turn_1',
   sourceId: 'source_1',
-  sourceHash: 'bound_hash',
-  sourceFingerprint: 'bound_fingerprint',
+  sourceHash: sourceHash('  AHA\n kilde  '),
+  sourceTextHash: sourceHash('  AHA\n kilde  '),
+  sourceSha256: sourceHash('  AHA\n kilde  '),
+  source_sha256: sourceHash('  AHA\n kilde  '),
+  sourceFingerprint: sourceHash('  AHA\n kilde  '),
+  source_binding: { valid: true },
   sourceKind: 'url',
   reflection: 'Kildebundet analyse'
 };
@@ -64,8 +69,8 @@ const saved = store.save({ activeRun, payload, sourceText: '  AHA\n kilde  ', so
 assert.ok(saved, 'valid cache must be saved');
 assert.equal(saved.activeRun, activeRun);
 assert.equal(saved.payload, payload);
-assert.equal(saved.sourceHash, 'bound_hash');
-assert.equal(saved.sourceFingerprint, 'bound_fingerprint');
+assert.equal(saved.sourceHash, sourceHash('  AHA\n kilde  '));
+assert.equal(saved.sourceFingerprint, sourceHash('  AHA\n kilde  '));
 assert.equal(saved.sourceTextHash, sourceHash('  AHA\n kilde  '));
 assert.equal(saved.sourceTextPreview, ' AHA kilde ');
 assert.equal(saved.sourceKind, 'url', 'payload source kind must take precedence');

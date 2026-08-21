@@ -74,11 +74,21 @@ assert.notEqual(detected, 'literary_diary');
 const payload = hooks.buildAutoOutputs(pinseText, '');
 const canonical = hooks.buildCanonicalAnalysis(payload, pinseText);
 assert.equal(canonical.contentType, 'academic_article');
+const run = hooks.createAnalysisRun(pinseText, { sourceKind: 'pasted_text' });
+payload.canonicalAnalysis = canonical;
+hooks.bindAnalysisArtifact(payload, run, 'rawAutoPayload');
+hooks.bindAnalysisArtifact(canonical, run, 'canonicalAnalysis');
+if (payload.ahaSer) hooks.bindAnalysisArtifact(payload.ahaSer, run, 'ahaSer');
+const sourceTextHash = run.sourceTextHash;
 
 context.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify({
   createdAt: new Date().toISOString(),
   sourceText: pinseText,
-  sourceTextHash: 'pinse_hash',
+  sourceTextHash,
+  sourceSha256: sourceTextHash,
+  analysisRunId: run.analysisRunId,
+  runId: run.runId,
+  activeRun: run,
   payload: Object.assign({}, payload, {
     rawMarker: 'RAW_PAYLOAD_MARKER_TEST_228'
   })
@@ -87,7 +97,7 @@ context.localStorage.setItem('aha_afterwork_v1', JSON.stringify([
   {
     id: 'afterwork_test_228',
     createdAt: '2026-05-25T10:00:00.000Z',
-    sourceTextHash: 'pinse_hash',
+    sourceTextHash,
     textType: 'day_log',
     reflection: 'Dette leses som en dagslogg',
     summary: 'Kort dagsoppsummering: ...',

@@ -171,6 +171,19 @@
     return out.slice(0, maxItems);
   }
 
+  function isSourceEventOnlyInput(input) {
+    const src = input && typeof input === "object" ? input : {};
+    const meta = src.meta && typeof src.meta === "object" ? src.meta : {};
+    const contentType = String(src.content_type || "").trim().toLowerCase();
+    const accessStatus = String(meta.access_status || src.access_status || "").trim().toLowerCase();
+    return src.skip_insight === true
+      || meta.skip_insight === true
+      || meta.source_event_only === true
+      || meta.semantic_insight_eligible === false
+      || /(?:^|_)(?:metadata|reference)(?:_|$)/.test(contentType)
+      || (accessStatus && accessStatus !== "full");
+  }
+
   function ingest(input) {
     const sourceEvent = sourcesApi()?.addSourceEvent?.(input) || null;
     // AHASources.createSourceEvent stripper top-level theme_id / subject_id /
@@ -187,7 +200,7 @@
     // men IKKE bli en ordinær brukerinnsikt. Brukes f.eks. for AHA-agentens
     // egne svar — de skal vises i chat og ligge i source-loggen, men ikke
     // forurense innsiktskammeret med AI-oppsummeringer.
-    if (inp.skip_insight === true || src.skip_insight === true) {
+    if (isSourceEventOnlyInput(inp) || isSourceEventOnlyInput(src)) {
       try {
         global.dispatchEvent(new CustomEvent("aha:source-only", { detail: { sourceEvent: src } }));
       } catch {}
@@ -290,6 +303,15 @@
     }
 
     const sourceEvent = sourceOnly.sourceEvent || input || {};
+    const sourceEventPolicy = Object.assign({}, sourceEvent, {
+      // ingestWithCandidates sets this technical flag while creating the one
+      // canonical source event. It must not suppress legitimate candidates.
+      skip_insight: false,
+      meta: Object.assign({}, sourceEvent.meta || {}, { skip_insight: false })
+    });
+    if (isSourceEventOnlyInput(input) || isSourceEventOnlyInput(sourceEventPolicy)) {
+      return { ok: true, sourceEvent, items: [], skipped_insight: true, reason: "source_event_only" };
+    }
     const engine = insightsApi();
     const themeId = String(
       sourceEvent.theme_id || input?.theme_id || sourceEvent.meta?.theme_id || sourceEvent.source_type || "self"
@@ -613,6 +635,7 @@
     enrichWithEmneMatcher,
     enrichWithEmbedding,
     cleanTextForAnalysis,
+    isSourceEventOnlyInput,
     ANALYSIS_NOISE_TERMS,
     ANALYSIS_NOISE_WORDS
   };

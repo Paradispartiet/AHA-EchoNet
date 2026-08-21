@@ -34,16 +34,6 @@
     }
   }
 
-  function shortHash(input) {
-    let hash = 5381;
-    const value = String(input || "");
-    for (let i = 0; i < value.length; i += 1) {
-      hash = ((hash << 5) + hash) + value.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash).toString(36);
-  }
-
   function normalizeSourceHash(value) {
     return String(value || "").trim();
   }
@@ -167,6 +157,57 @@
     };
   }
 
+  function buildSemanticFieldReports(sourceText, artifact) {
+    const canonical = artifact?.canonicalAnalysis && typeof artifact.canonicalAnalysis === "object"
+      ? artifact.canonicalAnalysis
+      : {};
+    const fields = {
+      "canonicalAnalysis.theme": canonical.theme,
+      "canonicalAnalysis.mainTension": canonical.mainTension,
+      "canonicalAnalysis.keyInsight": canonical.keyInsight,
+      "canonicalAnalysis.summary": canonical.summary,
+      "canonicalAnalysis.reflection": canonical.reflection,
+      "canonicalAnalysis.fieldConnections": canonical.fieldConnections,
+      "canonicalAnalysis.suggestedActions": canonical.suggestedActions,
+      "ahaSer.tema": artifact?.ahaSer?.tema,
+      "ahaSer.hovedspenning": artifact?.ahaSer?.hovedspenning,
+      "ahaSer.viktigsteInnsikt": artifact?.ahaSer?.viktigsteInnsikt,
+      "ahaSer.fagkoblinger": artifact?.ahaSer?.fagkoblinger,
+      reflection: artifact?.reflection,
+      day: artifact?.day,
+      sortItems: artifact?.sortItems,
+      list: artifact?.list,
+      path: artifact?.path,
+      insightCards: artifact?.insightCards
+    };
+    const sourceTerms = topTopicTerms(sourceText, 24);
+    const termsOverlap = (left, right) => left === right || (
+      left.length >= 6 && right.length >= 6 && (left.startsWith(right.slice(0, 6)) || right.startsWith(left.slice(0, 6)))
+    );
+    const reports = {};
+    Object.entries(fields).forEach(([field, value]) => {
+      const outputText = flattenTopicValue(value);
+      if (!outputText.trim()) return;
+      const outputTerms = topTopicTerms(outputText, 12);
+      const overlappingTerms = outputTerms.filter((term) => sourceTerms.some((sourceTerm) => termsOverlap(term, sourceTerm)));
+      const groundingField = /(?:theme|mainTension|keyInsight|summary|reflection|fieldConnections|fagkoblinger|^reflection$|^day$|sortItems|^list$|insightCards)$/u.test(field);
+      const labelField = /(?:fieldConnections|fagkoblinger)$/u.test(field);
+      const eligible = groundingField && sourceTerms.length >= 4 && outputTerms.length >= (labelField ? 1 : 2);
+      const valid = !eligible || overlappingTerms.length > 0;
+      reports[field] = {
+        field,
+        status: valid ? "valid" : "invalid_semantic_topic_mismatch",
+        valid,
+        sourceTerms,
+        outputTerms,
+        overlappingTerms,
+        reason: valid ? "field_topic_overlap_ok" : "field_has_no_source_topic_overlap"
+      };
+    });
+    const invalidFields = Object.values(reports).filter((report) => report.valid === false);
+    return { status: invalidFields.length ? "invalid_semantic_topic_mismatch" : "valid", valid: invalidFields.length === 0, fields: reports, invalidFields };
+  }
+
   function readObjectSourceHash(value) {
     const obj = value && typeof value === "object" && !Array.isArray(value) ? value : {};
     return normalizeSourceHash(
@@ -187,7 +228,8 @@
     const payloadHash = readObjectSourceHash(auto.payload);
     if (payloadHash) return payloadHash;
     const sourceText = String(auto.sourceText || auto.payload?.sourceText || "");
-    return sourceText.trim() ? shortHash(sourceText) : "";
+    const semantic = global.AHAModuleApi?.resolve?.("semanticDocument", "AHASemanticDocument", { version: 1 }) || global.AHASemanticDocument;
+    return sourceText.trim() && typeof semantic?.sha256Hex === "function" ? semantic.sha256Hex(sourceText) : "";
   }
 
   function buildSourceBinding(field, sourceTextHash, existingHash, reason, options = {}) {
@@ -195,21 +237,17 @@
     const fieldHash = normalizeSourceHash(existingHash);
     const hasFieldHash = Boolean(fieldHash);
     const hashesMatch = Boolean(current) && hasFieldHash && fieldHash === current;
-    const allowInference = options.allowInference === true;
-
     return {
       field,
       status: !current
         ? "invalid_missing_current_source_hash"
         : hasFieldHash
           ? (hashesMatch ? "verified" : "invalid_hash_mismatch")
-          : allowInference
-            ? "inferred_from_auto_output_wrapper"
-            : "warning_unverified_binding",
-      valid: Boolean(current) && (hasFieldHash ? hashesMatch : allowInference),
+          : "invalid_unbound_artifact",
+      valid: Boolean(current) && hasFieldHash && hashesMatch,
       currentSourceTextHash: current || null,
       fieldSourceTextHash: fieldHash || null,
-      inferred: !hasFieldHash && Boolean(current) && allowInference,
+      inferred: false,
       reason: reason || "auto_output_render_repair"
     };
   }
@@ -217,10 +255,7 @@
   function bindObjectToCurrentSource(value, field, sourceTextHash, options = {}) {
     if (!value || typeof value !== "object" || Array.isArray(value)) return value;
     const existingHash = readObjectSourceHash(value);
-    const binding = buildSourceBinding(field, sourceTextHash, existingHash, options.reason || "auto_output_render_repair", {
-      allowInference: options.allowInference === true
-    });
-    if (!existingHash && binding.inferred === true && binding.currentSourceTextHash) value.sourceTextHash = binding.currentSourceTextHash;
+    const binding = buildSourceBinding(field, sourceTextHash, existingHash, options.reason || "auto_output_render_repair");
     value.source_binding = Object.assign({}, value.source_binding || {}, binding);
     return value;
   }
@@ -244,28 +279,25 @@
     if (!autoOutput || typeof autoOutput !== "object" || Array.isArray(autoOutput)) return autoOutput;
     const sourceTextHash = resolveAutoOutputSourceHash(autoOutput);
     const sourceText = String(autoOutput.sourceText || autoOutput.payload?.sourceText || "");
-    const allowNestedInference = options.allowNestedInference !== false;
-
     if (sourceTextHash && !autoOutput.sourceTextHash) autoOutput.sourceTextHash = sourceTextHash;
-    autoOutput.source_binding = buildSourceBinding("autoOutput", sourceTextHash, autoOutput.sourceTextHash, "auto_output_render_repair", {
-      allowInference: true
-    });
+    autoOutput.source_binding = buildSourceBinding("autoOutput", sourceTextHash, autoOutput.sourceTextHash, "auto_output_render_repair");
 
     const payload = autoOutput.payload && typeof autoOutput.payload === "object" && !Array.isArray(autoOutput.payload)
       ? autoOutput.payload
       : null;
     let semanticReport = null;
     if (payload) {
-      bindObjectToCurrentSource(payload, "rawAutoPayload", sourceTextHash, { allowInference: allowNestedInference });
-      bindObjectToCurrentSource(payload.canonicalAnalysis, "canonicalAnalysis", sourceTextHash, { allowInference: allowNestedInference });
-      bindObjectToCurrentSource(payload.ahaSer, "ahaSer", sourceTextHash, { allowInference: allowNestedInference });
+      bindObjectToCurrentSource(payload, "rawAutoPayload", sourceTextHash);
+      bindObjectToCurrentSource(payload.canonicalAnalysis, "canonicalAnalysis", sourceTextHash);
+      bindObjectToCurrentSource(payload.ahaSer, "ahaSer", sourceTextHash);
 
       semanticReport = buildSemanticTopicReport(sourceText, payload);
-      if (semanticReport.valid === false) {
-        markSemanticMismatch(payload, "rawAutoPayload", sourceTextHash, semanticReport);
-        markSemanticMismatch(payload.canonicalAnalysis, "canonicalAnalysis", sourceTextHash, semanticReport);
-        markSemanticMismatch(payload.ahaSer, "ahaSer", sourceTextHash, semanticReport);
-      }
+      const fieldReport = buildSemanticFieldReports(sourceText, payload);
+      semanticReport.fieldReports = fieldReport.fields;
+      semanticReport.invalidFields = fieldReport.invalidFields;
+      semanticReport.valid = semanticReport.valid && fieldReport.valid;
+      semanticReport.status = semanticReport.valid ? "valid" : "invalid_semantic_topic_mismatch";
+      payload.source_field_reports = fieldReport.fields;
     }
 
     const bindings = [
@@ -280,6 +312,7 @@
       invalidFields: bindings
         .filter((binding) => binding.valid === false)
         .map((binding) => ({ field: binding.field, status: binding.status, reason: binding.reason })),
+      rejectedTopicFields: (semanticReport?.invalidFields || []).map((report) => ({ field: report.field, status: report.status, reason: report.reason })),
       semanticTopicReport: semanticReport,
       stampedAt: new Date().toISOString()
     };
@@ -299,8 +332,7 @@
     }
     const before = JSON.stringify(parsed);
     // Stored payloads are not allowed to inherit provenance from their wrapper.
-    // Only a fresh bindAutoOutputToSource() call may infer nested binding.
-    const bound = bindAutoOutputToSource(parsed, { allowNestedInference: false });
+    const bound = bindAutoOutputToSource(parsed);
     const after = JSON.stringify(bound);
     if (after !== before) storage.setItem(AUTO_OUTPUT_STORAGE_KEY, after);
     return bound;
@@ -319,11 +351,15 @@
       path: bundle.afterwork?.path
     };
     const semanticReport = buildSemanticTopicReport(sourceText, structuredArtifact);
+    const fieldReport = buildSemanticFieldReports(sourceText, structuredArtifact);
+    semanticReport.fieldReports = fieldReport.fields;
+    semanticReport.invalidFields = fieldReport.invalidFields;
+    semanticReport.valid = semanticReport.valid && fieldReport.valid;
+    semanticReport.status = semanticReport.valid ? "valid" : "invalid_semantic_topic_mismatch";
     if (semanticReport.valid !== false) return bundle;
 
     bundle.quality = bundle.quality && typeof bundle.quality === "object" ? bundle.quality : {};
-    bundle.quality.status = "invalid_topic_mismatch";
-    bundle.quality.failClosed = true;
+    if (bundle.quality.failClosed !== true) bundle.quality.status = "valid_with_rejected_topic_fields";
     bundle.quality.topicConsistency = Object.assign({}, bundle.quality.topicConsistency || {}, semanticReport, {
       status: "invalid_semantic_topic_mismatch",
       valid: false,
@@ -331,21 +367,25 @@
     });
     bundle.quality.warnings = Array.isArray(bundle.quality.warnings) ? bundle.quality.warnings : [];
     if (!bundle.quality.warnings.includes("semantic_topic_mismatch")) bundle.quality.warnings.push("semantic_topic_mismatch");
-    bundle.quality.sourceBinding = bundle.quality.sourceBinding && typeof bundle.quality.sourceBinding === "object"
-      ? bundle.quality.sourceBinding
-      : {};
-    bundle.quality.sourceBinding.invalidFields = Array.isArray(bundle.quality.sourceBinding.invalidFields)
-      ? bundle.quality.sourceBinding.invalidFields
-      : [];
-    if (!bundle.quality.sourceBinding.invalidFields.some((item) => item?.field === "topicConsistency")) {
-      bundle.quality.sourceBinding.invalidFields.push({
-        field: "topicConsistency",
-        status: "invalid_semantic_topic_mismatch",
-        reason: semanticReport.reason,
-        overlappingTerms: semanticReport.overlappingTerms,
-        overlappingAnchorTerms: semanticReport.overlappingAnchorTerms
-      });
-    }
+    const existingRejectedTopicFields = Array.isArray(bundle.quality.rejectedTopicFields) ? bundle.quality.rejectedTopicFields : [];
+    bundle.quality.rejectedTopicFields = existingRejectedTopicFields.concat(
+      fieldReport.invalidFields
+        .filter((report) => !existingRejectedTopicFields.some((item) => item?.field === report.field))
+        .map((report) => ({ field: report.field, status: report.status, reason: report.reason }))
+    );
+    fieldReport.invalidFields.forEach(({ field }) => {
+      if (field.startsWith("canonicalAnalysis.") && bundle.canonicalAnalysis) {
+        const key = field.split(".")[1];
+        bundle.canonicalAnalysis[key] = Array.isArray(bundle.canonicalAnalysis[key]) ? [] : "";
+      } else if (field.startsWith("ahaSer.") && bundle.ahaSer) {
+        const key = field.split(".")[1];
+        bundle.ahaSer[key] = Array.isArray(bundle.ahaSer[key]) ? [] : "";
+      } else if (field === "reflection" && bundle.afterwork) bundle.afterwork.reflection = "";
+      else if (field === "day" && bundle.afterwork) bundle.afterwork.summary = "";
+      else if (field === "sortItems" && bundle.afterwork) bundle.afterwork.sortItems = [];
+      else if (field === "list" && bundle.afterwork) bundle.afterwork.list = [];
+      else if (field === "path" && bundle.afterwork) bundle.afterwork.path = [];
+    });
     const contract = global.AHAChatAnalysisRunContract;
     return contract?.finalizeExport ? contract.finalizeExport(bundle) : bundle;
   }

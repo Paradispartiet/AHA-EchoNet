@@ -121,8 +121,16 @@
   }
 
   function sourceHash(text) {
-    const normalized = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
-    return normalized ? shortHash(normalized) : "";
+    const source = String(text || "");
+    if (!source.trim()) return "";
+    const semanticDocument = global.AHAModuleApi?.resolve?.("semanticDocument", "AHASemanticDocument", { version: 1 })
+      || global.AHASemanticDocument;
+    if (typeof semanticDocument?.sha256Hex !== "function") {
+      throw new Error("AHAChatTextUtils krever SemanticDocument SHA-256 for source identity.");
+    }
+    const digest = String(semanticDocument.sha256Hex(source) || "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(digest)) throw new Error("SemanticDocument returned an invalid SHA-256 source identity.");
+    return digest;
   }
 
   function collectOpinionArticleEvidence(raw, sentences) {

@@ -34,9 +34,13 @@
   function readSourceHash(value) {
     const src = object(value);
     return text(
-      src.sourceTextHash || src.sourceHash || src.normalizedSourceHash ||
+      src.source_sha256 || src.sourceSha256 || src.sourceTextHash || src.sourceHash || src.normalizedSourceHash ||
       src.sourceFingerprint || src.source_binding?.currentSourceTextHash
     );
+  }
+
+  function isSha256(value) {
+    return /^[a-f0-9]{64}$/.test(text(value).toLowerCase());
   }
 
   function runIdentity(value) {
@@ -55,6 +59,9 @@
       sourceType: text(src.sourceType || src.sourceKind || "chat"),
       sourceTextHash: readSourceHash(src),
       sourceHash: readSourceHash(src),
+      sourceSha256: readSourceHash(src),
+      source_sha256: readSourceHash(src),
+      sourceHashAlgorithm: "sha256",
       createdAt: text(src.createdAt),
       memoryAllowed: src.memoryAllowed === true,
       memoryMode: text(src.memoryMode) || (src.memoryAllowed === true ? "allowed" : "off")
@@ -69,21 +76,35 @@
       .filter((item) => text(item.field));
   }
 
-  function validateSourceLockedFields(input, currentHash) {
+  function validateSourceLockedFields(input, currentHash, currentRunId) {
     const src = object(input);
     const invalid = [];
     SOURCE_LOCKED_FIELDS.forEach((field) => {
       const value = src[field];
       const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value && typeof value === "object" && Object.keys(value).length);
       if (!hasValue) return;
+      // Array projections are validated through their producer-owned field
+      // reports. The run contract only accepts/rejects object artifacts here.
+      if (Array.isArray(value)) return;
       const fieldHash = readSourceHash(value);
+      const fieldRunId = text(value?.analysisRunId || value?.runId);
       const binding = object(value?.source_binding || value?.sourceBinding);
+      const dataKeys = Object.keys(value).filter((key) => key !== "source_binding" && key !== "sourceBinding");
+      if (text(binding.status) === "no_data" && dataKeys.length === 0) return;
       if (binding.valid === false) {
         invalid.push({ field, status: text(binding.status) || "invalid_source_binding", reason: text(binding.reason) || "binding_rejected" });
         return;
       }
+      if (!isSha256(fieldHash) || !fieldRunId) {
+        invalid.push({ field, status: "invalid_unbound_artifact", reason: "explicit_sha256_and_run_id_required" });
+        return;
+      }
       if (fieldHash && currentHash && fieldHash !== currentHash) {
         invalid.push({ field, status: "invalid_hash_mismatch", reason: "hash_mismatch", currentSourceTextHash: currentHash, fieldSourceTextHash: fieldHash });
+        return;
+      }
+      if (currentRunId && fieldRunId !== currentRunId) {
+        invalid.push({ field, status: "invalid_run_mismatch", reason: "run_mismatch", currentAnalysisRunId: currentRunId, fieldAnalysisRunId: fieldRunId });
       }
     });
     return invalid;
@@ -96,7 +117,7 @@
     const sourceTextHash = text(readSourceHash(src) || readSourceHash(active));
     const runId = text(src.analysisRunId || src.runId || active.analysisRunId || active.runId);
     const invalidFields = collectInvalidFields(src);
-    validateSourceLockedFields(src, sourceTextHash).forEach((item) => {
+    validateSourceLockedFields(src, sourceTextHash, runId).forEach((item) => {
       if (!invalidFields.some((existing) => existing.field === item.field && existing.status === item.status)) invalidFields.push(item);
     });
     const invalidationReasons = uniqueText([
@@ -124,6 +145,9 @@
       sourceText,
       sourceTextHash,
       sourceHash: sourceTextHash,
+      sourceSha256: sourceTextHash,
+      source_sha256: sourceTextHash,
+      sourceHashAlgorithm: "sha256",
       normalizedSourceHash: sourceTextHash,
       sourceFingerprint: sourceTextHash,
       sourcePreview: text(src.sourcePreview || src.sourceTextPreview || active.sourcePreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
@@ -144,9 +168,11 @@
       invalidationReasons,
       analysisBinding: {
         status: failClosed ? "invalid" : (text(quality.status) || (sourceTextHash && runId ? "bound" : "incomplete")),
-        valid: !failClosed && Boolean(sourceTextHash && runId),
+        valid: !failClosed && Boolean(isSha256(sourceTextHash) && runId),
         runId: runId || null,
-        sourceTextHash: sourceTextHash || null
+        sourceTextHash: sourceTextHash || null,
+        sourceSha256: sourceTextHash || null,
+        sourceHashAlgorithm: "sha256"
       }
     });
   }
@@ -159,25 +185,51 @@
     return run;
   }
 
-  function bindArtifact(artifact, run, field = "") {
+  function bindArtifact(artifact, run, field = "", options = {}) {
     if (!artifact || typeof artifact !== "object" || !run) return artifact;
     const runId = text(run.analysisRunId || run.runId);
     const sourceTextHash = readSourceHash(run);
-    Object.assign(artifact, {
-      analysisId: text(run.analysisId),
-      analysisRunId: runId,
-      runId,
-      conversationId: text(run.conversationId || run.sessionId),
-      sessionId: text(run.sessionId || run.conversationId),
-      turnId: text(run.turnId),
-      sourceId: text(run.sourceId),
-      sourceKind: text(run.sourceKind || run.sourceType || artifact.sourceKind || "chat"),
-      createdAt: artifact.createdAt || run.createdAt,
-      sourceHash: sourceTextHash || readSourceHash(artifact),
-      normalizedSourceHash: sourceTextHash || readSourceHash(artifact),
-      sourceTextHash: sourceTextHash || readSourceHash(artifact),
-      sourceFingerprint: sourceTextHash || readSourceHash(artifact),
-      sourcePreview: text(run.sourcePreview || artifact.sourcePreview || artifact.sourceTextPreview)
+    const producerBound = options.producer === "current_analysis_run";
+    if (producerBound) {
+      if (!runId || !isSha256(sourceTextHash)) throw new Error("Cannot produce a source-bound artifact without run id and SemanticDocument SHA-256.");
+      Object.assign(artifact, {
+        analysisId: text(run.analysisId),
+        analysisRunId: runId,
+        runId,
+        conversationId: text(run.conversationId || run.sessionId),
+        sessionId: text(run.sessionId || run.conversationId),
+        turnId: text(run.turnId),
+        sourceId: text(run.sourceId),
+        sourceKind: text(run.sourceKind || run.sourceType || artifact.sourceKind || "chat"),
+        createdAt: artifact.createdAt || run.createdAt,
+        sourceHash: sourceTextHash,
+        normalizedSourceHash: sourceTextHash,
+        sourceTextHash,
+        sourceSha256: sourceTextHash,
+        source_sha256: sourceTextHash,
+        sourceFingerprint: sourceTextHash,
+        sourceHashAlgorithm: "sha256",
+        sourcePreview: text(run.sourcePreview || artifact.sourcePreview || artifact.sourceTextPreview)
+      });
+    }
+    const artifactRunId = text(artifact.analysisRunId || artifact.runId);
+    const artifactHash = readSourceHash(artifact);
+    const valid = Boolean(
+      isSha256(sourceTextHash) &&
+      isSha256(artifactHash) &&
+      artifactHash === sourceTextHash &&
+      artifactRunId && artifactRunId === runId
+    );
+    artifact.source_binding = Object.assign({}, object(artifact.source_binding), {
+      field: field || text(artifact.source_binding?.field) || "artifact",
+      status: valid ? (producerBound ? "producer_bound" : "verified") : (!artifactHash || !artifactRunId ? "invalid_unbound_artifact" : "invalid_source_or_run_mismatch"),
+      valid,
+      inferred: false,
+      currentSourceTextHash: sourceTextHash || null,
+      fieldSourceTextHash: artifactHash || null,
+      currentAnalysisRunId: runId || null,
+      fieldAnalysisRunId: artifactRunId || null,
+      reason: valid ? (producerBound ? "created_by_current_analysis_run" : "explicit_identity_match") : "explicit_identity_required"
     });
     if (SOURCE_LOCKED_FIELDS.includes(field)) update(run, { [field]: artifact });
     return artifact;
@@ -199,6 +251,7 @@
     const errors = [];
     if (!value.runId) errors.push("missing_run_id");
     if (!value.sourceTextHash) errors.push("missing_source_text_hash");
+    else if (!isSha256(value.sourceTextHash)) errors.push("invalid_source_sha256");
     value.invalidFields.forEach((item) => errors.push(`${item.field}:${item.status || item.reason || "invalid"}`));
     return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), value });
   }
@@ -209,6 +262,7 @@
     create,
     update,
     bindArtifact,
+    isSha256,
     finalizeExport,
     validate
   });

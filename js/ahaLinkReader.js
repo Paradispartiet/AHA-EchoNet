@@ -60,13 +60,14 @@
     const publisher = compact(source.publisher, source.domain || "ukjent kilde");
     const accessStatus = compact(result?.access_status, "metadata_only");
     const full = accessStatus === "full";
+    const referenceOnly = context?.reference_only === true;
     const safeSourceSummary = full
       ? `Kilde lest transient: ${title}. AHA brukte tilgjengelig artikkeltekst midlertidig til analyse, men rå artikkeltekst er ikke lagret. Kilde: ${publisher}. Status: ${accessStatus}.`
       : `Kilde registrert fra metadata: ${title}. Full artikkeltekst var ikke tilgjengelig for AHA. Kilde: ${publisher}. Status: ${accessStatus}.`;
     return {
       source_type: "web_article",
       source_app: "aha_link_reader",
-      content_type: "article_metadata",
+      content_type: referenceOnly ? "article_reference" : (full ? "transient_article_analysis" : "article_metadata"),
       title,
       text: safeSourceSummary,
       user_created: false,
@@ -88,6 +89,9 @@
         source_kind: "user_pasted_url",
         raw_article_stored: false,
         transient_fulltext_read: full,
+        source_event_only: referenceOnly || !full,
+        semantic_insight_eligible: full && !referenceOnly,
+        reference_only: referenceOnly,
         approvalState: "suggested",
         visibility: "local_only",
         requiresUserConfirmation: true,
@@ -185,7 +189,8 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data?.ok === false) throw new Error(data?.error || `HTTP ${res.status}`);
     const sourcePayload = buildSafeSourcePayload(data, Object.assign({}, context || {}, { url }));
-    const candidates = safeCandidates(data.candidates);
+    const full = compact(data.access_status, "metadata_only") === "full";
+    const candidates = full && context?.reference_only !== true ? safeCandidates(data.candidates) : [];
     const safeAnalysis = buildSafeArticleAnalysis(data, url, candidates);
     setLatestArticleAnalysis(safeAnalysis);
     const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;

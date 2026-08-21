@@ -24,7 +24,7 @@
     "renderMetaAiSessionBox", "renderMetaAiClaims", "maybeHandleMetaAiAgentReply",
     "saveMetaAiClaimFeedback", "buildAhaPersonalAiLoopChatReadinessStatus",
     "renderAhaPersonalAiLoopStatus", "buildAhaAnswerPackage", "renderAhaAnswerComposer",
-    "createAnalysisRun", "updateAnalysisRun", "bindAnalysisArtifact",
+    "createAnalysisRun", "updateAnalysisRun", "bindAnalysisArtifact", "restoreAutoOutputFromStorage",
     "artifactMatchesActiveRun", "clearActiveAnalysisState", "renderAutoOutputPayload",
     "enforceCanonicalSourceGrounding", "filterRetrievalForActiveSource",
     "scoreRetrievalAgainstSource", "filterMemoryContextForActiveSource", "isActiveAnalysisRun"
@@ -91,6 +91,10 @@
       if (installed) return installed;
       const chatApi = pick(bindings, CHAT_EXPORTS);
       const testHooks = Object.assign({}, global.AHATestHooks || {}, pick(bindings, TEST_HOOK_EXPORTS));
+      const bindProducedArtifact = (artifact, run = bindings.getActiveAnalysisRun(), field = "") =>
+        bindings.bindAnalysisArtifact(artifact, run, field, { producer: "current_analysis_run" });
+      chatApi.bindAnalysisArtifact = bindProducedArtifact;
+      testHooks.bindAnalysisArtifact = bindProducedArtifact;
 
       global.refreshAhaExplorer = bindings.refreshAhaExplorer;
       global.showSavedAfterwork = bindings.showSavedAfterwork;
@@ -128,7 +132,7 @@
         get() { return bindings.getActiveAnalysisRun(); },
         isActive(run) { return bindings.isActiveAnalysisRun(run); },
         matches(artifact) { return bindings.artifactMatchesActiveRun(artifact, bindings.getActiveAnalysisRun()); },
-        bind(artifact) { return bindings.bindAnalysisArtifact(artifact, bindings.getActiveAnalysisRun()); }
+        bind(artifact) { return bindProducedArtifact(artifact, bindings.getActiveAnalysisRun()); }
       };
 
       global.AHAChat = chatApi;
