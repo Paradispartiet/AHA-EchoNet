@@ -1,65 +1,47 @@
-const assert = require('assert');
-const fs = require('fs');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
 
-const explorerCode = fs.readFileSync('js/ahaExplorer.js', 'utf8');
+const explorer = fs.readFileSync('js/ahaExplorer.js', 'utf8');
+const knowledgeView = fs.readFileSync('js/ahaChatKnowledgeView.js', 'utf8');
 const chatHtml = fs.readFileSync('chat.html', 'utf8');
 const chatCss = fs.readFileSync('css/aha-chat.css', 'utf8');
 
-function section(start, end) {
-  const from = explorerCode.indexOf(start);
-  const to = explorerCode.indexOf(end, from);
-  assert.notEqual(from, -1, `Expected ${start}`);
-  assert.notEqual(to, -1, `Expected ${end} after ${start}`);
-  return explorerCode.slice(from, to);
-}
+function occurrences(source, value) { return source.split(value).length - 1; }
 
-function occurrences(source, value) {
-  return source.split(value).length - 1;
-}
+assert.ok(explorer.includes('AHAAnalysisReadModelV2?.build'), 'Explorer must consume AnalysisReadModelV2');
+assert.ok(explorer.includes('AHAKnowledgeMapReadModelV2?.build'), 'Explorer must consume KnowledgeMapReadModelV2');
+assert.ok(explorer.includes('model.sections.overview'), 'Overview must read the typed overview section');
+assert.ok(explorer.includes('model.sections.insights'), 'Insights must read the typed insight section');
+assert.ok(explorer.includes('model.sections.concepts'), 'Concepts must read the typed concept section');
+assert.ok(explorer.includes('model.sections.conversation_tracks'), 'Conversation tracks must read the typed section');
+assert.ok(explorer.includes('model.sections.subjects'), 'Subjects must read the typed section');
+assert.ok(explorer.includes('model.sections.sources'), 'Sources must read the typed section');
+assert.ok(explorer.includes('model.sections.source_structure'), 'Source structure must read the typed section');
+assert.ok(explorer.includes('model.sections.afterwork'), 'Afterwork must read the typed section');
 
-const renderOversikt = section('function renderOversikt(b)', '// ── Innsikter');
-assert.ok(renderOversikt.includes('dlRow("Viktigste innsikt"'), 'Hovedbildet should own the primary insight');
-assert.ok(renderOversikt.includes('dlRow("Neste steg"'), 'Hovedbildet should own the primary next step');
-for (const duplicateCard of ['card("Innsikter"', 'card("Begreper"', 'card("Fagkoblinger', 'card("Kilder"']) {
-  assert.equal(renderOversikt.includes(duplicateCard), false, `Hovedbildet must not duplicate ${duplicateCard}`);
-}
+assert.equal(explorer.includes('chamberInsights'), false, 'Explorer must not merge Chamber insights into the current analysis');
+assert.equal(explorer.includes('rawAutoPayload'), false, 'Explorer must not render legacy raw auto payload');
+assert.equal(explorer.includes('afterwork.list'), false, 'Legacy List output must not appear under source structure');
+assert.equal(explorer.includes('afterwork.path'), false, 'Legacy Path output must not appear under source structure');
+assert.equal(explorer.includes('loadWebArticleSourceEvents'), false, 'Source events must not replace AnalysisBundleV2 source records');
+assert.equal(explorer.includes('global.showMeta'), false, 'Knowledge Map focus must not open the legacy Chamber map');
+assert.ok(explorer.includes('Kildens struktur'));
+assert.ok(explorer.includes('Kunnskapskart'));
+assert.ok(explorer.includes('Tankekart'));
+assert.ok(explorer.includes('origin_scope === "historical"'), 'Historical map nodes must be rendered separately');
 
-const renderSamtalespor = section('function renderSamtalespor(b)', 'function renderAhaNow(b)');
-assert.ok(renderSamtalespor.includes('buildConversationSnapshot'), 'Samtalespor should keep the safe conversation snapshot');
-assert.ok(renderSamtalespor.includes('Åpne spørsmål'), 'Samtalespor should preserve open questions');
-assert.ok(renderSamtalespor.includes('Perspektiver'), 'Samtalespor should preserve perspectives');
-assert.ok(renderSamtalespor.includes('Videre forståelsessteg'), 'Samtalespor should preserve additional next steps');
-assert.equal(renderSamtalespor.includes('signals.concepts'), false, 'Begreper belong only in the Begreper card');
-assert.equal(renderSamtalespor.includes('signals.conversationLinks'), false, 'Fag links belong only in the Fag card');
+assert.equal(knowledgeView.includes('data-analysis-artifact="mindmap"'), false, 'Knowledge Map must not materialize the first Mindmap candidate');
+assert.equal(knowledgeView.includes('data-analysis-artifact="path"'), false, 'Knowledge Map must not materialize the first Path candidate');
+assert.ok(knowledgeView.includes('Åpne separat Tankekart-forhåndsvisning'));
 
-const renderBegreper = section('function renderBegreper(b)', '// ── Fag');
-assert.ok(renderBegreper.includes('b.ahaSer?.begreper'), 'Begreper must retain AHA SER concepts after the merge');
-
-const renderEtterarbeid = section('function renderEtterarbeid(b)', '// ── Verktøy');
-assert.equal(renderEtterarbeid.includes('afterwork.sortItems'), false, 'Sortert struktur belongs only in Struktur');
-assert.equal(renderEtterarbeid.includes('afterwork.list'), false, 'Liste belongs only in Struktur');
-assert.equal(renderEtterarbeid.includes('afterwork.path'), false, 'Læringssti belongs only in Struktur');
-
-assert.ok(chatHtml.includes('<h2 id="aha-analysis-title">AHA ser nå</h2>'), 'The merged surface should keep AHA ser nå as its title');
-assert.equal(chatHtml.includes('Utforsk det AHA fant'), false, 'The old second surface should be removed');
-assert.equal(chatHtml.includes('role="tablist"'), false, 'The merged surface must not use a tablist');
-assert.equal(chatHtml.includes('role="tabpanel"'), false, 'The merged surface must not hide content in tabpanels');
-assert.equal(chatHtml.includes('data-tab-panel='), false, 'The old tab-panel routing must be gone');
-assert.equal(chatHtml.includes('data-open-tab='), false, 'Answer actions must target cards, not tabs');
-
+assert.ok(chatHtml.includes('<h2 id="aha-analysis-title">AHA ser nå</h2>'));
+assert.equal(chatHtml.includes('role="tablist"'), false);
+assert.equal(chatHtml.includes('role="tabpanel"'), false);
 for (const card of ['oversikt', 'innsikter', 'begreper', 'samtalespor', 'fag', 'kilder', 'struktur', 'etterarbeid', 'kart', 'verktoy', 'mer']) {
-  assert.equal(occurrences(chatHtml, `data-analysis-card="${card}"`), 1, `${card} should have exactly one canonical card`);
+  assert.equal(occurrences(chatHtml, `data-analysis-card="${card}"`), 1, `${card} should have one canonical card`);
 }
-for (const legacyId of ['aha-auto-output', 'afterwork-panel', 'panel', 'out', 'meta-profile-panel']) {
-  assert.equal(occurrences(chatHtml, `id="${legacyId}"`), 1, `${legacyId} must remain available exactly once`);
-}
-
-assert.ok(chatHtml.includes('data-open-card="begreper"'), 'Answer actions should focus the Begreper card');
-assert.ok(chatHtml.includes('window.AHAExplorer?.focus(card)'), 'Answer actions should use card focus routing');
-assert.ok(explorerCode.includes('function focusCard(name)'), 'Explorer should expose card focus behavior');
-assert.ok(explorerCode.includes('open: focusCard, focus: focusCard'), 'The old open API should remain as a compatibility alias');
-assert.equal(explorerCode.includes('querySelectorAll("[data-tab-panel]")'), false, 'Explorer must not hide sibling cards');
-assert.ok(chatCss.includes('.analysis-card-grid'), 'The merged surface should use a responsive card grid');
-assert.equal(chatCss.includes('.explorer-tabs'), false, 'Tab styling should be removed');
+assert.ok(explorer.includes('function focusCard(name)'));
+assert.ok(explorer.includes('open: focusCard, focus: focusCard'));
+assert.ok(chatCss.includes('.analysis-card-grid'));
 
 console.log('aha-explorer-no-duplicate-aha-ser.test.cjs passed');

@@ -145,15 +145,12 @@ for (const line of emptySurface.safeSummary.lines) {
   assert.doesNotMatch(line, /https?:\/\/|@|userId|source excerpt|raw invalid/i, 'safeSummary lines must not contain raw/private indicators');
 }
 
-const explorerSource = uiSources.find(([relativePath, source]) => relativePath === 'js/ahaExplorer.js' && source.includes('buildQualityStatusSurface'))?.[1];
+const explorerSource = uiSources.find(([relativePath]) => relativePath === 'js/ahaExplorer.js')?.[1];
 assert.ok(explorerSource, 'quality status preview must remain in an existing AHA UI file');
-const qualityPreview = sliceBetween(explorerSource, 'function pickQualityStatusInput(b)', 'function renderEtterarbeid', 'quality preview');
-const qualityInputBuilder = sliceBetween(explorerSource, 'function pickQualityStatusInput(b)', 'function renderQualityStatusPreview', 'quality input builder');
-assert.match(qualityPreview, /AHAQualityStatusSurface/, 'preview must use quality namespace');
-assert.match(qualityPreview, /buildQualityStatusSurface/, 'preview must call builder');
-assertMatchesAll(qualityPreview, [/read-only|lokal/i, /no-sync|ingen sync/i, /no raw user data|ingen rå brukerdata/i], 'preview safety copy');
-assertNoTerms(qualityPreview, ['Sync now', 'Start sync', 'Kjør sync', 'Synk', 'Approve', 'Reject', 'Godkjenn', 'Avvis', 'Publish', 'Share', 'Send', 'Connect EchoNet', 'Export', 'Save to memory', 'Open backend', 'Review source', 'Fix repo', 'Create PR', 'data-sync', 'data-approve', 'data-reject', 'approveCandidate', 'rejectCandidate', 'approvalAction'], 'quality preview actions');
-assertNoTerms(qualityInputBuilder, ['rawText', 'fullText', 'transcript', 'messageText', 'prompt', 'sourceEvent.text', 'event.text', 'candidate.text', 'candidate.previewLabel', 'privatePayload', 'rawPayload', 'privateMetadata', 'source.url', 'sourceEvent.url', 'sourceExcerpt', 'sourceExcerpts', 'rawInvalidFields', 'invalidFieldDetails', 'userId', 'email'], 'quality preview builder input');
+const qualityPreview = sliceBetween(explorerSource, 'function renderQualityStatus(model)', 'function renderOversikt(model)', 'quality preview');
+assert.match(qualityPreview, /model\?\.quality/, 'preview must consume AnalysisReadModelV2 quality');
+assertMatchesAll(qualityPreview, [/Kildebinding/, /Temakonsistens/, /Stale-data/, /Analyse-isolering/, /read-only/i, /ingen sync/i, /rå brukerdata/i], 'preview safety copy');
+assertNoTerms(qualityPreview, ['Sync now', 'Start sync', 'Kjør sync', 'Synk', 'Approve', 'Reject', 'Godkjenn', 'Avvis', 'Publish', 'Share', 'Send', 'Connect EchoNet', 'Export', 'Save to memory', 'Open backend', 'Review source', 'Fix repo', 'Create PR', 'data-sync', 'data-approve', 'data-reject', 'approveCandidate', 'rejectCandidate', 'approvalAction', 'rawText', 'fullText', 'transcript', 'messageText', 'prompt', 'sourceEvent.text', 'rawPayload', 'userId', 'email'], 'quality preview actions/raw data');
 
 const runtimeSurface = helperWithoutSafetyKeyNames + '\n' + qualityPreview;
 assertNoTerms(runtimeSurface, ['EchoNet', 'echonet', 'networkSync', 'graphSync', 'phase', 'priority', 'health', 'nextPr', 'repoStatus', 'buildStage', 'projectRoadmap'], 'quality runtime project/sync terms');

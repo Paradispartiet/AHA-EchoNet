@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paradispartiet.github.io/AHA-EchoNet/schemas/aha-knowledge-map-read-model-v2.schema.json",
+  "title": "AHA Knowledge Map Read Model V2",
+  "type": "object",
+  "required": ["schema", "version", "read_model_id", "status", "identity", "scopes", "quality", "validation", "policy"],
+  "properties": {
+    "schema": { "const": "aha_knowledge_map_read_model_v2" },
+    "version": { "const": 2 },
+    "read_model_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ready", "incomplete", "invalid"] },
+    "identity": { "type": "object", "required": ["analysis_id", "analysis_run_id", "source_id", "source_sha256"] },
+    "scopes": {
+      "type": "object",
+      "required": ["current_analysis", "whole_map"],
+      "properties": {
+        "current_analysis": { "$ref": "#/$defs/scope" },
+        "whole_map": { "$ref": "#/$defs/scope" }
+      },
+      "additionalProperties": false
+    },
+    "quality": { "type": "object" },
+    "validation": { "type": "object", "required": ["valid", "errors"] },
+    "policy": { "type": "object", "required": ["read_only", "direct_materialization"] }
+  },
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "required": ["label", "nodes", "edges"],
+      "properties": {
+        "label": { "type": "string" },
+        "nodes": { "type": "array", "items": { "type": "object" } },
+        "edges": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

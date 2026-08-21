@@ -42,6 +42,10 @@
         "candidate_insight_ids": { "$ref": "#/$defs/idArray" },
         "approved_insight_ids": { "$ref": "#/$defs/idArray" },
         "blocked_candidate_insight_ids": { "$ref": "#/$defs/idArray" },
+        "claim_records": { "type": "array", "items": { "$ref": "#/$defs/semanticClaim" } },
+        "relation_records": { "type": "array", "items": { "$ref": "#/$defs/semanticRelation" } },
+        "tension_records": { "type": "array", "items": { "$ref": "#/$defs/semanticTension" } },
+        "approved_insight_records": { "type": "array", "items": { "$ref": "#/$defs/semanticInsight" } },
         "synthesis_gate": {
           "type": ["object", "null"],
           "properties": {
@@ -86,6 +90,72 @@
   },
   "$defs": {
     "idArray": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "semanticEvidence": {
+      "type": "object",
+      "required": ["excerpt", "start", "end"],
+      "properties": {
+        "excerpt": { "type": "string", "minLength": 1 },
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "semanticClaim": {
+      "type": "object",
+      "required": ["id", "text", "mentioned_concept_ids", "epistemic_status", "origin", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 },
+        "mentioned_concept_ids": { "$ref": "#/$defs/idArray" },
+        "epistemic_status": { "type": "string" },
+        "origin": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/semanticEvidence" } }
+      },
+      "additionalProperties": false
+    },
+    "semanticRelation": {
+      "type": "object",
+      "required": ["id", "type", "from_id", "to_id", "epistemic_status", "origin", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "from_id": { "type": "string", "minLength": 1 },
+        "to_id": { "type": "string", "minLength": 1 },
+        "epistemic_status": { "type": "string" },
+        "origin": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/semanticEvidence" } }
+      },
+      "additionalProperties": false
+    },
+    "semanticTension": {
+      "type": "object",
+      "required": ["id", "label", "epistemic_status", "origin", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "epistemic_status": { "type": "string" },
+        "origin": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/semanticEvidence" } }
+      },
+      "additionalProperties": false
+    },
+    "semanticInsight": {
+      "type": "object",
+      "required": ["id", "insight", "type", "abstraction", "why_it_matters", "confidence", "uncertainty", "causal_status", "origin", "evidence"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "insight": { "type": "string", "minLength": 1 },
+        "type": { "type": "string" },
+        "abstraction": { "type": "string" },
+        "why_it_matters": { "type": "string" },
+        "confidence": { "type": "string" },
+        "uncertainty": { "type": "string" },
+        "causal_status": { "type": "string" },
+        "origin": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/semanticEvidence" } }
+      },
+      "additionalProperties": false
+    },
     "fieldArray": { "type": "array", "items": { "$ref": "#/$defs/field" } },
     "fieldMap": { "type": "object", "additionalProperties": { "anyOf": [{ "$ref": "#/$defs/field" }, { "type": "null" }] } },
     "field": {
