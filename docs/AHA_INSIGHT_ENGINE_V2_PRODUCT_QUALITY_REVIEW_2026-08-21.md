@@ -2,6 +2,8 @@
 
 Status: **source-bound agent remediation implemented; independent human usefulness review remains open**.
 
+The authoritative next-phase production integration plan is [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). It distinguishes Chat analysis, Knowledge Map and the three products, and it records the remaining seven-PR path from live source isolation to preview, human evaluation and controlled save.
+
 This document records the first qualitative review of the 24-case V2 product-evaluation corpus after the raw-source transport/provenance evaluation in PR #880. It does not widen any write authority and does not claim that the independent human release gate has passed.
 
 ## Why the automated score was not enough
@@ -78,6 +80,23 @@ tests/aha-projection-product-agent-quality-review-v2.test.cjs
 The TEMP probe also inspected `AHASemanticDocument` in this evaluation path. Its current shadow document reports `claims_relations_shadow` / `shadow_claims_relations_pending`, and the observed arrays for concepts, claims, relations, tensions and candidate insights are still empty at that layer. The semantic gate correctly reports that the dedicated semantic model is not authoritative and that the synthesized-insight quality gate is not implemented there.
 
 The #880 regression therefore uses a deterministic evaluation adapter after source-document validation: source-bound sentence insights plus heuristic token concepts. That makes it useful for product regression, provenance, determinism and suppression testing, but it is **not authoritative semantic extraction** and cannot be used to manufacture a human-review pass.
+
+## Post-remediation live analysis audit
+
+A production-shaped Livsarket analysis inspected after PR #884 produced materially unchanged Chat-analysis output across reload. The observed bundle contained stale Morgenbladet afterwork, unsupported institutional/media-history subject links, a rendered `[object Object]`, weak/morphologically duplicated concept tokens and a metadata-only `Kilde registrert` Chamber insight. Source binding and topic consistency still appeared as passed.
+
+This does not invalidate the narrow #884 product-refinement regression. It proves that the regression does not exercise the complete production route:
+
+```text
+raw Chat input
+→ authoritative semantic extraction
+→ source-bound current insights
+→ active AnalysisBundle
+→ product projection runtime
+→ Lists / Paths / Mindmap preview
+```
+
+The live audit is therefore a stop condition for declaring the complete analysis-to-products chain production-ready. The source/analysis fixes and real-browser sequential-source regression are specified in the authoritative integration plan.
 
 ## Release boundary
 

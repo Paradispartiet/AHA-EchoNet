@@ -2,7 +2,9 @@
 
 ## Status
 
-The shared V2 semantic projection is now consumed through a validated read-only product model. Lists, Paths and Mindmap can render quality-filtered candidates without writing them into product stores.
+The shared V2 semantic projection is consumed through a validated read-only product model. Lists, Paths and Mindmap can render quality-filtered candidates without writing them into product stores.
+
+This is an implemented **product-mechanics boundary**, not proof that the complete live Chat-input-to-product chain is finished. The active Chat analysis still needs the authoritative AnalysisBundle/semantic bridge, stronger source isolation, explicit Knowledge Map separation and real-browser human usefulness release proof described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
 
 ## Runtime chain
 
@@ -35,4 +37,16 @@ The structured review worksheet is `ops/evaluation/aha-projection-product-human-
 
 Every projected insight is stored as an immutable inline snapshot, so a product artifact does not depend on an unpersisted chamber record. Repeating the same action is idempotent. A new write returns a scoped receipt that can undo only the unchanged record it created; undo fails closed after user edits. Repository calls, sync, automatic persistence, Chamber writes and Meta writes remain forbidden.
 
-The older `ahaAnalysisArtifacts` click path now prefers an available V2 candidate and falls back to its legacy builder only when the V2 runtime is unavailable. This does not create a background write path: both routes still require the existing explicit artifact button click.
+`ahaAnalysisArtifacts` is now a thin V2-only compatibility wrapper. It contains no independent artifact builder and still requires an explicit artifact action. The remaining UI problem is that Chat/Knowledge Map can materialize the first candidate directly instead of routing the user through the dedicated preview surface; the authoritative integration plan closes that shortcut without adding a background write path.
+
+## Live integration boundary
+
+Current product-page preview availability depends on an active analysis plus matching projection-ready local insights. A structurally valid Chat analysis is therefore not sufficient if the live ingest path created only metadata or otherwise non-ready Chamber insights. Lists and Paths also hide their preview shells when no candidate is returned, while Mindmap defaults to the user's local graph unless V2 is selected.
+
+Required next behavior:
+
+- all product pages consume the same approved active AnalysisBundle identity;
+- Chat exposes explicit List/Path/Mindmap preview states and stable deep links;
+- blocked candidates remain visible as a reasoned status instead of disappearing;
+- Mindmap entered from Chat selects the V2 preview source;
+- no product is written before an explicit save inside its preview.

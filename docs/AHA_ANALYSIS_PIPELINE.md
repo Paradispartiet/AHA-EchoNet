@@ -4,6 +4,8 @@ Dette dokumentet beskriver den faktiske analyseflyten slik repoet står nå. Det
 
 Målet er å gjøre det tydelig hva som er kildetekst, hva som er minne, hva som er etterarbeid, hva som er cache, og hva som bare er visning.
 
+Status correction (2026-08-21): this file describes the legacy/current composition and its intended contracts. It must not be read as proof that the complete production chain satisfies those contracts. The audited next-state architecture, source-isolation requirements and seven-PR migration are defined in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
+
 ## Kort flyt
 
 ```text
@@ -271,6 +273,8 @@ Derfor må debugging alltid starte med å spørre:
 Hvilket felt kommer fra gjeldende sourceTextHash,
 og hvilket felt kommer fra tidligere chamber/cache/minne?
 ```
+
+The 2026-08-21 live audit confirmed that this remains an active production failure class: a later source could display stale afterwork/subject content while the composed bundle still reported successful source and topic checks. The corrective rule is stronger than hash filtering alone: use the full SemanticDocument SHA-256, preserve original item-level provenance, forbid inferred re-binding, validate each field separately and never merge historical output into the active analysis without an explicit typed relation.
 
 ## Ikke bruk quality layer som fasit
 

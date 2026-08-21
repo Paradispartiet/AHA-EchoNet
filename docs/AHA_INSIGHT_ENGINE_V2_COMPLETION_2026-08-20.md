@@ -4,6 +4,8 @@ Updated: 2026-08-21
 
 This document is the authoritative completion boundary for the nine-block semantic Insight Engine V2 rebuild, the product projection layer and the controlled production rollout.
 
+Completion scope correction (2026-08-21): the nine-block semantic architecture and V2 product mechanics are implemented, but the full live `Chat input → source-isolated analysis → Knowledge Map → Lists/Paths/Mindmap` production chain is **not** complete. The remaining integration and quality phase is authoritative in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). This correction does not reopen a tenth semantic build block and does not widen write authority.
+
 ## Semantic build
 
 All **9/9 semantic build blocks are implemented**:
@@ -266,7 +268,9 @@ tests/aha-lists.test.cjs
 
 ## Next phase
 
-The semantic rebuild itself is complete. The next work should improve product usefulness, evaluation and controlled adoption **without silently widening write authority**.
+The semantic rebuild architecture itself is complete. The next work must first make the live source/analysis chain authoritative and source-isolated, then connect the separate Analysis, Knowledge Map and product read models, and finally complete product usefulness evaluation and controlled adoption **without silently widening write authority**.
+
+The seven-PR order, feature-specific quality requirements, product visibility contract and definition of done are recorded in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). The existing 24-case adapter remains projection regression evidence, not a substitute for the full browser path or independent human review.
 
 Any expansion beyond the exact max=2 Insight scope requires a new immutable scope contract, explicit fail-closed gate, adversarial regressions and fresh production proof. Projection artifacts remain either read-only suggestions or explicit one-artifact-per-user-action local materializations under the finalized #875/#879 boundary.
 
