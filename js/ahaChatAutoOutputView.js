@@ -176,6 +176,7 @@
     const storageKey = deps.storageKey || AUTO_OUTPUT_STORAGE_KEY;
     const defaultConversationId = deps.defaultConversationId || "default_thread";
     const now = typeof deps.now === "function" ? deps.now : () => new Date().toISOString();
+    const analysisBundleV2 = deps.analysisBundleV2 || null;
 
     function load() {
       try {
@@ -184,7 +185,18 @@
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== "object") return null;
         // Bakoverkompatibilitet: gammel cache var ren payload.
-        if (parsed.payload && typeof parsed.payload === "object") return parsed;
+        if (parsed.payload && typeof parsed.payload === "object") {
+          if (analysisBundleV2?.hydrate) {
+            if (parsed.payload.analysisBundleV2) {
+              const bundle = analysisBundleV2.hydrate(parsed.payload.analysisBundleV2);
+              if (!bundle) return null;
+              parsed.payload.analysisBundleV2 = bundle;
+            } else {
+              parsed.legacy_analysis_bundle_missing = true;
+            }
+          }
+          return parsed;
+        }
         return { payload: parsed };
       } catch {
         return null;
@@ -200,6 +212,17 @@
       const payloadHash = String(payload.source_sha256 || payload.sourceSha256 || payload.sourceTextHash || payload.sourceHash || "").trim();
       const payloadRunId = String(payload.analysisRunId || payload.runId || "").trim();
       if (!fingerprint || payloadHash !== fingerprint || !payloadRunId || payload.source_binding?.valid !== true) return null;
+      if (analysisBundleV2?.hydrate) {
+        const bundle = analysisBundleV2.hydrate(payload.analysisBundleV2);
+        if (
+          !bundle
+          || bundle.identity.source_sha256 !== fingerprint
+          || bundle.identity.analysis_run_id !== payloadRunId
+          || bundle.identity.analysis_id !== String(payload.analysisId || "").trim()
+          || bundle.identity.source_id !== String(payload.sourceId || "").trim()
+        ) return null;
+        payload.analysisBundleV2 = bundle;
+      }
       const cache = {
         activeRun,
         payload,
@@ -399,6 +422,15 @@
       const host = global.document.getElementById("aha-auto-output");
       if (!host || !payload) return;
       payload = deps.enforceCanonicalSourceGrounding(payload, host.dataset.sourceText || "");
+      const bundleView = deps.analysisBundleV2?.toLegacyView?.(payload.analysisBundleV2);
+      if (bundleView) {
+        payload = Object.assign({}, payload, bundleView, {
+          summary: bundleView.afterwork?.summary || "",
+          reflection: bundleView.afterwork?.reflection || "",
+          thoughts: bundleView.afterwork?.thoughts || {},
+          analysisBundleV2: bundleView.analysisBundleV2
+        });
+      }
       const activeRun = deps.getActiveAnalysisRun();
       if (activeRun && !deps.artifactMatchesActiveRun(payload, activeRun)) {
         global.console.warn(`Skipped stale AHA analysis payload: expected ${activeRun.analysisRunId || activeRun.runId || activeRun.sourceHash}, got ${payload.analysisRunId || payload.runId || payload.sourceHash || payload.sourceTextHash || "unknown"}.`);
@@ -433,6 +465,7 @@
         ahaSer,
         concepts: payload?.concepts || payload?.keywords,
         subjectMatches: payload?.subjectMatches || payload?.subjectLinks,
+        analysisBundleV2: payload?.analysisBundleV2 || null,
         rawAutoPayload: payload
       }, activeRun);
       const historyGoSuggestion = buildHistoryGoSuggestion(payload, host.dataset.sourceText || "");
@@ -621,13 +654,31 @@
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
       if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer");
+      if (deps.analysisBundleV2?.build) {
+        payload.analysisBundleV2 = deps.analysisBundleV2.build({
+          activeRun,
+          payload,
+          sourceText: effectiveSourceText,
+          primarySourceKind: articleAnalysis ? "transient_article_full_text" : (linkInfo.isSourceAction ? "unavailable_full_text" : "pasted_text"),
+          acquisitionStatus: articleAnalysis ? "full_text_used" : (linkInfo.isSourceAction ? "reference" : "full_text_used"),
+          sourceReferences: articleAnalysis?.source ? [articleAnalysis.source] : []
+        });
+        if (payload.analysisBundleV2.validation?.valid !== true) {
+          payload.qualityGate = Object.assign({}, payload.qualityGate, {
+            status: "needs_review",
+            suppressClaims: true,
+            message: "AnalysisBundleV2 kunne ikke valideres for aktiv kilde og analyse-run."
+          });
+        }
+      }
       deps.updateAnalysisRun({
         sourceText,
         sourceType: linkInfo.isSourceAction ? "url" : "pasted_text",
         rawAutoPayload: payload,
         canonicalAnalysis: payload.canonicalAnalysis,
         concepts: payload.concepts || payload.keywords,
-        subjectMatches: payload.subjectMatches || payload.subjectLinks
+        subjectMatches: payload.subjectMatches || payload.subjectLinks,
+        analysisBundleV2: payload.analysisBundleV2 || null
       }, activeRun);
       if (options.persist !== false) {
         deps.saveAutoOutputs({
@@ -699,6 +750,22 @@
         sourceFingerprint: computedSourceSha256
       };
       deps.setActiveAnalysisRun(cachedRun);
+      if (deps.analysisBundleV2?.hydrate) {
+        const bundle = deps.analysisBundleV2.hydrate(payload.analysisBundleV2);
+        if (
+          !bundle
+          || bundle.identity.source_sha256 !== computedSourceSha256
+          || bundle.identity.analysis_run_id !== cachedRunId
+          || bundle.identity.analysis_id !== String(cachedRun.analysisId || "")
+          || bundle.identity.source_id !== String(cachedRun.sourceId || "")
+        ) {
+          deps.setExportButtonsEnabled(false);
+          deps.setActiveAnalysisRun(null);
+          deps.refreshAhaExplorer();
+          return;
+        }
+        payload.analysisBundleV2 = bundle;
+      }
       deps.bindAnalysisArtifact(payload, cachedRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, cachedRun, "canonicalAnalysis");
       if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, cachedRun, "ahaSer");
@@ -718,7 +785,8 @@
         canonicalAnalysis: payload.canonicalAnalysis,
         ahaSer: payload.ahaSer,
         concepts: payload.concepts || payload.keywords,
-        subjectMatches: payload.subjectMatches || payload.subjectLinks
+        subjectMatches: payload.subjectMatches || payload.subjectLinks,
+        analysisBundleV2: payload.analysisBundleV2 || null
       }, cachedRun);
       const host = global.document.getElementById("aha-auto-output");
       if (host) {
