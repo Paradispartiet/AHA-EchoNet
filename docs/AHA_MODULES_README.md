@@ -21,6 +21,8 @@ Ikke lag ny motor.
 Gi motoren riktige innganger.
 ```
 
+For den aktive kjeden fra Chat-analyse til Kunnskapskart, Lister, Stier og Tankekart er autoritativ neste-faseplan [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). Kunnskapskart og Tankekart er separate flater og skal ikke omtales som samme produkt.
+
 Alle nye moduler skal sende kildemateriale inn via eksisterende source/ingest-flyt:
 
 ```text
@@ -275,16 +277,15 @@ Ansvar:
 - delte lister senere
 
 Status:
-- ikke ferdig som egen modul
-- ideen finnes i arkitekturen, men ikke som egen side/dataflyt
+- `lists.html`, `js/ahaLists.js` og `aha_lists_v1` finnes som fungerende lokal modul
+- eksisterende lagrede lister og V2-forslag vises i separate flater
+- V2-forslag kan materialiseres én om gangen etter eksplisitt brukerhandling
 
 Mangler før ferdig:
-- `lists.html`
-- `ahaLists.js`
-- `aha-lists.css`
-- localStorage-key `aha_lists_v1`
-- listeobjekt med `id`, `title`, `type`, `items`, `source_event_ids`, `insight_ids`, `created_at`, `updated_at`
-- handling fra chat/insight: “legg til i liste”
+- autoritativ binding til samme aktive AnalysisBundle som Chat
+- synlig preview-/blokkeringsstatus når ingen kandidat passerer
+- produksjonsbevist tematisk koherens, medlemsbegrunnelse og lav redundans
+- full preview → eksplisitt lagring → redigering → reload → angre-verifikasjon
 
 ### 5. Stier
 
@@ -296,16 +297,15 @@ Ansvar:
 - publiserbare stier senere
 
 Status:
-- ikke ferdig som egen modul
+- `paths.html`, `js/ahaPaths.js` og `aha_paths_v1` finnes som fungerende lokal modul
+- eksisterende lagrede stier og V2-forslag vises i separate flater
+- V2-forslag kan materialiseres én om gangen etter eksplisitt brukerhandling
 
 Mangler før ferdig:
-- `paths.html`
-- `ahaPaths.js`
-- `aha-paths.css`
-- localStorage-key `aha_paths_v1`
-- stiobjekt med `steps`, `source_event_ids`, `insight_ids`, `historygo_refs`
-- visning som tidslinje
-- knapp fra chat/insight: “lag sti”
+- autoritativ binding til samme aktive AnalysisBundle som Chat
+- synlig preview-/blokkeringsstatus når ingen kandidat passerer
+- produksjonsbevist, kildespesifikk progresjon med meningsfulle overganger og læringsutbytte
+- full preview → eksplisitt lagring → redigering → reload → angre-verifikasjon
 
 ### 6. Tankekart / Graph
 
@@ -316,15 +316,16 @@ Ansvar:
 - koble AHA-data og History Go-import
 
 Status:
-- ikke ferdig som egen modul
+- `mindmap.html`, `js/ahaMindmap.js` og det eksisterende konseptgraf-formatet finnes
+- modulen kan vise lokal kunnskap eller en separat V2-projection-preview
+- et godkjent V2-tankekart kan materialiseres eksplisitt til `aha_concept_lists_v1`
 
 Mangler før ferdig:
-- `mindmap.html` eller `graph.html`
-- `ahaGraph.js`
-- `aha-graph.css`
-- node/edge-modell
-- enkel førstevisning uten tung grafmotor
-- senere: force graph / canvas / SVG
+- autoritativ binding til samme aktive AnalysisBundle som Chat
+- automatisk valg av V2-preview når brukeren kommer fra aktiv Chat-analyse
+- konsekvent navn `Tankekart`, adskilt fra Chat-flaten `Kunnskapskart`
+- produksjonsbevist hovedidé, 2–7 meningsfulle grener, undergrener og korrekte equivalence-/resonance-relasjoner
+- full preview → eksplisitt lagring → redigering → reload → angre-verifikasjon
 
 ### 7. History Go-modul
 

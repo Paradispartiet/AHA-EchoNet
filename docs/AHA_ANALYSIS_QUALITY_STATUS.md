@@ -1,8 +1,10 @@
 # AHA analyse- og innsiktskvalitet — implementert kontrakt
 
-Status: **7 av 7 kvalitetsområder er implementert på `main`**.
+Status: **7 av 7 kvalitetskontrakter er implementert, men live end-to-end etterlevelse er ikke produksjonsverifisert**.
 
 Dette dokumentet beskriver den operative kontrakten. Det er ikke en påstand om at alle analyser alltid blir perfekte; kontrakten bestemmer hvordan AHA skal oppdage, forbedre, avgrense og synliggjøre kvalitet.
+
+En live audit 2026-08-21 viste at den aktive Chat-komposisjonen fortsatt kan bryte kontrakten gjennom stale afterwork/subject data, metadata som innsikt, svake begreper og feilaktig godkjent kilde-/temastatus. Kontrakten er derfor implementert som lag, men full produksjonsetterlevelse er fortsatt åpen. Autoritativ utbedrings- og releaseplan: [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
 
 ## 1. Lærende kvalitetsprofil
 
@@ -138,4 +140,4 @@ Alle kvalitetslag må respektere den aktive analysekjøringen og dens kildeident
 
 ## Forventet videre arbeid
 
-Kvalitetskontrakten er komplett, men skal fortsatt valideres på reelle brukerdata. Nye feil skal først uttrykkes som konkrete regresjonsfixturer og tester. Terskler kan kalibreres, men de grunnleggende grensene — kildebinding, én kontrollert revisjon, eksplisitt rettelse, audit-historikk og ingen skjult trening — skal ikke svekkes uten en ny versjonert kontrakt.
+Kvalitetskontrakten er komplett, men skal nå håndheves gjennom den autoritative live AnalysisBundle-kjeden og valideres på reelle brukerdata. Nye feil skal først uttrykkes som konkrete regresjonsfixturer og tester. Den første obligatoriske regresjonen er en sekvensiell tidligere-kilde → Livsarket → hard reload-kjøring i samme lagringskontekst. Terskler kan kalibreres, men de grunnleggende grensene — kildebinding, én kontrollert revisjon, eksplisitt rettelse, audit-historikk og ingen skjult trening — skal ikke svekkes uten en ny versjonert kontrakt.
