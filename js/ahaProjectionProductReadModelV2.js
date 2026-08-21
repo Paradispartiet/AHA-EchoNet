@@ -7,22 +7,38 @@
   const MODULE_SCHEMA = "aha_projection_product_read_model_builder_v2";
   const MODULE_VERSION = 2;
 
+  function normalize(value) {
+    return String(value == null ? "" : value)
+      .toLocaleLowerCase("no")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   const TOPIC_STOPWORDS = new Set((
-    "og i på av til er et en det som med for den de å om men at fra har hadde blir ble kan skal må " +
-    "eller ikke når etter før ved også dette disse seg sine sin sitt være var mens mot mellom bare " +
-    "alene andre begge bedre derfor både bade samtidig antall prosent dagen dager samme flere færre " +
-    "viser melder peker beskriver advarer bruker brukes gjør gjorde avslører avslorer virker gir ga øker " +
-    "falt steg står sto får vite foreslår foreslar rapporterer varierer målt målte ordnes gjøres formes " +
-    "studien gruppene deltakere byrådet byradet kommunen tiltaket effekten effektene avgjørelsen begrunnelsen " +
-    "sykehuset lærere laerere tillitsvalgte innbyggerne reisende byggets arrangementer noen"
-  ).split(/\s+/).filter(Boolean));
+    "og i på av til er et en jeg vi det som med for den de å om men at fra har hadde blir ble kan skal må " +
+    "eller ikke når etter før ved også dette disse seg sine sin sitt være var mens mot mellom bare selv " +
+    "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme flere færre mye noe noen " +
+    "viser vise melder meldte peker pekte beskriver beskrev advarer advarte bruker brukes brukte gjør gjorde " +
+    "avslører virker gir ga øker økte falt faller stiger steg står sto får fikk vite foreslår rapporterer " +
+    "varierer målt målte ordnes gjøres formes former bevarer fortelles prøver fanger fanget isolere prioritere " +
+    "prioriterer vektes konkurrerer sparer optimaliseres oppstår strukturerer presser skjule skjuler hjelper " +
+    "begrenses begrenser forstår leser usikker forklare mangler går virker sov husket haster mister gjort " +
+    "studien gruppene deltakere byrådet kommunen tiltaket effekten effektene avgjørelsen begrunnelsen " +
+    "sykehuset lærere tillitsvalgte innbyggerne reisende byggets arrangementer team problemet målingen målinger " +
+    "oppgavene verktøy digitale offentlig organ skoler kortere høyere roligere uendret foreløpig tilfeldige " +
+    "vanskeligere viktigere innstilte mildere sterkest krevende valgfrie felles aktive raske uventede dårlig " +
+    "klare direkte faktisk utvidede lokale tette hyppig gjentatt spontan muntlige enkel konkrete grunnleggende " +
+    "små store tre få gratis kvelden pausen semester videre samme lett senere forskere utvalgte søkbare bestemte"
+  ).split(/\s+/).filter(Boolean).map(normalize));
 
   const LOW_INFORMATION_CONCEPTS = new Set((
-    "alene andre begge bedre derfor både bade samtidig antall prosent dagen dager samme bruker gjør steg " +
-    "beskriver advarer avslører avslorer byggets barnets"
-  ).split(/\s+/).filter(Boolean));
-
-  const NOUNISH_SUFFIX = /(ing|ning|het|else|skap|asjon|sjon|itet|isme|tid|bruk|marked|arbeid|lån|laan|resultat|temperatur|vekst|behov|situasjon|faktor|forskjell|spørsmål|sporsmal|belegg|fravær|fravaer|inntekt|kvalitet|oppmerksomhet|konsentrasjon|standardisering|fleksibilitet|punktlighet|strømbruk|strombruk|turisme)$/u;
+    "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme bruker gjør steg " +
+    "beskriver advarer avslører byggets barnets felles valgfrie noen effekten problemet målingen studien " +
+    "deltakere gruppene reisende lærere tillitsvalgte sykehuset byrådet kommunen tiltaket innbyggerne"
+  ).split(/\s+/).filter(Boolean).map(normalize));
 
   function integrationApi() {
     return global.AHAV2ProductIntegrationGate || null;
@@ -38,16 +54,6 @@
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
-  }
-
-  function normalize(value) {
-    return String(value == null ? "" : value)
-      .toLocaleLowerCase("no")
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
-      .replace(/\s+/g, " ")
-      .trim();
   }
 
   function sentenceCase(value) {
@@ -85,87 +91,89 @@
 
   function isTopicToken(token) {
     if (!token?.norm || /^\d+$/u.test(token.norm)) return false;
-    if (token.norm.length < 3 || TOPIC_STOPWORDS.has(token.norm)) return false;
+    if (token.norm.length < 4 || TOPIC_STOPWORDS.has(token.norm)) return false;
     return true;
   }
 
-  function singleScore(token) {
-    let score = Math.min(3.4, token.norm.length / 4);
-    if (token.ordinal <= 4) score += 0.8;
-    if (NOUNISH_SUFFIX.test(token.norm)) score += 1.15;
-    if (token.norm.length >= 9) score += 0.45;
-    return score;
+  function segments(value) {
+    return String(value || "")
+      .split(/\s*(?:[.!?]+|,\s*(?:men|mens)\s+|\s+(?:men|mens|samtidig|likevel|derfor)\s+)\s*/giu)
+      .map((part) => part.replace(/^[\s,;:]+|[\s,;:]+$/g, "").trim())
+      .filter(Boolean);
   }
 
-  function topicCandidates(value) {
-    const source = String(value || "");
-    const all = tokens(source);
-    const content = all.filter(isTopicToken);
-    const candidates = content.map((token) => ({
-      label: token.display,
-      norm: token.norm,
-      score: singleScore(token)
-    }));
+  function overlapsUsed(normValue, used) {
+    if (!normValue) return true;
+    for (const existing of used) {
+      if (!existing) continue;
+      if (existing === normValue || existing.includes(normValue) || normValue.includes(existing)) return true;
+    }
+    return false;
+  }
 
-    for (let index = 0; index < content.length - 1; index += 1) {
-      const left = content[index];
-      const right = content[index + 1];
-      if (right.ordinal - left.ordinal > 2) continue;
-      const label = source.slice(left.start, right.end).replace(/\s+/g, " ").trim();
-      const norm = normalize(label);
-      if (!norm || label.length > 44) continue;
-      let score = singleScore(left) + singleScore(right) + 1.25;
-      if (/s$/u.test(left.norm)) score += 0.75;
-      candidates.push({ label, norm, score });
+  function bestSegmentTerm(value, used = new Set()) {
+    const sourceTokens = tokens(value);
+
+    for (let index = 0; index < sourceTokens.length - 1; index += 1) {
+      const left = sourceTokens[index];
+      const right = sourceTokens[index + 1];
+      if (!isTopicToken(left) || !isTopicToken(right)) continue;
+      if (!left.norm.endsWith("s")) continue;
+      const pairNorm = `${left.norm} ${right.norm}`;
+      if (!overlapsUsed(pairNorm, used)) {
+        return { label: `${left.display} ${right.display}`, norm: pairNorm };
+      }
     }
 
-    const byNorm = new Map();
-    candidates.forEach((candidate) => {
-      const existing = byNorm.get(candidate.norm);
-      if (!existing || candidate.score > existing.score) byNorm.set(candidate.norm, candidate);
-    });
-    return [...byNorm.values()].sort((left, right) => (
-      right.score - left.score
-      || right.label.length - left.label.length
-      || left.norm.localeCompare(right.norm, "no")
-    ));
+    for (const token of sourceTokens) {
+      if (!isTopicToken(token) || overlapsUsed(token.norm, used)) continue;
+      return { label: token.display, norm: token.norm };
+    }
+    return null;
   }
 
   function chooseTopic(texts, options = {}) {
-    const excluded = new Set(Array.from(options.exclude || []).map(normalize));
-    const candidates = [];
-    [...new Set((Array.isArray(texts) ? texts : []).map((value) => String(value || "").trim()).filter(Boolean))]
-      .sort((left, right) => normalize(left).localeCompare(normalize(right), "no"))
-      .forEach((value) => topicCandidates(value).slice(0, 5).forEach((candidate, rank) => {
-        if (excluded.has(candidate.norm)) return;
-        candidates.push({ ...candidate, score: candidate.score - (rank * 0.22) });
-      }));
-
-    candidates.sort((left, right) => (
-      right.score - left.score
-      || right.label.length - left.label.length
-      || left.norm.localeCompare(right.norm, "no")
-    ));
-
+    const used = new Set(Array.from(options.exclude || []).map(normalize));
     const picked = [];
-    const used = new Set(excluded);
-    for (const candidate of candidates) {
-      if (used.has(candidate.norm)) continue;
-      if ([...used].some((value) => value && (candidate.norm.includes(value) || value.includes(candidate.norm)))) continue;
-      picked.push(candidate);
-      used.add(candidate.norm);
-      if (picked.length >= (options.maxParts || 2)) break;
+    const maxParts = Math.max(1, Number(options.maxParts || 2));
+    const uniqueTexts = [];
+    const seenTexts = new Set();
+
+    (Array.isArray(texts) ? texts : []).forEach((value) => {
+      const cleaned = String(value || "").replace(/\s+/g, " ").trim();
+      const key = normalize(cleaned);
+      if (!cleaned || seenTexts.has(key)) return;
+      seenTexts.add(key);
+      uniqueTexts.push(cleaned);
+    });
+
+    for (const text of uniqueTexts) {
+      for (const segment of segments(text)) {
+        const term = bestSegmentTerm(segment, used);
+        if (!term) continue;
+        picked.push(term);
+        used.add(term.norm);
+        if (picked.length >= maxParts) break;
+      }
+      if (picked.length >= maxParts) break;
     }
 
-    if (!picked.length) return "kildens hovedspørsmål";
-    return picked.map((candidate, index) => index ? candidate.label.toLocaleLowerCase("no") : candidate.label).join(" og ");
+    if (!picked.length) {
+      return { label: "kildens hovedspørsmål", terms: [] };
+    }
+    const label = picked
+      .map((term, index) => index === 0 ? sentenceCase(term.label) : term.label.toLocaleLowerCase("no"))
+      .join(" · ");
+    return { label, terms: picked };
   }
 
   function linkedInsightTexts(model, refs) {
     const insights = Array.isArray(model?.surfaces?.insights) ? model.surfaces.insights : [];
     const byId = new Map(insights.map((insight) => [String(insight.id || ""), insightText(insight)]));
-    const selected = (Array.isArray(refs) ? refs : []).map((ref) => byId.get(String(ref || ""))).filter(Boolean);
-    return selected.length ? selected : insights.map(insightText).filter(Boolean);
+    const requested = Array.isArray(refs) && refs.length
+      ? [...new Set(refs.map((ref) => String(ref || "")).filter(Boolean))].sort((left, right) => left.localeCompare(right, "no"))
+      : [...byId.keys()].sort((left, right) => left.localeCompare(right, "no"));
+    return requested.map((ref) => byId.get(ref)).filter(Boolean);
   }
 
   function refineLists(model) {
@@ -174,10 +182,10 @@
       const refs = (Array.isArray(list.items) ? list.items : []).map((item) => item?.refId || item?.ref_id).filter(Boolean);
       const texts = linkedInsightTexts(model, refs);
       const topic = chooseTopic(texts, { maxParts: Math.min(2, Math.max(1, texts.length)) });
-      list.title = `Tematisk: ${sentenceCase(topic)}`;
-      list.description = `Temaet «${topic}» samler ${Math.max(1, refs.length)} kildestøttede innsikter som belyser samme spørsmål fra ulike sider.`;
+      list.title = `Tematisk: ${topic.label}`;
+      list.description = `Disse ${Math.max(1, refs.length)} kildestøttede innsiktene er samlet under temaet «${topic.label}» fordi de belyser samme spørsmål fra ulike sider.`;
       if (list.meta && typeof list.meta === "object") {
-        list.meta.product_topic = topic;
+        list.meta.product_topic = topic.label;
         list.meta.language_refined_v2 = true;
       }
     });
@@ -185,16 +193,16 @@
 
   function refinePaths(model) {
     const paths = Array.isArray(model?.surfaces?.paths) ? model.surfaces.paths : [];
-    const insightById = new Map((Array.isArray(model?.surfaces?.insights) ? model.surfaces.insights : [])
-      .map((insight) => [String(insight.id || ""), insightText(insight)]));
+    const insights = Array.isArray(model?.surfaces?.insights) ? model.surfaces.insights : [];
+    const insightById = new Map(insights.map((insight) => [String(insight.id || ""), insightText(insight)]));
 
     paths.forEach((path) => {
       const refs = (Array.isArray(path.steps) ? path.steps : []).map((step) => step?.refId || step?.ref_id).filter(Boolean);
       const texts = linkedInsightTexts(model, refs);
       const topic = chooseTopic(texts, { maxParts: 2 });
-      path.title = `Undersøk ${sentenceCase(topic)}`;
-      path.description = `En kildebundet læringssti gjennom ${topic}, fra påstand og belegg til spenning, usikkerhet og neste spørsmål.`;
-      path.goal = `Bygg en etterprøvbar forståelse av ${topic} uten å gå lenger enn kildene tillater.`;
+      path.title = `Undersøk: ${topic.label}`;
+      path.description = `En kildebundet læringssti om «${topic.label}», fra påstand og belegg til spenning, usikkerhet og neste spørsmål.`;
+      path.goal = "Bygg en etterprøvbar forståelse av hovedspørsmålet uten å gå lenger enn kildene tillater.";
 
       const distinctTexts = [...new Set(texts)];
       (Array.isArray(path.steps) ? path.steps : []).forEach((step, index) => {
@@ -205,42 +213,69 @@
         const stage = String(step?.meta?.stage || "");
 
         if (stage === "orientation") {
-          step.title = `1. Avgrens ${sentenceCase(topic)}`;
-          step.narrative = `Start med «${quote}». Avgrens hva utsagnet faktisk sier om ${topic}, og finn kildegrunnlaget før du tolker videre.`;
-          step.learningOutcome = `Kunne formulere hovedspørsmålet om ${topic} og peke på utsagnet som forankrer det.`;
+          step.title = "1. Avgrens hovedspørsmålet";
+          step.narrative = `Start med «${quote}». Avgrens hva utsagnet faktisk sier, og finn kildegrunnlaget før du tolker videre.`;
+          step.learningOutcome = "Kunne formulere hva materialet faktisk hevder og peke på utsagnet som forankrer det.";
         } else if (stage === "claim_evidence") {
           step.title = "2. Koble utsagnet til belegg";
           step.narrative = `Bruk «${quote}» som kontrollpunkt. Skill mellom selve utsagnet, belegget i kilden og det som bare ville være en videre tolkning.`;
-          step.learningOutcome = `Kunne knytte en konkret påstand om ${topic} til belegg uten å overdrive kildens rekkevidde.`;
+          step.learningOutcome = "Kunne knytte en konkret påstand til belegg uten å overdrive kildens rekkevidde.";
         } else if (stage === "tension_counterexample") {
           step.title = "3. Test spenningen i materialet";
           step.narrative = `Sett «${quote}» opp mot «${otherQuote}». Undersøk om de peker i ulike retninger, avgrenser hverandre eller åpner for et moteksempel.`;
-          step.learningOutcome = `Kunne forklare den viktigste spenningen i materialet om ${topic} med to konkrete holdepunkter.`;
+          step.learningOutcome = "Kunne forklare den viktigste spenningen i materialet med to konkrete holdepunkter.";
         } else if (stage === "uncertainty") {
-          step.title = `4. Avklar hva ${sentenceCase(topic)} ikke avgjør`;
+          step.title = "4. Marker det materialet ikke avgjør";
           step.narrative = `Ta utgangspunkt i «${quote}». Marker hva materialet fortsatt ikke kan avgjøre, og hvilke alternative forklaringer som fortsatt er åpne.`;
-          step.learningOutcome = `Kunne skille dokumentert kunnskap om ${topic} fra begrunnet usikkerhet og åpne spørsmål.`;
+          step.learningOutcome = "Kunne skille dokumentert kunnskap fra begrunnet usikkerhet og åpne spørsmål.";
         } else if (stage === "synthesis_next_inquiry") {
           step.title = "5. Syntetiser og velg neste undersøkelse";
-          step.narrative = `Sammenfatt hva som faktisk holder om ${topic} etter de foregående kontrollene, og formuler ett presist spørsmål som kan redusere den viktigste usikkerheten.`;
-          step.learningOutcome = `Kunne formulere en kildeforankret syntese av ${topic} og ett gjennomførbart neste spørsmål.`;
+          step.narrative = "Sammenfatt hva som faktisk holder etter de foregående kontrollene, og formuler ett presist spørsmål som kan redusere den viktigste usikkerheten.";
+          step.learningOutcome = "Kunne formulere en kildeforankret syntese og ett gjennomførbart neste spørsmål.";
         }
       });
       if (path.meta && typeof path.meta === "object") {
-        path.meta.product_topic = topic;
+        path.meta.product_topic = topic.label;
         path.meta.language_refined_v2 = true;
       }
     });
   }
 
-  function restoreSourceLabel(label, texts) {
-    const target = normalize(label);
-    if (!target) return String(label || "");
-    for (const value of texts) {
-      const found = tokens(value).find((token) => token.norm === target);
-      if (found) return found.display;
+  function cleanConceptLabel(label, sourceTexts, used) {
+    const original = String(label || "").replace(/\s+/g, " ").trim();
+    const originalNorm = normalize(original);
+    const sourceTokens = tokens(original);
+    const content = sourceTokens.filter(isTopicToken);
+    const hasNoise = sourceTokens.some((token) => TOPIC_STOPWORDS.has(token.norm));
+    const explicitlyLow = LOW_INFORMATION_CONCEPTS.has(originalNorm);
+
+    if (!explicitlyLow && content.length && !hasNoise) {
+      const selected = [];
+      for (const token of content) {
+        if (overlapsUsed(token.norm, used)) continue;
+        selected.push(token);
+        if (selected.length >= 2) break;
+      }
+      if (selected.length) {
+        return selected.map((token, index) => index ? token.display.toLocaleLowerCase("no") : sentenceCase(token.display)).join(" · ");
+      }
     }
-    return String(label || "");
+
+    if (!explicitlyLow && content.length) {
+      const selected = [];
+      for (const token of content) {
+        if (overlapsUsed(token.norm, used)) continue;
+        selected.push(token);
+        if (selected.length >= 2) break;
+      }
+      if (selected.length) {
+        return selected.map((token, index) => index ? token.display.toLocaleLowerCase("no") : sentenceCase(token.display)).join(" · ");
+      }
+    }
+
+    const fallback = chooseTopic(sourceTexts, { maxParts: 1, exclude: used });
+    if (fallback.terms.length) return fallback.label;
+    return original || "Kildeinnsikt";
   }
 
   function refineMindmap(model) {
@@ -248,16 +283,16 @@
     if (!mindmap || !Array.isArray(mindmap.nodes) || !Array.isArray(mindmap.edges)) return;
     const insights = Array.isArray(model?.surfaces?.insights) ? model.surfaces.insights : [];
     const insightById = new Map(insights.map((insight) => [String(insight.id || ""), insightText(insight)]));
-    const allTexts = insights.map(insightText).filter(Boolean);
+    const allTexts = linkedInsightTexts(model, []);
     const topic = chooseTopic(allTexts, { maxParts: 2 });
-    const used = new Set([normalize(topic)]);
+    const used = new Set(topic.terms.map((term) => term.norm));
 
     mindmap.nodes.forEach((node) => {
       if (node?.meta?.root === true || String(node?.type || "") === "theme") {
-        node.label = `Tema: ${sentenceCase(topic)}`;
+        node.label = `Tema: ${topic.label}`;
         node.title = node.label;
         if (node.meta && typeof node.meta === "object") {
-          node.meta.product_topic = topic;
+          node.meta.product_topic = topic.label;
           node.meta.language_refined_v2 = true;
         }
       }
@@ -269,33 +304,57 @@
         .map((edge) => String(edge?.to || ""));
       const linkedTexts = linkedIds.map((id) => insightById.get(id)).filter(Boolean);
       const sourceTexts = linkedTexts.length ? linkedTexts : allTexts;
-      const restored = restoreSourceLabel(node.label || node.title, sourceTexts);
-      const normalizedRestored = normalize(restored);
-      let nextLabel = restored;
-
-      if (LOW_INFORMATION_CONCEPTS.has(normalizedRestored) || normalizedRestored.length < 4) {
-        nextLabel = chooseTopic(sourceTexts, { maxParts: 1, exclude: used });
-      }
-      if (!nextLabel || normalize(nextLabel) === "kildens hovedspørsmål") nextLabel = restored;
+      const nextLabel = cleanConceptLabel(node.label || node.title, sourceTexts, used);
       node.label = sentenceCase(nextLabel);
       node.title = node.label;
-      used.add(normalize(nextLabel));
+      tokens(nextLabel).filter(isTopicToken).forEach((token) => used.add(token.norm));
       if (node.meta && typeof node.meta === "object") node.meta.language_refined_v2 = true;
     });
+  }
+
+  function refsSignature(values) {
+    const refs = [...new Set((Array.isArray(values) ? values : []).map((value) => String(value || "")).filter(Boolean))]
+      .sort((left, right) => left.localeCompare(right, "no"));
+    return refs.length ? refs.join("|") : "";
+  }
+
+  function dedupeArtifacts(items, refsForItem) {
+    const seen = new Set();
+    const result = [];
+    let removed = 0;
+    (Array.isArray(items) ? items : []).forEach((item) => {
+      const signature = refsSignature(refsForItem(item));
+      if (signature && seen.has(signature)) {
+        removed += 1;
+        return;
+      }
+      if (signature) seen.add(signature);
+      result.push(item);
+    });
+    return { items: result, removed };
   }
 
   function refineProductLanguage(model) {
     if (!model || typeof model !== "object" || !model.surfaces) return model;
     const refined = clone(model);
     if (!Array.isArray(refined?.surfaces?.insights) || !refined.surfaces.insights.length) return refined;
+
     refineLists(refined);
     refinePaths(refined);
     refineMindmap(refined);
+
+    const lists = dedupeArtifacts(refined.surfaces.lists, (list) => (list?.items || []).map((item) => item?.refId || item?.ref_id));
+    const paths = dedupeArtifacts(refined.surfaces.paths, (path) => (path?.steps || []).map((step) => step?.refId || step?.ref_id));
+    refined.surfaces.lists = lists.items;
+    refined.surfaces.paths = paths.items;
     refined.product_language = {
       schema: "aha_projection_product_language_v2",
-      version: 1,
+      version: 2,
       status: "contextualized",
       source: "read_model_insight_content",
+      topic_strategy: "source_segment_terms",
+      duplicate_lists_removed: lists.removed,
+      duplicate_paths_removed: paths.removed,
       read_only: true
     };
     return refined;
