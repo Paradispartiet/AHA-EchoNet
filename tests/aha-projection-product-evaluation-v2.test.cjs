@@ -62,29 +62,46 @@ function makeInsightsFromRawText(entry) {
     const uniqueConcept = tokens(sentence.text).find((token) => token !== commonConcept) || `perspektiv_${index + 1}`;
     const supporting = sentences[(index + 1) % sentences.length]?.text || sentence.text;
     return {
-    id: `${entry.id}_insight_${index + 1}`,
-    source_event_id: `${entry.id}_source_${index + 1}`,
-    source_text_hash: semantic.source_text_hash,
-    semantic_concepts: [commonConcept, uniqueConcept],
-    candidate: {
-      insight: sentence.text,
-      type: "source_claim",
-      causal_status: "not_causal",
-      evidence: [
-        { quote: sentence.text, role: "supports", start_offset: sentence.start, end_offset: sentence.end },
-        { quote: supporting, role: "context" }
-      ]
-    },
-    gate_decision: {
-      eligible_for_insight_review: eligible,
-      blocking_reasons: eligible ? [] : ["raw_text_insufficient_for_product_evaluation"],
-      metrics: { quality_score: eligible ? 0.86 - index * 0.01 : 0.42 }
-    }
-  };
+      id: `${entry.id}_insight_${index + 1}`,
+      source_event_id: `${entry.id}_source_${index + 1}`,
+      source_text_hash: semantic.source_text_hash,
+      semantic_concepts: [commonConcept, uniqueConcept],
+      candidate: {
+        insight: sentence.text,
+        type: "source_claim",
+        causal_status: "not_causal",
+        evidence: [
+          { quote: sentence.text, role: "supports", start_offset: sentence.start, end_offset: sentence.end },
+          { quote: supporting, role: "context" }
+        ]
+      },
+      gate_decision: {
+        eligible_for_insight_review: eligible,
+        blocking_reasons: eligible ? [] : ["raw_text_insufficient_for_product_evaluation"],
+        metrics: { quality_score: eligible ? 0.86 - index * 0.01 : 0.42 }
+      }
+    };
   });
 }
 
+function refSet(items) {
+  return [...new Set(items.map((item) => item.refId).filter(Boolean))].sort().join("|");
+}
+
+function narrativeHasSourceSignal(narrative, source) {
+  const haystack = tokens(narrative);
+  const sourceTokens = tokens(source);
+  return sourceTokens.some((token) => haystack.includes(token));
+}
+
 const results = [];
+const pathNarrativeSignatures = new Set();
+let refinedWeakListAnchors = 0;
+let sourceBoundPathSteps = 0;
+let visiblePathSteps = 0;
+let duplicateListRefSets = 0;
+let duplicatePathRefSets = 0;
+
 for (const entry of corpus.cases) {
   const rawInsights = makeInsightsFromRawText(entry);
   const semanticHash = context.AHASemanticDocument.sha256Hex(entry.source_text);
@@ -107,13 +124,59 @@ for (const entry of corpus.cases) {
     assert.ok(model.surfaces.lists.every((item) => item.quality?.passed === true), `${entry.id} leaked weak list`);
     assert.ok(model.surfaces.paths.every((item) => item.quality?.passed === true), `${entry.id} leaked weak path`);
     assert.equal(model.surfaces.mindmap.quality?.passed, true, `${entry.id} leaked weak mindmap`);
-    assert.ok(model.surfaces.paths.every((path) => path.steps.map((step) => step.meta.stage).join("|") === "orientation|claim_evidence|tension_counterexample|uncertainty|synthesis_next_inquiry"));
+
+    const listRefSets = model.surfaces.lists.map((list) => refSet(list.items));
+    const pathRefSets = model.surfaces.paths.map((path) => refSet(path.steps));
+    duplicateListRefSets += listRefSets.length - new Set(listRefSets).size;
+    duplicatePathRefSets += pathRefSets.length - new Set(pathRefSets).size;
+    assert.equal(new Set(listRefSets).size, listRefSets.length, `${entry.id} duplicate list ref set survived refinement`);
+    assert.equal(new Set(pathRefSets).size, pathRefSets.length, `${entry.id} duplicate path ref set survived refinement`);
+
+    for (const list of model.surfaces.lists) {
+      assert.ok(list.title.length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} list title too long`);
+      assert.equal(list.meta.display_refinement, "source_bound_usefulness_v2", `${entry.id} list missing usefulness refinement`);
+      if (context.AHAProjectionArtifactQualityV2.isLowInformationLabel(list.meta.semantic_basis_label)) {
+        refinedWeakListAnchors += 1;
+        assert.equal(list.meta.display_theme_source, "source_bound_insight_text", `${entry.id} weak list anchor not source-refined`);
+        assert.notEqual(list.title, list.meta.original_title, `${entry.id} weak list kept raw token title`);
+      }
+    }
+
+    const insightById = new Map(model.surfaces.insights.map((insight) => [insight.id, insight]));
+    for (const path of model.surfaces.paths) {
+      assert.ok(path.title.length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} path title too long`);
+      assert.equal(path.meta.display_refinement, "source_bound_usefulness_v2", `${entry.id} path missing usefulness refinement`);
+      assert.equal(path.steps.map((step) => step.meta.stage).join("|"), "orientation|claim_evidence|tension_counterexample|uncertainty|synthesis_next_inquiry");
+      pathNarrativeSignatures.add(path.steps.map((step) => step.narrative).join("||"));
+      for (const step of path.steps) {
+        visiblePathSteps += 1;
+        assert.equal(step.meta.source_bound_narrative, true, `${entry.id} ${step.meta.stage} not marked source-bound`);
+        const sourceInsight = insightById.get(step.refId);
+        assert.ok(sourceInsight, `${entry.id} missing path source insight ${step.refId}`);
+        assert.ok(narrativeHasSourceSignal(step.narrative, sourceInsight.insight || sourceInsight.summary || sourceInsight.title), `${entry.id} ${step.meta.stage} narrative not tied to referenced insight`);
+        sourceBoundPathSteps += 1;
+      }
+    }
+
+    const roots = model.surfaces.mindmap.nodes.filter((node) => node.type === "theme" && node.meta?.root === true);
+    assert.equal(roots.length, 1, `${entry.id} mindmap root count`);
+    assert.ok((roots[0].title || "").length >= 4, `${entry.id} mindmap root title missing`);
+    assert.ok((roots[0].title || "").length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} mindmap root title too long`);
+    const branchIds = new Set(model.surfaces.mindmap.edges.filter((edge) => edge.type === "theme_branch").map((edge) => edge.to));
+    const branchNodes = model.surfaces.mindmap.nodes.filter((node) => branchIds.has(node.id));
+    assert.ok(branchNodes.every((node) => (node.title || "").length >= 4), `${entry.id} weak empty mindmap branch display`);
+    assert.ok(branchNodes.every((node) => (node.title || "").length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE), `${entry.id} mindmap branch title too long`);
   }
   results.push({ id: entry.id, genre: entry.genre, visible });
 }
 
 assert.equal(results.filter((entry) => entry.visible).length, 21);
 assert.equal(results.filter((entry) => !entry.visible).length, 3);
+assert.equal(duplicateListRefSets, 0);
+assert.equal(duplicatePathRefSets, 0);
+assert.equal(sourceBoundPathSteps, visiblePathSteps);
+assert.ok(refinedWeakListAnchors >= 10, `corpus should exercise weak-anchor refinement; got ${refinedWeakListAnchors}`);
+assert.ok(pathNarrativeSignatures.size >= 18, `paths remain too generic across cases: only ${pathNarrativeSignatures.size} distinct narrative signatures`);
 assert.equal(storageCalls, 0);
 
 const deterministicCase = corpus.cases.find((entry) => entry.expected_visible);
@@ -130,10 +193,12 @@ assert.deepEqual(review.case_reviews.map((entry) => entry.case_id), corpus.cases
 assert.ok(review.case_reviews.every((entry) => entry.lists === null && entry.paths === null && entry.mindmap === null && entry.review_status === "open"));
 assert.equal(review.status, "agent_pre_review_complete_independent_human_review_open");
 assert.equal(review.release_rule.minimum_acceptable_share, 0.8);
+assert.equal(review.release_rule.independent_human_review_required, true);
+assert.equal(review.release_rule.critical_provenance_errors_allowed, 0);
 assert.equal(review.release_rule.automatic_persistence_allowed, false, "human review must remain a release blocker");
 
 const lengths = corpus.cases.map((entry) => entry.source_text.length);
 assert.ok(Math.min(...lengths) < 80, "corpus must contain deliberately insufficient short text");
 assert.ok(Math.max(...lengths) >= 800, "corpus must contain genuinely long text");
 
-console.log("aha-projection-product-evaluation-v2.test.cjs: OK (24 raw-text cases; human usefulness gate open)");
+console.log(`aha-projection-product-evaluation-v2.test.cjs: OK (24 raw-text cases; ${refinedWeakListAnchors} weak anchors source-refined; ${pathNarrativeSignatures.size} path signatures; human usefulness gate open)`);
