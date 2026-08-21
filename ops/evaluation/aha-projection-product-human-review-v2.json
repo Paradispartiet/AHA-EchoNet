@@ -2,6 +2,7 @@
   "schema": "aha_projection_product_human_review_v2",
   "version": 2,
   "corpus": "tests/fixtures/aha-projection-product-evaluation-v2.json",
+  "input_contract": "raw_source_text_only",
   "status": "agent_pre_review_complete_independent_human_review_open",
   "rubric": {
     "scale": "1-5",
@@ -11,6 +12,7 @@
   },
   "release_rule": {
     "minimum_acceptable_share": 0.8,
+    "independent_human_review_required": true,
     "critical_provenance_errors_allowed": 0,
     "automatic_persistence_allowed": false
   },
@@ -23,5 +25,31 @@
     { "case_group": "data_heavy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
     { "case_group": "ambiguous", "cases": 3, "agent_pre_review": "correctly_suppressed", "independent_human_review": "open" },
     { "case_group": "contradictory", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" }
+  ],
+  "case_reviews": [
+    { "case_id": "news_transit", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "news_health", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "news_school_meals", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "research_heat", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "research_sleep", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "research_language", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "essay_archive", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "essay_attention", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "essay_public_space", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "policy_children", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "policy_housing", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "policy_ai", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "personal_work", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "personal_learning", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "personal_routines", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "data_bus", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "data_energy", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "data_library", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "weak_slogan", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "weak_assertion", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "weak_secret", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "conflict_remote_work", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "conflict_tourism", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "conflict_standardization", "lists": null, "paths": null, "mindmap": null, "review_status": "open" }
   ]
 }
