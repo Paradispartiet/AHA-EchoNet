@@ -22,7 +22,7 @@
     "eller ikke når etter før ved også dette disse seg sine sin sitt være var mens mot mellom bare selv " +
     "hvem hva hvor hvilken hvilket hvilke hvordan hvorfor like slik sånn der her " +
     "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme flere færre mye noe noen " +
-    "viser vise melder meldte peker pekte beskriver beskrev advarer advarte bruker brukes brukte gjør gjorde " +
+    "viser vise melder meldte peker pekte beskriver beskrev beskrives advarer advarte bruker brukes brukte gjør gjorde " +
     "avslører avslorer virker gir ga øker økte falt faller stiger steg står sto får fikk vite foreslår rapporterer " +
     "varierer målt målte ordnes gjøres formes former bevarer fortelles prøver fanger fanget isolere prioritere " +
     "prioriterer vektes konkurrerer sparer optimaliseres oppstår strukturerer presser skjule skjuler hjelper " +
@@ -38,7 +38,7 @@
 
   const LOW_INFORMATION_CONCEPTS = new Set((
     "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme bruker gjør steg " +
-    "beskriver advarer avslører avslorer byggets barnets felles valgfrie noen effekten problemet målingen studien " +
+    "beskriver beskrives advarer avslører avslorer byggets barnets felles valgfrie noen effekten problemet målingen studien " +
     "deltakere gruppene reisende lærere tillitsvalgte sykehuset byrådet kommunen tiltaket innbyggerne sendt " +
     "vurdert vurderer løser loser muntlige forstår forstar hvilke hvilken hvilket hvordan hvorfor like korte"
   ).split(/\s+/).filter(Boolean).map(normalize));
@@ -96,6 +96,14 @@
     if (!token?.norm || /^\d+$/u.test(token.norm)) return false;
     if (token.norm.length < 4 || TOPIC_STOPWORDS.has(token.norm)) return false;
     return true;
+  }
+
+  function isLowInfoConceptLabel(label) {
+    const normalized = normalize(label);
+    const labelTokens = tokens(label);
+    if (!normalized || LOW_INFORMATION_CONCEPTS.has(normalized)) return true;
+    if (!labelTokens.length) return true;
+    return labelTokens.filter(isTopicToken).length === 0;
   }
 
   function segments(value) {
@@ -294,7 +302,8 @@
     const insightById = new Map(insights.map((insight) => [String(insight.id || ""), insightText(insight)]));
     const allTexts = linkedInsightTexts(model, []);
     const topic = chooseTopic(allTexts, { maxParts: 2 });
-    const used = new Set(topic.terms.map((term) => term.norm));
+    const used = new Set();
+    const removedConceptIds = new Set();
 
     mindmap.nodes.forEach((node) => {
       if (node?.meta?.root === true || String(node?.type || "") === "theme") {
@@ -314,11 +323,23 @@
       const linkedTexts = linkedIds.map((id) => insightById.get(id)).filter(Boolean);
       const sourceTexts = linkedTexts.length ? linkedTexts : allTexts;
       const nextLabel = cleanConceptLabel(node.label || node.title, sourceTexts, used);
+      if (isLowInfoConceptLabel(nextLabel)) {
+        removedConceptIds.add(String(node.id || ""));
+        return;
+      }
       node.label = sentenceCase(nextLabel);
       node.title = node.label;
       tokens(nextLabel).filter(isTopicToken).forEach((token) => used.add(token.norm));
       if (node.meta && typeof node.meta === "object") node.meta.language_refined_v2 = true;
     });
+
+    if (removedConceptIds.size) {
+      mindmap.nodes = mindmap.nodes.filter((node) => !removedConceptIds.has(String(node?.id || "")));
+      mindmap.edges = mindmap.edges.filter((edge) => (
+        !removedConceptIds.has(String(edge?.from || ""))
+        && !removedConceptIds.has(String(edge?.to || ""))
+      ));
+    }
   }
 
   function refsSignature(values) {
@@ -358,10 +379,10 @@
     refined.surfaces.paths = paths.items;
     refined.product_language = {
       schema: "aha_projection_product_language_v2",
-      version: 3,
+      version: 4,
       status: "contextualized",
       source: "read_model_insight_content",
-      topic_strategy: "source_member_ordered_segment_terms",
+      topic_strategy: "source_member_ordered_segment_terms_with_mindmap_noise_filter",
       duplicate_lists_removed: lists.removed,
       duplicate_paths_removed: paths.removed,
       read_only: true
