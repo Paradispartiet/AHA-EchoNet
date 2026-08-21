@@ -37,6 +37,7 @@
 
   const capabilityBindings = providerLoader.require("capabilityBindings");
   const analysisBundleV2 = providerLoader.require("analysisBundleV2");
+  const liveSemanticBridgeV2 = providerLoader.resolve("chat.liveSemanticBridgeV2", "AHALiveSemanticBridgeV2") || null;
 
   function insightsApi() { return providerLoader.resolve("insights", "InsightsEngine"); }
   function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
@@ -80,6 +81,7 @@
     providerLoader.instantiate("autoOutputStore", {
       sourceHash,
       analysisBundleV2,
+      liveSemanticBridgeV2,
       defaultConversationId: CHAT_THREAD_ID
     })
   );
@@ -453,7 +455,8 @@
       knowledgeView: providerLoader.require("knowledgeView"),
       uiRuntime: uiRuntimeModule,
       runtimeFacade: providerLoader.require("runtimeFacade"),
-      analysisBundleV2
+      analysisBundleV2,
+      liveSemanticBridgeV2
     },
     capabilities: {
       core: Object.freeze({

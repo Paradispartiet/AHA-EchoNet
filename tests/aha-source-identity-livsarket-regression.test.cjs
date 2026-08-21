@@ -48,6 +48,7 @@ const chatFiles = [
   'js/ahaChatPersonalUi.js',
   'js/ahaChatConversationView.js',
   'js/ahaChatAnalysisRunContract.js',
+  'js/ahaSemanticModelShadowBridge.js',
   'js/ahaChatAcademicInsightView.js',
   'js/ahaChatUiRuntime.js',
   'js/ahaChatProviderLoader.js',
@@ -188,6 +189,18 @@ function assertLinkPrimarySourcePolicy() {
   assert.equal(cacheBeforeReload.payload.analysisBundleV2.identity.source_sha256, semanticSha);
   assert.equal(cacheBeforeReload.payload.analysisBundleV2.identity.analysis_run_id, livsarketRun.analysisRunId);
   assert.equal(cacheBeforeReload.payload.analysisBundleV2.validation.valid, true);
+  assert.equal(cacheBeforeReload.payload.semanticDocumentV2.schema, 'aha_semantic_document_v2');
+  assert.equal(cacheBeforeReload.payload.semanticDocumentV2.source_sha256, semanticSha);
+  assert.equal(cacheBeforeReload.payload.semanticDocumentV2.analysis_run_id, livsarketRun.analysisRunId);
+  assert.equal(cacheBeforeReload.payload.semanticDocumentV2.validation.valid, true);
+  assert.ok(cacheBeforeReload.payload.semanticDocumentV2.claims.length >= 2, 'live SemanticDocumentV2 must contain source claims from the actual Livsarket input');
+  assert.ok(cacheBeforeReload.payload.semanticDocumentV2.concepts.length >= 1, 'live SemanticDocumentV2 must contain literal source-grounded concepts');
+  assert.ok(cacheBeforeReload.payload.semanticDocumentV2.candidate_insights.length >= 1, 'current Chat analysis candidates must reach the live quality gate');
+  assert.ok(cacheBeforeReload.payload.semanticDocumentV2.candidate_insights.every((item) => ['approved', 'blocked'].includes(item.status)));
+  assert.equal(JSON.stringify(cacheBeforeReload.payload.semanticDocumentV2).includes('Kilde registrert'), false);
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.semantic_document.schema, 'aha_semantic_document_v2');
+  assert.ok(cacheBeforeReload.payload.analysisBundleV2.semantic_document.claim_ids.length >= 2);
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.semantic_document.synthesis_gate.authoritative, true);
   assert.equal(JSON.stringify(cacheBeforeReload.payload.analysisBundleV2).includes(morgenbladetText), false);
 
   const reloaded = createChatContext(sharedStore);
@@ -197,6 +210,7 @@ function assertLinkPrimarySourcePolicy() {
   assert.equal(afterReloadHtml, beforeReloadHtml, 'hard reload must render the same Livsarket analysis');
   assert.equal(reloaded.context.AHAActiveRun.get().sourceSha256, semanticSha);
   assert.equal(Object.isFrozen(reloaded.context.AHAActiveRun.get().analysisBundleV2), true, 'reload must hydrate an immutable AnalysisBundleV2');
+  assert.equal(Object.isFrozen(reloaded.context.AHAActiveRun.get().rawAutoPayload.semanticDocumentV2), true, 'reload must hydrate an immutable live SemanticDocumentV2');
 
   const unknownQuality = reloaded.context.AHAChatAutoOutputView.finalizeAnalysisQuality({
     reflection: 'En ellers god analyse uten eksplisitt kildebinding.',

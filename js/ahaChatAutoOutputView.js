@@ -35,6 +35,10 @@
     });
   }
 
+  function cloneSemanticGate(value) {
+    return value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : null;
+  }
+
   function harmonizeAnalysisPayload(payload, sourceText = "") {
     const safe = payload && typeof payload === "object" ? payload : {};
     const canonical = safe.canonicalAnalysis && typeof safe.canonicalAnalysis === "object"
@@ -177,6 +181,7 @@
     const defaultConversationId = deps.defaultConversationId || "default_thread";
     const now = typeof deps.now === "function" ? deps.now : () => new Date().toISOString();
     const analysisBundleV2 = deps.analysisBundleV2 || null;
+    const liveSemanticBridgeV2 = deps.liveSemanticBridgeV2 || null;
 
     function load() {
       try {
@@ -194,6 +199,15 @@
             } else {
               parsed.legacy_analysis_bundle_missing = true;
             }
+          }
+          if (parsed.payload.semanticDocumentV2 && liveSemanticBridgeV2?.hydrate) {
+            const semanticDocument = liveSemanticBridgeV2.hydrate(parsed.payload.semanticDocumentV2, {
+              sourceText: parsed.sourceText || "",
+              activeRun: parsed.activeRun || parsed,
+              payload: parsed.payload
+            });
+            if (!semanticDocument) return null;
+            parsed.payload.semanticDocumentV2 = semanticDocument;
           }
           return parsed;
         }
@@ -222,6 +236,11 @@
           || bundle.identity.source_id !== String(payload.sourceId || "").trim()
         ) return null;
         payload.analysisBundleV2 = bundle;
+      }
+      if (payload.semanticDocumentV2 && liveSemanticBridgeV2?.hydrate) {
+        const semanticDocument = liveSemanticBridgeV2.hydrate(payload.semanticDocumentV2, { sourceText, activeRun, payload });
+        if (!semanticDocument) return null;
+        payload.semanticDocumentV2 = semanticDocument;
       }
       const cache = {
         activeRun,
@@ -408,10 +427,13 @@
         : literarySignal?.strong
         ? deps.getLiterarySubjectMatches().map((item) => item?.title || item?.subject_label || "").filter(Boolean)
         : (subjectLinks.length ? subjectLinks : theoryLinks.length ? theoryLinks : (navSignal?.strong ? ["Offentlig forvaltning", "Organisasjonsteori", "Velferdsstat", "Implementeringsteori"] : themes));
+      const semanticSynthesisBlocked = payload?.analysisBundleV2?.semantic_document?.synthesis_gate?.status === "blocked";
       return {
         tema: explicitAhaSer?.tema || (domain === "song_lyric_child_culture" ? "Sang og sanglyrikk i barnekulturen" : (navSignal?.strong ? "NAV-reformen og måloppnåelse" : (literarySignal?.strong ? "Knausgårds Om våren, tilknytningsteori og litterær erkjennelse" : (parsedInsights.tema || lookup("tema") || lookup("hovedargument") || insights[1] || insights[0] || "Tema identifiseres fortløpende.")))),
         hovedspenning: explicitAhaSer?.hovedspenning || (domain === "song_lyric_child_culture" ? "Barnesang som kulturell praksis/kunstform ↔ behov for mer forskning på sjanger, språk, oppdragelse og identitetsdannelse" : (navSignal?.strong ? "Omstillingskostnad vs. strukturell utfordring" : (literarySignal?.strong ? "Tilknytningsteori vs. litterær/mytologisk utforskning av tilknytning, forknytning og løsrivelse" : (parsedInsights.hovedspenning || lookup("spenning") || insights.find((item) => /spenning|vs|mot/i.test(String(item || ""))) || "Spenning bygges fra flere meldinger.")))),
-        viktigsteInnsikt: explicitAhaSer?.viktigsteInnsikt || (domain === "song_lyric_child_culture" ? "Teksten viser sanglyrikk som del av barnekultur, barnelitteratur, musikk, språk, ritualer, utdanning og identitetsdannelse." : (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Hovedinnsikten vises her når AHA har nok materiale.")))),
+        viktigsteInnsikt: semanticSynthesisBlocked
+          ? "Blokkert: ingen syntetisert innsikt bestod den kildebundne kvalitetssperren."
+          : explicitAhaSer?.viktigsteInnsikt || (domain === "song_lyric_child_culture" ? "Teksten viser sanglyrikk som del av barnekultur, barnelitteratur, musikk, språk, ritualer, utdanning og identitetsdannelse." : (navSignal?.strong ? "NAVs manglende måloppnåelse skyldes ikke bare midlertidig omstilling, men også varige strukturelle utfordringer i styring, organisering og stat–kommune-samspill." : (literarySignal?.strong ? "Om våren bruker tilknytningsteori som ramme, men overskrider den gjennom autofiksjon, deiksis, performativ skriving, sårbarhet, nymaterialisme og mytologiske bilder." : (parsedInsights.viktigsteInnsikt || lookup("hovedinnsikt") || insights[0] || payload?.reflection || "Hovedinnsikten vises her når AHA har nok materiale.")))),
         fagkoblinger: prioritizedLinks.length ? prioritizedLinks.slice(0, 8).join(" · ") : "Fagkoblinger blir tydeligere når flere tekster analyseres.",
         nesteSteg: explicitAhaSer?.nesteSteg || (domain === "song_lyric_child_culture" ? "Undersøk konkrete tekstbelegg for hvordan sanglyrikk fungerer i barnekultur, læring, ritualer og identitetsdannelse." : (navSignal?.strong ? "Undersøk hvordan statlig styring, kommunale mål og lokal organisering påvirker arbeidsrettet oppfølging." : (literarySignal?.strong ? "Skill mellom hva Bowlbys tilknytningsteori forklarer, og hva romanens litterære form og materialistiske/mytologiske perspektiver tilfører." : (payload?.thoughts?.neste_steg || (Array.isArray(payload?.path) ? payload.path[0] : "") || "Velg ett konkret neste steg i teksten.")))),
         kortSvar: explicitAhaSer?.kortSvar || (domain === "song_lyric_child_culture" ? "Teksten handler om barnesang og sanglyrikk som barnekultur, barnelitteratur, musikk, språk og oppdragelse." : lookup("kort hovedinnsikt") || payload?.reflection || insights[0] || "AHA analyserer teksten fortløpende.")
@@ -654,11 +676,33 @@
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
       if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer");
+      let semanticDocument = null;
+      if (deps.liveSemanticBridgeV2?.build) {
+        try {
+          semanticDocument = deps.liveSemanticBridgeV2.build({
+            activeRun,
+            payload,
+            sourceText: effectiveSourceText
+          });
+          payload.semanticDocumentV2 = semanticDocument;
+          payload.qualityGate = Object.assign({}, payload.qualityGate, {
+            semanticSynthesis: cloneSemanticGate(semanticDocument.synthesis_gate)
+          });
+        } catch (error) {
+          global.console.warn("Live SemanticDocumentV2 failed closed", error);
+          payload.qualityGate = Object.assign({}, payload.qualityGate, {
+            status: "needs_review",
+            suppressClaims: true,
+            message: "Den live semantiske analysen kunne ikke bindes sikkert til aktiv kilde og analyse-run."
+          });
+        }
+      }
       if (deps.analysisBundleV2?.build) {
         payload.analysisBundleV2 = deps.analysisBundleV2.build({
           activeRun,
           payload,
           sourceText: effectiveSourceText,
+          semanticDocument,
           primarySourceKind: articleAnalysis ? "transient_article_full_text" : (linkInfo.isSourceAction ? "unavailable_full_text" : "pasted_text"),
           acquisitionStatus: articleAnalysis ? "full_text_used" : (linkInfo.isSourceAction ? "reference" : "full_text_used"),
           sourceReferences: articleAnalysis?.source ? [articleAnalysis.source] : []
@@ -765,6 +809,20 @@
           return;
         }
         payload.analysisBundleV2 = bundle;
+      }
+      if (payload.semanticDocumentV2 && deps.liveSemanticBridgeV2?.hydrate) {
+        const semanticDocument = deps.liveSemanticBridgeV2.hydrate(payload.semanticDocumentV2, {
+          sourceText,
+          activeRun: cachedRun,
+          payload
+        });
+        if (!semanticDocument) {
+          deps.setExportButtonsEnabled(false);
+          deps.setActiveAnalysisRun(null);
+          deps.refreshAhaExplorer();
+          return;
+        }
+        payload.semanticDocumentV2 = semanticDocument;
       }
       deps.bindAnalysisArtifact(payload, cachedRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, cachedRun, "canonicalAnalysis");
