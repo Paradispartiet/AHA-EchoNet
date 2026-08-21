@@ -61,7 +61,7 @@ assert.match(pathsHtml, /id="aha-module-health"/, 'Paths page should include a t
 assert.match(pathsHtml, /href="#paths-create">Lag sti<\/a>/, 'localized create flow should remain the primary action');
 assert.match(pathsHtml, />Lag sti<\/button>/, 'create form submit should use Lag sti label');
 assert.match(pathsHtml, /id="v2-path-preview-shell"/, 'Paths page should reserve a separate V2 preview surface');
-assert.match(pathsHtml, /AHA foreslår læringsstier/, 'V2 candidates should be clearly labelled as suggestions');
+assert.match(pathsHtml, /AHA foreslår fra denne analysen/, 'V2 candidates should be bound to the active analysis');
 assert.match(pathsHtml, /ahaProjectionRuntimeSourceV2\.js/, 'Paths page should load the shared read-only projection source');
 
 const empty = makeContext({ aha_paths_v1: '[]' });

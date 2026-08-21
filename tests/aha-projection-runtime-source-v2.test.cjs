@@ -3,7 +3,12 @@ const fs = require("fs");
 const vm = require("vm");
 
 const storage = new Map([
-  ["aha_insight_chamber_v1", JSON.stringify({ insights: [{ id: "insight_a" }, { id: "insight_b" }] })],
+  ["aha_chat_auto_outputs_v1", JSON.stringify({ analysisRunId: "run_active", sourceHash: "hash_active", payload: {} })],
+  ["aha_insight_chamber_v1", JSON.stringify({ insights: [
+    { id: "insight_a", analysisRunId: "run_active" },
+    { id: "insight_b", analysis_trace: { sourceHash: "hash_active" } },
+    { id: "insight_stale", analysisRunId: "run_stale", sourceHash: "hash_stale" }
+  ] })],
   ["aha_lists_v1", JSON.stringify([{ id: "list_a" }])],
   ["aha_paths_v1", JSON.stringify([{ id: "path_a" }])]
 ]);
@@ -45,11 +50,15 @@ assert.deepEqual(Array.from(snapshot.legacy_paths, (item) => item.id), ["path_a"
 const model = api.build();
 assert.equal(model.status, "ready");
 assert.equal(capturedInput.legacy_insights.length, 2);
+assert.equal(capturedInput.active_analysis.analysis_id, "run_active");
 assert.deepEqual(api.surface("lists"), [{ id: "candidate_list" }]);
 assert.equal(writes, 0, "runtime source must never write storage");
 
 storage.set("aha_insight_chamber_v1", "not-json");
 assert.equal(api.snapshot().legacy_insights.length, 0, "invalid storage must fail closed");
+assert.equal(api.build().status, "blocked");
+storage.delete("aha_chat_auto_outputs_v1");
+assert.equal(api.build().blocking_reasons[0], "active_analysis_unavailable");
 assert.equal(writes, 0);
 
 console.log("aha-projection-runtime-source-v2.test.cjs: OK");
