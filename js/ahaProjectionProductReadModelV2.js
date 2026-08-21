@@ -20,24 +20,27 @@
   const TOPIC_STOPWORDS = new Set((
     "og i på av til er et en jeg vi det som med for den de å om men at fra har hadde blir ble kan skal må " +
     "eller ikke når etter før ved også dette disse seg sine sin sitt være var mens mot mellom bare selv " +
+    "hvem hva hvor hvilken hvilket hvilke hvordan hvorfor like slik sånn der her " +
     "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme flere færre mye noe noen " +
     "viser vise melder meldte peker pekte beskriver beskrev advarer advarte bruker brukes brukte gjør gjorde " +
-    "avslører virker gir ga øker økte falt faller stiger steg står sto får fikk vite foreslår rapporterer " +
+    "avslører avslorer virker gir ga øker økte falt faller stiger steg står sto får fikk vite foreslår rapporterer " +
     "varierer målt målte ordnes gjøres formes former bevarer fortelles prøver fanger fanget isolere prioritere " +
     "prioriterer vektes konkurrerer sparer optimaliseres oppstår strukturerer presser skjule skjuler hjelper " +
-    "begrenses begrenser forstår leser usikker forklare mangler går virker sov husket haster mister gjort " +
-    "studien gruppene deltakere byrådet kommunen tiltaket effekten effektene avgjørelsen begrunnelsen " +
-    "sykehuset lærere tillitsvalgte innbyggerne reisende byggets arrangementer team problemet målingen målinger " +
-    "oppgavene verktøy digitale offentlig organ skoler kortere høyere roligere uendret foreløpig tilfeldige " +
-    "vanskeligere viktigere innstilte mildere sterkest krevende valgfrie felles aktive raske uventede dårlig " +
-    "klare direkte faktisk utvidede lokale tette hyppig gjentatt spontan muntlige enkel konkrete grunnleggende " +
-    "små store tre få gratis kvelden pausen semester videre samme lett senere forskere utvalgte søkbare bestemte"
+    "begrenses begrenser forstår forstar leser usikker forklare mangler går virker sov husket haster mister gjort " +
+    "sendt vurdert vurderer løser loser studien gruppene deltakere byrådet kommunen tiltaket effekten effektene " +
+    "avgjørelsen begrunnelsen sykehuset lærere tillitsvalgte innbyggerne reisende byggets arrangementer team " +
+    "problemet målingen målinger oppgavene verktøy digitale offentlig organ skoler kortere korte høyere roligere " +
+    "uendret foreløpig tilfeldige vanskeligere viktigere innstilte mildere sterkest krevende valgfrie felles aktive " +
+    "raske uventede dårlig klare direkte faktisk utvidede lokale tette hyppig gjentatt spontan muntlige enkel " +
+    "konkrete grunnleggende små store tre få gratis kvelden pausen semester videre lett senere forskere utvalgte " +
+    "søkbare bestemte"
   ).split(/\s+/).filter(Boolean).map(normalize));
 
   const LOW_INFORMATION_CONCEPTS = new Set((
     "alene andre begge bedre derfor både samtidig antall prosent dagen dager samme bruker gjør steg " +
-    "beskriver advarer avslører byggets barnets felles valgfrie noen effekten problemet målingen studien " +
-    "deltakere gruppene reisende lærere tillitsvalgte sykehuset byrådet kommunen tiltaket innbyggerne"
+    "beskriver advarer avslører avslorer byggets barnets felles valgfrie noen effekten problemet målingen studien " +
+    "deltakere gruppene reisende lærere tillitsvalgte sykehuset byrådet kommunen tiltaket innbyggerne sendt " +
+    "vurdert vurderer løser loser muntlige forstår forstar hvilke hvilken hvilket hvordan hvorfor like korte"
   ).split(/\s+/).filter(Boolean).map(normalize));
 
   function integrationApi() {
@@ -153,7 +156,7 @@
         if (!term) continue;
         picked.push(term);
         used.add(term.norm);
-        if (picked.length >= maxParts) break;
+        break;
       }
       if (picked.length >= maxParts) break;
     }
@@ -167,13 +170,32 @@
     return { label, terms: picked };
   }
 
-  function linkedInsightTexts(model, refs) {
+  function memberOrderKey(insight) {
+    const members = [];
+    if (Array.isArray(insight?.member_ids)) members.push(...insight.member_ids);
+    if (Array.isArray(insight?.provenance?.source_member_ids)) members.push(...insight.provenance.source_member_ids);
+    const normalizedMembers = [...new Set(members.map((value) => String(value || "")).filter(Boolean))]
+      .sort((left, right) => left.localeCompare(right, "no"));
+    return normalizedMembers[0] || String(insight?.id || "");
+  }
+
+  function linkedInsights(model, refs) {
     const insights = Array.isArray(model?.surfaces?.insights) ? model.surfaces.insights : [];
-    const byId = new Map(insights.map((insight) => [String(insight.id || ""), insightText(insight)]));
+    const byId = new Map(insights.map((insight) => [String(insight?.id || ""), insight]));
     const requested = Array.isArray(refs) && refs.length
-      ? [...new Set(refs.map((ref) => String(ref || "")).filter(Boolean))].sort((left, right) => left.localeCompare(right, "no"))
-      : [...byId.keys()].sort((left, right) => left.localeCompare(right, "no"));
-    return requested.map((ref) => byId.get(ref)).filter(Boolean);
+      ? [...new Set(refs.map((ref) => String(ref || "")).filter(Boolean))]
+      : [...byId.keys()];
+    return requested
+      .map((ref) => byId.get(ref))
+      .filter(Boolean)
+      .sort((left, right) => (
+        memberOrderKey(left).localeCompare(memberOrderKey(right), "no")
+        || String(left?.id || "").localeCompare(String(right?.id || ""), "no")
+      ));
+  }
+
+  function linkedInsightTexts(model, refs) {
+    return linkedInsights(model, refs).map(insightText).filter(Boolean);
   }
 
   function refineLists(model) {
@@ -246,20 +268,7 @@
     const originalNorm = normalize(original);
     const sourceTokens = tokens(original);
     const content = sourceTokens.filter(isTopicToken);
-    const hasNoise = sourceTokens.some((token) => TOPIC_STOPWORDS.has(token.norm));
     const explicitlyLow = LOW_INFORMATION_CONCEPTS.has(originalNorm);
-
-    if (!explicitlyLow && content.length && !hasNoise) {
-      const selected = [];
-      for (const token of content) {
-        if (overlapsUsed(token.norm, used)) continue;
-        selected.push(token);
-        if (selected.length >= 2) break;
-      }
-      if (selected.length) {
-        return selected.map((token, index) => index ? token.display.toLocaleLowerCase("no") : sentenceCase(token.display)).join(" · ");
-      }
-    }
 
     if (!explicitlyLow && content.length) {
       const selected = [];
@@ -349,10 +358,10 @@
     refined.surfaces.paths = paths.items;
     refined.product_language = {
       schema: "aha_projection_product_language_v2",
-      version: 2,
+      version: 3,
       status: "contextualized",
       source: "read_model_insight_content",
-      topic_strategy: "source_segment_terms",
+      topic_strategy: "source_member_ordered_segment_terms",
       duplicate_lists_removed: lists.removed,
       duplicate_paths_removed: paths.removed,
       read_only: true
