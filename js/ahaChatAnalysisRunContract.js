@@ -312,6 +312,29 @@
     if (!isSha256(identity.source_sha256)) errors.push("source_sha256_invalid");
     if (!value.surfaces || typeof value.surfaces !== "object") errors.push("surfaces_missing");
     SURFACES.forEach((surface) => { if (!(surface in object(value.surfaces))) errors.push(`surface_missing:${surface}`); });
+    const semantic = object(value.semantic_document);
+    if (semantic.source_sha256 !== identity.source_sha256) errors.push("semantic_document_source_mismatch");
+    if (!Array.isArray(semantic.semantic_ids)) errors.push("semantic_document_semantic_ids_invalid");
+    if (semantic.schema === "aha_semantic_document_v2") {
+      if (!text(semantic.document_id)) errors.push("semantic_document_id_missing");
+      if (semantic.analysis_id !== identity.analysis_id) errors.push("semantic_document_analysis_id_mismatch");
+      if (semantic.analysis_run_id !== identity.analysis_run_id) errors.push("semantic_document_analysis_run_id_mismatch");
+      if (semantic.source_id !== identity.source_id) errors.push("semantic_document_source_id_mismatch");
+      for (const key of ["concept_ids", "claim_ids", "relation_ids", "tension_ids", "candidate_insight_ids", "approved_insight_ids", "blocked_candidate_insight_ids"]) {
+        if (!Array.isArray(semantic[key])) errors.push(`semantic_document_${key}_invalid`);
+      }
+      const candidateIds = new Set(array(semantic.candidate_insight_ids));
+      const approvedIds = array(semantic.approved_insight_ids);
+      const blockedIds = array(semantic.blocked_candidate_insight_ids);
+      approvedIds.forEach((id) => { if (!candidateIds.has(id)) errors.push("semantic_document_approved_candidate_unknown"); });
+      blockedIds.forEach((id) => { if (!candidateIds.has(id)) errors.push("semantic_document_blocked_candidate_unknown"); });
+      if (approvedIds.some((id) => blockedIds.includes(id))) errors.push("semantic_document_candidate_status_overlap");
+      const gate = object(semantic.synthesis_gate);
+      if (gate.authoritative !== true) errors.push("semantic_document_synthesis_gate_not_authoritative");
+      if (gate.approved_count !== approvedIds.length || gate.blocked_count !== blockedIds.length || gate.candidate_count !== candidateIds.size) {
+        errors.push("semantic_document_synthesis_gate_counts_invalid");
+      }
+    }
     collectFields(value).forEach(({ field, path }) => validateField(field, identity, path, errors));
     CLOSED_WRITE_POLICY.forEach((key) => { if (value.policy?.[key] !== false) errors.push(`write_policy_not_closed:${key}`); });
     const forbiddenKeys = new Set(["sourceText", "raw_text", "rawAutoPayload", "fullChamberSnapshot", "historicalAfterwork"]);
@@ -332,20 +355,41 @@
     const ahaSer = object(payload.ahaSer);
     const sourceText = String(input.sourceText || "");
     const identity = identityFrom(input);
+    const semanticDocument = object(input.semanticDocument);
+    const authoritativeSemantic = semanticDocument.schema === "aha_semantic_document_v2"
+      && semanticDocument.validation?.valid === true
+      && text(semanticDocument.analysis_id) === identity.analysis_id
+      && text(semanticDocument.analysis_run_id) === identity.analysis_run_id
+      && text(semanticDocument.source_id) === identity.source_id
+      && text(semanticDocument.source_sha256) === identity.source_sha256;
     const make = fieldFactory(identity, input, sourceText);
-    const insights = array(payload.insights?.length ? payload.insights : payload.insightCards)
+    const semanticInsightCandidates = authoritativeSemantic
+      ? array(semanticDocument.candidate_insights).filter((item) => item?.status === "approved" && item?.eligible_for_current_analysis === true)
+      : [];
+    const rawInsights = authoritativeSemantic
+      ? semanticInsightCandidates
+      : array(payload.insights?.length ? payload.insights : payload.insightCards);
+    const insights = rawInsights
       .map((item, index) => make("insights.item", text(item), {
         raw: item,
         itemId: text(item?.id) || `insight_${index + 1}_${stableToken(text(item))}`,
         semanticIds: [item?.semantic_id, item?.semanticId, item?.id],
-        additionalEvidence: evidenceCandidates(item)
+        origin: authoritativeSemantic ? "semantic_document_v2_quality_approved" : "current_analysis_run",
+        additionalEvidence: authoritativeSemantic
+          ? array(item?.evidence).map((entry) => entry?.quote)
+          : evidenceCandidates(item)
       }))
       .filter(Boolean);
-    const concepts = array(payload.concepts?.length ? payload.concepts : payload.keywords)
+    const rawConcepts = authoritativeSemantic
+      ? array(semanticDocument.concepts)
+      : array(payload.concepts?.length ? payload.concepts : payload.keywords);
+    const concepts = rawConcepts
       .map((item, index) => make("concepts.item", text(item), {
         raw: item,
         itemId: text(item?.id) || `concept_${index + 1}_${stableToken(text(item))}`,
-        semanticIds: [item?.semantic_id, item?.semanticId, item?.id]
+        semanticIds: [item?.semantic_id, item?.semanticId, item?.id],
+        origin: authoritativeSemantic ? "semantic_document_v2_literal_concept" : "current_analysis_run",
+        additionalEvidence: authoritativeSemantic ? array(item?.mentions).map((entry) => entry?.text) : []
       }))
       .filter(Boolean);
     const tracks = uniqueText([
@@ -372,11 +416,26 @@
         });
       })
       .filter(Boolean);
-    const strongestInsight = canonical.keyInsight || ahaSer.viktigsteInnsikt || payload.insight || insights[0]?.value;
+    const strongestInsight = authoritativeSemantic
+      ? semanticInsightCandidates[0]?.insight || ""
+      : canonical.keyInsight || ahaSer.viktigsteInnsikt || payload.insight || insights[0]?.value;
+    const semanticTension = authoritativeSemantic ? array(semanticDocument.tensions)[0] : null;
     const overview = {
       theme: make("overview.theme", canonical.theme || ahaSer.tema || payload.tema, { reportField: "canonicalAnalysis.theme", additionalEvidence: claimEvidence(payload, canonical.theme || ahaSer.tema) }),
-      central_tension: make("overview.central_tension", canonical.mainTension || ahaSer.hovedspenning || payload.hovedspenning, { reportField: "canonicalAnalysis.mainTension", additionalEvidence: claimEvidence(payload, canonical.mainTension || ahaSer.hovedspenning) }),
-      strongest_insight: make("overview.strongest_insight", strongestInsight, { reportField: "canonicalAnalysis.keyInsight", additionalEvidence: claimEvidence(payload, strongestInsight) }),
+      central_tension: make("overview.central_tension", semanticTension?.label || canonical.mainTension || ahaSer.hovedspenning || payload.hovedspenning, {
+        reportField: "canonicalAnalysis.mainTension",
+        semanticIds: [semanticTension?.id],
+        origin: semanticTension ? "semantic_document_v2_source_tension" : "current_analysis_run",
+        additionalEvidence: semanticTension ? array(semanticTension.evidence_spans).map((entry) => entry?.text) : claimEvidence(payload, canonical.mainTension || ahaSer.hovedspenning)
+      }),
+      strongest_insight: make("overview.strongest_insight", strongestInsight, {
+        reportField: "canonicalAnalysis.keyInsight",
+        semanticIds: [semanticInsightCandidates[0]?.id],
+        origin: authoritativeSemantic ? "semantic_document_v2_quality_approved" : "current_analysis_run",
+        additionalEvidence: authoritativeSemantic
+          ? array(semanticInsightCandidates[0]?.evidence).map((entry) => entry?.quote)
+          : claimEvidence(payload, strongestInsight)
+      }),
       next_inquiry: make("overview.next_inquiry", ahaSer.nesteSteg || canonical.suggestedActions?.[0] || payload?.thoughts?.neste_steg, { reportField: "ahaSer.nesteSteg" })
     };
     const sourceStructure = {
@@ -410,6 +469,7 @@
     if (!identity.analysis_run_id) identityErrors.push("analysis_run_id_missing");
     if (!identity.source_id) identityErrors.push("source_id_missing");
     if (!isSha256(identity.source_sha256)) identityErrors.push("source_sha256_invalid");
+    if (semanticDocument.schema === "aha_semantic_document_v2" && !authoritativeSemantic) identityErrors.push("semantic_document_identity_mismatch");
     const status = identityErrors.length ? "invalid" : (incomplete.length || rejected.length) ? "incomplete" : "ready";
     const bundle = {
       schema: SCHEMA,
@@ -418,10 +478,38 @@
       status,
       identity,
       semantic_document: {
-        schema: text(input.semanticDocument?.schema) || "aha_semantic_document_v1",
-        document_id: text(input.semanticDocument?.id || input.semanticDocument?.document_id) || null,
-        source_sha256: identity.source_sha256,
-        semantic_ids: uniqueText(input.semanticIds)
+        schema: text(semanticDocument.schema) || "aha_semantic_document_v1",
+        document_id: text(semanticDocument.id || semanticDocument.document_id) || null,
+        analysis_id: text(semanticDocument.analysis_id) || null,
+        analysis_run_id: text(semanticDocument.analysis_run_id) || null,
+        source_id: text(semanticDocument.source_id) || null,
+        source_sha256: text(semanticDocument.source_sha256) || identity.source_sha256,
+        semantic_ids: uniqueText([
+          ...array(input.semanticIds),
+          ...array(semanticDocument.concepts).map((item) => item?.id),
+          ...array(semanticDocument.claims).map((item) => item?.id),
+          ...array(semanticDocument.relations).map((item) => item?.id),
+          ...array(semanticDocument.tensions).map((item) => item?.id),
+          ...array(semanticDocument.candidate_insights).map((item) => item?.id)
+        ]),
+        status: text(semanticDocument.status) || (authoritativeSemantic ? "incomplete" : "not_available"),
+        quality_status: text(semanticDocument.quality?.status) || "not_available",
+        concept_ids: uniqueText(array(semanticDocument.concepts).map((item) => item?.id)),
+        claim_ids: uniqueText(array(semanticDocument.claims).map((item) => item?.id)),
+        relation_ids: uniqueText(array(semanticDocument.relations).map((item) => item?.id)),
+        tension_ids: uniqueText(array(semanticDocument.tensions).map((item) => item?.id)),
+        candidate_insight_ids: uniqueText(array(semanticDocument.candidate_insights).map((item) => item?.id)),
+        approved_insight_ids: uniqueText(array(semanticDocument.candidate_insights).filter((item) => item?.status === "approved").map((item) => item?.id)),
+        blocked_candidate_insight_ids: uniqueText(array(semanticDocument.candidate_insights).filter((item) => item?.status === "blocked").map((item) => item?.id)),
+        synthesis_gate: authoritativeSemantic ? {
+          schema: text(semanticDocument.synthesis_gate?.schema),
+          quality_gate_schema: text(semanticDocument.synthesis_gate?.quality_gate_schema),
+          authoritative: semanticDocument.synthesis_gate?.authoritative === true,
+          status: text(semanticDocument.synthesis_gate?.status),
+          candidate_count: Number(semanticDocument.synthesis_gate?.candidate_count || 0),
+          approved_count: Number(semanticDocument.synthesis_gate?.approved_count || 0),
+          blocked_count: Number(semanticDocument.synthesis_gate?.blocked_count || 0)
+        } : null
       },
       surfaces,
       quality: {
@@ -430,7 +518,12 @@
         passed_field_count: fields.filter((field) => field.quality.status === "passed").length,
         incomplete_field_ids: incomplete,
         rejected_field_ids: rejected,
-        reasons: [...identityErrors, ...(incomplete.length ? ["item_level_evidence_or_topic_incomplete"] : []), ...(rejected.length ? ["one_or_more_fields_rejected"] : [])]
+        reasons: [
+          ...identityErrors,
+          ...(incomplete.length ? ["item_level_evidence_or_topic_incomplete"] : []),
+          ...(rejected.length ? ["one_or_more_fields_rejected"] : []),
+          ...(authoritativeSemantic && semanticDocument.synthesis_gate?.status === "blocked" ? ["unsupported_synthesized_insights_blocked"] : [])
+        ]
       },
       validation: { valid: false, errors: [] },
       policy: Object.fromEntries(CLOSED_WRITE_POLICY.map((key) => [key, false]))

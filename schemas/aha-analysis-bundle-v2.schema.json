@@ -28,8 +28,33 @@
       "properties": {
         "schema": { "type": "string" },
         "document_id": { "type": ["string", "null"] },
+        "analysis_id": { "type": ["string", "null"] },
+        "analysis_run_id": { "type": ["string", "null"] },
+        "source_id": { "type": ["string", "null"] },
         "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "semantic_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+        "semantic_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "status": { "type": "string" },
+        "quality_status": { "type": "string" },
+        "concept_ids": { "$ref": "#/$defs/idArray" },
+        "claim_ids": { "$ref": "#/$defs/idArray" },
+        "relation_ids": { "$ref": "#/$defs/idArray" },
+        "tension_ids": { "$ref": "#/$defs/idArray" },
+        "candidate_insight_ids": { "$ref": "#/$defs/idArray" },
+        "approved_insight_ids": { "$ref": "#/$defs/idArray" },
+        "blocked_candidate_insight_ids": { "$ref": "#/$defs/idArray" },
+        "synthesis_gate": {
+          "type": ["object", "null"],
+          "properties": {
+            "schema": { "type": "string" },
+            "quality_gate_schema": { "type": "string" },
+            "authoritative": { "type": "boolean" },
+            "status": { "type": "string" },
+            "candidate_count": { "type": "integer", "minimum": 0 },
+            "approved_count": { "type": "integer", "minimum": 0 },
+            "blocked_count": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
@@ -60,6 +85,7 @@
     "policy": { "type": "object" }
   },
   "$defs": {
+    "idArray": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
     "fieldArray": { "type": "array", "items": { "$ref": "#/$defs/field" } },
     "fieldMap": { "type": "object", "additionalProperties": { "anyOf": [{ "$ref": "#/$defs/field" }, { "type": "null" }] } },
     "field": {

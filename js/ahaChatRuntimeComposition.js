@@ -178,7 +178,8 @@
       setActiveAnalysisRun: b.setActiveAnalysisRun,
       takeKeywords: b.takeKeywords,
       refreshAhaExplorer: b.refreshAhaExplorer,
-      analysisBundleV2: modules.analysisBundleV2 || null
+      analysisBundleV2: modules.analysisBundleV2 || null,
+      liveSemanticBridgeV2: modules.liveSemanticBridgeV2 || null
     });
     if (!autoOutputRuntime) throw new Error("AHAChatAutoOutputRuntime må lastes før ahaChat.js.");
 

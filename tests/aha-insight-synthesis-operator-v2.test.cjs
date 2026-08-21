@@ -4,6 +4,7 @@ const fs = require("fs");
 const operator = fs.readFileSync("semantic-evaluation-shadow.html", "utf8");
 const chat = fs.readFileSync("chat.html", "utf8");
 const bootstrap = fs.readFileSync("js/ahaInsightSynthesisBootstrapV2.js", "utf8");
+const semanticBridge = fs.readFileSync("js/ahaSemanticModelShadowBridge.js", "utf8");
 
 assert.match(operator, /ahaSemanticModelShadow=1&amp;ahaInsightSynthesisV2=1/);
 assert.match(operator, /js\/ahaInsightQualityGateV2\.js/);
@@ -17,6 +18,10 @@ const bootstrapIndex = operator.indexOf('js/ahaInsightSynthesisBootstrapV2.js');
 assert.ok(gateIndex >= 0 && runtimeIndex > gateIndex && bootstrapIndex > runtimeIndex, "V2 gate må lastes før runtime og bootstrap");
 
 assert.doesNotMatch(chat, /ahaInsightQualityGateV2\.js/);
+assert.doesNotMatch(chat, /ahaLiveSemanticBridgeV2\.js/);
+assert.ok(chat.indexOf('js/ahaSemanticModelShadowBridge.js') < chat.indexOf('js/ahaChatAutoOutputView.js'));
+assert.match(semanticBridge, /global\.AHAInsightQualityGateV2 = api/);
+assert.match(semanticBridge, /global\.AHALiveSemanticBridgeV2 = api/);
 assert.doesNotMatch(chat, /ahaInsightSynthesisRuntimeV2\.js/);
 assert.doesNotMatch(chat, /ahaInsightSynthesisBootstrapV2\.js/);
 assert.doesNotMatch(chat, /ahaInsightSynthesisV2=1/);
