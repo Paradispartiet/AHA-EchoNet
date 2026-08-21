@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
   pages: read
 
 jobs:
@@ -29,81 +29,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
-      - name: Commit exact TEMP housekeeping-boundary correction
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs")
-          text = path.read_text()
-          replacements = [
-              (
-                  '  assert.equal(same(chamberSnapshot(storage), chamberBeforeActivation), true, "final Chamber must equal exact pre-activation state");\n',
-                  '  const finalChamber = chamberSnapshot(storage);\n'
-                  '  const finalBusinessState = clone(finalChamber);\n'
-                  '  const preActivationBusinessState = clone(chamberBeforeActivation);\n'
-                  '  delete finalBusinessState._local_updated_at;\n'
-                  '  delete preActivationBusinessState._local_updated_at;\n'
-                  '  const expectedFinalTopLevelKeys = [...new Set([...Object.keys(chamberBeforeActivation), "_local_updated_at"])].sort();\n'
-                  '  const finalTopLevelKeys = Object.keys(finalChamber).sort();\n'
-                  '  assert.equal(same(finalBusinessState, preActivationBusinessState), true, "final Chamber business state must equal exact pre-activation state");\n'
-                  '  assert.deepEqual(finalTopLevelKeys, expectedFinalTopLevelKeys, "_local_updated_at must be the only allowed top-level housekeeping delta");\n'
-                  '  assert.equal(typeof finalChamber._local_updated_at, "string", "final Chamber must expose _local_updated_at housekeeping timestamp");\n'
-              ),
-              (
-                  '    final_chamber_exact_pre_activation_state: same(chamberSnapshot(storage), chamberBeforeActivation),\n',
-                  '    final_chamber_exact_pre_activation_business_state: same(finalBusinessState, preActivationBusinessState),\n'
-                  '    final_chamber_only_local_updated_at_housekeeping_delta: same(finalTopLevelKeys, expectedFinalTopLevelKeys) && typeof finalChamber._local_updated_at === "string",\n'
-              ),
-              (
-                  '      final_chamber_exact_pre_activation_state: activation.final_chamber_exact_pre_activation_state,\n',
-                  '      final_chamber_exact_pre_activation_business_state: activation.final_chamber_exact_pre_activation_business_state,\n'
-                  '      final_chamber_only_local_updated_at_housekeeping_delta: activation.final_chamber_only_local_updated_at_housekeeping_delta,\n'
-              ),
-              (
-                  '  assert.equal(proof.activation.final_chamber_exact_pre_activation_state, true);\n',
-                  '  assert.equal(proof.activation.final_chamber_exact_pre_activation_business_state, true);\n'
-                  '  assert.equal(proof.activation.final_chamber_only_local_updated_at_housekeeping_delta, true);\n'
-              ),
-              (
-                  '    final_chamber_exact_pre_activation_state: proof.activation.final_chamber_exact_pre_activation_state,\n',
-                  '    final_chamber_exact_pre_activation_business_state: proof.activation.final_chamber_exact_pre_activation_business_state,\n'
-                  '    final_chamber_only_local_updated_at_housekeeping_delta: proof.activation.final_chamber_only_local_updated_at_housekeeping_delta,\n'
-              ),
-          ]
-
-          changed = False
-          for old, new in replacements:
-              count = text.count(old)
-              if count == 1:
-                  text = text.replace(old, new, 1)
-                  changed = True
-              elif count == 0 and new in text:
-                  continue
-              else:
-                  raise SystemExit(f"unexpected replacement count {count}: {old[:80]!r}")
-
-          if changed:
-              path.write_text(text)
-          PY
-
-          if git diff --quiet -- scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs; then
-            echo "TEMP proof correction already committed."
-            exit 0
-          fi
-
-          git diff --check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/TEMP-aha-v2-two-record-expansion-activation-live-proof-v2.cjs
-          git commit -m "TEMP: treat Chamber local timestamp as housekeeping"
-          git push origin "HEAD:${HEAD_BRANCH}"
-          echo "Committed exact TEMP correction; stopping stale workflow run so the next run proves the committed head."
-          exit 1
 
       - name: Prove TEMP branch isolation
         run: |
