@@ -291,7 +291,7 @@
     const requiredStages = ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"];
     const byId = insightMap(context);
     const insightIds = new Set(arr(context.insights).map((insight) => text(insight?.id)).filter(Boolean));
-    const invalidRefs = steps.filter((step) => !text(step?.refId) || insightIds.size && !insightIds.has(text(step?.refId)));
+    const invalidRefs = steps.filter((step) => !text(step?.refId) || !insightIds.has(text(step?.refId)));
     const narratives = steps.filter((step) => text(step?.narrative).length >= 40).length;
     const outcomes = steps.filter((step) => text(step?.learningOutcome).length >= 20).length;
     const uniqueTransitions = unique(steps.map((step) => normalize(step?.narrative))).length;
