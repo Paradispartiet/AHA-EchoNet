@@ -177,8 +177,8 @@ assert.equal(firstPage.AHAChatPersistence.loadSessions()[0].messages.length, 2, 
 const memory = firstPage.AHAChatMemoryControls.create({ loadChamber: () => ({ insights: [] }) });
 memory.setAhaMemoryControl("saveNewInsights", false);
 memory.setAhaMemoryControl("useExistingMemory", false);
-const sourceText = "Institusjoner former offentligheten i byrommet.";
-const sourceTextHash = `hash_${sourceText.length}`;
+const sourceText = "Byforskning viser hvordan institusjoner former offentligheten i byrommet. Institusjonell makt og offentlighet er tekstens hovedspenning.";
+const sourceTextHash = "a".repeat(64);
 const afterwork = createAfterworkRuntime(firstPage);
 afterwork.saveAfterworkEntries([{
   id: "launch_afterwork",
@@ -208,7 +208,8 @@ assert.equal(reloadedMemory.isAhaSavingEnabled(), false);
 assert.equal(reloadedMemory.isAhaMemoryUseEnabled(), false);
 assert.equal(createAfterworkRuntime(reloadedPage).loadAfterworkEntries()[0].id, "launch_afterwork");
 
-// 3. The source-bound export uses the reloaded afterwork and remains valid.
+// 3. The source-bound export keeps reloaded afterwork historical and rebuilds
+// the active analysis from the current source only.
 load(reloadedPage, "js/ahaChatAnalysisRunContract.js");
 load(reloadedPage, "js/ahaChatExport.js");
 const activeRun = {
@@ -275,7 +276,10 @@ const exportRuntime = reloadedPage.AHAChatExport.createRuntime({
 const exportBundle = exportRuntime.buildAhaAnalysisExportBundle();
 assert.equal(exportBundle.analysisBinding.valid, true);
 assert.equal(exportBundle.sourceTextHash, sourceTextHash);
-assert.equal(exportBundle.selectedAfterwork.id, "launch_afterwork");
+assert.equal(exportBundle.selectedAfterwork.id, undefined);
+assert.equal(exportBundle.selectedAfterwork.source_binding.status, "historical_afterwork_excluded");
+assert.equal(exportBundle.relevantAfterworks[0].id, "launch_afterwork");
+assert.doesNotMatch(exportBundle.afterwork.summary, /analyseres sammen/i);
 assert.equal(exportBundle.memoryMode, "off");
 assert.equal(exportBundle.quality.failClosed, false);
 

@@ -31,7 +31,7 @@ const run = api.create({
   sourceId: 'source_1',
   sourceKind: 'pasted_text',
   sourceText: 'Dette er den aktive kildeteksten.',
-  sourceTextHash: 'hash_1',
+  sourceTextHash: 'a'.repeat(64),
   createdAt: '2026-08-13T18:00:00.000Z',
   memoryAllowed: true
 });
@@ -43,14 +43,16 @@ assert.equal(run.memoryMode, 'allowed');
 assert.equal(run.analysisBinding.valid, true);
 assert.deepEqual(Array.from(run.invalidationReasons), []);
 
-const canonical = { theme: 'Aktivt tema', sourceTextHash: 'hash_1' };
-api.bindArtifact(canonical, run, 'canonicalAnalysis');
+const canonical = { theme: 'Aktivt tema' };
+api.bindArtifact(canonical, run, 'canonicalAnalysis', { producer: 'current_analysis_run' });
 assert.equal(canonical.analysisRunId, 'run_1');
 assert.equal(run.canonicalAnalysis.theme, 'Aktivt tema');
 
 const identity = run;
+const ahaSer = { tema: 'Aktivt tema' };
+api.bindArtifact(ahaSer, run, 'ahaSer', { producer: 'current_analysis_run' });
 api.update(run, {
-  ahaSer: { tema: 'Aktivt tema', sourceTextHash: 'hash_1' },
+  ahaSer,
   concepts: ['kildebinding'],
   subjectMatches: [{ title: 'Analyse' }]
 });
@@ -62,8 +64,8 @@ const stale = api.finalizeExport({
   version: 'aha_analysis_export_v1',
   analysisRunId: 'run_2',
   sourceText: 'Ny kilde',
-  sourceTextHash: 'hash_new',
-  canonicalAnalysis: { theme: 'Gammel analyse', sourceTextHash: 'hash_old' },
+  sourceTextHash: 'b'.repeat(64),
+  canonicalAnalysis: { theme: 'Gammel analyse', analysisRunId: 'run_old', sourceTextHash: 'c'.repeat(64) },
   quality: { status: 'valid', failClosed: false, sourceBinding: { invalidFields: [] } }
 });
 assert.equal(stale.analysisBinding.valid, false);
@@ -76,5 +78,13 @@ const missingIdentity = api.validate({ sourceText: 'Kilde uten identitet' });
 assert.equal(missingIdentity.valid, false);
 assert.ok(Array.from(missingIdentity.errors).includes('missing_run_id'));
 assert.ok(Array.from(missingIdentity.errors).includes('missing_source_text_hash'));
+
+const unbound = { theme: 'Skal ikke omstemples' };
+api.bindArtifact(unbound, run, 'canonicalAnalysis');
+assert.equal(unbound.sourceTextHash, undefined);
+assert.equal(unbound.source_binding.status, 'invalid_unbound_artifact');
+
+assert.equal(api.validate({ analysisRunId: 'run_3', sourceTextHash: 'short_hash' }).valid, false);
+assert.ok(Array.from(api.validate({ analysisRunId: 'run_3', sourceTextHash: 'short_hash' }).errors).includes('invalid_source_sha256'));
 
 console.log('aha-chat-analysis-run-contract passed');

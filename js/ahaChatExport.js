@@ -65,10 +65,21 @@
     return String(value || "").trim();
   }
 
+  function typedText(value) {
+    if (value == null) return "";
+    if (["string", "number", "boolean"].includes(typeof value)) return String(value).trim();
+    if (typeof value === "object") {
+      return typedText(value.text || value.summary || value.title || value.label || value.claim || "");
+    }
+    return "";
+  }
+
   function readSourceTextHash(value) {
     const obj = safeObject(value);
     return normalizeSourceHash(
-      obj.sourceTextHash
+      obj.source_sha256
+      || obj.sourceSha256
+      || obj.sourceTextHash
       || obj.source_text_hash
       || obj.sourceHash
       || obj.source_hash
@@ -83,7 +94,7 @@
     return Boolean(value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length);
   }
 
-  function makeSourceBinding(field, value, currentSourceTextHash, options = {}) {
+  function makeSourceBinding(field, value, currentSourceTextHash) {
     const currentHash = normalizeSourceHash(currentSourceTextHash);
     const explicitHash = readSourceTextHash(value);
     const hasValue = objectHasMeaningfulKeys(value);
@@ -112,11 +123,23 @@
       };
     }
 
-    if (explicitHash) {
-      const valid = explicitHash === currentHash;
+    if (!/^[a-f0-9]{64}$/.test(currentHash.toLowerCase())) {
       return {
         field,
-        status: valid ? "verified" : "invalid_hash_mismatch",
+        status: "invalid_current_source_sha256",
+        valid: false,
+        currentSourceTextHash: currentHash,
+        fieldSourceTextHash: explicitHash || null,
+        inferred: false,
+        reason: "authoritative_sha256_required"
+      };
+    }
+
+    if (explicitHash) {
+      const valid = /^[a-f0-9]{64}$/.test(explicitHash.toLowerCase()) && explicitHash === currentHash;
+      return {
+        field,
+        status: valid ? "verified" : (/^[a-f0-9]{64}$/.test(explicitHash.toLowerCase()) ? "invalid_hash_mismatch" : "invalid_field_source_sha256"),
         valid,
         currentSourceTextHash: currentHash,
         fieldSourceTextHash: explicitHash,
@@ -125,21 +148,9 @@
       };
     }
 
-    if (options.allowInferredSameRun === true) {
-      return {
-        field,
-        status: options.inferredStatus || "inferred_same_run",
-        valid: true,
-        currentSourceTextHash: currentHash,
-        fieldSourceTextHash: null,
-        inferred: true,
-        reason: options.reason || "same_run_wrapper"
-      };
-    }
-
     return {
       field,
-      status: "warning_unverified_binding",
+      status: "invalid_unbound_artifact",
       valid: false,
       currentSourceTextHash: currentHash,
       fieldSourceTextHash: null,
@@ -150,15 +161,15 @@
 
   function annotateSourceBoundObject(value, binding, currentSourceTextHash) {
     const base = safeObject(value);
+    const explicitHash = readSourceTextHash(base);
     return Object.assign({}, base, {
-      sourceTextHash: normalizeSourceHash(readSourceTextHash(base) || currentSourceTextHash),
       source_binding: {
         field: binding?.field || "unknown",
         status: binding?.status || "unknown",
         valid: binding?.valid === true,
         currentSourceTextHash: normalizeSourceHash(currentSourceTextHash) || null,
-        fieldSourceTextHash: binding?.fieldSourceTextHash || null,
-        inferred: binding?.inferred === true,
+        fieldSourceTextHash: binding?.fieldSourceTextHash || explicitHash || null,
+        inferred: false,
         reason: binding?.reason || "unknown"
       }
     });
@@ -256,18 +267,18 @@
     return { sourceTerms, requiredTerms, forbiddenTerms };
   }
 
-  function buildTopicConsistencyReport({ sourceText, outputText, requiredTerms, forbiddenTerms }) {
+  function buildTopicConsistencyReport({ sourceText, outputText, requiredTerms, forbiddenTerms, semanticCheckEnabled = true, minimumOutputTerms = 2 }) {
     const normalizedRequired = (Array.isArray(requiredTerms) ? requiredTerms : []).map(normalizeTopicTerm).filter(Boolean);
     const normalizedForbidden = (Array.isArray(forbiddenTerms) ? forbiddenTerms : []).map(normalizeTopicTerm).filter(Boolean);
-    const sourceTerms = extractTopicTerms(sourceText);
-    const outputTerms = extractTopicTerms(outputText);
+    const sourceTerms = extractTopicTerms(sourceText, 128);
+    const outputTerms = extractTopicTerms(outputText, 64);
     const outputTermSet = new Set(outputTerms);
     const overlappingTerms = sourceTerms.filter((term) => outputTermSet.has(term));
     const meaningfulOverlap = overlappingTerms.filter((term) => term.length >= 4);
     const missingRequiredTerms = normalizedRequired.filter((term) => !topicTextIncludes(outputText, term));
     const matchedForbiddenTerms = normalizedForbidden.filter((term) => topicTextIncludes(outputText, term));
-    const semanticCheckEligible = sourceTerms.length >= 6 && outputTerms.length >= 6;
-    const semanticTopicMismatch = semanticCheckEligible && meaningfulOverlap.length < 2;
+    const semanticCheckEligible = semanticCheckEnabled && sourceTerms.length >= 6 && outputTerms.length >= minimumOutputTerms;
+    const semanticTopicMismatch = semanticCheckEligible && meaningfulOverlap.length < 1;
     const valid = missingRequiredTerms.length === 0 && matchedForbiddenTerms.length === 0 && !semanticTopicMismatch;
     return {
       status: valid ? "valid" : (semanticTopicMismatch ? "invalid_semantic_topic_mismatch" : "invalid_topic_mismatch"),
@@ -287,28 +298,29 @@
   }
 
   function buildQualityReport({ sourceText, sourceTextHash, bindings, rejectedRawAutoPayload, rejectedSelectedAfterwork, topicConsistency }) {
-    const invalidFields = collectInvalidBindings(bindings);
+    const invalidSourceFields = collectInvalidBindings(bindings);
+    const topicInvalidFields = [];
     if (topicConsistency && topicConsistency.valid === false) {
-      invalidFields.push({
-        field: "topicConsistency",
-        status: topicConsistency.status || "invalid_topic_mismatch",
-        reason: topicConsistency.status === "invalid_semantic_topic_mismatch" ? "semantic_topic_divergence" : (topicConsistency.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing"),
-        missingRequiredTerms: topicConsistency.missingRequiredTerms || [],
-        matchedForbiddenTerms: topicConsistency.matchedForbiddenTerms || []
-      });
+      const failedFields = Array.isArray(topicConsistency.invalidFields) && topicConsistency.invalidFields.length
+        ? topicConsistency.invalidFields
+        : [{ field: "topicConsistency", report: topicConsistency }];
+      failedFields.forEach(({ field, report }) => topicInvalidFields.push({
+        field,
+        status: report?.status || topicConsistency.status || "invalid_topic_mismatch",
+        reason: report?.semanticTopicMismatch ? "semantic_topic_divergence" : (report?.matchedForbiddenTerms?.length ? "forbidden_terms_present" : "required_terms_missing"),
+        missingRequiredTerms: report?.missingRequiredTerms || [],
+        matchedForbiddenTerms: report?.matchedForbiddenTerms || []
+      }));
     }
     const warnings = [];
     if (!String(sourceText || "").trim()) warnings.push("missing_source_text");
     if (!normalizeSourceHash(sourceTextHash)) warnings.push("missing_source_text_hash");
 
-    const inferredFields = (Array.isArray(bindings) ? bindings : [])
-      .filter((binding) => binding?.valid === true && binding?.inferred === true)
-      .map((binding) => binding.field);
-    if (inferredFields.length) warnings.push(`inferred_source_binding:${inferredFields.join(",")}`);
+    const inferredFields = [];
 
     let status = "valid";
-    if (topicConsistency && topicConsistency.valid === false) status = "invalid_topic_mismatch";
-    else if (invalidFields.length) status = "invalid_source_mismatch";
+    if (invalidSourceFields.length) status = "invalid_source_mismatch";
+    else if (topicInvalidFields.length) status = "valid_with_rejected_topic_fields";
     else if (warnings.length) status = "warning_unverified_binding";
 
     return {
@@ -316,14 +328,20 @@
       sourceBinding: {
         currentSourceTextHash: normalizeSourceHash(sourceTextHash) || null,
         bindings,
-        invalidFields,
+        invalidFields: invalidSourceFields,
         inferredFields,
         rejectedRawAutoPayload: Boolean(rejectedRawAutoPayload),
         rejectedSelectedAfterwork: Boolean(rejectedSelectedAfterwork)
       },
       topicConsistency: topicConsistency || null,
+      rejectedTopicFields: topicInvalidFields,
+      analysisIsolation: {
+        status: invalidSourceFields.length ? "failed" : "verified",
+        isolated: invalidSourceFields.length === 0,
+        reason: invalidSourceFields.length ? "field_source_mismatch" : "all_current_fields_explicitly_bound"
+      },
       warnings,
-      failClosed: invalidFields.length > 0
+      failClosed: invalidSourceFields.length > 0
     };
   }
 
@@ -336,18 +354,10 @@
     const activeRun = Object.keys(liveRun).length ? liveRun : safeObject(auto?.activeRun);
     const analysisRunId = String(activeRun.analysisRunId || activeRun.runId || auto?.analysisRunId || auto?.runId || auto?.payload?.analysisRunId || auto?.payload?.runId || "");
     const sourceTextHash = normalizeSourceHash(activeRun.sourceTextHash || activeRun.sourceHash || auto?.sourceTextHash || deps.sourceHash(sourceText));
-    const autoBinding = makeSourceBinding("auto", auto, sourceTextHash, {
-      allowInferredSameRun: Boolean(sourceTextHash),
-      inferredStatus: "inferred_current_auto_wrapper",
-      reason: "auto_wrapper_is_current_export_source"
-    });
+    const autoBinding = makeSourceBinding("auto", auto, sourceTextHash);
 
     const rawPayloadCandidate = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
-    const rawPayloadBinding = makeSourceBinding("rawAutoPayload", rawPayloadCandidate, sourceTextHash, {
-      allowInferredSameRun: autoBinding.valid === true,
-      inferredStatus: "inferred_from_auto_wrapper",
-      reason: "payload_wrapped_by_current_auto_output"
-    });
+    const rawPayloadBinding = makeSourceBinding("rawAutoPayload", rawPayloadCandidate, sourceTextHash);
     const payload = rawPayloadBinding.valid ? rawPayloadCandidate : {};
     const rejectedRawAutoPayload = rawPayloadBinding.valid ? null : rawPayloadCandidate;
 
@@ -355,21 +365,26 @@
     const chamber = deps.loadChamberFromStorage() || {};
     const afterworks = deps.loadAfterworkEntries();
     const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || "") === sourceTextHash);
-    const selectedAfterworkCandidate = relevantAfterworks.length
-      ? relevantAfterworks[relevantAfterworks.length - 1]
-      : {};
-    const selectedAfterworkBinding = makeSourceBinding("selectedAfterwork", selectedAfterworkCandidate, sourceTextHash, {
-      allowInferredSameRun: false
-    });
-    const selectedAfterwork = selectedAfterworkBinding.valid ? selectedAfterworkCandidate : {};
-    const rejectedSelectedAfterwork = selectedAfterworkBinding.valid ? null : selectedAfterworkCandidate;
+    // Stored afterwork is historical state. PR 1 deliberately keeps it out of
+    // the active analysis; PR 2 may expose it later as an explicit relation.
+    const selectedAfterworkBinding = {
+      field: "selectedAfterwork",
+      status: "historical_afterwork_excluded",
+      valid: true,
+      currentSourceTextHash: sourceTextHash || null,
+      fieldSourceTextHash: null,
+      inferred: false,
+      reason: "stored_afterwork_not_selected_or_merged"
+    };
+    const selectedAfterwork = {};
+    const rejectedSelectedAfterwork = null;
 
     const chatLog = Array.isArray(chamber?.chatLog) ? chamber.chatLog : [];
     const currentRunReply = String(activeRun?.ahaReply || "").trim();
     const latestAhaReplyText = currentRunReply || deps.getLatestAhaReplyFromDom();
-    const subjectMatches = deps.normalizeSubjectLinks(selectedAfterwork?.subjectLinks || payload?.subjectMatches || []);
-    const insights = Array.isArray(selectedAfterwork?.insights) ? selectedAfterwork.insights : [];
-    const concepts = Array.isArray(selectedAfterwork?.concepts) ? selectedAfterwork.concepts : [];
+    const subjectMatches = deps.normalizeSubjectLinks(payload?.subjectMatches || payload?.subjectLinks || []);
+    const insights = Array.isArray(payload?.insights) ? payload.insights : (Array.isArray(payload?.insightCards) ? payload.insightCards : []);
+    const concepts = Array.isArray(payload?.concepts) ? payload.concepts : (Array.isArray(payload?.keywords) ? payload.keywords : []);
     const canonical = deps.buildCanonicalAnalysis(payload, sourceText);
     const canonicalAnalysis = normalizeAhaAnalysis(canonical);
     canonicalAnalysis.analysisRunId = analysisRunId;
@@ -377,58 +392,65 @@
     canonicalAnalysis.sourceHash = sourceTextHash;
     canonicalAnalysis.normalizedSourceHash = sourceTextHash;
     canonicalAnalysis.sourceTextHash = sourceTextHash;
+    canonicalAnalysis.sourceSha256 = sourceTextHash;
+    canonicalAnalysis.source_sha256 = sourceTextHash;
+    canonicalAnalysis.sourceHashAlgorithm = "sha256";
     canonicalAnalysis.source_binding = {
       field: "canonicalAnalysis",
-      status: rawPayloadBinding.valid ? "source_bound" : "rebuilt_from_source_after_payload_rejection",
-      valid: true,
+      status: rawPayloadBinding.valid ? "producer_bound" : "rebuilt_from_source_after_payload_rejection",
+      valid: Boolean(sourceTextHash),
       currentSourceTextHash: sourceTextHash || null,
       dependsOnPayload: rawPayloadBinding.valid === true,
       payloadBindingStatus: rawPayloadBinding.status
     };
 
-    const selectedAfterworkType = String(selectedAfterwork?.textType || selectedAfterwork?.innholdstype || "").trim();
-    const canonicalType = String(canonical?.contentType || "").trim();
-    const isAcademicType = (type) => {
-      const key = String(type || "").trim().toLowerCase();
-      return key === "academic_article" || key === "theory_idea";
-    };
-    const allowAfterwork = selectedAfterworkBinding.valid === true && (!selectedAfterworkType || selectedAfterworkType === canonicalType || (isAcademicType(selectedAfterworkType) && isAcademicType(canonicalType)));
-    const forceCanonicalOverDayLog = String(selectedAfterworkType || "").toLowerCase() === "day_log" && isAcademicType(canonicalType);
     const calibrationStatus = deps.getCalibrationStatus();
     const metaProfile = deps.buildMetaProfile(chamber);
     const knowledgeMap = chamber?.knowledgeMap || chamber?.map || {};
     const mergedAfterwork = deps.ensureAcademicAfterworkShape({
-      summary: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.summary) || payload?.summary || canonical?.summary || payload?.day || ""),
-      insight: String(payload?.insight || (insights[0] || "")),
-      reflection: String((allowAfterwork && !forceCanonicalOverDayLog && selectedAfterwork?.reflection) || canonical?.reflection || payload?.reflection || ""),
-      sortItems: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.sortItems) && selectedAfterwork.sortItems.length) ? selectedAfterwork.sortItems : (canonical?.sortItems?.length ? canonical.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : [])),
-      list: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.list) && selectedAfterwork.list.length) ? selectedAfterwork.list : (canonical?.list?.length ? canonical.list : (Array.isArray(payload?.list) ? payload.list : [])),
-      path: (allowAfterwork && !forceCanonicalOverDayLog && Array.isArray(selectedAfterwork?.learningPath) && selectedAfterwork.learningPath.length) ? selectedAfterwork.learningPath : (canonical?.path?.length ? canonical.path : (Array.isArray(payload?.path) ? payload.path : [])),
-      thoughts: selectedAfterwork?.thoughtSorting || payload?.thoughts || {}
+      summary: typedText(payload?.summary || canonical?.summary || payload?.day),
+      insight: typedText(payload?.insight || insights[0]),
+      reflection: typedText(canonical?.reflection || payload?.reflection),
+      sortItems: canonical?.sortItems?.length ? canonical.sortItems : (Array.isArray(payload?.sortItems) ? payload.sortItems : []),
+      list: canonical?.list?.length ? canonical.list : (Array.isArray(payload?.list) ? payload.list : []),
+      path: canonical?.path?.length ? canonical.path : (Array.isArray(payload?.path) ? payload.path : []),
+      thoughts: payload?.thoughts && typeof payload.thoughts === "object" ? payload.thoughts : {}
     }, canonical);
     const afterworkBinding = {
       field: "afterwork",
-      status: allowAfterwork ? "verified_or_canonical_merge" : "canonical_or_payload_only",
-      valid: true,
+      status: "producer_bound_current_analysis_only",
+      valid: Boolean(sourceTextHash && analysisRunId),
       currentSourceTextHash: sourceTextHash || null,
-      fieldSourceTextHash: allowAfterwork ? selectedAfterworkBinding.fieldSourceTextHash : null,
-      inferred: !allowAfterwork,
-      reason: allowAfterwork ? "selected_afterwork_hash_match" : "selected_afterwork_not_used"
+      fieldSourceTextHash: sourceTextHash || null,
+      inferred: false,
+      reason: "stored_afterwork_not_merged"
     };
-    const sourceBoundAfterwork = Object.assign(annotateSourceBoundObject(mergedAfterwork, afterworkBinding, sourceTextHash), { analysisRunId, runId: analysisRunId, sourceHash: sourceTextHash, normalizedSourceHash: sourceTextHash });
+    const sourceBoundAfterwork = Object.assign(annotateSourceBoundObject(mergedAfterwork, afterworkBinding, sourceTextHash), {
+      analysisRunId,
+      runId: analysisRunId,
+      sourceHash: sourceTextHash,
+      sourceTextHash,
+      sourceSha256: sourceTextHash,
+      source_sha256: sourceTextHash,
+      sourceHashAlgorithm: "sha256",
+      normalizedSourceHash: sourceTextHash
+    });
 
     const ahaSer = {
-      innholdstype: String(canonical?.contentType || payload?.innholdstype || payload?.textType || ""),
-      tema: String(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema || ""),
-      hovedspenning: String(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning || ""),
-      viktigsteInnsikt: String(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt || ""),
+      innholdstype: typedText(canonical?.contentType || payload?.innholdstype || payload?.textType),
+      tema: typedText(canonical?.ahaSer?.tema || explicitAhaSer?.tema || payload?.tema),
+      hovedspenning: typedText(canonical?.ahaSer?.hovedspenning || explicitAhaSer?.hovedspenning || payload?.hovedspenning),
+      viktigsteInnsikt: typedText(canonical?.ahaSer?.viktigsteInnsikt || explicitAhaSer?.viktigsteInnsikt || payload?.viktigsteInnsikt),
       fagkoblinger: deps.normalizeFagkoblinger(canonical?.ahaSer?.fagkoblinger || explicitAhaSer?.fagkoblinger || payload?.fagkoblinger),
-      nesteSteg: String(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg || ""),
-      kortSvar: String(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar || ""),
+      nesteSteg: typedText(canonical?.ahaSer?.nesteSteg || explicitAhaSer?.nesteSteg || payload?.nesteSteg),
+      kortSvar: typedText(canonical?.ahaSer?.kortSvar || explicitAhaSer?.kortSvar || payload?.kortSvar),
       analysisRunId,
       runId: analysisRunId,
       sourceHash: sourceTextHash,
       normalizedSourceHash: sourceTextHash,
+      sourceSha256: sourceTextHash,
+      source_sha256: sourceTextHash,
+      sourceHashAlgorithm: "sha256",
       sourceTextHash,
       source_binding: {
         field: "ahaSer",
@@ -442,11 +464,73 @@
     const explicitTopicContract = typeof deps.getTopicConsistencyContract === "function" ? deps.getTopicConsistencyContract(sourceText, payload) : {};
     const topicContract = inferTopicConsistencyContract(sourceText, explicitTopicContract);
     const topicOutputText = flattenTopicValue({ ahaSer, canonicalAnalysis, afterwork: sourceBoundAfterwork, rawAutoPayload: payload });
-    const topicConsistency = buildTopicConsistencyReport({
+    const aggregateTopicConsistency = buildTopicConsistencyReport({
       sourceText,
       outputText: topicOutputText,
       requiredTerms: topicContract.requiredTerms,
       forbiddenTerms: topicContract.forbiddenTerms
+    });
+    const fieldTargets = {
+      "canonicalAnalysis.theme": canonicalAnalysis.theme,
+      "canonicalAnalysis.mainTension": canonicalAnalysis.mainTension,
+      "canonicalAnalysis.keyInsight": canonicalAnalysis.keyInsight,
+      "canonicalAnalysis.summary": canonicalAnalysis.summary,
+      "canonicalAnalysis.reflection": canonicalAnalysis.reflection,
+      "canonicalAnalysis.fieldConnections": canonicalAnalysis.fieldConnections,
+      "canonicalAnalysis.suggestedActions": canonicalAnalysis.suggestedActions,
+      "ahaSer.tema": ahaSer.tema,
+      "ahaSer.hovedspenning": ahaSer.hovedspenning,
+      "ahaSer.viktigsteInnsikt": ahaSer.viktigsteInnsikt,
+      "ahaSer.fagkoblinger": ahaSer.fagkoblinger,
+      "ahaSer.nesteSteg": ahaSer.nesteSteg,
+      "afterwork.summary": sourceBoundAfterwork.summary,
+      "afterwork.insight": sourceBoundAfterwork.insight,
+      "afterwork.reflection": sourceBoundAfterwork.reflection,
+      "afterwork.sortItems": sourceBoundAfterwork.sortItems,
+      "afterwork.list": sourceBoundAfterwork.list,
+      "afterwork.path": sourceBoundAfterwork.path,
+      subjectMatches
+    };
+    const fieldReports = {};
+    Object.keys(fieldTargets).forEach((field) => bindings.push({
+      field,
+      status: sourceTextHash && analysisRunId ? "producer_bound_current_analysis_field" : "invalid_unbound_artifact",
+      valid: Boolean(sourceTextHash && analysisRunId),
+      currentSourceTextHash: sourceTextHash || null,
+      fieldSourceTextHash: sourceTextHash || null,
+      currentAnalysisRunId: analysisRunId || null,
+      fieldAnalysisRunId: analysisRunId || null,
+      inferred: false,
+      reason: "field_created_from_current_bound_analysis"
+    }));
+    Object.entries(fieldTargets).forEach(([field, value]) => {
+      const outputText = flattenTopicValue(value);
+      if (!outputText.trim()) return;
+      const groundingField = /(?:theme|mainTension|keyInsight|summary|reflection|fieldConnections|fagkoblinger|subjectMatches)$/u.test(field);
+      const labelField = /(?:fieldConnections|fagkoblinger|subjectMatches)$/u.test(field);
+      fieldReports[field] = buildTopicConsistencyReport({
+        sourceText,
+        outputText,
+        requiredTerms: [],
+        forbiddenTerms: topicContract.forbiddenTerms,
+        semanticCheckEnabled: groundingField,
+        minimumOutputTerms: labelField ? 1 : 2
+      });
+    });
+    const invalidFieldReports = Object.entries(fieldReports)
+      .filter(([, report]) => report.valid === false)
+      .map(([field, report]) => ({ field, report }));
+    invalidFieldReports.forEach(({ field }) => {
+      if (field.startsWith("canonicalAnalysis.")) canonicalAnalysis[field.split(".")[1]] = Array.isArray(canonicalAnalysis[field.split(".")[1]]) ? [] : "";
+      else if (field.startsWith("ahaSer.")) ahaSer[field.split(".")[1]] = Array.isArray(ahaSer[field.split(".")[1]]) ? [] : "";
+      else if (field.startsWith("afterwork.")) sourceBoundAfterwork[field.split(".")[1]] = Array.isArray(sourceBoundAfterwork[field.split(".")[1]]) ? [] : "";
+      else if (field === "subjectMatches") subjectMatches.splice(0, subjectMatches.length);
+    });
+    const topicConsistency = Object.assign({}, aggregateTopicConsistency, {
+      status: aggregateTopicConsistency.valid && !invalidFieldReports.length ? "valid" : "invalid_semantic_topic_mismatch",
+      valid: aggregateTopicConsistency.valid && !invalidFieldReports.length,
+      fields: fieldReports,
+      invalidFields: invalidFieldReports
     });
     const quality = buildQualityReport({
       sourceText,
@@ -481,7 +565,7 @@
       canonicalAnalysis,
       afterwork: sourceBoundAfterwork,
       insights,
-      concepts: (allowAfterwork && !forceCanonicalOverDayLog && concepts.length) ? concepts : (canonical?.concepts || []),
+      concepts: concepts.length ? concepts : (canonical?.concepts || []),
       subjectMatches,
       metaProfile,
       knowledgeMap,
@@ -531,14 +615,14 @@
       return text ? { type: "topic", id: text.toLowerCase().replace(/\s+/g, "_"), title: text, reason: "" } : null;
     }).filter(Boolean);
     return {
-      contentType: String(src.contentType || "").trim(),
-      domain: String(src.domain || "").trim(),
-      theme: String(src.theme || "").trim(),
-      mainTension: String(src.mainTension || "").trim(),
-      keyInsight: String(src.keyInsight || "").trim(),
-      fieldConnections: asList(src.fieldConnections).map((v) => String(v || "").trim()).filter(Boolean),
+      contentType: typedText(src.contentType).trim(),
+      domain: typedText(src.domain).trim(),
+      theme: typedText(src.theme).trim(),
+      mainTension: typedText(src.mainTension).trim(),
+      keyInsight: typedText(src.keyInsight).trim(),
+      fieldConnections: asList(src.fieldConnections).map((v) => typedText(v).trim()).filter(Boolean),
       historyGoLinks,
-      suggestedActions: asList(src.suggestedActions).map((v) => String(v || "").trim()).filter(Boolean),
+      suggestedActions: asList(src.suggestedActions).map((v) => typedText(v).trim()).filter(Boolean),
       confidence: {
         contentType: clamp01(confidence.contentType),
         domain: clamp01(confidence.domain),
@@ -546,7 +630,7 @@
         mainTension: clamp01(confidence.mainTension),
         historyGoLinks: clamp01(confidence.historyGoLinks)
       },
-      warnings: asList(src.warnings).map((v) => String(v || "").trim()).filter(Boolean)
+      warnings: asList(src.warnings).map((v) => typedText(v).trim()).filter(Boolean)
     };
   }
 

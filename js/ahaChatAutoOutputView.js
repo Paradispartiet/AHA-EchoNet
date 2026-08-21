@@ -12,9 +12,22 @@
 
   const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
 
+  function displayText(value) {
+    if (value == null) return "";
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+    if (Array.isArray(value)) return value.map(displayText).filter(Boolean).join(" · ");
+    if (typeof value !== "object") return "";
+    const keys = ["text", "title", "label", "summary", "insight", "name", "theme", "subject_label", "subject_id", "id"];
+    for (const key of keys) {
+      const candidate = value[key];
+      if (typeof candidate === "string" || typeof candidate === "number") return String(candidate);
+    }
+    return "";
+  }
+
   function uniqueText(values) {
     const seen = new Set();
-    return (Array.isArray(values) ? values : []).map((value) => String(value || "").replace(/\s+/g, " ").trim()).filter((value) => {
+    return (Array.isArray(values) ? values : []).map((value) => displayText(value).replace(/\s+/g, " ").trim()).filter((value) => {
       const key = value.toLowerCase().replace(/[.!?;,:\s]+$/u, "");
       if (!key || seen.has(key)) return false;
       seen.add(key);
@@ -29,9 +42,9 @@
       : null;
     if (!canonical?.theme || !canonical?.keyInsight) return safe;
 
-    const theme = String(canonical.theme || "").trim();
-    const tension = String(canonical.mainTension || "").trim();
-    const insight = String(canonical.keyInsight || "").trim();
+    const theme = displayText(canonical.theme).trim();
+    const tension = displayText(canonical.mainTension).trim();
+    const insight = displayText(canonical.keyInsight).trim();
     const fields = uniqueText(canonical.fieldConnections).slice(0, 6);
     const actions = uniqueText(canonical.suggestedActions).slice(0, 3);
     const sourceItems = [];
@@ -107,8 +120,19 @@
     const revision = evaluator.improveAnalysisOnce(safe, sourceText, { profile, thresholds });
     const finalPayload = revision.payload && typeof revision.payload === "object" ? revision.payload : safe;
     const report = evaluator.evaluateAnalysis(finalPayload, sourceText, { thresholds });
+    const payloadBound = finalPayload?.source_binding?.valid === true;
+    const canonicalBound = !finalPayload?.canonicalAnalysis || finalPayload?.canonicalAnalysis?.source_binding?.valid === true;
+    const ahaSerBound = !finalPayload?.ahaSer || finalPayload?.ahaSer?.source_binding?.valid === true;
+    const isolationStatus = payloadBound && canonicalBound && ahaSerBound ? "verified" : "unknown";
+    const effectiveStatus = report.status === "passed" && isolationStatus !== "verified" ? "needs_review" : report.status;
     finalPayload.analysisQuality = {
       ...report,
+      status: effectiveStatus,
+      analysisIsolation: {
+        status: isolationStatus,
+        isolated: isolationStatus === "verified",
+        reason: isolationStatus === "verified" ? "explicit_source_and_run_identity_match" : "source_or_run_identity_unverified"
+      },
       revision: {
         attempted: revision.attempted,
         improved: revision.improved,
@@ -128,13 +152,15 @@
     } : null;
     finalPayload.qualityGate = {
       version: "aha_visible_analysis_quality_gate_v1",
-      status: revision.needsMoreSource ? "needs_more_source" : report.status === "passed" ? (revision.attempted ? "improved" : "passed") : "needs_review",
+      status: revision.needsMoreSource ? "needs_more_source" : effectiveStatus === "passed" ? (revision.attempted ? "improved" : "passed") : "needs_review",
       attempts: revision.attempted ? 1 : 0,
       suppressClaims: revision.needsMoreSource,
       message: revision.needsMoreSource
         ? "AHA trenger mer konkret kildetekst før den kan vise en trygg analyse. Legg til hvem eller hva teksten gjelder, ett konkret eksempel og relevant sammenheng."
         : revision.improved
           ? "AHA forbedret analysen én gang etter kvalitetskontrollen."
+          : isolationStatus !== "verified"
+            ? "Analysen kan ikke passere før kilde- og run-isoleringen er eksplisitt verifisert."
           : revision.attempted
             ? "AHA forsøkte én forbedring, men analysen bør fortsatt leses med forbehold."
             : "Analysen bestod kvalitetskontrollen."
@@ -171,6 +197,9 @@
       const sourceText = String(input.sourceText || "");
       const activeRun = input.activeRun && typeof input.activeRun === "object" ? input.activeRun : null;
       const fingerprint = deps.sourceHash(sourceText);
+      const payloadHash = String(payload.source_sha256 || payload.sourceSha256 || payload.sourceTextHash || payload.sourceHash || "").trim();
+      const payloadRunId = String(payload.analysisRunId || payload.runId || "").trim();
+      if (!fingerprint || payloadHash !== fingerprint || !payloadRunId || payload.source_binding?.valid !== true) return null;
       const cache = {
         activeRun,
         payload,
@@ -183,8 +212,11 @@
         sourceId: payload.sourceId || "",
         sourceKind: payload.sourceKind || input.sourceKind || "pasted_text",
         sessionId: payload.sessionId || payload.conversationId || defaultConversationId,
-        sourceHash: payload.sourceHash || fingerprint,
-        sourceFingerprint: payload.sourceFingerprint || fingerprint,
+        sourceHash: fingerprint,
+        sourceSha256: fingerprint,
+        source_sha256: fingerprint,
+        sourceHashAlgorithm: "sha256",
+        sourceFingerprint: fingerprint,
         sourceTextHash: fingerprint,
         sourceTextPreview: sourceText.replace(/\s+/g, " ").slice(0, 180),
         createdAt: now()
@@ -228,7 +260,7 @@
     });
 
     function safeMarkupText(value) {
-      return deps.escHtml(deps.cleanArticleText(String(value || "")).replace(/\s+/g, " ").trim());
+      return deps.escHtml(deps.cleanArticleText(displayText(value)).replace(/\s+/g, " ").trim());
     }
 
     function safeMarkupList(values) {
@@ -258,7 +290,7 @@
 
     function buildHistoryGoSuggestion(payload, sourceText) {
       const source = String(sourceText || "");
-      const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.join(" ") : "")}`.toLowerCase();
+      const text = `${source} ${(Array.isArray(payload?.insightCards) ? payload.insightCards.map(displayText).join(" ") : "")}`.toLowerCase();
       const navSignal = deps.detectPublicAdministrationReformSignal(source || text);
       const literarySignal = deps.detectLiteraryAttachmentSignal(source || text);
       if (navSignal?.strong) {
@@ -340,7 +372,7 @@
       const parsedInsights = deps.parseLabeledInsightCards(insights);
       const explicitAhaSer = payload?.ahaSer && typeof payload.ahaSer === "object" ? payload.ahaSer : null;
       const explicitFagkoblinger = Array.isArray(explicitAhaSer?.fagkoblinger)
-        ? explicitAhaSer.fagkoblinger.map((item) => String(item || "").trim()).filter(Boolean)
+        ? explicitAhaSer.fagkoblinger.map((item) => displayText(item).trim()).filter(Boolean)
         : (typeof explicitAhaSer?.fagkoblinger === "string"
           ? String(explicitAhaSer.fagkoblinger).split("·").map((item) => item.trim()).filter(Boolean)
           : []);
@@ -498,7 +530,7 @@
       "getLiterarySubjectMatches", "getLiteraryAttachmentLearningPath", "isSportsArticleAnalysis",
       "applyRuntimeKnowledgePolicy", "filterCrossDomainAutoPayload", "enforceCanonicalSourceGrounding",
       "buildCanonicalAnalysis", "resolveCanonicalAnalysisWithOptionalPythonEngine", "isActiveAnalysisRun",
-      "bindAnalysisArtifact", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs", "saveAutoOutputs",
+      "bindAnalysisArtifact", "artifactMatchesActiveRun", "renderAutoOutputPayload", "setExportButtonsEnabled", "loadAutoOutputs", "saveAutoOutputs",
       "setActiveAnalysisRun", "updateAnalysisRun", "takeKeywords", "refreshAhaExplorer"
     ];
     required.forEach((name) => {
@@ -578,9 +610,17 @@
       payload.canonicalAnalysisMeta = resolvedCanonical.meta;
       payload = harmonizeAnalysisPayload(payload, effectiveSourceText);
       payload = deps.enforceCanonicalSourceGrounding(payload, effectiveSourceText);
+      deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload", { producer: "current_analysis_run" });
+      if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") {
+        deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis", { producer: "current_analysis_run" });
+      }
+      if (payload.ahaSer && typeof payload.ahaSer === "object") {
+        deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer", { producer: "current_analysis_run" });
+      }
       payload = finalizeAnalysisQuality(payload, effectiveSourceText);
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
+      if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer");
       deps.updateAnalysisRun({
         sourceText,
         sourceType: linkInfo.isSourceAction ? "url" : "pasted_text",
@@ -629,10 +669,20 @@
       }
       const payload = cache?.payload && typeof cache.payload === "object" ? cache.payload : cache;
       const sourceText = String(cache?.sourceText || "");
+      const computedSourceSha256 = deps.sourceHash(sourceText);
+      const cachedSourceSha256 = String(cache.source_sha256 || cache.sourceSha256 || cache.sourceTextHash || cache.sourceHash || "").trim();
+      const payloadSourceSha256 = String(payload.source_sha256 || payload.sourceSha256 || payload.sourceTextHash || payload.sourceHash || "").trim();
+      const cachedRunId = String(cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "").trim();
+      if (!computedSourceSha256 || cachedSourceSha256 !== computedSourceSha256 || payloadSourceSha256 !== computedSourceSha256 || !cachedRunId) {
+        deps.setExportButtonsEnabled(false);
+        deps.setActiveAnalysisRun(null);
+        deps.refreshAhaExplorer();
+        return;
+      }
       const cachedRun = {
         analysisId: cache.analysisId || payload.analysisId || `analysis_${cache.sourceTextHash || deps.sourceHash(sourceText)}`,
-        analysisRunId: cache.analysisRunId || cache.runId || payload.analysisRunId || payload.runId || "restored",
-        runId: cache.runId || cache.analysisRunId || payload.runId || payload.analysisRunId || "restored",
+        analysisRunId: cachedRunId,
+        runId: cachedRunId,
         conversationId: cache.conversationId || cache.sessionId || payload.conversationId || payload.sessionId || deps.defaultConversationId,
         turnId: cache.turnId || payload.turnId || "",
         sourceId: cache.sourceId || payload.sourceId || `source_${cache.sourceTextHash || deps.sourceHash(sourceText)}`,
@@ -640,12 +690,28 @@
         topicLabel: cache.topicLabel || payload.topicLabel || deps.takeKeywords(sourceText, 4).join(" · "),
         sessionId: cache.sessionId || cache.conversationId || payload.sessionId || payload.conversationId || deps.defaultConversationId,
         createdAt: cache.createdAt || payload.createdAt || new Date().toISOString(),
-        sourceHash: cache.sourceHash || cache.sourceTextHash || deps.sourceHash(sourceText),
-        sourceFingerprint: cache.sourceFingerprint || cache.sourceTextHash || deps.sourceHash(sourceText)
+        sourceText,
+        sourceTextHash: computedSourceSha256,
+        sourceHash: computedSourceSha256,
+        sourceSha256: computedSourceSha256,
+        source_sha256: computedSourceSha256,
+        sourceHashAlgorithm: "sha256",
+        sourceFingerprint: computedSourceSha256
       };
       deps.setActiveAnalysisRun(cachedRun);
       deps.bindAnalysisArtifact(payload, cachedRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, cachedRun, "canonicalAnalysis");
+      if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, cachedRun, "ahaSer");
+      if (
+        !deps.artifactMatchesActiveRun(payload, cachedRun)
+        || (payload.canonicalAnalysis && !deps.artifactMatchesActiveRun(payload.canonicalAnalysis, cachedRun))
+        || (payload.ahaSer && !deps.artifactMatchesActiveRun(payload.ahaSer, cachedRun))
+      ) {
+        deps.setExportButtonsEnabled(false);
+        deps.setActiveAnalysisRun(null);
+        deps.refreshAhaExplorer();
+        return;
+      }
       deps.updateAnalysisRun({
         sourceText,
         rawAutoPayload: payload,

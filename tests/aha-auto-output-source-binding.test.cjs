@@ -41,12 +41,14 @@ function loadSmokeModule(storage = makeLocalStorage(), windowExtras = {}) {
 }
 
 const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
+const CURRENT_SHA = "a".repeat(64);
+const OLD_SHA = "b".repeat(64);
 
 {
   const win = loadSmokeModule();
   const auto = win.AHAAutoOutputSourceBinding.bindAutoOutputToSource({
     sourceText: "Dette er kildeteksten.",
-    sourceTextHash: "hash_current",
+    sourceTextHash: CURRENT_SHA,
     payload: {
       textType: "academic_article",
       reflection: "Analyse av kilden.",
@@ -55,26 +57,26 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
     }
   });
 
-  assert.equal(auto.sourceTextHash, "hash_current");
-  assert.equal(auto.payload.sourceTextHash, "hash_current");
-  assert.equal(auto.payload.source_binding.status, "inferred_from_auto_output_wrapper");
-  assert.equal(auto.payload.canonicalAnalysis.sourceTextHash, "hash_current");
-  assert.equal(auto.payload.ahaSer.sourceTextHash, "hash_current");
-  assert.equal(JSON.stringify(auto.sourceBinding.invalidFields), JSON.stringify([]));
+  assert.equal(auto.sourceTextHash, CURRENT_SHA);
+  assert.equal(auto.payload.sourceTextHash, undefined);
+  assert.equal(auto.payload.source_binding.status, "invalid_unbound_artifact");
+  assert.equal(auto.payload.canonicalAnalysis.sourceTextHash, undefined);
+  assert.equal(auto.payload.ahaSer.sourceTextHash, undefined);
+  assert.deepEqual(Array.from(auto.sourceBinding.invalidFields, (item) => item.field), ["rawAutoPayload", "canonicalAnalysis", "ahaSer"]);
 }
 
 {
   const win = loadSmokeModule();
   const auto = win.AHAAutoOutputSourceBinding.bindAutoOutputToSource({
     sourceText: "Dette er ny kildetekst.",
-    sourceTextHash: "hash_current",
+    sourceTextHash: CURRENT_SHA,
     payload: {
-      sourceTextHash: "old_hash",
+      sourceTextHash: OLD_SHA,
       reflection: "Stale payload"
     }
   });
 
-  assert.equal(auto.payload.sourceTextHash, "old_hash");
+  assert.equal(auto.payload.sourceTextHash, OLD_SHA);
   assert.equal(auto.payload.source_binding.status, "invalid_hash_mismatch");
   assert.equal(auto.payload.source_binding.valid, false);
   assert.equal(JSON.stringify(auto.sourceBinding.invalidFields.map((item) => item.field)), JSON.stringify(["rawAutoPayload"]));
@@ -84,7 +86,7 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
   const storage = makeLocalStorage();
   storage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
     sourceText: "Norsk medietidsskrift lanserer konseptuelle artikler.",
-    sourceTextHash: "hash_current",
+    sourceTextHash: CURRENT_SHA,
     payload: {
       canonicalAnalysis: { contentType: "academic_article" }
     }
@@ -95,9 +97,9 @@ const AUTO_OUTPUT_STORAGE_KEY = "aha_chat_auto_outputs_v1";
 
   assert.equal(repaired.payload.sourceTextHash, undefined);
   assert.equal(stored.payload.canonicalAnalysis.sourceTextHash, undefined);
-  assert.equal(repaired.payload.source_binding.status, "warning_unverified_binding");
+  assert.equal(repaired.payload.source_binding.status, "invalid_unbound_artifact");
   assert.equal(repaired.payload.source_binding.valid, false);
-  assert.equal(win.AHAPythonEngineSmokeTest.printStatus().latestPayloadSourceBinding, "warning_unverified_binding");
+  assert.equal(win.AHAPythonEngineSmokeTest.printStatus().latestPayloadSourceBinding, "invalid_unbound_artifact");
 }
 
 const evaluationSource = `
@@ -136,19 +138,23 @@ const stalePentecostPayload = {
 
 {
   const storage = makeLocalStorage();
+  const sourceBoundPayload = JSON.parse(JSON.stringify(stalePentecostPayload));
+  sourceBoundPayload.sourceTextHash = "c".repeat(64);
+  sourceBoundPayload.canonicalAnalysis.sourceTextHash = "c".repeat(64);
+  sourceBoundPayload.ahaSer.sourceTextHash = "c".repeat(64);
   storage.setItem(AUTO_OUTPUT_STORAGE_KEY, JSON.stringify({
     sourceText: evaluationSource,
-    sourceTextHash: "hash_evaluation",
-    payload: stalePentecostPayload
+    sourceTextHash: "c".repeat(64),
+    payload: sourceBoundPayload
   }));
   const win = loadSmokeModule(storage);
   const repaired = win.AHAAutoOutputSourceBinding.repairStored();
 
-  assert.equal(repaired.payload.sourceTextHash, undefined);
-  assert.equal(repaired.payload.source_binding.status, "invalid_semantic_topic_mismatch");
-  assert.equal(repaired.payload.source_binding.valid, false);
+  assert.equal(repaired.payload.source_binding.status, "verified");
+  assert.equal(repaired.payload.source_binding.valid, true);
   assert.equal(repaired.sourceBinding.semanticTopicReport.valid, false);
-  assert.ok(repaired.sourceBinding.invalidFields.some((item) => item.status === "invalid_semantic_topic_mismatch"));
+  assert.equal(repaired.sourceBinding.invalidFields.length, 0);
+  assert.ok(repaired.sourceBinding.rejectedTopicFields.some((item) => item.status === "invalid_semantic_topic_mismatch"));
 }
 
 {
@@ -178,12 +184,12 @@ const stalePentecostPayload = {
   const win = loadSmokeModule(makeLocalStorage(), { AHAChatExport: exporter });
   const bundle = win.AHAChatExport.buildAhaAnalysisExportBundle({});
 
-  assert.equal(bundle.quality.status, "invalid_topic_mismatch");
-  assert.equal(bundle.quality.failClosed, true);
+  assert.equal(bundle.quality.status, "valid_with_rejected_topic_fields");
+  assert.equal(bundle.quality.failClosed, false);
   assert.equal(bundle.quality.topicConsistency.status, "invalid_semantic_topic_mismatch");
   assert.equal(bundle.quality.topicConsistency.valid, false);
   assert.ok(bundle.quality.warnings.includes("semantic_topic_mismatch"));
-  assert.ok(bundle.quality.sourceBinding.invalidFields.some((item) => item.field === "topicConsistency"));
+  assert.ok(bundle.quality.rejectedTopicFields.some((item) => /canonicalAnalysis|afterwork/.test(item.field)));
 }
 
 {

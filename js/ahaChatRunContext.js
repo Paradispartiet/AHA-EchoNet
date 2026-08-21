@@ -64,10 +64,10 @@
       return analysisRunContract.update(run, patch);
     }
 
-    function bindAnalysisArtifact(artifact, run = activeAnalysisRun, field = "") {
+    function bindAnalysisArtifact(artifact, run = activeAnalysisRun, field = "", options = {}) {
       if (!artifact || typeof artifact !== "object" || !run) return artifact;
-      analysisRunContract.bindArtifact(artifact, run, field);
-      artifact.topicLabel = run.topicLabel || artifact.topicLabel || "";
+      analysisRunContract.bindArtifact(artifact, run, field, options);
+      if (options.producer === "current_analysis_run") artifact.topicLabel = run.topicLabel || artifact.topicLabel || "";
       return artifact;
     }
 
@@ -75,15 +75,9 @@
       if (!artifact || typeof artifact !== "object" || !run) return false;
       const artifactRunId = String(artifact.analysisRunId || artifact.runId || "");
       const activeRunId = String(run.analysisRunId || run.runId || "");
-      if (artifactRunId || activeRunId) {
-        if (!(artifactRunId && activeRunId && artifactRunId === activeRunId)) return false;
-        const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.normalizedSourceHash || artifact.sourceFingerprint || "");
-        return !(hash && run.sourceHash && hash !== run.sourceHash);
-      }
-      const hasRunIds = artifact.analysisId || artifact.sourceId;
-      if (hasRunIds) return String(artifact.analysisId || "") === run.analysisId && String(artifact.sourceId || "") === run.sourceId;
-      const hash = String(artifact.sourceHash || artifact.sourceTextHash || artifact.sourceFingerprint || "");
-      return Boolean(hash && hash === run.sourceHash);
+      if (!(artifactRunId && activeRunId && artifactRunId === activeRunId)) return false;
+      const hash = String(artifact.source_sha256 || artifact.sourceSha256 || artifact.sourceHash || artifact.sourceTextHash || artifact.normalizedSourceHash || artifact.sourceFingerprint || "");
+      return Boolean(/^[a-f0-9]{64}$/i.test(hash) && hash === run.sourceHash);
     }
 
     function isActiveAnalysisRun(run) {
@@ -147,9 +141,8 @@
           const keep = score >= 0.08;
           if (!keep) rejected.push({ title: item?.title || item?.sourceId || "retrieval", score });
           else {
-            item.analysisId = run?.analysisId || item.analysisId;
-            item.sourceIdForAnalysis = run?.sourceId || item.sourceIdForAnalysis;
-            item.sourceHash = run?.sourceHash || item.sourceHash;
+            item.relatedToAnalysisId = run?.analysisId || item.relatedToAnalysisId;
+            item.relatedToSourceId = run?.sourceId || item.relatedToSourceId;
             item.relevanceToActiveSource = score;
           }
           return keep;
@@ -175,9 +168,8 @@
         const keep = score >= 0.08;
         if (!keep) rejected.push({ title: insight?.title || insight?.id || "memory", score });
         else if (insight && typeof insight === "object") {
-          insight.analysisId = run?.analysisId || insight.analysisId;
-          insight.sourceIdForAnalysis = run?.sourceId || insight.sourceIdForAnalysis;
-          insight.sourceHash = run?.sourceHash || insight.sourceHash;
+          insight.relatedToAnalysisId = run?.analysisId || insight.relatedToAnalysisId;
+          insight.relatedToSourceId = run?.sourceId || insight.relatedToSourceId;
           insight.relevanceToActiveSource = score;
         }
         return keep;
@@ -258,7 +250,9 @@
         linkReadPromise = global.AHALinkReader.processUrlsFromMessage(cleanText, {
           subject_id: config.subjectId,
           theme_id: input.getThemeId(),
-          field_id: input.getFieldId()
+          field_id: input.getFieldId(),
+          reference_only: !urlInfo.isSourceAction,
+          primary_source_kind: urlInfo.isSourceAction ? "url" : "pasted_text"
         }).catch((err) => {
           global.console.warn("AHA Link Reader feilet", err?.message || err);
         });

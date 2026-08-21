@@ -11,6 +11,7 @@ const tests = [
   "tests/aha-global-footer-daily-sheet.test.cjs",
   "tests/aha-chat-application-composition.test.cjs",
   "tests/aha-chat-golden-output-regression.test.cjs",
+  "tests/aha-source-identity-livsarket-regression.test.cjs",
   "tests/aha-chat-insight-end-to-end-audit.test.cjs",
   "tests/aha-chat-export-source-binding.test.cjs",
   "tests/aha-historygo-import-e2e.test.cjs",

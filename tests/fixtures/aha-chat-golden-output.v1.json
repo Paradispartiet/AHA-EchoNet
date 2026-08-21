@@ -6,7 +6,7 @@
     {
       "fixtureId": "pinse-religion-001",
       "replyMode": "normal",
-      "expectedSourceHash": "o3fx5x",
+      "expectedSourceHash": "77c7e932b9d411153475c1aff440fc1d3797a0a39883dd185f2776b265e3a957",
       "expectedReflection": "Fortellingen om at disiplene mottok Den hellige ånd på pinsedag brukes ofte til å forklare hvorfor kirken gikk fra å være en liten gruppe til en offentlig bevegelse.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["pinse", "Den hellige ånd", "kirkens fødselsdag"],
@@ -15,7 +15,7 @@
     {
       "fixtureId": "morgenbladet-mediehistorie-001",
       "replyMode": "normal",
-      "expectedSourceHash": "n91b97",
+      "expectedSourceHash": "6587317e9c17ec94150e4fb6b451bf5cb00451a4da7255b4bb488e551104c03d",
       "expectedReflection": "Avisens format og redaksjonelle profil har variert over tid, men den har ofte posisjonert seg som et sted for lange resonnementer framfor raske nyhetsoppdateringer.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["Morgenbladet", "redaksjonelle profil", "idédebatt"],
@@ -24,7 +24,7 @@
     {
       "fixtureId": "nav-reform-forvaltning-001",
       "replyMode": "normal",
-      "expectedSourceHash": "e7r70w",
+      "expectedSourceHash": "887db86709cae9d7429a5ba4b5d06d9fb2a1bfaa6cc26585436b220a61a7fe4a",
       "expectedReflection": "Reformen viser spenningen mellom politisk samordning og operativ gjennomføring.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["NAV-reformen", "velferdsforvaltningen", "styringsutfordringer"],
@@ -33,7 +33,7 @@
     {
       "fixtureId": "litteraer-tilknytning-001",
       "replyMode": "normal",
-      "expectedSourceHash": "mnfti2",
+      "expectedSourceHash": "793e448411eb9b2cc8a89d1e3bb43e915762135864d959a13f44f6f3fad9507e",
       "expectedReflection": "Leses teksten gjennom tilknytningsteori, kan denne pendlingen forstås som et mønster av ambivalent tilknytning.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["tilknytningsteori", "ambivalent tilknytning", "narrativ form"],
@@ -42,7 +42,7 @@
     {
       "fixtureId": "dagbok-refleksjon-001",
       "replyMode": "normal",
-      "expectedSourceHash": "68ovbq",
+      "expectedSourceHash": "604a1f182fb9ee2e61b98dd586a2c841e3ea4b77a06503815a6aa569d4499759",
       "expectedReflection": "Dette leses som en dagslogg med fokus på motivert, og et tydelig behov for å se mønster i dagen.",
       "expectedSummary": "Kort dagsoppsummering: I dag kjente jeg meg både motivert og urolig. Jeg fikk gjort mye arbeid, men satt igjen med en følelse av at jeg ikke var til stede i samtaler med andre. Viktigst nå: motivert.",
       "requiredTerms": ["produktivitet", "nærvær", "vanskelige valg"],
@@ -51,7 +51,7 @@
     {
       "fixtureId": "prosjektplan-teknisk-001",
       "replyMode": "normal",
-      "expectedSourceHash": "c8l6x8",
+      "expectedSourceHash": "bf5eda8e196a3fe619d8320ead7d8c4115dee3187f27b19615b2599e3e79a5d4",
       "expectedReflection": "Dette er et prosjektnotat med tydelig problem og mål. Neste gevinst ligger i å koble løsning til konkrete filer/funksjoner.",
       "expectedSummary": "Ikke nok dagsmateriale ennå.",
       "requiredTerms": ["analyseklassifisering", "stabile grensesnitt", "testdata"],
@@ -60,7 +60,7 @@
     {
       "fixtureId": "juridisk-tekst-001",
       "replyMode": "normal",
-      "expectedSourceHash": "owu3gq",
+      "expectedSourceHash": "3ca74407df9ca432ec937072477e7988567deece8ca2428520d3b5fcc61245f9",
       "expectedReflection": "Dersom mindre inngripende tiltak kan oppnå samme resultat, taler dette mot å opprettholde vedtaket.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["hjemmel i lov", "legitimt formål", "forholdsmessig"],
@@ -69,7 +69,7 @@
     {
       "fixtureId": "uklar-tekst-001",
       "replyMode": "normal",
-      "expectedSourceHash": "qrdr7j",
+      "expectedSourceHash": "08c49af9693304fdb209f1d79272209d97270fd0741afa2851ab4d24bbf41f02",
       "expectedReflection": "Jeg ser et tydelig tema. Del gjerne litt mer for skarpere sortering.",
       "expectedSummary": "Ikke nok dagsmateriale ennå.",
       "requiredTerms": ["lav informasjonsdensitet", "foreløpig", "konkret eksempel"],
@@ -78,7 +78,7 @@
     {
       "fixtureId": "morgenbladet-offentlighet-002",
       "replyMode": "normal",
-      "expectedSourceHash": "cael0p",
+      "expectedSourceHash": "792e5550bc44e061ebef551d9a1d05a53d9bbf0df234238d19819468fbdfaafe",
       "expectedReflection": "Når redaksjonen prioriterer langsom journalistikk framfor kontinuerlig nyhetsstrøm, blir avisen også et eksempel på hvordan medieinstitusjoner former tempoet i offentlig samtale.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["Morgenbladet", "langsom journalistikk", "dannelsesoffentlighet"],
@@ -87,7 +87,7 @@
     {
       "fixtureId": "nav-reform-brukermoete-002",
       "replyMode": "normal",
-      "expectedSourceHash": "7sy5f6",
+      "expectedSourceHash": "11f944ee5373580c739ff1a0138990e5dcebeee2b2647267c0dcfbb4e81443f2",
       "expectedReflection": "I praksis møtte reformen ulike etatskulturer, digitale systemer og styringslinjer som gjorde samordning vanskelig.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["NAV-reformen", "brukermøtet", "uklart ansvar"],
@@ -96,7 +96,7 @@
     {
       "fixtureId": "refleksjon-laering-feil-001",
       "replyMode": "normal",
-      "expectedSourceHash": "7kehm3",
+      "expectedSourceHash": "a6e68cde73c0c3f730efaf9efe54b650a2511cfa65f32681a977d00214e1d46f",
       "expectedReflection": "Dette leses som en dagslogg med fokus på nederlag, og et tydelig behov for å se mønster i dagen.",
       "expectedSummary": "Kort dagsoppsummering: Jeg merker at jeg lærer mest når jeg tør å se på feilene mine uten å gjøre dem til et nederlag. Når jeg skriver ned hva som faktisk skjedde, husker jeg mønstrene bedre neste gang. Viktigst nå: nederlag.",
       "requiredTerms": ["lærer", "feilene", "små justeringer"],
@@ -105,7 +105,7 @@
     {
       "fixtureId": "refleksjon-byrom-uro-001",
       "replyMode": "normal",
-      "expectedSourceHash": "rxfaex",
+      "expectedSourceHash": "783a344413830f7ede0e6bd9cdd3ded3f3184bfb357a1fc5c70129a12ae0f629",
       "expectedReflection": "Dette leses som en dagslogg med fokus på folkestrømmen, og et tydelig behov for å se mønster i dagen.",
       "expectedSummary": "Kort dagsoppsummering: I dag kjente jeg uro da jeg prøvde å arbeide på den travle plassen ved trikken. Det var ikke bare lyden, men rytmen i folkestrømmen som dro tankene mine bort fra teksten. Viktigst nå: folkestrømmen.",
       "requiredTerms": ["byrom", "folkestrømmen", "situert erfaring"],
@@ -114,7 +114,7 @@
     {
       "fixtureId": "historygo-eidsvoll-grunnloven-001",
       "replyMode": "normal",
-      "expectedSourceHash": "u7clnv",
+      "expectedSourceHash": "bcf9469a2a8e2e765fb82b7b5cbc51dce59e2087f3e434ef97e5ed8358888941",
       "expectedReflection": "Grunnloven samlet forestillinger om folkestyre, rettigheter og nasjonsbygging, men den viste også grensene for hvem som ble regnet som politiske deltakere.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["Eidsvoll", "Grunnloven", "demokratiet"],
@@ -123,7 +123,7 @@
     {
       "fixtureId": "historygo-bislett-stadion-001",
       "replyMode": "detailed",
-      "expectedSourceHash": "f0uxzs",
+      "expectedSourceHash": "2ff07645eb37acc9d8dd053cff75168697e42517ff01b170a19a5327a99da4f5",
       "expectedReflection": "Samtidig viser ombygging og publikumsbruk hvordan sportshistorie, arkitektur og byutvikling veves sammen i ett sosialt rom.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["Bislett stadion", "byrom", "lokal identitet"],
@@ -132,7 +132,7 @@
     {
       "fixtureId": "uklar-fragmentert-002",
       "replyMode": "normal",
-      "expectedSourceHash": "ipvp3n",
+      "expectedSourceHash": "c79faf2affe4f08e430f16ff2074ada053e329f579b1aec64775173c6854125e",
       "expectedReflection": "Jeg ser et tydelig tema. Del gjerne litt mer for skarpere sortering.",
       "expectedSummary": "Ikke nok dagsmateriale ennå.",
       "requiredTerms": ["kort og fragmentert", "lav sikkerhet", "konkret eksempel"],
@@ -141,7 +141,7 @@
     {
       "fixtureId": "tverrfaglig-ai-laering-001",
       "replyMode": "normal",
-      "expectedSourceHash": "r3i43h",
+      "expectedSourceHash": "202858c03395ed74befff5f36b8f192748d866c5061472559bc3f16d3e545080",
       "expectedReflection": "Teknologien kan gjøre flere perspektiver tilgjengelige raskere, men den kan også skjule usikkerhet dersom svarene tas som fasit.",
       "expectedSummary": "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
       "requiredTerms": ["AI", "kollektiv kunnskap", "menneskelig vurdering"],

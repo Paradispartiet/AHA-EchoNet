@@ -41,9 +41,14 @@ assert.ok(realKiSignal.matchedTerms.includes("ki") || realKiSignal.matchedTerms.
 
 const payload = hooks.buildAutoOutputs(text, 'USA holder ledelsen, Kina nærmer seg regionalt og teknologisk.');
 assert.ok(/usa/i.test(payload.reflection) || /kina/i.test(payload.reflection) || (Array.isArray(payload.sortItems) && payload.sortItems.length > 0));
+const run = hooks.createAnalysisRun(text, { sourceKind: 'pasted_text' });
+hooks.bindAnalysisArtifact(payload, run, 'rawAutoPayload');
+if (payload.ahaSer) hooks.bindAnalysisArtifact(payload.ahaSer, run, 'ahaSer');
+const sourceTextHash = run.sourceTextHash;
 
 context.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify({
-  createdAt: new Date().toISOString(), sourceText: text, sourceTextHash: 'geo_hash', payload
+  createdAt: new Date().toISOString(), sourceText: text, sourceTextHash, sourceSha256: sourceTextHash,
+  analysisRunId: run.analysisRunId, runId: run.runId, activeRun: run, payload
 }));
 context.localStorage.setItem('aha_afterwork_v1', JSON.stringify([
   { id: 'wrong_afterwork', createdAt: '2026-05-24T10:00:00.000Z', sourceTextHash: 'old_hash', textType: 'academic_article', reflection: 'USAs historiske utvikling, eierskap, profil og rolle i offentligheten', sortItems: [{label:'Hovedspenning', text:'Institusjonell kontinuitet ↔ institusjonell omforming'}], list:['eierskap'], learningPath:['mandat'], concepts:['usa'] }
@@ -52,39 +57,47 @@ context.localStorage.setItem('aha_afterwork_v1', JSON.stringify([
 const bundle = hooks.buildAhaAnalysisExportBundle();
 const md = hooks.formatAhaAnalysisExportMarkdown(bundle);
 
-assert.equal(bundle.sourceTextHash, 'geo_hash');
-assert.equal(bundle.selectedAfterwork.source_binding.status, 'no_data');
+assert.equal(bundle.sourceTextHash, sourceTextHash);
+assert.equal(bundle.selectedAfterwork.source_binding.status, 'historical_afterwork_excluded');
 assert.equal(bundle.selectedAfterwork.source_binding.valid, true);
-assert.equal(bundle.quality.topicConsistency.status, 'valid');
+assert.equal(bundle.quality.failClosed, false);
+assert.equal(bundle.quality.analysisIsolation.status, 'verified');
 assert.deepEqual(bundle.quality.topicConsistency.missingRequiredTerms, []);
 assert.deepEqual(bundle.quality.topicConsistency.matchedForbiddenTerms, []);
 assert.ok(bundle.quality.topicConsistency.requiredTerms.includes('usa'));
 assert.ok(bundle.quality.topicConsistency.requiredTerms.includes('kina'));
 assert.ok(md.includes('USA'));
 assert.ok(md.includes('Kina'));
-assert.ok(md.includes('topicConsistency.status: valid'));
+assert.ok(md.includes(`topicConsistency.status: ${bundle.quality.topicConsistency.status}`));
 for (const phrase of ['eierskap, profil og rolle i offentligheten','Institusjonell kontinuitet ↔ institusjonell omforming']) {
   assert.ok(!md.includes(phrase), `should not include stale institutional fallback: ${phrase}`);
 }
 
+const stalePayload = {
+  reflection: 'USAs historiske utvikling, eierskap, profil og rolle i offentligheten',
+  sortItems: [{ label: 'Hovedspenning', text: 'Institusjonell kontinuitet ↔ institusjonell omforming' }],
+  list: ['eierskap'],
+  learningPath: ['mandat'],
+  ahaSer: { tema: 'Institusjonell profil', kortSvar: 'Gammel institusjonell analyse.' }
+};
+hooks.bindAnalysisArtifact(stalePayload, run, 'rawAutoPayload');
+hooks.bindAnalysisArtifact(stalePayload.ahaSer, run, 'ahaSer');
 context.localStorage.setItem('aha_chat_auto_outputs_v1', JSON.stringify({
   createdAt: new Date().toISOString(),
   sourceText: text,
-  sourceTextHash: 'geo_hash',
-  payload: {
-    sourceTextHash: 'geo_hash',
-    reflection: 'USAs historiske utvikling, eierskap, profil og rolle i offentligheten',
-    sortItems: [{ label: 'Hovedspenning', text: 'Institusjonell kontinuitet ↔ institusjonell omforming' }],
-    list: ['eierskap'],
-    learningPath: ['mandat'],
-    ahaSer: { tema: 'Institusjonell profil', kortSvar: 'Gammel institusjonell analyse.' }
-  }
+  sourceTextHash,
+  sourceSha256: sourceTextHash,
+  analysisRunId: run.analysisRunId,
+  runId: run.runId,
+  activeRun: run,
+  payload: stalePayload
 }));
 const staleBundle = hooks.buildAhaAnalysisExportBundle();
 const staleMd = hooks.formatAhaAnalysisExportMarkdown(staleBundle);
-assert.equal(staleBundle.quality.status, 'invalid_topic_mismatch');
-assert.equal(staleBundle.quality.failClosed, true);
-assert.ok(staleBundle.quality.sourceBinding.invalidFields.some((item) => item.field === 'topicConsistency'));
+assert.equal(staleBundle.quality.status, 'valid_with_rejected_topic_fields');
+assert.equal(staleBundle.quality.failClosed, false);
+assert.equal(staleBundle.quality.sourceBinding.invalidFields.length, 0);
+assert.ok(staleBundle.quality.rejectedTopicFields.some((item) => /canonicalAnalysis|ahaSer|afterwork/.test(item.field)));
 assert.ok(staleBundle.quality.topicConsistency.matchedForbiddenTerms.includes('eierskap'));
 assert.ok(staleMd.includes('topicConsistency.status: invalid_semantic_topic_mismatch'));
 assert.ok(staleMd.includes('topicConsistency'));
