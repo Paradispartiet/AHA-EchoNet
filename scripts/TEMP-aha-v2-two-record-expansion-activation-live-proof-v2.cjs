@@ -384,6 +384,7 @@ async function runActivationSequence(parity, executedAssets) {
   };
   const storage = makeStorage({ insights: [clone(sentinel)] });
   const sentinelBefore = chamberRecord(storage, sentinel.id);
+  const chamberBeforeActivation = chamberSnapshot(storage);
   const lockManager = makeExclusiveLockManager();
 
   const activationDeps = {
@@ -502,7 +503,7 @@ async function runActivationSequence(parity, executedAssets) {
   const sentinelAfterRollback1 = chamberRecord(storage, sentinel.id);
   assert.equal(same(sentinelAfterRollback1, sentinelBefore), true, "full sentinel record changed after rollback 1");
   assert.equal(chamberRecord(storage, canonicalIds[0]), null);
-  assert.equal(same(chamberSnapshot(storage), stable({ insights: [sentinelBefore] })), true, "final Chamber must equal exact sentinel-only pre-state");
+  assert.equal(same(chamberSnapshot(storage), chamberBeforeActivation), true, "final Chamber must equal exact pre-activation state");
   assert.equal(expansion.getStatus().created_record_count, 2);
   assert.equal(expansion.getStatus().expansion_complete, true);
 
@@ -547,7 +548,7 @@ async function runActivationSequence(parity, executedAssets) {
     rollback_second_full_first_record_preserved: same(firstCanonicalAfterRollback2, firstCanonicalBeforeRollbacks),
     rollback_first_status: rolled1.status,
     rollback_first_full_sentinel_preserved: same(sentinelAfterRollback1, sentinelBefore),
-    final_chamber_exact_sentinel_only: same(chamberSnapshot(storage), stable({ insights: [sentinelBefore] })),
+    final_chamber_exact_pre_activation_state: same(chamberSnapshot(storage), chamberBeforeActivation),
     lifetime_count_after_rollbacks: expansion.getStatus().created_record_count,
     fresh_wrapper_third_write_error: freshThirdError,
     audit_event_count: fresh.getAudit().length,
@@ -617,7 +618,7 @@ async function run() {
       rollback_second_full_first_record_preserved: activation.rollback_second_full_first_record_preserved,
       rollback_first_status: activation.rollback_first_status,
       rollback_first_full_sentinel_preserved: activation.rollback_first_full_sentinel_preserved,
-      final_chamber_exact_sentinel_only: activation.final_chamber_exact_sentinel_only,
+      final_chamber_exact_pre_activation_state: activation.final_chamber_exact_pre_activation_state,
       lifetime_count_after_rollbacks: activation.lifetime_count_after_rollbacks,
       fresh_wrapper_third_write_error: activation.fresh_wrapper_third_write_error,
       audit_event_count: activation.audit_event_count,
@@ -662,7 +663,7 @@ async function run() {
   assert.equal(proof.activation.rollback_second_full_sentinel_preserved, true);
   assert.equal(proof.activation.rollback_second_full_first_record_preserved, true);
   assert.equal(proof.activation.rollback_first_full_sentinel_preserved, true);
-  assert.equal(proof.activation.final_chamber_exact_sentinel_only, true);
+  assert.equal(proof.activation.final_chamber_exact_pre_activation_state, true);
   assert.equal(proof.activation.rollback_lock.max_active, 1);
   assert.deepEqual(proof.activation.rollback_lock.names, [ROLLBACK_LOCK_NAME, ROLLBACK_LOCK_NAME]);
   assert.deepEqual(proof.activation.rollback_lock.modes, ["exclusive", "exclusive"]);
@@ -683,6 +684,7 @@ async function run() {
     created_record_count: proof.activation.created_record_count,
     full_sentinel_preserved_after_both_rollbacks: proof.activation.rollback_second_full_sentinel_preserved && proof.activation.rollback_first_full_sentinel_preserved,
     first_record_preserved_during_second_rollback: proof.activation.rollback_second_full_first_record_preserved,
+    final_chamber_exact_pre_activation_state: proof.activation.final_chamber_exact_pre_activation_state,
     rollback_lock_max_active: proof.activation.rollback_lock.max_active,
     rollback_lock_modes: proof.activation.rollback_lock.modes,
     third_write_error: proof.activation.third_write_error,
