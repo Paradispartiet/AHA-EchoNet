@@ -261,6 +261,56 @@
     return [primary, ...references].filter(Boolean);
   }
 
+  function semanticEvidence(spans) {
+    return array(spans).map((span) => ({
+      excerpt: text(span?.text),
+      start: Number(span?.start_offset),
+      end: Number(span?.end_offset)
+    })).filter((item) => item.excerpt && Number.isInteger(item.start) && Number.isInteger(item.end) && item.end > item.start);
+  }
+
+  function semanticRecords(document) {
+    const src = object(document);
+    return {
+      claim_records: array(src.claims).map((item) => ({
+        id: text(item?.id),
+        text: text(item?.text),
+        mentioned_concept_ids: uniqueText(item?.mentioned_concept_ids),
+        epistemic_status: text(item?.epistemic_status),
+        origin: text(item?.origin),
+        evidence: semanticEvidence(item?.spans)
+      })).filter((item) => item.id && item.text),
+      relation_records: array(src.relations).map((item) => ({
+        id: text(item?.id),
+        type: text(item?.type),
+        from_id: text(item?.from_id),
+        to_id: text(item?.to_id),
+        epistemic_status: text(item?.epistemic_status),
+        origin: text(item?.origin),
+        evidence: semanticEvidence(item?.evidence_spans)
+      })).filter((item) => item.id && item.type && item.from_id && item.to_id),
+      tension_records: array(src.tensions).map((item) => ({
+        id: text(item?.id),
+        label: text(item?.label),
+        epistemic_status: text(item?.epistemic_status),
+        origin: text(item?.origin),
+        evidence: semanticEvidence(item?.evidence_spans)
+      })).filter((item) => item.id && item.label),
+      approved_insight_records: array(src.candidate_insights).filter((item) => item?.status === "approved" && item?.eligible_for_current_analysis === true).map((item) => ({
+        id: text(item?.id),
+        insight: text(item?.insight),
+        type: text(item?.type),
+        abstraction: text(item?.abstraction),
+        why_it_matters: text(item?.why_it_matters),
+        confidence: text(item?.confidence),
+        uncertainty: text(item?.uncertainty),
+        causal_status: text(item?.causal_status),
+        origin: text(item?.origin),
+        evidence: array(item?.evidence).flatMap((entry) => semanticEvidence(entry?.spans))
+      })).filter((item) => item.id && item.insight)
+    };
+  }
+
   function validateField(field, identity, path, errors) {
     if (!field || typeof field !== "object" || Array.isArray(field)) {
       errors.push(`${path}:field_invalid`);
@@ -323,12 +373,33 @@
       for (const key of ["concept_ids", "claim_ids", "relation_ids", "tension_ids", "candidate_insight_ids", "approved_insight_ids", "blocked_candidate_insight_ids"]) {
         if (!Array.isArray(semantic[key])) errors.push(`semantic_document_${key}_invalid`);
       }
+      for (const key of ["claim_records", "relation_records", "tension_records", "approved_insight_records"]) {
+        if (key in semantic && !Array.isArray(semantic[key])) errors.push(`semantic_document_${key}_invalid`);
+      }
       const candidateIds = new Set(array(semantic.candidate_insight_ids));
       const approvedIds = array(semantic.approved_insight_ids);
       const blockedIds = array(semantic.blocked_candidate_insight_ids);
       approvedIds.forEach((id) => { if (!candidateIds.has(id)) errors.push("semantic_document_approved_candidate_unknown"); });
       blockedIds.forEach((id) => { if (!candidateIds.has(id)) errors.push("semantic_document_blocked_candidate_unknown"); });
       if (approvedIds.some((id) => blockedIds.includes(id))) errors.push("semantic_document_candidate_status_overlap");
+      const claimIds = new Set(array(semantic.claim_ids));
+      const conceptIds = new Set(array(semantic.concept_ids));
+      const relationIds = new Set(array(semantic.relation_ids));
+      const tensionIds = new Set(array(semantic.tension_ids));
+      array(semantic.claim_records).forEach((record) => {
+        if (!claimIds.has(record?.id) || !text(record?.text)) errors.push("semantic_document_claim_record_invalid");
+      });
+      array(semantic.relation_records).forEach((record) => {
+        if (!relationIds.has(record?.id) || !claimIds.has(record?.from_id) || !conceptIds.has(record?.to_id) || !text(record?.type)) {
+          errors.push("semantic_document_relation_record_invalid");
+        }
+      });
+      array(semantic.tension_records).forEach((record) => {
+        if (!tensionIds.has(record?.id) || !text(record?.label)) errors.push("semantic_document_tension_record_invalid");
+      });
+      array(semantic.approved_insight_records).forEach((record) => {
+        if (!approvedIds.includes(record?.id) || !text(record?.insight)) errors.push("semantic_document_approved_insight_record_invalid");
+      });
       const gate = object(semantic.synthesis_gate);
       if (gate.authoritative !== true) errors.push("semantic_document_synthesis_gate_not_authoritative");
       if (gate.approved_count !== approvedIds.length || gate.blocked_count !== blockedIds.length || gate.candidate_count !== candidateIds.size) {
@@ -401,18 +472,21 @@
       .map((item, index) => {
         const src = object(item);
         const label = text(src.title || src.label || src.subject_label || src.subject_id || item);
-        if (!label) return null;
+        const score = Number(src.score);
+        const explanation = text(src.explanation || src.reason);
+        const subjectEvidence = uniqueText([...evidenceCandidates(item), ...array(src.matched_terms)]);
+        if (!label || !Number.isFinite(score) || score < 0.8 || !explanation || !subjectEvidence.length) return null;
         return make("subjects.item", {
           subject_id: text(src.subject_id || src.id),
           label,
-          score: Number.isFinite(Number(src.score)) ? Number(src.score) : null,
-          explanation: text(src.explanation || src.reason)
+          score,
+          explanation
         }, {
           valueType: "record",
           raw: item,
           itemId: text(src.subject_id || src.id) || `subject_${index + 1}_${stableToken(label)}`,
           semanticIds: [src.semantic_id, src.semanticId],
-          additionalEvidence: evidenceCandidates(item)
+          additionalEvidence: subjectEvidence
         });
       })
       .filter(Boolean);
@@ -501,6 +575,7 @@
         candidate_insight_ids: uniqueText(array(semanticDocument.candidate_insights).map((item) => item?.id)),
         approved_insight_ids: uniqueText(array(semanticDocument.candidate_insights).filter((item) => item?.status === "approved").map((item) => item?.id)),
         blocked_candidate_insight_ids: uniqueText(array(semanticDocument.candidate_insights).filter((item) => item?.status === "blocked").map((item) => item?.id)),
+        ...semanticRecords(semanticDocument),
         synthesis_gate: authoritativeSemantic ? {
           schema: text(semanticDocument.synthesis_gate?.schema),
           quality_gate_schema: text(semanticDocument.synthesis_gate?.quality_gate_schema),
@@ -643,6 +718,285 @@
     legacyGlobal: "AHAAnalysisBundleV2",
     exports: Object.keys(api)
   });
+})(typeof window !== "undefined" ? window : globalThis);
+
+// Authoritative read-only projections for the analysis surface and Knowledge Map.
+// Both models retain the immutable AnalysisBundleV2 identity and never read or
+// write Chamber, product stores, remote services or raw source text.
+(function (global) {
+  "use strict";
+
+  const ANALYSIS_SCHEMA = "aha_analysis_read_model_v2";
+  const KNOWLEDGE_SCHEMA = "aha_knowledge_map_read_model_v2";
+  const READ_ITEM_SCHEMA = "aha_analysis_read_item_v2";
+  const VERSION = 2;
+  const CLOSED_POLICY = Object.freeze({
+    read_only: true,
+    product_store_write: false,
+    automatic_product_write: false,
+    chamber_write: false,
+    canonical_write: false,
+    meta_write: false,
+    remote_write: false,
+    sync_write: false,
+    direct_materialization: false,
+    legacy_chamber_merge: false
+  });
+
+  function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+  function array(value) { return Array.isArray(value) ? value : []; }
+  function text(value) {
+    if (value == null) return "";
+    if (["string", "number", "boolean"].includes(typeof value)) return String(value).replace(/\s+/g, " ").trim();
+    const src = object(value);
+    return text(src.insight || src.text || src.label || src.title || src.name || src.summary || src.value);
+  }
+  function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+  function deepFreeze(value, seen = new Set()) {
+    if (!value || typeof value !== "object" || seen.has(value)) return value;
+    seen.add(value);
+    Object.keys(value).forEach((key) => deepFreeze(value[key], seen));
+    return Object.freeze(value);
+  }
+  function stableToken(value) {
+    let hash = 2166136261;
+    const input = String(value || "");
+    for (let i = 0; i < input.length; i += 1) { hash ^= input.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    return (hash >>> 0).toString(36);
+  }
+  function isSha256(value) { return /^[a-f0-9]{64}$/u.test(text(value).toLowerCase()); }
+  function allItems(value, out = []) {
+    if (!value || typeof value !== "object") return out;
+    if (value.schema === READ_ITEM_SCHEMA) { out.push(value); return out; }
+    if (Array.isArray(value)) value.forEach((item) => allItems(item, out));
+    else Object.values(value).forEach((item) => allItems(item, out));
+    return out;
+  }
+  function visibleField(field, surface) {
+    if (field?.schema !== "aha_analysis_field_v2") return false;
+    if (field.topic?.status === "rejected" || field.quality?.status === "rejected") return false;
+    if (surface === "sources") return field.value_type === "record";
+    if (field.quality?.status !== "passed") return false;
+    if (surface === "subjects") {
+      const value = object(field.value);
+      return Number.isFinite(Number(value.score)) && Number(value.score) >= 0.8
+        && Boolean(text(value.explanation)) && array(field.provenance?.evidence).length > 0;
+    }
+    return true;
+  }
+  function insightDisplay(field, semantic) {
+    const semanticId = array(field?.semantic_ids)[0];
+    const record = array(semantic?.approved_insight_records).find((item) => item?.id === semanticId) || {};
+    return {
+      insight: text(record.insight || field?.value),
+      type: text(record.type),
+      abstraction: text(record.abstraction),
+      why_it_matters: text(record.why_it_matters),
+      confidence: text(record.confidence),
+      uncertainty: text(record.uncertainty),
+      causal_status: text(record.causal_status)
+    };
+  }
+  function readItem(field, semantic, identity) {
+    return {
+      schema: READ_ITEM_SCHEMA,
+      item_id: text(field?.item_id),
+      field_id: text(field?.field_id),
+      value_type: text(field?.value_type),
+      value: clone(field?.value),
+      display: field?.field_id === "insights.item" ? insightDisplay(field, semantic) : clone(field?.value),
+      analysis_id: text(identity?.analysis_id),
+      source_sha256: text(field?.source_sha256),
+      analysis_run_id: text(field?.analysis_run_id),
+      source_id: text(field?.source_id),
+      semantic_ids: clone(array(field?.semantic_ids)),
+      provenance: clone(object(field?.provenance)),
+      topic: clone(object(field?.topic)),
+      quality: clone(object(field?.quality))
+    };
+  }
+  function mapFields(value, surface, semantic, identity, blocked) {
+    if (Array.isArray(value)) return value.map((field) => {
+      if (!visibleField(field, surface)) { if (field?.item_id) blocked.push(field.item_id); return null; }
+      return readItem(field, semantic, identity);
+    }).filter(Boolean);
+    return Object.fromEntries(Object.entries(object(value)).map(([key, field]) => {
+      if (!field) return [key, null];
+      if (!visibleField(field, surface)) { if (field?.item_id) blocked.push(field.item_id); return [key, null]; }
+      return [key, readItem(field, semantic, identity)];
+    }));
+  }
+  function validateAnalysis(model) {
+    const value = object(model); const errors = [];
+    if (value.schema !== ANALYSIS_SCHEMA || value.version !== VERSION) errors.push("schema_invalid");
+    if (!text(value.identity?.analysis_id)) errors.push("analysis_id_missing");
+    if (!text(value.identity?.analysis_run_id)) errors.push("analysis_run_id_missing");
+    if (!text(value.identity?.source_id)) errors.push("source_id_missing");
+    if (!isSha256(value.identity?.source_sha256)) errors.push("source_sha256_invalid");
+    for (const surface of global.AHAAnalysisBundleV2?.SURFACES || []) {
+      if (!(surface in object(value.sections))) errors.push(`section_missing:${surface}`);
+    }
+    for (const item of allItems(value.sections)) {
+      if (item.analysis_id !== value.identity?.analysis_id) errors.push("item_analysis_mismatch");
+      if (item.source_sha256 !== value.identity?.source_sha256) errors.push("item_source_mismatch");
+      if (item.analysis_run_id !== value.identity?.analysis_run_id) errors.push("item_run_mismatch");
+      if (item.source_id !== value.identity?.source_id) errors.push("item_source_id_mismatch");
+    }
+    if (Object.entries(CLOSED_POLICY).some(([key, expected]) => value.policy?.[key] !== expected)) errors.push("read_policy_open");
+    return deepFreeze({ valid: errors.length === 0, errors: Array.from(new Set(errors)).sort() });
+  }
+  function buildAnalysis(bundle) {
+    const bundleApi = global.AHAAnalysisBundleV2;
+    const verified = bundleApi?.hydrate?.(bundle);
+    if (!verified) return null;
+    const blocked = [];
+    const semantic = object(verified.semantic_document);
+    const sections = Object.fromEntries(bundleApi.SURFACES.map((surface) => [surface, mapFields(verified.surfaces[surface], surface, semantic, verified.identity, blocked)]));
+    const model = {
+      schema: ANALYSIS_SCHEMA,
+      version: VERSION,
+      read_model_id: `analysis_read_${stableToken(verified.bundle_id)}`,
+      status: verified.status === "invalid" ? "invalid" : blocked.length ? "incomplete" : "ready",
+      identity: clone(verified.identity),
+      semantic_document: clone(semantic),
+      sections,
+      blocked_field_ids: Array.from(new Set(blocked)).sort(),
+      quality: {
+        source_bundle_status: verified.status,
+        visible_field_count: allItems(sections).length,
+        blocked_field_count: new Set(blocked).size,
+        synthesis_gate: clone(semantic.synthesis_gate)
+      },
+      validation: { valid: false, errors: [] },
+      policy: clone(CLOSED_POLICY)
+    };
+    model.validation = clone(validateAnalysis(model));
+    if (!model.validation.valid) return null;
+    return deepFreeze(model);
+  }
+  function hydrateAnalysis(value) {
+    const validation = validateAnalysis(value);
+    if (!validation.valid) return null;
+    const model = clone(value); model.validation = clone(validation); return deepFreeze(model);
+  }
+
+  function evidenceFor(item) { return clone(array(item?.provenance?.evidence)); }
+  function node(identity, input) {
+    const historical = text(input.origin_scope) === "historical";
+    return {
+      id: text(input.id), node_type: text(input.node_type), label: text(input.label), summary: text(input.summary),
+      origin_scope: text(input.origin_scope) || "current_analysis",
+      analysis_id: historical ? (text(input.analysis_id) || null) : identity.analysis_id,
+      source_sha256: historical ? text(input.source_sha256) : identity.source_sha256,
+      analysis_run_id: historical ? (text(input.analysis_run_id) || null) : identity.analysis_run_id,
+      source_id: historical ? (text(input.source_id) || null) : identity.source_id,
+      map_analysis_id: identity.analysis_id, map_analysis_run_id: identity.analysis_run_id, map_source_id: identity.source_id, map_source_sha256: identity.source_sha256,
+      semantic_ids: clone(array(input.semantic_ids)), provenance: { origin: text(input.origin), evidence: clone(array(input.evidence)) }
+    };
+  }
+  function edge(identity, input) {
+    return {
+      id: text(input.id) || `edge_${stableToken(`${input.from}|${input.to}|${input.relation_type}`)}`,
+      from: text(input.from), to: text(input.to), relation_type: text(input.relation_type), explanation: text(input.explanation),
+      origin_scope: text(input.origin_scope) || "current_analysis",
+      analysis_id: identity.analysis_id, source_sha256: identity.source_sha256, analysis_run_id: identity.analysis_run_id, source_id: identity.source_id,
+      semantic_ids: clone(array(input.semantic_ids)), provenance: { origin: text(input.origin), evidence: clone(array(input.evidence)) }
+    };
+  }
+  function buildCurrentGraph(readModel) {
+    const identity = readModel.identity;
+    const sourceNodeId = `source_${stableToken(identity.source_id)}`;
+    const nodes = [node(identity, { id: sourceNodeId, node_type: "source", label: "Aktiv primærkilde", summary: `SHA-256 ${identity.source_sha256.slice(0, 12)}…`, origin: "analysis_bundle_v2_identity" })];
+    const addFieldNodes = (items, nodeType) => array(items).forEach((item) => {
+      const semanticId = array(item.semantic_ids)[0];
+      const label = nodeType === "insight" ? text(item.display?.insight) : text(item.display || item.value);
+      if (!label) return;
+      const id = semanticId || `${nodeType}_${stableToken(item.item_id)}`;
+      nodes.push(node(identity, { id, node_type: nodeType, label, summary: nodeType === "insight" ? text(item.display?.why_it_matters) : "", semantic_ids: item.semantic_ids, evidence: evidenceFor(item), origin: item.provenance?.origin }));
+    });
+    addFieldNodes(readModel.sections.insights, "insight");
+    addFieldNodes(readModel.sections.concepts, "concept");
+    array(readModel.semantic_document?.claim_records).forEach((record) => nodes.push(node(identity, { id: record.id, node_type: "claim", label: record.text, semantic_ids: [record.id], evidence: record.evidence, origin: record.origin })));
+    array(readModel.semantic_document?.tension_records).forEach((record) => nodes.push(node(identity, { id: record.id, node_type: "tension", label: record.label, semantic_ids: [record.id], evidence: record.evidence, origin: record.origin })));
+    const dedupedNodes = Array.from(new Map(nodes.filter((item) => item.id).map((item) => [item.id, item])).values());
+    const nodeIds = new Set(dedupedNodes.map((item) => item.id));
+    const edges = dedupedNodes.filter((item) => item.id !== sourceNodeId).map((item) => edge(identity, { from: sourceNodeId, to: item.id, relation_type: "grounded_in_current_source", explanation: "Noden er utledet fra den aktive, SHA-256-bundne kilden.", semantic_ids: item.semantic_ids, evidence: item.provenance.evidence, origin: item.provenance.origin }));
+    array(readModel.semantic_document?.relation_records).forEach((record) => {
+      if (!nodeIds.has(record.from_id) || !nodeIds.has(record.to_id)) return;
+      edges.push(edge(identity, { id: record.id, from: record.from_id, to: record.to_id, relation_type: record.type, explanation: "Eksplisitt semantisk relasjon fra den aktive kilden.", semantic_ids: [record.id], evidence: record.evidence, origin: record.origin }));
+    });
+    return { sourceNodeId, nodes: dedupedNodes, edges: Array.from(new Map(edges.map((item) => [item.id, item])).values()) };
+  }
+  function historicalGraph(readModel, current, historicalRelations) {
+    const identity = readModel.identity; const nodes = []; const edges = [];
+    array(historicalRelations).forEach((relation) => {
+      const src = object(relation); const relationType = text(src.relation || src.relation_type); const historicalId = text(src.id || src.historical_id);
+      const historicalSourceSha256 = text(src.source_sha256 || src.sourceSha256 || src.sourceTextHash);
+      if (!historicalId || !isSha256(historicalSourceSha256) || !["historical_same_source_afterwork", "explicit_historical_relation"].includes(relationType)) return;
+      const id = `historical_${stableToken(`${relationType}|${historicalId}`)}`;
+      nodes.push(node(identity, {
+        id, node_type: "historical_relation", label: text(src.label) || "Tidligere etterarbeid", summary: text(src.createdAt || src.created_at),
+        origin_scope: "historical", origin: relationType, source_sha256: historicalSourceSha256,
+        analysis_id: src.analysis_id || src.analysisId, analysis_run_id: src.analysis_run_id || src.analysisRunId || src.runId, source_id: src.source_id || src.sourceId
+      }));
+      edges.push(edge(identity, { from: current.sourceNodeId, to: id, relation_type: relationType, explanation: "Historisk materiale vises separat gjennom en eksplisitt typed relasjon og beholder egen kildeidentitet.", origin_scope: "historical", origin: relationType, semantic_ids: [] }));
+    });
+    return { nodes, edges };
+  }
+  function validateKnowledge(model) {
+    const value = object(model); const errors = [];
+    if (value.schema !== KNOWLEDGE_SCHEMA || value.version !== VERSION) errors.push("schema_invalid");
+    if (!text(value.identity?.analysis_id)) errors.push("analysis_id_missing");
+    if (!text(value.identity?.analysis_run_id)) errors.push("analysis_run_id_missing");
+    if (!text(value.identity?.source_id)) errors.push("source_id_missing");
+    if (!isSha256(value.identity?.source_sha256)) errors.push("source_sha256_invalid");
+    for (const scopeName of ["current_analysis", "whole_map"]) {
+      const scope = object(value.scopes?.[scopeName]); const ids = new Set(array(scope.nodes).map((item) => item?.id));
+      array(scope.nodes).forEach((item) => {
+        if (item?.map_analysis_id !== value.identity?.analysis_id || item?.map_analysis_run_id !== value.identity?.analysis_run_id || item?.map_source_id !== value.identity?.source_id || item?.map_source_sha256 !== value.identity?.source_sha256) errors.push(`${scopeName}:node_map_identity_mismatch`);
+        if (item?.origin_scope === "historical") {
+          if (!isSha256(item?.source_sha256) || !["historical_same_source_afterwork", "explicit_historical_relation"].includes(text(item?.provenance?.origin))) errors.push(`${scopeName}:historical_node_unbound`);
+        } else if (item?.analysis_id !== value.identity?.analysis_id || item?.source_sha256 !== value.identity?.source_sha256 || item?.analysis_run_id !== value.identity?.analysis_run_id || item?.source_id !== value.identity?.source_id) errors.push(`${scopeName}:node_identity_mismatch`);
+      });
+      array(scope.edges).forEach((item) => {
+        if (!ids.has(item?.from) || !ids.has(item?.to)) errors.push(`${scopeName}:dangling_edge`);
+        if (!text(item?.relation_type) || !text(item?.explanation)) errors.push(`${scopeName}:unexplained_edge`);
+        if (item?.analysis_id !== value.identity?.analysis_id || item?.source_sha256 !== value.identity?.source_sha256 || item?.analysis_run_id !== value.identity?.analysis_run_id || item?.source_id !== value.identity?.source_id) errors.push(`${scopeName}:edge_identity_mismatch`);
+      });
+    }
+    if (array(value.scopes?.current_analysis?.nodes).some((item) => item?.origin_scope === "historical")) errors.push("historical_node_in_current_scope");
+    if (value.policy?.direct_materialization !== false || value.policy?.read_only !== true) errors.push("read_policy_open");
+    return deepFreeze({ valid: errors.length === 0, errors: Array.from(new Set(errors)).sort() });
+  }
+  function buildKnowledge(input = {}) {
+    const readModel = input.analysisReadModel ? hydrateAnalysis(input.analysisReadModel) : buildAnalysis(input.analysisBundleV2 || input.bundle);
+    if (!readModel) return null;
+    const current = buildCurrentGraph(readModel); const historical = historicalGraph(readModel, current, input.historicalRelations);
+    const model = {
+      schema: KNOWLEDGE_SCHEMA, version: VERSION, read_model_id: `knowledge_map_${stableToken(readModel.read_model_id)}`, status: readModel.status,
+      identity: clone(readModel.identity),
+      scopes: {
+        current_analysis: { label: "Denne analysen", nodes: current.nodes, edges: current.edges },
+        whole_map: { label: "Hele Kunnskapskartet", nodes: [...current.nodes, ...historical.nodes], edges: [...current.edges, ...historical.edges] }
+      },
+      quality: { current_node_count: current.nodes.length, historical_node_count: historical.nodes.length, dangling_edge_count: 0 },
+      validation: { valid: false, errors: [] }, policy: clone(CLOSED_POLICY)
+    };
+    model.validation = clone(validateKnowledge(model));
+    if (!model.validation.valid) return null;
+    return deepFreeze(model);
+  }
+  function hydrateKnowledge(value) {
+    const validation = validateKnowledge(value); if (!validation.valid) return null;
+    const model = clone(value); model.validation = clone(validation); return deepFreeze(model);
+  }
+
+  const analysisApi = Object.freeze({ SCHEMA: ANALYSIS_SCHEMA, READ_ITEM_SCHEMA, VERSION, build: buildAnalysis, validate: validateAnalysis, hydrate: hydrateAnalysis });
+  const knowledgeApi = Object.freeze({ SCHEMA: KNOWLEDGE_SCHEMA, VERSION, build: buildKnowledge, validate: validateKnowledge, hydrate: hydrateKnowledge });
+  global.AHAAnalysisReadModelV2 = analysisApi;
+  global.AHAKnowledgeMapReadModelV2 = knowledgeApi;
+  global.AHAModuleApi?.register?.("chat.analysisReadModelV2", analysisApi, { version: VERSION, legacyGlobal: "AHAAnalysisReadModelV2", exports: Object.keys(analysisApi) });
+  global.AHAModuleApi?.register?.("chat.knowledgeMapReadModelV2", knowledgeApi, { version: VERSION, legacyGlobal: "AHAKnowledgeMapReadModelV2", exports: Object.keys(knowledgeApi) });
 })(typeof window !== "undefined" ? window : globalThis);
 
 // ahaChatAnalysisRunContract.js

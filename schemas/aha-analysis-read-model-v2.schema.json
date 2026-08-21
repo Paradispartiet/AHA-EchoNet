@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paradispartiet.github.io/AHA-EchoNet/schemas/aha-analysis-read-model-v2.schema.json",
+  "title": "AHA Analysis Read Model V2",
+  "type": "object",
+  "required": ["schema", "version", "read_model_id", "status", "identity", "semantic_document", "sections", "blocked_field_ids", "quality", "validation", "policy"],
+  "properties": {
+    "schema": { "const": "aha_analysis_read_model_v2" },
+    "version": { "const": 2 },
+    "read_model_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ready", "incomplete", "invalid"] },
+    "identity": {
+      "type": "object",
+      "required": ["analysis_id", "analysis_run_id", "source_id", "source_sha256"],
+      "properties": {
+        "analysis_id": { "type": "string", "minLength": 1 },
+        "analysis_run_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "semantic_document": { "type": "object" },
+    "sections": {
+      "type": "object",
+      "required": ["overview", "insights", "concepts", "conversation_tracks", "subjects", "sources", "source_structure", "afterwork"]
+    },
+    "blocked_field_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "quality": { "type": "object" },
+    "validation": { "type": "object", "required": ["valid", "errors"] },
+    "policy": { "type": "object", "required": ["read_only", "direct_materialization"] }
+  }
+}

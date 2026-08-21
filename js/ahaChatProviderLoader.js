@@ -29,6 +29,8 @@
     conceptPolicy: spec("AHAChatConceptPolicy", ["create"], "create"),
     analysisRunContract: spec("AHAChatAnalysisRunContract"),
     analysisBundleV2: spec("AHAAnalysisBundleV2"),
+    analysisReadModelV2: spec("AHAAnalysisReadModelV2", ["build", "validate", "hydrate"]),
+    knowledgeMapReadModelV2: spec("AHAKnowledgeMapReadModelV2", ["build", "validate", "hydrate"]),
     liveSemanticBridgeV2: spec("AHALiveSemanticBridgeV2", ["build", "validate", "hydrate"]),
     memoryControls: spec("AHAChatMemoryControls", ["create"], "create"),
     afterwork: spec("AHAChatAfterwork", ["create", "createAutoOutputAdapter"], "create"),

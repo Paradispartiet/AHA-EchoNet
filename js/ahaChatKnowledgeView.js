@@ -621,11 +621,9 @@
         ${activeFields.length ? `<p class="knowledge-sub"><strong>Koblinger:</strong> ${activeFields.map(escHtml).join(" ↔ ")}</p>` : ""}
         ${activeNextStep ? `<p class="knowledge-sub"><strong>Neste steg:</strong> ${escHtml(activeNextStep)}</p>` : ""}
         ${activeEvidenceMarkup}
-        <div class="aha-analysis-artifact-actions" aria-label="Bruk den aktive analysen">
-          <button type="button" data-analysis-artifact="mindmap">Lagre som tankekart</button>
-          <button type="button" data-analysis-artifact="path">Lagre som sti</button>
-          <a href="mindmap.html">Åpne tankekart</a>
-          <a href="paths.html">Åpne stier</a>
+        <div class="aha-analysis-artifact-actions" aria-label="Separate read-only produktforhåndsvisninger">
+          <a href="mindmap.html">Åpne separat Tankekart-forhåndsvisning</a>
+          <a href="paths.html">Åpne separat Sti-forhåndsvisning</a>
         </div>
         <div class="aha-analysis-quality-actions" aria-label="Vurder den aktive analysen">
           <span>Var dette treffende?</span>
