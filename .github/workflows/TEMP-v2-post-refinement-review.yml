@@ -1,0 +1,28 @@
+name: TEMP V2 post-refinement product review
+
+on:
+  pull_request:
+    paths:
+      - "tests/TEMP-aha-projection-product-post-refinement-review-v2.test.cjs"
+      - ".github/workflows/TEMP-v2-post-refinement-review.yml"
+      - "js/ahaProjectionArtifactQualityV2.js"
+      - "js/ahaProjectionProductReadModelV2.js"
+      - "js/ahaProjectionProductContractV2.js"
+      - "js/ahaV2ProductIntegrationGate.js"
+      - "js/ahaSemanticProjectionsV2.js"
+      - "tests/fixtures/aha-projection-product-evaluation-v2.json"
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Print post-refinement review packets
+        run: node tests/TEMP-aha-projection-product-post-refinement-review-v2.test.cjs
