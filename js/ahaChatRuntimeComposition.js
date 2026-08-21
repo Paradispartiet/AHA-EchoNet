@@ -140,7 +140,8 @@
           : (chamber?.meta || {});
       },
       setStatusNote: b.setStatusNote,
-      out: b.out
+      out: b.out,
+      analysisBundleV2: modules.analysisBundleV2 || null
     });
     if (!exportRuntime) throw new Error("AHAChatExportRuntime må lastes før ahaChat.js.");
 
@@ -176,7 +177,8 @@
       saveAutoOutputs: b.saveAutoOutputs,
       setActiveAnalysisRun: b.setActiveAnalysisRun,
       takeKeywords: b.takeKeywords,
-      refreshAhaExplorer: b.refreshAhaExplorer
+      refreshAhaExplorer: b.refreshAhaExplorer,
+      analysisBundleV2: modules.analysisBundleV2 || null
     });
     if (!autoOutputRuntime) throw new Error("AHAChatAutoOutputRuntime må lastes før ahaChat.js.");
 

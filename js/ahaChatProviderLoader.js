@@ -28,6 +28,7 @@
     analysisPolicy: spec("AHAChatAnalysisPolicy", ["create"], "create"),
     conceptPolicy: spec("AHAChatConceptPolicy", ["create"], "create"),
     analysisRunContract: spec("AHAChatAnalysisRunContract"),
+    analysisBundleV2: spec("AHAAnalysisBundleV2"),
     memoryControls: spec("AHAChatMemoryControls", ["create"], "create"),
     afterwork: spec("AHAChatAfterwork", ["create", "createAutoOutputAdapter"], "create"),
     memoryRuntime: spec("AHAChatMemoryRuntime", ["create"], "create"),

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paradispartiet.github.io/AHA-EchoNet/schemas/aha-analysis-bundle-v2.schema.json",
+  "title": "AHA Analysis Bundle V2",
+  "type": "object",
+  "required": ["schema", "version", "bundle_id", "status", "identity", "semantic_document", "surfaces", "quality", "validation", "policy"],
+  "properties": {
+    "schema": { "const": "aha_analysis_bundle_v2" },
+    "version": { "const": 2 },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ready", "incomplete", "invalid"] },
+    "identity": {
+      "type": "object",
+      "required": ["analysis_id", "analysis_run_id", "source_id", "source_sha256", "created_at"],
+      "properties": {
+        "analysis_id": { "type": "string", "minLength": 1 },
+        "analysis_run_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "minLength": 1 },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "topic_label": { "type": "string" },
+        "created_at": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "semantic_document": {
+      "type": "object",
+      "required": ["schema", "document_id", "source_sha256", "semantic_ids"],
+      "properties": {
+        "schema": { "type": "string" },
+        "document_id": { "type": ["string", "null"] },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "semantic_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "surfaces": {
+      "type": "object",
+      "required": ["overview", "insights", "concepts", "conversation_tracks", "subjects", "sources", "source_structure", "afterwork"],
+      "properties": {
+        "overview": { "$ref": "#/$defs/fieldMap" },
+        "insights": { "$ref": "#/$defs/fieldArray" },
+        "concepts": { "$ref": "#/$defs/fieldArray" },
+        "conversation_tracks": { "$ref": "#/$defs/fieldArray" },
+        "subjects": { "$ref": "#/$defs/fieldArray" },
+        "sources": { "$ref": "#/$defs/fieldArray" },
+        "source_structure": { "$ref": "#/$defs/fieldMap" },
+        "afterwork": { "$ref": "#/$defs/fieldMap" }
+      },
+      "additionalProperties": false
+    },
+    "quality": { "type": "object" },
+    "validation": {
+      "type": "object",
+      "required": ["valid", "errors"],
+      "properties": {
+        "valid": { "type": "boolean" },
+        "errors": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "policy": { "type": "object" }
+  },
+  "$defs": {
+    "fieldArray": { "type": "array", "items": { "$ref": "#/$defs/field" } },
+    "fieldMap": { "type": "object", "additionalProperties": { "anyOf": [{ "$ref": "#/$defs/field" }, { "type": "null" }] } },
+    "field": {
+      "type": "object",
+      "required": ["schema", "field_id", "item_id", "value_type", "value", "source_sha256", "analysis_run_id", "source_id", "semantic_ids", "provenance", "topic", "quality"],
+      "properties": {
+        "schema": { "const": "aha_analysis_field_v2" },
+        "field_id": { "type": "string", "minLength": 1 },
+        "item_id": { "type": "string", "minLength": 1 },
+        "value_type": { "enum": ["text", "text_list", "record"] },
+        "value": { "type": ["string", "array", "object"] },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "analysis_run_id": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string", "minLength": 1 },
+        "semantic_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "provenance": {
+          "type": "object",
+          "required": ["source_sha256", "analysis_run_id", "source_id", "origin", "evidence", "status"]
+        },
+        "topic": {
+          "type": "object",
+          "required": ["status", "valid", "reason"],
+          "properties": {
+            "status": { "enum": ["verified", "unknown", "rejected", "not_applicable"] },
+            "valid": { "type": ["boolean", "null"] },
+            "reason": { "type": "string" }
+          }
+        },
+        "quality": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

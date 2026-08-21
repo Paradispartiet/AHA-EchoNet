@@ -36,6 +36,7 @@
   const PENDING_CHAT_PROMPT_KEY = "aha_pending_chat_prompt_v1";
 
   const capabilityBindings = providerLoader.require("capabilityBindings");
+  const analysisBundleV2 = providerLoader.require("analysisBundleV2");
 
   function insightsApi() { return providerLoader.resolve("insights", "InsightsEngine"); }
   function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
@@ -78,6 +79,7 @@
     "autoOutputStore",
     providerLoader.instantiate("autoOutputStore", {
       sourceHash,
+      analysisBundleV2,
       defaultConversationId: CHAT_THREAD_ID
     })
   );
@@ -417,7 +419,8 @@
     updateAnalysisRun,
     getSongLyricChildCultureSubjectMatches,
     getLiterarySubjectMatches,
-    getLiteraryAttachmentLearningPath
+    getLiteraryAttachmentLearningPath,
+    analysisBundleV2
   }));
   const { buildAhaSerCard, renderAutoOutputPayload, filterCrossDomainAutoPayload } = autoOutputView;
 
@@ -449,7 +452,8 @@
       runContext: providerLoader.require("runContext"),
       knowledgeView: providerLoader.require("knowledgeView"),
       uiRuntime: uiRuntimeModule,
-      runtimeFacade: providerLoader.require("runtimeFacade")
+      runtimeFacade: providerLoader.require("runtimeFacade"),
+      analysisBundleV2
     },
     capabilities: {
       core: Object.freeze({

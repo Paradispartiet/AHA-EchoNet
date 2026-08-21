@@ -184,6 +184,11 @@ function assertLinkPrimarySourcePolicy() {
   assert.equal(cacheBeforeReload.payload.source_sha256, semanticSha);
   assert.equal(cacheBeforeReload.payload.analysisRunId, livsarketRun.analysisRunId);
   assert.equal(cacheBeforeReload.payload.source_binding.valid, true);
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.schema, 'aha_analysis_bundle_v2');
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.identity.source_sha256, semanticSha);
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.identity.analysis_run_id, livsarketRun.analysisRunId);
+  assert.equal(cacheBeforeReload.payload.analysisBundleV2.validation.valid, true);
+  assert.equal(JSON.stringify(cacheBeforeReload.payload.analysisBundleV2).includes(morgenbladetText), false);
 
   const reloaded = createChatContext(sharedStore);
   reloaded.context.AHATestHooks.restoreAutoOutputFromStorage();
@@ -191,6 +196,7 @@ function assertLinkPrimarySourcePolicy() {
   assertCleanLivsarketAnalysis(afterReloadHtml);
   assert.equal(afterReloadHtml, beforeReloadHtml, 'hard reload must render the same Livsarket analysis');
   assert.equal(reloaded.context.AHAActiveRun.get().sourceSha256, semanticSha);
+  assert.equal(Object.isFrozen(reloaded.context.AHAActiveRun.get().analysisBundleV2), true, 'reload must hydrate an immutable AnalysisBundleV2');
 
   const unknownQuality = reloaded.context.AHAChatAutoOutputView.finalizeAnalysisQuality({
     reflection: 'En ellers god analyse uten eksplisitt kildebinding.',

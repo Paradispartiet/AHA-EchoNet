@@ -356,6 +356,127 @@
     const sourceTextHash = normalizeSourceHash(activeRun.sourceTextHash || activeRun.sourceHash || auto?.sourceTextHash || deps.sourceHash(sourceText));
     const autoBinding = makeSourceBinding("auto", auto, sourceTextHash);
 
+    const analysisBundleApi = deps.analysisBundleV2 || global.AHAAnalysisBundleV2;
+    const bundleCandidate = liveRun.analysisBundleV2 || auto?.payload?.analysisBundleV2 || auto?.analysisBundleV2;
+    const authoritativeBundle = analysisBundleApi?.hydrate?.(bundleCandidate);
+    if (authoritativeBundle) {
+      const identity = authoritativeBundle.identity;
+      const identityMatches = Boolean(
+        identity.source_sha256 === sourceTextHash
+        && identity.analysis_run_id === analysisRunId
+        && identity.analysis_id === String(activeRun.analysisId || auto?.analysisId || auto?.payload?.analysisId || "")
+        && identity.source_id === String(activeRun.sourceId || auto?.sourceId || auto?.payload?.sourceId || "")
+      );
+      if (!identityMatches) throw new Error("AnalysisBundleV2 matcher ikke aktiv analyseidentitet.");
+      const view = analysisBundleApi.toLegacyView(authoritativeBundle);
+      if (!view) throw new Error("AnalysisBundleV2 kunne ikke projiseres til eksportvisning.");
+      const chamber = deps.loadChamberFromStorage() || {};
+      const afterworks = deps.loadAfterworkEntries();
+      const relevantAfterworks = afterworks.filter((entry) => String(entry?.sourceTextHash || entry?.source_sha256 || "") === sourceTextHash);
+      const fields = [];
+      const collect = (value) => {
+        if (!value || typeof value !== "object") return;
+        if (value.schema === analysisBundleApi.FIELD_SCHEMA) {
+          fields.push(value);
+          return;
+        }
+        if (Array.isArray(value)) value.forEach(collect);
+        else Object.values(value).forEach(collect);
+      };
+      collect(authoritativeBundle.surfaces);
+      const fieldTopicReports = Object.fromEntries(fields.map((field) => [field.item_id, field.topic]));
+      const quality = {
+        status: authoritativeBundle.status === "ready" ? "valid" : authoritativeBundle.status === "incomplete" ? "valid_incomplete" : "invalid",
+        sourceBinding: {
+          currentSourceTextHash: sourceTextHash,
+          bindings: [{
+            field: "analysisBundleV2",
+            status: "authoritative_bundle_v2",
+            valid: true,
+            currentSourceTextHash: sourceTextHash,
+            fieldSourceTextHash: identity.source_sha256,
+            currentAnalysisRunId: analysisRunId,
+            fieldAnalysisRunId: identity.analysis_run_id,
+            inferred: false,
+            reason: "immutable_schema_validated_bundle"
+          }],
+          invalidFields: [],
+          inferredFields: [],
+          rejectedRawAutoPayload: false,
+          rejectedSelectedAfterwork: false
+        },
+        topicConsistency: {
+          status: authoritativeBundle.status === "ready" ? "valid" : "incomplete",
+          valid: authoritativeBundle.status === "ready",
+          fields: fieldTopicReports,
+          invalidFields: fields.filter((field) => field.topic.status === "rejected").map((field) => ({ field: field.item_id, report: field.topic }))
+        },
+        rejectedTopicFields: fields.filter((field) => field.topic.status === "rejected").map((field) => ({ field: field.item_id, report: field.topic })),
+        analysisIsolation: {
+          status: "verified",
+          isolated: true,
+          reason: "authoritative_analysis_bundle_v2_identity_match"
+        },
+        warnings: authoritativeBundle.quality.reasons.slice(),
+        failClosed: authoritativeBundle.status === "invalid"
+      };
+      const exportBundle = {
+        version: "aha_analysis_export_v2",
+        exportedAt: nowIso,
+        analysisBundleV2: authoritativeBundle,
+        authoritativeAnalysisSchema: authoritativeBundle.schema,
+        analysisRunId,
+        runId: analysisRunId,
+        activeRun,
+        analysisId: identity.analysis_id,
+        sourceId: identity.source_id,
+        sourceHash: sourceTextHash,
+        normalizedSourceHash: sourceTextHash,
+        sourceTextHash,
+        sourceSha256: sourceTextHash,
+        source_sha256: sourceTextHash,
+        sourceHashAlgorithm: "sha256",
+        sourceText,
+        sourceTextPreview: String(activeRun?.sourceTextPreview || activeRun?.sourcePreview || auto?.sourceTextPreview || sourceText.replace(/\s+/g, " ").slice(0, 180)),
+        createdAt: identity.created_at,
+        ahaReply: String(activeRun?.ahaReply || view.ahaSer?.kortSvar || ""),
+        ahaReplySourceBinding: {
+          field: "ahaReply",
+          status: activeRun?.ahaReply ? "current_run" : "bundle_summary_fallback",
+          valid: true,
+          currentSourceTextHash: sourceTextHash,
+          reason: activeRun?.ahaReply ? "reply_bound_to_current_run" : "typed_bundle_summary"
+        },
+        ahaSer: view.ahaSer,
+        canonicalAnalysis: view.canonicalAnalysis,
+        afterwork: view.afterwork,
+        insights: view.insights,
+        concepts: view.concepts,
+        subjectMatches: view.subjectMatches,
+        rawAutoPayload: {},
+        rawAutoPayloadStatus: "excluded_by_analysis_bundle_v2_authority",
+        selectedAfterwork: {},
+        selectedAfterworkStatus: "historical_afterwork_not_merged",
+        relevantAfterworks: relevantAfterworks.map((entry) => ({
+          relation: "historical_same_source_afterwork",
+          id: typedText(entry?.id),
+          source_sha256: readSourceTextHash(entry) || null,
+          createdAt: typedText(entry?.createdAt) || null
+        })),
+        allAfterworkCount: afterworks.length,
+        chamberSummary: {
+          insightCount: Array.isArray(chamber?.insights) ? chamber.insights.length : 0,
+          recentAfterworkCount: relevantAfterworks.length,
+          chatTurns: Array.isArray(chamber?.chatLog) ? chamber.chatLog.length : 0
+        },
+        quality,
+        sourceBinding: quality.sourceBinding
+      };
+      const contract = deps?.analysisRunContract || global.AHAChatAnalysisRunContract;
+      if (!contract?.finalizeExport) throw new Error("AHAChatExport krever AHAAnalysisRun-kontrakten.");
+      return contract.finalizeExport(exportBundle);
+    }
+
     const rawPayloadCandidate = auto?.payload && typeof auto.payload === "object" ? auto.payload : {};
     const rawPayloadBinding = makeSourceBinding("rawAutoPayload", rawPayloadCandidate, sourceTextHash);
     const payload = rawPayloadBinding.valid ? rawPayloadCandidate : {};

@@ -20,9 +20,11 @@ vm.runInNewContext(fs.readFileSync('js/ahaChatAnalysisRunContract.js', 'utf8'), 
   filename: 'js/ahaChatAnalysisRunContract.js'
 });
 
-assert.equal(registrations.length, 1);
-assert.equal(registrations[0].name, 'chat.analysisRunContract');
-assert.equal(registrations[0].options.version, 1);
+assert.equal(registrations.length, 2);
+assert.equal(registrations[0].name, 'chat.analysisBundleV2');
+assert.equal(registrations[0].options.version, 2);
+assert.equal(registrations[1].name, 'chat.analysisRunContract');
+assert.equal(registrations[1].options.version, 1);
 
 const api = context.AHAChatAnalysisRunContract;
 const run = api.create({
