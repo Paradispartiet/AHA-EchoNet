@@ -79,6 +79,18 @@ function makeContext({ seed = {}, repository, config } = {}) {
   assert.equal(syncDisabled.database_sync_disabled, true, 'syncFromDatabase should say database sync is disabled');
   assert.equal(repoCalls.length, 0, 'Lists should not use repository, fetch, EchoNet or Sync Hub by default');
 
+  const conceptList = Lists.createConceptList({ title: 'Semantisk graf', terms: ['demokrati', 'representasjon'] });
+  const relationResult = Lists.addConceptRelation(conceptList.id, { from: 'demokrati', to: 'representasjon', type: 'supports', label: 'støtter' });
+  assert.equal(relationResult.ok, true, 'a relation between existing terms should be editable');
+  assert.equal(Lists.addConceptRelation(conceptList.id, { from: 'demokrati', to: 'ukjent', type: 'supports' }).reason, 'term_not_found');
+  assert.equal(Lists.addConceptRelation(conceptList.id, { from: 'demokrati', to: 'representasjon', type: 'supports' }).reason, 'duplicate');
+  assert.ok(Lists.removeConceptRelation(conceptList.id, relationResult.relation.id), 'a user should be able to remove a relation');
+  const secondRelation = Lists.addConceptRelation(conceptList.id, { from: 'demokrati', to: 'representasjon', type: 'related_to' });
+  assert.equal(secondRelation.ok, true);
+  const termToRemove = Lists.loadConceptLists().find((list) => list.id === conceptList.id).terms.find((term) => term.term === 'demokrati');
+  Lists.removeConceptTerm(conceptList.id, termToRemove.id);
+  assert.equal(Lists.loadConceptLists().find((list) => list.id === conceptList.id).relations.length, 0, 'removing a term must remove its dangling relations');
+
   const enabledRepoCalls = [];
   const enabledRepo = { saveList(list) { enabledRepoCalls.push(['saveList', list.id]); return { ok: true }; }, loadLists() { enabledRepoCalls.push(['loadLists']); return { ok: true, data: [] }; } };
   const enabled = makeContext({ repository: enabledRepo, config: { lists: { enableDatabaseSync: true } } });

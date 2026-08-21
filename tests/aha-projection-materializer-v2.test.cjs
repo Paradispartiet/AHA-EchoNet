@@ -76,9 +76,9 @@ const model = {
       source: "aha_semantic_v2",
       meta: { projection_id: "projection_v2_test", candidate_only: true, read_only: true },
       quality: { passed: true, score: 0.94 },
-      steps: ["orientation", "comparison", "synthesis"].map((stage, index) => ({
+      steps: ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"].map((stage, index) => ({
         id: `s${index + 1}`,
-        refId: `i${index + 1}`,
+        refId: `i${index % 2 + 1}`,
         title: `Steg ${index + 1}`,
         type: "insight",
         order: index,
@@ -139,7 +139,8 @@ const pathResult = api.materialize({ model, artifact_type: "path", artifact_id: 
 assert.equal(pathResult.ok, true);
 const pathRecords = JSON.parse(storage.getItem("aha_paths_v1"));
 assert.equal(pathRecords.length, 1);
-assert.equal(pathRecords[0].steps.length, 3);
+assert.equal(pathRecords[0].steps.length, 5);
+assert.equal(new Set(pathRecords[0].steps.map((step) => step.id)).size, 5);
 assert.equal(context.AHAPaths.validatePathStepReference(pathRecords[0].steps[0], []).ok, true);
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "aha_projection_v2", refId: "broken", meta: { inline: true } }, []).reason, "incomplete_projection_snapshot");
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "unknown", refId: "x" }, []).reason, "unknown_source");
@@ -153,10 +154,20 @@ assert.equal(conceptRecords.length, 1);
 assert.equal(conceptRecords[0].terms.length, 3);
 assert.equal(conceptRecords[0].relations.length, 2);
 assert.equal(conceptRecords[0].meta.graph_snapshot.quality.passed, true);
+assert.equal(api.canUndoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id }), true);
 
-conceptRecords[0].description = "Brukeren endret grafen";
-storage.setItem("aha_concept_lists_v1", JSON.stringify(conceptRecords));
-assert.equal(api.undo(mindmapResult.receipt, { user_confirmed: true }).reason, "artifact_modified_since_materialization");
+const durableUndo = api.undoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id, user_confirmed: true });
+assert.equal(durableUndo.ok, true, "undo must survive a page reload without an in-memory receipt");
+assert.equal(storage.getItem("aha_concept_lists_v1"), "[]");
+
+const rematerializedMindmap = api.materialize({ model, artifact_type: "mindmap", artifact_id: model.projection_id, user_confirmed: true });
+assert.equal(rematerializedMindmap.ok, true);
+const modifiedConceptRecords = JSON.parse(storage.getItem("aha_concept_lists_v1"));
+
+modifiedConceptRecords[0].description = "Brukeren endret grafen";
+modifiedConceptRecords[0].updatedAt = new Date().toISOString();
+storage.setItem("aha_concept_lists_v1", JSON.stringify(modifiedConceptRecords));
+assert.equal(api.undoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id, user_confirmed: true }).reason, "artifact_modified_since_materialization");
 assert.equal(remoteWrites, 0, "materializer must never call repository writes");
 
 const weakModel = JSON.parse(JSON.stringify(model));

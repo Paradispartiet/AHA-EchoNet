@@ -239,7 +239,37 @@
     if (index < 0) return null;
     const next = lists[index].terms.filter((term) => term.id !== termId);
     if (next.length === lists[index].terms.length) return null;
+    const removed = lists[index].terms.find((term) => term.id === termId);
     lists[index].terms = next;
+    if (removed) lists[index].relations = lists[index].relations.filter((relation) => relation.from !== removed.term && relation.to !== removed.term);
+    lists[index].updatedAt = new Date().toISOString();
+    saveConceptLists(lists);
+    return lists[index];
+  }
+
+  function addConceptRelation(listId, input) {
+    const relation = normalizeConceptRelation(input);
+    if (!relation) return { ok: false, reason: "invalid_relation" };
+    const lists = loadConceptLists();
+    const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
+    if (index < 0) return { ok: false, reason: "list_not_found" };
+    const termNames = new Set(lists[index].terms.map((term) => term.term));
+    if (!termNames.has(relation.from) || !termNames.has(relation.to)) return { ok: false, reason: "term_not_found" };
+    const duplicate = lists[index].relations.some((item) => item.from === relation.from && item.to === relation.to && item.type === relation.type);
+    if (duplicate) return { ok: false, reason: "duplicate" };
+    lists[index].relations.push(relation);
+    lists[index].updatedAt = new Date().toISOString();
+    saveConceptLists(lists);
+    return { ok: true, relation, list: lists[index] };
+  }
+
+  function removeConceptRelation(listId, relationId) {
+    const lists = loadConceptLists();
+    const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
+    if (index < 0) return null;
+    const next = lists[index].relations.filter((relation) => relation.id !== relationId);
+    if (next.length === lists[index].relations.length) return null;
+    lists[index].relations = next;
     lists[index].updatedAt = new Date().toISOString();
     saveConceptLists(lists);
     return lists[index];
@@ -591,6 +621,7 @@
       const score = Number(list?.quality?.score);
       const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
       const items = asArray(list.items).map((item) => `<li><strong>${escapeHtml(item.title)}</strong></li>`).join("");
+      const undoAvailable = global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({ artifact_type: "list", artifact_id: list.id, projection_id: model.projection_id }) === true;
       return `<article class="aha-v2-list-preview-card" data-v2-list-preview="${escapeHtml(list.id)}">
         <div class="aha-list-header">
           <div><p class="aha-list-card-kicker">${escapeHtml(list.meta?.semantic_basis_label || "Semantisk sammenheng")}</p><h3>${escapeHtml(list.title)}</h3></div>
@@ -601,7 +632,7 @@
         <div class="aha-list-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
         <div class="aha-v2-materialize-actions">
           <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-list-materialize="${escapeHtml(list.id)}">Lagre som min liste</button>
-          <button type="button" class="aha-tile-btn" data-v2-list-undo="${escapeHtml(list.id)}" hidden>Angre lagring</button>
+          <button type="button" class="aha-tile-btn" data-v2-list-undo="${escapeHtml(list.id)}"${undoAvailable ? "" : " hidden"}>Angre lagring</button>
           <span class="module-meta" data-v2-list-materialize-status="${escapeHtml(list.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
         </div>
       </article>`;
@@ -704,6 +735,10 @@
       const terms = list.terms.length
         ? `<ul class="aha-concept-terms">${list.terms.map((term) => `<li class="aha-concept-term"><div class="aha-concept-term-main"><span><strong>${escapeHtml(term.term)}</strong>${term.definition ? `<span class="aha-concept-term-definition">${escapeHtml(term.definition)}</span>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-term-remove="${escapeHtml(list.id)}::${escapeHtml(term.id)}" aria-label="Fjern ${escapeHtml(term.term)}">×</button></div></li>`).join("")}</ul>`
         : `<p class="module-meta">Listen er tom. Legg til det første begrepet nedenfor.</p>`;
+      const relations = list.relations.length
+        ? `<ul class="aha-concept-relations">${list.relations.map((relation) => `<li><span><strong>${escapeHtml(relation.from)}</strong> ${escapeHtml(relation.label)} <strong>${escapeHtml(relation.to)}</strong></span><button type="button" class="aha-concept-term-remove" data-concept-relation-remove="${escapeHtml(list.id)}::${escapeHtml(relation.id)}" aria-label="Fjern relasjon">×</button></li>`).join("")}</ul>`
+        : `<p class="module-meta">Ingen relasjoner ennå.</p>`;
+      const termOptions = list.terms.map((term) => `<option value="${escapeHtml(term.term)}">${escapeHtml(term.term)}</option>`).join("");
       return `<article class="aha-panel aha-concept-list-card" data-concept-list-card="${escapeHtml(list.id)}">
         <div class="aha-list-header"><div><p class="eyebrow">Begrepsliste</p><h3>${escapeHtml(list.title)}</h3></div><span class="aha-list-badge">${list.terms.length} ${list.terms.length === 1 ? "begrep" : "begreper"}</span></div>
         ${list.description ? `<p>${escapeHtml(list.description)}</p>` : ""}
@@ -713,6 +748,14 @@
           <label>Kort forklaring<input name="definition" placeholder="Valgfri forklaring" /></label>
           <button type="submit">Legg til</button>
         </form>
+        <details><summary>Relasjoner (${list.relations.length})</summary>${relations}
+          ${list.terms.length >= 2 ? `<form class="aha-concept-add-form" data-concept-relation-form="${escapeHtml(list.id)}">
+            <label>Fra<select name="from" required>${termOptions}</select></label>
+            <label>Relasjon<input name="label" required value="relatert til" /></label>
+            <label>Til<select name="to" required>${termOptions}</select></label>
+            <button type="submit">Legg til relasjon</button>
+          </form>` : ""}
+        </details>
         <div class="aha-concept-list-actions"><span class="module-meta">Oppdatert ${escapeHtml(formatDate(list.updatedAt))}</span><button type="button" class="aha-list-delete" data-concept-list-delete="${escapeHtml(list.id)}">Slett liste</button></div>
       </article>`;
     }).join("");
@@ -802,7 +845,10 @@
       const undoButton = document.querySelector(`[data-v2-list-undo="${id}"]`);
       if (undoId) {
         const receipt = projectionReceipts.get(id);
-        const result = global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true });
+        const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+        const result = receipt
+          ? global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true })
+          : global.AHAProjectionMaterializerV2?.undoMaterialized?.({ artifact_type: "list", artifact_id: id, projection_id: model?.projection_id, user_confirmed: true });
         if (result?.ok) {
           projectionReceipts.delete(id);
           if (status instanceof HTMLElement) status.textContent = "Den lokale listen ble fjernet igjen.";
@@ -840,6 +886,15 @@
     });
 
     document.getElementById("concept-lists-list")?.addEventListener("submit", (event) => {
+      const form = event.target?.closest?.("[data-concept-relation-form]");
+      if (!form) return;
+      event.preventDefault();
+      const data = new FormData(form);
+      const result = addConceptRelation(form.dataset.conceptRelationForm, { from: data.get("from"), to: data.get("to"), label: data.get("label"), type: "related_to" });
+      if (result?.ok) render();
+    });
+
+    document.getElementById("concept-lists-list")?.addEventListener("submit", (event) => {
       const form = event.target;
       if (!(form instanceof HTMLFormElement) || !form.dataset.conceptTermForm) return;
       event.preventDefault();
@@ -864,6 +919,12 @@
       if (target.dataset.conceptTermRemove) {
         const [listId, termId] = target.dataset.conceptTermRemove.split("::");
         removeConceptTerm(listId, termId);
+        render();
+        return;
+      }
+      if (target.dataset.conceptRelationRemove) {
+        const [listId, relationId] = target.dataset.conceptRelationRemove.split("::");
+        removeConceptRelation(listId, relationId);
         render();
       }
     });
@@ -958,6 +1019,8 @@
     createConceptList,
     addConceptTerm,
     removeConceptTerm,
+    addConceptRelation,
+    removeConceptRelation,
     deleteConceptList,
     loadLists,
     saveLists,

@@ -809,8 +809,13 @@
     const undoButton = document.getElementById("mindmap-v2-undo");
     const materializeStatus = document.getElementById("mindmap-v2-materialize-status");
     const materializable = previewMode && graph.summary?.quality?.passed === true;
+    const durableUndo = materializable && global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({
+      artifact_type: "mindmap",
+      artifact_id: graph.summary?.projectionId,
+      projection_id: graph.summary?.projectionId
+    }) === true;
     if (materializeButton) materializeButton.hidden = !materializable;
-    if (undoButton) undoButton.hidden = !materializable || !projectionReceipt;
+    if (undoButton) undoButton.hidden = !materializable || (!projectionReceipt && !durableUndo);
     if (materializeStatus && !previewMode) materializeStatus.textContent = "";
 
     const nodeSelect = document.getElementById("mindmap-node-type");
@@ -868,7 +873,10 @@
       if (undoButton) undoButton.hidden = !projectionReceipt;
     });
     document.getElementById("mindmap-v2-undo")?.addEventListener("click", () => {
-      const result = global.AHAProjectionMaterializerV2?.undo?.(projectionReceipt, { user_confirmed: true });
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+      const result = projectionReceipt
+        ? global.AHAProjectionMaterializerV2?.undo?.(projectionReceipt, { user_confirmed: true })
+        : global.AHAProjectionMaterializerV2?.undoMaterialized?.({ artifact_type: "mindmap", artifact_id: model?.projection_id, projection_id: model?.projection_id, user_confirmed: true });
       const status = document.getElementById("mindmap-v2-materialize-status");
       if (result?.ok) {
         projectionReceipt = null;

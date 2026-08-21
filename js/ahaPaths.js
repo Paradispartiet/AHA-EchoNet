@@ -450,6 +450,7 @@
     mount.innerHTML = candidates.map((path) => {
       const score = Number(path?.quality?.score);
       const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
+      const undoAvailable = global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({ artifact_type: "path", artifact_id: path.id, projection_id: model.projection_id }) === true;
       const steps = asArray(path.steps).slice().sort((a, b) => a.order - b.order).map((step) => `<li class="aha-v2-path-step">
         <span>${step.order + 1}</span><div><small>${escapeHtml(projectionStageLabel(step.meta?.stage))}</small><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.narrative)}</p><p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p></div>
       </li>`).join("");
@@ -461,7 +462,7 @@
         <div class="aha-path-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
         <div class="aha-v2-materialize-actions">
           <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-path-materialize="${escapeHtml(path.id)}">Lagre som min sti</button>
-          <button type="button" class="aha-tile-btn" data-v2-path-undo="${escapeHtml(path.id)}" hidden>Angre lagring</button>
+          <button type="button" class="aha-tile-btn" data-v2-path-undo="${escapeHtml(path.id)}"${undoAvailable ? "" : " hidden"}>Angre lagring</button>
           <span class="module-meta" data-v2-path-materialize-status="${escapeHtml(path.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
         </div>
       </article>`;
@@ -768,7 +769,10 @@
       const undoButton = document.querySelector(`[data-v2-path-undo="${id}"]`);
       if (undoId) {
         const receipt = projectionReceipts.get(id);
-        const result = global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true });
+        const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+        const result = receipt
+          ? global.AHAProjectionMaterializerV2?.undo?.(receipt, { user_confirmed: true })
+          : global.AHAProjectionMaterializerV2?.undoMaterialized?.({ artifact_type: "path", artifact_id: id, projection_id: model?.projection_id, user_confirmed: true });
         if (result?.ok) {
           projectionReceipts.delete(id);
           if (status instanceof HTMLElement) status.textContent = "Den lokale stien ble fjernet igjen.";
