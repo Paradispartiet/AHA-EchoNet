@@ -9,7 +9,7 @@ jobs:
   browser-evaluation:
     name: Browser corpus and iPad WebKit gate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

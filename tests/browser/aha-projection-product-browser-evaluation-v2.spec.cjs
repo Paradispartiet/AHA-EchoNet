@@ -50,6 +50,7 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
 });
 
 test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName }) => {
+  test.setTimeout(18 * 60 * 1000);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
   const proxiedAgentRequests = [];
