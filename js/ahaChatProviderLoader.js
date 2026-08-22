@@ -3,12 +3,13 @@
 (function (global) {
   "use strict";
 
-  function spec(legacyGlobal, functions = [], factory = null) {
+  function spec(legacyGlobal, functions = [], factory = null, version = 1) {
     return Object.freeze({
       legacyGlobal,
       label: legacyGlobal,
       functions: Object.freeze(functions.slice()),
-      factory
+      factory,
+      version
     });
   }
 
@@ -28,10 +29,10 @@
     analysisPolicy: spec("AHAChatAnalysisPolicy", ["create"], "create"),
     conceptPolicy: spec("AHAChatConceptPolicy", ["create"], "create"),
     analysisRunContract: spec("AHAChatAnalysisRunContract"),
-    analysisBundleV2: spec("AHAAnalysisBundleV2"),
-    analysisReadModelV2: spec("AHAAnalysisReadModelV2", ["build", "validate", "hydrate"]),
-    knowledgeMapReadModelV2: spec("AHAKnowledgeMapReadModelV2", ["build", "validate", "hydrate"]),
-    liveSemanticBridgeV2: spec("AHALiveSemanticBridgeV2", ["build", "validate", "hydrate"]),
+    analysisBundleV2: spec("AHAAnalysisBundleV2", [], null, 2),
+    analysisReadModelV2: spec("AHAAnalysisReadModelV2", ["build", "validate", "hydrate"], null, 2),
+    knowledgeMapReadModelV2: spec("AHAKnowledgeMapReadModelV2", ["build", "validate", "hydrate"], null, 2),
+    liveSemanticBridgeV2: spec("AHALiveSemanticBridgeV2", ["build", "validate", "hydrate"], null, 2),
     memoryControls: spec("AHAChatMemoryControls", ["create"], "create"),
     afterwork: spec("AHAChatAfterwork", ["create", "createAutoOutputAdapter"], "create"),
     memoryRuntime: spec("AHAChatMemoryRuntime", ["create"], "create"),
@@ -62,8 +63,8 @@
     let insightsCompatMeta = null;
     let insightsCompatView = null;
 
-    function resolveBase(name, legacyGlobal) {
-      return moduleApi?.resolve?.(name, legacyGlobal, { version: 1 }) || legacyRoot[legacyGlobal] || null;
+    function resolveBase(name, legacyGlobal, version = 1) {
+      return moduleApi?.resolve?.(name, legacyGlobal, { version }) || legacyRoot[legacyGlobal] || null;
     }
 
     function buildInsightsCompatibilityView(insights) {
@@ -94,8 +95,8 @@
       return insightsCompatView;
     }
 
-    function resolve(name, legacyGlobal) {
-      const provider = resolveBase(name, legacyGlobal);
+    function resolve(name, legacyGlobal, version = 1) {
+      const provider = resolveBase(name, legacyGlobal, version);
       if (name === "insights" || legacyGlobal === "InsightsEngine") {
         return buildInsightsCompatibilityView(provider);
       }
@@ -118,7 +119,7 @@
 
     function requireProvider(key) {
       const providerSpec = getSpec(key);
-      const provider = resolve(`chat.${key}`, providerSpec.legacyGlobal);
+      const provider = resolve(`chat.${key}`, providerSpec.legacyGlobal, providerSpec.version);
       if (!provider) throw new Error(`${providerSpec.label} må lastes før ahaChat.js.`);
       return validateFunctions(provider, providerSpec, providerSpec.label);
     }
@@ -127,7 +128,7 @@
       const providerSpec = getSpec(key);
       const label = options.label || providerSpec.label;
       const factoryName = options.factory || providerSpec.factory || "create";
-      const provider = resolve(`chat.${key}`, providerSpec.legacyGlobal);
+      const provider = resolve(`chat.${key}`, providerSpec.legacyGlobal, providerSpec.version);
       if (!provider) throw new Error(`${label} må lastes før ahaChat.js.`);
       validateFunctions(provider, providerSpec, providerSpec.label);
       if (typeof provider[factoryName] !== "function") {

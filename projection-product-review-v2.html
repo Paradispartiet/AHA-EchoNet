@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA produktreview V2</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#141b2e;--line:#2b3655;--text:#edf2ff;--muted:#aeb9d2;--accent:#ffd15c;--ok:#64d98b;--bad:#ff7d7d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}main{width:min(1180px,calc(100% - 32px));margin:32px auto 80px}h1,h2,h3,h4,p{margin-top:0}.lead{max-width:850px;color:var(--muted)}.toolbar,.summary,.case,.product{border:1px solid var(--line);border-radius:16px;background:var(--panel)}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:16px;margin:24px 0}.toolbar button{border:0;border-radius:999px;padding:11px 17px;font-weight:750;cursor:pointer}.primary{background:var(--accent);color:#17130a}.secondary{background:#273352;color:var(--text)}button:disabled{opacity:.45;cursor:wait}progress{width:min(360px,100%)}#status{color:var(--muted)}.summary{padding:16px;margin-bottom:18px}.case{padding:18px;margin:18px 0}.case-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.badge{display:inline-block;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:.78rem}.badge.ready{border-color:var(--ok);color:var(--ok)}.badge.critical{border-color:var(--bad);color:var(--bad)}.products{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.product{padding:14px;background:#10172a;overflow:auto}.product pre{white-space:pre-wrap;font:12px/1.45 ui-monospace,monospace;color:#cbd5ec}.review{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.review label{display:grid;gap:6px;color:var(--muted)}select,input[type=text],textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:#0c1324;color:var(--text);padding:9px}.attestation{display:flex!important;grid-column:1/-1;align-items:center;gap:9px}.critical-row{display:flex;align-items:center;gap:8px;color:var(--bad);margin-top:12px}.review-frame{position:fixed;width:1px;height:1px;left:-10000px;border:0}@media(max-width:820px){.products,.review{grid-template-columns:1fr}.case-head{display:block}}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="badge">PR 6 · read-only evaluation</p>
+    <h1>Produktnytte: faktisk browser-output</h1>
+    <p class="lead">Denne flaten kjører det varierte kildekorpuset gjennom den virkelige Chat-applikasjonen, den aktive AnalysisBundleV2 og samme produktbro som brukeren møter. Den oppretter ingen Liste-, Sti- eller Tankekartprodukter. Menneskelige poeng lagres ikke automatisk; eksport krever en eksplisitt handling.</p>
+    <div class="toolbar">
+      <button id="run" class="primary" type="button">Kjør 27-case browsermatrise</button>
+      <button id="export" class="secondary" type="button" disabled>Eksporter menneskelig review</button>
+      <progress id="progress" max="27" value="0"></progress>
+      <span id="status" aria-live="polite">Ikke startet.</span>
+    </div>
+    <section class="summary">
+      <h2>Uavhengig vurdering</h2>
+      <div class="review">
+        <label>Navn på reviewer<input id="reviewer" type="text" autocomplete="name" /></label>
+        <label>Reviewdato<input id="review-date" type="text" placeholder="YYYY-MM-DD" /></label>
+        <label class="attestation"><input id="attestation" type="checkbox" /> Jeg bekrefter at vurderingen er gjort av et menneske etter å ha lest outputene.</label>
+      </div>
+      <p id="gate">Human-porten er åpen. Alle tre produkttyper må ha minst 80 % akseptable vurderinger og null kritiske proveniensfeil.</p>
+    </section>
+    <div id="results"></div>
+  </main>
+  <script src="ops/evaluation/ahaProjectionProductBrowserReviewV2.js"></script>
+</body>
+</html>

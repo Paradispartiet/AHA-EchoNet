@@ -974,6 +974,7 @@
       buildSemanticInsightCandidates,
       generateAIInsightCandidates,
       buildAIState,
+      isMemoryUseEnabled = () => true,
       loadChamber,
       saveChamber,
       getSemanticDocumentApi = () => (
@@ -1112,7 +1113,7 @@
         subject_id: subjectId,
         theme_id: themeId,
         field_id: fieldId,
-        ai_state: buildAIState()
+        ai_state: buildAIState({ includeMemory: isMemoryUseEnabled() })
       });
       if (!aiCandidates.length) return 0;
       return ingestUserMessageWithCandidates(text, aiCandidates);

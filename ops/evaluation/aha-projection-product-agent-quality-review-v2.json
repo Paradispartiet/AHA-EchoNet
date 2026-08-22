@@ -4,14 +4,15 @@
   "reviewed_at": "2026-08-21",
   "corpus": "tests/fixtures/aha-projection-product-evaluation-v2.json",
   "human_review_ledger": "ops/evaluation/aha-projection-product-human-review-v2.json",
-  "status": "agent_remediation_implemented_independent_human_review_open",
+  "status": "real_browser_evaluation_implemented_independent_human_review_open",
   "scope": {
-    "cases": 24,
-    "expected_visible": 21,
+    "cases": 27,
+    "expected_visible": 24,
     "expected_suppressed": 3,
     "artifact_types": ["lists", "paths", "mindmap"],
     "review_authority": "agent_quality_audit_only",
-    "independent_human_review_completed": false
+    "independent_human_review_completed": false,
+    "browser_corpus_extension": ["literature_livsarket", "health_patient_path", "pasted_text_inaccessible_url"]
   },
   "observation_probe": {
     "pull_request": 882,
@@ -57,7 +58,31 @@
       "dedicated_semantic_model_not_authoritative",
       "synthesized_insight_quality_gate_not_implemented"
     ],
-    "corpus_adapter": "The current evaluation test creates source-bound sentence insights and heuristic token concepts after AHASemanticDocument validation. This is useful for deterministic product regression, but it is not authoritative semantic extraction and cannot substitute for independent human review."
+    "corpus_adapter": "The legacy Node evaluation test creates source-bound sentence insights and heuristic token concepts after AHASemanticDocument validation. It remains deterministic regression evidence only. PR 6 adds a separate real-browser Chat/AnalysisBundle/product-bridge corpus, but neither automated path can substitute for independent human review."
+  },
+  "browser_evaluation": {
+    "cases": 27,
+    "surface": "projection-product-review-v2.html",
+    "workflow": ".github/workflows/aha-projection-product-browser-evaluation-v2.yml",
+    "offline_matrix": "source_identity_reload_replay_version_and_zero_preview_write",
+    "live_matrix": "configured_backend_required_and_minimum_80_percent_ready_per_product",
+    "ipad_webkit_gate": true,
+    "independent_human_review_completed": false
+  },
+  "latest_live_gate": {
+    "observed_at": "2026-08-22",
+    "workflow_run": 32585430022,
+    "artifact_id": 9479042596,
+    "chat_submission_count": 29,
+    "chat_2xx_count": 0,
+    "chat_http_status_counts": { "500": 29 },
+    "upstream_failure": "openai_insufficient_quota_429",
+    "offline_browser_matrix_passed": true,
+    "ipad_webkit_gate_passed": true,
+    "critical_provenance_error_count": 0,
+    "guarded_preview_write_count": 0,
+    "fallback_product_output_is_live_quality_evidence": false,
+    "gate_status": "blocked_live_backend_unavailable"
   },
   "remediation": {
     "pull_request": 884,

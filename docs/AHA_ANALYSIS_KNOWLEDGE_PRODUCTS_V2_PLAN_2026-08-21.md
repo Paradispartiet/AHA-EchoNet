@@ -1,6 +1,6 @@
 # AHA Analysis, Knowledge Map and Products V2 — authoritative integration plan
 
-Status: **PR 1–PR 5 implemented; PR 6–PR 7 and final release gates remain**
+Status: **PR 1–PR 5 merged; PR 6 browser evaluation implemented with independent human review still open; PR 7 and final release gates remain**
 
 Date: 2026-08-21
 
@@ -16,11 +16,13 @@ This document is the authoritative plan for the production chain from active Cha
 | PR 2 / #888 | Merged | Immutable, schema-validated `AnalysisBundleV2` with field-level provenance |
 | PR 3 / #889 | Merged | Authoritative live semantic bridge and quality-gated current-source insights |
 | PR 4 / #890 | Merged | `AnalysisReadModelV2`, separated `KnowledgeMapReadModelV2` and repaired analysis UI |
-| PR 5 | Implemented in this change | Active-bundle projection bridge, visible product states, stable preview links and blocked preview shells |
-| PR 6 | Not started | Product usefulness calibration, real browser corpus and independent human review |
+| PR 5 / #891 | Merged | Active-bundle projection bridge, visible product states, stable preview links and blocked preview shells |
+| PR 6 | In progress | 27-case real Chat browser corpus, live-backend release gate and read-only human-review operator; independent review remains open |
 | PR 7 | Not started | Controlled save journey, compatibility cleanup and final parity proof |
 
 The complete live production chain remains unfinished until PR 6–PR 7 and every layered release gate pass. PR 5 does not change the List, Path or Mindmap builders and does not widen automatic or remote write authority.
+
+PR 6 adds a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. The deterministic offline matrix proves source/run/SHA-256 isolation, sequential storage, hard reload, replay/version handling and zero preview writes. The live CI matrix must reach the configured backend and produce qualified outputs for the useful cases. Neither matrix can self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
 
 ## Product distinctions
 

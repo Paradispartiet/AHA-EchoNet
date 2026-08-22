@@ -20,6 +20,7 @@
     "test:golden-chat-output": "node tests/aha-chat-golden-output-regression.test.cjs",
     "test:source-identity": "node tests/aha-source-identity-livsarket-regression.test.cjs",
     "test:analysis-bundle-v2": "node tests/aha-analysis-bundle-v2.test.cjs",
+    "test:projection-products:browser": "playwright test --config=playwright.config.cjs",
     "build:music-historygo-bridge": "node scripts/build-music-history-go-bridge.cjs",
     "validate:aha-fixtures": "node scripts/validate-aha-analysis-fixtures.mjs",
     "test:aha-python-smoke": "node tests/aha-python-engine-smoke.test.cjs",
@@ -32,5 +33,8 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "openai": "^4.70.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }
