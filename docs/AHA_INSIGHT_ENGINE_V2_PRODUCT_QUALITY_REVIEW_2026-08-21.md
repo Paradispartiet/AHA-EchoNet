@@ -98,6 +98,12 @@ The browser workflow has two distinct gates:
 
 An iPad WebKit job locks responsive layout and the accessible review/Chat entry controls. The browser run also exposed and fixed a real bootstrap defect: the Chat provider loader resolved V2 Bundle/read-model/live-semantic modules as version 1 in the registry.
 
+### Current live-gate evidence (2026-08-22)
+
+Workflow run `32585430022` and artifact `9479042596` prove that the browser reached the configured backend for all 29 Chat submissions (27 cases, the Morgenbladet seed and the deterministic replay). The backend returned HTTP 500 for every Chat response because its upstream OpenAI request returned `insufficient_quota` (HTTP 429). The deterministic offline Chromium matrix and iPad WebKit surface gate passed, and the captured 27-case fallback state retained zero critical provenance errors and zero guarded preview writes.
+
+This is an external live-model availability blocker, not product-quality evidence. The fallback candidates are therefore not used to tune the semantic quality gate, to declare products ready or to start the human review. The browser evidence now distinguishes received responses from successful 2xx responses and records status counts plus bounded HTTP-failure metadata. The live usefulness gate remains fail-closed until at least 27 real Chat responses are successful and the product assertions then pass.
+
 ## Post-remediation live analysis audit
 
 A production-shaped Livsarket analysis inspected after PR #884 produced materially unchanged Chat-analysis output across reload. The observed bundle contained stale Morgenbladet afterwork, unsupported institutional/media-history subject links, a rendered `[object Object]`, weak/morphologically duplicated concept tokens and a metadata-only `Kilde registrert` Chamber insight. Source binding and topic consistency still appeared as passed.
@@ -146,10 +152,11 @@ The explicit #875/#879 local materializer remains a separate one-artifact-per-us
 
 The next product-quality step is no longer another generic structural heuristic. It is:
 
-1. run the independent per-case usefulness review on the 27 live-browser Lists, Paths and Mindmaps;
-2. record the 1–5 rubric scores without replacing them with agent scores;
-3. fix any remaining recurring defect class found by that review;
-4. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout;
-5. only after that, production-test the full explicit user journey from analysis to chosen local artifact, edit, reload and safe undo.
+1. restore the configured backend's live-model quota and rerun the 27-case browser gate;
+2. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
+3. record the 1–5 rubric scores without replacing them with agent scores;
+4. fix any remaining recurring defect class found by that review;
+5. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout;
+6. only after that, production-test the full explicit user journey from analysis to chosen local artifact, edit, reload and safe undo.
 
 The max=2 controlled Insight write boundary does not need to expand for this work.

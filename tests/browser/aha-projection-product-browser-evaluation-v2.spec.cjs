@@ -76,10 +76,18 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   });
   const evaluation = await runEvaluation(page);
   const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
+  const successfulChatResponses = chatResponses.filter((request) => request.status >= 200 && request.status < 300);
+  const backendHttpFailures = chatResponses.filter((request) => request.status < 200 || request.status >= 300);
+  const chatStatusCounts = Object.fromEntries([...new Set(chatResponses.map((request) => request.status))]
+    .sort((left, right) => left - right)
+    .map((status) => [String(status), chatResponses.filter((request) => request.status === status).length]));
   const criticalProxyFailures = proxyFailures.filter((failure) => !failure.includes("/insight-candidates"));
   evaluation.live_transport = {
-    successful_request_count: proxiedAgentRequests.length,
-    successful_chat_count: chatResponses.length,
+    received_response_count: proxiedAgentRequests.length,
+    chat_response_count: chatResponses.length,
+    successful_chat_count: successfulChatResponses.length,
+    chat_status_counts: chatStatusCounts,
+    backend_http_failures: backendHttpFailures.map((request) => ({ method: request.method, status: request.status })),
     auxiliary_insight_candidate_failures: proxyFailures.filter((failure) => failure.includes("/insight-candidates")),
     critical_failures: criticalProxyFailures
   };
@@ -89,7 +97,8 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   expect(criticalProxyFailures, "The CI transport proxy must receive successful responses from every required semantic/chat backend call").toEqual([]);
   expect(proxiedAgentRequests.length, "The live release corpus must actually reach the configured semantic/chat backend").toBeGreaterThan(0);
   expect(chatResponses.length, "Every corpus case must exercise a real Chat backend response").toBeGreaterThanOrEqual(27);
-  expect(chatResponses.every((request) => request.status >= 200 && request.status < 300), "Every real Chat backend response must succeed").toBe(true);
+  expect(backendHttpFailures, "Every real Chat backend response must be 2xx; received responses are not successful responses").toEqual([]);
+  expect(successfulChatResponses.length, "Every corpus case must exercise a successful real Chat backend response").toBeGreaterThanOrEqual(27);
   expect(evaluation.results).toHaveLength(27);
   for (const result of evaluation.results) {
     expect(result.critical_provenance_errors, result.case_id).toEqual([]);
