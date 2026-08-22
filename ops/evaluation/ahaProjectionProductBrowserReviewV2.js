@@ -84,6 +84,7 @@
     }
     const win = await waitFor(() => state.frame?.contentWindow?.AHAChat?.submitAhaChatMessage && state.frame.contentWindow, "AHA Chat runtime");
     win.AHAMemoryControls?.enableSaving?.();
+    win.AHAMemoryControls?.disableMemoryUse?.();
     await win.AHAAnalysisArtifacts?.ensureV2Dependencies?.();
     await waitFor(() => win.AHAProjectionRuntimeSourceV2?.build, "ProjectionRuntimeSourceV2");
     return win;
@@ -188,6 +189,7 @@
       let win = await loadFrame();
       win.localStorage.clear();
       win.AHAMemoryControls?.enableSaving?.();
+      win.AHAMemoryControls?.disableMemoryUse?.();
       for (let index = 0; index < state.corpus.cases.length; index += 1) {
         const entry = state.corpus.cases[index];
         if (entry.sequential_after === "morgenbladet_seed") await win.AHAChat.submitAhaChatMessage(SEED_TEXT);

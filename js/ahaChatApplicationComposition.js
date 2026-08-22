@@ -268,6 +268,7 @@
     buildSemanticInsightCandidates,
     generateAIInsightCandidates,
     buildAIState,
+    isMemoryUseEnabled: isAhaMemoryUseEnabled,
     loadChamber: loadChamberFromStorage,
     saveChamber: saveChamberToStorage
   }));
