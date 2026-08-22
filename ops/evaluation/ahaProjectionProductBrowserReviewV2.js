@@ -127,6 +127,7 @@
   async function capture(win, entry) {
     const cache = readStorage(win, "aha_chat_auto_outputs_v1");
     const bundle = win.AHAAnalysisBundleV2?.hydrate?.(cache?.payload?.analysisBundleV2);
+    const semanticDocument = cache?.payload?.semanticDocumentV2 || {};
     const model = win.AHAProjectionRuntimeSourceV2?.build?.({ ignoreRequest: true });
     if (!bundle) throw new Error(`${entry.id}: AnalysisBundleV2 mangler eller er ugyldig`);
     if (!model) throw new Error(`${entry.id}: ProjectionProductReadModelV2 mangler`);
@@ -140,6 +141,18 @@
       focus: entry.focus,
       expected_visible: entry.expected_visible,
       bundle_status: bundle.status,
+      semantic_diagnostics: {
+        document_status: text(semanticDocument.status),
+        quality: clone(semanticDocument.quality || {}),
+        synthesis_gate: clone(semanticDocument.synthesis_gate || {}),
+        candidates: (Array.isArray(semanticDocument.candidate_insights) ? semanticDocument.candidate_insights : []).map((candidate) => ({
+          id: text(candidate?.id),
+          insight: text(candidate?.insight),
+          status: text(candidate?.status),
+          blocking_reasons: clone(candidate?.blocking_reasons || []),
+          quality_metrics: clone(candidate?.quality_metrics || {})
+        }))
+      },
       identity: bundle.identity,
       projection_id: model.projection_id,
       model,

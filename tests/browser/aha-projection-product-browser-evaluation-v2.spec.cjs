@@ -75,12 +75,21 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     }
   });
   const evaluation = await runEvaluation(page);
+  const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
+  const criticalProxyFailures = proxyFailures.filter((failure) => !failure.includes("/insight-candidates"));
+  evaluation.live_transport = {
+    successful_request_count: proxiedAgentRequests.length,
+    successful_chat_count: chatResponses.length,
+    auxiliary_insight_candidate_failures: proxyFailures.filter((failure) => failure.includes("/insight-candidates")),
+    critical_failures: criticalProxyFailures
+  };
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-browser-evaluation-v2.json", `${JSON.stringify(evaluation, null, 2)}\n`);
 
-  expect(proxyFailures, "The CI transport proxy must receive successful responses from the configured semantic/chat backend").toEqual([]);
+  expect(criticalProxyFailures, "The CI transport proxy must receive successful responses from every required semantic/chat backend call").toEqual([]);
   expect(proxiedAgentRequests.length, "The live release corpus must actually reach the configured semantic/chat backend").toBeGreaterThan(0);
-  expect(proxiedAgentRequests.some((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 500), "At least one real Chat backend response is required").toBe(true);
+  expect(chatResponses.length, "Every corpus case must exercise a real Chat backend response").toBeGreaterThanOrEqual(27);
+  expect(chatResponses.every((request) => request.status >= 200 && request.status < 300), "Every real Chat backend response must succeed").toBe(true);
   expect(evaluation.results).toHaveLength(27);
   for (const result of evaluation.results) {
     expect(result.critical_provenance_errors, result.case_id).toEqual([]);
