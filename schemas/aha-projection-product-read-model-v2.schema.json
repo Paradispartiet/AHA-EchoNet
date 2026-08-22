@@ -11,6 +11,26 @@
     "status": { "enum": ["ready", "blocked"] },
     "gate_id": { "type": ["string", "null"] },
     "projection_id": { "type": ["string", "null"] },
+    "source_mode": { "type": "string" },
+    "analysis_bundle_id": { "type": ["string", "null"] },
+    "identity": {
+      "type": ["object", "null"],
+      "properties": {
+        "analysis_id": { "type": "string" },
+        "analysis_run_id": { "type": "string" },
+        "source_id": { "type": "string" },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "product_states": {
+      "type": "object",
+      "properties": {
+        "list": { "$ref": "#/$defs/productState" },
+        "path": { "$ref": "#/$defs/productState" },
+        "mindmap": { "$ref": "#/$defs/productState" }
+      },
+      "required": ["list", "path", "mindmap"]
+    },
     "surfaces": {
       "type": "object",
       "required": ["insights", "concepts", "lists", "paths", "mindmap"],
@@ -39,5 +59,19 @@
       }
     },
     "policy": { "type": "object" }
+  },
+  "$defs": {
+    "productState": {
+      "type": "object",
+      "required": ["status", "label", "reason", "candidate_count", "href"],
+      "properties": {
+        "status": { "enum": ["ready", "needs_evidence", "not_relevant"] },
+        "label": { "enum": ["Klar til forhåndsvisning", "Trenger mer belegg", "Ikke relevant for denne teksten"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "candidate_count": { "type": "integer", "minimum": 0 },
+        "href": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
   }
 }

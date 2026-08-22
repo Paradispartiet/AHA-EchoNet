@@ -305,6 +305,8 @@
         confidence: text(item?.confidence),
         uncertainty: text(item?.uncertainty),
         causal_status: text(item?.causal_status),
+        quality_score: Number.isFinite(Number(item?.quality_metrics?.quality_score)) ? Number(item.quality_metrics.quality_score) : null,
+        quality_gate_schema: text(item?.quality_gate_schema),
         origin: text(item?.origin),
         evidence: array(item?.evidence).flatMap((entry) => semanticEvidence(entry?.spans))
       })).filter((item) => item.id && item.insight)

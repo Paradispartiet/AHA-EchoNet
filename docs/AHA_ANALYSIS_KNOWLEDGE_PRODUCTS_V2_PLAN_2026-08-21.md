@@ -1,12 +1,26 @@
 # AHA Analysis, Knowledge Map and Products V2 — authoritative integration plan
 
-Status: **approved next-phase plan; implementation not complete**
+Status: **PR 1–PR 5 implemented; PR 6–PR 7 and final release gates remain**
 
 Date: 2026-08-21
 
 Baseline reviewed: `7e1e460044905dd33c3a988503d850d0e9abe8b6` / PR #884
 
 This document is the authoritative plan for the production chain from active Chat input to analysis, Knowledge Map and the three user products Lists, Paths and Mindmap. It does not reopen or rebuild the nine-block Insight Engine V2 semantic architecture. It defines the remaining production integration, quality and release work.
+
+## Implementation progress
+
+| PR | Status | Main result |
+|---|---|---|
+| PR 1 / #887 | Merged | SHA-256 source identity, fail-closed isolation and Livsarket sequential/reload regression |
+| PR 2 / #888 | Merged | Immutable, schema-validated `AnalysisBundleV2` with field-level provenance |
+| PR 3 / #889 | Merged | Authoritative live semantic bridge and quality-gated current-source insights |
+| PR 4 / #890 | Merged | `AnalysisReadModelV2`, separated `KnowledgeMapReadModelV2` and repaired analysis UI |
+| PR 5 | Implemented in this change | Active-bundle projection bridge, visible product states, stable preview links and blocked preview shells |
+| PR 6 | Not started | Product usefulness calibration, real browser corpus and independent human review |
+| PR 7 | Not started | Controlled save journey, compatibility cleanup and final parity proof |
+
+The complete live production chain remains unfinished until PR 6–PR 7 and every layered release gate pass. PR 5 does not change the List, Path or Mindmap builders and does not widen automatic or remote write authority.
 
 ## Product distinctions
 
@@ -22,7 +36,7 @@ These surfaces must not be conflated:
 
 `Kart` in Chat means **Kunnskapskart**. It is not a shorthand for Mindmap. Navigation and action labels must use the full names `Kunnskapskart` and `Tankekart`.
 
-## Audit conclusion
+## Baseline audit conclusion before PR 1
 
 The V2 product mechanics are substantially built:
 
