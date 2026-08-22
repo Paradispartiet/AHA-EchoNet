@@ -159,9 +159,110 @@
     return clone({ valid: errors.length === 0, errors: [...new Set(errors)].sort() });
   }
 
+  function previewActiveBundle(input, projections) {
+    const bundle = input?.analysis_bundle_v2;
+    const identity = bundle?.identity || {};
+    const records = arr(input?.approved_active_insights);
+    const identityErrors = [];
+    if (bundle?.schema !== "aha_analysis_bundle_v2" || bundle?.validation?.valid !== true) identityErrors.push("active_analysis_bundle_v2_invalid");
+    if (!String(identity.analysis_id || "").trim()) identityErrors.push("active_analysis_id_missing");
+    if (!String(identity.analysis_run_id || "").trim()) identityErrors.push("active_analysis_run_id_missing");
+    if (!String(identity.source_id || "").trim()) identityErrors.push("active_source_id_missing");
+    if (!/^[a-f0-9]{64}$/u.test(String(identity.source_sha256 || ""))) identityErrors.push("active_source_sha256_invalid");
+    records.forEach((record) => {
+      if (
+        record?.analysis_id !== identity.analysis_id
+        || record?.analysis_run_id !== identity.analysis_run_id
+        || record?.source_id !== identity.source_id
+        || record?.source_text_hash !== identity.source_sha256
+      ) identityErrors.push(`active_bundle_record_identity_mismatch:${explicitSourceId(record) || "unknown"}`);
+    });
+    if (identityErrors.length) return blockedResult(identityErrors);
+    if (!records.length) return blockedResult(["no_approved_active_bundle_insights"]);
+
+    const projection = projections.project({ insights: records });
+    if (projection.status === "blocked" || projection.validation?.valid !== true) {
+      const blocked = blockedResult([
+        "active_bundle_projection_not_ready",
+        ...arr(projection.blocking_reasons),
+        ...arr(projection.validation?.errors)
+      ]);
+      blocked.source_mode = "active_analysis_bundle_v2";
+      blocked.projection = clone(projection);
+      blocked.adapters = projections.adapters(projection);
+      return clone(blocked);
+    }
+
+    const trustedSourceIds = [...new Set(arr(projection?.core?.insight_units).flatMap((unit) => arr(unit?.member_ids)).map(String).filter(Boolean))].sort();
+    const exclusions = arr(projection.exclusions).map((entry) => ({
+      source_id: String(entry?.id || ""),
+      classification: "active_bundle_quality_excluded",
+      action: "hold_back",
+      reason: arr(entry?.readiness?.blocking_reasons).join(",") || "projection_readiness_failed",
+      trust: clone(entry?.readiness || {})
+    })).filter((entry) => entry.source_id).sort((a, b) => a.source_id.localeCompare(b.source_id));
+    const migration = {
+      migration_id: `active_bundle_${String(bundle.bundle_id || identity.analysis_id)}`,
+      status: "not_applicable_active_analysis_bundle_v2",
+      counts: {
+        legacy_insight_count: 0,
+        trusted_candidate_count: trustedSourceIds.length,
+        enrichment_candidate_count: 0,
+        already_staged_count: 0,
+        invalid_skip_count: exclusions.length,
+        conflict_count: 0,
+        reference_candidate_count: 0,
+        planned_write_count: 0
+      },
+      blocking_reasons: [],
+      validation: { valid: true, errors: [] },
+      inventory: [],
+      reference_rewrites: [],
+      policy: policy()
+    };
+    const result = {
+      schema: GATE_SCHEMA,
+      version: GATE_VERSION,
+      mode: "shadow",
+      source_mode: "active_analysis_bundle_v2",
+      status: exclusions.length ? "shadow_ready_with_exclusions" : "shadow_ready",
+      gate_id: `v2_active_bundle_gate_${String(projection.projection_id || "").replace(/[^a-zA-Z0-9_-]/g, "")}`,
+      blocking_reasons: [],
+      checks: {
+        migration_dependency_ready: true,
+        projections_dependency_ready: true,
+        migration_plan_valid: true,
+        trusted_only_projection: true,
+        projection_valid: projection.validation.valid === true,
+        reference_boundary_valid: true,
+        product_writes_closed: true,
+        normal_chat_persistence_closed: true
+      },
+      migration,
+      trusted_source_ids: trustedSourceIds,
+      exclusions,
+      trusted_reference_rewrites: [],
+      deferred_reference_rewrites: [],
+      projection: clone(projection),
+      adapters: projections.adapters(projection),
+      policy: policy(),
+      validation: { valid: false, errors: [] }
+    };
+    result.validation = validate(result);
+    if (!result.validation.valid) {
+      result.status = "blocked";
+      result.blocking_reasons = ["active_bundle_product_integration_validation_failed"];
+    }
+    return clone(result);
+  }
+
   function preview(input = {}) {
     const migration = migrationApi();
     const projections = projectionsApi();
+    if (input?.analysis_bundle_v2 || input?.approved_active_insights) {
+      if (!projections?.project || !projections?.adapters) return blockedResult(["semantic_projections_v2_unavailable"]);
+      return previewActiveBundle(input, projections);
+    }
     const missing = [];
     if (!migration?.plan || !migration?.stableHash) missing.push("knowledge_migration_v2_unavailable");
     if (!projections?.project || !projections?.adapters) missing.push("semantic_projections_v2_unavailable");
@@ -296,6 +397,7 @@
     GATE_VERSION,
     READY_CLASSIFICATIONS,
     preview,
+    previewActiveBundle,
     validate,
     surface
   });

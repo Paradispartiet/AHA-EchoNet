@@ -181,8 +181,9 @@ storage.setItem("aha_paths_v1", "[]");
 context.AHAProjectionRuntimeSourceV2 = { build() { return model; } };
 vm.runInContext(fs.readFileSync("js/ahaAnalysisArtifacts.js", "utf8"), context, { filename: "js/ahaAnalysisArtifacts.js" });
 const wrappedV2 = context.AHAAnalysisArtifacts.saveV2ProjectionArtifact("path");
-assert.equal(wrappedV2.ok, true, "legacy artifact entry point should prefer a ready V2 candidate");
-assert.equal(JSON.parse(storage.getItem("aha_paths_v1"))[0].meta.createdBy, "aha_projection_materializer_v2");
+assert.equal(wrappedV2.ok, false, "Chat artifact entry point must remain preview-only");
+assert.equal(wrappedV2.reason, "chat_projection_is_preview_only");
+assert.deepEqual(JSON.parse(storage.getItem("aha_paths_v1")), [], "Chat must not materialize the first product candidate");
 assert.equal(remoteWrites, 0);
 
 for (const [page, marker] of [

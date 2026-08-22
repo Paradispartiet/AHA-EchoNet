@@ -3,7 +3,7 @@
 (function (global) {
   "use strict";
 
-  const CARD_NAMES = ["oversikt", "innsikter", "begreper", "samtalespor", "fag", "kilder", "struktur", "etterarbeid", "verktoy", "mer", "kart"];
+  const CARD_NAMES = ["oversikt", "innsikter", "begreper", "samtalespor", "fag", "kilder", "struktur", "etterarbeid", "produkter", "verktoy", "mer", "kart"];
   let current = null;
   let initialized = false;
 
@@ -133,9 +133,62 @@
     host.innerHTML = `${card("Denne analysen", renderMapScope(model.scopes.current_analysis), { primary: true })}${card("Hele Kunnskapskartet · historiske relasjoner", renderMapScope(model.scopes.whole_map, true))}<p class="exp-kicker">Noder og relasjoner er read-only. Kunnskapskartet materialiserer aldri et produkt direkte.</p><a class="exp-action-btn" href="mindmap.html">Åpne separat Tankekart-forhåndsvisning</a>`;
   }
 
+  function ensureProductSection() {
+    let section = document.getElementById("analysis-card-produkter");
+    if (section) return section;
+    const grid = document.querySelector("#aha-explorer .analysis-card-grid");
+    if (!grid) return null;
+    section = document.createElement("section");
+    section.id = "analysis-card-produkter";
+    section.className = "analysis-card analysis-card-full";
+    section.dataset.analysisCard = "produkter";
+    section.setAttribute("aria-labelledby", "analysis-title-produkter");
+    section.innerHTML = '<header class="analysis-card-head"><h3 id="analysis-title-produkter">Produkter fra denne analysen</h3></header><div id="exp-produkter" aria-live="polite"></div>';
+    const before = document.getElementById("analysis-card-kart") || document.getElementById("analysis-card-verktoy");
+    grid.insertBefore(section, before || null);
+    return section;
+  }
+
+  function installProductStyles() {
+    if (document.getElementById("aha-analysis-product-state-styles")) return;
+    const style = document.createElement("style");
+    style.id = "aha-analysis-product-state-styles";
+    style.textContent = '.exp-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.exp-product-card{display:flex;flex-direction:column;gap:9px;min-height:190px}.exp-product-card h4,.exp-product-card p{margin:0}.exp-product-status{align-self:flex-start;border:1px solid rgba(255,210,74,.34);border-radius:999px;padding:5px 9px;font-size:.76rem;font-weight:750}.exp-product-status[data-status="ready"]{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.36)}.exp-product-status[data-status="not_relevant"]{opacity:.72}.exp-product-card .exp-action-btn{margin-top:auto;align-self:flex-start}@media(max-width:760px){.exp-product-grid{grid-template-columns:1fr}}';
+    document.head.appendChild(style);
+  }
+
+  function renderProductStates(model) {
+    ensureProductSection(); installProductStyles();
+    const host = getContainer("produkter"); if (!host) return;
+    const labels = { list: "Listeforslag", path: "Stiforslag", mindmap: "Tankekartforslag" };
+    const states = model?.product_states || {};
+    host.innerHTML = `<div class="exp-product-grid">${Object.entries(labels).map(([key, title]) => {
+      const state = states[key] || { status: "needs_evidence", label: "Trenger mer belegg", reason: "Produktbroen kunne ikke bekrefte et kildeforankret forslag.", href: null };
+      const action = state.href ? `<a class="exp-action-btn" href="${esc(state.href)}">${state.status === "ready" ? "Åpne forhåndsvisning" : "Se blokkeringsgrunn"}</a>` : "";
+      return `<article class="exp-card exp-product-card"><h4>${esc(title)}</h4><span class="exp-product-status" data-status="${esc(state.status)}">${esc(state.label)}</span><p>${esc(state.reason)}</p>${action}</article>`;
+    }).join("")}</div><p class="exp-kicker">Skrivebeskyttet produktbro · samme analyse- og projeksjonsidentitet · ingen automatisk lagring.</p>`;
+  }
+
+  function renderProducts(bundle) {
+    ensureProductSection(); installProductStyles();
+    const host = getContainer("produkter"); if (!host) return;
+    host.innerHTML = emptyNote("Kontrollerer kildebelegg og produktkvalitet …");
+    const expectedBundleId = asText(bundle?.bundle_id);
+    const ready = global.AHAAnalysisArtifacts?.ensureV2Dependencies?.() || Promise.resolve(Boolean(global.AHAProjectionRuntimeSourceV2?.build));
+    Promise.resolve(ready).then((available) => {
+      if (!available || !current || asText(current.run?.analysisBundleV2?.bundle_id) !== expectedBundleId) return;
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.({ analysisBundleV2: bundle, ignoreRequest: true });
+      if (!model) return renderProductStates(null);
+      current.product = model;
+      renderProductStates(model);
+      renderData();
+    }).catch(() => renderProductStates(null));
+  }
+
   const DATA_SECTIONS = [
     { key: "analysisReadModelV2", label: "AnalysisReadModelV2", get: () => current?.analysis },
     { key: "knowledgeMapReadModelV2", label: "KnowledgeMapReadModelV2", get: () => current?.knowledge },
+    { key: "projectionProductReadModelV2", label: "ProjectionProductReadModelV2", get: () => current?.product },
     { key: "analysisBundleV2", label: "AnalysisBundleV2", get: () => current?.run?.analysisBundleV2 }
   ];
   function dataContent(key) { return safeJson(DATA_SECTIONS.find((item) => item.key === key)?.get?.() || {}); }
@@ -162,7 +215,7 @@
     const root = document.getElementById("aha-explorer"); if (!root) return;
     root.addEventListener("click", (event) => { const target = event.target.closest("[data-analysis-target], [data-concept-id], [data-json-copy], [data-json-download]"); if (!target) return; if (target.dataset.analysisTarget) return focusCard(target.dataset.analysisTarget); if (target.dataset.conceptId) return renderConceptDetail(target.dataset.conceptId); if (target.dataset.jsonCopy) return void copyData(target.dataset.jsonCopy); if (target.dataset.jsonDownload) return downloadData(target.dataset.jsonDownload); });
   }
-  function init() { if (initialized) return; if (!document.getElementById("aha-explorer")) return; initialized = true; applyTerminology(); bindDelegatedActions(); }
+  function init() { if (initialized) return; if (!document.getElementById("aha-explorer")) return; initialized = true; ensureProductSection(); installProductStyles(); applyTerminology(); bindDelegatedActions(); }
   function clear() {
     init(); current = null;
     CARD_NAMES.forEach((name) => { const host = getContainer(name); if (host && name !== "mer") host.innerHTML = emptyNote("AHA venter på en gyldig, kildebundet analyse."); setCardCount(name, 0); });
@@ -177,8 +230,9 @@
     if (!analysis || !identityMatchesRun(analysis.identity, getActiveRun())) { clear(); return; }
     const knowledge = global.AHAKnowledgeMapReadModelV2?.build?.({ analysisReadModel: analysis, historicalRelations: run.relevantAfterworks });
     if (!knowledge) { clear(); return; }
-    current = { run, analysis, knowledge };
+    current = { run, analysis, knowledge, product: null };
     renderOversikt(analysis); renderInnsikter(analysis); renderBegreper(analysis); renderSamtalespor(analysis); renderFag(analysis); renderKilder(analysis); renderStruktur(analysis); renderEtterarbeid(analysis); renderKart(knowledge); renderData();
+    renderProducts(run.analysisBundleV2);
     setCardCount("innsikter", analysis.sections.insights.length); setCardCount("begreper", analysis.sections.concepts.length); setCardCount("fag", analysis.sections.subjects.length); setCardCount("kilder", analysis.sections.sources.length); setCardCount("kart", knowledge.scopes.current_analysis.nodes.length);
   }
 

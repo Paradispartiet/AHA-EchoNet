@@ -612,9 +612,14 @@
     const candidates = model?.status === "ready" && model?.validation?.valid === true
       ? asArray(model?.surfaces?.lists)
       : [];
-    shell.hidden = candidates.length === 0;
+    shell.hidden = false;
     if (!candidates.length) {
-      mount.replaceChildren();
+      const state = model?.product_states?.list || {};
+      const label = asText(state.label, "Trenger mer belegg");
+      const reason = asText(state.reason, asArray(model?.blocking_reasons).length
+        ? `Forslaget ble holdt tilbake: ${asArray(model.blocking_reasons).join(", ")}.`
+        : "Den aktive analysen har ikke nok kvalitetssikret kildebelegg til et listeforslag.");
+      mount.innerHTML = `<article class="aha-v2-list-preview-card aha-v2-preview-blocked"><div class="aha-list-header"><div><p class="aha-list-card-kicker">Produktstatus</p><h3>${escapeHtml(label)}</h3></div><span class="aha-list-badge">Ikke lagret</span></div><p>${escapeHtml(reason)}</p><div class="aha-list-meta"><span>Read-only</span><span>Ingen produktwrite</span></div></article>`;
       return;
     }
     mount.innerHTML = candidates.map((list) => {

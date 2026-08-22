@@ -466,7 +466,7 @@
       }
     }));
     const graph = { nodes, edges, meta: { root_id: candidate?.meta?.root_id || "", projection_id: model?.projection_id || null } };
-    graph.summary = { ...summarizeGraphOrigins(graph, 0), preview: true, projectionId: model?.projection_id || null, quality: candidate?.quality || null };
+    graph.summary = { ...summarizeGraphOrigins(graph, 0), preview: true, projectionId: model?.projection_id || null, quality: candidate?.quality || null, productState: model?.product_states?.mindmap || null };
     return graph;
   }
 
@@ -803,7 +803,9 @@
 
     const modeNote = document.getElementById("mindmap-mode-note");
     if (modeNote) modeNote.textContent = previewMode
-      ? "AHA V2-preview: hovedidé, semantiske grener og resonansforbindelser. Kartet er kvalitetsfiltrert og ikke lagret."
+      ? (graph.summary?.productState?.status === "ready"
+        ? "AHA V2-preview: hovedidé, semantiske grener og resonansforbindelser. Kartet er kvalitetsfiltrert og ikke lagret."
+        : `${graph.summary?.productState?.label || "Trenger mer belegg"}: ${graph.summary?.productState?.reason || "Tankekartforslaget ble holdt tilbake av kvalitetsporten."}`)
       : "Velg en node for å gjøre den til hovedidé. Dra i bakgrunnen for å flytte kartet, eller bruk zoom.";
     const materializeButton = document.getElementById("mindmap-v2-materialize");
     const undoButton = document.getElementById("mindmap-v2-undo");
@@ -846,6 +848,8 @@
   }
 
   function bindUi() {
+    const sourceSelector = document.getElementById("mindmap-data-source");
+    if (sourceSelector && global.AHAProjectionRuntimeSourceV2?.shouldOpenProduct?.("mindmap")) sourceSelector.value = "v2";
     document.getElementById("mindmap-refresh")?.addEventListener("click", refresh);
     document.getElementById("mindmap-data-source")?.addEventListener("change", refresh);
     document.getElementById("mindmap-zoom-in")?.addEventListener("click", () => zoomMindmap(.15));

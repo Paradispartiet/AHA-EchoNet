@@ -151,6 +151,8 @@
         "confidence": { "type": "string" },
         "uncertainty": { "type": "string" },
         "causal_status": { "type": "string" },
+        "quality_score": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "quality_gate_schema": { "type": "string" },
         "origin": { "type": "string" },
         "evidence": { "type": "array", "items": { "$ref": "#/$defs/semanticEvidence" } }
       },

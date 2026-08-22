@@ -115,6 +115,7 @@
       status: "ready",
       gate_id: integration.gate_id,
       projection_id: integration.projection?.projection_id || integration.adapters.projection_id,
+      source_mode: text(integration.source_mode) || "legacy_migration_v2",
       source_status: integration.status,
       trusted_source_ids: clone(arr(integration.trusted_source_ids)),
       exclusions: clone(arr(integration.exclusions)),

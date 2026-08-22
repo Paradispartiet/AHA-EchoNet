@@ -13,8 +13,7 @@
     ["js/ahaProjectionProductContractV2.js", "AHAProjectionProductContractV2"],
     ["js/ahaProjectionArtifactQualityV2.js", "AHAProjectionArtifactQualityV2"],
     ["js/ahaProjectionProductReadModelV2.js", "AHAProjectionProductReadModelV2"],
-    ["js/ahaProjectionRuntimeSourceV2.js", "AHAProjectionRuntimeSourceV2"],
-    ["js/ahaProjectionMaterializerV2.js", "AHAProjectionMaterializerV2"]
+    ["js/ahaProjectionRuntimeSourceV2.js", "AHAProjectionRuntimeSourceV2"]
   ]);
   function arr(value) { return Array.isArray(value) ? value : []; }
 
@@ -45,21 +44,16 @@
   }
 
   function saveV2ProjectionArtifact(artifactType) {
-    if (!global.AHAProjectionRuntimeSourceV2?.build || !global.AHAProjectionMaterializerV2?.materialize) {
-      return { ok: false, reason: "v2_unavailable", fallback_allowed: false };
-    }
-    const model = global.AHAProjectionRuntimeSourceV2.build();
-    if (model?.status !== "ready" || model?.validation?.valid !== true) {
-      return { ok: false, reason: "no_v2_candidate", blocking_reasons: arr(model?.blocking_reasons), fallback_allowed: false };
-    }
     const normalizedType = artifactType === "path" ? "path" : artifactType === "list" ? "list" : "mindmap";
-    const candidateId = normalizedType === "path"
-      ? arr(model?.surfaces?.paths)[0]?.id
-      : normalizedType === "list"
-        ? arr(model?.surfaces?.lists)[0]?.id
-        : model.projection_id;
-    if (!candidateId) return { ok: false, reason: "no_v2_candidate", fallback_allowed: false };
-    return global.AHAProjectionMaterializerV2.materialize({ model, artifact_type: normalizedType, artifact_id: candidateId, user_confirmed: true });
+    const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+    return {
+      ok: false,
+      reason: "chat_projection_is_preview_only",
+      artifact_type: normalizedType,
+      preview_href: model?.product_states?.[normalizedType]?.href || null,
+      blocking_reasons: arr(model?.blocking_reasons),
+      fallback_allowed: false
+    };
   }
 
   function saveMindmapFromActiveAnalysis() { return saveV2ProjectionArtifact("mindmap"); }
@@ -87,10 +81,14 @@
         setStatus("Kunne ikke laste V2-projeksjonen. Ingen legacy-builder ble brukt.");
         return;
       }
-      const result = saveV2ProjectionArtifact(artifactType);
-      setStatus(result.ok
-        ? (artifactType === "path" ? "V2-læringsstien er klar under Stier." : "V2-tankekartet er klart under Kart.")
-        : "Kunne ikke lagre: den aktive analysen har ikke et kvalitetsgodkjent V2-forslag.");
+      const model = global.AHAProjectionRuntimeSourceV2?.build?.();
+      const href = model?.product_states?.[artifactType]?.href;
+      if (href && global.location?.assign) {
+        setStatus("Åpner skrivebeskyttet V2-forhåndsvisning …");
+        global.location.assign(href);
+      } else {
+        setStatus("Forslaget trenger mer kildebelegg før det kan forhåndsvises.");
+      }
       return;
     }
     const qualityButton = event.target?.closest?.("[data-analysis-quality]");
