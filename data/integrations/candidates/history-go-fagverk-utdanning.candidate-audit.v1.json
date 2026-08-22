@@ -6,7 +6,7 @@
   "source_repo": "Paradispartiet/History-Go",
   "source_ref": "6b7b034080532f9f8f9216a921d377079d67e704",
   "release_sha256": "2e82e0dc28034f23f5ef88dbe5f698d7bf688fb9e0c283a655a82d44ad9a6332",
-  "subject_id": "religion",
+  "subject_id": "utdanning",
   "package_status": "complete",
   "chapter_status": "not_materialized",
   "coverage": {
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "757c0c038c6087229347c1681c949d84bffd11107c74101b82cf26e74a725ed1",
-    "structure_sha256": "b0d15d6d852934f96b8703a62499287f09e96eb83b20fc32cad3e0f52e5b899b",
-    "content_sha256": "757c0c038c6087229347c1681c949d84bffd11107c74101b82cf26e74a725ed1"
+    "package_content_sha256": "7ca5101f8870446274672667b5f1e5ed57561eacf3ad085d8c0095662b62132d",
+    "structure_sha256": "7277c52cf1665ad71f60f075f0487fb8c21c1fc0d9d790f9dbff24d7f397113f",
+    "content_sha256": "7ca5101f8870446274672667b5f1e5ed57561eacf3ad085d8c0095662b62132d"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

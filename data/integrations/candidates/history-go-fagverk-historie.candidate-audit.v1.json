@@ -2,9 +2,9 @@
   "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "registry_version": "2.19.0",
-  "registry_updated_at": "2026-08-04",
+  "source_ref": "6b7b034080532f9f8f9216a921d377079d67e704",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-08-21",
   "subject_filter": [
     "historie"
   ],
@@ -364,14 +364,14 @@
     }
   ],
   "term_collision_summary": {
-    "total": 292,
-    "high_risk": 96,
-    "medium_risk": 108,
+    "total": 275,
+    "high_risk": 95,
+    "medium_risk": 92,
     "low_risk": 88
   },
   "high_risk_terms": [
     {
-      "term": "dokumenterer",
+      "term": "alene",
       "token_count": 1,
       "chapter_count": 20,
       "chapters": [
@@ -540,6 +540,12 @@
           ]
         },
         {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
             "support_terms"
@@ -565,6 +571,367 @@
         },
         {
           "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "påstanden",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
           "groups": [
             "support_terms"
           ]
@@ -859,7 +1226,587 @@
       "risk": "high"
     },
     {
-      "term": "analytisk",
+      "term": "avgrenset",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "claim",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidenspunkt",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "full",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "går",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "her",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -1092,7 +2039,7 @@
       "risk": "high"
     },
     {
-      "term": "skill",
+      "term": "kildesporet",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -1208,7 +2155,7 @@
       "risk": "high"
     },
     {
-      "term": "undersøker",
+      "term": "supported",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -1232,12 +2179,6 @@
         },
         {
           "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
           "groups": [
             "support_terms"
           ]
@@ -1291,6 +2232,12 @@
           ]
         },
         {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
@@ -1324,12 +2271,24 @@
       "risk": "high"
     },
     {
-      "term": "historiske",
+      "term": "via",
       "token_count": 1,
-      "chapter_count": 17,
+      "chapter_count": 18,
       "chapters": [
         {
           "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
@@ -1341,9 +2300,118 @@
           ]
         },
         {
-          "chapter_id": "historisk_tid_periodisering",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
-            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "årsaksforklaring",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
             "support_terms"
           ]
         },
@@ -1354,14 +2422,13 @@
           ]
         },
         {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
             "support_terms"
           ]
@@ -1369,7 +2436,6 @@
         {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         },
@@ -1547,414 +2613,7 @@
       "risk": "high"
     },
     {
-      "term": "institusjoner",
-      "token_count": 1,
-      "chapter_count": 16,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "sted",
-      "token_count": 1,
-      "chapter_count": 16,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "analysen",
-      "token_count": 1,
-      "chapter_count": 15,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "avgrenser",
-      "token_count": 1,
-      "chapter_count": 15,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "skiller",
       "token_count": 1,
       "chapter_count": 15,
       "chapters": [
@@ -2054,8 +2713,14 @@
     {
       "term": "dem",
       "token_count": 1,
-      "chapter_count": 14,
+      "chapter_count": 15,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -2144,10 +2809,16 @@
       "risk": "high"
     },
     {
-      "term": "dokumentasjon",
+      "term": "produserte",
       "token_count": 1,
-      "chapter_count": 14,
+      "chapter_count": 15,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -2223,7 +2894,6 @@
         {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
-            "concept_terms",
             "support_terms"
           ]
         },
@@ -2331,10 +3001,16 @@
       "risk": "high"
     },
     {
-      "term": "konsekvenser",
+      "term": "sted",
       "token_count": 1,
       "chapter_count": 14,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -2342,19 +3018,13 @@
           ]
         },
         {
-          "chapter_id": "industri_arbeid_sosialhistorie",
+          "chapter_id": "historisk_tid_periodisering",
           "groups": [
             "support_terms"
           ]
         },
         {
           "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "support_terms"
           ]
@@ -2423,12 +3093,24 @@
       "risk": "high"
     },
     {
-      "term": "tidsrom",
+      "term": "tolkning",
       "token_count": 1,
-      "chapter_count": 12,
+      "chapter_count": 14,
       "chapters": [
         {
           "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
             "support_terms"
           ]
@@ -2476,13 +3158,13 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -2503,12 +3185,112 @@
       "risk": "high"
     },
     {
-      "term": "produserte",
+      "term": "institusjoner",
       "token_count": 1,
-      "chapter_count": 11,
+      "chapter_count": 13,
       "chapters": [
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "historisk_tid_periodisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
             "support_terms"
           ]
@@ -2532,12 +3314,6 @@
           ]
         },
         {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "support_terms"
@@ -2550,13 +3326,13 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -2577,7 +3353,7 @@
       "risk": "high"
     },
     {
-      "term": "der",
+      "term": "dersom",
       "token_count": 1,
       "chapter_count": 10,
       "chapters": [
@@ -2612,7 +3388,13 @@
           ]
         },
         {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
           "groups": [
             "support_terms"
           ]
@@ -2630,13 +3412,7 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -2656,13 +3432,13 @@
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "chapter_id": "forhistorie_arkeologi",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
@@ -2698,133 +3474,9 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "tolkning",
-      "token_count": 1,
-      "chapter_count": 10,
-      "chapters": [
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "brukes",
-      "token_count": 1,
-      "chapter_count": 8,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "title_terms"
           ]
         },
         {
@@ -2893,18 +3545,24 @@
       "risk": "high"
     },
     {
-      "term": "underbygges",
+      "term": "der",
       "token_count": 1,
-      "chapter_count": 8,
+      "chapter_count": 6,
       "chapters": [
         {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "byhistorie_stedsendring",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kjonn_familie_livslop",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
             "support_terms"
           ]
@@ -2922,108 +3580,30 @@
           ]
         },
         {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "support_terms"
           ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
         }
       ],
       "risk": "high"
     },
     {
-      "term": "faktisk",
+      "term": "historiske",
       "token_count": 1,
-      "chapter_count": 7,
+      "chapter_count": 6,
       "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "gjør",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "historisk_tid_periodisering",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "industri_arbeid_sosialhistorie",
+          "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
@@ -3034,151 +3614,9 @@
           ]
         },
         {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "politisk",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "slik",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "arbeid",
-      "token_count": 1,
-      "chapter_count": 6,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "concept_terms",
-            "support_terms"
+            "title_terms"
           ]
         },
         {
@@ -3188,51 +3626,7 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "formet",
-      "token_count": 1,
-      "chapter_count": 6,
-      "chapters": [
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "support_terms"
           ]
@@ -3287,7 +3681,7 @@
       "risk": "high"
     },
     {
-      "term": "samlet",
+      "term": "oslo",
       "token_count": 1,
       "chapter_count": 6,
       "chapters": [
@@ -3310,7 +3704,13 @@
           ]
         },
         {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -3320,9 +3720,47 @@
           "groups": [
             "support_terms"
           ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
         },
         {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -3376,62 +3814,14 @@
       "risk": "high"
     },
     {
-      "term": "eiendom",
+      "term": "analytisk",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "title_terms",
-            "concept_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "før",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
-            "title_terms"
+            "support_terms"
           ]
         },
         {
@@ -3447,7 +3837,51 @@
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "support_terms"
           ]
@@ -3497,37 +3931,36 @@
       "risk": "high"
     },
     {
-      "term": "materielle",
+      "term": "mot",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
         {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
-            "title_terms"
+            "support_terms"
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "minne_kulturarv_historiebruk",
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -3616,50 +4049,12 @@
       "risk": "high"
     },
     {
-      "term": "oslo",
+      "term": "praksis",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
         {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "ressurser",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "support_terms"
           ]
@@ -3671,21 +4066,23 @@
           ]
         },
         {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
-            "title_terms"
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "concept_terms",
+            "support_terms"
           ]
         }
       ],
@@ -3730,44 +4127,6 @@
       "risk": "high"
     },
     {
-      "term": "var",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "ansvar",
       "token_count": 1,
       "chapter_count": 4,
@@ -3796,6 +4155,42 @@
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arbeid",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
             "support_terms"
           ]
         }
@@ -3901,6 +4296,106 @@
       "risk": "high"
     },
     {
+      "term": "eiendom",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk_tid_periodisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "handel",
       "token_count": 1,
       "chapter_count": 4,
@@ -3929,41 +4424,6 @@
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "hushold",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
             "support_terms"
           ]
         }
@@ -4101,6 +4561,38 @@
       "risk": "high"
     },
     {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "kunnskap",
       "token_count": 1,
       "chapter_count": 4,
@@ -4128,38 +4620,6 @@
           "groups": [
             "title_terms",
             "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "lokale",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
             "support_terms"
           ]
         }
@@ -4236,16 +4696,10 @@
       "risk": "high"
     },
     {
-      "term": "norsk",
+      "term": "norge",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
@@ -4259,7 +4713,13 @@
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
@@ -4268,100 +4728,32 @@
       "risk": "high"
     },
     {
-      "term": "praksis",
+      "term": "rettigheter",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "makt_stat_institusjoner",
+          "chapter_id": "1814_statsdannelse",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "title_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "concept_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "produksjon",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "samfunn",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
+          "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "concept_terms",
-            "support_terms"
           ]
         }
       ],
@@ -4394,73 +4786,6 @@
           "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "spor",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "stat",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "title_terms",
-            "concept_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "concept_terms"
           ]
         }
       ],
@@ -4501,7 +4826,7 @@
       "risk": "high"
     },
     {
-      "term": "ulike",
+      "term": "var",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
@@ -4512,13 +4837,7 @@
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
             "support_terms"
           ]
@@ -4528,29 +4847,9 @@
           "groups": [
             "support_terms"
           ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "alene",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
         },
         {
           "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
@@ -4680,8 +4979,7 @@
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
-            "concept_terms",
-            "support_terms"
+            "concept_terms"
           ]
         },
         {
@@ -4720,16 +5018,10 @@
       "risk": "high"
     },
     {
-      "term": "emnet",
+      "term": "enn",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
@@ -4737,7 +5029,13 @@
           ]
         },
         {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
           "groups": [
             "support_terms"
           ]
@@ -4828,32 +5126,6 @@
       "risk": "high"
     },
     {
-      "term": "forløp",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "globale",
       "token_count": 1,
       "chapter_count": 3,
@@ -4867,8 +5139,7 @@
         {
           "chapter_id": "kald_krig_etterkrig",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "title_terms"
           ]
         },
         {
@@ -4908,24 +5179,27 @@
       "risk": "high"
     },
     {
-      "term": "krever",
+      "term": "hushold",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
+            "title_terms",
+            "concept_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
           ]
@@ -4990,6 +5264,59 @@
       "risk": "high"
     },
     {
+      "term": "lokale",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materielle",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "mens",
       "token_count": 1,
       "chapter_count": 3,
@@ -5037,33 +5364,8 @@
         {
           "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
-            "concept_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "organisering",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
+            "concept_terms",
             "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "concept_terms"
           ]
         }
       ],
@@ -5096,28 +5398,54 @@
       "risk": "high"
     },
     {
-      "term": "rettigheter",
+      "term": "ressurser",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "1814_statsdannelse",
+          "chapter_id": "makt_stat_institusjoner",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kjonn_familie_livslop",
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samfunn",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "title_terms",
+            "concept_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "velferd_rett_hverdagsliv",
+          "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "concept_terms"
           ]
         }
       ],
@@ -5150,6 +5478,32 @@
       "risk": "high"
     },
     {
+      "term": "skiller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "språk",
       "token_count": 1,
       "chapter_count": 3,
@@ -5168,6 +5522,34 @@
         },
         {
           "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "stat",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
             "concept_terms",
             "support_terms"
@@ -5250,7 +5632,8 @@
           "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "title_terms",
-            "concept_terms"
+            "concept_terms",
+            "support_terms"
           ]
         }
       ],
@@ -5259,7 +5642,7 @@
   ],
   "term_collisions": [
     {
-      "term": "dokumenterer",
+      "term": "alene",
       "token_count": 1,
       "chapter_count": 20,
       "chapters": [
@@ -5428,6 +5811,12 @@
           ]
         },
         {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
             "support_terms"
@@ -5453,6 +5842,367 @@
         },
         {
           "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumenterer",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "påstanden",
+      "token_count": 1,
+      "chapter_count": 19,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
           "groups": [
             "support_terms"
           ]
@@ -5747,7 +6497,587 @@
       "risk": "high"
     },
     {
-      "term": "analytisk",
+      "term": "avgrenset",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "claim",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidenspunkt",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "full",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "går",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "her",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -5980,7 +7310,7 @@
       "risk": "high"
     },
     {
-      "term": "skill",
+      "term": "kildesporet",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -6096,7 +7426,7 @@
       "risk": "high"
     },
     {
-      "term": "undersøker",
+      "term": "supported",
       "token_count": 1,
       "chapter_count": 18,
       "chapters": [
@@ -6120,12 +7450,6 @@
         },
         {
           "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
           "groups": [
             "support_terms"
           ]
@@ -6179,6 +7503,12 @@
           ]
         },
         {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
@@ -6212,12 +7542,24 @@
       "risk": "high"
     },
     {
-      "term": "historiske",
+      "term": "via",
       "token_count": 1,
-      "chapter_count": 17,
+      "chapter_count": 18,
       "chapters": [
         {
           "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
@@ -6229,9 +7571,118 @@
           ]
         },
         {
-          "chapter_id": "historisk_tid_periodisering",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
-            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "årsaksforklaring",
+      "token_count": 1,
+      "chapter_count": 18,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
             "support_terms"
           ]
         },
@@ -6242,14 +7693,13 @@
           ]
         },
         {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
             "support_terms"
           ]
@@ -6257,7 +7707,6 @@
         {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         },
@@ -6435,414 +7884,7 @@
       "risk": "high"
     },
     {
-      "term": "institusjoner",
-      "token_count": 1,
-      "chapter_count": 16,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "sted",
-      "token_count": 1,
-      "chapter_count": 16,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "analysen",
-      "token_count": 1,
-      "chapter_count": 15,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "avgrenser",
-      "token_count": 1,
-      "chapter_count": 15,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "skiller",
       "token_count": 1,
       "chapter_count": 15,
       "chapters": [
@@ -6942,8 +7984,14 @@
     {
       "term": "dem",
       "token_count": 1,
-      "chapter_count": 14,
+      "chapter_count": 15,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -7032,10 +8080,16 @@
       "risk": "high"
     },
     {
-      "term": "dokumentasjon",
+      "term": "produserte",
       "token_count": 1,
-      "chapter_count": 14,
+      "chapter_count": 15,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -7111,7 +8165,6 @@
         {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
-            "concept_terms",
             "support_terms"
           ]
         },
@@ -7219,10 +8272,16 @@
       "risk": "high"
     },
     {
-      "term": "konsekvenser",
+      "term": "sted",
       "token_count": 1,
       "chapter_count": 14,
       "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
@@ -7230,19 +8289,13 @@
           ]
         },
         {
-          "chapter_id": "industri_arbeid_sosialhistorie",
+          "chapter_id": "historisk_tid_periodisering",
           "groups": [
             "support_terms"
           ]
         },
         {
           "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "support_terms"
           ]
@@ -7311,12 +8364,24 @@
       "risk": "high"
     },
     {
-      "term": "tidsrom",
+      "term": "tolkning",
       "token_count": 1,
-      "chapter_count": 12,
+      "chapter_count": 14,
       "chapters": [
         {
           "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
             "support_terms"
           ]
@@ -7364,13 +8429,13 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -7391,12 +8456,112 @@
       "risk": "high"
     },
     {
-      "term": "produserte",
+      "term": "institusjoner",
       "token_count": 1,
-      "chapter_count": 11,
+      "chapter_count": 13,
       "chapters": [
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "historisk_tid_periodisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "katastrofer_brudd_ulykker",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
             "support_terms"
           ]
@@ -7420,12 +8585,6 @@
           ]
         },
         {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "support_terms"
@@ -7438,13 +8597,13 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -7465,7 +8624,7 @@
       "risk": "high"
     },
     {
-      "term": "der",
+      "term": "dersom",
       "token_count": 1,
       "chapter_count": 10,
       "chapters": [
@@ -7500,7 +8659,13 @@
           ]
         },
         {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "krig_okkupasjon_motstand",
           "groups": [
             "support_terms"
           ]
@@ -7518,13 +8683,7 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -7544,13 +8703,13 @@
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "chapter_id": "forhistorie_arkeologi",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
@@ -7586,133 +8745,9 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "tolkning",
-      "token_count": 1,
-      "chapter_count": 10,
-      "chapters": [
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "brukes",
-      "token_count": 1,
-      "chapter_count": 8,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "title_terms"
           ]
         },
         {
@@ -7781,18 +8816,24 @@
       "risk": "high"
     },
     {
-      "term": "underbygges",
+      "term": "der",
       "token_count": 1,
-      "chapter_count": 8,
+      "chapter_count": 6,
       "chapters": [
         {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "byhistorie_stedsendring",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kjonn_familie_livslop",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
             "support_terms"
           ]
@@ -7810,108 +8851,30 @@
           ]
         },
         {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "support_terms"
           ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "support_terms"
-          ]
         }
       ],
       "risk": "high"
     },
     {
-      "term": "faktisk",
+      "term": "historiske",
       "token_count": 1,
-      "chapter_count": 7,
+      "chapter_count": 6,
       "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "gjør",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "historisk_tid_periodisering",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "industri_arbeid_sosialhistorie",
+          "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
@@ -7922,151 +8885,9 @@
           ]
         },
         {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "politisk",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "slik",
-      "token_count": 1,
-      "chapter_count": 7,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "arbeid",
-      "token_count": 1,
-      "chapter_count": 6,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "concept_terms",
-            "support_terms"
+            "title_terms"
           ]
         },
         {
@@ -8076,51 +8897,7 @@
           ]
         },
         {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "formet",
-      "token_count": 1,
-      "chapter_count": 6,
-      "chapters": [
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "support_terms"
           ]
@@ -8175,7 +8952,7 @@
       "risk": "high"
     },
     {
-      "term": "samlet",
+      "term": "oslo",
       "token_count": 1,
       "chapter_count": 6,
       "chapters": [
@@ -8198,7 +8975,13 @@
           ]
         },
         {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -8208,9 +8991,47 @@
           "groups": [
             "support_terms"
           ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "politisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
         },
         {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -8264,62 +9085,14 @@
       "risk": "high"
     },
     {
-      "term": "eiendom",
+      "term": "analytisk",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "title_terms",
-            "concept_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "før",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
-            "title_terms"
+            "support_terms"
           ]
         },
         {
@@ -8335,7 +9108,51 @@
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "krig_okkupasjon_motstand",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "support_terms"
           ]
@@ -8385,37 +9202,36 @@
       "risk": "high"
     },
     {
-      "term": "materielle",
+      "term": "mot",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
         {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
-            "title_terms"
+            "support_terms"
           ]
         },
         {
-          "chapter_id": "kilder_arkiv_spor",
+          "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "minne_kulturarv_historiebruk",
+          "chapter_id": "kald_krig_etterkrig",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -8504,50 +9320,12 @@
       "risk": "high"
     },
     {
-      "term": "oslo",
+      "term": "praksis",
       "token_count": 1,
       "chapter_count": 5,
       "chapters": [
         {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "ressurser",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "katastrofer_brudd_ulykker",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "support_terms"
           ]
@@ -8559,21 +9337,23 @@
           ]
         },
         {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
-            "title_terms"
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "concept_terms",
+            "support_terms"
           ]
         }
       ],
@@ -8618,44 +9398,6 @@
       "risk": "high"
     },
     {
-      "term": "var",
-      "token_count": 1,
-      "chapter_count": 5,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "ansvar",
       "token_count": 1,
       "chapter_count": 4,
@@ -8684,6 +9426,42 @@
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arbeid",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
             "support_terms"
           ]
         }
@@ -8789,6 +9567,106 @@
       "risk": "high"
     },
     {
+      "term": "eiendom",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "kjonn_familie_livslop",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "historisk_tid_periodisering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "handel",
       "token_count": 1,
       "chapter_count": 4,
@@ -8817,41 +9695,6 @@
           "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "hushold",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
-          "groups": [
             "support_terms"
           ]
         }
@@ -8989,6 +9832,38 @@
       "risk": "high"
     },
     {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "kunnskap",
       "token_count": 1,
       "chapter_count": 4,
@@ -9016,38 +9891,6 @@
           "groups": [
             "title_terms",
             "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "lokale",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
             "support_terms"
           ]
         }
@@ -9124,16 +9967,10 @@
       "risk": "high"
     },
     {
-      "term": "norsk",
+      "term": "norge",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forste_verdenskrig_mellomkrig",
           "groups": [
@@ -9147,7 +9984,13 @@
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
@@ -9156,100 +9999,32 @@
       "risk": "high"
     },
     {
-      "term": "praksis",
+      "term": "rettigheter",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "makt_stat_institusjoner",
+          "chapter_id": "1814_statsdannelse",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "title_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "concept_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "produksjon",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "samfunn",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
+          "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "concept_terms",
-            "support_terms"
           ]
         }
       ],
@@ -9282,73 +10057,6 @@
           "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "spor",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "stat",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "title_terms",
-            "concept_terms"
-          ]
-        },
-        {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
-          "groups": [
-            "concept_terms"
           ]
         }
       ],
@@ -9389,7 +10097,7 @@
       "risk": "high"
     },
     {
-      "term": "ulike",
+      "term": "var",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
@@ -9400,13 +10108,7 @@
           ]
         },
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
             "support_terms"
           ]
@@ -9416,29 +10118,9 @@
           "groups": [
             "support_terms"
           ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "alene",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
         },
         {
           "chapter_id": "middelalder_kirke_kongemakt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]
@@ -9568,8 +10250,7 @@
         {
           "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
-            "concept_terms",
-            "support_terms"
+            "concept_terms"
           ]
         },
         {
@@ -9608,16 +10289,10 @@
       "risk": "high"
     },
     {
-      "term": "emnet",
+      "term": "enn",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
         {
           "chapter_id": "forhistorie_arkeologi",
           "groups": [
@@ -9625,7 +10300,13 @@
           ]
         },
         {
-          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
           "groups": [
             "support_terms"
           ]
@@ -9716,32 +10397,6 @@
       "risk": "high"
     },
     {
-      "term": "forløp",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "globale",
       "token_count": 1,
       "chapter_count": 3,
@@ -9755,8 +10410,7 @@
         {
           "chapter_id": "kald_krig_etterkrig",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "title_terms"
           ]
         },
         {
@@ -9796,24 +10450,27 @@
       "risk": "high"
     },
     {
-      "term": "krever",
+      "term": "hushold",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
+            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
+            "title_terms",
+            "concept_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
           ]
@@ -9878,6 +10535,59 @@
       "risk": "high"
     },
     {
+      "term": "lokale",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "1814_statsdannelse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "materielle",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "mens",
       "token_count": 1,
       "chapter_count": 3,
@@ -9925,33 +10635,8 @@
         {
           "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
-            "concept_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "organisering",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
+            "concept_terms",
             "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "concept_terms"
           ]
         }
       ],
@@ -9984,28 +10669,54 @@
       "risk": "high"
     },
     {
-      "term": "rettigheter",
+      "term": "ressurser",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "1814_statsdannelse",
+          "chapter_id": "makt_stat_institusjoner",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "kjonn_familie_livslop",
+          "chapter_id": "miljo_klima_landskap",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samfunn",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "middelalder_kirke_kongemakt",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "title_terms",
+            "concept_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "velferd_rett_hverdagsliv",
+          "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "concept_terms"
           ]
         }
       ],
@@ -10038,6 +10749,32 @@
       "risk": "high"
     },
     {
+      "term": "skiller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "global_kolonial_transnasjonal",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "religion_reformasjon_livssyn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
       "term": "språk",
       "token_count": 1,
       "chapter_count": 3,
@@ -10056,6 +10793,34 @@
         },
         {
           "chapter_id": "samisk_urfolkshistorie",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "stat",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
             "concept_terms",
             "support_terms"
@@ -10138,7 +10903,8 @@
           "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "title_terms",
-            "concept_terms"
+            "concept_terms",
+            "support_terms"
           ]
         }
       ],
@@ -10178,26 +10944,6 @@
         },
         {
           "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "aker",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "middelalder_kirke_kongemakt",
           "groups": [
             "support_terms"
           ]
@@ -10261,26 +11007,6 @@
           "groups": [
             "concept_terms",
             "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "arealbruk",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "byhistorie_stedsendring",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "concept_terms"
           ]
         }
       ],
@@ -10538,6 +11264,26 @@
       "risk": "medium"
     },
     {
+      "term": "dokumentasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
       "term": "dokumenteres",
       "token_count": 1,
       "chapter_count": 2,
@@ -10551,6 +11297,27 @@
         {
           "chapter_id": "kilder_arkiv_spor",
           "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ekskludering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
+          "groups": [
+            "concept_terms",
             "support_terms"
           ]
         }
@@ -10572,68 +11339,6 @@
           "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "title_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "energi",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "miljo_klima_landskap",
-          "groups": [
-            "title_terms",
-            "concept_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "enn",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "erfaringer",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
           ]
         }
       ],
@@ -10680,26 +11385,6 @@
       "risk": "medium"
     },
     {
-      "term": "flere",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "historisk_tid_periodisering",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "flytting",
       "token_count": 1,
       "chapter_count": 2,
@@ -10714,26 +11399,6 @@
           "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "concept_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "forklares",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
           ]
         }
       ],
@@ -10792,46 +11457,6 @@
         },
         {
           "chapter_id": "minne_kulturarv_historiebruk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "geografier",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "gjennomføring",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
             "support_terms"
           ]
@@ -10902,26 +11527,6 @@
       "risk": "medium"
     },
     {
-      "term": "godtas",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "grenser",
       "token_count": 1,
       "chapter_count": 2,
@@ -10942,39 +11547,19 @@
       "risk": "medium"
     },
     {
-      "term": "hendelse",
+      "term": "helse",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "historisk_tid_periodisering",
+          "chapter_id": "miljo_klima_landskap",
           "groups": [
             "concept_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "katastrofer_brudd_ulykker",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "his",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
             "support_terms"
           ]
@@ -11029,33 +11614,13 @@
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
             "concept_terms"
           ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "ideologi",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
         },
         {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
@@ -11125,18 +11690,18 @@
       "risk": "medium"
     },
     {
-      "term": "kildebegrensning",
+      "term": "juli",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "byhistorie_stedsendring",
+          "chapter_id": "katastrofer_brudd_ulykker",
           "groups": [
-            "concept_terms"
+            "support_terms"
           ]
         },
         {
-          "chapter_id": "velferd_rett_hverdagsliv",
+          "chapter_id": "minne_kulturarv_historiebruk",
           "groups": [
             "support_terms"
           ]
@@ -11159,26 +11724,6 @@
           "chapter_id": "krig_okkupasjon_motstand",
           "groups": [
             "concept_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "kildetyper",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
           ]
         }
       ],
@@ -11227,26 +11772,6 @@
       "risk": "medium"
     },
     {
-      "term": "konflikt",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "makt_stat_institusjoner",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "konflikter",
       "token_count": 1,
       "chapter_count": 2,
@@ -11261,6 +11786,26 @@
           "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "konsekvenser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "minne_kulturarv_historiebruk",
+          "groups": [
+            "support_terms"
           ]
         }
       ],
@@ -11413,26 +11958,6 @@
       "risk": "medium"
     },
     {
-      "term": "kvinner",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "1814_statsdannelse",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kjonn_familie_livslop",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "lekmannsbevegelse",
       "token_count": 1,
       "chapter_count": 2,
@@ -11474,26 +11999,6 @@
       "risk": "medium"
     },
     {
-      "term": "logistikk",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "lov",
       "token_count": 1,
       "chapter_count": 2,
@@ -11528,26 +12033,7 @@
         {
           "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
-            "concept_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "mennesker",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "title_terms"
-          ]
-        },
-        {
-          "chapter_id": "velferd_rett_hverdagsliv",
-          "groups": [
+            "concept_terms",
             "support_terms"
           ]
         }
@@ -11639,7 +12125,7 @@
       "risk": "medium"
     },
     {
-      "term": "mot",
+      "term": "norsk",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
@@ -11650,7 +12136,7 @@
           ]
         },
         {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "global_kolonial_transnasjonal",
           "groups": [
             "support_terms"
           ]
@@ -11659,18 +12145,18 @@
       "risk": "medium"
     },
     {
-      "term": "nasjonal",
+      "term": "nye",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "byhistorie_stedsendring",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "samisk_urfolkshistorie",
+          "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "support_terms"
           ]
@@ -11707,54 +12193,34 @@
           "chapter_id": "offentlighet_mobilisering_bevegelser",
           "groups": [
             "title_terms",
-            "concept_terms",
-            "support_terms"
+            "concept_terms"
           ]
         },
         {
           "chapter_id": "religion_reformasjon_livssyn",
           "groups": [
-            "concept_terms"
+            "concept_terms",
+            "support_terms"
           ]
         }
       ],
       "risk": "medium"
     },
     {
-      "term": "organisasjon",
+      "term": "organisering",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "global_kolonial_transnasjonal",
+          "chapter_id": "industri_arbeid_sosialhistorie",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "chapter_id": "samisk_urfolkshistorie",
           "groups": [
             "concept_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "organisasjoner",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "global_kolonial_transnasjonal",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "offentlighet_mobilisering_bevegelser",
-          "groups": [
-            "support_terms"
           ]
         }
       ],
@@ -11773,6 +12239,46 @@
         },
         {
           "chapter_id": "offentlighet_mobilisering_bevegelser",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "produksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "industri_arbeid_sosialhistorie",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "okonomi_handel_materielle_systemer",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "profesjonalisering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "velferd_rett_hverdagsliv",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
             "concept_terms"
           ]
@@ -11802,26 +12308,6 @@
       "risk": "medium"
     },
     {
-      "term": "rekonstrueres",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "relasjoner",
       "token_count": 1,
       "chapter_count": 2,
@@ -11829,8 +12315,7 @@
         {
           "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "title_terms"
           ]
         },
         {
@@ -11949,26 +12434,6 @@
       "risk": "medium"
     },
     {
-      "term": "samarbeid",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "industri_arbeid_sosialhistorie",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "krig_okkupasjon_motstand",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "samisk",
       "token_count": 1,
       "chapter_count": 2,
@@ -12002,46 +12467,6 @@
         },
         {
           "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "sammen",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "forste_verdenskrig_mellomkrig",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "sammenligning",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "forhistorie_arkeologi",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "kald_krig_etterkrig",
           "groups": [
             "support_terms"
           ]
@@ -12090,27 +12515,6 @@
       "risk": "medium"
     },
     {
-      "term": "skatt",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
-          "groups": [
-            "concept_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "samisk_urfolkshistorie",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
       "term": "skole",
       "token_count": 1,
       "chapter_count": 2,
@@ -12125,6 +12529,28 @@
         {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "spor",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forhistorie_arkeologi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kilder_arkiv_spor",
+          "groups": [
+            "title_terms",
             "support_terms"
           ]
         }
@@ -12152,18 +12578,18 @@
       "risk": "medium"
     },
     {
-      "term": "stortinget",
+      "term": "statsborgerskap",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "1814_statsdannelse",
+          "chapter_id": "kjonn_familie_livslop",
           "groups": [
-            "support_terms"
+            "concept_terms"
           ]
         },
         {
-          "chapter_id": "kald_krig_etterkrig",
+          "chapter_id": "migrasjon_minoritet_tilhorighet",
           "groups": [
             "support_terms"
           ]
@@ -12192,6 +12618,26 @@
       "risk": "medium"
     },
     {
+      "term": "svekkes",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "forste_verdenskrig_mellomkrig",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kald_krig_etterkrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
       "term": "systemer",
       "token_count": 1,
       "chapter_count": 2,
@@ -12205,20 +12651,19 @@
         {
           "chapter_id": "vitenskap_teknologi_kunnskap",
           "groups": [
-            "title_terms",
-            "support_terms"
+            "title_terms"
           ]
         }
       ],
       "risk": "medium"
     },
     {
-      "term": "tjenester",
+      "term": "tilgang",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "byhistorie_stedsendring",
           "groups": [
             "support_terms"
           ]
@@ -12226,7 +12671,6 @@
         {
           "chapter_id": "velferd_rett_hverdagsliv",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         }
@@ -12234,18 +12678,38 @@
       "risk": "medium"
     },
     {
-      "term": "transport",
+      "term": "ulike",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "krig_okkupasjon_motstand",
+          "chapter_id": "1814_statsdannelse",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "okonomi_handel_materielle_systemer",
+          "chapter_id": "makt_stat_institusjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "urban",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "byhistorie_stedsendring",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "miljo_klima_landskap",
           "groups": [
             "support_terms"
           ]
@@ -12327,26 +12791,6 @@
         },
         {
           "chapter_id": "kilder_arkiv_spor",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "økonomisk",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "kald_krig_etterkrig",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "okonomi_handel_materielle_systemer",
           "groups": [
             "support_terms"
           ]

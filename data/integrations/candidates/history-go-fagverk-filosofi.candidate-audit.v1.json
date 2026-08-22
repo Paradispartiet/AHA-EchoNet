@@ -1,34 +1,7631 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
-  "subject_id": "filosofi",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "6b7b034080532f9f8f9216a921d377079d67e704",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-08-21",
+  "subject_filter": [
+    "filosofi"
+  ],
   "coverage": {
-    "declared_package_files": 7,
-    "expected_existing_package_files": 7,
-    "materialized_existing_package_files": 7,
-    "required_package_files": 4,
-    "optional_package_files": 3,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 20,
+    "registered": 20,
+    "materialized": 20,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "e5993af3efc3844d67f93f35765a464d27971e03bf2a88c95f9b0e2694712354",
-    "structure_sha256": "240a36638376e9c937aaf7a6e40808e4bd236a81df3e2a0b9b924f0c6dea60ce",
-    "content_sha256": "e5993af3efc3844d67f93f35765a464d27971e03bf2a88c95f9b0e2694712354"
+  "chapters": [
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-argumentasjon-logikk",
+      "title": "Argumentasjon og logikk",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-argumentasjon-logikk.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 3,
+      "concept_term_count": 4,
+      "support_term_count": 35
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-eksistens-fenomenologi",
+      "title": "Eksistens, fenomenologi og livstolkning",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-eksistens-fenomenologi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 4,
+      "support_term_count": 40
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-erkjennelse-sannhet",
+      "title": "Erkjennelse, sannhet og kunnskapsmakt",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-erkjennelse-sannhet.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 4,
+      "support_term_count": 32
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-estetikk-fortolkning",
+      "title": "Estetikk, kunst og fortolkning",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-estetikk-fortolkning.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 4,
+      "support_term_count": 40
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-etikk-moralpsykologi",
+      "title": "Etikk, dyd og moralsk ansvar",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-etikk-moralpsykologi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 5,
+      "concept_term_count": 4,
+      "support_term_count": 43
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-fysikkfilosofi",
+      "title": "Fysikkfilosofi, romtid og kvanteteori",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-fysikkfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 35
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-globale-tradisjoner",
+      "title": "Globale tradisjoner og filosofihistorie",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-globale-tradisjoner.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 6,
+      "support_term_count": 37
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-handlingsfilosofi",
+      "title": "Handlingsfilosofi, intensjon og agency",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-handlingsfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 37
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-matematikkfilosofi",
+      "title": "Matematikkfilosofi, objekter og bevis",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-matematikkfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 39
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-metafysikk-virkelighet",
+      "title": "Metafysikk, virkelighet og tid",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-metafysikk-virkelighet.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 4,
+      "support_term_count": 35
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-miljo-dyr-klima",
+      "title": "Miljø-, dyre- og klimafilosofi",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-miljo-dyr-klima.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 4,
+      "support_term_count": 41
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+      "title": "Politisk filosofi, frihet og rettferdighet",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-politisk-filosofi-rettferdighet.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 5,
+      "concept_term_count": 4,
+      "support_term_count": 38
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-religionsfilosofi",
+      "title": "Religionsfilosofi, gudsbegrep og tro",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-religionsfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 39
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-rettsfilosofi",
+      "title": "Rettsfilosofi, autoritet og fortolkning",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-rettsfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 37
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-sannsynlighet-beslutning",
+      "title": "Sannsynlighet, risiko og beslutningsteori",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-sannsynlighet-beslutning.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 40
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-sinn-bevissthet-identitet",
+      "title": "Sinn, bevissthet og personlig identitet",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-sinn-bevissthet-identitet.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 5,
+      "concept_term_count": 4,
+      "support_term_count": 34
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-sosial-filosofi-makt",
+      "title": "Sosial filosofi, makt og frigjøring",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-sosial-filosofi-makt.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 5,
+      "concept_term_count": 4,
+      "support_term_count": 34
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-sprakfilosofi",
+      "title": "Språkfilosofi, mening og bruk",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-sprakfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 4,
+      "concept_term_count": 2,
+      "support_term_count": 34
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-teknologi-ai",
+      "title": "Teknologi, digitalitet og kunstig intelligens",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-teknologi-ai.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 5,
+      "concept_term_count": 4,
+      "support_term_count": 37
+    },
+    {
+      "subject_id": "filosofi",
+      "chapter_id": "filosofi-vitenskapsfilosofi",
+      "title": "Vitenskapsfilosofi og forklaring",
+      "source_path": "data/fagverk/filosofi/chapters/filosofi-vitenskapsfilosofi.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 3,
+      "concept_term_count": 4,
+      "support_term_count": 37
+    }
+  ],
+  "term_collision_summary": {
+    "total": 76,
+    "high_risk": 52,
+    "medium_risk": 24,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "artikkelen",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "begreper",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "claimsporede",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksplisitt",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fagområdets",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ord",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sekundærkilder",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "argumentasjonsproblem",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behandles",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "egen",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eget",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidensgrense",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faglige",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontrollpåstander",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "leses",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "metode",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seks",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "selvstendige",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skrevne",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "åpne",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "premisser",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "består",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "debatt",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "emnespesifikke",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "feltet",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "filosofisk",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontrollpunkter",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ligger",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "navngitt",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "primærverkene",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rekonstruerer",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "struktur",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tre",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "utskrevne",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "empiriske",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "argumenter",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "erfaring",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "filosofi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mening",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "normative",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "relasjoner",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rettigheter",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "artikkelen",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "begreper",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "claimsporede",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksplisitt",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fagområdets",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ord",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sekundærkilder",
+      "token_count": 1,
+      "chapter_count": 20,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "argumentasjonsproblem",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behandles",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "egen",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eget",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidensgrense",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faglige",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontrollpåstander",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "leses",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "metode",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seks",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "selvstendige",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skrevne",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "åpne",
+      "token_count": 1,
+      "chapter_count": 13,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "case",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "premisser",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "består",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "debatt",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "emnespesifikke",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "feltet",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "filosofisk",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontrollpunkter",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ligger",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "navngitt",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "primærverkene",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rekonstruerer",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "struktur",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tre",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "utskrevne",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-fysikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "empiriske",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "argumenter",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "erfaring",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "filosofi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mening",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sprakfilosofi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "normative",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "relasjoner",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-metafysikk-virkelighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "rettigheter",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "begrunnelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forklaring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "former",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fortolkning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-rettsfilosofi",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "frigjøring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "frihet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "grunner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-estetikk-fortolkning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-handlingsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historiske",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-vitenskapsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "institusjoner",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kropp",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sinn-bevissthet-identitet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kunnskap",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-erkjennelse-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "makt",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-sosial-filosofi-makt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "moralsk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "philosophy",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "problem",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "status",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-miljo-dyr-klima",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-teknologi-ai",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "the",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-matematikkfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tillegg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-argumentasjon-logikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-politisk-filosofi-rettferdighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tro",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-religionsfilosofi",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-sannsynlighet-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-globale-tradisjoner",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "videre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "filosofi-eksistens-fenomenologi",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "filosofi-etikk-moralpsykologi",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

@@ -6,7 +6,7 @@
   "registry_version": "3.14.0",
   "registry_updated_at": "2026-08-21",
   "subject_filter": [
-    "scenekunst"
+    "helse"
   ],
   "coverage": {
     "expected": 4,
@@ -18,154 +18,102 @@
   },
   "chapters": [
     {
-      "subject_id": "scenekunst",
-      "chapter_id": "dans-musikkteater-komikk-hybridformer",
-      "title": "Dans, musikkteater, komikk og hybride former",
-      "source_path": "data/fagverk/scenekunst/dans-musikkteater-komikk-hybridformer.json",
+      "subject_id": "helse",
+      "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+      "title": "Anatomi og fysiologi: struktur, funksjon og regulering",
+      "source_path": "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering.json",
       "module_source_paths": [
-        "data/fagverk/scenekunst/dans-musikkteater-komikk-hybridformer/01-fulltekst.json"
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/01-anatomisk-sprak-og-struktur.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/02-transport-og-homeostase.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/03-eksitabelt-vev-og-oksygentransport.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/04-nyre-endokrin-og-integrasjon.json"
       ],
-      "module_file_count": 1,
-      "title_term_count": 16,
-      "concept_term_count": 11,
+      "module_file_count": 4,
+      "title_term_count": 17,
+      "concept_term_count": 13,
       "support_term_count": 48
     },
     {
-      "subject_id": "scenekunst",
-      "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-      "title": "Dramaturgi, utøver, regi og scenisk form",
-      "source_path": "data/fagverk/scenekunst/dramaturgi-utover-regi-scenisk-form.json",
+      "subject_id": "helse",
+      "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+      "title": "Klinisk medisin: informasjon, testing, beslutning og oppfølging",
+      "source_path": "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging.json",
       "module_source_paths": [
-        "data/fagverk/scenekunst/dramaturgi-utover-regi-scenisk-form/01-fulltekst.json"
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/01-klinisk-informasjon-og-testing.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/02-sannsynlighet-maling-og-usikkerhet.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/03-diagnostisk-sikkerhet-og-behandlingsevidens.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/04-oppfolging-samvalg-og-plan.json"
       ],
-      "module_file_count": 1,
-      "title_term_count": 14,
-      "concept_term_count": 15,
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
       "support_term_count": 48
     },
     {
-      "subject_id": "scenekunst",
-      "chapter_id": "institusjon-historie-produksjonsfelt",
-      "title": "Institusjon, historie og produksjonsfelt",
-      "source_path": "data/fagverk/scenekunst/institusjon-historie-produksjonsfelt.json",
+      "subject_id": "helse",
+      "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+      "title": "Medisinsk etikk, evidens og ansvarlig beslutning",
+      "source_path": "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning.json",
       "module_source_paths": [
-        "data/fagverk/scenekunst/institusjon-historie-produksjonsfelt/01-fulltekst.json"
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/01-autonomi-samtykke-og-stotte.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/02-nytte-skade-og-forskningsansvar.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/03-evidens-anbefaling-og-samvalg.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/04-rettferdighet-og-profesjonsansvar.json"
       ],
-      "module_file_count": 1,
+      "module_file_count": 4,
       "title_term_count": 14,
       "concept_term_count": 13,
       "support_term_count": 48
     },
     {
-      "subject_id": "scenekunst",
-      "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-      "title": "Publikum, resepsjon, deltakelse og etikk",
-      "source_path": "data/fagverk/scenekunst/publikum-resepsjon-deltakelse-etikk.json",
+      "subject_id": "helse",
+      "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+      "title": "Sykdom og patofysiologi: mekanisme, skade og systemsvikt",
+      "source_path": "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt.json",
       "module_source_paths": [
-        "data/fagverk/scenekunst/publikum-resepsjon-deltakelse-etikk/01-fulltekst.json"
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/01-mekanisme-celleskade-og-inflammasjon.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/02-immunologi-sirkulasjon-og-systemsvikt.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/03-genetisk-sarbarhet-og-kreft.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/04-biomarkorer-fenotype-og-kausal-tolkning.json"
       ],
-      "module_file_count": 1,
-      "title_term_count": 14,
+      "module_file_count": 4,
+      "title_term_count": 16,
       "concept_term_count": 13,
       "support_term_count": 48
     }
   ],
   "term_collision_summary": {
-    "total": 34,
-    "high_risk": 15,
-    "medium_risk": 19,
+    "total": 31,
+    "high_risk": 11,
+    "medium_risk": 20,
     "low_risk": 0
   },
   "high_risk_terms": [
-    {
-      "term": "analysen",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "brukes",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
     {
       "term": "derfor",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -174,30 +122,30 @@
       "risk": "high"
     },
     {
-      "term": "faktisk",
+      "term": "mens",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -206,30 +154,30 @@
       "risk": "high"
     },
     {
-      "term": "gjør",
+      "term": "skille",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -238,24 +186,30 @@
       "risk": "high"
     },
     {
-      "term": "analyse",
+      "term": "uten",
       "token_count": 1,
-      "chapter_count": 3,
+      "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -264,24 +218,24 @@
       "risk": "high"
     },
     {
-      "term": "bare",
+      "term": "alene",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -290,24 +244,24 @@
       "risk": "high"
     },
     {
-      "term": "bør",
+      "term": "biologisk",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -316,24 +270,24 @@
       "risk": "high"
     },
     {
-      "term": "khios",
+      "term": "krever",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -347,19 +301,19 @@
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -373,19 +327,19 @@
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -394,24 +348,24 @@
       "risk": "high"
     },
     {
-      "term": "publikum",
+      "term": "skade",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "title_terms",
             "support_terms"
@@ -421,77 +375,24 @@
       "risk": "high"
     },
     {
-      "term": "scenekunst",
+      "term": "vise",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "uten",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "valg",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -502,94 +403,30 @@
   ],
   "term_collisions": [
     {
-      "term": "analysen",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "brukes",
-      "token_count": 1,
-      "chapter_count": 4,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
       "term": "derfor",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -598,30 +435,30 @@
       "risk": "high"
     },
     {
-      "term": "faktisk",
+      "term": "mens",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -630,30 +467,30 @@
       "risk": "high"
     },
     {
-      "term": "gjør",
+      "term": "skille",
       "token_count": 1,
       "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -662,24 +499,30 @@
       "risk": "high"
     },
     {
-      "term": "analyse",
+      "term": "uten",
       "token_count": 1,
-      "chapter_count": 3,
+      "chapter_count": 4,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -688,24 +531,24 @@
       "risk": "high"
     },
     {
-      "term": "bare",
+      "term": "alene",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -714,24 +557,24 @@
       "risk": "high"
     },
     {
-      "term": "bør",
+      "term": "biologisk",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -740,24 +583,24 @@
       "risk": "high"
     },
     {
-      "term": "khios",
+      "term": "krever",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -771,19 +614,19 @@
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -797,19 +640,19 @@
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -818,24 +661,24 @@
       "risk": "high"
     },
     {
-      "term": "publikum",
+      "term": "skade",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "title_terms",
             "support_terms"
@@ -845,24 +688,24 @@
       "risk": "high"
     },
     {
-      "term": "scenekunst",
+      "term": "vise",
       "token_count": 1,
       "chapter_count": 3,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -871,92 +714,18 @@
       "risk": "high"
     },
     {
-      "term": "uten",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "valg",
-      "token_count": 1,
-      "chapter_count": 3,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "high"
-    },
-    {
-      "term": "arbeid",
+      "term": "alternativer",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "title_terms",
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "bevegelse",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -965,18 +734,18 @@
       "risk": "medium"
     },
     {
-      "term": "del",
+      "term": "andre",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -985,18 +754,18 @@
       "risk": "medium"
     },
     {
-      "term": "dramaturgisk",
+      "term": "beskriver",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
@@ -1005,18 +774,98 @@
       "risk": "medium"
     },
     {
-      "term": "egen",
+      "term": "beskrives",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "beslutning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "diagnose",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
@@ -1030,13 +879,13 @@
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -1045,18 +894,38 @@
       "risk": "medium"
     },
     {
-      "term": "forestilling",
+      "term": "evidens",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -1065,18 +934,39 @@
       "risk": "medium"
     },
     {
-      "term": "forestillingen",
+      "term": "gjør",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "informasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "title_terms",
             "support_terms"
@@ -1086,19 +976,18 @@
       "risk": "medium"
     },
     {
-      "term": "former",
+      "term": "ingen",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -1107,18 +996,18 @@
       "risk": "medium"
     },
     {
-      "term": "før",
+      "term": "samme",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]
@@ -1127,98 +1016,18 @@
       "risk": "medium"
     },
     {
-      "term": "gjøre",
+      "term": "samvalg",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "handling",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "historisk",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "komposisjon",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "kropp",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "title_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "title_terms"
           ]
@@ -1227,38 +1036,18 @@
       "risk": "medium"
     },
     {
-      "term": "levende",
+      "term": "usikkerhet",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
-          "groups": [
-            "title_terms"
-          ]
-        }
-      ],
-      "risk": "medium"
-    },
-    {
-      "term": "mens",
-      "token_count": 1,
-      "chapter_count": 2,
-      "chapters": [
-        {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
-          "groups": [
-            "support_terms"
-          ]
-        },
-        {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
             "support_terms"
           ]
@@ -1267,20 +1056,19 @@
       "risk": "medium"
     },
     {
-      "term": "rom",
+      "term": "utfall",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
           "groups": [
-            "title_terms",
             "support_terms"
           ]
         }
@@ -1288,18 +1076,38 @@
       "risk": "medium"
     },
     {
-      "term": "seg",
+      "term": "vev",
       "token_count": 1,
       "chapter_count": 2,
       "chapters": [
         {
-          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
           "groups": [
             "support_terms"
           ]
         },
         {
-          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
           "groups": [
             "support_terms"
           ]

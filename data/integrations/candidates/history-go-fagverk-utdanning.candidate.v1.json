@@ -7,8 +7,8 @@
   "source_repo": "Paradispartiet/History-Go",
   "source_ref": "6b7b034080532f9f8f9216a921d377079d67e704",
   "release_sha256": "2e82e0dc28034f23f5ef88dbe5f698d7bf688fb9e0c283a655a82d44ad9a6332",
-  "subject_id": "religion",
-  "title": "Religion",
+  "subject_id": "utdanning",
+  "title": "utdanning",
   "kind": "subject",
   "parent_subject_id": null,
   "schema_family": "foundation_v1",
@@ -19,54 +19,54 @@
   "required_package_file_count": 4,
   "optional_package_file_count": 3,
   "referenced_file_count": 7,
-  "package_content_sha256": "757c0c038c6087229347c1681c949d84bffd11107c74101b82cf26e74a725ed1",
-  "structure_sha256": "b0d15d6d852934f96b8703a62499287f09e96eb83b20fc32cad3e0f52e5b899b",
-  "content_sha256": "757c0c038c6087229347c1681c949d84bffd11107c74101b82cf26e74a725ed1",
+  "package_content_sha256": "7ca5101f8870446274672667b5f1e5ed57561eacf3ad085d8c0095662b62132d",
+  "structure_sha256": "7277c52cf1665ad71f60f075f0487fb8c21c1fc0d9d790f9dbff24d7f397113f",
+  "content_sha256": "7ca5101f8870446274672667b5f1e5ed57561eacf3ad085d8c0095662b62132d",
   "package_files": [
     {
-      "path": "data/fag/religion/emner_religion_canonical_v1.json",
+      "path": "data/fag/utdanning/emner_utdanning_canonical_v1.json",
       "required": true,
       "fields": [
         "emner"
       ],
       "exists": true,
-      "content_sha256": "0bf3810adb028c48c422ba23f7a11d98235e4f64a35937b5c85752ef0a10799a"
+      "content_sha256": "9349eedb4991d0fbb364685c1a30ae1f9f69dbf6ebf23b9b4a5d81b1b653e891"
     },
     {
-      "path": "data/fag/religion/fagkart_religion_canonical_v1.json",
+      "path": "data/fag/utdanning/fagkart_utdanning_canonical_v1.json",
       "required": true,
       "fields": [
         "fagkart"
       ],
       "exists": true,
-      "content_sha256": "37a7a124f29ee195205bdd7b9977c2bca9a26363b35ba287d5d83344a8e53c68"
+      "content_sha256": "3751da533dc7c9edc2c474487be39cdfe1e099f19a49115bfcab8acf1ca016e9"
     },
     {
-      "path": "data/fag/religion/methods_religion_canonical_v1.json",
+      "path": "data/fag/utdanning/methods_utdanning_canonical_v1.json",
       "required": true,
       "fields": [
         "methods"
       ],
       "exists": true,
-      "content_sha256": "c93e07bbdffae86489834132b2540baa161cbb0618430dad276cfa04ea73df19"
+      "content_sha256": "d03cdc2712cf4472849ea7c02f1fcd9969ab9645ad210a3ae093b71b9406123a"
     },
     {
-      "path": "data/fag/religion/religionpensum_canonical_v1.json",
-      "required": true,
-      "fields": [
-        "pensum"
-      ],
-      "exists": true,
-      "content_sha256": "c19e798d8fd0405ff5ca5a85c60ba25ed6bd40cc2a8e00e608e9982322d7a676"
-    },
-    {
-      "path": "data/fag/religion/supersetQUIZMAL_religion.json",
+      "path": "data/fag/utdanning/supersetQUIZMAL_utdanning.json",
       "required": false,
       "fields": [
         "supersetQuizMal"
       ],
       "exists": true,
-      "content_sha256": "5467ba8b9d389c4e3b2a89bc192dede28ec70e12ac838a688e8ea5c5d21ecdf0"
+      "content_sha256": "ac7b16cf9e2b3f98bdd244e14073a1a5ff7c67a793b63839e78ca9c350734273"
+    },
+    {
+      "path": "data/fag/utdanning/utdanningpensum_canonical_v1.json",
+      "required": true,
+      "fields": [
+        "pensum"
+      ],
+      "exists": true,
+      "content_sha256": "117d9f79cbd62c24bbe1b1cb822e47a7f86fb345c388b2bcb1b1f4254867ef59"
     },
     {
       "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
