@@ -6,6 +6,7 @@
   "status": "agent_pre_review_complete_independent_human_review_open",
   "rubric": {
     "scale": "1-5",
+    "acceptable_score_minimum": 4,
     "lists": ["tematisk_koherens", "ikke_triviell", "begrunnet_medlemskap", "kildebevaring"],
     "paths": ["progresjon", "overganger", "laeringsutbytte", "aapent_spoersmaal"],
     "mindmap": ["hierarki", "meningsfulle_grener", "stoeykontroll", "resonans_semantikk"]
@@ -14,7 +15,9 @@
     "minimum_acceptable_share": 0.8,
     "independent_human_review_required": true,
     "critical_provenance_errors_allowed": 0,
-    "automatic_persistence_allowed": false
+    "automatic_persistence_allowed": false,
+    "review_surface": "projection-product-review-v2.html",
+    "reviewer_attestation_required": true
   },
   "review_rows": [
     { "case_group": "news", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
@@ -24,7 +27,10 @@
     { "case_group": "personal_reflection", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
     { "case_group": "data_heavy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
     { "case_group": "ambiguous", "cases": 3, "agent_pre_review": "correctly_suppressed", "independent_human_review": "open" },
-    { "case_group": "contradictory", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" }
+    { "case_group": "contradictory", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
+    { "case_group": "literature_health", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" },
+    { "case_group": "health", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" },
+    { "case_group": "source_precedence", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" }
   ],
   "case_reviews": [
     { "case_id": "news_transit", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
@@ -50,6 +56,9 @@
     { "case_id": "weak_secret", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
     { "case_id": "conflict_remote_work", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
     { "case_id": "conflict_tourism", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "conflict_standardization", "lists": null, "paths": null, "mindmap": null, "review_status": "open" }
+    { "case_id": "conflict_standardization", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "literature_livsarket", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "health_patient_path", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
+    { "case_id": "pasted_text_inaccessible_url", "lists": null, "paths": null, "mindmap": null, "review_status": "open" }
   ]
 }

@@ -24,8 +24,8 @@ for (const file of [
 ]) vm.runInContext(fs.readFileSync(file, "utf8"), context, { filename: file });
 
 const corpus = JSON.parse(fs.readFileSync("tests/fixtures/aha-projection-product-evaluation-v2.json", "utf8"));
-assert.equal(corpus.cases.length, 24);
-assert.equal(new Set(corpus.cases.map((entry) => entry.genre)).size, 8);
+assert.equal(corpus.cases.length, 27);
+assert.ok(new Set(corpus.cases.map((entry) => entry.genre)).size >= 8);
 
 const STOPWORDS = new Set("og i på av til er et en det som med for den de å om men at fra har blir ble kan skal eller ikke når etter før ved også dette seg sine sin sitt være var mens mot mellom bare".split(" "));
 
@@ -170,7 +170,7 @@ for (const entry of corpus.cases) {
   results.push({ id: entry.id, genre: entry.genre, visible });
 }
 
-assert.equal(results.filter((entry) => entry.visible).length, 21);
+assert.equal(results.filter((entry) => entry.visible).length, 24);
 assert.equal(results.filter((entry) => !entry.visible).length, 3);
 assert.equal(duplicateListRefSets, 0);
 assert.equal(duplicatePathRefSets, 0);
@@ -187,8 +187,8 @@ assert.deepEqual(forward.surfaces, reverse.surfaces);
 
 const review = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-human-review-v2.json", "utf8"));
 assert.equal(review.release_rule.automatic_persistence_allowed, false);
-assert.equal(review.review_rows.reduce((sum, row) => sum + row.cases, 0), 24);
-assert.equal(review.case_reviews.length, 24);
+assert.equal(review.review_rows.reduce((sum, row) => sum + row.cases, 0), 27);
+assert.equal(review.case_reviews.length, 27);
 assert.deepEqual(review.case_reviews.map((entry) => entry.case_id), corpus.cases.map((entry) => entry.id));
 assert.ok(review.case_reviews.every((entry) => entry.lists === null && entry.paths === null && entry.mindmap === null && entry.review_status === "open"));
 assert.equal(review.status, "agent_pre_review_complete_independent_human_review_open");
@@ -201,4 +201,4 @@ const lengths = corpus.cases.map((entry) => entry.source_text.length);
 assert.ok(Math.min(...lengths) < 80, "corpus must contain deliberately insufficient short text");
 assert.ok(Math.max(...lengths) >= 800, "corpus must contain genuinely long text");
 
-console.log(`aha-projection-product-evaluation-v2.test.cjs: OK (24 raw-text cases; ${refinedWeakListAnchors} weak anchors source-refined; ${pathNarrativeSignatures.size} path signatures; human usefulness gate open)`);
+console.log(`aha-projection-product-evaluation-v2.test.cjs: OK (27 raw-text cases; ${refinedWeakListAnchors} weak anchors source-refined; ${pathNarrativeSignatures.size} path signatures; human usefulness gate open)`);
