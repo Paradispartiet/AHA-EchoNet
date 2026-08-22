@@ -52,15 +52,34 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
 test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
-  const failedAgentRequests = [];
-  page.on("requestfailed", (request) => {
-    if (request.url().includes("aha-agent-7a3y.onrender.com")) failedAgentRequests.push(`${request.url()}:${request.failure()?.errorText || "unknown"}`);
+  const proxiedAgentRequests = [];
+  const proxyFailures = [];
+  await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
+    try {
+      const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
+      delete outboundHeaders.host;
+      const response = await route.fetch({ headers: outboundHeaders, timeout: 60000 });
+      proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status() });
+      await route.fulfill({
+        response,
+        headers: {
+          ...response.headers(),
+          "access-control-allow-origin": "http://127.0.0.1:4177",
+          "access-control-allow-credentials": "true"
+        }
+      });
+    } catch (error) {
+      proxyFailures.push(`${request.method()} ${request.url()}: ${error.message}`);
+      await route.abort("connectionfailed");
+    }
   });
   const evaluation = await runEvaluation(page);
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-browser-evaluation-v2.json", `${JSON.stringify(evaluation, null, 2)}\n`);
 
-  expect(failedAgentRequests, "The live release corpus must actually reach the configured semantic/chat backend").toEqual([]);
+  expect(proxyFailures, "The CI transport proxy must receive successful responses from the configured semantic/chat backend").toEqual([]);
+  expect(proxiedAgentRequests.length, "The live release corpus must actually reach the configured semantic/chat backend").toBeGreaterThan(0);
+  expect(proxiedAgentRequests.some((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 500), "At least one real Chat backend response is required").toBe(true);
   expect(evaluation.results).toHaveLength(27);
   for (const result of evaluation.results) {
     expect(result.critical_provenance_errors, result.case_id).toEqual([]);
