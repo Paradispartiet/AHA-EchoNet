@@ -49,10 +49,25 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
   expect(repeated.changed_runtime_version_guard).toEqual({ comparable: false, reason: "runtime_version_changed" });
 });
 
-test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName }) => {
+test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName, request: apiRequest }) => {
   test.setTimeout(18 * 60 * 1000);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
+  const preflightResponse = await apiRequest.post("https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
+    headers: { origin: "https://paradispartiet.github.io" },
+    data: { message: "AHA live product corpus preflight.", ai_state: {}, memory_context: null },
+    timeout: 60000
+  });
+  const preflight = {
+    schema: "aha_projection_product_live_backend_preflight_v2",
+    checked_at: new Date().toISOString(),
+    endpoint: "configured_aha_agent_chat",
+    status: preflightResponse.status(),
+    successful_2xx: preflightResponse.ok()
+  };
+  fs.mkdirSync("test-results", { recursive: true });
+  fs.writeFileSync("test-results/aha-projection-product-live-backend-preflight-v2.json", `${JSON.stringify(preflight, null, 2)}\n`);
+  expect(preflightResponse.ok(), `Live Chat preflight must return 2xx before the 27-case model corpus runs; received HTTP ${preflight.status}`).toBe(true);
   const proxiedAgentRequests = [];
   const proxyFailures = [];
   await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
