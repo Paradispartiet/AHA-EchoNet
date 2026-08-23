@@ -196,6 +196,37 @@ assert.equal(alreadyStaged.migration.counts.already_staged_count, 1);
 assert.equal(alreadyStaged.migration.counts.planned_write_count, 0);
 assert.equal(alreadyStaged.projection.trusted_input_count, 1);
 
+// Active AnalysisBundle input may contain projection-readiness exclusions.
+// The integration gate must account for them instead of comparing total input
+// count with the trusted subset and blocking the entire current analysis.
+const activeIdentity = {
+  analysis_id: "analysis_active",
+  analysis_run_id: "run_active",
+  source_id: "source_active",
+  source_sha256: "b".repeat(64)
+};
+const activeRecord = (record) => ({
+  ...record,
+  analysis_id: activeIdentity.analysis_id,
+  analysis_run_id: activeIdentity.analysis_run_id,
+  source_id: activeIdentity.source_id,
+  source_text_hash: activeIdentity.source_sha256
+});
+const activeWithExclusion = api.preview({
+  analysis_bundle_v2: {
+    schema: "aha_analysis_bundle_v2",
+    bundle_id: "bundle_active",
+    identity: activeIdentity,
+    validation: { valid: true }
+  },
+  approved_active_insights: [activeRecord(trustedA), activeRecord(needsEnrichment)]
+});
+assert.equal(activeWithExclusion.status, "shadow_ready_with_exclusions", JSON.stringify(activeWithExclusion));
+assert.equal(activeWithExclusion.validation.valid, true, JSON.stringify(activeWithExclusion.validation));
+assert.equal(activeWithExclusion.projection.input_count, 2);
+assert.equal(activeWithExclusion.projection.trusted_input_count, 1);
+assert.equal(activeWithExclusion.projection.excluded_input_count, 1);
+
 // If nothing is V2 trust-ready, the gate blocks instead of projecting weak legacy knowledge.
 const weakOnly = api.preview({ legacy_insights: [needsEnrichment, invalid] });
 assert.equal(weakOnly.status, "blocked");

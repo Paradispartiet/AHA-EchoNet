@@ -124,9 +124,19 @@
         end: Number(entry?.end),
         exact_source_match: true
       })).filter((entry) => entry.quote && Number.isInteger(entry.start) && Number.isInteger(entry.end) && entry.end > entry.start);
-      const semanticText = [record.insight, record.abstraction, record.why_it_matters, ...arr(record.evidence).map((entry) => entry?.excerpt)]
+      const narrativeText = [record.insight, record.abstraction, record.why_it_matters]
         .map(text).join(" ").toLocaleLowerCase("no");
-      const relatedConcepts = concepts.filter((concept) => semanticText.includes(text(concept.label).toLocaleLowerCase("no")));
+      const evidenceText = arr(record.evidence).map((entry) => text(entry?.excerpt)).join(" ").toLocaleLowerCase("no");
+      const narrativeConcepts = concepts.filter((concept) => narrativeText.includes(text(concept.label).toLocaleLowerCase("no")))
+        .sort((left, right) => narrativeText.indexOf(text(left.label).toLocaleLowerCase("no")) - narrativeText.indexOf(text(right.label).toLocaleLowerCase("no")));
+      const evidenceConcepts = concepts.filter((concept) => (
+        evidenceText.includes(text(concept.label).toLocaleLowerCase("no"))
+        && !narrativeConcepts.some((item) => item.id === concept.id)
+      ));
+      // Product projections need a small, discriminating concept signature per
+      // insight. Evidence still remains complete in provenance, but must not
+      // make every insight inherit every source concept.
+      const relatedConcepts = [...narrativeConcepts, ...evidenceConcepts].slice(0, 2);
       return {
         id: text(record.id),
         insight: text(record.insight),
