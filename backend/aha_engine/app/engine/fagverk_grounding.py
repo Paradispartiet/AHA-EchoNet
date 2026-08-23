@@ -324,6 +324,10 @@ def _passing_match_sort_key(match: GroundingMatch) -> tuple[float, float, float,
 
 
 def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
+    top_reviewed = top.scoring_mode.startswith("subject_policy_")
+    second_reviewed = second.scoring_mode.startswith("subject_policy_")
+    if top_reviewed and not second_reviewed:
+        return False
     same_scale = (
         top.scoring_mode == second.scoring_mode
         and math.isclose(top.minimum_score, second.minimum_score, rel_tol=0.0, abs_tol=1e-9)
