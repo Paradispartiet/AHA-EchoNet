@@ -56,12 +56,10 @@
     applicationComposition: spec("AHAChatApplicationComposition", ["create"], "create")
   });
 
-  // V2 semantic quality repair. This is deliberately a provider adapter rather
-  // than a second semantic engine: the existing SemanticDocumentV2 and Insight
-  // Quality Gate remain authoritative. The adapter only makes long-source
-  // candidate generation reachable, removes lexical/chrome noise from the
-  // semantic read path, and prevents legacy topic text from masquerading as a
-  // verified V2 field.
+  // V2 semantic quality repair. This remains a provider adapter rather than a
+  // second semantic engine: SemanticDocumentV2 and the Insight Quality Gate stay
+  // authoritative. The adapter improves long-source reach/salience and prevents
+  // optional enrichment from masquerading as a failed core analysis.
   const QUALITY_REPAIR_SCHEMA = "aha_semantic_quality_repair_v2";
   const LONG_SOURCE_LIMIT = 7600;
   const SUBSTANTIVE_SOURCE_MIN = 1200;
@@ -80,6 +78,25 @@
   const TITLE_NOISE = /(?:https?:\/\/|@|\b(?:statistikk|artikkelvisninger|crossref|siteringer|siteringsvarsel|lagre favoritt|referanser|figurer|informasjon og forfattere)\b)/iu;
   const TENSION_SIGNAL = /\b(?:men|mens|samtidig|derimot|likevel|kontrast|kontrasteres|på den ene siden|på den andre siden|spenning(?:sfelt)? mellom|utfordring|problematisk)\b/iu;
   const CONCLUSION_SIGNAL = /\b(?:konklusjon|avslutning|vi har argumentert|vi har vist|vår analyse|dette viser|dermed|derfor|sentralt|viktig|problematiserer)\b/iu;
+  const ACADEMIC_ROLE_ORDER = Object.freeze([
+    "research_question", "method", "framework", "findings", "limitations", "conclusion"
+  ]);
+  const ACADEMIC_ROLE_SIGNALS = Object.freeze({
+    research_question: /\b(?:problemstilling(?:en)?|forskningsspørsmål(?:et|ene)?|research question|formål(?:et)? med (?:studien|artikkelen)|hensikt(?:en)? med (?:studien|artikkelen)|vi undersøker|artikkelen undersøker|studien undersøker|(?:the|this) (?:article|study) asks|the study asks)\b/iu,
+    method: /\b(?:metode(?:n|r)?|metodisk|datamateriale|materiale og metode|utvalg(?:et)?|informant(?:er|ene)?|intervju(?:er|ene)?|observasjon(?:er|ene)?|casestudie|case study|kvalitativ|kvantitativ|empiri(?:sk)?|analysemetode|semi-structured interviews?|thematic analysis|qualitative|quantitative)\b/iu,
+    framework: /\b(?:teori(?:en|er)?|teoretisk|rammeverk(?:et)?|perspektiv(?:et|er)?|begrep(?:et|er)?|conceptual framework|theoretical framework|analytisk tilnærming)\b/iu,
+    findings: /\b(?:resultat(?:er|ene)?|funn(?:ene)?|analysen viser|studien viser|vi finner|vi fant|hovedtema(?:ene)?|temaene|informantene (?:beskriver|forteller)|deltakerne (?:beskriver|forteller)|findings?|results?|the analysis identifies|the study finds)\b/iu,
+    limitations: /\b(?:begrensning(?:er|ene)?|forbehold|usikkerhet|kan ikke fastslå|ikke nødvendigvis|videre forskning|limitations?|cannot establish|further research)\b/iu,
+    conclusion: /\b(?:konklusjon(?:en)?|avslutning|vi konkluderer|vi har vist|vi har argumentert|dette viser|samlet sett|overall|conclusion|the study concludes)\b/iu
+  });
+  const ROLE_HEADING_SIGNALS = Object.freeze({
+    research_question: /^(?:problemstilling|forskningsspørsmål|research question)\b/iu,
+    method: /^(?:metode|materiale og metode|method|methods)\b/iu,
+    framework: /^(?:teori|teoretisk rammeverk|theory|theoretical framework)\b/iu,
+    findings: /^(?:resultat|resultater|funn|results|findings)\b/iu,
+    limitations: /^(?:begrensninger?|limitations?)\b/iu,
+    conclusion: /^(?:konklusjon|avslutning|conclusion)\b/iu
+  });
 
   function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function array(value) { return Array.isArray(value) ? value : []; }
@@ -140,9 +157,80 @@
     return sentences.length ? sentences : [source.trim()].filter(Boolean);
   }
 
+  function rolesForUnit(unit) {
+    const value = String(unit || "");
+    return ACADEMIC_ROLE_ORDER.filter((role) => ACADEMIC_ROLE_SIGNALS[role].test(value));
+  }
+
+  function detectAcademicCoverage(sourceText) {
+    const units = splitSourceUnits(sourceText);
+    const counts = Object.fromEntries(ACADEMIC_ROLE_ORDER.map((role) => [role, 0]));
+    units.forEach((unit) => rolesForUnit(unit).forEach((role) => { counts[role] += 1; }));
+    return deepFreeze({
+      schema: QUALITY_REPAIR_SCHEMA,
+      roles: ACADEMIC_ROLE_ORDER.filter((role) => counts[role] > 0),
+      counts,
+      unit_count: units.length
+    });
+  }
+
+  function roleUnitScore(unit, role, index) {
+    const value = String(unit || "").trim();
+    let score = ACADEMIC_ROLE_SIGNALS[role].test(value) ? 10 : 0;
+    if (ROLE_HEADING_SIGNALS[role]?.test(value)) score += 8;
+    score += Math.min(4, rolesForUnit(value).length * 2);
+    if (value.length >= 100 && value.length <= 1400) score += 2;
+    score += Math.max(0, 2 - (index * 0.01));
+    return score;
+  }
+
+  function focusAcademicSource(sourceText, limit = LONG_SOURCE_LIMIT) {
+    const source = String(sourceText || "").trim();
+    if (!source || source.length <= limit) return source;
+    const coverage = detectAcademicCoverage(source);
+    if (coverage.roles.length < 3) return "";
+    const units = splitSourceUnits(source);
+    if (units.length <= 1) return source.slice(0, limit);
+    const chosen = [];
+    const chosenKeys = new Set();
+    let used = 0;
+    const add = (unit) => {
+      const value = String(unit || "").trim();
+      const key = normalize(value);
+      if (!value || chosenKeys.has(key)) return false;
+      const extra = value.length + (chosen.length ? 2 : 0);
+      if (used + extra > limit) return false;
+      chosen.push(value);
+      chosenKeys.add(key);
+      used += extra;
+      return true;
+    };
+    for (let index = 0; index < Math.min(4, units.length); index += 1) add(units[index]);
+    for (let index = Math.max(0, units.length - 3); index < units.length; index += 1) add(units[index]);
+    const interior = units.slice(4, Math.max(4, units.length - 3));
+    ACADEMIC_ROLE_ORDER.forEach((role) => {
+      const candidate = interior.map((unit, index) => ({ unit, index, score: roleUnitScore(unit, role, index) }))
+        .filter((item) => item.score >= 10)
+        .sort((left, right) => right.score - left.score || left.index - right.index)[0];
+      if (candidate) add(candidate.unit);
+    });
+    interior.map((unit, index) => ({
+      unit,
+      index,
+      score: (rolesForUnit(unit).length * 6)
+        + (TENSION_SIGNAL.test(unit) ? 3 : 0)
+        + (CONCLUSION_SIGNAL.test(unit) ? 4 : 0)
+        + Math.min(3, contentTokens(unit).length / 45)
+    })).sort((left, right) => right.score - left.score || left.index - right.index)
+      .forEach(({ unit }) => add(unit));
+    return chosen.sort((left, right) => source.indexOf(left) - source.indexOf(right)).join("\n\n").slice(0, limit);
+  }
+
   function focusLongSource(sourceText, limit = LONG_SOURCE_LIMIT) {
     const source = String(sourceText || "").trim();
     if (!source || source.length <= limit) return source;
+    const academic = focusAcademicSource(source, limit);
+    if (academic) return academic;
     const units = splitSourceUnits(source);
     if (units.length <= 1) return source.slice(0, limit);
 
@@ -174,9 +262,6 @@
     }).sort((left, right) => right.score - left.score || left.index - right.index);
     middle.forEach(({ unit }) => add(unit));
 
-    // Keep the sample in original source order so the model sees a coherent
-    // progression. Every selected unit is verbatim from the source; only the
-    // whitespace between selected units is new.
     return chosen.sort((left, right) => source.indexOf(left) - source.indexOf(right)).join("\n\n").slice(0, limit);
   }
 
@@ -403,6 +488,55 @@
     return out;
   }
 
+  function isCoreReadinessField(field) {
+    const id = text(field?.field_id);
+    return id === "overview.theme"
+      || id === "overview.strongest_insight"
+      || id === "overview.central_tension"
+      || id === "insights.item"
+      || id === "sources.primary";
+  }
+
+  function fieldPassed(field) {
+    return field?.quality?.status === "passed"
+      && field?.provenance?.status === "verified"
+      && ["verified", "not_applicable"].includes(text(field?.topic?.status));
+  }
+
+  function semanticGateState(bundle, semanticDocument) {
+    const gate = object(semanticDocument?.synthesis_gate && Object.keys(object(semanticDocument.synthesis_gate)).length
+      ? semanticDocument.synthesis_gate
+      : bundle?.semantic_document?.synthesis_gate);
+    const status = text(gate.status);
+    const approvedCount = Number(gate.approved_count ?? bundle?.semantic_document?.approved_insight_ids?.length ?? 0);
+    return {
+      status,
+      authoritative: gate.authoritative === true,
+      approvedCount: Number.isFinite(approvedCount) ? approvedCount : 0,
+      ready: gate.authoritative === true && Boolean(status) && !["not_run", "blocked"].includes(status) && approvedCount > 0
+    };
+  }
+
+  function analyzeCoreReadiness(bundle, semanticDocument) {
+    const fields = collectBundleFields(bundle?.surfaces);
+    const coreFields = fields.filter(isCoreReadinessField);
+    const coreBlocked = coreFields.filter((field) => !fieldPassed(field));
+    const requiredSingles = ["overview.theme", "overview.strongest_insight", "sources.primary"];
+    const missingRequired = requiredSingles.filter((fieldId) => !coreFields.some((field) => text(field?.field_id) === fieldId && fieldPassed(field)));
+    const insightFields = coreFields.filter((field) => text(field?.field_id) === "insights.item");
+    const allBlocked = fields.filter((field) => !fieldPassed(field));
+    const coreBlockedIds = new Set(coreBlocked.map((field) => text(field?.item_id)).filter(Boolean));
+    const optionalBlockedIds = allBlocked.map((field) => text(field?.item_id)).filter((id) => id && !coreBlockedIds.has(id));
+    const gate = semanticGateState(bundle, semanticDocument);
+    const ready = bundle?.status !== "invalid"
+      && bundle?.validation?.valid !== false
+      && gate.ready
+      && missingRequired.length === 0
+      && insightFields.length > 0
+      && coreBlocked.length === 0;
+    return { ready, gate, fields, coreBlocked, optionalBlockedIds, missingRequired };
+  }
+
   function repairAnalysisBundle(bundle, input = {}, originalProvider = null) {
     const repaired = clone(bundle);
     if (!repaired || repaired.schema !== "aha_analysis_bundle_v2") return bundle;
@@ -418,15 +552,75 @@
       repaired.quality.passed_field_count = fields.filter((field) => field?.quality?.status === "passed").length;
       repaired.quality.incomplete_field_ids = fields.filter((field) => field?.quality?.status === "incomplete").map((field) => field.item_id);
       repaired.quality.rejected_field_ids = fields.filter((field) => field?.quality?.status === "rejected").map((field) => field.item_id);
-      if (semanticDocument?.synthesis_gate?.status === "not_run") {
-        repaired.quality.reasons = unique([...array(repaired.quality.reasons), "semantic_synthesis_not_run_for_substantive_source"]);
+      const readiness = analyzeCoreReadiness(repaired, semanticDocument);
+      repaired.quality.blocking_field_ids = readiness.coreBlocked.map((field) => text(field?.item_id)).filter(Boolean);
+      repaired.quality.optional_withheld_field_ids = unique(readiness.optionalBlockedIds);
+      repaired.quality.required_missing_field_ids = readiness.missingRequired.slice();
+      repaired.quality.release_readiness_schema = QUALITY_REPAIR_SCHEMA;
+      if (readiness.ready) {
+        repaired.status = "ready";
+        repaired.quality.status = "ready";
+        repaired.quality.reasons = unique([
+          ...array(repaired.quality.reasons).filter((reason) => ![
+            "item_level_evidence_or_topic_incomplete", "one_or_more_fields_rejected"
+          ].includes(text(reason))),
+          ...(readiness.optionalBlockedIds.length ? ["optional_enrichment_withheld_fail_closed"] : []),
+          QUALITY_REPAIR_SCHEMA
+        ]);
+      } else if (repaired.status !== "invalid") {
         repaired.status = "incomplete";
         repaired.quality.status = "incomplete";
+        repaired.quality.reasons = unique([
+          ...array(repaired.quality.reasons),
+          ...(readiness.gate.ready ? [] : ["authoritative_semantic_synthesis_not_ready"]),
+          ...(readiness.coreBlocked.length || readiness.missingRequired.length ? ["core_analysis_readiness_blocked"] : []),
+          ...(semanticDocument?.synthesis_gate?.status === "not_run" ? ["semantic_synthesis_not_run_for_substantive_source"] : []),
+          QUALITY_REPAIR_SCHEMA
+        ]);
       }
     }
     if (originalProvider?.validate) {
       repaired.validation = clone(originalProvider.validate(repaired));
       if (repaired.validation?.valid !== true) return bundle;
+    }
+    return deepFreeze(repaired);
+  }
+
+  function repairAnalysisReadModel(model, bundle, originalProvider = null) {
+    const repaired = clone(model);
+    if (!repaired || repaired.schema !== "aha_analysis_read_model_v2") return model;
+    const readiness = analyzeCoreReadiness(bundle, bundle?.semantic_document);
+    const blocked = unique(repaired.blocked_field_ids);
+    const coreBlockedIds = new Set(readiness.coreBlocked.map((field) => text(field?.item_id)).filter(Boolean));
+    const blocking = blocked.filter((id) => coreBlockedIds.has(id));
+    repaired.quality = {
+      ...object(repaired.quality),
+      source_bundle_status: bundle?.status || repaired.quality?.source_bundle_status,
+      blocking_field_count: blocking.length,
+      optional_withheld_field_count: Math.max(0, blocked.length - blocking.length),
+      release_readiness_schema: QUALITY_REPAIR_SCHEMA
+    };
+    if (repaired.status !== "invalid" && bundle?.status === "ready" && readiness.ready && blocking.length === 0) repaired.status = "ready";
+    else if (repaired.status !== "invalid") repaired.status = "incomplete";
+    if (originalProvider?.validate) {
+      repaired.validation = clone(originalProvider.validate(repaired));
+      if (repaired.validation?.valid !== true) return model;
+    }
+    return deepFreeze(repaired);
+  }
+
+  function repairHydratedReadModel(model, originalProvider = null) {
+    const repaired = clone(model);
+    if (!repaired || repaired.schema !== "aha_analysis_read_model_v2") return model;
+    if (repaired.status !== "invalid"
+      && text(repaired.quality?.source_bundle_status) === "ready"
+      && Number(repaired.quality?.blocking_field_count || 0) === 0
+      && text(repaired.quality?.release_readiness_schema) === QUALITY_REPAIR_SCHEMA) {
+      repaired.status = "ready";
+    }
+    if (originalProvider?.validate) {
+      repaired.validation = clone(originalProvider.validate(repaired));
+      if (repaired.validation?.valid !== true) return model;
     }
     return deepFreeze(repaired);
   }
@@ -441,14 +635,22 @@
           ...instance,
           async generateAIInsightCandidates(sourceText, context) {
             const raw = String(sourceText || "");
+            const coverage = raw.length >= SUBSTANTIVE_SOURCE_MIN ? detectAcademicCoverage(raw) : { roles: [] };
             const focused = focusLongSource(raw);
+            const academicSample = raw.length > focused.length && coverage.roles.length >= 3;
             const nextContext = {
               ...object(context),
               semantic_source_focus: {
                 schema: QUALITY_REPAIR_SCHEMA,
                 source_length: raw.length,
                 focused_length: focused.length,
-                verbatim_excerpt: raw.length > focused.length
+                verbatim_excerpt: raw.length > focused.length,
+                ...(academicSample ? {
+                  academic_roles_present: coverage.roles.slice(),
+                  minimum_distinct_roles: Math.min(4, coverage.roles.length),
+                  require_cross_section_semantic_diversity: true,
+                  preserve_source_uncertainty: true
+                } : {})
               }
             };
             const candidates = await instance.generateAIInsightCandidates(focused, nextContext);
@@ -486,6 +688,19 @@
     });
   }
 
+  function wrapAnalysisReadModel(provider) {
+    return Object.freeze({
+      ...provider,
+      build(bundle) {
+        return repairAnalysisReadModel(provider.build(bundle), bundle, provider);
+      },
+      hydrate(value) {
+        const hydrated = provider.hydrate(value);
+        return hydrated ? repairHydratedReadModel(hydrated, provider) : null;
+      }
+    });
+  }
+
   function wrapProvider(name, provider) {
     if (!provider || (typeof provider !== "object" && typeof provider !== "function")) return provider;
     let byName = providerRepairCache.get(provider);
@@ -495,6 +710,7 @@
     if (name === "chat.insightPipeline" && typeof provider.create === "function") wrapped = wrapInsightPipeline(provider);
     else if (name === "chat.liveSemanticBridgeV2" && typeof provider.build === "function") wrapped = wrapLiveSemanticBridge(provider);
     else if (name === "chat.analysisBundleV2" && typeof provider.build === "function") wrapped = wrapAnalysisBundle(provider);
+    else if (name === "chat.analysisReadModelV2" && typeof provider.build === "function") wrapped = wrapAnalysisReadModel(provider);
     byName.set(name, wrapped);
     return wrapped;
   }
@@ -503,11 +719,16 @@
     schema: QUALITY_REPAIR_SCHEMA,
     longSourceLimit: LONG_SOURCE_LIMIT,
     substantiveSourceMin: SUBSTANTIVE_SOURCE_MIN,
+    detectAcademicCoverage,
+    focusAcademicSource,
     focusLongSource,
     deriveSourceTheme,
     repairSemanticDocument,
     repairPayloadSourceFields,
+    analyzeCoreReadiness,
     repairAnalysisBundle,
+    repairAnalysisReadModel,
+    wrapInsightPipeline,
     wrapProvider
   });
 
@@ -531,11 +752,6 @@
         return insightsCompatView;
       }
 
-      // RuntimeComposition har fortsatt en legacy export-seam som spør
-      // InsightsEngine etter buildMetaProfile(), mens eierskapet ligger i
-      // MetaInsightsEngine. Provider-objektene kan være Object.freeze()-låst i
-      // produksjon, så denne kompatibiliteten må være en read-only view og må
-      // aldri mutere den faktiske InsightsEngine-provideren.
       const view = Object.create(insights);
       Object.defineProperty(view, "buildMetaProfile", {
         configurable: false,
