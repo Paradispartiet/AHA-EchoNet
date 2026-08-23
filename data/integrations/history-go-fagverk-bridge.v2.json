@@ -1,0 +1,37 @@
+{
+  "schema": "aha_history_go_fagverk_bridge_v2",
+  "version": "2.0.0",
+  "authority": "history_go_canonical_fagverk",
+  "status": "active",
+  "canonical_source": {
+    "repository": "Paradispartiet/History-Go",
+    "source_ref": "847a2e8ca3e71a3bfdd9bc41e7029a41e1c9dec4",
+    "pin_mode": "exact_commit",
+    "paths": {
+      "release": "data/fagverk/fagverk_release.json",
+      "subject_inventory": "data/fagverk/subject_inventory.json",
+      "registry": "data/fagverk/fagverk_registry.json",
+      "fag_manifest": "data/fag/fag_manifest.json"
+    }
+  },
+  "expected": {
+    "registry_sha256": "76ecdd251d9ce74ef9f18624b24e7dd2ecb97d492c2366f095021421574df22d",
+    "subject_inventory_sha256": "5cefdaa14b36c1c8962b96e132766e0ca4cba8ddfe1e64c079da0935decf2c6f",
+    "fag_manifest_sha256": "8f93bd18df3e64ad6ddb471ed026c7f271c9896a8ac1008a7622816ecb0b60df",
+    "root_subject_count": 19,
+    "specialization_count": 1,
+    "chapter_count": 174,
+    "missing_file_count": 0
+  },
+  "consumer_policy": {
+    "subject_ids_from": "subject_inventory",
+    "package_paths_from": "fag_manifest",
+    "chapter_metadata_from": "fagverk_registry",
+    "release_integrity_from": "fagverk_release",
+    "aha_local_subject_data_role": "overlay_only",
+    "stale_runtime_registry_role": "compatibility_only_not_authority",
+    "fallback_to_partial_runtime_registry": false,
+    "fallback_to_local_subject_index_as_authority": false,
+    "fail_closed_when_canonical_package_unavailable": true
+  }
+}
