@@ -5,7 +5,7 @@
   const INDEX_URL = "/data/integrations/runtime/history-go-fagverk-canonical-index.v2.json";
   const OVERLAY_URL = "/data/subjects/subjects_index.json";
   const cache = { bridge: null, index: null, overlays: null, subjects: {} };
-  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner"]);
+  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner","historie","historisk","kapittel"]);
 
   function normalize(value) { return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim(); }
   function unique(values) {
@@ -107,6 +107,7 @@
   function containsSubjectTerm(text, term) { const haystack = normalize(text), needle = normalize(term); return Boolean(haystack && needle && ` ${haystack} `.includes(` ${needle} `)); }
   function matched(text, values) { return unique(Array.isArray(values) ? values : [values]).filter((value) => value.length <= 180 && containsSubjectTerm(text, value)); }
   function relevant(values) { return unique(values).filter((value) => { const key = normalize(value); return key.length >= 3 && !NOISE.has(key); }); }
+  function titleTokens(value) { return relevant(normalize(value).split(" ").filter((token) => token.length >= 4)); }
   function buildMatchProvenance(subject, emne) {
     if (emne?.fagverk) return { kind: "canonical_fagverk", evidence_role: "reference_support_not_source_evidence", canonical_subject_id: String(emne.fagverk.canonical_subject_id || subject.subject_id), chapter_id: String(emne.fagverk.chapter_id || ""), source_repo: String(emne.fagverk.source_repo || "Paradispartiet/History-Go"), source_ref: String(emne.fagverk.source_ref || subject.source_ref || ""), source_path: String(emne.fagverk.source_path || ""), registry_path: String(emne.fagverk.registry_path || ""), manifest_path: String(emne.fagverk.manifest_path || ""), package_field: String(emne.fagverk.package_field || ""), term_source: String(emne.fagverk.term_source || ""), generation_mode: String(emne.fagverk.generation_mode || "") };
     if (emne?.local_knowledge) return { kind: "aha_local_overlay", evidence_role: "local_reference_support_not_source_evidence", classification: String(emne.local_knowledge.classification || ""), canonical_subject_ids: unique(emne.local_knowledge.canonical_subject_ids || []), revalidate_on_runtime_change: true };
@@ -123,7 +124,7 @@
   function fieldsForClass(emne, kind) {
     if (kind === "method") return [["title", emne.title, 1.5], ["core", emne.core_concepts, 0.75], ["keywords", emne.keywords, 0.5], ["summary", emne.summary, 0.25]];
     if (kind === "supplement") return [["title", emne.title, 4], ["core", emne.core_concepts, 4.5], ["summary", emne.summary, 0.5]];
-    if (kind === "chapter") return [["title", emne.title, 5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["methods", emne.methods, 1], ["summary", emne.summary, 1]];
+    if (kind === "chapter") return [["title", emne.title, 5], ["title_tokens", titleTokens(emne.title), 4.5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["methods", emne.methods, 1], ["summary", emne.summary, 1]];
     return [["title", emne.title, 6], ["core", emne.core_concepts, 5], ["keywords", emne.keywords, 3], ["thinkers", emne.thinkers, 3], ["methods", emne.methods, 1.5], ["summary", emne.summary, 0.75], ["description", emne.description, 0.5]];
   }
 
@@ -152,9 +153,15 @@
     }
 
     const termSubjects = new Map();
+    const termEntriesWithinSubject = new Map();
     for (const match of out) for (const term of match.matched_terms || []) {
       const key = normalize(term); if (!key) continue;
       if (!termSubjects.has(key)) termSubjects.set(key, new Set()); termSubjects.get(key).add(match.subject_id);
+      if (match.emne_id) {
+        const subjectKey = `${match.subject_id}|${key}`;
+        if (!termEntriesWithinSubject.has(subjectKey)) termEntriesWithinSubject.set(subjectKey, new Set());
+        termEntriesWithinSubject.get(subjectKey).add(match.emne_id);
+      }
     }
     const substantiveCounts = new Map();
     for (const match of out) if (match.strong && match.type !== "method" && match.emne_id) substantiveCounts.set(match.subject_id, (substantiveCounts.get(match.subject_id) || 0) + 1);
@@ -163,11 +170,15 @@
         const count = substantiveCounts.get(match.subject_id) || 0;
         match.score += Math.min(3, Math.max(0, count - 1) * 0.75);
         let rarity = 0;
+        let specificity = 0;
         for (const term of match.matched_terms || []) {
-          const subjectCount = termSubjects.get(normalize(term))?.size || 0;
+          const normalizedTerm = normalize(term);
+          const subjectCount = termSubjects.get(normalizedTerm)?.size || 0;
           rarity += subjectCount === 1 ? 2.5 : subjectCount === 2 ? 1.25 : subjectCount === 3 ? 0.5 : 0;
+          const entryCount = termEntriesWithinSubject.get(`${match.subject_id}|${normalizedTerm}`)?.size || 0;
+          specificity += entryCount === 1 ? 2 : entryCount === 2 ? 1 : entryCount === 3 ? 0.4 : 0;
         }
-        match.score += Math.min(5, rarity);
+        match.score += Math.min(5, rarity) + Math.min(6, specificity);
       }
     }
 
