@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from app.engine.analyzer import analyze_message
+from app.engine.fagverk_canonical import load_canonical_fagverk_corpus
 from app.schemas import AnalyzeRequest, CanonicalAhaAnalysis, Confidence, HistoryGoLink
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -312,7 +313,7 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     if len(normalized) < 24:
         return {"status": "unsupported", "reason": "source_too_short", "matches": []}
 
-    payload = corpus or load_fagverk_corpus()
+    payload = corpus or load_canonical_fagverk_corpus()
     subject_policies = payload.get("subject_policies", {})
     matches: list[GroundingMatch] = []
     for entry in payload.get("entries", []):
