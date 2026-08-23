@@ -1104,17 +1104,23 @@
       return ingestUserMessageWithCandidates(messageText);
     }
 
-    async function handleUserMessageInsightCandidatesInBackground(messageText) {
+    async function generateAnalysisInsightCandidates(messageText) {
       const text = String(messageText || "").trim();
-      if (!text || !getInsightsApi()) return 0;
+      if (!text) return [];
       const themeId = getThemeId();
       const fieldId = getFieldId();
-      const aiCandidates = await generateAIInsightCandidates(text, {
+      return generateAIInsightCandidates(text, {
         subject_id: subjectId,
         theme_id: themeId,
         field_id: fieldId,
         ai_state: buildAIState({ includeMemory: isMemoryUseEnabled() })
       });
+    }
+
+    async function handleUserMessageInsightCandidatesInBackground(messageText) {
+      const text = String(messageText || "").trim();
+      if (!text || !getInsightsApi()) return 0;
+      const aiCandidates = await generateAnalysisInsightCandidates(text);
       if (!aiCandidates.length) return 0;
       return ingestUserMessageWithCandidates(text, aiCandidates);
     }
@@ -1124,6 +1130,7 @@
       recordSemanticDocumentShadow,
       ingestUserMessageWithCandidates,
       handleUserMessage,
+      generateAnalysisInsightCandidates,
       handleUserMessageInsightCandidatesInBackground
     });
   }

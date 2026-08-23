@@ -62,6 +62,19 @@ const blockedCandidate = {
   ...approvedCandidate,
   insight: 'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.'
 };
+const liveApiCandidate = {
+  title: 'Felles kjerne med lokal tilpasning',
+  summary: 'Delvis standardisering balanserer sammenlignbarhet mot behovet for lokal fleksibilitet i ulike saker.',
+  functional_type: 'pattern',
+  evidence_quotes: [
+    'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.',
+    'Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.'
+  ],
+  why_it_matters: 'Modellen viser hvordan styringssystemer kan kombinere felles krav med nødvendig lokal tilpasning.',
+  uncertainty: 'interpretive',
+  claim_kind: 'interpretation',
+  candidate_type: 'ai'
+};
 const payload = {
   ...activeRun,
   source_binding: { valid: true },
@@ -73,7 +86,7 @@ const payload = {
   },
   ahaSer: { viktigsteInnsikt: approvedCandidate.insight },
   reflection: approvedCandidate.why_it_matters,
-  insightCandidatesV2: [approvedCandidate, blockedCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
+  insightCandidatesV2: [approvedCandidate, blockedCandidate, liveApiCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
 };
 
 const bridge = context.AHALiveSemanticBridgeV2;
@@ -87,11 +100,12 @@ assert.ok(semantic.concepts.length >= 4);
 assert.ok(semantic.claims.length >= 3);
 assert.ok(semantic.relations.length >= 4);
 assert.ok(semantic.tensions.length >= 1);
-assert.equal(semantic.candidate_insights.length, 2, 'metadata candidates must be excluded before semantic insight creation');
-assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 1);
+assert.equal(semantic.candidate_insights.length, 3, 'metadata candidates must be excluded before semantic insight creation');
+assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 2);
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'blocked').length, 1);
+assert.equal(semantic.candidate_insights.find((item) => item.insight === liveApiCandidate.summary).origin, 'live_analysis_candidate');
 assert.equal(semantic.synthesis_gate.authoritative, true);
-assert.equal(semantic.synthesis_gate.approved_count, 1);
+assert.equal(semantic.synthesis_gate.approved_count, 2);
 assert.equal(semantic.synthesis_gate.blocked_count, 1);
 assert.equal(semantic.policy.legacy_chamber_dependency, false);
 assert.equal(semantic.policy.ungated_heuristic_synthesis, false);
@@ -103,9 +117,9 @@ assert.equal(bundle.semantic_document.schema, semantic.schema);
 assert.equal(bundle.semantic_document.source_sha256, sourceSha256);
 assert.equal(bundle.semantic_document.analysis_run_id, activeRun.analysisRunId);
 assert.equal(bundle.semantic_document.source_id, activeRun.sourceId);
-assert.equal(bundle.semantic_document.approved_insight_ids.length, 1);
+assert.equal(bundle.semantic_document.approved_insight_ids.length, 2);
 assert.equal(bundle.semantic_document.blocked_candidate_insight_ids.length, 1);
-assert.equal(bundle.surfaces.insights.length, 1, 'only quality-approved current insights may enter AnalysisBundleV2');
+assert.equal(bundle.surfaces.insights.length, 2, 'only quality-approved current insights may enter AnalysisBundleV2');
 assert.equal(bundle.surfaces.insights[0].value, approvedCandidate.insight);
 assert.equal(bundle.surfaces.insights[0].provenance.origin, 'semantic_document_v2_quality_approved');
 assert.equal(bundle.surfaces.overview.strongest_insight.value, approvedCandidate.insight);

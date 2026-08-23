@@ -746,7 +746,8 @@
   ]);
   const METADATA_INSIGHT = /(?:^|\b)(?:kilde registrert|source registered|metadata_only|source_event_only)(?:\b|$)/iu;
   const TENSION_MARKER = /\b(?:men|mens|samtidig|derimot|likevel|adskilt fra|skilles fra|spenning mellom|på den ene siden|på den andre siden)\b/iu;
-  const CAUSAL_LANGUAGE = /\b(?:fordi|forårsaker|forårsaket|fører til|førte til|gjør at|resulterer i|på grunn av|som følge av|derfor|causes?|caused|leads? to|led to|results? in|because)\b/iu;
+  const CAUSAL_LANGUAGE = /(?:\b(?:fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|bidrar til|causes?|caused|leads? to|led to|results? in|because)\b|\bfør(?:er|te)[^.!?]{0,100}\btil\b|(?:^|[^\p{L}\p{N}_])(?:skaper|skapes|skapte|skapt|gir|ga|øker|økte|reduserer|reduserte|muliggjør|muliggjorde|kanaliserer|kanaliserte)(?![\p{L}\p{N}_]))/iu;
+  const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|kan\s+flytte|causes?|caused|leads? to|led to|results? in|because)\b/iu;
   const STOPWORDS = new Set([
     "og", "i", "på", "til", "av", "for", "med", "som", "det", "den", "de", "et", "en", "er", "var", "blir",
     "kan", "skal", "har", "om", "at", "fra", "når", "etter", "før", "mellom", "også", "dette", "tekst", "teksten",
@@ -827,7 +828,7 @@
       if (Array.isArray(item)) return item.forEach(visit);
       if (item && typeof item === "object") {
         const source = object(item);
-        for (const key of ["quote", "text", "excerpt", "evidence", "evidenceText", "evidence_text", "source_excerpt"]) {
+        for (const key of ["quote", "text", "excerpt", "evidence", "evidence_quotes", "evidenceText", "evidence_text", "source_excerpt"]) {
           if (source[key] != null && source[key] !== item) visit(source[key]);
         }
         return;
@@ -981,22 +982,37 @@
   }
   function buildCandidateInput(raw, payload, claims, sourceText) {
     const source = object(raw);
-    const insight = text(source.insight || source.text || raw);
+    const insight = text(source.insight || source.summary || source.text || raw);
     const interpretation = linkedInterpretation(payload, insight);
     const evidence = candidateEvidence(raw, payload, insight, claims, sourceText);
-    const requestedType = text(source.type || source.insight_type);
-    const confidence = text(source.confidence || interpretation?.confidence);
+    const requestedType = text(source.type || source.insight_type || source.functional_type);
+    const typeMap = {
+      observation: "generalization", question: "generalization", definition: "generalization", learning_point: "generalization",
+      contradiction: "tension", task: "consequence", problem: "consequence", solution: "consequence", decision: "consequence"
+    };
+    const uncertainty = text(source.uncertainty || interpretation?.uncertainty);
+    const confidence = text(source.confidence || interpretation?.confidence)
+      || (uncertainty === "hypothesis" ? "low" : "medium");
+    const whyItMatters = text(source.why_it_matters || source.whyItMatters || payload?.reflection);
+    const title = text(source.title);
+    const abstraction = text(source.abstraction || source.semantic_transform)
+      || (tokens(title).length >= 5 ? title : text([title, whyItMatters].filter(Boolean).join(": ")))
+      || text(payload?.canonicalAnalysis?.theme);
+    const explicitCausalEvidence = evidence.some((item) => EXPLICIT_CAUSAL_SOURCE.test(text(item?.quote)));
+    const inferredCausalStatus = CAUSAL_LANGUAGE.test(insight)
+      ? (explicitCausalEvidence ? "source_explicit" : "interpretive")
+      : "not_causal";
     return {
       insight,
-      type: INSIGHT_TYPES.has(requestedType) ? requestedType : "generalization",
-      abstraction: text(source.abstraction || source.semantic_transform || payload?.canonicalAnalysis?.theme),
+      type: INSIGHT_TYPES.has(requestedType) ? requestedType : (typeMap[requestedType] || "generalization"),
+      abstraction,
       evidence,
-      why_it_matters: text(source.why_it_matters || source.whyItMatters || payload?.reflection),
+      why_it_matters: whyItMatters,
       confidence: ["high", "medium", "low"].includes(confidence) ? confidence : "low",
-      uncertainty: text(source.uncertainty || interpretation?.uncertainty),
+      uncertainty,
       causal_status: ["not_causal", "source_explicit", "interpretive"].includes(text(source.causal_status))
         ? text(source.causal_status)
-        : CAUSAL_LANGUAGE.test(insight) ? "interpretive" : "not_causal"
+        : inferredCausalStatus
     };
   }
   function buildCandidateInsights(sourceText, sourceSha256, anchors, claims, payload, gateApi) {
@@ -1024,7 +1040,7 @@
         blocking_reasons: clone(decision.blocking_reasons),
         quality_metrics: clone(decision.metrics),
         quality_gate_schema: gateApi.GATE_SCHEMA || "aha_insight_quality_gate_v2",
-        origin: text(object(raw).origin) || "current_chat_analysis_candidate"
+        origin: text(object(raw).origin) || (object(raw).candidate_type === "ai" ? "live_analysis_candidate" : "current_chat_analysis_candidate")
       };
     }).filter(Boolean);
   }

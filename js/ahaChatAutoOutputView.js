@@ -673,6 +673,9 @@
         deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer", { producer: "current_analysis_run" });
       }
       payload = finalizeAnalysisQuality(payload, effectiveSourceText);
+      payload.insightCandidatesV2 = Array.isArray(options.insightCandidatesV2)
+        ? cloneSemanticGate(options.insightCandidatesV2) || []
+        : [];
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
       if (payload.ahaSer && typeof payload.ahaSer === "object") deps.bindAnalysisArtifact(payload.ahaSer, activeRun, "ahaSer");

@@ -95,7 +95,8 @@
     insightPipeline: group(functions("generateAIInsightCandidates", "buildSemanticInsightCandidates")),
     agentRuntime: group(functions("buildAIState", "askAhaAgent")),
     ingestRuntime: group(functions(
-      "handleUserMessage", "handleUserMessageInsightCandidatesInBackground"
+      "handleUserMessage", "ingestUserMessageWithCandidates", "generateAnalysisInsightCandidates",
+      "handleUserMessageInsightCandidatesInBackground"
     )),
     academicInsightView: group(functions(
       "parseLabeledInsightCards", "readLatestAcademicContext", "buildAcademicSyntheticInsightCards"

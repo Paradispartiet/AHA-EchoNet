@@ -32,6 +32,13 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     getThemeId: () => 'theme_test',
     getFieldId: () => 'field_test',
     handleUserMessage: () => 1,
+    ingestUserMessageWithCandidates: (_text, candidates) => { events.push(`ingest-candidates:${candidates.length}`); return candidates.length; },
+    generateAnalysisInsightCandidates: async () => [{
+      title: 'Analysebundet kandidat',
+      summary: 'En analysebundet kandidat følger aktiv kilde inn i den semantiske pakken.',
+      evidence_quotes: ['Analyser dette'],
+      candidate_type: 'ai'
+    }],
     handleUserMessageInsightCandidatesInBackground: async () => 0
   },
   memory: {
@@ -75,7 +82,11 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     normalizeVisibleReply: (value) => value,
     evaluateAnswerForChat: () => ({ status: 'ok', score: 1 }),
     maybeHandleMetaAiAgentReply: () => {},
-    renderAutoOutputs: async () => events.push('render-auto-output'),
+    renderAutoOutputs: async (_text, _reply, options) => {
+      events.push('render-auto-output');
+      assert.equal(options.insightCandidatesV2.length, 1);
+      assert.equal(options.insightCandidatesV2[0].candidate_type, 'ai');
+    },
     ensureAfterworkForLatestAnalysis: () => events.push('ensure-afterwork')
   },
   ui: {
@@ -107,6 +118,7 @@ assert.equal(typeof runtime.submitAhaChatMessage, 'function');
   assert(events.indexOf('clear-analysis') < events.indexOf('render-retrieval'), 'analysis run must be cleared before retrieval is rendered');
   assert(events.indexOf('render-retrieval') < events.indexOf('chat:aha:Svar fra AHA'), 'retrieval must complete before the answer is rendered');
   assert(events.includes('render-auto-output'));
+  assert(events.includes('ingest-candidates:1'));
   assert(events.includes('ensure-afterwork'));
   assert(events.includes('ingest:aha_agent'));
   assert.equal(events.at(-2), 'processing:false');

@@ -119,6 +119,15 @@ async function verifyBackgroundIngestWithoutMemory() {
   assert.deepEqual(JSON.parse(JSON.stringify(calls.ai[0].inputContext.ai_state)), { state: "isolated" });
 }
 
+async function verifyAnalysisGenerationIsReadOnly() {
+  const { runtime, calls } = createHarness({ aiCandidates: [{ text: "Analysebundet AI-kandidat" }] });
+  const candidates = await runtime.generateAnalysisInsightCandidates("Aktiv analysekilde");
+  assert.equal(candidates.length, 1);
+  assert.equal(calls.ai.length, 1);
+  assert.equal(calls.canonical.length, 0, "analysebundet generering skal ikke skrive til Chamber");
+  assert.equal(calls.sources.length, 0, "analysebundet generering skal ikke opprette source events");
+}
+
 {
   const { runtime, calls } = createHarness({ engine: false });
   assert.equal(runtime.handleUserMessage("Ingen motor"), 0);
@@ -130,7 +139,7 @@ assert.doesNotMatch(chatSource, /function (?:ingestUserMessageWithCandidates|han
 assert.doesNotMatch(chatSource, /ingestWithCandidates|addSourceEvent\?\.\(/);
 assert.ok(chatHtml.indexOf("js/ahaChatIngestRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));
 
-Promise.all([verifyBackgroundIngest(), verifyBackgroundIngestWithoutMemory()])
+Promise.all([verifyBackgroundIngest(), verifyBackgroundIngestWithoutMemory(), verifyAnalysisGenerationIsReadOnly()])
   .then(() => console.log("aha-chat-ingest-runtime passed"))
   .catch((error) => {
     console.error(error);

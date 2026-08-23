@@ -27,7 +27,7 @@ const bundle = {
       id: "insight_livsarket",
       insight: "Feltvis kildebelegg gjør analysen kontrollerbar.",
       type: "generalization",
-      causal_status: "not_causal",
+      causal_status: "source_explicit",
       quality_score: 0.91,
       evidence
     }]
