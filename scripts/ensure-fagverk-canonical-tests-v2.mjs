@@ -37,8 +37,8 @@ const engineChanged = migrate("js/ahaSubjectEngine.js", [
     'const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner"]);'
   ],
   [
-    'methods: unique(item.methods || []), learning_goals: [], checkpoints: [], summary:',
-    'methods: unique(item.methods || []), chapter_specific_terms: unique(item.semantic_terms || []), learning_goals: [], checkpoints: [], summary:'
+    'return { emne_id: `fagverk_${subject.subject_id}_${id}`, title: String(item.title || id), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), learning_goals: [], checkpoints: [], summary:',
+    'return { emne_id: `fagverk_${subject.subject_id}_${id}`, title: String(item.title || id), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), chapter_specific_terms: unique(item.semantic_terms || []), learning_goals: [], checkpoints: [], summary:'
   ],
   [
     'if (kind === "chapter") return [["title", emne.title, 5], ["title_tokens", titleTokens(emne.title), 4.5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["methods", emne.methods, 1], ["summary", emne.summary, 1]];',
@@ -55,7 +55,11 @@ const engineChanged = migrate("js/ahaSubjectEngine.js", [
 ]);
 
 const engine = fs.readFileSync(path.join(root, "js/ahaSubjectEngine.js"), "utf8");
-if (!engine.includes('chapter_specific_terms: unique(item.semantic_terms || [])')) throw new Error("js/ahaSubjectEngine.js: chapter specificity channel missing.");
+const chapterStart = engine.indexOf("  function chapterEmne(raw, subject) {");
+const chapterEnd = engine.indexOf("  function supplementEmne(raw, subject, index) {", chapterStart);
+if (chapterStart < 0 || chapterEnd < 0) throw new Error("js/ahaSubjectEngine.js: chapter loader boundary missing.");
+const chapterBlock = engine.slice(chapterStart, chapterEnd);
+if (!chapterBlock.includes('chapter_specific_terms: unique(item.semantic_terms || [])')) throw new Error("js/ahaSubjectEngine.js: chapter specificity channel missing from chapter loader.");
 if (!engine.includes('primarySupportBySubject')) throw new Error("js/ahaSubjectEngine.js: subject-anchor gate missing.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
 
