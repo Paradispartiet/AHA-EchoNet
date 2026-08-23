@@ -180,7 +180,7 @@ function compactChapter(raw, subjectId, sourceRef, index, emneById, chapterAsset
     subtitle: String(chapter.subtitle || chapterAsset?.data?.subtitle || ""),
     primary_domain_id: String(chapter.primary_domain_id || ""),
     emne_ids: emneIds,
-    core_concepts: unique([...linked.flatMap((item) => item.core_concepts || []), ...semanticTerms]),
+    core_concepts: unique(linked.flatMap((item) => item.core_concepts || [])),
     keywords: unique([chapter.primary_domain_id, ...linked.flatMap((item) => item.keywords || [])]),
     thinkers: unique(linked.flatMap((item) => item.thinkers || [])),
     methods: unique(linked.flatMap((item) => item.methods || [])),
