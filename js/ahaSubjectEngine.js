@@ -164,21 +164,6 @@
       primarySupportBySubject.set(match.subject_id, Math.max(primarySupportBySubject.get(match.subject_id) || 0, Number(match.score || 0)));
     }
     const maxPrimarySupport = Math.max(0, ...primarySupportBySubject.values());
-    if (maxPrimarySupport >= 8) {
-      const derivedFloor = maxPrimarySupport * 0.5;
-      for (let index = out.length - 1; index >= 0; index -= 1) {
-        const match = out[index];
-        if (!["chapter", "supplement", "method"].includes(match.type)) continue;
-        if ((primarySupportBySubject.get(match.subject_id) || 0) < derivedFloor) out.splice(index, 1);
-      }
-    }
-
-    const primarySupportBySubject = new Map();
-    for (const match of out) {
-      if (!["emne", "concept", "thinker", "overlay"].includes(match.type) || !match.emne_id) continue;
-      primarySupportBySubject.set(match.subject_id, Math.max(primarySupportBySubject.get(match.subject_id) || 0, Number(match.score || 0)));
-    }
-    const maxPrimarySupport = Math.max(0, ...primarySupportBySubject.values());
     const chapterSpecificityEligibleSubjects = new Set();
     if (maxPrimarySupport >= 8) {
       const derivedFloor = maxPrimarySupport * 0.5;
