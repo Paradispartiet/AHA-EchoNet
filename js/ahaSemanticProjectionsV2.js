@@ -169,6 +169,16 @@
     );
   }
 
+  function extractSemanticProfile(item) {
+    const candidate = unwrapCandidate(item);
+    return {
+      abstraction: text(candidate?.abstraction || item?.abstraction || item?.activation_v2?.abstraction),
+      why_it_matters: text(candidate?.why_it_matters || candidate?.whyItMatters || item?.why_it_matters || item?.whyItMatters || item?.activation_v2?.why_it_matters),
+      confidence: text(candidate?.confidence || item?.confidence || item?.activation_v2?.confidence),
+      uncertainty: text(candidate?.uncertainty || item?.uncertainty || item?.activation_v2?.uncertainty)
+    };
+  }
+
   function emptyResult(reasons, inputCount = 0) {
     const result = {
       schema: PROJECTION_SCHEMA,
@@ -291,6 +301,7 @@
           return true;
         }).sort((a, b) => `${a.field}:${a.value}`.localeCompare(`${b.field}:${b.value}`));
         const repText = insightText(representative.item);
+        const semanticProfile = extractSemanticProfile(representative.item);
         const types = unique(memberEntries.map((member) => extractType(member.item))).sort();
         const causalStatuses = unique(memberEntries.map((member) => extractCausalStatus(member.item))).sort();
 
@@ -306,6 +317,7 @@
           all_types: types,
           causal_status: extractCausalStatus(representative.item),
           all_causal_statuses: causalStatuses,
+          semantic_profile: semanticProfile,
           quality: {
             representative_score: round(representative.quality_score),
             min_score: round(Math.min(...qualities)),
@@ -404,6 +416,10 @@
       insight: unit.insight,
       type: unit.type,
       causal_status: unit.causal_status,
+      abstraction: unit.semantic_profile?.abstraction || "",
+      why_it_matters: unit.semantic_profile?.why_it_matters || "",
+      confidence: unit.semantic_profile?.confidence || "",
+      uncertainty: unit.semantic_profile?.uncertainty || "",
       quality: clone(unit.quality),
       provenance: clone(unit.provenance),
       member_ids: [...unit.member_ids],
@@ -416,18 +432,22 @@
     }));
   }
 
-  function listItem(unit) {
+  function listItem(unit, membership = {}) {
     return {
       id: `list_item_v2_${hash(unit.id)}`,
       title: unit.title,
       type: "insight",
       source: "aha_semantic_v2",
       refId: unit.id,
+      membership_reason: text(membership.reason),
       meta: {
         read_only: true,
         projection_candidate: true,
         quality_score: unit.quality.mean_score,
-        concept_keys: unit.concepts.map((concept) => concept.key)
+        concept_keys: unit.concepts.map((concept) => concept.key),
+        semantic_basis: text(membership.basis),
+        semantic_basis_label: text(membership.label),
+        membership_reason: text(membership.reason)
       }
     };
   }
@@ -446,7 +466,11 @@
         type: "concepts",
         description: `Kvalitetsgodkjente innsikter som belyser «${concept.label}» fra flere sider.`,
         tags: [concept.label, "AHA V2"],
-        items: related.map(listItem),
+        items: related.map((unit) => listItem(unit, {
+          basis: "shared_concept",
+          label: concept.label,
+          reason: `Innsikten belyser «${concept.label}» direkte og er derfor et begrunnet medlem av dette temaet.`
+        })),
         source: "aha_semantic_v2",
         local_only: true,
         meta: {
@@ -455,6 +479,9 @@
           concept_id: concept.id,
           semantic_basis: "shared_concept",
           semantic_basis_label: concept.label,
+          semantic_shape: "thematic_membership_v2",
+          membership_rule: "every_member_explicitly_shares_the_named_concept",
+          member_ref_ids: related.map((unit) => unit.id),
           read_only: true,
           candidate_only: true
         }
@@ -471,7 +498,11 @@
         type: "concepts",
         description: "To selvstendige innsikter som resonerer semantisk uten å være duplikater.",
         tags: ["Resonans", "AHA V2"],
-        items: related.map(listItem),
+        items: related.map((unit) => listItem(unit, {
+          basis: "resonance",
+          label: "resonans",
+          reason: "Innsikten er én side av en kildebundet resonans; den beholdes som selvstendig perspektiv og skal ikke dedupliseres."
+        })),
         source: "aha_semantic_v2",
         local_only: true,
         meta: {
@@ -480,6 +511,9 @@
           resonance_edge_id: edge.id,
           semantic_basis: "resonance",
           semantic_basis_label: "resonans",
+          semantic_shape: "thematic_membership_v2",
+          membership_rule: "exactly_two_distinct_insights_joined_by_typed_resonance",
+          member_ref_ids: related.map((unit) => unit.id),
           dedupe_eligible: false,
           read_only: true,
           candidate_only: true
@@ -495,7 +529,11 @@
         type: "concepts",
         description: "Foreløpig kandidat som krever sterkere tematisk belegg før den kan bli et produktforslag.",
         tags: ["Krever vurdering", "AHA V2"],
-        items: units.slice().sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id)).map(listItem),
+        items: units.slice().sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id)).map((unit) => listItem(unit, {
+          basis: "fallback_core",
+          label: focus?.label || "",
+          reason: "Innsikten tilhører den kildebundne kjernen, men den tematiske medlemsgrunnen er foreløpig ikke sterk nok."
+        })),
         source: "aha_semantic_v2",
         local_only: true,
         meta: {
@@ -503,6 +541,9 @@
           projection_id: projectionId,
           semantic_basis: "fallback_core",
           semantic_basis_label: focus?.label || "",
+          semantic_shape: "thematic_membership_v2",
+          membership_rule: "unqualified_core_candidate_requires_stronger_shared_basis",
+          member_ref_ids: units.map((unit) => unit.id).sort(),
           read_only: true,
           candidate_only: true
         }
@@ -512,83 +553,205 @@
     return candidates.sort((a, b) => a.id.localeCompare(b.id));
   }
 
-  function buildPathCandidates(listCandidates, projectionId) {
+  function semanticProfileText(unit) {
+    return [
+      unit?.insight,
+      unit?.type,
+      unit?.causal_status,
+      unit?.semantic_profile?.abstraction,
+      unit?.semantic_profile?.why_it_matters,
+      unit?.semantic_profile?.confidence,
+      unit?.semantic_profile?.uncertainty
+    ].map(text).join(" ");
+  }
+
+  function stageScore(unit, stage) {
+    const profile = normalize(semanticProfileText(unit));
+    const type = normalize(unit?.type);
+    const evidenceCount = arr(unit?.provenance?.evidence).length;
+    let score = Number(unit?.quality?.mean_score) || 0;
+    if (stage === "orientation") {
+      if (["observation", "generalization", "principle"].includes(type)) score += 0.35;
+      score += Math.min(0.2, unit?.concepts?.length * 0.05);
+    } else if (stage === "claim_evidence") {
+      score += Math.min(0.45, evidenceCount * 0.12);
+      if (unit?.causal_status === "source_explicit") score += 0.1;
+    } else if (stage === "tension_counterexample") {
+      if (["tension", "contrast", "problem"].includes(type)) score += 0.7;
+      if (/\b(men|samtidig|likevel|spenning|motsetning|begrensning|alternativ)\b/u.test(profile)) score += 0.4;
+      if (unit?.causal_status === "interpretive") score += 0.15;
+    } else if (stage === "uncertainty") {
+      if (text(unit?.semantic_profile?.uncertainty)) score += 0.55;
+      if (["low", "medium"].includes(text(unit?.semantic_profile?.confidence))) score += 0.2;
+      if (unit?.causal_status === "interpretive") score += 0.25;
+      if (/\b(usikker|uklar|mangler|kan ikke|begrensning|alternativ)\b/u.test(profile)) score += 0.35;
+    } else {
+      if (text(unit?.semantic_profile?.why_it_matters)) score += 0.45;
+      if (text(unit?.semantic_profile?.abstraction)) score += 0.25;
+      if (["principle", "consequence", "solution", "generalization"].includes(type)) score += 0.2;
+    }
+    return score;
+  }
+
+  function selectStageUnits(related) {
+    const stages = ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"];
+    const selected = stages.map((stage) => {
+      const ranked = related.slice().sort((left, right) => stageScore(right, stage) - stageScore(left, stage) || left.id.localeCompare(right.id));
+      return { stage, unit: ranked[0] };
+    });
+    if (unique(selected.map((entry) => entry.unit?.id).filter(Boolean)).length < 2 && related.length >= 2) {
+      const contrast = related.slice().sort((left, right) => stageScore(right, "tension_counterexample") - stageScore(left, "tension_counterexample") || left.id.localeCompare(right.id))[1];
+      selected[2] = { stage: "tension_counterexample", unit: contrast };
+    }
+    return selected;
+  }
+
+  function sourceBoundStageNarrative(stage, unit, related) {
+    const focus = insightTitle(unit?.insight || "den kildebundne innsikten");
+    const counterpart = related.find((entry) => entry.id !== unit?.id);
+    const contrast = insightTitle(counterpart?.insight || focus);
+    if (stage === "orientation") return `Start med «${focus}». Avgrens hovedspørsmålet, og identifiser hvilke begreper og kildebelegg som setter rammen.`;
+    if (stage === "claim_evidence") return `Prøv «${focus}» mot det konkrete kildebelegget. Skill tydelig mellom observasjon, tolkning og påstandens faktiske rekkevidde.`;
+    if (stage === "tension_counterexample") return `Sett «${focus}» opp mot «${contrast}». Forklar spenningen eller et moteksempel som kan endre den foreløpige forståelsen.`;
+    if (stage === "uncertainty") return `Undersøk grensene for «${focus}». Marker manglende belegg, åpne antakelser og alternative forklaringer som fortsatt må prøves.`;
+    return `Syntetiser det som holder mellom «${focus}» og «${contrast}», og formuler ett presist neste spørsmål som reduserer den viktigste usikkerheten.`;
+  }
+
+  function buildPathCandidates(listCandidates, units, projectionId) {
     const stages = [
       {
         id: "orientation",
-        narrative: "Orienter deg i temaet: avgrens hovedspørsmålet, les den første innsikten og kontroller hvilket kildegrunnlag den bygger på.",
         outcome: "Kunne formulere hovedspørsmålet og peke på relevant kildegrunnlag."
       },
       {
         id: "claim_evidence",
-        narrative: "Undersøk den sentrale påstanden og skill tydelig mellom hva kilden sier, hvilket belegg som finnes og hva som er tolkning.",
         outcome: "Kunne koble en påstand til konkret belegg uten å overdrive kildens rekkevidde."
       },
       {
         id: "tension_counterexample",
-        narrative: "Sett innsiktene opp mot hverandre og let etter en spenning, begrensning eller et moteksempel som utfordrer den første forklaringen.",
         outcome: "Kunne forklare den viktigste spenningen og beskrive hva et moteksempel ville endret."
       },
       {
         id: "uncertainty",
-        narrative: "Kartlegg hva analysen fortsatt ikke kan avgjøre: noter usikre antakelser, manglende belegg og alternative forklaringer.",
         outcome: "Kunne skille dokumentert kunnskap fra åpne spørsmål og begrunnet usikkerhet."
       },
       {
         id: "synthesis_next_inquiry",
-        narrative: "Syntetiser det som holder etter testen, og formuler én presis neste undersøkelse som kan redusere den viktigste usikkerheten.",
         outcome: "Kunne formulere en kildeforankret syntese og et gjennomførbart neste spørsmål."
       }
     ];
-    return arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice(0, 6).map((list) => ({
-      id: `path_v2_${hash(`${projectionId}:${list.id}`)}`,
-      title: `Undersøk: ${list.meta?.semantic_basis_label || list.title}`,
-      type: "learning",
-      mode: "learning",
-      status: "candidate",
-      description: list.description,
-      goal: "Undersøk hvordan innsiktene henger sammen, hvor de skiller lag og hva som fortsatt er usikkert.",
-      learningOutcome: "Kunne forklare sammenhengen med kildebelegg, en tydelig forskjell og et begrunnet neste spørsmål.",
-      tags: [...arr(list.tags)],
-      steps: stages.map((stage, index) => {
-        const items = arr(list.items);
-        const item = items[index % items.length];
-        return {
-          id: `path_step_v2_${hash(`${list.id}:${stage.id}:${item.refId}`)}`,
-          title: `${index + 1}. ${stage.id === "orientation" ? "Orientering" : stage.id === "claim_evidence" ? "Påstand og belegg" : stage.id === "tension_counterexample" ? "Spenning eller moteksempel" : stage.id === "uncertainty" ? "Usikkerhet" : "Syntese og neste undersøkelse"}`,
-          type: "insight",
-          source: "aha_semantic_v2",
-          refId: item.refId,
-          order: index,
-          status: "planned",
-          narrative: stage.narrative,
-          learningOutcome: stage.outcome,
-          meta: { projection_id: projectionId, stage: stage.id, semantic_basis: list.meta?.semantic_basis || "", read_only: true, candidate_only: true }
-        };
-      }),
-      source: "aha_semantic_v2",
-      local_only: true,
-      meta: { createdBy: PROJECTION_SCHEMA, projection_id: projectionId, read_only: true, candidate_only: true }
-    })).sort((a, b) => a.id.localeCompare(b.id));
+    const byInsight = new Map(arr(units).map((unit) => [unit.id, unit]));
+    return arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice(0, 6).map((list) => {
+      const related = arr(list.items).map((item) => byInsight.get(item.refId)).filter(Boolean);
+      const selectedStages = selectStageUnits(related);
+      return {
+        id: `path_v2_${hash(`${projectionId}:${list.id}`)}`,
+        title: `Undersøk: ${list.meta?.semantic_basis_label || list.title}`,
+        type: "learning",
+        mode: "learning",
+        status: "candidate",
+        description: list.description,
+        goal: "Bygg en kildeforankret forklaring fra orientering og belegg via spenning og usikkerhet til en begrunnet syntese.",
+        learningOutcome: "Kunne forklare sammenhengen med kildebelegg, teste et motperspektiv og formulere et presist neste spørsmål.",
+        tags: [...arr(list.tags)],
+        steps: stages.map((stage, index) => {
+          const selected = selectedStages[index]?.unit;
+          return {
+            id: `path_step_v2_${hash(`${list.id}:${stage.id}:${selected?.id || "missing"}`)}`,
+            title: `${index + 1}. ${stage.id === "orientation" ? "Orientering" : stage.id === "claim_evidence" ? "Påstand og belegg" : stage.id === "tension_counterexample" ? "Spenning eller moteksempel" : stage.id === "uncertainty" ? "Usikkerhet" : "Syntese og neste undersøkelse"}`,
+            type: "insight",
+            source: "aha_semantic_v2",
+            refId: selected?.id || "",
+            order: index,
+            status: "planned",
+            narrative: sourceBoundStageNarrative(stage.id, selected, related),
+            learningOutcome: stage.outcome,
+            meta: {
+              projection_id: projectionId,
+              stage: stage.id,
+              semantic_role: stage.id,
+              semantic_basis: list.meta?.semantic_basis || "",
+              selection_reason: `best_source_bound_fit_for_${stage.id}`,
+              source_bound_narrative: true,
+              read_only: true,
+              candidate_only: true
+            }
+          };
+        }),
+        source: "aha_semantic_v2",
+        local_only: true,
+        meta: {
+          createdBy: PROJECTION_SCHEMA,
+          projection_id: projectionId,
+          semantic_shape: "ordered_inquiry_v2",
+          source_list_candidate_id: list.id,
+          stage_selection: "semantic_role_ranked_not_round_robin",
+          read_only: true,
+          candidate_only: true
+        }
+      };
+    }).sort((a, b) => a.id.localeCompare(b.id));
   }
 
   function buildMindmap(units, concepts, resonanceEdges, projectionId) {
     const rankedConcepts = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
-    const rootConcept = rankedConcepts[0] || null;
     const repeatedConcepts = rankedConcepts.filter((concept) => concept.occurrence_count >= 2);
-    const selectedConcepts = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts).slice(0, 7);
-    const selectedConceptKeys = new Set(selectedConcepts.map((concept) => concept.key));
-    const selectedInsightIds = new Set(selectedConcepts.flatMap((concept) => concept.insight_ids));
+    const branchLimit = Math.min(7, units.length);
+    const branchCandidatePool = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts)
+      .filter((concept) => concept.insight_ids.length > 0);
+    const unitById = new Map(units.map((unit) => [unit.id, unit]));
+    const assignedUnitIds = new Set();
+    const assignments = new Map();
+
+    // Seed every branch with one unique child before distributing the rest.
+    // This keeps the hierarchy meaningful and prevents one insight from
+    // appearing under several normal hierarchy parents.
+    const selectedConcepts = [];
+    branchCandidatePool.forEach((concept) => {
+      if (selectedConcepts.length >= branchLimit) return;
+      const available = concept.insight_ids.map((id) => unitById.get(id)).filter((unit) => unit && !assignedUnitIds.has(unit.id))
+        .sort((left, right) => (right.quality.mean_score - left.quality.mean_score) || left.id.localeCompare(right.id));
+      if (!available.length) return;
+      assignments.set(concept.id, [available[0].id]);
+      assignedUnitIds.add(available[0].id);
+      selectedConcepts.push(concept);
+    });
+    const selectedConceptIds = new Set(selectedConcepts.map((concept) => concept.id));
+    units.filter((unit) => !assignedUnitIds.has(unit.id)).forEach((unit) => {
+      const supported = selectedConcepts.filter((concept) => concept.insight_ids.includes(unit.id));
+      const target = (supported.length ? supported : selectedConcepts).slice().sort((left, right) => {
+        const load = arr(assignments.get(left.id)).length - arr(assignments.get(right.id)).length;
+        return load || right.occurrence_count - left.occurrence_count || left.key.localeCompare(right.key);
+      })[0];
+      if (!target) return;
+      assignments.get(target.id).push(unit.id);
+      assignedUnitIds.add(unit.id);
+    });
+
+    const selectedInsightIds = new Set([...assignedUnitIds]);
     const selectedUnits = units.filter((unit) => selectedInsightIds.has(unit.id));
-    const rootId = `theme_v2_${hash(`${projectionId}:${rootConcept?.key || "semantic-core"}`)}`;
+    const rootLabels = selectedConcepts.slice(0, 2).map((concept) => concept.label);
+    const rootTitle = rootLabels.length >= 2
+      ? `Sammenhengen mellom ${rootLabels[0]} og ${rootLabels[1]}`
+      : rootLabels[0] ? `Perspektiver på ${rootLabels[0]}` : "Kildebundne perspektiver";
+    const rootId = `theme_v2_${hash(`${projectionId}:${rootLabels.join("||") || "semantic-core"}`)}`;
     const nodes = [
       {
         id: rootId,
-        title: rootConcept ? `${rootConcept.label}: semantisk oversikt` : "Semantisk oversikt",
+        title: rootTitle,
         type: "theme",
         source: "aha_semantic_v2",
         refId: projectionId,
-        meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy_level: 0, root: true }
+        meta: {
+          projection_id: projectionId,
+          semantic_shape: "ranked_hierarchy_v2",
+          central_idea: rootTitle,
+          source_concept_ids: selectedConcepts.slice(0, 2).map((concept) => concept.id),
+          read_only: true,
+          candidate_only: true,
+          hierarchy_level: 0,
+          root: true
+        }
       },
       ...selectedUnits.map((unit) => ({
         id: unit.id,
@@ -603,6 +766,7 @@
           member_ids: [...unit.member_ids],
           equivalence_collapsed: unit.equivalence_collapsed,
           quality_score: unit.quality.mean_score,
+          primary_branch_id: selectedConcepts.find((concept) => arr(assignments.get(concept.id)).includes(unit.id))?.id || "",
           hierarchy_level: 2
         }
       })),
@@ -618,6 +782,7 @@
           candidate_only: true,
           concept_key: concept.key,
           occurrence_count: concept.occurrence_count,
+          branch_reason: `Gren for kildebegrepet «${concept.label}», med ${arr(assignments.get(concept.id)).length} tilordnet innsikt${arr(assignments.get(concept.id)).length === 1 ? "" : "er"}.`,
           hierarchy_level: 1,
           branch_rank: rankedConcepts.findIndex((entry) => entry.id === concept.id)
         }
@@ -631,26 +796,30 @@
       to: concept.id,
       type: "theme_branch",
       label: "gren",
-      meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
+      meta: {
+        projection_id: projectionId,
+        semantic_basis: "ranked_source_concept",
+        branch_reason: `«${concept.label}» organiserer en egen kildebundet perspektivgren.`,
+        read_only: true,
+        candidate_only: true,
+        hierarchy: true
+      }
     }));
-    selectedUnits.forEach((unit) => unit.concepts
-      .filter((concept) => selectedConceptKeys.has(concept.key))
-      .sort((left, right) => {
-        const leftNode = selectedConcepts.find((node) => node.key === left.key);
-        const rightNode = selectedConcepts.find((node) => node.key === right.key);
-        return (rightNode?.occurrence_count || 0) - (leftNode?.occurrence_count || 0) || left.key.localeCompare(right.key);
-      })
-      .slice(0, 2)
-      .forEach((concept) => {
-      const conceptNode = selectedConcepts.find((node) => node.key === concept.key);
-      if (!conceptNode) return;
+    selectedConcepts.forEach((concept) => arr(assignments.get(concept.id)).forEach((unitId) => {
+      if (!selectedInsightIds.has(unitId) || !selectedConceptIds.has(concept.id)) return;
       edges.push({
-        id: `edge_v2_${hash(`${unit.id}:${conceptNode.id}:has_concept`)}`,
-        from: conceptNode.id,
-        to: unit.id,
+        id: `edge_v2_${hash(`${unitId}:${concept.id}:primary_branch`)}`,
+        from: concept.id,
+        to: unitId,
         type: "supports_insight",
         label: "belyser innsikt",
-        meta: { projection_id: projectionId, read_only: true, candidate_only: true, hierarchy: true }
+        meta: {
+          projection_id: projectionId,
+          semantic_basis: "primary_concept_assignment",
+          read_only: true,
+          candidate_only: true,
+          hierarchy: true
+        }
       });
     }));
     resonanceEdges.filter((edge) => selectedInsightIds.has(edge.from) && selectedInsightIds.has(edge.to)).forEach((edge) => edges.push({
@@ -676,6 +845,8 @@
       meta: {
         createdBy: PROJECTION_SCHEMA,
         projection_id: projectionId,
+        semantic_shape: "ranked_hierarchy_v2",
+        branch_assignment: "one_primary_hierarchy_parent_per_insight",
         candidate_only: true,
         root_id: rootId,
         hierarchy_levels: 3,
@@ -703,12 +874,23 @@
       if (!insightIds.has(edge.from) || !insightIds.has(edge.to)) errors.push(`resonance_unresolved_endpoint:${edge.id}`);
       if (edge.dedupe_eligible !== false) errors.push(`resonance_must_not_dedupe:${edge.id}`);
     });
-    arr(projections.lists).forEach((list) => arr(list.items).forEach((item) => {
-      if (item.type === "insight" && !insightIds.has(item.refId)) errors.push(`list_unresolved_insight:${list.id}:${item.refId}`);
-    }));
-    arr(projections.paths).forEach((path) => arr(path.steps).forEach((step) => {
-      if (step.type === "insight" && !insightIds.has(step.refId)) errors.push(`path_unresolved_insight:${path.id}:${step.refId}`);
-    }));
+    arr(projections.lists).forEach((list) => {
+      if (list?.meta?.semantic_shape !== "thematic_membership_v2") errors.push(`list_semantic_shape_invalid:${list.id}`);
+      const manifest = arr(list?.meta?.member_ref_ids).map(text).sort().join("|");
+      const refs = arr(list.items).map((item) => text(item?.refId)).filter(Boolean).sort().join("|");
+      if (manifest !== refs) errors.push(`list_member_manifest_mismatch:${list.id}`);
+      arr(list.items).forEach((item) => {
+        if (item.type === "insight" && !insightIds.has(item.refId)) errors.push(`list_unresolved_insight:${list.id}:${item.refId}`);
+        if (!text(item?.membership_reason) || text(item?.membership_reason) !== text(item?.meta?.membership_reason)) errors.push(`list_membership_reason_invalid:${list.id}:${item.refId}`);
+      });
+    });
+    arr(projections.paths).forEach((path) => {
+      if (path?.meta?.semantic_shape !== "ordered_inquiry_v2" || path?.meta?.stage_selection !== "semantic_role_ranked_not_round_robin") errors.push(`path_semantic_shape_invalid:${path.id}`);
+      arr(path.steps).forEach((step) => {
+        if (step.type === "insight" && !insightIds.has(step.refId)) errors.push(`path_unresolved_insight:${path.id}:${step.refId}`);
+        if (text(step?.meta?.semantic_role) !== text(step?.meta?.stage) || !text(step?.meta?.selection_reason)) errors.push(`path_semantic_role_invalid:${path.id}:${step.id}`);
+      });
+    });
 
     const mindmapNodes = new Set(arr(projections.mindmap?.nodes).map((node) => node.id));
     arr(projections.mindmap?.edges).forEach((edge) => {
@@ -716,6 +898,11 @@
     });
     const mindmapBranches = arr(projections.mindmap?.edges).filter((edge) => edge.type === "theme_branch");
     if (mindmapBranches.length > 7) errors.push("mindmap_branch_limit_exceeded");
+    if (projections.mindmap?.meta?.semantic_shape !== "ranked_hierarchy_v2" || projections.mindmap?.meta?.branch_assignment !== "one_primary_hierarchy_parent_per_insight") errors.push("mindmap_semantic_shape_invalid");
+    const hierarchyEdges = arr(projections.mindmap?.edges).filter((edge) => edge.type === "supports_insight");
+    arr(projections.mindmap?.nodes).filter((node) => node.type === "insight").forEach((node) => {
+      if (hierarchyEdges.filter((edge) => edge.to === node.id).length !== 1) errors.push(`mindmap_insight_hierarchy_parent_invalid:${node.id}`);
+    });
 
     return { valid: errors.length === 0, errors: unique(errors).sort() };
   }
@@ -758,7 +945,7 @@
     const projectionId = `projection_v2_${hash(seed)}`;
     const projectedInsights = insightProjection(units, concepts);
     const listCandidates = buildListCandidates(units, concepts, resonanceEdges, projectionId);
-    const pathCandidates = buildPathCandidates(listCandidates, projectionId);
+    const pathCandidates = buildPathCandidates(listCandidates, units, projectionId);
     const mindmap = buildMindmap(units, concepts, resonanceEdges, projectionId);
 
     const result = {

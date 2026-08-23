@@ -135,6 +135,9 @@ for (const entry of corpus.cases) {
     for (const list of model.surfaces.lists) {
       assert.ok(list.title.length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} list title too long`);
       assert.equal(list.meta.display_refinement, "source_bound_usefulness_v2", `${entry.id} list missing usefulness refinement`);
+      assert.equal(list.meta.semantic_shape, "thematic_membership_v2", `${entry.id} list semantic shape drift`);
+      assert.deepEqual(Array.from(list.meta.member_ref_ids).sort(), Array.from(list.items, (item) => item.refId).sort(), `${entry.id} list member manifest drift`);
+      assert.ok(list.items.every((item) => item.membership_reason.length >= 40 && item.meta.membership_reason === item.membership_reason), `${entry.id} list membership reason missing`);
       if (context.AHAProjectionArtifactQualityV2.isLowInformationLabel(list.meta.semantic_basis_label)) {
         refinedWeakListAnchors += 1;
         assert.equal(list.meta.display_theme_source, "source_bound_insight_text", `${entry.id} weak list anchor not source-refined`);
@@ -146,11 +149,16 @@ for (const entry of corpus.cases) {
     for (const path of model.surfaces.paths) {
       assert.ok(path.title.length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} path title too long`);
       assert.equal(path.meta.display_refinement, "source_bound_usefulness_v2", `${entry.id} path missing usefulness refinement`);
+      assert.equal(path.meta.semantic_shape, "ordered_inquiry_v2", `${entry.id} path semantic shape drift`);
+      assert.equal(path.meta.stage_selection, "semantic_role_ranked_not_round_robin", `${entry.id} path reverted to generic cycling`);
       assert.equal(path.steps.map((step) => step.meta.stage).join("|"), "orientation|claim_evidence|tension_counterexample|uncertainty|synthesis_next_inquiry");
+      assert.ok(new Set(path.steps.map((step) => step.refId)).size >= 2, `${entry.id} path lacks semantic contrast`);
       pathNarrativeSignatures.add(path.steps.map((step) => step.narrative).join("||"));
       for (const step of path.steps) {
         visiblePathSteps += 1;
         assert.equal(step.meta.source_bound_narrative, true, `${entry.id} ${step.meta.stage} not marked source-bound`);
+        assert.equal(step.meta.semantic_role, step.meta.stage, `${entry.id} ${step.meta.stage} semantic role drift`);
+        assert.equal(step.meta.selection_reason, `best_source_bound_fit_for_${step.meta.stage}`, `${entry.id} ${step.meta.stage} selection reason drift`);
         const sourceInsight = insightById.get(step.refId);
         assert.ok(sourceInsight, `${entry.id} missing path source insight ${step.refId}`);
         assert.ok(narrativeHasSourceSignal(step.narrative, sourceInsight.insight || sourceInsight.summary || sourceInsight.title), `${entry.id} ${step.meta.stage} narrative not tied to referenced insight`);
@@ -160,12 +168,20 @@ for (const entry of corpus.cases) {
 
     const roots = model.surfaces.mindmap.nodes.filter((node) => node.type === "theme" && node.meta?.root === true);
     assert.equal(roots.length, 1, `${entry.id} mindmap root count`);
+    assert.equal(model.surfaces.mindmap.meta.semantic_shape, "ranked_hierarchy_v2", `${entry.id} mindmap semantic shape drift`);
+    assert.equal(model.surfaces.mindmap.meta.branch_assignment, "one_primary_hierarchy_parent_per_insight", `${entry.id} mindmap hierarchy assignment drift`);
+    assert.equal(roots[0].meta.central_idea, roots[0].title, `${entry.id} mindmap central idea drift`);
     assert.ok((roots[0].title || "").length >= 4, `${entry.id} mindmap root title missing`);
     assert.ok((roots[0].title || "").length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE, `${entry.id} mindmap root title too long`);
     const branchIds = new Set(model.surfaces.mindmap.edges.filter((edge) => edge.type === "theme_branch").map((edge) => edge.to));
     const branchNodes = model.surfaces.mindmap.nodes.filter((node) => branchIds.has(node.id));
     assert.ok(branchNodes.every((node) => (node.title || "").length >= 4), `${entry.id} weak empty mindmap branch display`);
     assert.ok(branchNodes.every((node) => (node.title || "").length <= context.AHAProjectionArtifactQualityV2.MAX_PRODUCT_TITLE), `${entry.id} mindmap branch title too long`);
+    assert.ok(branchNodes.every((node) => (node.meta?.branch_reason || "").length >= 30), `${entry.id} mindmap branch reason missing`);
+    const hierarchyEdges = model.surfaces.mindmap.edges.filter((edge) => edge.type === "supports_insight");
+    for (const node of model.surfaces.mindmap.nodes.filter((candidate) => candidate.type === "insight")) {
+      assert.equal(hierarchyEdges.filter((edge) => edge.to === node.id).length, 1, `${entry.id} ${node.id} must have one hierarchy parent`);
+    }
   }
   results.push({ id: entry.id, genre: entry.genre, visible });
 }
@@ -178,6 +194,13 @@ assert.equal(sourceBoundPathSteps, visiblePathSteps);
 assert.ok(refinedWeakListAnchors >= 10, `corpus should exercise weak-anchor refinement; got ${refinedWeakListAnchors}`);
 assert.ok(pathNarrativeSignatures.size >= 18, `paths remain too generic across cases: only ${pathNarrativeSignatures.size} distinct narrative signatures`);
 assert.equal(storageCalls, 0);
+
+for (const caseId of ["data_bus", "conflict_tourism"]) {
+  const entry = corpus.cases.find((candidate) => candidate.id === caseId);
+  const model = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsightsFromRawText(entry) });
+  assert.ok(model.surfaces.lists.length > 0 && model.surfaces.paths.length > 0 && model.surfaces.mindmap.nodes.length > 0,
+    `${caseId} must remain a fully qualified semantic-shape regression case`);
+}
 
 const deterministicCase = corpus.cases.find((entry) => entry.expected_visible);
 const forward = context.AHAProjectionProductReadModelV2.build({ legacy_insights: makeInsightsFromRawText(deterministicCase) });

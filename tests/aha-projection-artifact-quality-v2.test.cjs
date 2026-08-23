@@ -33,18 +33,57 @@ const insights = [
   }
 ];
 
-const goodList = {
+function withListShape(list) {
+  const basis = list.meta.semantic_basis;
+  const label = list.meta.semantic_basis_label || "";
+  const items = list.items.map((item) => {
+    const membershipReason = `Innsikten er et eksplisitt kildebundet medlem av temaet «${label || basis}» og bidrar med et eget perspektiv.`;
+    return {
+      ...item,
+      membership_reason: membershipReason,
+      meta: { ...(item.meta || {}), semantic_basis: basis, semantic_basis_label: label, membership_reason: membershipReason }
+    };
+  });
+  return {
+    ...list,
+    items,
+    meta: {
+      ...list.meta,
+      semantic_shape: "thematic_membership_v2",
+      membership_rule: "test_membership_rule",
+      member_ref_ids: items.map((item) => item.refId)
+    }
+  };
+}
+
+function withPathShape(path) {
+  return {
+    ...path,
+    meta: { ...(path.meta || {}), semantic_shape: "ordered_inquiry_v2", stage_selection: "semantic_role_ranked_not_round_robin" },
+    steps: path.steps.map((step) => ({
+      ...step,
+      meta: {
+        ...(step.meta || {}),
+        semantic_role: step.meta.stage,
+        selection_reason: `best_source_bound_fit_for_${step.meta.stage}`,
+        source_bound_narrative: true
+      }
+    }))
+  };
+}
+
+const goodList = withListShape({
   id: "list_good",
   title: "Utforsk skolemåltid",
   items: insights.map((insight) => ({ refId: insight.id, title: insight.title, meta: { concept_keys: ["skolemåltid", `perspektiv_${insight.id}`] } })),
   meta: { semantic_basis: "shared_concept", semantic_basis_label: "skolemåltid" }
-};
-const weakList = {
+});
+const weakList = withListShape({
   id: "list_weak",
   items: [{ refId: "a" }, { refId: "b" }],
   meta: { semantic_basis: "fallback_core" }
-};
-const lowInformationList = {
+});
+const lowInformationList = withListShape({
   id: "list_low_information",
   title: "Utforsk alene",
   description: "Strukturelt riktig, men menneskelig svakt.",
@@ -53,14 +92,21 @@ const lowInformationList = {
     { refId: "b", title: insights[1].title, meta: { concept_keys: ["alene", "fravær"] } }
   ],
   meta: { semantic_basis: "shared_concept", semantic_basis_label: "alene" }
-};
+});
 assert.equal(api.evaluateList(goodList, { insights }).passed, true);
 assert.equal(api.evaluateList(weakList, { insights }).passed, false);
+const unshapedListQuality = api.evaluateList({ ...goodList, meta: { ...goodList.meta, semantic_shape: "" } }, { insights });
+assert.equal(unshapedListQuality.passed, false);
+assert.ok(unshapedListQuality.reasons.includes("list_semantic_shape_invalid"));
+const unexplainedList = { ...goodList, id: "list_unexplained", items: goodList.items.map((item) => ({ ...item, membership_reason: "", meta: { ...item.meta, membership_reason: "" } })) };
+const unexplainedListQuality = api.evaluateList(unexplainedList, { insights });
+assert.equal(unexplainedListQuality.passed, false);
+assert.ok(unexplainedListQuality.reasons.includes("list_membership_reason_missing"));
 const rawLowInformationQuality = api.evaluateList(lowInformationList, { insights });
 assert.equal(rawLowInformationQuality.passed, false);
 assert.ok(rawLowInformationQuality.reasons.includes("list_display_anchor_low_information"));
 
-const genericPath = {
+const genericPath = withPathShape({
   id: "path_generic",
   title: "Undersøk: alene",
   steps: [
@@ -70,32 +116,40 @@ const genericPath = {
     { refId: "b", order: 3, narrative: "Kartlegg usikre antakelser, manglende belegg og mulige alternative forklaringer.", learningOutcome: "Kunne skille kunnskap fra begrunnet usikkerhet.", meta: { stage: "uncertainty", semantic_basis: "shared_concept" } },
     { refId: "a", order: 4, narrative: "Syntetiser det som holder og formuler en presis neste undersøkelse.", learningOutcome: "Kunne formulere en syntese og ett åpent spørsmål.", meta: { stage: "synthesis_next_inquiry", semantic_basis: "shared_concept" } }
   ]
-};
+});
 const rawPathQuality = api.evaluatePath(genericPath, { insights });
 assert.equal(rawPathQuality.passed, false, "generic path copy must not pass when source insight text is available");
 assert.ok(rawPathQuality.reasons.includes("path_transitions_not_source_bound"));
+const roundRobinPathQuality = api.evaluatePath({ ...genericPath, meta: { ...genericPath.meta, stage_selection: "round_robin" } }, { insights });
+assert.equal(roundRobinPathQuality.passed, false);
+assert.ok(roundRobinPathQuality.reasons.includes("path_semantic_shape_invalid"));
 assert.equal(api.evaluatePath({ ...genericPath, id: "short", steps: genericPath.steps.slice(0, 2) }, { insights }).passed, false);
 
 const goodMindmap = {
   nodes: [
-    { id: "root", title: "Skolemåltid: semantisk oversikt", type: "theme", meta: { root: true } },
-    { id: "concept_a", title: "arbeidsro", type: "concept" },
-    { id: "concept_b", title: "fravær", type: "concept" },
+    { id: "root", title: "Skolemåltid: semantisk oversikt", type: "theme", meta: { root: true, semantic_shape: "ranked_hierarchy_v2", central_idea: "Skolemåltid: semantisk oversikt" } },
+    { id: "concept_a", title: "arbeidsro", type: "concept", meta: { branch_reason: "Grenen samler kildebundne innsikter om arbeidsro etter måltidet." } },
+    { id: "concept_b", title: "fravær", type: "concept", meta: { branch_reason: "Grenen samler kildebundne innsikter om fravær i forsøket." } },
     { id: "a", title: insights[0].title, type: "insight", refId: "a" },
     { id: "b", title: insights[1].title, type: "insight", refId: "b" }
   ],
   edges: [
-    { from: "root", to: "concept_a", type: "theme_branch" },
-    { from: "root", to: "concept_b", type: "theme_branch" },
+    { from: "root", to: "concept_a", type: "theme_branch", meta: { semantic_basis: "ranked_source_concept", branch_reason: "Arbeidsro er en egen kildebundet perspektivgren i analysen." } },
+    { from: "root", to: "concept_b", type: "theme_branch", meta: { semantic_basis: "ranked_source_concept", branch_reason: "Fravær er en egen kildebundet perspektivgren i analysen." } },
     { from: "concept_a", to: "a", type: "supports_insight" },
     { from: "concept_b", to: "b", type: "supports_insight" }
   ],
   read_only: true,
-  meta: { projection_id: "projection_1" }
+  meta: { projection_id: "projection_1", semantic_shape: "ranked_hierarchy_v2", branch_assignment: "one_primary_hierarchy_parent_per_insight" }
 };
 assert.equal(api.evaluateMindmap(goodMindmap).passed, true);
+const multiParentMindmap = JSON.parse(JSON.stringify(goodMindmap));
+multiParentMindmap.edges.push({ from: "concept_b", to: "a", type: "supports_insight" });
+const multiParentQuality = api.evaluateMindmap(multiParentMindmap);
+assert.equal(multiParentQuality.passed, false);
+assert.ok(multiParentQuality.reasons.includes("mindmap_insight_hierarchy_parent_invalid"));
 
-const duplicateShared = {
+const duplicateShared = withListShape({
   id: "list_duplicate_shared",
   title: "Utforsk oppmerksomhet",
   items: [
@@ -103,8 +157,8 @@ const duplicateShared = {
     { refId: "c", title: insights[2].title, meta: { concept_keys: ["oppmerksomhet"] } }
   ],
   meta: { semantic_basis: "shared_concept", semantic_basis_label: "oppmerksomhet" }
-};
-const duplicateResonance = {
+});
+const duplicateResonance = withListShape({
   id: "list_duplicate_resonance",
   title: `Sammenheng: ${insights[1].title} ↔ ${insights[2].title}`,
   items: [
@@ -112,7 +166,7 @@ const duplicateResonance = {
     { refId: "c", title: insights[2].title, meta: { concept_keys: ["arbeidsro"] } }
   ],
   meta: { semantic_basis: "resonance", semantic_basis_label: "resonans", dedupe_eligible: false }
-};
+});
 const duplicatePath = {
   ...genericPath,
   id: "path_duplicate_resonance",
@@ -155,6 +209,8 @@ assert.ok(!refined.surfaces.paths.some((item) => item.id === "path_duplicate_sha
 const refinedGenericPath = refined.surfaces.paths.find((item) => item.id === "path_generic");
 assert.ok(refinedGenericPath.steps.every((step) => step.meta.source_bound_narrative === true));
 assert.equal(api.evaluatePath(refinedGenericPath, { insights }).passed, true);
+const refinedRoot = refined.surfaces.mindmap.nodes.find((node) => node.type === "theme" && node.meta?.root === true);
+assert.equal(refinedRoot.meta.central_idea, refinedRoot.title, "root refinement must keep the central-idea contract synchronized");
 
 const filtered = api.filterReadModel(model);
 assert.ok(filtered.surfaces.lists.some((item) => item.id === "list_good"));

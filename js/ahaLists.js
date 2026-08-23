@@ -625,7 +625,10 @@
     mount.innerHTML = candidates.map((list) => {
       const score = Number(list?.quality?.score);
       const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
-      const items = asArray(list.items).map((item) => `<li><strong>${escapeHtml(item.title)}</strong></li>`).join("");
+      const items = asArray(list.items).map((item) => {
+        const membershipReason = asText(item?.membership_reason || item?.meta?.membership_reason, "");
+        return `<li><strong>${escapeHtml(item.title)}</strong>${membershipReason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(membershipReason)}</p>` : ""}</li>`;
+      }).join("");
       const undoAvailable = global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({ artifact_type: "list", artifact_id: list.id, projection_id: model.projection_id }) === true;
       return `<article class="aha-v2-list-preview-card" data-v2-list-preview="${escapeHtml(list.id)}">
         <div class="aha-list-header">

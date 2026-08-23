@@ -213,6 +213,7 @@
         node.meta.display_refinement = DISPLAY_REFINEMENT;
         if ((!current || isLowInformationLabel(rootAnchor)) && sourceTheme) node.title = capTitle(`Oversikt: ${sourceTheme}`);
         else node.title = capTitle(current);
+        node.meta.central_idea = text(node.title);
       }
       if (node.type === "concept") {
         const branchAnchor = current;
@@ -254,6 +255,13 @@
     }).length;
     const basis = text(list?.meta?.semantic_basis);
     const basisLabel = normalize(list?.meta?.semantic_basis_label);
+    const memberRefIds = arr(list?.meta?.member_ref_ids).map(text).filter(Boolean).sort();
+    const membershipReady = items.filter((item) => (
+      text(item?.membership_reason).length >= 40
+      && text(item?.meta?.membership_reason) === text(item?.membership_reason)
+      && text(item?.meta?.semantic_basis) === basis
+      && normalize(item?.meta?.semantic_basis_label) === basisLabel
+    )).length;
     const justified = items.filter((item) => {
       if (basis === "resonance") return list?.meta?.dedupe_eligible === false && items.length === 2;
       return arr(item?.meta?.concept_keys).map(normalize).includes(basisLabel);
@@ -266,10 +274,13 @@
     }
     const reasons = [];
     if (items.length < 2) reasons.push("list_too_short");
+    if (list?.meta?.semantic_shape !== "thematic_membership_v2") reasons.push("list_semantic_shape_invalid");
     if (unique(refs).length !== refs.length) reasons.push("list_duplicate_reference");
+    if (memberRefIds.join("|") !== refs.slice().sort().join("|")) reasons.push("list_member_manifest_mismatch");
     if (!basis) reasons.push("list_semantic_basis_missing");
     if (basis === "fallback_core") reasons.push("list_only_has_fallback_basis");
     if (items.length && justified !== items.length) reasons.push("list_membership_not_semantically_justified");
+    if (items.length && membershipReady !== items.length) reasons.push("list_membership_reason_missing");
     if (redundantPairs.length) reasons.push("list_semantic_redundancy_high");
     if (refs.length && provenanceReady / refs.length < 0.75) reasons.push("list_provenance_coverage_low");
     if (text(list?.title).length > MAX_PRODUCT_TITLE) reasons.push("list_title_too_long");
@@ -295,6 +306,12 @@
     const narratives = steps.filter((step) => text(step?.narrative).length >= 40).length;
     const outcomes = steps.filter((step) => text(step?.learningOutcome).length >= 20).length;
     const uniqueTransitions = unique(steps.map((step) => normalize(step?.narrative))).length;
+    const uniqueRefs = unique(steps.map((step) => text(step?.refId)).filter(Boolean));
+    const semanticRoles = steps.filter((step) => (
+      text(step?.meta?.semantic_role) === text(step?.meta?.stage)
+      && text(step?.meta?.selection_reason) === `best_source_bound_fit_for_${text(step?.meta?.stage)}`
+      && step?.meta?.source_bound_narrative === true
+    )).length;
     const sourceBoundReady = steps.filter((step) => insightText(byId.get(text(step?.refId)))).length;
     const sourceBound = steps.filter((step) => {
       const source = insightText(byId.get(text(step?.refId)));
@@ -302,7 +319,10 @@
     }).length;
     const reasons = [];
     if (steps.length !== requiredStages.length) reasons.push("path_must_have_five_stages");
+    if (path?.meta?.semantic_shape !== "ordered_inquiry_v2" || path?.meta?.stage_selection !== "semantic_role_ranked_not_round_robin") reasons.push("path_semantic_shape_invalid");
     if (stages.join("|") !== requiredStages.join("|")) reasons.push("path_progression_sequence_invalid");
+    if (steps.length && uniqueRefs.length < 2) reasons.push("path_progression_lacks_semantic_contrast");
+    if (steps.length && semanticRoles !== steps.length) reasons.push("path_semantic_role_missing");
     if (invalidRefs.length) reasons.push("path_unresolved_reference");
     if (steps.length && narratives !== steps.length) reasons.push("path_transition_missing");
     if (steps.length && uniqueTransitions !== steps.length) reasons.push("path_transitions_not_distinct");
@@ -328,6 +348,7 @@
     const branches = edges.filter((edge) => edge.type === "theme_branch");
     const branchIds = new Set(branches.map((edge) => edge.to));
     const hierarchyEdges = edges.filter((edge) => edge.type === "supports_insight");
+    const insightNodes = nodes.filter((node) => node.type === "insight");
     const childCounts = [...branchIds].map((id) => hierarchyEdges.filter((edge) => edge.from === id).length);
     const emptyBranches = childCounts.filter((count) => count === 0).length;
     const maxChildren = Math.max(0, ...childCounts);
@@ -338,9 +359,16 @@
     const invalidEquivalence = nodes.filter((node) => node.type === "insight" && node.meta?.equivalence_collapsed === true && arr(node.meta?.member_ids).length < 2);
     const missingRootTitle = roots.filter((node) => text(node?.title || node?.label).length < 4);
     const weakBranchTitles = nodes.filter((node) => branchIds.has(node.id) && text(node?.title || node?.label).length < 4);
+    const branchNodes = nodes.filter((node) => branchIds.has(node.id));
+    const hierarchyParentCounts = insightNodes.map((node) => hierarchyEdges.filter((edge) => edge.to === node.id).length);
+    const invalidHierarchyParents = hierarchyParentCounts.filter((count) => count !== 1).length;
+    const invalidBranchSemantics = branchNodes.filter((node) => node.type !== "concept" || text(node?.meta?.branch_reason).length < 30).length
+      + branches.filter((edge) => text(edge?.meta?.branch_reason).length < 30 || edge?.meta?.semantic_basis !== "ranked_source_concept").length;
     const reasons = [];
     if (nodes.length < 4) reasons.push("mindmap_too_small");
+    if (mindmap?.meta?.semantic_shape !== "ranked_hierarchy_v2" || mindmap?.meta?.branch_assignment !== "one_primary_hierarchy_parent_per_insight") reasons.push("mindmap_semantic_shape_invalid");
     if (roots.length !== 1) reasons.push("mindmap_root_invalid");
+    if (roots.length === 1 && (text(roots[0]?.meta?.central_idea) !== text(roots[0]?.title || roots[0]?.label) || roots[0]?.meta?.semantic_shape !== "ranked_hierarchy_v2")) reasons.push("mindmap_central_idea_invalid");
     if (branches.length < 2) reasons.push("mindmap_has_too_few_branches");
     if (branches.length > 7) reasons.push("mindmap_has_too_many_branches");
     if (emptyBranches) reasons.push("mindmap_empty_branch");
@@ -351,6 +379,8 @@
     if (invalidEquivalence.length) reasons.push("mindmap_equivalence_semantics_invalid");
     if (missingRootTitle.length) reasons.push("mindmap_root_title_missing");
     if (weakBranchTitles.length) reasons.push("mindmap_branch_title_missing");
+    if (invalidHierarchyParents) reasons.push("mindmap_insight_hierarchy_parent_invalid");
+    if (invalidBranchSemantics) reasons.push("mindmap_branch_semantics_missing");
     const score = round(
       (nodes.length >= 4 ? 0.15 : 0)
       + (roots.length === 1 ? 0.2 : 0)

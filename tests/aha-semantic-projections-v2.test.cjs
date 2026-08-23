@@ -33,7 +33,10 @@ assert.ok(api);
 assert.equal(api.PROJECTION_SCHEMA, "aha_semantic_projections_v2");
 assert.deepEqual(Array.from(api.SURFACES), ["insights", "concepts", "lists", "paths", "mindmap"]);
 
-function makeInsight({ id, insight, concepts, quality = 0.84, reviewed = true, causal_status = "not_causal", source = id }) {
+function makeInsight({
+  id, insight, concepts, quality = 0.84, reviewed = true, causal_status = "not_causal", source = id,
+  type = "principle", abstraction = "", why_it_matters = "", confidence = "high", uncertainty = ""
+}) {
   return {
     id,
     source_event_id: `source_${source}`,
@@ -41,7 +44,11 @@ function makeInsight({ id, insight, concepts, quality = 0.84, reviewed = true, c
     semantic_concepts: concepts,
     candidate: {
       insight,
-      type: "principle",
+      type,
+      abstraction,
+      why_it_matters,
+      confidence,
+      uncertainty,
       causal_status,
       evidence: [
         { quote: `Første dokumenterte belegg for ${source}.`, role: "supports" },
@@ -74,6 +81,11 @@ const resonantC = makeInsight({
   id: "ins_c",
   insight: "Fleksibilitet gjennom valgfrie felt kan gjøre lokal kvalitetssikring mer krevende.",
   concepts: ["standardisering", "fleksibilitet", "kvalitetssikring"],
+  type: "tension",
+  abstraction: "Fleksibilitet flytter en del av kvalitetsarbeidet til lokal oppfølging.",
+  why_it_matters: "Avveiningen avgjør hvor kontrollarbeidet faktisk må utføres.",
+  confidence: "medium",
+  uncertainty: "Den lokale kvalitetssikringen kan variere mellom miljøer.",
   quality: 0.86,
   source: "c"
 });
@@ -139,10 +151,15 @@ assert.ok(result.projections.lists.length >= 2, "shared core and repeated concep
 result.projections.lists.forEach((list) => {
   assert.equal(list.meta.candidate_only, true);
   assert.equal(list.meta.read_only, true);
+  assert.equal(list.meta.semantic_shape, "thematic_membership_v2");
+  assert.deepEqual(Array.from(list.meta.member_ref_ids).sort(), Array.from(list.items, (item) => item.refId).sort());
   list.items.forEach((item) => {
     assert.equal(item.type, "insight");
     assert.equal(item.source, "aha_semantic_v2");
     assert.ok(insightIds.has(item.refId), `list ${list.id} has unresolved ${item.refId}`);
+    assert.ok(item.membership_reason.length >= 40);
+    assert.equal(item.meta.membership_reason, item.membership_reason);
+    assert.equal(item.meta.semantic_basis, list.meta.semantic_basis);
   });
 });
 
@@ -150,20 +167,39 @@ assert.ok(result.projections.paths.length >= 1);
 result.projections.paths.forEach((path) => {
   assert.equal(path.status, "candidate");
   assert.equal(path.meta.candidate_only, true);
+  assert.equal(path.meta.semantic_shape, "ordered_inquiry_v2");
+  assert.equal(path.meta.stage_selection, "semantic_role_ranked_not_round_robin");
   path.steps.forEach((step) => {
     assert.equal(step.type, "insight");
     assert.equal(step.source, "aha_semantic_v2");
     assert.ok(insightIds.has(step.refId), `path ${path.id} has unresolved ${step.refId}`);
+    assert.equal(step.meta.semantic_role, step.meta.stage);
+    assert.equal(step.meta.selection_reason, `best_source_bound_fit_for_${step.meta.stage}`);
+    assert.equal(step.meta.source_bound_narrative, true);
   });
   assert.deepEqual(Array.from(path.steps, (step) => step.meta.stage), ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"]);
 });
+const semanticRolePath = result.projections.paths.find((path) => path.steps.some((step) => step.refId === resonantC.id || result.projections.insights.find((item) => item.id === step.refId)?.member_ids.includes("ins_c")));
+assert.ok(semanticRolePath, "a path must include the source-bound tension insight");
+const projectedC = result.projections.insights.find((item) => item.member_ids.includes("ins_c"));
+assert.equal(semanticRolePath.steps.find((step) => step.meta.stage === "tension_counterexample").refId, projectedC.id,
+  "the tension stage must select the semantically matching tension insight");
 
 const mindmap = result.projections.mindmap;
 assert.equal(mindmap.read_only, true);
+assert.equal(mindmap.meta.semantic_shape, "ranked_hierarchy_v2");
+assert.equal(mindmap.meta.branch_assignment, "one_primary_hierarchy_parent_per_insight");
 const mindmapIds = new Set(mindmap.nodes.map((node) => node.id));
 assert.ok(mindmap.nodes.some((node) => node.type === "insight"));
 assert.ok(mindmap.nodes.some((node) => node.type === "concept"));
 assert.ok(mindmap.meta.branch_count >= 2 && mindmap.meta.branch_count <= 7);
+const root = mindmap.nodes.find((node) => node.type === "theme" && node.meta?.root === true);
+assert.equal(root.meta.central_idea, root.title);
+const hierarchyEdges = mindmap.edges.filter((edge) => edge.type === "supports_insight");
+mindmap.nodes.filter((node) => node.type === "insight").forEach((node) => {
+  assert.equal(hierarchyEdges.filter((edge) => edge.to === node.id).length, 1, `${node.id} must have exactly one hierarchy parent`);
+});
+mindmap.nodes.filter((node) => node.type === "concept").forEach((node) => assert.ok(node.meta.branch_reason.length >= 30));
 mindmap.edges.forEach((edge) => {
   assert.ok(mindmapIds.has(edge.from), `mindmap unresolved from ${edge.from}`);
   assert.ok(mindmapIds.has(edge.to), `mindmap unresolved to ${edge.to}`);
