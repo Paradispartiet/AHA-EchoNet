@@ -8,11 +8,10 @@
   ) || global.AHAChatProviderLoader;
   if (!providerLoaderApi) throw new Error("AHAChatProviderLoader må lastes før ahaChat.js.");
 
-  const baseProviderLoader = providerLoaderApi.create({
+  const providerLoader = providerLoaderApi.create({
     moduleApi: global.AHAModuleApi,
     legacyRoot: global
   });
-  const providerLoader = global.AHAV2ReleaseQualityGuard?.wrapProviderLoader?.(baseProviderLoader) || baseProviderLoader;
   const applicationComposition = providerLoader.instantiate("applicationComposition", {
     providerLoader,
     environment: Object.freeze({
