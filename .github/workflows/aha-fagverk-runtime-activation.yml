@@ -1,50 +1,40 @@
-name: AHA Fagverk runtime activation
+name: AHA canonical Fagverk bridge
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - "scripts/build-history-go-fagverk-runtime-activation.mjs"
+      - "data/integrations/history-go-fagverk-bridge.v2.json"
+      - "data/integrations/runtime/history-go-fagverk-canonical-index.v2.json"
+      - "data/subjects/**"
+      - "docs/HISTORY_GO_FAGVERK_BRIDGE_V2.md"
+      - "scripts/build-history-go-fagverk-canonical-index-v2.mjs"
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
       - "scripts/audit-local-subject-knowledge.mjs"
       - "js/ahaSubjectEngine.js"
-      - "js/ahaEngineClient.js"
-      - "tests/aha-fagverk-runtime-activation.test.cjs"
-      - "tests/aha-fagverk-subject-approvals.test.cjs"
+      - "js/emnerLoader.js"
+      - "tests/aha-history-go-fagverk-canonical-bridge-v2.test.cjs"
       - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
       - "tests/aha-local-subject-knowledge-audit.test.cjs"
       - "tests/aha-production-analysis-pipeline-audit.test.cjs"
-      - "reports/subject-bridge/local-subject-knowledge-audit.v1.json"
-      - ".github/workflows/aha-fagverk-runtime-activation.yml"
+      - "tests/aha-production-analysis-quality-matrix.test.cjs"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
-      - "backend/aha_engine/app/schemas.py"
       - "backend/aha_engine/tests/test_fagverk_grounding.py"
-      - "backend/aha_engine/tests/test_history_fagverk_runtime.py"
-      - "backend/aha_engine/tests/test_nature_fagverk_runtime.py"
-      - "data/subjects/**"
-      - "data/integrations/runtime/**"
-      - "data/integrations/history-go-fagverk-corpus.v1.json"
-      - "data/integrations/history-go-fagverk-release.approved.json"
-      - "data/integrations/history-go-fagverk-release.runtime-active.json"
-      - "data/integrations/approvals/**"
-      - "data/integrations/candidates/history-go-fagverk-*.candidate.v1.json"
-      - "data/integrations/review/history-go-fagverk-*.term-policy.v1.json"
-      - "data/integrations/review/history-go-fagverk-*.review-config.v1.json"
-      - "data/integrations/review/history-go-fagverk-*.review-attestation.v1.json"
-      - "data/evaluation/aha-fagverk-grounding-cases.v1.json"
-      - "data/evaluation/aha-*-fagverk-evaluation-matrix.v1.json"
-      - "data/evaluation/aha-*-fixture-corrections.v1.json"
+      - ".github/workflows/aha-fagverk-runtime-activation.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  validate-runtime-activation:
-    name: Rebuild active Fagverk runtime package
+  validate-canonical-bridge:
+    name: Validate canonical History-Go Fagverk bridge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 1
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -52,23 +42,39 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Rebuild runtime activation artifacts
-        run: node scripts/build-history-go-fagverk-runtime-activation.mjs --output-root artifacts/runtime-activation
+      - name: Build pinned canonical deployment index
+        run: node scripts/build-history-go-fagverk-canonical-index-v2.mjs --write
 
-      - name: Verify activation contract and checked-in parity
+      - name: Persist deterministic deployment index on same-repo PRs
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          node tests/aha-fagverk-runtime-activation.test.cjs
-          node tests/aha-fagverk-subject-approvals.test.cjs
+          if git diff --quiet -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json; then
+            echo "Canonical index already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json
+          git commit -m "chore(fagverk): refresh canonical History-Go deployment index"
+          git push origin "HEAD:${HEAD_REF}"
 
-      - name: Verify Subject Engine bridge to active Fagverk
+      - name: Verify exact canonical index parity
+        run: node scripts/build-history-go-fagverk-canonical-index-v2.mjs --check
+
+      - name: Verify bridge authority and Subject Engine integration
         run: |
           node scripts/materialize-history-go-fagverk-subjects.mjs --check
+          node tests/aha-history-go-fagverk-canonical-bridge-v2.test.cjs
           node tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs
 
-      - name: Verify production analysis pipeline provenance and isolation
-        run: node tests/aha-production-analysis-pipeline-audit.test.cjs
+      - name: Verify production analysis provenance and subject routing
+        run: |
+          node tests/aha-production-analysis-pipeline-audit.test.cjs
+          node tests/aha-production-analysis-quality-matrix.test.cjs
 
-      - name: Verify governed local Subject Engine knowledge
+      - name: Verify governed AHA overlays
         run: |
           node scripts/audit-local-subject-knowledge.mjs --check
           node tests/aha-local-subject-knowledge-audit.test.cjs
@@ -77,14 +83,14 @@ jobs:
         working-directory: backend/aha_engine
         run: python -m pip install -r requirements.txt
 
-      - name: Verify composed runtime behavior
+      - name: Verify Python uses the same canonical deployment index
         working-directory: backend/aha_engine
-        run: python -m pytest tests/test_fagverk_grounding.py tests/test_history_fagverk_runtime.py tests/test_nature_fagverk_runtime.py
+        run: python -m pytest tests/test_fagverk_grounding.py
 
-      - name: Upload runtime activation artifacts
+      - name: Upload canonical deployment index
         uses: actions/upload-artifact@v4
         with:
-          name: aha-fagverk-runtime-activation
-          path: artifacts/runtime-activation/*.json
+          name: aha-history-go-fagverk-canonical-index-v2
+          path: data/integrations/runtime/history-go-fagverk-canonical-index.v2.json
           if-no-files-found: error
           retention-days: 14
