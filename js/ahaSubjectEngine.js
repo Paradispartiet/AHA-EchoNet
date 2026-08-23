@@ -5,7 +5,7 @@
   const INDEX_URL = "/data/integrations/runtime/history-go-fagverk-canonical-index.v2.json";
   const OVERLAY_URL = "/data/subjects/subjects_index.json";
   const cache = { bridge: null, index: null, overlays: null, subjects: {} };
-  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active"]);
+  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner"]);
 
   function normalize(value) { return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim(); }
   function unique(values) {
