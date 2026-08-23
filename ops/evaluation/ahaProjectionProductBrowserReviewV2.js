@@ -292,6 +292,28 @@
     }
   }
 
+  async function prepareControlledJourney(caseId) {
+    if (state.running) return null;
+    state.running = true;
+    try {
+      state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
+      const entry = state.corpus.cases.find((candidate) => candidate.id === text(caseId));
+      if (!entry) throw new Error(`Ukjent journey-case: ${text(caseId)}`);
+      global.localStorage.clear();
+      const win = await loadFrame({ reload: Boolean(state.frame) });
+      win.localStorage.clear();
+      win.AHAMemoryControls?.enableSaving?.();
+      win.AHAMemoryControls?.disableMemoryUse?.();
+      if (entry.sequential_after === "morgenbladet_seed") await win.AHAChat.submitAhaChatMessage(SEED_TEXT);
+      const result = await submit(win, entry);
+      const states = ["list", "path", "mindmap"].map((product) => result.model?.product_states?.[product]?.status);
+      if (!states.every((status) => status === "ready")) throw new Error(`${entry.id}: alle tre produkter må være klare for den kontrollerte reisen`);
+      return clone(result);
+    } finally {
+      state.running = false;
+    }
+  }
+
   function collectHumanReview() {
     const reviewer = text(byId("reviewer")?.value);
     const reviewedAt = text(byId("review-date")?.value);
@@ -323,5 +345,5 @@
   byId("run")?.addEventListener("click", () => { void runAll().catch((error) => { byId("status").textContent = error.message; }); });
   byId("export")?.addEventListener("click", downloadReview);
 
-  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, collectHumanReview, compareReplay, getState: () => clone(state) });
+  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, prepareControlledJourney, collectHumanReview, compareReplay, getState: () => clone(state) });
 })(window);

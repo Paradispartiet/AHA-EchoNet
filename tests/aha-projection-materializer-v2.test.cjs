@@ -44,6 +44,12 @@ const model = {
   mode: "read_only",
   status: "ready",
   projection_id: "projection_v2_test",
+  identity: {
+    analysis_id: "analysis_v2_test",
+    analysis_run_id: "run_v2_test",
+    source_id: "source_v2_test",
+    source_sha256: "a".repeat(64)
+  },
   validation: { valid: true, errors: [] },
   policy: Object.fromEntries([
     "product_surface_binding_authority", "product_store_write_authority", "automatic_projection_authority",
@@ -58,11 +64,15 @@ const model = {
       description: "To sider av samme tema.",
       tags: ["Representasjon"],
       source: "aha_semantic_v2",
-      meta: { projection_id: "projection_v2_test", candidate_only: true, read_only: true },
+      meta: {
+        projection_id: "projection_v2_test", candidate_only: true, read_only: true,
+        semantic_shape: "thematic_membership_v2", semantic_basis: "shared_concept", semantic_basis_label: "representasjon",
+        membership_rule: "all_members_share_named_source_concept", member_ref_ids: ["i1", "i2"]
+      },
       quality: { passed: true, score: 0.9 },
       items: [
-        { id: "i1", refId: "i1", title: "Valg former representasjon", type: "insight", meta: { member_ids: ["legacy_1"], quality_score: 0.9 } },
-        { id: "i2", refId: "i2", title: "Deltakelse former legitimitet", type: "insight", meta: { member_ids: ["legacy_2"], quality_score: 0.88 } }
+        { id: "i1", refId: "i1", title: "Valg former representasjon", type: "insight", membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", meta: { member_ids: ["legacy_1"], quality_score: 0.9, membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", semantic_basis: "shared_concept", semantic_basis_label: "representasjon" } },
+        { id: "i2", refId: "i2", title: "Deltakelse former legitimitet", type: "insight", membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", meta: { member_ids: ["legacy_2"], quality_score: 0.88, membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", semantic_basis: "shared_concept", semantic_basis_label: "representasjon" } }
       ]
     }],
     paths: [{
@@ -74,7 +84,7 @@ const model = {
       goal: "Forstå sammenhengen.",
       learningOutcome: "Forklar med belegg.",
       source: "aha_semantic_v2",
-      meta: { projection_id: "projection_v2_test", candidate_only: true, read_only: true },
+      meta: { projection_id: "projection_v2_test", candidate_only: true, read_only: true, semantic_shape: "ordered_inquiry_v2", stage_selection: "semantic_role_ranked_not_round_robin", source_list_candidate_id: "list_candidate" },
       quality: { passed: true, score: 0.94 },
       steps: ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"].map((stage, index) => ({
         id: `s${index + 1}`,
@@ -84,7 +94,7 @@ const model = {
         order: index,
         narrative: `Narrativ ${index + 1}`,
         learningOutcome: `Læringspunkt ${index + 1}`,
-        meta: { stage }
+        meta: { stage, semantic_role: stage, semantic_basis: "shared_concept", selection_reason: `best_source_bound_fit_for_${stage}`, source_bound_narrative: true }
       }))
     }],
     mindmap: {
@@ -98,7 +108,7 @@ const model = {
         { id: "e1", from: "root", to: "concept", type: "theme_branch", label: "gren" },
         { id: "e2", from: "concept", to: "insight", type: "supports_insight", label: "belyser" }
       ],
-      meta: { root_id: "root", projection_id: "projection_v2_test", candidate_only: true, read_only: true },
+      meta: { root_id: "root", projection_id: "projection_v2_test", candidate_only: true, read_only: true, semantic_shape: "ranked_hierarchy_v2", branch_assignment: "one_primary_hierarchy_parent_per_insight", branch_count: 1 },
       quality: { passed: true, score: 0.92 }
     }
   }
@@ -108,6 +118,9 @@ const api = context.AHAProjectionMaterializerV2;
 assert.equal(api.POLICY.one_artifact_per_call, true);
 assert.equal(api.POLICY.automatic_write, false);
 assert.equal(api.POLICY.remote_write, false);
+assert.deepEqual(JSON.parse(JSON.stringify(api.getMaterializationState({ artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id }))), {
+  state: "absent", materialized: false, undo_available: false, record_id: null
+});
 
 const beforeConfirmation = storage.writes;
 assert.equal(api.materialize({ model, artifact_type: "list", artifact_id: "list_candidate" }).reason, "explicit_user_confirmation_required");
@@ -124,6 +137,13 @@ assert.equal(listRecords.length, 1);
 assert.equal(listRecords[0].items.length, 2);
 assert.ok(listRecords[0].items.every((item) => item.source === "aha_projection_v2" && item.meta.inline === true && item.meta.immutable === true));
 assert.equal(listRecords[0].meta.sync_enabled, false);
+assert.equal(listRecords[0].meta.semantic_shape, "thematic_membership_v2");
+assert.equal(listRecords[0].meta.source_sha256, model.identity.source_sha256);
+assert.equal(listRecords[0].items[0].membership_reason, model.surfaces.lists[0].items[0].membership_reason);
+assert.equal(listRecords[0].items[0].meta.membership_reason, model.surfaces.lists[0].items[0].membership_reason);
+assert.deepEqual(JSON.parse(JSON.stringify(api.getMaterializationState({ artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id }))), {
+  state: "unchanged", materialized: true, undo_available: true, record_id: listRecords[0].id
+});
 assert.equal(context.AHALists.validateListReference(listRecords[0].items[0], []).ok, true);
 assert.equal(context.AHALists.validateListReference({ source: "aha_projection_v2", refId: "broken", meta: { inline: true } }, []).reason, "incomplete_projection_snapshot");
 assert.equal(context.AHALists.validateListReference({ source: "unknown", refId: "x" }, []).reason, "unknown_source");
@@ -141,6 +161,9 @@ const pathRecords = JSON.parse(storage.getItem("aha_paths_v1"));
 assert.equal(pathRecords.length, 1);
 assert.equal(pathRecords[0].steps.length, 5);
 assert.equal(new Set(pathRecords[0].steps.map((step) => step.id)).size, 5);
+assert.equal(pathRecords[0].meta.semantic_shape, "ordered_inquiry_v2");
+assert.ok(pathRecords[0].steps.every((step) => step.meta.semantic_role === step.meta.stage && step.meta.source_bound_narrative === true));
+assert.equal(api.getMaterializationState({ artifact_type: "path", artifact_id: "path_candidate", projection_id: model.projection_id }).state, "unchanged");
 assert.equal(context.AHAPaths.validatePathStepReference(pathRecords[0].steps[0], []).ok, true);
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "aha_projection_v2", refId: "broken", meta: { inline: true } }, []).reason, "incomplete_projection_snapshot");
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "unknown", refId: "x" }, []).reason, "unknown_source");
@@ -154,6 +177,11 @@ assert.equal(conceptRecords.length, 1);
 assert.equal(conceptRecords[0].terms.length, 3);
 assert.equal(conceptRecords[0].relations.length, 2);
 assert.equal(conceptRecords[0].meta.graph_snapshot.quality.passed, true);
+assert.equal(conceptRecords[0].meta.semantic_shape, "ranked_hierarchy_v2");
+assert.equal(conceptRecords[0].meta.source_sha256, model.identity.source_sha256);
+const normalizedConceptRecord = context.AHALists.loadConceptLists()[0];
+assert.equal(normalizedConceptRecord.terms[0].meta.source_node_id, model.surfaces.mindmap.nodes[0].id);
+assert.equal(normalizedConceptRecord.relations[0].meta.source_edge_id, model.surfaces.mindmap.edges[0].id);
 assert.equal(api.canUndoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id }), true);
 
 const durableUndo = api.undoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id, user_confirmed: true });
@@ -167,12 +195,21 @@ const modifiedConceptRecords = JSON.parse(storage.getItem("aha_concept_lists_v1"
 modifiedConceptRecords[0].description = "Brukeren endret grafen";
 modifiedConceptRecords[0].updatedAt = new Date().toISOString();
 storage.setItem("aha_concept_lists_v1", JSON.stringify(modifiedConceptRecords));
+assert.deepEqual(JSON.parse(JSON.stringify(api.getMaterializationState({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id }))), {
+  state: "modified", materialized: true, undo_available: false, record_id: modifiedConceptRecords[0].id
+});
 assert.equal(api.undoMaterialized({ artifact_type: "mindmap", artifact_id: model.projection_id, projection_id: model.projection_id, user_confirmed: true }).reason, "artifact_modified_since_materialization");
 assert.equal(remoteWrites, 0, "materializer must never call repository writes");
 
 const weakModel = JSON.parse(JSON.stringify(model));
 weakModel.surfaces.lists[0].quality.passed = false;
 assert.equal(api.materialize({ model: weakModel, artifact_type: "list", artifact_id: "list_candidate", user_confirmed: true }).reason, "artifact_quality_failed");
+const legacyShapeModel = JSON.parse(JSON.stringify(model));
+legacyShapeModel.surfaces.paths[0].meta.semantic_shape = "generic_round_robin";
+assert.equal(api.materialize({ model: legacyShapeModel, artifact_type: "path", artifact_id: "path_candidate", user_confirmed: true }).reason, "artifact_quality_failed");
+const identitylessModel = JSON.parse(JSON.stringify(model));
+delete identitylessModel.identity.source_sha256;
+assert.equal(api.materialize({ model: identitylessModel, artifact_type: "path", artifact_id: "path_candidate", user_confirmed: true }).reason, "read_model_invalid");
 const openPolicy = JSON.parse(JSON.stringify(model));
 openPolicy.policy.remote_write = true;
 assert.equal(api.materialize({ model: openPolicy, artifact_type: "path", artifact_id: "path_candidate", user_confirmed: true }).reason, "read_model_invalid");

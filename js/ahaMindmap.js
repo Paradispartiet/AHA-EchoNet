@@ -811,14 +811,21 @@
     const undoButton = document.getElementById("mindmap-v2-undo");
     const materializeStatus = document.getElementById("mindmap-v2-materialize-status");
     const materializable = previewMode && graph.summary?.quality?.passed === true;
-    const durableUndo = materializable && global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({
+    const materialization = materializable ? global.AHAProjectionMaterializerV2?.getMaterializationState?.({
       artifact_type: "mindmap",
       artifact_id: graph.summary?.projectionId,
       projection_id: graph.summary?.projectionId
-    }) === true;
+    }) : null;
     if (materializeButton) materializeButton.hidden = !materializable;
-    if (undoButton) undoButton.hidden = !materializable || (!projectionReceipt && !durableUndo);
+    if (materializeButton) {
+      materializeButton.disabled = materialization?.materialized === true;
+      materializeButton.textContent = materialization?.materialized ? "Begrepsgraf lagret lokalt" : "Lagre begrepsgraf lokalt";
+    }
+    if (undoButton) undoButton.hidden = !materializable || materialization?.undo_available !== true;
     if (materializeStatus && !previewMode) materializeStatus.textContent = "";
+    else if (materializeStatus && materialization?.state === "unchanged") materializeStatus.textContent = "Lagret lokalt. Kan angres så lenge tankekartet er uendret.";
+    else if (materializeStatus && materialization?.state === "modified") materializeStatus.textContent = "Lagret lokalt og senere endret. Angre er låst for å beskytte endringene.";
+    else if (materializeStatus && materializable) materializeStatus.textContent = "Krever et eksplisitt klikk og lagres bare lokalt.";
 
     const nodeSelect = document.getElementById("mindmap-node-type");
     const edgeSelect = document.getElementById("mindmap-edge-type");
@@ -872,9 +879,7 @@
         return;
       }
       projectionReceipt = result.receipt || null;
-      if (status) status.textContent = result.existing ? "Begrepsgrafen finnes allerede lokalt." : "Begrepsgrafen er lagret lokalt. Ingen sync ble åpnet.";
-      const undoButton = document.getElementById("mindmap-v2-undo");
-      if (undoButton) undoButton.hidden = !projectionReceipt;
+      refresh();
     });
     document.getElementById("mindmap-v2-undo")?.addEventListener("click", () => {
       const model = global.AHAProjectionRuntimeSourceV2?.build?.();
@@ -884,9 +889,7 @@
       const status = document.getElementById("mindmap-v2-materialize-status");
       if (result?.ok) {
         projectionReceipt = null;
-        if (status) status.textContent = "Den lokale begrepsgrafen ble fjernet igjen.";
-        const undoButton = document.getElementById("mindmap-v2-undo");
-        if (undoButton) undoButton.hidden = true;
+        refresh();
       } else if (status) status.textContent = "Kunne ikke angre; begrepsgrafen kan ha blitt endret etter lagring.";
     });
   }

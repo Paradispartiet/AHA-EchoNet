@@ -216,6 +216,8 @@ PR #879 then completed the local artifact lifecycle without widening Insight aut
 - V2 dependencies load lazily only after an explicit Chat artifact action;
 - protected production `chat.html` remained byte-identical.
 
+PR 7 later binds that finalized local lifecycle to the hardened active-analysis chain: saved artifacts retain exact analysis/run/source/SHA-256 identity and their product-specific semantic shape, previews expose reload-safe save status, and the live browser gate proves both successful unchanged undo and refusal after normal user edits for Lists, Paths and Mindmap.
+
 The finalized boundary is:
 
 ```text

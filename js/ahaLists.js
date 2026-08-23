@@ -78,6 +78,7 @@
       type: asText(item?.type, "reference"),
       source: asText(item?.source, "aha"),
       refId: asText(item?.refId || item?.ref_id, ""),
+      membership_reason: asText(item?.membership_reason || item?.meta?.membership_reason, ""),
       addedAt: item?.addedAt || item?.added_at || now,
       meta: item && typeof item.meta === "object" && !Array.isArray(item.meta) ? item.meta : { listId }
     };
@@ -131,7 +132,8 @@
       id: asText(input.id, stableId("concept_term", `${listId}:${title}:${index}`)),
       term: title,
       definition: asText(input.definition || input.description, ""),
-      relation: asText(input.relation, "related_to")
+      relation: asText(input.relation, "related_to"),
+      meta: input && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {}
     };
   }
 
@@ -146,7 +148,8 @@
       to,
       type: asText(input.type, "related_to"),
       label: asText(input.label || input.type, "relatert til"),
-      explanation: asText(input.explanation || input.reason, "")
+      explanation: asText(input.explanation || input.reason, ""),
+      meta: input && typeof input.meta === "object" && !Array.isArray(input.meta) ? input.meta : {}
     };
   }
 
@@ -629,7 +632,15 @@
         const membershipReason = asText(item?.membership_reason || item?.meta?.membership_reason, "");
         return `<li><strong>${escapeHtml(item.title)}</strong>${membershipReason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(membershipReason)}</p>` : ""}</li>`;
       }).join("");
-      const undoAvailable = global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({ artifact_type: "list", artifact_id: list.id, projection_id: model.projection_id }) === true;
+      const materialization = global.AHAProjectionMaterializerV2?.getMaterializationState?.({ artifact_type: "list", artifact_id: list.id, projection_id: model.projection_id })
+        || { state: "absent", materialized: false, undo_available: false };
+      const savedLabel = materialization.materialized ? "Lagret lokalt" : "Ikke lagret";
+      const saveLabel = materialization.materialized ? "Lagret som min liste" : "Lagre som min liste";
+      const saveStatus = materialization.state === "unchanged"
+        ? "Lagret lokalt. Kan angres så lenge listen er uendret."
+        : materialization.state === "modified"
+          ? "Lagret lokalt og senere endret. Angre er låst for å beskytte endringene."
+          : "Krever et eksplisitt klikk og lagres bare lokalt.";
       return `<article class="aha-v2-list-preview-card" data-v2-list-preview="${escapeHtml(list.id)}">
         <div class="aha-list-header">
           <div><p class="aha-list-card-kicker">${escapeHtml(list.meta?.semantic_basis_label || "Semantisk sammenheng")}</p><h3>${escapeHtml(list.title)}</h3></div>
@@ -637,11 +648,11 @@
         </div>
         <p>${escapeHtml(list.description)}</p>
         <ul class="aha-v2-preview-items">${items}</ul>
-        <div class="aha-list-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+        <div class="aha-list-meta"><span>${escapeHtml(quality)}</span><span data-v2-list-save-state="${escapeHtml(materialization.state)}">${escapeHtml(savedLabel)}</span><span>Read-only</span></div>
         <div class="aha-v2-materialize-actions">
-          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-list-materialize="${escapeHtml(list.id)}">Lagre som min liste</button>
-          <button type="button" class="aha-tile-btn" data-v2-list-undo="${escapeHtml(list.id)}"${undoAvailable ? "" : " hidden"}>Angre lagring</button>
-          <span class="module-meta" data-v2-list-materialize-status="${escapeHtml(list.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
+          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-list-materialize="${escapeHtml(list.id)}"${materialization.materialized ? " disabled" : ""}>${escapeHtml(saveLabel)}</button>
+          <button type="button" class="aha-tile-btn" data-v2-list-undo="${escapeHtml(list.id)}"${materialization.undo_available ? "" : " hidden"}>Angre lagring</button>
+          <span class="module-meta" data-v2-list-materialize-status="${escapeHtml(list.id)}" aria-live="polite">${escapeHtml(saveStatus)}</span>
         </div>
       </article>`;
     }).join("");
@@ -665,6 +676,7 @@
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
+            ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
             <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
@@ -850,7 +862,6 @@
       const id = artifactId || undoId;
       if (!id) return;
       const status = document.querySelector(`[data-v2-list-materialize-status="${id}"]`);
-      const undoButton = document.querySelector(`[data-v2-list-undo="${id}"]`);
       if (undoId) {
         const receipt = projectionReceipts.get(id);
         const model = global.AHAProjectionRuntimeSourceV2?.build?.();
@@ -859,8 +870,7 @@
           : global.AHAProjectionMaterializerV2?.undoMaterialized?.({ artifact_type: "list", artifact_id: id, projection_id: model?.projection_id, user_confirmed: true });
         if (result?.ok) {
           projectionReceipts.delete(id);
-          if (status instanceof HTMLElement) status.textContent = "Den lokale listen ble fjernet igjen.";
-          if (undoButton instanceof HTMLElement) undoButton.hidden = true;
+          renderProjectionListPreviews();
           renderContent();
         } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; listen kan ha blitt endret etter lagring.";
         return;
@@ -877,8 +887,7 @@
         return;
       }
       if (result.receipt) projectionReceipts.set(id, result.receipt);
-      if (status instanceof HTMLElement) status.textContent = result.existing ? "Listen finnes allerede lokalt." : "Listen er lagret lokalt. Ingen sync ble åpnet.";
-      if (undoButton instanceof HTMLElement) undoButton.hidden = !result.receipt;
+      renderProjectionListPreviews();
       renderContent();
     });
 
