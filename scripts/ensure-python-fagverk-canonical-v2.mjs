@@ -67,6 +67,40 @@ def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
     )
     return normalized_gap < normalized_margin
 `;
+const oldAmbiguityHelper = `def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
+    same_scale = (
+        top.scoring_mode == second.scoring_mode
+        and math.isclose(top.minimum_score, second.minimum_score, rel_tol=0.0, abs_tol=1e-9)
+    )
+    if same_scale:
+        return (top.score - second.score) < top.ambiguity_margin
+    normalized_gap = _threshold_strength(top) - _threshold_strength(second)
+    normalized_margin = min(
+        0.25,
+        top.ambiguity_margin / max(top.minimum_score, 1.0),
+        second.ambiguity_margin / max(second.minimum_score, 1.0),
+    )
+    return normalized_gap < normalized_margin
+`;
+const calibratedAmbiguityHelper = `def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
+    top_reviewed = top.scoring_mode.startswith("subject_policy_")
+    second_reviewed = second.scoring_mode.startswith("subject_policy_")
+    if top_reviewed and not second_reviewed:
+        return False
+    same_scale = (
+        top.scoring_mode == second.scoring_mode
+        and math.isclose(top.minimum_score, second.minimum_score, rel_tol=0.0, abs_tol=1e-9)
+    )
+    if same_scale:
+        return (top.score - second.score) < top.ambiguity_margin
+    normalized_gap = _threshold_strength(top) - _threshold_strength(second)
+    normalized_margin = min(
+        0.25,
+        top.ambiguity_margin / max(top.minimum_score, 1.0),
+        second.ambiguity_margin / max(second.minimum_score, 1.0),
+    )
+    return normalized_gap < normalized_margin
+`;
 const rawPassingSelection = `    top = passing_matches[0]
     second = passing_matches[1] if len(passing_matches) > 1 else None
     if second and (top.score - second.score) < top.ambiguity_margin:
@@ -99,8 +133,9 @@ function transform(source) {
     if (!next.includes(thresholdAnchor)) throw new Error("Python Fagverk threshold helper anchor missing.");
     next = next.replace(thresholdAnchor, normalizedRankingHelpers);
   }
-  if (!next.includes("def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch)")) {
-    throw new Error("Python cross-policy ambiguity normalizer missing.");
+  if (next.includes(oldAmbiguityHelper)) next = next.replace(oldAmbiguityHelper, calibratedAmbiguityHelper);
+  if (!next.includes(calibratedAmbiguityHelper)) {
+    throw new Error("Python calibrated-vs-generic ambiguity arbitration missing.");
   }
 
   if (next.includes(rawPassingSelection)) next = next.replace(rawPassingSelection, normalizedPassingSelection);
