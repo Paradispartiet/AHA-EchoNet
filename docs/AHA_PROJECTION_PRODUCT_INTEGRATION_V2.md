@@ -2,9 +2,9 @@
 
 ## Status
 
-The shared V2 semantic projection is consumed through a validated read-only product model. Lists, Paths and Mindmap can render quality-filtered candidates without writing them into product stores.
+The shared V2 semantic projection is consumed through a validated read-only product model. Lists, Paths and Mindmap render distinct, quality-filtered semantic shapes without writing them into product stores.
 
-This is an implemented **product-mechanics boundary**, not proof that the complete live Chat-input-to-product chain is finished. The active Chat analysis still needs the authoritative AnalysisBundle/semantic bridge, stronger source isolation, explicit Knowledge Map separation and real-browser human usefulness release proof described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
+The authoritative AnalysisBundle, source isolation, Knowledge Map separation and real-browser product gate are merged through PR #892. Independent human usefulness review and the controlled save journey remain release blockers as described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
 
 ## Runtime chain
 
@@ -18,16 +18,16 @@ No module in this chain has automatic persistence, remote write, sync or product
 
 ## Product quality
 
-- Lists require a documented semantic basis, unique members and provenance coverage.
-- Paths require the ordered five-stage progression orientation → claim/evidence → tension/counterexample → uncertainty → synthesis/next inquiry, with source-bound references, distinct transitions and learning outcomes.
-- Mindmaps require one root, meaningful branches, resolved endpoints and correct resonance semantics.
+- Lists use `thematic_membership_v2`: every unique member has an explicit membership reason, the same named semantic basis and a deterministic member manifest.
+- Paths use `ordered_inquiry_v2`: each of the five stages selects the best source-bound insight for its semantic role instead of cycling through List members.
+- Mindmaps use `ranked_hierarchy_v2`: one source-specific central idea, 2–7 justified concept branches and exactly one normal hierarchy parent per insight. Resonance remains a typed cross-link.
 - Weak or ambiguous input is allowed to produce no product candidate.
 
 ## Evaluation corpus
 
-`tests/fixtures/aha-projection-product-evaluation-v2.json` contains 24 source texts across eight groups: news, research, essay, policy, personal reflection, data-heavy text, ambiguous/unsupported text and contradictory material.
+`tests/fixtures/aha-projection-product-evaluation-v2.json` contains 27 source texts across news, research, essay, policy, personal reflection, data-heavy, ambiguous, contradictory, literature/health and source-precedence classes.
 
-The automated release suite expects 21 grounded cases to yield all three product artifacts and three weak cases to be suppressed. It also checks determinism and zero storage access.
+The deterministic adapter suite expects 24 grounded cases to yield all three product artifacts and three weak cases to be suppressed. It checks semantic-shape invariants, determinism and zero storage access. The real-browser workflow separately exercises the active Chat/AnalysisBundle runtime.
 
 The structured review worksheet is `ops/evaluation/aha-projection-product-human-review-v2.json`. Agent pre-review is complete. Independent human review remains explicitly open and cannot be replaced by the automated suite. Automatic persistence remains forbidden regardless of the evaluation result.
 
@@ -41,12 +41,11 @@ Every projected insight is stored as an immutable inline snapshot, so a product 
 
 ## Live integration boundary
 
-Current product-page preview availability depends on an active analysis plus matching projection-ready local insights. A structurally valid Chat analysis is therefore not sufficient if the live ingest path created only metadata or otherwise non-ready Chamber insights. Lists and Paths also hide their preview shells when no candidate is returned, while Mindmap defaults to the user's local graph unless V2 is selected.
+Product-page preview availability depends on an active, identity-matched AnalysisBundle with approved projection-ready insights. It does not read Chamber as a fallback. Blocked candidates keep a visible reasoned state, and a Mindmap deep link selects the V2 preview source.
 
-Required next behavior:
+Still required:
 
-- all product pages consume the same approved active AnalysisBundle identity;
-- Chat exposes explicit List/Path/Mindmap preview states and stable deep links;
-- blocked candidates remain visible as a reasoned status instead of disappearing;
-- Mindmap entered from Chat selects the V2 preview source;
-- no product is written before an explicit save inside its preview.
+- rerun the browser/live corpus for every semantic-shape change;
+- complete the independent 1–5 usefulness review;
+- prove preview → explicit save → edit → reload → safe undo for each product;
+- keep all automatic, Chamber, canonical, Meta, sync and remote write authority closed.

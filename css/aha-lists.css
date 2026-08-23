@@ -69,6 +69,18 @@
   gap: 7px;
 }
 
+.aha-v2-membership-reason {
+  margin-top: 3px !important;
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.45;
+}
+
+.aha-v2-membership-reason span {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .aha-concept-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

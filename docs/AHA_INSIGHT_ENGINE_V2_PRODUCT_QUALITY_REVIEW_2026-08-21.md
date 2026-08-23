@@ -1,6 +1,6 @@
 # AHA Insight Engine V2 — product quality review (2026-08-21)
 
-Status: **source-bound remediation and 27-case browser evaluation implemented; independent human usefulness review remains open**.
+Status: **PR #892 browser gate merged; product-specific semantic shapes implemented in the current change; independent human usefulness review remains open**.
 
 The authoritative next-phase production integration plan is [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). It distinguishes Chat analysis, Knowledge Map and the three products, and it records the remaining seven-PR path from live source isolation to preview, human evaluation and controlled save.
 
@@ -98,11 +98,11 @@ The browser workflow has two distinct gates:
 
 An iPad WebKit job locks responsive layout and the accessible review/Chat entry controls. The browser run also exposed and fixed a real bootstrap defect: the Chat provider loader resolved V2 Bundle/read-model/live-semantic modules as version 1 in the registry.
 
-### Current live-gate evidence (2026-08-22)
+### Merged live-gate evidence (2026-08-23)
 
-Workflow run `32585430022` and artifact `9479042596` prove that the browser reached the configured backend for all 29 Chat submissions (27 cases, the Morgenbladet seed and the deterministic replay). The backend returned HTTP 500 for every Chat response because its upstream OpenAI request returned `insufficient_quota` (HTTP 429). The deterministic offline Chromium matrix and iPad WebKit surface gate passed, and the captured 27-case fallback state retained zero critical provenance errors and zero guarded preview writes.
+PR #892's final workflow run `32630087938`, artifact `9490861618`, received HTTP 200 for all 29 Chat submissions (27 cases, the Morgenbladet seed and the deterministic replay). Eighteen of 22 live coverage cases produced at least one qualified product on the first pass, or 81.82%; retry was not used. `data_bus` produced qualified Lists, Paths and Mindmap output. `conflict_tourism` produced qualified Paths and Mindmap output while its List was selectively withheld.
 
-This is an external live-model availability blocker, not product-quality evidence. The fallback candidates are therefore not used to tune the semantic quality gate, to declare products ready or to start the human review. The browser evidence now distinguishes received responses from successful 2xx responses and records status counts plus bounded HTTP-failure metadata. A minimal live Chat preflight fails before the expensive corpus when the configured model backend is unavailable; after a successful preflight the complete 27-case gate still runs. The live usefulness gate remains fail-closed until at least 27 real Chat responses are successful and the product assertions then pass.
+The run recorded zero critical provenance errors and zero guarded preview writes; offline Chromium and iPad WebKit also passed. The result was achieved without lowering cross-claim evidence, causal-status, provenance or write gates. It is the baseline that every later semantic-shape change must preserve, not a substitute for the separate human 1–5 review.
 
 ## Post-remediation live analysis audit
 
@@ -150,9 +150,9 @@ The explicit #875/#879 local materializer remains a separate one-artifact-per-us
 
 ## What remains
 
-The next product-quality step is no longer another generic structural heuristic. It is:
+The remaining product-quality sequence is:
 
-1. restore the configured backend's live-model quota and rerun the 27-case browser gate;
+1. rerun the 27-case browser/live gate on the product-specific semantic shapes;
 2. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
 3. record the 1–5 rubric scores without replacing them with agent scores;
 4. fix any remaining recurring defect class found by that review;
