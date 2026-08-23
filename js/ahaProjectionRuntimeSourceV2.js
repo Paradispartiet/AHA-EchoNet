@@ -296,10 +296,20 @@
     if (request.projection_id && model?.projection_id !== request.projection_id) {
       model = blocked("deeplink_projection_id_mismatch", snap.active_analysis, model?.projection_id || null);
     }
+    const projectionWasReady = model?.status === "ready" && model?.validation?.valid === true;
     model.active_analysis = clone(snap.active_analysis);
     model.identity = clone(snap.active_analysis);
     model.analysis_bundle_id = text(snap.analysis_bundle_v2.bundle_id) || null;
     model.product_states = productStates(model, snap);
+    const hasReadyProduct = Object.values(model.product_states).some((state) => state?.status === "ready");
+    if (projectionWasReady && !hasReadyProduct) {
+      model.status = "blocked";
+      model.blocking_reasons = [...new Set([...arr(model.blocking_reasons), "integration_not_ready"])];
+      model.validation = {
+        valid: false,
+        errors: [...new Set([...arr(model.validation?.errors), "integration_not_ready"])]
+      };
+    }
     model.policy = Object.assign({}, model.policy, {
       product_store_write: false, automatic_product_write: false, chamber_write: false,
       canonical_write: false, meta_write: false, persistent_write: false,
