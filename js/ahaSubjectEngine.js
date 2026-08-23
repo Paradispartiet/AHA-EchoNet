@@ -137,12 +137,18 @@
       const subjectHits = relevant(matched(target, subject.subject_label));
       if (subjectHits.length) out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: null, title: subject.subject_label, type: subject.kind || "subject", score: 1.5 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text", strong: false, provenance: { kind: "canonical_fagverk_subject", evidence_role: "reference_support_not_source_evidence", source_repo: "Paradispartiet/History-Go", source_ref: subject.source_ref, canonical_subject_id: subject.subject_id, registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", generation_mode: "canonical_history_go_deployment_index_v2" } });
       for (const emne of subject.emner || []) {
-        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let score = 0, strong = false; const terms = [];
+        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map();
         for (const [name, values, weight] of fields) {
           const hits = relevant(matched(target, values)); if (!hits.length) continue;
-          score += hits.length * weight; terms.push(...hits); if (kind !== "method" && (name === "title" || name === "core")) strong = true;
+          for (const hit of hits) {
+            const key = normalize(hit); if (!key) continue;
+            const previous = termScores.get(key);
+            if (!previous || weight > previous.weight) termScores.set(key, { term: hit, weight });
+          }
+          if (kind !== "method" && (name === "title" || name === "core")) strong = true;
         }
-        const found = relevant(terms); if (!found.length) continue;
+        const found = relevant(Array.from(termScores.values()).map((entry) => entry.term)); if (!found.length) continue;
+        let score = Array.from(termScores.values()).reduce((sum, entry) => sum + entry.weight, 0);
         const minimum = Math.max(1, Number(emne?.fagverk?.minimum_matched_terms || emne?.local_knowledge?.minimum_matched_terms || 1));
         if (found.length < minimum && !strong) continue;
         const phraseBonus = kind === "method" ? 0 : found.reduce((sum, term) => sum + (normalize(term).includes(" ") ? 3 : 0), 0);
