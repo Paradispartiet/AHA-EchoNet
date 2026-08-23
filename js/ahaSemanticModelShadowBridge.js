@@ -958,12 +958,12 @@
   }
   function candidateSources(payload) {
     const source = object(payload);
+    if (Array.isArray(source.insightCandidatesV2)) {
+      return unique(source.insightCandidatesV2.filter(Boolean), (item) => text(item));
+    }
     const qualityInterpretations = array(source.analysisQuality?.claims).filter((item) => item?.kind === "interpretation");
     const candidates = [
-      ...array(source.insightCandidatesV2), ...array(source.insights), ...array(source.insightCards),
-      ...qualityInterpretations,
-      source.canonicalAnalysis?.keyInsight ? { insight: source.canonicalAnalysis.keyInsight, origin: "canonicalAnalysis.keyInsight" } : null,
-      source.ahaSer?.viktigsteInnsikt ? { insight: source.ahaSer.viktigsteInnsikt, origin: "ahaSer.viktigsteInnsikt" } : null
+      ...array(source.insights), ...array(source.insightCards), ...qualityInterpretations
     ].filter(Boolean);
     return unique(candidates, (item) => text(item));
   }

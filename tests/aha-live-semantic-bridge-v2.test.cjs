@@ -82,9 +82,9 @@ const payload = {
   canonicalAnalysis: {
     theme: 'Standardisering og fleksibilitet',
     mainTension: 'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.',
-    keyInsight: approvedCandidate.insight
+    keyInsight: 'Eldre canonical-tekst skal ikke slås sammen med den autoritative kandidatlisten.'
   },
-  ahaSer: { viktigsteInnsikt: approvedCandidate.insight },
+  ahaSer: { viktigsteInnsikt: 'Eldre afterwork-tekst skal ikke slås sammen med den autoritative kandidatlisten.' },
   reflection: approvedCandidate.why_it_matters,
   insightCandidatesV2: [approvedCandidate, blockedCandidate, liveApiCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
 };
@@ -104,12 +104,22 @@ assert.equal(semantic.candidate_insights.length, 3, 'metadata candidates must be
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 2);
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'blocked').length, 1);
 assert.equal(semantic.candidate_insights.find((item) => item.insight === liveApiCandidate.summary).origin, 'live_analysis_candidate');
+assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre canonical-tekst'), false);
+assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre afterwork-tekst'), false);
 assert.equal(semantic.synthesis_gate.authoritative, true);
 assert.equal(semantic.synthesis_gate.approved_count, 2);
 assert.equal(semantic.synthesis_gate.blocked_count, 1);
 assert.equal(semantic.policy.legacy_chamber_dependency, false);
 assert.equal(semantic.policy.ungated_heuristic_synthesis, false);
 bridge.CLOSED_WRITE_POLICY.forEach((key) => assert.equal(semantic.policy[key], false));
+
+const emptyAuthoritative = bridge.build({
+  activeRun,
+  sourceText,
+  payload: { ...payload, insightCandidatesV2: [] }
+});
+assert.equal(emptyAuthoritative.candidate_insights.length, 0,
+  'an explicitly empty authoritative list must not fall back to canonical or afterwork candidates');
 
 const bundle = context.AHAAnalysisBundleV2.build({ activeRun, payload, sourceText, semanticDocument: semantic });
 assert.equal(bundle.validation.valid, true);
