@@ -44,9 +44,26 @@
     const insightCandidatesUrl = buildAhaAgentUrl("insight-candidates");
     if (!insightCandidatesUrl) return [];
 
+    const sentenceCount = splitIntoSentences(raw).length;
+    const callerContext = context && typeof context === "object" && !Array.isArray(context) ? context : {};
+
     const body = {
       text: raw,
-      context: context || {},
+      context: {
+        ...callerContext,
+        candidate_diversity_contract: {
+          distinct_semantic_roles: [
+            "cross_claim_pattern",
+            "tension_or_tradeoff",
+            "boundary_or_condition",
+            "consequence_or_decision"
+          ],
+          source_sentence_count: sentenceCount,
+          require_distinct_primary_relation: true,
+          require_cross_sentence_evidence: sentenceCount >= 2,
+          preserve_source_uncertainty: true
+        }
+      },
       format: "insight_candidates_v1"
     };
 
