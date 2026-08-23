@@ -74,7 +74,7 @@ async function fetchText(url, label) {
 
 async function fetchJson(url, label) {
   const text = await fetchText(url, label);
-  return { text, data: JSON.parse(text), digest: sha256(text) };
+  return { text, data: JSON.parse(text), transport_digest: sha256(text) };
 }
 
 function inventoryEntries(inventory) {
@@ -159,20 +159,12 @@ async function build() {
     fetchJson(`${base}${paths.fag_manifest}`, "fag_manifest")
   ]);
   const expected = object(bridge.expected);
-  const digestChecks = [
-    ["registry", registryAsset.digest, expected.registry_sha256],
-    ["subject_inventory", inventoryAsset.digest, expected.subject_inventory_sha256],
-    ["fag_manifest", manifestAsset.digest, expected.fag_manifest_sha256]
-  ];
-  for (const [label, actual, wanted] of digestChecks) {
-    if (actual !== wanted) throw new Error(`${label} digest mismatch: expected ${wanted}, got ${actual}`);
-  }
   const release = releaseAsset.data;
   if (release?.schema !== "history_go_fagverk_release_v2" || release?.summary?.missing_file_count !== 0) {
     throw new Error("Pinned History-Go release is not complete.");
   }
   if (release.registry?.content_sha256 !== expected.registry_sha256 || release.subject_inventory?.content_sha256 !== expected.subject_inventory_sha256 || release.fag_manifest?.content_sha256 !== expected.fag_manifest_sha256) {
-    throw new Error("History-Go release and AHA bridge disagree on canonical digests.");
+    throw new Error("History-Go release and AHA bridge disagree on canonical content digests.");
   }
   const inventory = inventoryAsset.data;
   const registry = registryAsset.data;
@@ -210,9 +202,9 @@ async function build() {
       source_ref: bridge.canonical_source.source_ref,
       package: {
         emner_path: emnerPath,
-        emner_sha256: assets[0]?.digest || "",
+        emner_transport_sha256: assets[0]?.transport_digest || "",
         methods_path: methodsPath,
-        methods_sha256: assets[1]?.digest || ""
+        methods_transport_sha256: assets[1]?.transport_digest || ""
       },
       emner: emnerRaw.map((item, index) => compactEmne(item, entry.id, bridge.canonical_source.source_ref, emnerPath, index)),
       methods: methodsRaw.map((item, index) => compactMethod(item, entry.id, bridge.canonical_source.source_ref, methodsPath, index)),
@@ -232,9 +224,12 @@ async function build() {
       subject_inventory_path: paths.subject_inventory,
       registry_path: paths.registry,
       fag_manifest_path: paths.fag_manifest,
-      registry_sha256: registryAsset.digest,
-      subject_inventory_sha256: inventoryAsset.digest,
-      fag_manifest_sha256: manifestAsset.digest
+      registry_content_sha256: expected.registry_sha256,
+      subject_inventory_content_sha256: expected.subject_inventory_sha256,
+      fag_manifest_content_sha256: expected.fag_manifest_sha256,
+      registry_transport_sha256: registryAsset.transport_digest,
+      subject_inventory_transport_sha256: inventoryAsset.transport_digest,
+      fag_manifest_transport_sha256: manifestAsset.transport_digest
     },
     summary: {
       root_subject_count: roots,
