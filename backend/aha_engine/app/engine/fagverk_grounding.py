@@ -319,6 +319,8 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     for entry in payload.get("entries", []):
         subject_id = str(entry.get("subject_id") or "")
         policy = subject_policies.get(subject_id)
+        if policy and entry.get("chapter_id") not in (policy.get("chapter_rules") or {}):
+            policy = None
         if policy:
             score, matched_terms, eligible, contributions = _policy_entry_score(normalized, entry, policy)
             thresholds = policy.get("thresholds", {})
@@ -328,8 +330,8 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
             ambiguity_margin = float(thresholds.get("ambiguity_margin", 3.0))
         else:
             score, matched_terms, eligible, contributions = _generic_entry_score(normalized, entry)
-            scoring_mode = "generic_v1"
-            minimum_score = 8.0
+            scoring_mode = "canonical_generic_v2" if payload.get("status") == "canonical_history_go_deployment_index_v2" else "generic_v1"
+            minimum_score = 10.0 if scoring_mode == "canonical_generic_v2" else 8.0
             minimum_terms = 2
             ambiguity_margin = 3.0
         if not eligible or score <= 0:
