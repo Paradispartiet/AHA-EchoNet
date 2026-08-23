@@ -38,8 +38,8 @@ const canonicalIndex = {
       }]
     },
     {
-      subject_id: 's2', subject_label: 'Chemistry', description: '', kind: 'subject', source_ref: ref,
-      package: { emner_path: 'data/fag/chemistry/emner.json', methods_path: '' }, methods: [],
+      subject_id: 's2', subject_label: 'History', description: '', kind: 'subject', source_ref: ref,
+      package: { emner_path: 'data/fag/history/emner.json', methods_path: '' }, methods: [],
       chapters: [
         {
           chapter_id: 'kilder_arkiv_spor',
@@ -50,6 +50,7 @@ const canonicalIndex = {
           keywords: ['kontekstualisering', 'førstehåndskilder', 'historisk kunnskap'],
           thinkers: [],
           methods: ['Kildekritikk', 'Proveniensanalyse'],
+          semantic_terms: ['kildekritikk', 'proveniens', 'arkivtaushet', 'kildeformer', 'bevaringshistorikk'],
           source_path: 'data/fagverk/historie/kilder_arkiv_spor.json',
           source_ref: ref
         },
@@ -62,14 +63,15 @@ const canonicalIndex = {
           keywords: ['offentlig', 'kildekritikk', 'arkiv', 'proveniens', 'kontekstualisering'],
           thinkers: [],
           methods: ['Kildekritikk', 'Proveniensanalyse', 'Arkivlesning'],
+          semantic_terms: ['kulturarv', 'bevaring', 'minnepolitikk', 'fortellinger', 'offentlig'],
           source_path: 'data/fagverk/historie/minne_kulturarv_historiebruk.json',
           source_ref: ref
         }
       ],
       emner: [{
-        emne_id: 'chem-main', title: 'Reactions', definition: 'Bonds and atoms', why_it_matters: 'Reaction dynamics',
-        core_concepts: ['molecule'], keywords: ['reaction'], thinkers: ['Lavoisier'], methods: [],
-        source_path: 'data/fag/chemistry/emner.json', source_ref: ref
+        emne_id: 'history-main', title: 'Historisk kildearbeid', definition: 'Kilder og dokumentasjon', why_it_matters: 'Etterprøvbart kildegrunnlag',
+        core_concepts: ['kildegrunnlag'], keywords: ['historisk kunnskap'], thinkers: [], methods: [],
+        source_path: 'data/fag/history/emner.json', source_ref: ref
       }]
     }
   ]
@@ -103,16 +105,17 @@ const unrelatedTerms = ['Darwin', 'sunlight', 'Plant energy systems', 'Leaf proc
 unrelatedTerms.forEach((term) => {
   assert.ok(!results[0].matched_terms.includes(term), `Unexpected unrelated matched term: ${term}`);
 });
-assert.ok(!results.some((entry) => entry.emne_id === 'chem-main'), 'Unrelated subject must not be boosted into the result list.');
+assert.ok(!results.some((entry) => entry.emne_id === 'history-main'), 'Unrelated subject must not be boosted into the result list.');
 
 const archiveResults = await matchText(
   'Arkivstudien bygger på kildekritikk, proveniens og kontekstualisering av brev og kommunale protokoller. Den sammenligner førstehåndskilder med senere beretninger, drøfter arkivtaushet og vurderer hvilke grupper som mangler i det bevarte materialet. Analysen skiller mellom levning og beretning og forklarer hvordan utvalget av kilder påvirker historisk kunnskap. Forfatteren sammenholder materialet med et offentlig arkiv, markerer usikkerhet i dateringen og viser hvordan arkivets ordning påvirker hvilke fortellinger senere historikere kan bygge. Det gjør kildegrunnlaget eksplisitt og etterprøvbart.',
   { maxResults: 5 }
 );
 assert.ok(archiveResults.length > 0, 'Expected canonical archive evidence to produce a match.');
-assert.equal(archiveResults[0].emne_id, 'fagverk_s2_kilder_arkiv_spor', 'Specific archive/provenance evidence must outrank a broader memory/history-use chapter.');
+assert.equal(archiveResults[0].emne_id, 'fagverk_s2_kilder_arkiv_spor', 'Specific archive/provenance evidence must outrank a broader memory/history-use chapter after the subject anchor is established.');
 assert.equal(archiveResults[0].provenance.chapter_id, 'kilder_arkiv_spor');
 assert.ok(archiveResults[0].matched_terms.includes('arkiv'));
 assert.ok(archiveResults[0].matched_terms.includes('kildekritikk'));
+assert.ok(!archiveResults.some((entry) => Object.prototype.hasOwnProperty.call(entry, '_chapter_specific_hits')), 'Internal chapter-specific evidence must not leak from matcher output.');
 
 console.log('ahaSubjectEngine canonical-index regression test passed');
