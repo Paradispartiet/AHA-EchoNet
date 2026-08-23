@@ -233,7 +233,7 @@
     try {
       state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
       global.localStorage.clear();
-      let win = await loadFrame();
+      let win = await loadFrame({ reload: Boolean(state.frame) });
       win.localStorage.clear();
       win.AHAMemoryControls?.enableSaving?.();
       win.AHAMemoryControls?.disableMemoryUse?.();
@@ -264,6 +264,31 @@
     } finally {
       restoreStorage(global.localStorage, originalStorage);
       state.running = false; if (runButton) runButton.disabled = false;
+    }
+  }
+
+  async function runCases(caseIds = []) {
+    if (state.running) return [];
+    state.running = true;
+    const originalStorage = fullStorageSnapshot(global.localStorage);
+    try {
+      state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
+      const selectedIds = new Set((Array.isArray(caseIds) ? caseIds : []).map(text).filter(Boolean));
+      const entries = state.corpus.cases.filter((entry) => selectedIds.has(entry.id));
+      global.localStorage.clear();
+      let win = await loadFrame({ reload: Boolean(state.frame) });
+      win.localStorage.clear();
+      win.AHAMemoryControls?.enableSaving?.();
+      win.AHAMemoryControls?.disableMemoryUse?.();
+      const results = [];
+      for (const entry of entries) {
+        if (entry.sequential_after === "morgenbladet_seed") await win.AHAChat.submitAhaChatMessage(SEED_TEXT);
+        results.push(await submit(win, entry));
+      }
+      return clone(results);
+    } finally {
+      restoreStorage(global.localStorage, originalStorage);
+      state.running = false;
     }
   }
 
@@ -298,5 +323,5 @@
   byId("run")?.addEventListener("click", () => { void runAll().catch((error) => { byId("status").textContent = error.message; }); });
   byId("export")?.addEventListener("click", downloadReview);
 
-  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, collectHumanReview, compareReplay, getState: () => clone(state) });
+  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, collectHumanReview, compareReplay, getState: () => clone(state) });
 })(window);

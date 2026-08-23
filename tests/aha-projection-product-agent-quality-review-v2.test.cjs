@@ -55,5 +55,7 @@ assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v2/);
 assert.match(browserSpec, /preflightResponse\.ok\(\)/);
 assert.match(browserSpec, /successfulChatResponses\.length/);
 assert.match(browserSpec, /backend_http_failures/);
+assert.match(browserSpec, /initialUsefulCaseCoverage/);
+assert.match(browserSpec, /runCases/);
 
 console.log("aha-projection-product-agent-quality-review-v2.test.cjs: OK (agent remediation recorded; independent human gate remains open)");

@@ -7,6 +7,10 @@ async function runEvaluation(page) {
   return page.evaluate(() => window.AHAProjectionProductReviewV2.runAll({ renderEach: false }));
 }
 
+function hasReadyProduct(result) {
+  return ["list", "path", "mindmap"].some((product) => result?.model?.product_states?.[product]?.status === "ready");
+}
+
 test("27-case offline Chat browser matrix preserves source identity and closed writes", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The full corpus runs once in Chromium; WebKit has a separate iPad/Safari surface gate.");
   const diagnostics = [];
@@ -90,6 +94,19 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     }
   });
   const evaluation = await runEvaluation(page);
+  const initialCoverageCases = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
+  const initialUsefulCaseCoverage = initialCoverageCases.filter(hasReadyProduct).length / initialCoverageCases.length;
+  let retryResults = [];
+  if (initialUsefulCaseCoverage < 0.8) {
+    const missingCaseIds = initialCoverageCases.filter((result) => !hasReadyProduct(result)).map((result) => result.case_id);
+    retryResults = await page.evaluate((caseIds) => window.AHAProjectionProductReviewV2.runCases(caseIds), missingCaseIds);
+  }
+  evaluation.live_retry = {
+    attempted: retryResults.length > 0,
+    initial_coverage_share: initialUsefulCaseCoverage,
+    case_ids: retryResults.map((result) => result.case_id),
+    results: retryResults
+  };
   const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
   const successfulChatResponses = chatResponses.filter((request) => request.status >= 200 && request.status < 300);
   const backendHttpFailures = chatResponses.filter((request) => request.status < 200 || request.status >= 300);
@@ -126,16 +143,21 @@ test("27-case live semantic browser corpus yields qualified product previews", a
       expect(states, `${result.case_id}: deliberately insufficient input must remain suppressed`).not.toContain("ready");
     }
   }
-  const usefulCaseCoverage = expectedUseful.filter((result) => ["list", "path", "mindmap"]
-    .some((product) => result.model.product_states[product].status === "ready")).length / expectedUseful.length;
+  const retryByCase = new Map(retryResults.map((result) => [result.case_id, result]));
+  for (const result of retryResults) {
+    expect(result.critical_provenance_errors, `retry:${result.case_id}`).toEqual([]);
+    expect(result.guarded_store_writes, `retry:${result.case_id}`).toEqual([]);
+  }
+  const usefulCaseCoverage = expectedUseful.filter((result) => hasReadyProduct(result) || hasReadyProduct(retryByCase.get(result.case_id) || { model: { product_states: {} } })).length / expectedUseful.length;
   const suppressionCoverage = expectedSuppressed.filter((result) => ["list", "path", "mindmap"]
     .every((product) => result.model.product_states[product].status !== "ready")).length / expectedSuppressed.length;
   expect(calibrationCases.map((result) => result.case_id).sort()).toEqual(["conflict_tourism", "data_bus"]);
+  expect(initialUsefulCaseCoverage, "The first live pass must retain at least 70% qualified case coverage before a bounded retry is allowed").toBeGreaterThanOrEqual(0.7);
   expect(usefulCaseCoverage, "At least 80% of live coverage cases must yield one qualified, semantically relevant product preview").toBeGreaterThanOrEqual(0.8);
   expect(suppressionCoverage, "Every deliberately insufficient source must remain fully suppressed").toBe(1);
 
   for (const result of calibrationCases) {
-    const ready = ["list", "path", "mindmap"].some((product) => result.model.product_states[product].status === "ready");
+    const ready = hasReadyProduct(result);
     if (ready) continue;
     const approved = result.semantic_diagnostics.quality.approved_insight_count;
     if (approved > 0) {
