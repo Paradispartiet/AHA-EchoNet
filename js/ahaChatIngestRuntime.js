@@ -11,6 +11,10 @@
   const SEMANTIC_DOCUMENT_VERSION = 1;
   const SEMANTIC_DOCUMENT_MODE = "shadow";
   const SEMANTIC_DOCUMENT_STATUS = "claims_relations_shadow";
+  const ANALYSIS_CANDIDATE_CACHE_SCHEMA = "aha_analysis_candidate_session_cache_v2";
+  const ANALYSIS_CANDIDATE_CACHE_INDEX_KEY = "aha_analysis_candidate_session_cache_v2:index";
+  const ANALYSIS_CANDIDATE_CACHE_PREFIX = "aha_analysis_candidate_session_cache_v2:";
+  const ANALYSIS_CANDIDATE_CACHE_LIMIT = 32;
   const SEMANTIC_GENERIC_TERMS = new Set([
     "kunnskap", "mennesker", "sted", "samfunn", "refleksjon", "innsikt", "samtale", "analyse",
     "illustrasjon", "logo", "annonse", "sponset", "nødvendighet", "nodvendighet"
@@ -977,6 +981,7 @@
       isMemoryUseEnabled = () => true,
       loadChamber,
       saveChamber,
+      candidateCacheStorage = global.sessionStorage || null,
       getSemanticDocumentApi = () => (
         global.AHAModuleApi?.resolve?.("semanticDocument", "AHASemanticDocument", { version: 1 })
         || global.AHASemanticDocument
@@ -991,6 +996,34 @@
     } = deps;
     let semanticShadowSequence = 0;
     const analysisCandidateRequests = new Map();
+
+    function readSessionCandidates(requestKey) {
+      try {
+        const parsed = JSON.parse(candidateCacheStorage?.getItem?.(`${ANALYSIS_CANDIDATE_CACHE_PREFIX}${requestKey}`) || "null");
+        if (parsed?.schema !== ANALYSIS_CANDIDATE_CACHE_SCHEMA || parsed?.request_key !== requestKey || !Array.isArray(parsed?.candidates)) return null;
+        return clone(parsed.candidates);
+      } catch {
+        return null;
+      }
+    }
+
+    function writeSessionCandidates(requestKey, candidates) {
+      try {
+        if (!candidateCacheStorage?.setItem) return;
+        const rawIndex = JSON.parse(candidateCacheStorage.getItem?.(ANALYSIS_CANDIDATE_CACHE_INDEX_KEY) || "[]");
+        const index = (Array.isArray(rawIndex) ? rawIndex : []).filter((key) => typeof key === "string" && key !== requestKey);
+        index.push(requestKey);
+        while (index.length > ANALYSIS_CANDIDATE_CACHE_LIMIT) {
+          candidateCacheStorage.removeItem?.(`${ANALYSIS_CANDIDATE_CACHE_PREFIX}${index.shift()}`);
+        }
+        candidateCacheStorage.setItem(`${ANALYSIS_CANDIDATE_CACHE_PREFIX}${requestKey}`, JSON.stringify({
+          schema: ANALYSIS_CANDIDATE_CACHE_SCHEMA,
+          request_key: requestKey,
+          candidates: clone(candidates)
+        }));
+        candidateCacheStorage.setItem(ANALYSIS_CANDIDATE_CACHE_INDEX_KEY, JSON.stringify(index));
+      } catch {}
+    }
 
     function buildChatPayload(text, themeId, fieldId) {
       return {
@@ -1119,12 +1152,19 @@
       const requestKey = sha256Hex(JSON.stringify({ text, inputContext }));
       let request = analysisCandidateRequests.get(requestKey);
       if (!request) {
-        if (analysisCandidateRequests.size >= 32) {
+        const persisted = readSessionCandidates(requestKey);
+        if (analysisCandidateRequests.size >= ANALYSIS_CANDIDATE_CACHE_LIMIT) {
           analysisCandidateRequests.delete(analysisCandidateRequests.keys().next().value);
         }
-        request = Promise.resolve()
-          .then(() => generateAIInsightCandidates(text, inputContext))
-          .then((candidates) => Array.isArray(candidates) ? clone(candidates) : []);
+        request = persisted
+          ? Promise.resolve(persisted)
+          : Promise.resolve()
+            .then(() => generateAIInsightCandidates(text, inputContext))
+            .then((candidates) => Array.isArray(candidates) ? clone(candidates) : [])
+            .then((candidates) => {
+              writeSessionCandidates(requestKey, candidates);
+              return candidates;
+            });
         analysisCandidateRequests.set(requestKey, request);
       }
       try {
