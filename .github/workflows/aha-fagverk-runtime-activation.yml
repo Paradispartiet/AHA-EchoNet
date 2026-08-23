@@ -11,6 +11,7 @@ on:
       - "scripts/build-history-go-fagverk-canonical-index-v2.mjs"
       - "scripts/ensure-python-fagverk-canonical-v2.mjs"
       - "scripts/ensure-fagverk-canonical-tests-v2.mjs"
+      - "scripts/cleanup-local-subject-fagverk-copies-v2.mjs"
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
       - "js/ahaSubjectEngine.js"
       - "js/emnerLoader.js"
@@ -54,19 +55,22 @@ jobs:
       - name: Migrate active quality gates off the partial runtime registry
         run: node scripts/ensure-fagverk-canonical-tests-v2.mjs --write
 
+      - name: Remove materialized History-Go copies from local AHA overlays
+        run: node scripts/cleanup-local-subject-fagverk-copies-v2.mjs --write
+
       - name: Persist deterministic canonical artifacts on same-repo PRs
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs)"
+          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs)"
           if [ -z "$CHANGED" ]; then
             echo "Canonical deployment artifacts already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs
+          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs
           git commit -m "chore(fagverk): refresh canonical deployment consumers"
           git push origin "HEAD:${HEAD_REF}"
 
@@ -75,6 +79,7 @@ jobs:
           node scripts/build-history-go-fagverk-canonical-index-v2.mjs --check
           node scripts/ensure-python-fagverk-canonical-v2.mjs --check
           node scripts/ensure-fagverk-canonical-tests-v2.mjs --check
+          node scripts/cleanup-local-subject-fagverk-copies-v2.mjs --check
 
       - name: Verify bridge authority and Subject Engine integration
         run: |
