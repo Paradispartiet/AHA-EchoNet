@@ -14,7 +14,10 @@ function migrate(relativePath, replacements, options = {}) {
   const file = path.join(root, relativePath);
   const current = fs.readFileSync(file, "utf8");
   let next = current;
-  for (const [before, after] of replacements) if (next.includes(before)) next = next.replace(before, after);
+  for (const [before, after] of replacements) {
+    if (next.includes(after)) continue;
+    if (next.includes(before)) next = next.replace(before, after);
+  }
   if (options.rejectLegacyRegistry !== false && /history-go-fagverk-runtime-registry\.v1\.json/.test(next)) throw new Error(`${relativePath}: active contract still references the legacy partial runtime registry.`);
   if (mode === "write") { if (next !== current) fs.writeFileSync(file, next); return next !== current; }
   if (next !== current) throw new Error(`${relativePath}: canonical Fagverk migration drift.`);
