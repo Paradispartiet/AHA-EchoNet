@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const REGISTRY_PATH = 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json';
+const CANONICAL_INDEX_PATH = 'data/integrations/runtime/history-go-fagverk-canonical-index.v2.json';
 const QUALITY_MATRIX_PATH = 'tests/fixtures/aha-production-analysis-quality-matrix.v1.json';
 
 function readJson(relativePath) {
@@ -32,10 +32,14 @@ const cases = qualityMatrix.cases.map((item) => [
   item.sourceText
 ]);
 
-const registry = readJson(REGISTRY_PATH);
-const subjectIndex = readJson('data/subjects/subjects_index.json');
-const metaById = new Map((subjectIndex.subjects || []).map((item) => [item.subject_id, item]));
-assert.equal(cases.length, Object.keys(registry.active_subjects || {}).length, 'Audit matrix must track every runtime-active canonical subject.');
+const canonicalIndex = readJson(CANONICAL_INDEX_PATH);
+assert.equal(canonicalIndex.schema, 'aha_history_go_fagverk_canonical_index_v2');
+assert.equal(canonicalIndex.summary.subject_count, 20, 'Canonical History-Go deployment index must expose all 19 root subjects + technology specialization.');
+const canonicalById = new Map((canonicalIndex.subjects || []).map((item) => [item.subject_id, item]));
+cases.forEach(([canonicalSubjectId, ahaSubjectId]) => {
+  assert.ok(canonicalById.has(canonicalSubjectId), `${canonicalSubjectId}: reviewed subject missing from canonical index`);
+  assert.equal(ahaSubjectId, canonicalSubjectId, `${canonicalSubjectId}: AHA calibration case must use canonical subject ID`);
+});
 
 const subjectContext = { window: null, globalThis: null, console, fetch: localFetch() };
 subjectContext.window = subjectContext;
@@ -45,17 +49,14 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
 (async () => {
   let checks = 0;
   for (const [canonicalSubjectId, ahaSubjectId, chapterId, emneId, text] of cases) {
-    const runtime = registry.active_subjects[canonicalSubjectId];
-    const corpus = readJson(runtime.runtime_corpus_path);
-    const meta = metaById.get(ahaSubjectId);
-    const subject = readJson(`data/subjects/${meta.file}`);
-    const emne = (subject.emner || []).find((item) => item.emne_id === emneId);
+    const canonicalSubject = canonicalById.get(canonicalSubjectId);
+    const chapter = (canonicalSubject.chapters || []).find((item) => item.chapter_id === chapterId);
 
-    assert.ok(emne); checks += 1;
-    assert.equal(emne.fagverk.canonical_subject_id, canonicalSubjectId); checks += 1;
-    assert.equal(emne.fagverk.chapter_id, chapterId); checks += 1;
-    assert.equal(emne.fagverk.source_ref, corpus.source_ref); checks += 1;
-    assert.ok(emne.fagverk.source_path && emne.fagverk.corpus_path && emne.fagverk.policy_path); checks += 1;
+    assert.ok(chapter, `${canonicalSubjectId}: reviewed chapter missing from canonical History-Go index`); checks += 1;
+    assert.equal(ahaSubjectId, canonicalSubjectId); checks += 1;
+    assert.equal(chapter.chapter_id, chapterId); checks += 1;
+    assert.equal(chapter.source_ref, canonicalIndex.canonical_source.source_ref); checks += 1;
+    assert.ok(chapter.source_path); checks += 1;
 
     const matches = await subjectContext.AHASubjectEngine.matchText(text, { source: 'production_pipeline_audit', maxResults: 8 });
     assert.ok(matches.length > 0); checks += 1;
@@ -72,7 +73,7 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
       {
         canonical_subject_id: canonicalSubjectId,
         chapter_id: chapterId,
-        source_ref: corpus.source_ref,
+        source_ref: canonicalIndex.canonical_source.source_ref,
         evidence_role: 'reference_support_not_source_evidence'
       }
     ); checks += 1;

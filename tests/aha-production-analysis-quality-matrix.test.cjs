@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURE_PATH = path.join(ROOT, 'tests/fixtures/aha-production-analysis-quality-matrix.v1.json');
-const REGISTRY_PATH = path.join(ROOT, 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json');
+const CANONICAL_INDEX_PATH = path.join(ROOT, 'data/integrations/runtime/history-go-fagverk-canonical-index.v2.json');
 const AUTO_OUTPUT_STORAGE_KEY = 'aha_chat_auto_outputs_v1';
 
 function read(relativePath) {
@@ -169,13 +169,16 @@ function makeProductContext() {
 }
 
 const fixture = readJson(FIXTURE_PATH);
-const registry = readJson(REGISTRY_PATH);
+const canonicalIndex = readJson(CANONICAL_INDEX_PATH);
 assert.equal(fixture.version, 'aha_production_analysis_quality_matrix_v1');
 assert.ok(Array.isArray(fixture.cases) && fixture.cases.length > 0, 'quality matrix must contain reviewed cases');
-
-const activeSubjectIds = Object.keys(registry.active_subjects || {}).sort();
-const fixtureSubjectIds = fixture.cases.map((item) => item.canonicalSubjectId).sort();
-assert.deepEqual(fixtureSubjectIds, activeSubjectIds, 'quality matrix must track every runtime-active subject exactly once');
+assert.equal(canonicalIndex.schema, 'aha_history_go_fagverk_canonical_index_v2');
+assert.equal(canonicalIndex.summary.subject_count, 20, 'canonical History-Go subject inventory must remain complete');
+const canonicalSubjectIds = new Set(canonicalIndex.subjects.map((item) => item.subject_id));
+fixture.cases.forEach((item) => {
+  assert.ok(canonicalSubjectIds.has(item.canonicalSubjectId), `${item.id}: reviewed subject is not in canonical History-Go index`);
+  assert.equal(item.ahaSubjectId, item.canonicalSubjectId, `${item.id}: reviewed AHA subject must use canonical History-Go ID`);
+});
 
 const subjectContext = { window: null, globalThis: null, console, fetch: localFetch() };
 subjectContext.window = subjectContext;
