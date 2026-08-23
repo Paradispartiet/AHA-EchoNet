@@ -1,0 +1,324 @@
+name: TEMP V2 human semantic quality repair
+on:
+  push:
+    branches:
+      - agent/v2-human-semantic-quality-repair
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: agent/v2-human-semantic-quality-repair
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Apply generic semantic quality repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('js/ahaChatProviderLoader.js')
+          s = p.read_text()
+
+          marker = '''  function candidateConceptKeys(payload) {'''
+          insert = r'''  function sourceRegionWindows(sourceText, limit = 6000) {
+            const source = String(sourceText || "").trim();
+            if (!source) return [];
+            if (source.length <= LONG_SOURCE_LIMIT) return [source];
+            const units = splitSourceUnits(source);
+            if (units.length < 9) return [focusLongSource(source, Math.min(limit, LONG_SOURCE_LIMIT))];
+            const regionCount = 3;
+            const windows = [];
+            for (let region = 0; region < regionCount; region += 1) {
+              const start = Math.floor((units.length * region) / regionCount);
+              const end = Math.floor((units.length * (region + 1)) / regionCount);
+              const regionUnits = units.slice(start, end);
+              const ranked = regionUnits.map((unit, index) => {
+                let score = 1;
+                if (TENSION_SIGNAL.test(unit)) score += 5;
+                if (CONCLUSION_SIGNAL.test(unit)) score += 4;
+                if (/\?/u.test(unit)) score += 4;
+                if (/\b(?:teori|begrep|sjanger|etikk|metode|analyse|diskurs|kunnskap|rettighet|mekanisme|konsekvens|dilemma|kritisk|representasjon|fortolk)\w*/iu.test(unit)) score += 3;
+                score += Math.min(3, contentTokens(unit).length / 35);
+                return { unit, index, score };
+              }).sort((left, right) => right.score - left.score || left.index - right.index);
+              const chosen = [];
+              let used = 0;
+              const add = (unit) => {
+                const value = String(unit || "").trim();
+                if (!value || chosen.includes(value)) return;
+                const extra = value.length + (chosen.length ? 2 : 0);
+                if (used + extra > limit) return;
+                chosen.push(value); used += extra;
+              };
+              regionUnits.slice(0, 2).forEach(add);
+              regionUnits.slice(-2).forEach(add);
+              ranked.forEach(({ unit }) => add(unit));
+              const windowText = chosen.sort((a, b) => source.indexOf(a) - source.indexOf(b)).join("\n\n");
+              if (windowText) windows.push(windowText.slice(0, limit));
+            }
+            return unique(windows).slice(0, 3);
+          }
+
+          function sourceQuestionTracks(sourceText, maxItems = 4) {
+            const source = String(sourceText || "");
+            const units = splitSourceUnits(source);
+            return unique(units.filter((unit) => /\?/u.test(unit) && unit.length >= 35 && unit.length <= 420))
+              .slice(0, maxItems);
+          }
+
+          function sourceBoundAcademicSubjects(sourceText) {
+            const source = String(sourceText || "");
+            const normalizedSource = normalize(source);
+            const rules = [
+              ["Etikk", ["etikk", "etisk"]],
+              ["Litteraturvitenskap", ["litteraturvitenskap", "litteraturteori", "litteraturvitere", "fortellende sjanger"]],
+              ["Kulturvitenskap", ["kulturvitere", "kulturvitenskap"]],
+              ["Helse- og omsorgsfag", ["helsepersonell", "omsorgsforskning", "omsorgstjenester", "demensomsorg"]],
+              ["Gerontologi", ["gerontologi", "aldringsforskning"]],
+              ["Samfunnsvitenskap", ["velferdsstat", "biopolitikk", "sosiale og kulturelle"]]
+            ];
+            return rules.map(([title, terms]) => {
+              const exact = terms.find((term) => normalizedSource.includes(normalize(term)));
+              if (!exact) return null;
+              const sourceMatch = source.match(new RegExp(exact.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "iu"));
+              const evidence = sourceMatch?.[0] || exact;
+              return {
+                title,
+                subject_label: title,
+                score: 0.92,
+                type: "source_bound_derived",
+                matched_terms: [evidence],
+                evidence: [evidence],
+                explanation: `${title} er eksplisitt forankret i fagterminologi som forekommer i den aktive kilden.`
+              };
+            }).filter(Boolean).slice(0, 6);
+          }
+
+          function sourceConclusionReflection(sourceText) {
+            const units = splitSourceUnits(sourceText);
+            const tail = units.slice(Math.max(0, units.length - 18));
+            const ranked = tail.map((unit, index) => ({
+              unit,
+              index,
+              score: (CONCLUSION_SIGNAL.test(unit) ? 5 : 0)
+                + (/\b(?:vi har|vår analyse|understreke|konklusjon|avslutning|derfor|dermed|viktig|behovet)\b/iu.test(unit) ? 4 : 0)
+                + (unit.length >= 80 && unit.length <= 360 ? 2 : 0)
+            })).sort((left, right) => right.score - left.score || right.index - left.index);
+            return ranked.find((item) => item.score >= 6)?.unit || "";
+          }
+
+          function conceptFamilyKey(label) {
+            const key = normalize(label);
+            if (!key || key.includes(" ")) return key;
+            for (const suffix of ["ene", "er", "et", "en"]) {
+              if (key.endsWith(suffix) && key.length - suffix.length >= 6) return key.slice(0, -suffix.length);
+            }
+            return key;
+          }
+
+''' + marker
+          if marker not in s:
+              raise SystemExit('candidateConceptKeys marker missing')
+          s = s.replace(marker, insert, 1)
+
+          old_rank = '''    const keptConceptIds = new Set(rankedConcepts.map((item) => item.concept.id));\n    repaired.concepts = rankedConcepts.sort((left, right) => left.index - right.index).map((item) => item.concept);'''
+          new_rank = '''    const conceptFamilies = new Set();\n    const dedupedConcepts = rankedConcepts.filter((item) => {\n      const family = conceptFamilyKey(item.concept?.label);\n      if (!family || conceptFamilies.has(family)) return false;\n      conceptFamilies.add(family);\n      return true;\n    });\n    const keptConceptIds = new Set(dedupedConcepts.map((item) => item.concept.id));\n    repaired.concepts = dedupedConcepts.sort((left, right) => left.index - right.index).map((item) => item.concept);'''
+          if old_rank not in s:
+              raise SystemExit('concept rank block missing')
+          s = s.replace(old_rank, new_rank, 1)
+
+          old_payload_start = s.index('  function repairPayloadSourceFields(payload, sourceText, semanticDocument) {')
+          old_payload_end = s.index('\n  function verifiedThemeField(', old_payload_start)
+          new_payload = r'''  function repairPayloadSourceFields(payload, sourceText, semanticDocument) {
+            const source = object(payload);
+            if (!Object.keys(source).length || semanticDocument?.schema !== "aha_semantic_document_v2") return source;
+            if (String(sourceText || "").length < SUBSTANTIVE_SOURCE_MIN) return source;
+            const theme = deriveSourceTheme(sourceText, semanticDocument);
+            const insight = approvedInsight(semanticDocument);
+            const tension = array(semanticDocument?.tensions)[0] || null;
+            let canonical = source.canonicalAnalysis && typeof source.canonicalAnalysis === "object"
+              ? { ...source.canonicalAnalysis }
+              : null;
+            let ahaSer = source.ahaSer && typeof source.ahaSer === "object" ? { ...source.ahaSer } : null;
+            let thoughts = source.thoughts && typeof source.thoughts === "object" ? { ...source.thoughts } : null;
+            if (theme) {
+              if (canonical) canonical.theme = theme;
+              if (ahaSer) ahaSer.tema = theme;
+              if (thoughts) thoughts.hovedspor = theme;
+            }
+            if (insight) {
+              if (canonical) canonical.keyInsight = insight.insight;
+              if (ahaSer) ahaSer.viktigsteInnsikt = insight.insight;
+              const rawCandidate = array(source.insightCandidatesV2).find((candidate) => normalize(candidate?.summary || candidate?.text) === normalize(insight.insight));
+              const nextTest = text(rawCandidate?.next_test);
+              if (nextTest && ahaSer) ahaSer.nesteSteg = nextTest;
+              if (nextTest && thoughts) thoughts.neste_steg = nextTest;
+            }
+            if (tension?.label) {
+              if (canonical) canonical.mainTension = tension.label;
+              if (ahaSer) ahaSer.hovedspenning = tension.label;
+            }
+
+            const tracks = sourceQuestionTracks(sourceText);
+            if (tracks.length) source.conversationTracks = tracks;
+            const derivedSubjects = sourceBoundAcademicSubjects(sourceText);
+            if (derivedSubjects.length) {
+              const existing = array(source.subjectMatches?.length ? source.subjectMatches : source.subjectLinks);
+              const byKey = new Map([...existing, ...derivedSubjects].map((item) => [normalize(item?.title || item?.subject_label || item?.label), item]).filter(([key]) => key));
+              source.subjectMatches = [...byKey.values()].slice(0, 12);
+            }
+            const reflection = sourceConclusionReflection(sourceText);
+            if (reflection) {
+              source.reflection = reflection;
+              if (canonical) canonical.reflection = reflection;
+            }
+            if (/^(?:ikke\s+dagbokmateriale|ingen\s+dagsoppsummering)/iu.test(text(source.day))) source.day = "";
+
+            if (canonical) source.canonicalAnalysis = canonical;
+            if (ahaSer) {
+              if (source.subjectMatches?.length) ahaSer.fagkoblinger = source.subjectMatches.map((item) => item.title || item.subject_label).filter(Boolean);
+              source.ahaSer = ahaSer;
+            }
+            if (thoughts) source.thoughts = thoughts;
+            return source;
+          }
+'''
+          s = s[:old_payload_start] + new_payload + s[old_payload_end:]
+
+          old_wrap_start = s.index('  function wrapInsightPipeline(provider) {')
+          old_wrap_end = s.index('\n  function wrapLiveSemanticBridge(', old_wrap_start)
+          new_wrap = r'''  function wrapInsightPipeline(provider) {
+            return Object.freeze({
+              ...provider,
+              create(deps) {
+                const instance = provider.create(deps);
+                if (!instance || typeof instance.generateAIInsightCandidates !== "function") return instance;
+                return Object.freeze({
+                  ...instance,
+                  async generateAIInsightCandidates(sourceText, context) {
+                    const raw = String(sourceText || "");
+                    const windows = sourceRegionWindows(raw);
+                    const combined = [];
+                    for (let index = 0; index < windows.length; index += 1) {
+                      const focused = windows[index];
+                      const nextContext = {
+                        ...object(context),
+                        semantic_source_focus: {
+                          schema: QUALITY_REPAIR_SCHEMA,
+                          source_length: raw.length,
+                          focused_length: focused.length,
+                          verbatim_excerpt: raw.length > focused.length,
+                          window_index: index,
+                          window_count: windows.length
+                        }
+                      };
+                      const batch = await instance.generateAIInsightCandidates(focused, nextContext);
+                      array(batch).forEach((candidate) => combined.push(candidate));
+                    }
+                    const deduped = unique(combined, (candidate) => candidate?.summary || candidate?.text || candidate?.title);
+                    if (deduped.length) {
+                      if (typeof instance.reviewInsightCandidates === "function") {
+                        return instance.reviewInsightCandidates(deduped, raw, { limit: 5 }).selected;
+                      }
+                      return deduped.slice(0, 5);
+                    }
+                    const focused = focusLongSource(raw);
+                    if (raw.length >= SUBSTANTIVE_SOURCE_MIN && typeof instance.buildSemanticInsightCandidates === "function") {
+                      return instance.buildSemanticInsightCandidates(focused, { minInsights: 2, maxInsights: 4 });
+                    }
+                    return [];
+                  }
+                });
+              }
+            });
+          }
+'''
+          s = s[:old_wrap_start] + new_wrap + s[old_wrap_end:]
+
+          old_export = '''    focusLongSource,\n    deriveSourceTheme,\n    repairSemanticDocument,\n    repairPayloadSourceFields,'''
+          new_export = '''    focusLongSource,\n    sourceRegionWindows,\n    sourceQuestionTracks,\n    sourceBoundAcademicSubjects,\n    sourceConclusionReflection,\n    deriveSourceTheme,\n    repairSemanticDocument,\n    repairPayloadSourceFields,'''
+          if old_export not in s:
+              raise SystemExit('quality export block missing')
+          s = s.replace(old_export, new_export, 1)
+          p.write_text(s)
+
+          subject = Path('js/ahaChatSubjects.js')
+          t = subject.read_text()
+          old = '''        if (match.score != null && Number.isFinite(Number(match.score))) normalized.score = Number(match.score);\n        if (Array.isArray(match.matched_terms)) normalized.matched_terms = match.matched_terms.map((term) => String(term));'''
+          new = '''        if (match.score != null && Number.isFinite(Number(match.score))) normalized.score = Number(match.score);\n        if (match.explanation != null) normalized.explanation = String(match.explanation);\n        else if (match.reason != null) normalized.explanation = String(match.reason);\n        if (Array.isArray(match.matched_terms)) normalized.matched_terms = match.matched_terms.map((term) => String(term));\n        if (Array.isArray(match.evidence)) normalized.evidence = match.evidence.map((item) => String(item?.excerpt || item?.quote || item)).filter(Boolean);'''
+          if old not in t:
+              raise SystemExit('subject normalize block missing')
+          subject.write_text(t.replace(old, new, 1))
+
+          test = Path('tests/aha-v2-human-semantic-quality.test.cjs')
+          test.write_text(r'''const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+
+const context = { console, URLSearchParams };
+context.window = context; context.globalThis = context;
+context.AHAModuleApi = { resolve() { return null; }, register() {} };
+vm.createContext(context);
+vm.runInContext(fs.readFileSync("js/ahaChatProviderLoader.js", "utf8"), context, { filename: "js/ahaChatProviderLoader.js" });
+const repair = context.AHAChatProviderLoader.QUALITY_REPAIR_V2;
+assert.ok(repair);
+
+const paragraphs = [];
+for (let i = 0; i < 36; i += 1) {
+  if (i === 2) paragraphs.push("Innledningen avgrenser et akademisk spørsmål om institusjoner, erfaring og fortolkning i offentlig praksis.");
+  else if (i === 13) paragraphs.push("Midtveis oppstår et dilemma mellom standardisering og individuell fortolkning, og analysen spør: Hvem får definere hvilken kunnskap som teller?");
+  else if (i === 24) paragraphs.push("Etikk og litteraturvitenskap brukes til å undersøke representasjon og kritisk fortolkning av erfaring.");
+  else if (i === 34) paragraphs.push("Vår analyse understreker derfor behovet for en tverrfaglig og kritisk forståelse av kunnskapsproduksjonen.");
+  else paragraphs.push(`Akademisk del ${i} utdyper argumentet med dokumentasjon, begreper og en selvstendig faglig drøfting som gjør langteksten substansiell og kildebundet.`);
+}
+const source = paragraphs.join("\n\n");
+const windows = repair.sourceRegionWindows(source);
+assert.equal(windows.length, 3);
+assert.ok(windows.every((value) => value.length <= 6000));
+assert.ok(windows[0].includes("Innledningen avgrenser"));
+assert.ok(windows[1].includes("Hvem får definere"));
+assert.ok(windows[2].includes("Vår analyse understreker"));
+
+const tracks = repair.sourceQuestionTracks(source);
+assert.ok(tracks.some((value) => value.includes("Hvem får definere")));
+const subjects = repair.sourceBoundAcademicSubjects(source);
+assert.ok(subjects.some((item) => item.title === "Etikk"));
+assert.ok(subjects.some((item) => item.title === "Litteraturvitenskap"));
+assert.ok(subjects.every((item) => item.explanation && item.evidence.length));
+const reflection = repair.sourceConclusionReflection(source);
+assert.ok(reflection.includes("Vår analyse understreker"));
+
+const payload = {
+  day: "Ikke dagbokmateriale – ingen dagsoppsummering laget.",
+  canonicalAnalysis: { theme: "gammelt tema", keyInsight: "gammel innsikt", reflection: "" },
+  ahaSer: { tema: "gammelt tema", viktigsteInnsikt: "gammel innsikt", fagkoblinger: [] },
+  thoughts: {}, subjectMatches: []
+};
+const semanticDocument = {
+  schema: "aha_semantic_document_v2",
+  concepts: [], tensions: [{ label: paragraphs[13] }],
+  candidate_insights: [{ status: "approved", eligible_for_current_analysis: true, insight: paragraphs[34] }]
+};
+repair.repairPayloadSourceFields(payload, source, semanticDocument);
+assert.equal(payload.day, "");
+assert.ok(payload.conversationTracks.length >= 1);
+assert.ok(payload.subjectMatches.length >= 2);
+assert.ok(payload.canonicalAnalysis.reflection.includes("Vår analyse understreker"));
+assert.ok(payload.ahaSer.fagkoblinger.includes("Etikk"));
+console.log("aha-v2-human-semantic-quality.test.cjs: OK");
+''')
+
+          Path('.github/workflows/temp-v2-human-semantic-quality-repair.yml').unlink()
+          PY
+          node tests/aha-v2-human-semantic-quality.test.cjs
+          git diff --check
+          git config user.name "Paradispartiet"
+          git config user.email "paradispartiet@gmail.com"
+          git add -A
+          git commit -m "fix(v2): improve long-source semantic prioritization"
+          git push origin HEAD:agent/v2-human-semantic-quality-repair
