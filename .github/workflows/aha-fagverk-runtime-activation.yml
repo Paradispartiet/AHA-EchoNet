@@ -63,14 +63,14 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs)"
+          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects js/ahaSubjectEngine.js backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs)"
           if [ -z "$CHANGED" ]; then
             echo "Canonical deployment artifacts already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs
+          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json data/subjects js/ahaSubjectEngine.js backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs
           git commit -m "chore(fagverk): refresh canonical deployment consumers"
           git push origin "HEAD:${HEAD_REF}"
 
