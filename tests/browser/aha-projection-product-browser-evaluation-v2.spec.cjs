@@ -15,6 +15,26 @@ async function readLocalStore(page, key) {
   return page.evaluate((storeKey) => JSON.parse(localStorage.getItem(storeKey) || "[]"), key);
 }
 
+test("controlled-write actions honor the hidden state", async ({ page, browserName }) => {
+  test.skip(browserName !== "chromium", "The shared product CSS is verified once in Chromium.");
+  await page.goto("/lists.html", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    const fixture = document.createElement("div");
+    fixture.innerHTML = `
+      <div class="aha-v2-materialize-actions">
+        <button id="hidden-list-action" hidden>Skjult listehandling</button>
+        <button id="visible-list-action">Synlig listehandling</button>
+      </div>
+      <button id="mindmap-v2-materialize" hidden>Skjult tankekarthandling</button>
+      <button id="mindmap-v2-undo" hidden>Skjult angrehandling</button>`;
+    document.body.append(fixture);
+  });
+  await expect(page.locator("#hidden-list-action")).toBeHidden();
+  await expect(page.locator("#mindmap-v2-materialize")).toBeHidden();
+  await expect(page.locator("#mindmap-v2-undo")).toBeHidden();
+  await expect(page.locator("#visible-list-action")).toBeVisible();
+});
+
 test("27-case offline Chat browser matrix preserves source identity and closed writes", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The full corpus runs once in Chromium; WebKit has a separate iPad/Safari surface gate.");
   const diagnostics = [];
