@@ -73,7 +73,6 @@
       try {
         const data = await json(`/data/subjects/${file}`, `overlay ${file}`);
         for (const emne of Array.isArray(data?.emner) ? data.emner : []) {
-          // Historical materialized History-Go copies are never active knowledge in V2.
           if (emne?.fagverk) continue;
           result.push({
             ...emne,
@@ -101,8 +100,7 @@
       keywords: unique(item.keywords || []),
       thinkers: unique(item.thinkers || []),
       methods: unique(item.methods || []),
-      learning_goals: [],
-      checkpoints: [],
+      learning_goals: [], checkpoints: [],
       summary: String(item.definition || ""),
       description: String(item.why_it_matters || item.definition || ""),
       fagverk: {
@@ -148,11 +146,13 @@
     const item = object(raw);
     const id = String(item.chapter_id || "");
     return {
-      emne_id: `chapter:${id}`,
+      emne_id: `fagverk_${subject.subject_id}_${id}`,
       title: String(item.title || id),
-      core_concepts: unique((item.emne_ids || []).flatMap((emneId) => normalize(emneId).split(" ")).filter((token) => token.length >= 4 && !NOISE.has(token))),
-      keywords: unique([item.primary_domain_id]),
-      thinkers: [], methods: [], learning_goals: [], checkpoints: [],
+      core_concepts: unique(item.core_concepts || []),
+      keywords: unique(item.keywords || []),
+      thinkers: unique(item.thinkers || []),
+      methods: unique(item.methods || []),
+      learning_goals: [], checkpoints: [],
       summary: String(item.subtitle || ""), description: String(item.subtitle || ""),
       fagverk: {
         source_repo: "Paradispartiet/History-Go",
@@ -164,7 +164,7 @@
         manifest_path: "data/fag/fag_manifest.json",
         package_field: "chapter_registry",
         minimum_matched_terms: 2,
-        term_source: "history_go_registry_chapter_metadata_v2",
+        term_source: "history_go_registry_plus_manifest_emner_v2",
         generation_mode: "canonical_history_go_deployment_index_v2"
       }
     };
@@ -264,6 +264,25 @@
     return null;
   }
 
+  function matchClass(emne) {
+    if (String(emne?.emne_id || "").startsWith("method:")) return "method";
+    if (String(emne?.emne_id || "").startsWith("fagverk_") && emne?.fagverk?.chapter_id) return "chapter";
+    if (emne?.local_knowledge) return "overlay";
+    return "emne";
+  }
+
+  function fieldsForClass(emne, kind) {
+    if (kind === "method") return [
+      ["title", emne.title, 1.5], ["core", emne.core_concepts, 0.75], ["keywords", emne.keywords, 0.5], ["summary", emne.summary, 0.25]
+    ];
+    if (kind === "chapter") return [
+      ["title", emne.title, 5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["methods", emne.methods, 1], ["summary", emne.summary, 1]
+    ];
+    return [
+      ["title", emne.title, 6], ["core", emne.core_concepts, 5], ["keywords", emne.keywords, 3], ["thinkers", emne.thinkers, 3], ["methods", emne.methods, 1.5], ["summary", emne.summary, 0.75], ["description", emne.description, 0.5]
+    ];
+  }
+
   async function matchText(text, options = {}) {
     const target = cleanText(text).trim();
     if (!target) return [];
@@ -272,34 +291,46 @@
     catch (error) { console.warn("AHASubjectEngine: canonical Fagverk deployment index unavailable; fail closed", error); return []; }
     const out = [];
     for (const subject of subjects) {
-      const subjectHits = relevant([...matched(target, subject.subject_label), ...matched(target, subject.description)]);
+      const subjectHits = relevant(matched(target, subject.subject_label));
       if (subjectHits.length) out.push({
         subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: null, title: subject.subject_label,
-        type: subject.kind || "subject", score: 2 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text",
+        type: subject.kind || "subject", score: 1.5 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text", strong: false,
         provenance: { kind: "canonical_fagverk_subject", evidence_role: "reference_support_not_source_evidence", source_repo: "Paradispartiet/History-Go", source_ref: subject.source_ref, canonical_subject_id: subject.subject_id, registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", generation_mode: "canonical_history_go_deployment_index_v2" }
       });
       for (const emne of subject.emner || []) {
-        const fields = [
-          ["title", emne.title, 4], ["core", emne.core_concepts, 4], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 3], ["methods", emne.methods, 2], ["summary", emne.summary, 1], ["description", emne.description, 1]
-        ];
+        const kind = matchClass(emne);
+        const fields = fieldsForClass(emne, kind);
         let score = 0, strong = false; const terms = [];
         for (const [name, values, weight] of fields) {
           const hits = relevant(matched(target, values));
           if (!hits.length) continue;
           score += hits.length * weight; terms.push(...hits);
-          if (name === "title" || name === "core") strong = true;
+          if (kind !== "method" && (name === "title" || name === "core")) strong = true;
         }
         const found = relevant(terms);
         if (!found.length) continue;
         const minimum = Math.max(1, Number(emne?.fagverk?.minimum_matched_terms || emne?.local_knowledge?.minimum_matched_terms || 1));
         if (found.length < minimum && !strong) continue;
-        score += Math.max(0, found.length - 1) * 1.25 + (strong ? 1.5 : 0);
-        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type: String(emne.emne_id).startsWith("method:") ? "method" : String(emne.emne_id).startsWith("chapter:") ? "chapter" : (emne.thinkers || []).some((value) => found.includes(value)) ? "thinker" : (emne.core_concepts || []).some((value) => found.includes(value)) ? "concept" : "emne", score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne) });
+        score += Math.max(0, found.length - 1) * (kind === "method" ? 0.25 : 1.5) + (strong ? 2 : 0) + (kind === "overlay" && strong ? 1 : 0);
+        const type = kind === "method" ? "method" : kind === "chapter" ? "chapter" : (emne.thinkers || []).some((value) => found.includes(value)) ? "thinker" : (emne.core_concepts || []).some((value) => found.includes(value)) ? "concept" : "emne";
+        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne) });
       }
     }
-    out.sort((a, b) => b.score - a.score);
+
+    const substantiveCounts = new Map();
+    for (const match of out) {
+      if (!match.strong || match.type === "method" || !match.emne_id) continue;
+      substantiveCounts.set(match.subject_id, (substantiveCounts.get(match.subject_id) || 0) + 1);
+    }
+    for (const match of out) {
+      const count = substantiveCounts.get(match.subject_id) || 0;
+      if (match.type !== "method" && match.emne_id) match.score += Math.min(3, Math.max(0, count - 1) * 0.75);
+    }
+
+    const typeRank = { chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
+    out.sort((a, b) => b.score - a.score || (typeRank[b.type] || 0) - (typeRank[a.type] || 0) || String(a.subject_id).localeCompare(String(b.subject_id)));
     if (!out.length) return [];
-    const best = out[0].score, floor = Math.max(best * 0.45, best - 4), limit = Math.min(8, Number(options.maxResults || options.limit) || 8), seen = new Set();
+    const best = out[0].score, floor = Math.max(best * 0.45, best - 5), limit = Math.min(8, Number(options.maxResults || options.limit) || 8), seen = new Set();
     return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => {
       const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`;
       if (seen.has(key)) return false; seen.add(key); return true;
