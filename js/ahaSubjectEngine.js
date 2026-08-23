@@ -137,7 +137,7 @@
       const subjectHits = relevant(matched(target, subject.subject_label));
       if (subjectHits.length) out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: null, title: subject.subject_label, type: subject.kind || "subject", score: 1.5 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text", strong: false, provenance: { kind: "canonical_fagverk_subject", evidence_role: "reference_support_not_source_evidence", source_repo: "Paradispartiet/History-Go", source_ref: subject.source_ref, canonical_subject_id: subject.subject_id, registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", generation_mode: "canonical_history_go_deployment_index_v2" } });
       for (const emne of subject.emner || []) {
-        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map();
+        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matched(target, emne.chapter_specific_terms || [])) : [];
         for (const [name, values, weight] of fields) {
           const hits = relevant(matched(target, values)); if (!hits.length) continue;
           for (const hit of hits) {
@@ -154,7 +154,7 @@
         const phraseBonus = kind === "method" ? 0 : found.reduce((sum, term) => sum + (normalize(term).includes(" ") ? 3 : 0), 0);
         score += Math.max(0, found.length - 1) * (kind === "method" ? 0.25 : 1.5) + (strong ? 2 : 0) + (kind === "overlay" && strong ? 1 : 0) + phraseBonus;
         const type = kind === "method" ? "method" : kind === "supplement" ? "supplement" : kind === "chapter" ? "chapter" : (emne.thinkers || []).some((value) => found.includes(value)) ? "thinker" : (emne.core_concepts || []).some((value) => found.includes(value)) ? "concept" : "emne";
-        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne) });
+        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne), _chapter_specific_hits: chapterSpecificHits });
       }
     }
 
@@ -173,6 +173,23 @@
       }
     }
 
+    const primarySupportBySubject = new Map();
+    for (const match of out) {
+      if (!["emne", "concept", "thinker", "overlay"].includes(match.type) || !match.emne_id) continue;
+      primarySupportBySubject.set(match.subject_id, Math.max(primarySupportBySubject.get(match.subject_id) || 0, Number(match.score || 0)));
+    }
+    const maxPrimarySupport = Math.max(0, ...primarySupportBySubject.values());
+    const chapterSpecificityEligibleSubjects = new Set();
+    if (maxPrimarySupport >= 8) {
+      const derivedFloor = maxPrimarySupport * 0.5;
+      for (const [subjectId, support] of primarySupportBySubject.entries()) if (support >= derivedFloor) chapterSpecificityEligibleSubjects.add(subjectId);
+      for (let index = out.length - 1; index >= 0; index -= 1) {
+        const match = out[index];
+        if (!["chapter", "supplement", "method"].includes(match.type)) continue;
+        if ((primarySupportBySubject.get(match.subject_id) || 0) < derivedFloor) out.splice(index, 1);
+      }
+    }
+
     const termSubjects = new Map();
     const termEntriesWithinSubject = new Map();
     for (const match of out) for (const term of match.matched_terms || []) {
@@ -182,6 +199,15 @@
         const subjectKey = `${match.subject_id}|${key}`;
         if (!termEntriesWithinSubject.has(subjectKey)) termEntriesWithinSubject.set(subjectKey, new Set());
         termEntriesWithinSubject.get(subjectKey).add(match.emne_id);
+      }
+    }
+    const chapterSpecificEntriesWithinSubject = new Map();
+    for (const match of out) {
+      if (match.type !== "chapter" || !match.emne_id || !chapterSpecificityEligibleSubjects.has(match.subject_id)) continue;
+      for (const term of match._chapter_specific_hits || []) {
+        const key = `${match.subject_id}|${normalize(term)}`;
+        if (!chapterSpecificEntriesWithinSubject.has(key)) chapterSpecificEntriesWithinSubject.set(key, new Set());
+        chapterSpecificEntriesWithinSubject.get(key).add(match.emne_id);
       }
     }
     const substantiveCounts = new Map();
@@ -199,7 +225,14 @@
           const entryCount = termEntriesWithinSubject.get(`${match.subject_id}|${normalizedTerm}`)?.size || 0;
           specificity += entryCount === 1 ? 2 : entryCount === 2 ? 1 : entryCount === 3 ? 0.4 : 0;
         }
-        match.score += Math.min(5, rarity) + Math.min(6, specificity);
+        let chapterSpecificity = 0;
+        if (match.type === "chapter" && chapterSpecificityEligibleSubjects.has(match.subject_id)) {
+          for (const term of match._chapter_specific_hits || []) {
+            const entryCount = chapterSpecificEntriesWithinSubject.get(`${match.subject_id}|${normalize(term)}`)?.size || 0;
+            chapterSpecificity += entryCount === 1 ? 4 : entryCount === 2 ? 2 : entryCount === 3 ? 0.75 : 0;
+          }
+        }
+        match.score += Math.min(5, rarity) + Math.min(6, specificity) + Math.min(12, chapterSpecificity);
       }
     }
 
@@ -207,7 +240,7 @@
     out.sort((a, b) => b.score - a.score || (typeRank[b.type] || 0) - (typeRank[a.type] || 0) || String(a.subject_id).localeCompare(String(b.subject_id)));
     if (!out.length) return [];
     const best = out[0].score, floor = Math.max(best * 0.45, best - 5), limit = Math.min(8, Number(options.maxResults || options.limit) || 8), seen = new Set();
-    return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => { const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit);
+    return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => { const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit).map(({ _chapter_specific_hits, ...match }) => match);
   }
 
   function flatten(value) { if (Array.isArray(value)) return value.map(flatten).join(" "); if (value && typeof value === "object") return Object.values(value).map(flatten).join(" "); return String(value || ""); }
