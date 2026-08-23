@@ -50,7 +50,7 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          if git diff --quiet -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json; then
+          if [ -z "$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json)" ]; then
             echo "Canonical index already current."
             exit 0
           fi
