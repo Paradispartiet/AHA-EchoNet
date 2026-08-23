@@ -10,21 +10,21 @@ const root = path.resolve(here, "..");
 const mode = process.argv.includes("--write") ? "write" : process.argv.includes("--check") ? "check" : "";
 if (!mode) throw new Error("Use --write or --check.");
 
-function migrate(relativePath, replacements) {
+function migrate(relativePath, replacements, options = {}) {
   const file = path.join(root, relativePath);
   const current = fs.readFileSync(file, "utf8");
   let next = current;
   for (const [before, after] of replacements) {
     if (next.includes(before)) next = next.replace(before, after);
   }
-  if (/history-go-fagverk-runtime-registry\.v1\.json/.test(next)) {
-    throw new Error(`${relativePath}: active quality test still references the legacy partial runtime registry.`);
+  if (options.rejectLegacyRegistry !== false && /history-go-fagverk-runtime-registry\.v1\.json/.test(next)) {
+    throw new Error(`${relativePath}: active contract still references the legacy partial runtime registry.`);
   }
   if (mode === "write") {
     if (next !== current) fs.writeFileSync(file, next);
     return next !== current;
   }
-  if (next !== current) throw new Error(`${relativePath}: canonical Fagverk test migration drift.`);
+  if (next !== current) throw new Error(`${relativePath}: canonical Fagverk migration drift.`);
   return false;
 }
 
@@ -102,4 +102,11 @@ cases.forEach(([canonicalSubjectId, ahaSubjectId]) => {
   ]
 ]);
 
-console.log(`Canonical Fagverk test contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged ? " with changes" : ""}.`);
+const engineChanged = migrate("js/ahaSubjectEngine.js", [
+  [
+    'const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active"]);',
+    'const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner"]);'
+  ]
+]);
+
+console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged ? " with changes" : ""}.`);
