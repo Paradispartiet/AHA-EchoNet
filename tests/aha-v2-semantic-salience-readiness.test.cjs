@@ -3,33 +3,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const context = {
-  window: null,
-  globalThis: null,
-  console,
-  fetch: async () => ({ ok: true, json: async () => ({}) }),
-  AHA_AGENT_API: ''
-};
+const context = { window: null, globalThis: null };
 context.window = context;
 context.globalThis = context;
-context.AHAModuleApi = { resolve() { return null; } };
-context.AHAChatProviderLoader = {
-  create() {
-    return {
-      resolve() { return null; },
-      require() { return null; },
-      instantiate(key) {
-        if (key === 'applicationComposition') return { install() {} };
-        return null;
-      }
-    };
-  }
-};
 vm.createContext(context);
 vm.runInContext(
-  fs.readFileSync(path.resolve(__dirname, '../js/ahaChat.js'), 'utf8'),
+  fs.readFileSync(path.resolve(__dirname, '../js/ahaV2ReleaseQualityGuard.js'), 'utf8'),
   context,
-  { filename: 'js/ahaChat.js' }
+  { filename: 'js/ahaV2ReleaseQualityGuard.js' }
 );
 
 const guard = context.AHAV2ReleaseQualityGuard;
