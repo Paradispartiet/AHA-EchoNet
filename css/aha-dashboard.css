@@ -3084,6 +3084,14 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
   padding-top: calc(var(--aha-fixed-header-height) + 10px);
 }
 
+/* Product actions toggle `hidden` as state changes. Keep that semantic state
+   authoritative even when a component rule assigns its own display value. */
+.aha-v2-materialize-actions [hidden],
+#mindmap-v2-materialize[hidden],
+#mindmap-v2-undo[hidden] {
+  display: none !important;
+}
+
 @media (max-width: 980px) {
   :root { --aha-fixed-header-height: 82px; }
   .aha-fixed-header { width: 100%; }

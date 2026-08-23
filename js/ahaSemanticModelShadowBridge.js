@@ -983,14 +983,41 @@
     const key = normalize(insight);
     return array(payload?.analysisQuality?.claims).find((item) => item?.kind === "interpretation" && normalize(item?.text) === key) || null;
   }
+  function claimIndexForEvidence(value, claims) {
+    const quote = text(value);
+    if (!quote) return -1;
+    return array(claims).findIndex((claim) => {
+      const claimText = text(claim?.text);
+      return claimText && (claimText.includes(quote) || quote.includes(claimText));
+    });
+  }
   function candidateEvidence(raw, payload, insight, claims, sourceText) {
     const values = evidenceValues(raw);
     const interpretation = linkedInterpretation(payload, insight);
     values.push(...evidenceValues([interpretation?.evidenceText, interpretation?.evidence_text]));
     const exact = unique(values).filter((value) => String(sourceText).includes(value));
     const rankedClaims = claims.slice().sort((left, right) => overlapScore(right.text, insight) - overlapScore(left.text, insight));
-    rankedClaims.forEach((claim) => { if (exact.length < 3 && !exact.includes(claim.text)) exact.push(claim.text); });
-    return exact.slice(0, 3).map((quote) => ({ quote, role: "supports" }));
+    const hasExactEvidence = (value) => exact.some((quote) => normalize(quote) === normalize(value));
+    const coveredClaimIndexes = () => new Set(exact.map((quote) => claimIndexForEvidence(quote, claims)).filter((index) => index >= 0));
+
+    // The quality gate requires cross-claim evidence. Model output may contain
+    // several exact fragments from one sentence, so add the best-ranked exact
+    // source claim from a different sentence before filling the final slot.
+    if (claims.length > 1 && coveredClaimIndexes().size < 2) {
+      const covered = coveredClaimIndexes();
+      const distinctClaim = rankedClaims.find((claim) => {
+        const index = claims.indexOf(claim);
+        return !covered.has(index) && !hasExactEvidence(claim.text);
+      });
+      if (distinctClaim) {
+        if (exact.length >= 3) exact[exact.length - 1] = distinctClaim.text;
+        else exact.push(distinctClaim.text);
+      }
+    }
+    rankedClaims.forEach((claim) => {
+      if (exact.length < 3 && !hasExactEvidence(claim.text)) exact.push(claim.text);
+    });
+    return unique(exact).slice(0, 3).map((quote) => ({ quote, role: "supports" }));
   }
   function buildCandidateInput(raw, payload, claims, sourceText) {
     const source = object(raw);

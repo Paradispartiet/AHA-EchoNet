@@ -152,11 +152,10 @@ The explicit #875/#879 local materializer remains a separate one-artifact-per-us
 
 The remaining product-quality sequence is:
 
-1. rerun the 27-case browser/live gate on the product-specific semantic shapes;
+1. pass the extended live browser proof for analysis → preview → explicit local save → edit → reload → safe undo across all three products;
 2. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
 3. record the 1–5 rubric scores without replacing them with agent scores;
 4. fix any remaining recurring defect class found by that review;
-5. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout;
-6. only after that, production-test the full explicit user journey from analysis to chosen local artifact, edit, reload and safe undo.
+5. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout.
 
 The max=2 controlled Insight write boundary does not need to expand for this work.

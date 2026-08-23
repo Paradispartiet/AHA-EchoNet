@@ -75,6 +75,18 @@ const liveApiCandidate = {
   claim_kind: 'interpretation',
   candidate_type: 'ai'
 };
+const sparseEvidenceCandidate = {
+  title: 'Fast mal avløst av kontrollert fleksibilitet',
+  summary: 'Erfaringen med én rigid rapportmal peker mot kontrollert fleksibilitet som et bedre kompromiss mellom sammenligning og sakstilpasning.',
+  functional_type: 'learning_point',
+  evidence_quotes: [
+    'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.'
+  ],
+  why_it_matters: 'Skillet hjelper systemeiere å beholde sammenlignbare kjernefelt uten å presse ulike saker inn i identiske rapporter.',
+  uncertainty: 'interpretive',
+  claim_kind: 'interpretation',
+  candidate_type: 'ai'
+};
 const payload = {
   ...activeRun,
   source_binding: { valid: true },
@@ -86,7 +98,7 @@ const payload = {
   },
   ahaSer: { viktigsteInnsikt: 'Eldre afterwork-tekst skal ikke slås sammen med den autoritative kandidatlisten.' },
   reflection: approvedCandidate.why_it_matters,
-  insightCandidatesV2: [approvedCandidate, blockedCandidate, liveApiCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
+  insightCandidatesV2: [approvedCandidate, blockedCandidate, liveApiCandidate, sparseEvidenceCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
 };
 
 const bridge = context.AHALiveSemanticBridgeV2;
@@ -100,14 +112,17 @@ assert.ok(semantic.concepts.length >= 4);
 assert.ok(semantic.claims.length >= 3);
 assert.ok(semantic.relations.length >= 4);
 assert.ok(semantic.tensions.length >= 1);
-assert.equal(semantic.candidate_insights.length, 3, 'metadata candidates must be excluded before semantic insight creation');
-assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 2);
+assert.equal(semantic.candidate_insights.length, 4, 'metadata candidates must be excluded before semantic insight creation');
+assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 3);
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'blocked').length, 1);
 assert.equal(semantic.candidate_insights.find((item) => item.insight === liveApiCandidate.summary).origin, 'live_analysis_candidate');
+const sparseSemanticCandidate = semantic.candidate_insights.find((item) => item.insight === sparseEvidenceCandidate.summary);
+assert.equal(sparseSemanticCandidate.status, 'approved', 'the bridge must complete sparse exact evidence across distinct source claims');
+assert.ok(sparseSemanticCandidate.quality_metrics.evidence_sentence_count >= 2);
 assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre canonical-tekst'), false);
 assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre afterwork-tekst'), false);
 assert.equal(semantic.synthesis_gate.authoritative, true);
-assert.equal(semantic.synthesis_gate.approved_count, 2);
+assert.equal(semantic.synthesis_gate.approved_count, 3);
 assert.equal(semantic.synthesis_gate.blocked_count, 1);
 assert.equal(semantic.policy.legacy_chamber_dependency, false);
 assert.equal(semantic.policy.ungated_heuristic_synthesis, false);
@@ -153,9 +168,9 @@ assert.equal(bundle.semantic_document.schema, semantic.schema);
 assert.equal(bundle.semantic_document.source_sha256, sourceSha256);
 assert.equal(bundle.semantic_document.analysis_run_id, activeRun.analysisRunId);
 assert.equal(bundle.semantic_document.source_id, activeRun.sourceId);
-assert.equal(bundle.semantic_document.approved_insight_ids.length, 2);
+assert.equal(bundle.semantic_document.approved_insight_ids.length, 3);
 assert.equal(bundle.semantic_document.blocked_candidate_insight_ids.length, 1);
-assert.equal(bundle.surfaces.insights.length, 2, 'only quality-approved current insights may enter AnalysisBundleV2');
+assert.equal(bundle.surfaces.insights.length, 3, 'only quality-approved current insights may enter AnalysisBundleV2');
 assert.equal(bundle.surfaces.insights[0].value, approvedCandidate.insight);
 assert.equal(bundle.surfaces.insights[0].provenance.origin, 'semantic_document_v2_quality_approved');
 assert.equal(bundle.surfaces.overview.strongest_insight.value, approvedCandidate.insight);

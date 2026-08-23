@@ -1,6 +1,6 @@
 # AHA Analysis, Knowledge Map and Products V2 — authoritative integration plan
 
-Status: **PR 1–PR 6 merged; product-specific semantic shapes implemented in the current change; independent human review, PR 7 and final release gates remain**
+Status: **PR 1–PR 6 and product-specific semantic shapes merged through #894; PR 7 controlled-save journey implemented in the current change; independent human review and final release gate remain**
 
 Date: 2026-08-21
 
@@ -18,12 +18,12 @@ This document is the authoritative plan for the production chain from active Cha
 | PR 4 / #890 | Merged | `AnalysisReadModelV2`, separated `KnowledgeMapReadModelV2` and repaired analysis UI |
 | PR 5 / #891 | Merged | Active-bundle projection bridge, visible product states, stable preview links and blocked preview shells |
 | PR 6 / #892 | Merged | 27-case real Chat browser corpus, live-backend release gate and read-only human-review operator; independent human review remains open |
-| Semantic shapes | Implemented in current change | Explicit List membership, role-ranked Path progression and a balanced one-parent Mindmap hierarchy |
-| PR 7 | Not started | Controlled save journey, compatibility cleanup and final parity proof |
+| Semantic shapes / #894 | Merged | Explicit List membership, role-ranked Path progression and a balanced one-parent Mindmap hierarchy |
+| PR 7 | Implemented in current change | Reload-safe save state, exact identity/semantic parity and live preview → save → edit → reload → safe-undo proof |
 
-The complete live production chain remains unfinished until the current semantic-shape change is merged, PR 7 is completed and every layered release gate passes. PRs #891 and #892 did not change the List, Path or Mindmap builders and did not widen automatic or remote write authority.
+The complete live production chain remains unfinished until PR 7 passes its live CI journey and the independent human gate passes. #894 changed the List, Path and Mindmap builders without widening automatic or remote write authority.
 
-PR #892 added a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. Its final live run received 29/29 HTTP 200 responses, reached 81.82% useful-case coverage on the first pass, used no retry and recorded zero critical provenance errors and zero guarded preview writes. The current semantic-shape change must rerun the same gate. Neither run can self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
+PR #892 added a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. Its final live run received 29/29 HTTP 200 responses, reached 81.82% useful-case coverage on the first pass, used no retry and recorded zero critical provenance errors and zero guarded preview writes. #894 reran and preserved that baseline. PR 7 extends the same live workflow with a qualified raw-Chat journey through all three product stores. Automated runs still cannot self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
 
 ## Product distinctions
 
@@ -274,6 +274,15 @@ The release corpus must therefore run 24–30 varied sources through the actual 
 - keep automatic, remote, sync, Chamber and Meta writes closed;
 - remove remaining legacy artifact presentation and domain-specific patches only after proven parity;
 - leave `ahaAnalysisArtifacts` as a thin V2 compatibility wrapper or remove it once no caller needs it.
+
+Implemented in the current change:
+
+- the materializer requires exact `analysis_id`, `analysis_run_id`, `source_id` and 64-character `source_sha256` identity and copies it into every saved artifact and inline insight snapshot;
+- only `thematic_membership_v2`, `ordered_inquiry_v2` and `ranked_hierarchy_v2` candidates can cross the explicit save boundary;
+- semantic membership, stage-role and hierarchy metadata survive conversion into the existing local stores;
+- every preview exposes a reload-safe `absent`, `unchanged` or `modified` save state;
+- unchanged records retain durable undo after reload, while edited records remain saved and make rollback unavailable;
+- the live browser gate starts from raw Chat text and writes a structured three-product journey artifact only after all products are qualified.
 
 ## Definition of done
 

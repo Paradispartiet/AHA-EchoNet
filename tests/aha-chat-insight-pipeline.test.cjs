@@ -37,6 +37,29 @@ assert.equal(pipeline.normalizeFunctionalType("unsupported"), "observation");
 assert.equal(pipeline.isWeakInsightCandidate({ title: "Innsikt", summary: "Noe", concepts: ["tema"] }, "Kilde"), true);
 assert.equal(pipeline.isWeakInsightCandidate({ title: "Institusjonell endring", summary: "En særskilt endring skaper nye rammer.", concepts: ["institusjon"] }, "Annen kilde"), false);
 
+async function verifyCandidateDiversityContract() {
+  const requests = [];
+  const requestContext = {
+    window: null,
+    console,
+    AHA_AGENT_API: "https://example.test/api/aha-agent",
+    fetch: async (_url, options) => {
+      requests.push(JSON.parse(options.body));
+      return { ok: true, json: async () => ({ candidates: [] }) };
+    }
+  };
+  requestContext.window = requestContext;
+  vm.createContext(requestContext);
+  vm.runInContext(source, requestContext, { filename: "js/ahaChatInsightPipeline.js" });
+  const requestPipeline = requestContext.AHAChatInsightPipeline.create(dependencies);
+  await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", { theme_id: "tema" });
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].context.theme_id, "tema");
+  assert.equal(requests[0].context.candidate_diversity_contract.source_sentence_count, 2);
+  assert.equal(requests[0].context.candidate_diversity_contract.require_cross_sentence_evidence, true);
+  assert.equal(requests[0].context.candidate_diversity_contract.require_distinct_primary_relation, true);
+}
+
 const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring trenger trygghet i parker, torg, bibliotek og andre byrom.", {});
 assert.equal(candidates.length, 3);
 assert.ok(candidates.every((candidate) => candidate.candidate_type === "semantic"));
@@ -80,4 +103,4 @@ assert.doesNotMatch(chatSource, /AHA_INSIGHT_CONTRACT|INSIGHT_NOISE_PATTERN|LEAD
 assert.doesNotMatch(chatSource, /function (?:getInsightPipeline|normalizeInsightCandidate|isWeakInsightCandidate|normalizeFunctionalType|normalizeCandidateConcepts)\s*\(/);
 assert.ok(chatHtml.indexOf("js/ahaChatInsightPipeline.js") < chatHtml.indexOf("js/ahaChat.js"));
 
-console.log("aha-chat-insight-pipeline passed");
+verifyCandidateDiversityContract().then(() => console.log("aha-chat-insight-pipeline passed"));

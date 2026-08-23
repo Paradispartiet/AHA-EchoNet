@@ -69,6 +69,10 @@
     if (model?.mode !== "read_only") errors.push("read_model_mode_invalid");
     if (model?.status !== "ready" || model?.validation?.valid !== true) errors.push("read_model_not_ready");
     if (!text(model?.projection_id)) errors.push("projection_id_missing");
+    for (const key of ["analysis_id", "analysis_run_id", "source_id"]) {
+      if (!text(model?.identity?.[key])) errors.push(`identity_missing:${key}`);
+    }
+    if (!/^[a-f0-9]{64}$/u.test(text(model?.identity?.source_sha256).toLowerCase())) errors.push("identity_source_sha256_invalid");
     if (!model?.surfaces || typeof model.surfaces !== "object") errors.push("surfaces_missing");
     for (const key of REQUIRED_CLOSED_READ_POLICY) {
       if (model?.policy?.[key] !== false) errors.push(`read_model_policy_not_closed:${key}`);
@@ -89,9 +93,25 @@
 
   function candidateQualityPassed(candidate, artifactType) {
     if (!candidate || candidate?.quality?.passed !== true) return false;
-    if (artifactType === "list") return arr(candidate.items).length >= 2;
-    if (artifactType === "path") return arr(candidate.steps).length === 5;
-    if (artifactType === "mindmap") return arr(candidate.nodes).length >= 3 && arr(candidate.edges).length >= 2;
+    if (artifactType === "list") {
+      const items = arr(candidate.items);
+      const manifest = arr(candidate?.meta?.member_ref_ids).map(text).filter(Boolean).sort().join("|");
+      const refs = items.map((item) => text(item?.refId)).filter(Boolean).sort().join("|");
+      return candidate?.meta?.semantic_shape === "thematic_membership_v2"
+        && items.length >= 2
+        && manifest === refs
+        && items.every((item) => text(item?.membership_reason).length >= 40 && text(item?.membership_reason) === text(item?.meta?.membership_reason));
+    }
+    if (artifactType === "path") {
+      const steps = arr(candidate.steps);
+      return candidate?.meta?.semantic_shape === "ordered_inquiry_v2"
+        && candidate?.meta?.stage_selection === "semantic_role_ranked_not_round_robin"
+        && steps.length === 5
+        && steps.every((step) => text(step?.meta?.semantic_role) === text(step?.meta?.stage) && text(step?.meta?.selection_reason));
+    }
+    if (artifactType === "mindmap") return candidate?.meta?.semantic_shape === "ranked_hierarchy_v2"
+      && candidate?.meta?.branch_assignment === "one_primary_hierarchy_parent_per_insight"
+      && arr(candidate.nodes).length >= 3 && arr(candidate.edges).length >= 2;
     return false;
   }
 
@@ -109,6 +129,10 @@
       immutable: true,
       projection_id: model.projection_id,
       projection_artifact_id: artifactId,
+      analysis_id: text(model?.identity?.analysis_id),
+      analysis_run_id: text(model?.identity?.analysis_run_id),
+      source_id: text(model?.identity?.source_id),
+      source_sha256: text(model?.identity?.source_sha256).toLowerCase(),
       snapshot: {
         id: text(item?.refId || item?.id),
         title: text(item?.title) || "V2-innsikt",
@@ -120,11 +144,16 @@
     };
   }
 
-  function baseMeta(model, artifactId, materializedAt) {
+  function baseMeta(model, artifactId, materializedAt, candidateMeta = {}) {
     return {
       createdBy: CREATED_BY,
       projection_id: model.projection_id,
       projection_artifact_id: artifactId,
+      analysis_id: text(model?.identity?.analysis_id),
+      analysis_run_id: text(model?.identity?.analysis_run_id),
+      source_id: text(model?.identity?.source_id),
+      source_sha256: text(model?.identity?.source_sha256).toLowerCase(),
+      semantic_shape: text(candidateMeta?.semantic_shape),
       materializedAt,
       local_only: true,
       published_external: false,
@@ -150,15 +179,27 @@
         type: text(item?.type) || "insight",
         source: "aha_projection_v2",
         refId: text(item?.refId || item?.id),
+        membership_reason: text(item?.membership_reason),
         addedAt: materializedAt,
-        meta: inlineSnapshot(item, model, candidate.id)
+        meta: {
+          ...inlineSnapshot(item, model, candidate.id),
+          membership_reason: text(item?.membership_reason),
+          semantic_basis: text(item?.meta?.semantic_basis),
+          semantic_basis_label: text(item?.meta?.semantic_basis_label)
+        }
       })).filter((item) => item.refId),
       source: "aha_lists",
       local_only: true,
       published_external: false,
       echonet_shared: false,
       sync_enabled: false,
-      meta: baseMeta(model, candidate.id, materializedAt),
+      meta: {
+        ...baseMeta(model, candidate.id, materializedAt, candidate.meta),
+        semantic_basis: text(candidate?.meta?.semantic_basis),
+        semantic_basis_label: text(candidate?.meta?.semantic_basis_label),
+        membership_rule: text(candidate?.meta?.membership_rule),
+        member_ref_ids: arr(candidate?.meta?.member_ref_ids).map(text).filter(Boolean)
+      },
       deletedAt: ""
     };
   }
@@ -188,14 +229,25 @@
         narrative: text(step?.narrative),
         learningOutcome: text(step?.learningOutcome),
         addedAt: materializedAt,
-        meta: { ...inlineSnapshot(step, model, candidate.id), stage: text(step?.meta?.stage) }
+        meta: {
+          ...inlineSnapshot(step, model, candidate.id),
+          stage: text(step?.meta?.stage),
+          semantic_role: text(step?.meta?.semantic_role),
+          semantic_basis: text(step?.meta?.semantic_basis),
+          selection_reason: text(step?.meta?.selection_reason),
+          source_bound_narrative: step?.meta?.source_bound_narrative === true
+        }
       })).filter((step) => step.refId),
       source: "aha_paths",
       local_only: true,
       published_external: false,
       echonet_shared: false,
       sync_enabled: false,
-      meta: baseMeta(model, candidate.id, materializedAt),
+      meta: {
+        ...baseMeta(model, candidate.id, materializedAt, candidate.meta),
+        source_list_candidate_id: text(candidate?.meta?.source_list_candidate_id),
+        stage_selection: text(candidate?.meta?.stage_selection)
+      },
       deletedAt: ""
     };
   }
@@ -211,8 +263,15 @@
       terms: nodes.map((node, index) => ({
         id: `concept_term_projection_${stableHash(`${artifactId}:${node.id}`)}`,
         term: text(node.title) || `Node ${index + 1}`,
-        definition: node.type === "concept" ? "Semantisk begrep" : (node.type === "theme" ? "Hovedidé" : "Kvalitetsgodkjent innsikt"),
-        relation: text(node.type) || "related_to"
+        definition: node.type === "concept" ? text(node?.meta?.branch_reason) || "Semantisk begrep" : (node.type === "theme" ? text(node?.meta?.central_idea) || "Hovedidé" : "Kvalitetsgodkjent innsikt"),
+        relation: text(node.type) || "related_to",
+        meta: {
+          source_node_id: text(node.id),
+          node_type: text(node.type),
+          branch_reason: text(node?.meta?.branch_reason),
+          primary_branch_id: text(node?.meta?.primary_branch_id),
+          hierarchy_level: Number.isFinite(Number(node?.meta?.hierarchy_level)) ? Number(node.meta.hierarchy_level) : null
+        }
       })),
       relations: arr(candidate.edges).map((edge, index) => {
         const from = nodeById.get(edge.from);
@@ -224,7 +283,13 @@
           to: text(to.title),
           type: text(edge.type) || "related_to",
           label: text(edge.label || edge.type) || "relatert til",
-          explanation: edge.type === "resonates_with" ? "Semantisk resonans; ikke ekvivalens eller deduplisering." : "Relasjon fra AHA V2-projeksjonen."
+          explanation: edge.type === "resonates_with" ? "Semantisk resonans; ikke ekvivalens eller deduplisering." : text(edge?.meta?.branch_reason) || "Relasjon fra AHA V2-projeksjonen.",
+          meta: {
+            source_edge_id: text(edge.id),
+            semantic_basis: text(edge?.meta?.semantic_basis),
+            hierarchy: edge?.meta?.hierarchy === true,
+            dedupe_eligible: edge?.meta?.dedupe_eligible === false ? false : null
+          }
         };
       }).filter(Boolean),
       references: [],
@@ -232,7 +297,13 @@
       updatedAt: materializedAt,
       source: "aha_concept_lists",
       local_only: true,
-      meta: { ...baseMeta(model, artifactId, materializedAt), graph_snapshot: clone(candidate) },
+      meta: {
+        ...baseMeta(model, artifactId, materializedAt, candidate.meta),
+        root_id: text(candidate?.meta?.root_id),
+        branch_assignment: text(candidate?.meta?.branch_assignment),
+        branch_count: Number(candidate?.meta?.branch_count) || 0,
+        graph_snapshot: clone(candidate)
+      },
       deletedAt: ""
     };
   }
@@ -335,18 +406,31 @@
       && record?.meta?.projection_artifact_id === text(options.artifact_id);
   }
 
-  function canUndoMaterialized(options = {}) {
+  function getMaterializationState(options = {}) {
     const artifactType = text(options.artifact_type);
     const storeKey = STORES[artifactType];
-    if (!storeKey) return false;
+    if (!storeKey) return { state: "invalid", materialized: false, undo_available: false, reason: "artifact_type_invalid" };
     const store = readStore(options.storage || global.localStorage, storeKey);
-    if (!store.ok) return false;
+    if (!store.ok) return { state: "invalid", materialized: false, undo_available: false, reason: store.reason };
     const record = store.records.find((item) => materializedMatch(item, options));
+    if (!record) return { state: "absent", materialized: false, undo_available: false, record_id: null };
     const rollback = record?.meta?.materialization_rollback;
-    return rollback?.schema === "aha_projection_materialization_rollback_v2"
+    const undoAvailable = rollback?.schema === "aha_projection_materialization_rollback_v2"
       && rollback.store_key === storeKey
       && rollback.artifact_type === artifactType
+      && rollback.artifact_id === text(options.artifact_id)
+      && rollback.projection_id === text(options.projection_id)
       && rollback.original_fingerprint === recordFingerprint(record);
+    return {
+      state: undoAvailable ? "unchanged" : "modified",
+      materialized: true,
+      undo_available: undoAvailable,
+      record_id: text(record.id) || null
+    };
+  }
+
+  function canUndoMaterialized(options = {}) {
+    return getMaterializationState(options).undo_available === true;
   }
 
   function undoMaterialized(options = {}) {
@@ -376,7 +460,7 @@
     return { ok: true, undone: true, record_id: current.id, policy: POLICY };
   }
 
-  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, POLICY, STORES, validateModel, materialize, undo, canUndoMaterialized, undoMaterialized });
+  const api = Object.freeze({ MODULE_SCHEMA, MODULE_VERSION, POLICY, STORES, validateModel, materialize, undo, getMaterializationState, canUndoMaterialized, undoMaterialized });
   global.AHAProjectionMaterializerV2 = api;
   global.AHAModuleApi?.register?.("projectionMaterializerV2", api, {
     version: MODULE_VERSION,

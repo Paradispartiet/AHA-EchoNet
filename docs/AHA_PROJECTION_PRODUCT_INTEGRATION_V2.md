@@ -4,7 +4,7 @@
 
 The shared V2 semantic projection is consumed through a validated read-only product model. Lists, Paths and Mindmap render distinct, quality-filtered semantic shapes without writing them into product stores.
 
-The authoritative AnalysisBundle, source isolation, Knowledge Map separation and real-browser product gate are merged through PR #892. Independent human usefulness review and the controlled save journey remain release blockers as described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
+The authoritative AnalysisBundle, source isolation, Knowledge Map separation, real-browser product gate and product-specific semantic shapes are merged through PR #894. The controlled save journey is implemented in the current change. Independent human usefulness review and green live journey evidence remain release blockers as described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
 
 ## Runtime chain
 
@@ -35,9 +35,9 @@ The structured review worksheet is `ops/evaluation/aha-projection-product-human-
 
 `AHAProjectionMaterializerV2` is the sole write boundary for projection artifacts. It accepts only a valid, quality-filtered product read model and exactly one list, path or mindmap candidate per explicit user action. Lists are stored in `aha_lists_v1`, paths in `aha_paths_v1`, and mindmaps become concept graphs in the existing `aha_concept_lists_v1` model.
 
-Every projected insight is stored as an immutable inline snapshot, so a product artifact does not depend on an unpersisted chamber record. Repeating the same action is idempotent. A new write returns a scoped receipt that can undo only the unchanged record it created; undo fails closed after user edits. Repository calls, sync, automatic persistence, Chamber writes and Meta writes remain forbidden.
+Every projected insight is stored as an immutable inline snapshot, so a product artifact does not depend on an unpersisted chamber record. Saved artifacts retain exact analysis/run/source/SHA-256 identity plus their List membership, Path stage-role or Mindmap hierarchy contract. Repeating the same action is idempotent. A reload-safe state distinguishes absent, unchanged and user-modified artifacts. A new write returns a scoped receipt that can undo only the unchanged record it created; undo fails closed after user edits. Repository calls, sync, automatic persistence, Chamber writes and Meta writes remain forbidden.
 
-`ahaAnalysisArtifacts` is now a thin V2-only compatibility wrapper. It contains no independent artifact builder and still requires an explicit artifact action. The remaining UI problem is that Chat/Knowledge Map can materialize the first candidate directly instead of routing the user through the dedicated preview surface; the authoritative integration plan closes that shortcut without adding a background write path.
+`ahaAnalysisArtifacts` remains a thin V2-only compatibility wrapper. It contains no independent artifact builder and cannot materialize the first candidate from Chat or Knowledge Map. Stable links route the user through the dedicated preview surfaces, and saving is available only there.
 
 ## Live integration boundary
 
@@ -45,7 +45,6 @@ Product-page preview availability depends on an active, identity-matched Analysi
 
 Still required:
 
-- rerun the browser/live corpus for every semantic-shape change;
+- pass the extended live browser journey for all three products;
 - complete the independent 1–5 usefulness review;
-- prove preview → explicit save → edit → reload → safe undo for each product;
 - keep all automatic, Chamber, canonical, Meta, sync and remote write authority closed.

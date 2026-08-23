@@ -455,7 +455,15 @@
     mount.innerHTML = candidates.map((path) => {
       const score = Number(path?.quality?.score);
       const quality = Number.isFinite(score) ? `${Math.round(score * 100)} % kvalitetsport` : "Kvalitetsgodkjent";
-      const undoAvailable = global.AHAProjectionMaterializerV2?.canUndoMaterialized?.({ artifact_type: "path", artifact_id: path.id, projection_id: model.projection_id }) === true;
+      const materialization = global.AHAProjectionMaterializerV2?.getMaterializationState?.({ artifact_type: "path", artifact_id: path.id, projection_id: model.projection_id })
+        || { state: "absent", materialized: false, undo_available: false };
+      const savedLabel = materialization.materialized ? "Lagret lokalt" : "Ikke lagret";
+      const saveLabel = materialization.materialized ? "Lagret som min sti" : "Lagre som min sti";
+      const saveStatus = materialization.state === "unchanged"
+        ? "Lagret lokalt. Kan angres så lenge stien er uendret."
+        : materialization.state === "modified"
+          ? "Lagret lokalt og senere endret. Angre er låst for å beskytte endringene."
+          : "Krever et eksplisitt klikk og lagres bare lokalt.";
       const steps = asArray(path.steps).slice().sort((a, b) => a.order - b.order).map((step) => `<li class="aha-v2-path-step">
         <span>${step.order + 1}</span><div><small>${escapeHtml(projectionStageLabel(step.meta?.stage))}</small><strong>${escapeHtml(step.title)}</strong><p>${escapeHtml(step.narrative)}</p><p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p></div>
       </li>`).join("");
@@ -464,11 +472,11 @@
         <p>${escapeHtml(path.description)}</p>
         <p class="aha-path-goal"><strong>Mål:</strong> ${escapeHtml(path.goal)}</p>
         <ol class="aha-v2-path-steps">${steps}</ol>
-        <div class="aha-path-meta"><span>${escapeHtml(quality)}</span><span>Ikke lagret</span><span>Read-only</span></div>
+        <div class="aha-path-meta"><span>${escapeHtml(quality)}</span><span data-v2-path-save-state="${escapeHtml(materialization.state)}">${escapeHtml(savedLabel)}</span><span>Read-only</span></div>
         <div class="aha-v2-materialize-actions">
-          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-path-materialize="${escapeHtml(path.id)}">Lagre som min sti</button>
-          <button type="button" class="aha-tile-btn" data-v2-path-undo="${escapeHtml(path.id)}"${undoAvailable ? "" : " hidden"}>Angre lagring</button>
-          <span class="module-meta" data-v2-path-materialize-status="${escapeHtml(path.id)}" aria-live="polite">Krever et eksplisitt klikk og lagres bare lokalt.</span>
+          <button type="button" class="aha-tile-btn aha-tile-btn-primary" data-v2-path-materialize="${escapeHtml(path.id)}"${materialization.materialized ? " disabled" : ""}>${escapeHtml(saveLabel)}</button>
+          <button type="button" class="aha-tile-btn" data-v2-path-undo="${escapeHtml(path.id)}"${materialization.undo_available ? "" : " hidden"}>Angre lagring</button>
+          <span class="module-meta" data-v2-path-materialize-status="${escapeHtml(path.id)}" aria-live="polite">${escapeHtml(saveStatus)}</span>
         </div>
       </article>`;
     }).join("");
@@ -771,7 +779,6 @@
       const id = artifactId || undoId;
       if (!id) return;
       const status = document.querySelector(`[data-v2-path-materialize-status="${id}"]`);
-      const undoButton = document.querySelector(`[data-v2-path-undo="${id}"]`);
       if (undoId) {
         const receipt = projectionReceipts.get(id);
         const model = global.AHAProjectionRuntimeSourceV2?.build?.();
@@ -780,8 +787,7 @@
           : global.AHAProjectionMaterializerV2?.undoMaterialized?.({ artifact_type: "path", artifact_id: id, projection_id: model?.projection_id, user_confirmed: true });
         if (result?.ok) {
           projectionReceipts.delete(id);
-          if (status instanceof HTMLElement) status.textContent = "Den lokale stien ble fjernet igjen.";
-          if (undoButton instanceof HTMLElement) undoButton.hidden = true;
+          renderProjectionPathPreviews();
           renderContent();
         } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; stien kan ha blitt endret etter lagring.";
         return;
@@ -798,8 +804,7 @@
         return;
       }
       if (result.receipt) projectionReceipts.set(id, result.receipt);
-      if (status instanceof HTMLElement) status.textContent = result.existing ? "Stien finnes allerede lokalt." : "Stien er lagret lokalt. Ingen sync ble åpnet.";
-      if (undoButton instanceof HTMLElement) undoButton.hidden = !result.receipt;
+      renderProjectionPathPreviews();
       renderContent();
     });
 
