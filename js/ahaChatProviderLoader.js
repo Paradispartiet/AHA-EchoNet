@@ -64,6 +64,7 @@
   // verified V2 field.
   const QUALITY_REPAIR_SCHEMA = "aha_semantic_quality_repair_v2";
   const LONG_SOURCE_LIMIT = 7600;
+  const SUBSTANTIVE_SOURCE_MIN = 1200;
   const MAX_VISIBLE_CONCEPTS = 16;
   const MAX_VISIBLE_CLAIMS = 12;
   const MAX_VISIBLE_TENSIONS = 6;
@@ -197,6 +198,7 @@
     const payload = object(input.payload);
     const repaired = clone(document);
     if (!repaired || repaired.schema !== "aha_semantic_document_v2") return document;
+    if (sourceText.length < SUBSTANTIVE_SOURCE_MIN) return document;
     const supplied = candidateConceptKeys(payload);
     const claimMentionCounts = new Map();
     array(repaired.claims).forEach((claim) => array(claim?.mentioned_concept_ids).forEach((id) => {
@@ -243,17 +245,17 @@
       .map((item) => item.tension);
 
     const synthesisStatus = text(repaired.synthesis_gate?.status);
-    repaired.status = synthesisStatus === "not_run" && sourceText.length >= 1200 ? "incomplete" : repaired.status;
+    repaired.status = synthesisStatus === "not_run" ? "incomplete" : repaired.status;
     repaired.quality = {
       ...object(repaired.quality),
-      status: synthesisStatus === "not_run" && sourceText.length >= 1200 ? "incomplete" : repaired.quality?.status,
+      status: synthesisStatus === "not_run" ? "incomplete" : repaired.quality?.status,
       concept_count: repaired.concepts.length,
       relation_count: repaired.relations.length,
       tension_count: repaired.tensions.length,
       reasons: unique([
         ...array(repaired.quality?.reasons),
         QUALITY_REPAIR_SCHEMA,
-        ...(synthesisStatus === "not_run" && sourceText.length >= 1200 ? ["semantic_synthesis_not_run_for_substantive_source"] : [])
+        ...(synthesisStatus === "not_run" ? ["semantic_synthesis_not_run_for_substantive_source"] : [])
       ])
     };
     repaired.policy = { ...object(repaired.policy), current_analysis_read_available: array(repaired.candidate_insights).some((item) => item?.status === "approved") };
@@ -302,6 +304,7 @@
   function repairPayloadSourceFields(payload, sourceText, semanticDocument) {
     const source = object(payload);
     if (!Object.keys(source).length || semanticDocument?.schema !== "aha_semantic_document_v2") return source;
+    if (String(sourceText || "").length < SUBSTANTIVE_SOURCE_MIN) return source;
     const theme = deriveSourceTheme(sourceText, semanticDocument);
     const insight = approvedInsight(semanticDocument);
     const tension = array(semanticDocument?.tensions)[0] || null;
@@ -404,6 +407,7 @@
     const repaired = clone(bundle);
     if (!repaired || repaired.schema !== "aha_analysis_bundle_v2") return bundle;
     const sourceText = String(input.sourceText || "");
+    if (sourceText.length < SUBSTANTIVE_SOURCE_MIN) return bundle;
     const semanticDocument = input.semanticDocument;
     const themeField = verifiedThemeField(repaired, sourceText, semanticDocument);
     if (themeField && repaired.surfaces?.overview) repaired.surfaces.overview.theme = themeField;
@@ -414,7 +418,7 @@
       repaired.quality.passed_field_count = fields.filter((field) => field?.quality?.status === "passed").length;
       repaired.quality.incomplete_field_ids = fields.filter((field) => field?.quality?.status === "incomplete").map((field) => field.item_id);
       repaired.quality.rejected_field_ids = fields.filter((field) => field?.quality?.status === "rejected").map((field) => field.item_id);
-      if (semanticDocument?.synthesis_gate?.status === "not_run" && sourceText.length >= 1200) {
+      if (semanticDocument?.synthesis_gate?.status === "not_run") {
         repaired.quality.reasons = unique([...array(repaired.quality.reasons), "semantic_synthesis_not_run_for_substantive_source"]);
         repaired.status = "incomplete";
         repaired.quality.status = "incomplete";
@@ -449,7 +453,7 @@
             };
             const candidates = await instance.generateAIInsightCandidates(focused, nextContext);
             if (Array.isArray(candidates) && candidates.length) return candidates;
-            if (raw.length >= 1200 && typeof instance.buildSemanticInsightCandidates === "function") {
+            if (raw.length >= SUBSTANTIVE_SOURCE_MIN && typeof instance.buildSemanticInsightCandidates === "function") {
               return instance.buildSemanticInsightCandidates(focused, { minInsights: 2, maxInsights: 4 });
             }
             return Array.isArray(candidates) ? candidates : [];
@@ -498,6 +502,7 @@
   const QUALITY_REPAIR_V2 = Object.freeze({
     schema: QUALITY_REPAIR_SCHEMA,
     longSourceLimit: LONG_SOURCE_LIMIT,
+    substantiveSourceMin: SUBSTANTIVE_SOURCE_MIN,
     focusLongSource,
     deriveSourceTheme,
     repairSemanticDocument,
