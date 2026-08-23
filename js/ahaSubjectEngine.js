@@ -65,7 +65,7 @@
 
   function canonicalEmne(raw, subject) {
     const item = object(raw);
-    return { emne_id: String(item.emne_id || ""), title: String(item.title || item.emne_id || ""), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), learning_goals: [], checkpoints: [], summary: String(item.definition || ""), description: String(item.why_it_matters || item.definition || ""), fagverk: { source_repo: "Paradispartiet/History-Go", source_ref: String(item.source_ref || subject.source_ref || ""), canonical_subject_id: subject.subject_id, source_path: String(item.source_path || subject?.package?.emner_path || ""), registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", package_field: "emner", minimum_matched_terms: 2, term_source: "history_go_manifest_emner_v2", generation_mode: "canonical_history_go_deployment_index_v2" } };
+    return { emne_id: String(item.emne_id || ""), title: String(item.title || item.emne_id || ""), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), chapter_specific_terms: unique(item.semantic_terms || []), learning_goals: [], checkpoints: [], summary: String(item.definition || ""), description: String(item.why_it_matters || item.definition || ""), fagverk: { source_repo: "Paradispartiet/History-Go", source_ref: String(item.source_ref || subject.source_ref || ""), canonical_subject_id: subject.subject_id, source_path: String(item.source_path || subject?.package?.emner_path || ""), registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", package_field: "emner", minimum_matched_terms: 2, term_source: "history_go_manifest_emner_v2", generation_mode: "canonical_history_go_deployment_index_v2" } };
   }
   function methodEmne(raw, subject) {
     const item = object(raw);
@@ -124,7 +124,7 @@
   function fieldsForClass(emne, kind) {
     if (kind === "method") return [["title", emne.title, 1.5], ["core", emne.core_concepts, 0.75], ["keywords", emne.keywords, 0.5], ["summary", emne.summary, 0.25]];
     if (kind === "supplement") return [["title", emne.title, 4], ["core", emne.core_concepts, 4.5], ["summary", emne.summary, 0.5]];
-    if (kind === "chapter") return [["title", emne.title, 5], ["title_tokens", titleTokens(emne.title), 4.5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["methods", emne.methods, 1], ["summary", emne.summary, 1]];
+    if (kind === "chapter") return [["title", emne.title, 5], ["title_tokens", titleTokens(emne.title), 4.5], ["core", emne.core_concepts, 4.5], ["keywords", emne.keywords, 2.5], ["thinkers", emne.thinkers, 2.5], ["specific", emne.chapter_specific_terms, 2], ["methods", emne.methods, 1], ["summary", emne.summary, 1]];
     return [["title", emne.title, 6], ["core", emne.core_concepts, 5], ["keywords", emne.keywords, 3], ["thinkers", emne.thinkers, 3], ["methods", emne.methods, 1.5], ["summary", emne.summary, 0.75], ["description", emne.description, 0.5]];
   }
 
@@ -155,6 +155,21 @@
         score += Math.max(0, found.length - 1) * (kind === "method" ? 0.25 : 1.5) + (strong ? 2 : 0) + (kind === "overlay" && strong ? 1 : 0) + phraseBonus;
         const type = kind === "method" ? "method" : kind === "supplement" ? "supplement" : kind === "chapter" ? "chapter" : (emne.thinkers || []).some((value) => found.includes(value)) ? "thinker" : (emne.core_concepts || []).some((value) => found.includes(value)) ? "concept" : "emne";
         out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne) });
+      }
+    }
+
+    const primarySupportBySubject = new Map();
+    for (const match of out) {
+      if (!["emne", "concept", "thinker", "overlay"].includes(match.type) || !match.emne_id) continue;
+      primarySupportBySubject.set(match.subject_id, Math.max(primarySupportBySubject.get(match.subject_id) || 0, Number(match.score || 0)));
+    }
+    const maxPrimarySupport = Math.max(0, ...primarySupportBySubject.values());
+    if (maxPrimarySupport >= 8) {
+      const derivedFloor = maxPrimarySupport * 0.5;
+      for (let index = out.length - 1; index >= 0; index -= 1) {
+        const match = out[index];
+        if (!["chapter", "supplement", "method"].includes(match.type)) continue;
+        if ((primarySupportBySubject.get(match.subject_id) || 0) < derivedFloor) out.splice(index, 1);
       }
     }
 
