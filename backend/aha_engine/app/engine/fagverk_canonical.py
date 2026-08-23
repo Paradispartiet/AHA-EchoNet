@@ -180,7 +180,6 @@ def load_canonical_fagverk_corpus() -> dict[str, Any]:
             entries.extend(_chapter_entry(subject, chapter) for chapter in chapters)
         else:
             entries.extend(_emne_entry(subject, emne) for emne in subject.get("emner") or [])
-        entries.extend(_method_entry(subject, method) for method in subject.get("methods") or [])
     return {
         "schema": "aha_history_go_fagverk_corpus_v1",
         "version": "3.0.0",
