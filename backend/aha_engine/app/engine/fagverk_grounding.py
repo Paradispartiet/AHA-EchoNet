@@ -319,8 +319,6 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     for entry in payload.get("entries", []):
         subject_id = str(entry.get("subject_id") or "")
         policy = subject_policies.get(subject_id)
-        if policy and entry.get("chapter_id") not in (policy.get("chapter_rules") or {}):
-            policy = None
         if policy:
             score, matched_terms, eligible, contributions = _policy_entry_score(normalized, entry, policy)
             thresholds = policy.get("thresholds", {})
@@ -356,31 +354,33 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     if not matches:
         return {"status": "unsupported", "reason": "no_fagverk_evidence", "matches": []}
 
-    top = matches[0]
-    second = matches[1] if len(matches) > 1 else None
-    if not _match_passes_threshold(top):
+    passing_matches = [match for match in matches if _match_passes_threshold(match)]
+    if not passing_matches:
         return {
             "status": "unsupported",
             "reason": "insufficient_fagverk_evidence",
             "matches": [match.__dict__ for match in matches[:3]],
         }
-    if second and _match_passes_threshold(second) and (top.score - second.score) < top.ambiguity_margin:
+
+    top = passing_matches[0]
+    second = passing_matches[1] if len(passing_matches) > 1 else None
+    if second and (top.score - second.score) < top.ambiguity_margin:
         return {
             "status": "ambiguous",
             "reason": "multiple_chapters_close",
-            "matches": [match.__dict__ for match in matches[:3]],
+            "matches": [match.__dict__ for match in passing_matches[:3]],
         }
 
     related_matches = [
-        match for match in matches[1:]
-        if _match_passes_threshold(match) and match.subject_id != top.subject_id
+        match for match in passing_matches[1:]
+        if match.subject_id != top.subject_id
     ][:2]
     return {
         "status": "grounded",
         "reason": "chapter_evidence_threshold_met",
         "match": top.__dict__,
         "related_matches": [match.__dict__ for match in related_matches],
-        "matches": [match.__dict__ for match in matches[:3]],
+        "matches": [match.__dict__ for match in passing_matches[:3]],
         "corpus": {
             "schema": payload.get("schema"),
             "version": payload.get("version"),
