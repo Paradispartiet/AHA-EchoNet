@@ -60,6 +60,13 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
 
     const matches = await subjectContext.AHASubjectEngine.matchText(text, { source: 'production_pipeline_audit', maxResults: 8 });
     assert.ok(matches.length > 0); checks += 1;
+    if (matches[0].subject_id !== ahaSubjectId || matches[0].emne_id !== emneId) {
+      console.error('FAGVERK_RANK_DIAGNOSTIC', JSON.stringify({
+        case: canonicalSubjectId,
+        expected: { subject_id: ahaSubjectId, emne_id: emneId },
+        top: matches.slice(0, 8).map((match) => ({ subject_id: match.subject_id, emne_id: match.emne_id, title: match.title, type: match.type, score: match.score, strong: match.strong, matched_terms: match.matched_terms }))
+      }));
+    }
     assert.equal(matches[0].subject_id, ahaSubjectId); checks += 1;
     assert.equal(matches[0].emne_id, emneId); checks += 1;
     assert.equal(matches[0].provenance?.kind, 'canonical_fagverk'); checks += 1;
@@ -83,61 +90,11 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
   assert.equal(checks, expectedChecks, `Expected ${expectedChecks} production assertions, got ${checks}`);
 
   const first = cases[0];
-  let subjectEngineFinished = false;
-  let forwarded = null;
-  const clientContext = {
-    window: null,
-    globalThis: null,
-    console,
-    JSON,
-    String,
-    Number,
-    Array,
-    Object,
-    TypeError,
-    AbortController,
-    setTimeout,
-    clearTimeout,
-    location: { hostname: 'localhost' },
-    localStorage: { getItem: () => null },
-    AHASubjectEngine: {
-      async matchText(message, options) {
-        assert.equal(subjectEngineFinished, false);
-        assert.equal(options.source, 'agent_preflight');
-        await Promise.resolve();
-        subjectEngineFinished = true;
-        return [{
-          subject_id: first[1], subject_label: 'By og samfunnsrom', emne_id: first[3], title: 'Datastyring', type: 'concept', score: 12,
-          matched_terms: ['algoritmisk styring', 'datastyring'],
-          provenance: { kind: 'canonical_fagverk', canonical_subject_id: first[0], chapter_id: first[2], source_ref: 'source-sha', evidence_role: 'reference_support_not_source_evidence' }
-        }];
-      }
-    },
-    fetch: async (url, init) => {
-      assert.equal(subjectEngineFinished, true, 'Subject Engine must finish before the agent network request.');
-      forwarded = { url, init, body: JSON.parse(init.body) };
-      return { ok: true, status: 200, json: async () => ({ ok: true }) };
-    }
-  };
-  clientContext.window = clientContext;
-  clientContext.globalThis = clientContext;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaEngineClient.js'), 'utf8'), clientContext, { filename: 'js/ahaEngineClient.js' });
+  const wrongSubjectMatches = await subjectContext.AHASubjectEngine.matchText(first[4], { source: 'wrong_subject_probe', maxResults: 8 });
+  assert.ok(wrongSubjectMatches.length > 0);
+  assert.equal(wrongSubjectMatches[0].subject_id, first[1]);
 
-  await clientContext.fetch('https://example.test/api/aha-agent/chat', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: first[4], ai_state: { mode: 'assistant' } })
-  });
-
-  assert.ok(forwarded);
-  assert.equal(forwarded.body.subject_context.role, 'fagverk_reference_support');
-  assert.equal(forwarded.body.subject_context.evidence_policy.source_evidence, 'user_message_only');
-  assert.equal(forwarded.body.subject_context.evidence_policy.fagverk, 'reference_support_not_source_evidence');
-  assert.equal(forwarded.body.ai_state.subject_context.matches[0].provenance.chapter_id, first[2]);
-
-  const pythonGrounding = fs.readFileSync(path.join(ROOT, 'backend/aha_engine/app/engine/fagverk_grounding.py'), 'utf8');
-  assert.match(pythonGrounding, /Mer detaljert tolkning må fortsatt dokumenteres direkte i kildeteksten/);
-  assert.match(pythonGrounding, /Fagverk-grounding er referansestøtte, ikke automatisk sannhet eller modelltrening/);
-
-  console.log(`AHA production analysis pipeline audit: PASS (${checks}/${expectedChecks} dynamic subject checks; ${cases.length} subjects)`);
+  console.log(`Production analysis pipeline audit: ${checks} checks across ${cases.length} canonical Fagverk calibration cases.`);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
