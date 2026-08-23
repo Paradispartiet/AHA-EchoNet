@@ -1,64 +1,20 @@
 {
+  "schema": "aha_subject_overlays_v1",
+  "version": "1.0.0",
+  "authority": "overlay_only",
+  "canonical_source": "data/integrations/history-go-fagverk-bridge.v2.json",
   "subjects": [
-    {
-      "subject_id": "by",
-      "subject_label": "By og samfunnsrom",
-      "file": "by.json"
-    },
-    {
-      "subject_id": "kultur_kunst",
-      "subject_label": "Kultur og kunst",
-      "file": "kultur_kunst.json"
-    },
-    {
-      "subject_id": "musikk",
-      "subject_label": "Musikk",
-      "file": "musikk.json"
-    },
-    {
-      "subject_id": "naeringsliv",
-      "subject_label": "Næringsliv",
-      "file": "naeringsliv.json"
-    },
-    {
-      "subject_id": "natur",
-      "subject_label": "Natur og omgivelser",
-      "file": "natur.json"
-    },
-    {
-      "subject_id": "sport_lek",
-      "subject_label": "Sport og lek",
-      "file": "sport_lek.json"
-    },
-    {
-      "subject_id": "psykologi_pedagogikk",
-      "subject_label": "Psykologi og pedagogikk",
-      "file": "psykologi_pedagogikk.json"
-    },
-    {
-      "subject_id": "politikk",
-      "subject_label": "Politikk & samfunn",
-      "file": "politikk.json"
-    },
-    {
-      "subject_id": "subkultur",
-      "subject_label": "Subkultur",
-      "file": "subkultur.json"
-    },
-    {
-      "subject_id": "historie",
-      "subject_label": "Historie",
-      "file": "historie.json"
-    },
-    {
-      "subject_id": "vitenskap",
-      "subject_label": "Vitenskap & filosofi",
-      "file": "vitenskap.json"
-    },
-    {
-      "subject_id": "klima_omstilling",
-      "subject_label": "Klima, natur og omstilling",
-      "file": "klima_omstilling.json"
-    }
+    { "subject_id": "by", "subject_label": "By og samfunnsrom", "file": "by.json", "canonical_subject_ids": ["by"] },
+    { "subject_id": "kultur_kunst", "subject_label": "Kultur og kunst", "file": "kultur_kunst.json", "canonical_subject_ids": ["kunst"] },
+    { "subject_id": "musikk", "subject_label": "Musikk", "file": "musikk.json", "canonical_subject_ids": ["musikk"] },
+    { "subject_id": "naeringsliv", "subject_label": "Næringsliv", "file": "naeringsliv.json", "canonical_subject_ids": ["naeringsliv"] },
+    { "subject_id": "natur", "subject_label": "Natur og omgivelser", "file": "natur.json", "canonical_subject_ids": ["natur"] },
+    { "subject_id": "sport_lek", "subject_label": "Sport og lek", "file": "sport_lek.json", "canonical_subject_ids": ["sport"] },
+    { "subject_id": "psykologi_pedagogikk", "subject_label": "Psykologi og pedagogikk", "file": "psykologi_pedagogikk.json", "canonical_subject_ids": ["psykologi"] },
+    { "subject_id": "politikk", "subject_label": "Politikk & samfunn", "file": "politikk.json", "canonical_subject_ids": ["politikk"] },
+    { "subject_id": "subkultur", "subject_label": "Subkultur", "file": "subkultur.json", "canonical_subject_ids": ["subkultur"] },
+    { "subject_id": "historie", "subject_label": "Historie", "file": "historie.json", "canonical_subject_ids": ["historie"] },
+    { "subject_id": "vitenskap", "subject_label": "Vitenskap & filosofi", "file": "vitenskap.json", "canonical_subject_ids": ["vitenskap"] },
+    { "subject_id": "klima_omstilling", "subject_label": "Klima, natur og omstilling", "file": "klima_omstilling.json", "canonical_subject_ids": ["natur"], "secondary_subject_ids": ["politikk"] }
   ]
 }
