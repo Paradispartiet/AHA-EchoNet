@@ -37,7 +37,7 @@
 
   const capabilityBindings = providerLoader.require("capabilityBindings");
   const analysisBundleV2 = providerLoader.require("analysisBundleV2");
-  const liveSemanticBridgeV2 = providerLoader.resolve("chat.liveSemanticBridgeV2", "AHALiveSemanticBridgeV2") || null;
+  const liveSemanticBridgeV2 = providerLoader.resolve("chat.liveSemanticBridgeV2", "AHALiveSemanticBridgeV2", 2) || null;
 
   function insightsApi() { return providerLoader.resolve("insights", "InsightsEngine"); }
   function ingestApi() { return providerLoader.resolve("ingest", "AHAIngest"); }
@@ -268,6 +268,7 @@
     buildSemanticInsightCandidates,
     generateAIInsightCandidates,
     buildAIState,
+    isMemoryUseEnabled: isAhaMemoryUseEnabled,
     loadChamber: loadChamberFromStorage,
     saveChamber: saveChamberToStorage
   }));

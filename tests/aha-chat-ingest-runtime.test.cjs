@@ -19,7 +19,8 @@ function createHarness(options = {}) {
     sources: [],
     signals: [],
     saves: [],
-    ai: []
+    ai: [],
+    aiStateOptions: []
   };
   const engine = {
     createSignalFromMessage(text, subjectId, themeId, meta) {
@@ -50,7 +51,8 @@ function createHarness(options = {}) {
       calls.ai.push({ text, inputContext });
       return options.aiCandidates || [];
     },
-    buildAIState: () => ({ state: "test" }),
+    buildAIState: (input) => { calls.aiStateOptions.push(input); return input?.includeMemory === false ? { state: "isolated" } : { state: "test" }; },
+    isMemoryUseEnabled: () => options.memoryUse !== false,
     loadChamber: () => ({ signals: [] }),
     saveChamber: (chamber) => calls.saves.push(chamber),
     candidateCacheStorage: options.candidateCacheStorage || null,
@@ -101,12 +103,21 @@ async function verifyBackgroundIngest() {
   assert.equal(count, 1);
   assert.equal(calls.ai.length, 1);
   assert.equal(calls.canonical.length, 1);
+  assert.deepEqual(calls.aiStateOptions, [{ includeMemory: true }]);
   assert.deepEqual(JSON.parse(JSON.stringify(calls.ai[0].inputContext)), {
     subject_id: "sub_laring",
     theme_id: "theme_test",
     field_id: "field_test",
     ai_state: { state: "test" }
   });
+}
+
+async function verifyBackgroundIngestWithoutMemory() {
+  const { runtime, calls } = createHarness({ aiCandidates: [{ text: "AI-kandidat" }], memoryUse: false });
+  const count = await runtime.handleUserMessageInsightCandidatesInBackground("Isolert bakgrunnsmelding");
+  assert.equal(count, 1);
+  assert.deepEqual(calls.aiStateOptions, [{ includeMemory: false }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.ai[0].inputContext.ai_state)), { state: "isolated" });
 }
 
 async function verifyAnalysisGenerationIsReadOnly() {
@@ -120,6 +131,7 @@ async function verifyAnalysisGenerationIsReadOnly() {
   assert.equal(calls.canonical.length, 0, "analysebundet generering skal ikke skrive til Chamber");
   assert.equal(calls.sources.length, 0, "analysebundet generering skal ikke opprette source events");
 }
+
 async function verifyAnalysisGenerationSurvivesReload() {
   const values = new Map();
   const candidateCacheStorage = {
@@ -136,6 +148,7 @@ async function verifyAnalysisGenerationSurvivesReload() {
   assert.deepEqual(replay, initial, "same source and context must hydrate the authoritative session candidate after reload");
   assert.equal(reloaded.calls.ai.length, 0, "reload replay must not spend a second model call");
 }
+
 {
   const { runtime, calls } = createHarness({ engine: false });
   assert.equal(runtime.handleUserMessage("Ingen motor"), 0);
@@ -149,6 +162,7 @@ assert.ok(chatHtml.indexOf("js/ahaChatIngestRuntime.js") < chatHtml.indexOf("js/
 
 Promise.all([
   verifyBackgroundIngest(),
+  verifyBackgroundIngestWithoutMemory(),
   verifyAnalysisGenerationIsReadOnly(),
   verifyAnalysisGenerationSurvivesReload()
 ])

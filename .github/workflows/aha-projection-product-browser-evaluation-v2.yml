@@ -1,0 +1,32 @@
+name: AHA projection product browser evaluation v2
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  browser-evaluation:
+    name: Browser corpus and iPad WebKit gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install browser engines
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run real browser product evaluation
+        run: npm run test:projection-products:browser
+        env:
+          AHA_REQUIRE_LIVE_PRODUCT_CORPUS: "1"
+      - name: Upload browser evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-projection-product-browser-evaluation-v2
+          path: test-results/
+          if-no-files-found: warn

@@ -1,10 +1,10 @@
 # AHA Insight Engine V2 — product quality review (2026-08-21)
 
-Status: **source-bound agent remediation implemented; independent human usefulness review remains open**.
+Status: **source-bound remediation and 27-case browser evaluation implemented; independent human usefulness review remains open**.
 
 The authoritative next-phase production integration plan is [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). It distinguishes Chat analysis, Knowledge Map and the three products, and it records the remaining seven-PR path from live source isolation to preview, human evaluation and controlled save.
 
-This document records the first qualitative review of the 24-case V2 product-evaluation corpus after the raw-source transport/provenance evaluation in PR #880. It does not widen any write authority and does not claim that the independent human release gate has passed.
+This document records the qualitative review lineage from the original 24-case V2 product-evaluation corpus and the PR 6 expansion to 27 browser cases. It does not widen any write authority and does not claim that the independent human release gate has passed.
 
 ## Why the automated score was not enough
 
@@ -79,7 +79,30 @@ tests/aha-projection-product-agent-quality-review-v2.test.cjs
 
 The TEMP probe also inspected `AHASemanticDocument` in this evaluation path. Its current shadow document reports `claims_relations_shadow` / `shadow_claims_relations_pending`, and the observed arrays for concepts, claims, relations, tensions and candidate insights are still empty at that layer. The semantic gate correctly reports that the dedicated semantic model is not authoritative and that the synthesized-insight quality gate is not implemented there.
 
-The #880 regression therefore uses a deterministic evaluation adapter after source-document validation: source-bound sentence insights plus heuristic token concepts. That makes it useful for product regression, provenance, determinism and suppression testing, but it is **not authoritative semantic extraction** and cannot be used to manufacture a human-review pass.
+The #880 regression therefore uses a deterministic evaluation adapter after source-document validation: source-bound sentence insights plus heuristic token concepts. That makes it useful for product regression, provenance, determinism and suppression testing, but it is **not authoritative semantic extraction** and cannot be used to manufacture a human-review pass. This limitation now describes the legacy Node adapter only; PR 6 separately runs the actual browser application and active AnalysisBundle V2 chain.
+
+## PR 6 real-browser evaluation
+
+PR 6 expands the corpus from 24 to 27 sources with three previously missing release classes:
+
+- Livsarket/literature-health after a Morgenbladet seed in the same storage context, followed by hard reload;
+- a health/patient-path source where one metric does not represent the whole care journey;
+- pasted full text with an inaccessible URL, where the pasted text must remain primary.
+
+`projection-product-review-v2.html` runs every case through the real `chat.html` application, `AHAChat.submitAhaChatMessage`, the active immutable `AnalysisBundleV2` and `AHAProjectionRuntimeSourceV2`. It displays the exact Lists, Paths and Mindmap output and supports an explicit downloadable human-review ledger. Review inputs are not automatically persisted.
+
+The browser workflow has two distinct gates:
+
+1. deterministic offline Chromium transport proof: exact cache/bundle/projection identity, evidence containment, sequential isolation, hard reload, same-source replay, changed-runtime-version separation and zero guarded preview writes;
+2. live semantic corpus proof: the configured backend must be reachable, all useful cases must yield qualified previews, weak cases must remain suppressed and at least 80% of cases per product type must be ready for human review.
+
+An iPad WebKit job locks responsive layout and the accessible review/Chat entry controls. The browser run also exposed and fixed a real bootstrap defect: the Chat provider loader resolved V2 Bundle/read-model/live-semantic modules as version 1 in the registry.
+
+### Current live-gate evidence (2026-08-22)
+
+Workflow run `32585430022` and artifact `9479042596` prove that the browser reached the configured backend for all 29 Chat submissions (27 cases, the Morgenbladet seed and the deterministic replay). The backend returned HTTP 500 for every Chat response because its upstream OpenAI request returned `insufficient_quota` (HTTP 429). The deterministic offline Chromium matrix and iPad WebKit surface gate passed, and the captured 27-case fallback state retained zero critical provenance errors and zero guarded preview writes.
+
+This is an external live-model availability blocker, not product-quality evidence. The fallback candidates are therefore not used to tune the semantic quality gate, to declare products ready or to start the human review. The browser evidence now distinguishes received responses from successful 2xx responses and records status counts plus bounded HTTP-failure metadata. A minimal live Chat preflight fails before the expensive corpus when the configured model backend is unavailable; after a successful preflight the complete 27-case gate still runs. The live usefulness gate remains fail-closed until at least 27 real Chat responses are successful and the product assertions then pass.
 
 ## Post-remediation live analysis audit
 
@@ -129,10 +152,11 @@ The explicit #875/#879 local materializer remains a separate one-artifact-per-us
 
 The next product-quality step is no longer another generic structural heuristic. It is:
 
-1. run the independent per-case usefulness review on the refined Lists, Paths and Mindmaps;
-2. record the 1–5 rubric scores without replacing them with agent scores;
-3. fix any remaining recurring defect class found by that review;
-4. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout;
-5. only after that, production-test the full explicit user journey from analysis to chosen local artifact, edit, reload and safe undo.
+1. restore the configured backend's live-model quota and rerun the 27-case browser gate;
+2. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
+3. record the 1–5 rubric scores without replacing them with agent scores;
+4. fix any remaining recurring defect class found by that review;
+5. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout;
+6. only after that, production-test the full explicit user journey from analysis to chosen local artifact, edit, reload and safe undo.
 
 The max=2 controlled Insight write boundary does not need to expand for this work.

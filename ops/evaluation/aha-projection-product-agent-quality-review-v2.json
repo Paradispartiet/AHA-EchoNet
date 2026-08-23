@@ -1,17 +1,18 @@
 {
   "schema": "aha_projection_product_agent_quality_review_v2",
   "version": 2,
-  "reviewed_at": "2026-08-21",
+  "reviewed_at": "2026-08-23",
   "corpus": "tests/fixtures/aha-projection-product-evaluation-v2.json",
   "human_review_ledger": "ops/evaluation/aha-projection-product-human-review-v2.json",
-  "status": "agent_remediation_implemented_independent_human_review_open",
+  "status": "live_corpus_agent_usefulness_review_complete_independent_human_review_open",
   "scope": {
-    "cases": 24,
-    "expected_visible": 21,
+    "cases": 27,
+    "expected_visible": 24,
     "expected_suppressed": 3,
     "artifact_types": ["lists", "paths", "mindmap"],
     "review_authority": "agent_quality_audit_only",
-    "independent_human_review_completed": false
+    "independent_human_review_completed": false,
+    "browser_corpus_extension": ["literature_livsarket", "health_patient_path", "pasted_text_inaccessible_url"]
   },
   "observation_probe": {
     "pull_request": 882,
@@ -57,7 +58,59 @@
       "dedicated_semantic_model_not_authoritative",
       "synthesized_insight_quality_gate_not_implemented"
     ],
-    "corpus_adapter": "The current evaluation test creates source-bound sentence insights and heuristic token concepts after AHASemanticDocument validation. This is useful for deterministic product regression, but it is not authoritative semantic extraction and cannot substitute for independent human review."
+    "corpus_adapter": "The legacy Node evaluation test creates source-bound sentence insights and heuristic token concepts after AHASemanticDocument validation. It remains deterministic regression evidence only. PR 6 adds a separate real-browser Chat/AnalysisBundle/product-bridge corpus, but neither automated path can substitute for independent human review."
+  },
+  "browser_evaluation": {
+    "cases": 27,
+    "surface": "projection-product-review-v2.html",
+    "workflow": ".github/workflows/aha-projection-product-browser-evaluation-v2.yml",
+    "offline_matrix": "source_identity_reload_replay_version_and_zero_preview_write",
+    "live_matrix": "configured_backend_required_zero_critical_provenance_zero_guarded_writes_minimum_80_percent_case_coverage_and_explicit_calibration_observations",
+    "ipad_webkit_gate": true,
+    "independent_human_review_completed": false
+  },
+  "latest_live_gate": {
+    "observed_at": "2026-08-23",
+    "workflow_run": 32628853791,
+    "artifact_id": 9490534957,
+    "chat_submission_count": 29,
+    "chat_2xx_count": 29,
+    "chat_http_status_counts": { "200": 29 },
+    "upstream_failure": null,
+    "offline_browser_matrix_passed": true,
+    "ipad_webkit_gate_passed": true,
+    "critical_provenance_error_count": 0,
+    "guarded_preview_write_count": 0,
+    "fallback_product_output_is_live_quality_evidence": false,
+    "coverage_case_count": 22,
+    "coverage_case_with_qualified_preview_count": 19,
+    "coverage_case_qualified_preview_share": 0.863636,
+    "calibration_observation_count": 2,
+    "gate_status": "live_transport_and_agent_usefulness_assessment_passed"
+  },
+  "independent_usefulness_assessment": {
+    "status": "complete",
+    "authority": "independent_agent_quality_review_not_human_attestation",
+    "evidence_workflow_run": 32628853791,
+    "evidence_artifact_id": 9490534957,
+    "decision_rule": "A live coverage case counts when at least one semantically relevant product form is qualified. Selective suppression of other forms is not converted into a failure or bypassed. The independent human 80-percent score gate remains unchanged for every product form.",
+    "verified_findings": [
+      {
+        "case_id": "data_bus",
+        "disposition": "calibration_observation_fail_closed",
+        "finding": "The live candidates identify the useful tension between higher punctuality and more cancellations, but the strongest evidence quotes occupy one source sentence and are blocked by evidence_not_cross_claim. The product evaluation must record the miss without changing the production-proven insight quality gate."
+      },
+      {
+        "case_id": "conflict_tourism",
+        "disposition": "calibration_observation_fail_closed",
+        "finding": "The live synthesis approves an interpretive correlation candidate, while the stricter projection/dedupe readiness keeps it out of products. The approved wording adds limited value beyond the source and does not justify weakening causal or provenance readiness in this PR."
+      }
+    ],
+    "scope_boundary": {
+      "analysis_quality_gate_changed": false,
+      "product_builder_changed": false,
+      "human_review_attested": false
+    }
   },
   "remediation": {
     "pull_request": 884,

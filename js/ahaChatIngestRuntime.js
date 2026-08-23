@@ -978,6 +978,7 @@
       buildSemanticInsightCandidates,
       generateAIInsightCandidates,
       buildAIState,
+      isMemoryUseEnabled = () => true,
       loadChamber,
       saveChamber,
       candidateCacheStorage = global.sessionStorage || null,
@@ -1146,7 +1147,7 @@
         subject_id: subjectId,
         theme_id: themeId,
         field_id: fieldId,
-        ai_state: buildAIState()
+        ai_state: buildAIState({ includeMemory: isMemoryUseEnabled() })
       };
       const requestKey = sha256Hex(JSON.stringify({ text, inputContext }));
       let request = analysisCandidateRequests.get(requestKey);

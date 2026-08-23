@@ -3,12 +3,30 @@ const fs = require("fs");
 
 const audit = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-agent-quality-review-v2.json", "utf8"));
 const humanReview = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-human-review-v2.json", "utf8"));
+const browserSpec = fs.readFileSync("tests/browser/aha-projection-product-browser-evaluation-v2.spec.cjs", "utf8");
 
 assert.equal(audit.schema, "aha_projection_product_agent_quality_review_v2");
-assert.equal(audit.scope.cases, 24);
-assert.equal(audit.scope.expected_visible, 21);
+assert.equal(audit.scope.cases, 27);
+assert.equal(audit.scope.expected_visible, 24);
 assert.equal(audit.scope.expected_suppressed, 3);
 assert.equal(audit.scope.independent_human_review_completed, false);
+assert.equal(audit.browser_evaluation.cases, 27);
+assert.equal(audit.browser_evaluation.independent_human_review_completed, false);
+assert.equal(audit.browser_evaluation.ipad_webkit_gate, true);
+assert.equal(audit.latest_live_gate.chat_submission_count, 29);
+assert.equal(audit.latest_live_gate.chat_2xx_count, 29);
+assert.equal(audit.latest_live_gate.upstream_failure, null);
+assert.equal(audit.latest_live_gate.fallback_product_output_is_live_quality_evidence, false);
+assert.equal(audit.latest_live_gate.gate_status, "live_transport_and_agent_usefulness_assessment_passed");
+assert.ok(audit.latest_live_gate.coverage_case_qualified_preview_share >= 0.8);
+assert.equal(audit.latest_live_gate.critical_provenance_error_count, 0);
+assert.equal(audit.latest_live_gate.guarded_preview_write_count, 0);
+assert.equal(audit.independent_usefulness_assessment.status, "complete");
+assert.equal(audit.independent_usefulness_assessment.authority, "independent_agent_quality_review_not_human_attestation");
+assert.deepEqual(audit.independent_usefulness_assessment.verified_findings.map((entry) => entry.case_id).sort(), ["conflict_tourism", "data_bus"]);
+assert.equal(audit.independent_usefulness_assessment.scope_boundary.analysis_quality_gate_changed, false);
+assert.equal(audit.independent_usefulness_assessment.scope_boundary.product_builder_changed, false);
+assert.equal(audit.independent_usefulness_assessment.scope_boundary.human_review_attested, false);
 assert.equal(audit.observation_probe.pull_request, 882);
 assert.equal(audit.observation_probe.disposition, "closed_without_merge");
 assert.equal(audit.remediation.pull_request, 884);
@@ -29,6 +47,15 @@ assert.equal(humanReview.release_rule.independent_human_review_required, true);
 assert.equal(humanReview.release_rule.minimum_acceptable_share, 0.8);
 assert.equal(humanReview.release_rule.critical_provenance_errors_allowed, 0);
 assert.equal(humanReview.release_rule.automatic_persistence_allowed, false);
+assert.equal(humanReview.release_rule.reviewer_attestation_required, true);
+assert.equal(humanReview.rubric.acceptable_score_minimum, 4);
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
+
+assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v2/);
+assert.match(browserSpec, /preflightResponse\.ok\(\)/);
+assert.match(browserSpec, /successfulChatResponses\.length/);
+assert.match(browserSpec, /backend_http_failures/);
+assert.match(browserSpec, /initialUsefulCaseCoverage/);
+assert.match(browserSpec, /runCases/);
 
 console.log("aha-projection-product-agent-quality-review-v2.test.cjs: OK (agent remediation recorded; independent human gate remains open)");

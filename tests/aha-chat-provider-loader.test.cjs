@@ -4,6 +4,7 @@ const vm = require("node:vm");
 
 const registrations = [];
 const registeredProviders = new Map();
+const resolutions = [];
 const legacyRoot = {};
 const context = {
   console,
@@ -14,7 +15,7 @@ const context = {
       registrations.push({ name, source, options });
       return source;
     },
-    resolve(name) { return registeredProviders.get(name) || null; }
+    resolve(name, legacyGlobal, options) { resolutions.push({ name, legacyGlobal, options }); return registeredProviders.get(name) || null; }
   }
 };
 context.window = context;
@@ -35,6 +36,7 @@ const loader = api.create({ moduleApi: context.AHAModuleApi, legacyRoot });
 assert.equal(Object.isFrozen(loader), true);
 assert.throws(() => loader.require("unknown"), /Ukjent AHA Chat-provider/);
 assert.throws(() => loader.require("textUtils"), /AHAChatTextUtils må lastes før ahaChat\.js/);
+assert.equal(api.CHAT_PROVIDERS.analysisBundleV2.version, 2);
 
 legacyRoot.AHAChatTextUtils = {
   shortHash() {}, takeKeywords() {}, sourceHash() {}, cleanArticleText() {},
@@ -48,6 +50,9 @@ registeredProviders.set("chat.signals", {
   detectInstitutionalMediaHistorySignal() {}, detectLiteraryAttachmentSignal() {}
 });
 assert.strictEqual(loader.require("signals"), registeredProviders.get("chat.signals"));
+registeredProviders.set("chat.analysisBundleV2", { VERSION: 2 });
+assert.strictEqual(loader.require("analysisBundleV2"), registeredProviders.get("chat.analysisBundleV2"));
+assert.equal(resolutions.at(-1).options?.version, 2, "V2 providers must resolve against registry version 2 in a real browser load");
 
 registeredProviders.set("chat.analysis", { buildOpinionArticleQualityAnalysis() {} });
 legacyRoot.AHAChatAnalysis = { buildOpinionArticleQualityAnalysis: null };

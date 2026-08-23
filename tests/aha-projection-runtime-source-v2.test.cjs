@@ -44,6 +44,28 @@ const bundle = {
       topic: { status: "verified" },
       quality: { status: "passed" },
       provenance: { evidence }
+    }, {
+      schema: "aha_analysis_field_v2",
+      item_id: "concept_source_only",
+      value: "erfaringer",
+      semantic_ids: ["concept_source_only"],
+      source_sha256: sha,
+      analysis_run_id: identity.analysis_run_id,
+      source_id: identity.source_id,
+      topic: { status: "verified" },
+      quality: { status: "passed" },
+      provenance: { evidence }
+    }, {
+      schema: "aha_analysis_field_v2",
+      item_id: "concept_sources",
+      value: "kilder",
+      semantic_ids: ["concept_sources"],
+      source_sha256: sha,
+      analysis_run_id: identity.analysis_run_id,
+      source_id: identity.source_id,
+      topic: { status: "verified" },
+      quality: { status: "passed" },
+      provenance: { evidence }
     }]
   }
 };
@@ -105,6 +127,7 @@ assert.deepEqual(Array.from(snapshot.legacy_insights, (item) => item.id), ["insi
 assert.equal(snapshot.legacy_insights[0].source_text_hash, sha);
 assert.equal(snapshot.legacy_insights[0].analysis_id, identity.analysis_id);
 assert.equal(snapshot.legacy_insights[0].evidence.length, 2);
+assert.ok(snapshot.legacy_insights[0].semantic_concepts.length <= 2, "projection signature must stay discriminating");
 assert.deepEqual(Array.from(snapshot.legacy_lists), []);
 assert.deepEqual(Array.from(snapshot.legacy_paths), []);
 

@@ -122,7 +122,10 @@
     if (migration.validation?.valid !== true) errors.push("migration_plan_invalid");
     if (projection.validation?.valid !== true) errors.push("projection_invalid");
     if (projection.mode !== "shadow") errors.push("projection_not_shadow");
-    if (Number(projection.input_count || 0) !== trusted.size) errors.push("projection_input_count_mismatch");
+    if (Number(projection.trusted_input_count || 0) !== trusted.size) errors.push("projection_trusted_input_count_mismatch");
+    if (Number(projection.input_count || 0) !== Number(projection.trusted_input_count || 0) + Number(projection.excluded_input_count || 0)) {
+      errors.push("projection_input_accounting_mismatch");
+    }
 
     arr(projection?.projections?.insights).forEach((insight) => {
       arr(insight?.member_ids).forEach((id) => {
