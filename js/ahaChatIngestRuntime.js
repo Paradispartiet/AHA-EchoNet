@@ -990,6 +990,7 @@
       now = () => new Date().toISOString()
     } = deps;
     let semanticShadowSequence = 0;
+    const analysisCandidateRequests = new Map();
 
     function buildChatPayload(text, themeId, fieldId) {
       return {
@@ -1109,12 +1110,29 @@
       if (!text) return [];
       const themeId = getThemeId();
       const fieldId = getFieldId();
-      return generateAIInsightCandidates(text, {
+      const inputContext = {
         subject_id: subjectId,
         theme_id: themeId,
         field_id: fieldId,
         ai_state: buildAIState({ includeMemory: isMemoryUseEnabled() })
-      });
+      };
+      const requestKey = sha256Hex(JSON.stringify({ text, inputContext }));
+      let request = analysisCandidateRequests.get(requestKey);
+      if (!request) {
+        if (analysisCandidateRequests.size >= 32) {
+          analysisCandidateRequests.delete(analysisCandidateRequests.keys().next().value);
+        }
+        request = Promise.resolve()
+          .then(() => generateAIInsightCandidates(text, inputContext))
+          .then((candidates) => Array.isArray(candidates) ? clone(candidates) : []);
+        analysisCandidateRequests.set(requestKey, request);
+      }
+      try {
+        return clone(await request);
+      } catch (error) {
+        if (analysisCandidateRequests.get(requestKey) === request) analysisCandidateRequests.delete(requestKey);
+        throw error;
+      }
     }
 
     async function handleUserMessageInsightCandidatesInBackground(messageText) {

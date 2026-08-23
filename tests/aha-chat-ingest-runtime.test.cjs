@@ -122,8 +122,11 @@ async function verifyBackgroundIngestWithoutMemory() {
 async function verifyAnalysisGenerationIsReadOnly() {
   const { runtime, calls } = createHarness({ aiCandidates: [{ text: "Analysebundet AI-kandidat" }] });
   const candidates = await runtime.generateAnalysisInsightCandidates("Aktiv analysekilde");
+  const replayedCandidates = await runtime.generateAnalysisInsightCandidates("Aktiv analysekilde");
   assert.equal(candidates.length, 1);
-  assert.equal(calls.ai.length, 1);
+  assert.deepEqual(replayedCandidates, candidates);
+  assert.notStrictEqual(replayedCandidates, candidates, "cached candidates must be returned as an isolated clone");
+  assert.equal(calls.ai.length, 1, "same source and analysis context must reuse one authoritative candidate request");
   assert.equal(calls.canonical.length, 0, "analysebundet generering skal ikke skrive til Chamber");
   assert.equal(calls.sources.length, 0, "analysebundet generering skal ikke opprette source events");
 }
