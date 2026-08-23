@@ -39,7 +39,33 @@ const canonicalIndex = {
     },
     {
       subject_id: 's2', subject_label: 'Chemistry', description: '', kind: 'subject', source_ref: ref,
-      package: { emner_path: 'data/fag/chemistry/emner.json', methods_path: '' }, methods: [], chapters: [],
+      package: { emner_path: 'data/fag/chemistry/emner.json', methods_path: '' }, methods: [],
+      chapters: [
+        {
+          chapter_id: 'kilder_arkiv_spor',
+          title: 'Kilder, arkiv og spor',
+          subtitle: 'Hvordan fortiden blir dokumenterbar, ordnet og taus',
+          primary_domain_id: 'his_kilder_arkiv_spor',
+          core_concepts: ['kildekritikk', 'proveniens', 'arkiv', 'arkivtaushet', 'levning', 'beretning', 'kildegrunnlag'],
+          keywords: ['kontekstualisering', 'førstehåndskilder', 'historisk kunnskap'],
+          thinkers: [],
+          methods: ['Kildekritikk', 'Proveniensanalyse'],
+          source_path: 'data/fagverk/historie/kilder_arkiv_spor.json',
+          source_ref: ref
+        },
+        {
+          chapter_id: 'minne_kulturarv_historiebruk',
+          title: 'Minne, kulturarv og historiebruk',
+          subtitle: 'Hvordan fortiden velges, bevares, brukes og bestrides',
+          primary_domain_id: 'his_minne_kulturarv_historiebruk',
+          core_concepts: ['proveniens', 'arkiv', 'fortellinger', 'kontekstualisering'],
+          keywords: ['offentlig', 'kildekritikk', 'arkiv', 'proveniens', 'kontekstualisering'],
+          thinkers: [],
+          methods: ['Kildekritikk', 'Proveniensanalyse', 'Arkivlesning'],
+          source_path: 'data/fagverk/historie/minne_kulturarv_historiebruk.json',
+          source_ref: ref
+        }
+      ],
       emner: [{
         emne_id: 'chem-main', title: 'Reactions', definition: 'Bonds and atoms', why_it_matters: 'Reaction dynamics',
         core_concepts: ['molecule'], keywords: ['reaction'], thinkers: ['Lavoisier'], methods: [],
@@ -78,5 +104,15 @@ unrelatedTerms.forEach((term) => {
   assert.ok(!results[0].matched_terms.includes(term), `Unexpected unrelated matched term: ${term}`);
 });
 assert.ok(!results.some((entry) => entry.emne_id === 'chem-main'), 'Unrelated subject must not be boosted into the result list.');
+
+const archiveResults = await matchText(
+  'Arkivstudien bygger på kildekritikk, proveniens og kontekstualisering av brev og kommunale protokoller. Den sammenligner førstehåndskilder med senere beretninger, drøfter arkivtaushet og vurderer hvilke grupper som mangler i det bevarte materialet. Analysen skiller mellom levning og beretning og forklarer hvordan utvalget av kilder påvirker historisk kunnskap. Forfatteren sammenholder materialet med et offentlig arkiv, markerer usikkerhet i dateringen og viser hvordan arkivets ordning påvirker hvilke fortellinger senere historikere kan bygge. Det gjør kildegrunnlaget eksplisitt og etterprøvbart.',
+  { maxResults: 5 }
+);
+assert.ok(archiveResults.length > 0, 'Expected canonical archive evidence to produce a match.');
+assert.equal(archiveResults[0].emne_id, 'fagverk_s2_kilder_arkiv_spor', 'Specific archive/provenance evidence must outrank a broader memory/history-use chapter.');
+assert.equal(archiveResults[0].provenance.chapter_id, 'kilder_arkiv_spor');
+assert.ok(archiveResults[0].matched_terms.includes('arkiv'));
+assert.ok(archiveResults[0].matched_terms.includes('kildekritikk'));
 
 console.log('ahaSubjectEngine canonical-index regression test passed');
