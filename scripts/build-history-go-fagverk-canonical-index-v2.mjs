@@ -131,15 +131,21 @@ function compactMethod(raw, subjectId, sourceRef, sourcePath, index) {
   };
 }
 
-function compactChapter(raw, subjectId, sourceRef, index) {
+function compactChapter(raw, subjectId, sourceRef, index, emneById) {
   const chapter = object(raw);
   const id = String(chapter.id || chapter.chapter_id || `canonical_chapter_${subjectId}_${index + 1}`);
+  const emneIds = unique(chapter.emne_ids || []);
+  const linked = emneIds.map((emneId) => emneById.get(emneId)).filter(Boolean);
   return {
     chapter_id: id,
     title: String(chapter.title || id),
     subtitle: String(chapter.subtitle || ""),
     primary_domain_id: String(chapter.primary_domain_id || ""),
-    emne_ids: unique(chapter.emne_ids || []),
+    emne_ids: emneIds,
+    core_concepts: unique(linked.flatMap((item) => item.core_concepts || [])),
+    keywords: unique([chapter.primary_domain_id, ...linked.flatMap((item) => item.keywords || [])]),
+    thinkers: unique(linked.flatMap((item) => item.thinkers || [])),
+    methods: unique(linked.flatMap((item) => item.methods || [])),
     source_path: String(chapter.file || chapter.source_path || ""),
     source_ref: sourceRef
   };
@@ -192,6 +198,8 @@ async function build() {
     const methodsRaw = Array.isArray(assets[1]?.data) ? assets[1].data : Array.isArray(assets[1]?.data?.methods) ? assets[1].data.methods : [];
     const registrySubject = object(registry?.subjects?.[entry.id]);
     const releaseSubject = object(release?.subjects?.[entry.id]);
+    const compactedEmner = emnerRaw.map((item, index) => compactEmne(item, entry.id, bridge.canonical_source.source_ref, emnerPath, index));
+    const emneById = new Map(compactedEmner.map((item) => [item.emne_id, item]));
     subjects.push({
       subject_id: entry.id,
       subject_label: String(registrySubject.title || releaseSubject.title || entry.label || entry.id),
@@ -206,9 +214,9 @@ async function build() {
         methods_path: methodsPath,
         methods_transport_sha256: assets[1]?.transport_digest || ""
       },
-      emner: emnerRaw.map((item, index) => compactEmne(item, entry.id, bridge.canonical_source.source_ref, emnerPath, index)),
+      emner: compactedEmner,
       methods: methodsRaw.map((item, index) => compactMethod(item, entry.id, bridge.canonical_source.source_ref, methodsPath, index)),
-      chapters: (Array.isArray(registrySubject.chapters) ? registrySubject.chapters : []).map((item, index) => compactChapter(item, entry.id, bridge.canonical_source.source_ref, index))
+      chapters: (Array.isArray(registrySubject.chapters) ? registrySubject.chapters : []).map((item, index) => compactChapter(item, entry.id, bridge.canonical_source.source_ref, index, emneById))
     });
   }
 
