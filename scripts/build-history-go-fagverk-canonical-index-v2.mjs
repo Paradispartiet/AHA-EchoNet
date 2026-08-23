@@ -12,6 +12,7 @@ const BRIDGE_PATH = "data/integrations/history-go-fagverk-bridge.v2.json";
 const DEFAULT_OUTPUT = "data/integrations/runtime/history-go-fagverk-canonical-index.v2.json";
 const SEMANTIC_KEY = /(?:title|label|name|term|concept|keyword|topic|theme|method|theor|thinker|framework|dimension|genre|scope|area|field|focus|foundation|chapter|files?)/iu;
 const TERM_NOISE = new Set(["json", "canonical", "active", "complete", "schema", "version", "file", "files", "data", "fag"]);
+const CHAPTER_TERM_NOISE = new Set(["data", "fagverk", "json", "og", "eller", "med", "for", "til", "fra", "som", "chapter", "module", "forklare", "anvende", "analysere", "vurdere", "identifisere"]);
 
 function parseArgs(argv) {
   const out = { check: false, write: false, output: DEFAULT_OUTPUT };
@@ -37,6 +38,7 @@ function unique(values) {
   return (Array.isArray(values) ? values : [values]).flatMap((value) => Array.isArray(value) ? value : [value]).map((value) => String(value ?? "").trim()).filter((value) => value && !seen.has(value) && seen.add(value));
 }
 function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+function normalize(value) { return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim(); }
 function rawBase(bridge) {
   const repository = String(bridge?.canonical_source?.repository || "");
   const ref = String(bridge?.canonical_source?.source_ref || "");
@@ -96,7 +98,7 @@ function manifestJsonPointers(value, prefix = "") {
 }
 
 function pathTerms(value) {
-  const base = path.posix.basename(String(value || ""), ".json").replace(/[_-]+/g, " ").replace(/\bv\d+(?: \d+)*\b/giu, " ").replace(/\s+/g, " ").trim();
+  const base = path.posix.basename(String(value || ""), ".json").replace(/^\d+[-_]?/, "").replace(/[_-]+/g, " ").replace(/\bv\d+(?: \d+)*\b/giu, " ").replace(/\s+/g, " ").trim();
   if (!base) return [];
   const parts = base.split(" ").filter((part) => part.length >= 4 && !TERM_NOISE.has(part.toLowerCase()));
   return unique([base, ...parts]);
@@ -128,6 +130,19 @@ function extractSupplementTerms(data) {
   return unique(terms);
 }
 
+function chapterSemanticTerms(chapter, sourcePath) {
+  const source = object(chapter);
+  const terms = [];
+  pathTerms(source.id || source.chapter_id).forEach((term) => terms.push(term));
+  pathTerms(sourcePath).forEach((term) => terms.push(term));
+  for (const moduleFile of Array.isArray(source.moduleFiles) ? source.moduleFiles : []) pathTerms(moduleFile).forEach((term) => terms.push(term));
+  for (const objective of Array.isArray(source.learningObjectives) ? source.learningObjectives : []) {
+    const words = normalize(objective).split(" ").filter((term) => term.length >= 8 && !CHAPTER_TERM_NOISE.has(term));
+    terms.push(...words);
+  }
+  return unique(terms).slice(0, 80);
+}
+
 function compactSupplement(pointer, asset, subjectId, sourceRef) {
   const data = object(asset.data);
   return {
@@ -152,12 +167,28 @@ function compactMethod(raw, subjectId, sourceRef, sourcePath, index) {
   const id = String(item.method_id || item.id || `canonical_method_${subjectId}_${index + 1}`);
   return { method_id: id, title: String(item.title || item.name || item.short_label || id), short_label: String(item.short_label || ""), description: String(item.description || item.method_use_note || ""), data_forms: arraysFrom(item, ["data_forms", "coverage_domains", "question_moves", "hook_affinities"]), emne_affinities: arraysFrom(item, ["emne_affinities", "best_for_emne_kinds"]), source_path: sourcePath, source_ref: sourceRef };
 }
-function compactChapter(raw, subjectId, sourceRef, index, emneById) {
+function compactChapter(raw, subjectId, sourceRef, index, emneById, chapterAsset) {
   const chapter = object(raw);
   const id = String(chapter.id || chapter.chapter_id || `canonical_chapter_${subjectId}_${index + 1}`);
   const emneIds = unique(chapter.emne_ids || []);
   const linked = emneIds.map((emneId) => emneById.get(emneId)).filter(Boolean);
-  return { chapter_id: id, title: String(chapter.title || id), subtitle: String(chapter.subtitle || ""), primary_domain_id: String(chapter.primary_domain_id || ""), emne_ids: emneIds, core_concepts: unique(linked.flatMap((item) => item.core_concepts || [])), keywords: unique([chapter.primary_domain_id, ...linked.flatMap((item) => item.keywords || [])]), thinkers: unique(linked.flatMap((item) => item.thinkers || [])), methods: unique(linked.flatMap((item) => item.methods || [])), source_path: String(chapter.file || chapter.source_path || ""), source_ref: sourceRef };
+  const sourcePath = String(chapter.file || chapter.source_path || "");
+  const semanticTerms = chapterSemanticTerms(chapterAsset?.data || chapter, sourcePath);
+  return {
+    chapter_id: id,
+    title: String(chapter.title || chapterAsset?.data?.title || id),
+    subtitle: String(chapter.subtitle || chapterAsset?.data?.subtitle || ""),
+    primary_domain_id: String(chapter.primary_domain_id || ""),
+    emne_ids: emneIds,
+    core_concepts: unique([...linked.flatMap((item) => item.core_concepts || []), ...semanticTerms]),
+    keywords: unique([chapter.primary_domain_id, ...linked.flatMap((item) => item.keywords || [])]),
+    thinkers: unique(linked.flatMap((item) => item.thinkers || [])),
+    methods: unique(linked.flatMap((item) => item.methods || [])),
+    semantic_terms: semanticTerms,
+    source_path: sourcePath,
+    chapter_transport_sha256: String(chapterAsset?.transport_digest || ""),
+    source_ref: sourceRef
+  };
 }
 
 async function build() {
@@ -196,6 +227,12 @@ async function build() {
     const methodsRaw = Array.isArray(methodsAsset.data) ? methodsAsset.data : Array.isArray(methodsAsset.data?.methods) ? methodsAsset.data.methods : [];
     const registrySubject = object(registry?.subjects?.[entry.id]);
     const releaseSubject = object(release?.subjects?.[entry.id]);
+    const registryChapters = Array.isArray(registrySubject.chapters) ? registrySubject.chapters : [];
+    const chapterAssets = await Promise.all(registryChapters.map((chapter, chapterIndex) => {
+      const sourcePath = String(chapter?.file || chapter?.source_path || "").trim();
+      if (!/^data\/fagverk\/.+\.json$/u.test(sourcePath)) return null;
+      return fetchJson(`${base}${sourcePath}`, `${entry.id}.chapter.${chapter?.id || chapter?.chapter_id || chapterIndex + 1}`);
+    }));
     const compactedEmner = emnerRaw.map((item, index) => compactEmne(item, entry.id, bridge.canonical_source.source_ref, emnerPath, index));
     const emneById = new Map(compactedEmner.map((item) => [item.emne_id, item]));
     subjects.push({
@@ -209,15 +246,15 @@ async function build() {
       package: { emner_path: emnerPath, emner_transport_sha256: emnerAsset.transport_digest || "", methods_path: methodsPath, methods_transport_sha256: methodsAsset.transport_digest || "" },
       emner: compactedEmner,
       methods: methodsRaw.map((item, index) => compactMethod(item, entry.id, bridge.canonical_source.source_ref, methodsPath, index)),
-      chapters: (Array.isArray(registrySubject.chapters) ? registrySubject.chapters : []).map((item, index) => compactChapter(item, entry.id, bridge.canonical_source.source_ref, index, emneById)),
+      chapters: registryChapters.map((item, index) => compactChapter(item, entry.id, bridge.canonical_source.source_ref, index, emneById, chapterAssets[index])),
       supplements: dedupPointers.map((pointer, index) => compactSupplement(pointer, supplementAssets[index], entry.id, bridge.canonical_source.source_ref))
     });
   }
 
   return {
-    schema: "aha_history_go_fagverk_canonical_index_v2", version: "2.1.0", authority: "derived_cache_only",
+    schema: "aha_history_go_fagverk_canonical_index_v2", version: "2.2.0", authority: "derived_cache_only",
     canonical_source: { repository: bridge.canonical_source.repository, source_ref: bridge.canonical_source.source_ref, bridge_path: BRIDGE_PATH, release_path: paths.release, subject_inventory_path: paths.subject_inventory, registry_path: paths.registry, fag_manifest_path: paths.fag_manifest, registry_content_sha256: expected.registry_sha256, subject_inventory_content_sha256: expected.subject_inventory_sha256, fag_manifest_content_sha256: expected.fag_manifest_sha256, registry_transport_sha256: registryAsset.transport_digest, subject_inventory_transport_sha256: inventoryAsset.transport_digest, fag_manifest_transport_sha256: manifestAsset.transport_digest },
-    summary: { root_subject_count: roots, specialization_count: specializations, subject_count: subjects.length, emne_count: subjects.reduce((sum, subject) => sum + subject.emner.length, 0), method_count: subjects.reduce((sum, subject) => sum + subject.methods.length, 0), chapter_count: subjects.reduce((sum, subject) => sum + subject.chapters.length, 0), supplement_count: subjects.reduce((sum, subject) => sum + subject.supplements.length, 0), missing_file_count: 0 },
+    summary: { root_subject_count: roots, specialization_count: specializations, subject_count: subjects.length, emne_count: subjects.reduce((sum, subject) => sum + subject.emner.length, 0), method_count: subjects.reduce((sum, subject) => sum + subject.methods.length, 0), chapter_count: subjects.reduce((sum, subject) => sum + subject.chapters.length, 0), chapter_semantic_source_count: subjects.reduce((sum, subject) => sum + subject.chapters.filter((chapter) => chapter.chapter_transport_sha256).length, 0), supplement_count: subjects.reduce((sum, subject) => sum + subject.supplements.length, 0), missing_file_count: 0 },
     subjects
   };
 }
