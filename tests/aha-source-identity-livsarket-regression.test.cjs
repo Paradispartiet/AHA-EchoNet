@@ -195,7 +195,8 @@ function assertLinkPrimarySourcePolicy() {
   assert.equal(cacheBeforeReload.payload.semanticDocumentV2.validation.valid, true);
   assert.ok(cacheBeforeReload.payload.semanticDocumentV2.claims.length >= 2, 'live SemanticDocumentV2 must contain source claims from the actual Livsarket input');
   assert.ok(cacheBeforeReload.payload.semanticDocumentV2.concepts.length >= 1, 'live SemanticDocumentV2 must contain literal source-grounded concepts');
-  assert.ok(cacheBeforeReload.payload.semanticDocumentV2.candidate_insights.length >= 1, 'current Chat analysis candidates must reach the live quality gate');
+  assert.equal(cacheBeforeReload.payload.semanticDocumentV2.candidate_insights.length, 0,
+    'an empty authoritative candidate list must fail closed instead of merging legacy canonical or afterwork text');
   assert.ok(cacheBeforeReload.payload.semanticDocumentV2.candidate_insights.every((item) => ['approved', 'blocked'].includes(item.status)));
   assert.equal(JSON.stringify(cacheBeforeReload.payload.semanticDocumentV2).includes('Kilde registrert'), false);
   assert.equal(cacheBeforeReload.payload.analysisBundleV2.semantic_document.schema, 'aha_semantic_document_v2');

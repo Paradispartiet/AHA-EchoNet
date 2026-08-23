@@ -53,6 +53,7 @@ function createHarness(options = {}) {
     buildAIState: () => ({ state: "test" }),
     loadChamber: () => ({ signals: [] }),
     saveChamber: (chamber) => calls.saves.push(chamber),
+    candidateCacheStorage: options.candidateCacheStorage || null,
     now: () => "2026-08-14T00:00:00.000Z"
   });
   return { runtime, calls };
@@ -108,6 +109,33 @@ async function verifyBackgroundIngest() {
   });
 }
 
+async function verifyAnalysisGenerationIsReadOnly() {
+  const { runtime, calls } = createHarness({ aiCandidates: [{ text: "Analysebundet AI-kandidat" }] });
+  const candidates = await runtime.generateAnalysisInsightCandidates("Aktiv analysekilde");
+  const replayedCandidates = await runtime.generateAnalysisInsightCandidates("Aktiv analysekilde");
+  assert.equal(candidates.length, 1);
+  assert.deepEqual(replayedCandidates, candidates);
+  assert.notStrictEqual(replayedCandidates, candidates, "cached candidates must be returned as an isolated clone");
+  assert.equal(calls.ai.length, 1, "same source and analysis context must reuse one authoritative candidate request");
+  assert.equal(calls.canonical.length, 0, "analysebundet generering skal ikke skrive til Chamber");
+  assert.equal(calls.sources.length, 0, "analysebundet generering skal ikke opprette source events");
+}
+async function verifyAnalysisGenerationSurvivesReload() {
+  const values = new Map();
+  const candidateCacheStorage = {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, String(value)),
+    removeItem: (key) => values.delete(key)
+  };
+  const first = createHarness({ aiCandidates: [{ text: "Stabil kildekandidat" }], candidateCacheStorage });
+  const initial = await first.runtime.generateAnalysisInsightCandidates("Samme kilde etter reload");
+  assert.equal(first.calls.ai.length, 1);
+
+  const reloaded = createHarness({ aiCandidates: [{ text: "Ustabil ny kandidat" }], candidateCacheStorage });
+  const replay = await reloaded.runtime.generateAnalysisInsightCandidates("Samme kilde etter reload");
+  assert.deepEqual(replay, initial, "same source and context must hydrate the authoritative session candidate after reload");
+  assert.equal(reloaded.calls.ai.length, 0, "reload replay must not spend a second model call");
+}
 {
   const { runtime, calls } = createHarness({ engine: false });
   assert.equal(runtime.handleUserMessage("Ingen motor"), 0);
@@ -119,7 +147,11 @@ assert.doesNotMatch(chatSource, /function (?:ingestUserMessageWithCandidates|han
 assert.doesNotMatch(chatSource, /ingestWithCandidates|addSourceEvent\?\.\(/);
 assert.ok(chatHtml.indexOf("js/ahaChatIngestRuntime.js") < chatHtml.indexOf("js/ahaChat.js"));
 
-verifyBackgroundIngest()
+Promise.all([
+  verifyBackgroundIngest(),
+  verifyAnalysisGenerationIsReadOnly(),
+  verifyAnalysisGenerationSurvivesReload()
+])
   .then(() => console.log("aha-chat-ingest-runtime passed"))
   .catch((error) => {
     console.error(error);

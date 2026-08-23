@@ -113,7 +113,7 @@
       && text(record?.insight)
       && Number.isFinite(Number(record?.quality_score))
       && Number(record.quality_score) >= 0.55
-      && ["causal", "not_causal"].includes(text(record?.causal_status))
+      && ["not_causal", "source_explicit", "interpretive"].includes(text(record?.causal_status))
       && arr(record?.evidence).length >= 2
     )).map((record) => {
       const evidence = arr(record.evidence).map((entry) => ({

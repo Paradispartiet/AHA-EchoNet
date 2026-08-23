@@ -355,10 +355,20 @@
       }
       retrieval.renderPersonalContextStatus();
       retrieval.renderPersonalAiLoopStatus();
+      const analysisInsightCandidatesPromise = Promise.resolve(
+        input.generateAnalysisInsightCandidates(analysisInputText)
+      ).catch((err) => {
+        global.console.warn("AI insight-candidates for aktiv analyse feilet", err);
+        return [];
+      });
       let count = 0;
       if (savingEnabled && !urlInfo.isSourceAction && !transientAnalysisDocument) {
         count = input.handleUserMessage(cleanText);
-        void input.handleUserMessageInsightCandidatesInBackground(cleanText)
+        void analysisInsightCandidatesPromise
+          .then((candidates) => {
+            if (!analysis.isActiveAnalysisRun(analysisRun) || !Array.isArray(candidates) || !candidates.length) return 0;
+            return input.ingestUserMessageWithCandidates(cleanText, candidates);
+          })
           .then((aiCount) => {
             if (aiCount > 0) ui.setStatusNote(`Beriket med ${aiCount} AI-signal${aiCount === 1 ? "" : "er"} i bakgrunnen.`);
           })
@@ -372,11 +382,11 @@
       if (memoryContext.used) ui.setStatusNote("Bruker relevant AHA-minne.");
       void memory.updateMemoryStatus();
       ui.setProcessing(true, "AHA analyserer teksten …");
-      return { ...submission, analysisRun, analysisInputText, memoryContext, personalContext, answerPackage, memoryUseEnabled };
+      return { ...submission, analysisRun, analysisInputText, memoryContext, personalContext, answerPackage, memoryUseEnabled, analysisInsightCandidatesPromise };
     }
 
     async function executeAnalysis(context) {
-      const { cleanText, urlInfo, savingEnabled, analysisRun, analysisInputText, memoryContext, personalContext, answerPackage, memoryUseEnabled } = context;
+      const { cleanText, urlInfo, savingEnabled, analysisRun, analysisInputText, memoryContext, personalContext, answerPackage, memoryUseEnabled, analysisInsightCandidatesPromise } = context;
       try {
         ui.setProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
         const agent = await analysis.askAgent(analysisInputText, { memoryContext, personalContext });
@@ -434,10 +444,13 @@
         }
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
         try {
+          const insightCandidatesV2 = await analysisInsightCandidatesPromise;
+          if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
           await analysis.renderAutoOutputs(cleanText, safeReply, {
             subjectMatches: urlInfo.isSourceAction ? [] : subjectMatches,
             persist: savingEnabled,
-            analysisRun
+            analysisRun,
+            insightCandidatesV2: Array.isArray(insightCandidatesV2) ? insightCandidatesV2 : []
           });
         } catch (autoErr) {
           global.console.warn("Auto-output feilet", autoErr);

@@ -62,6 +62,19 @@ const blockedCandidate = {
   ...approvedCandidate,
   insight: 'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.'
 };
+const liveApiCandidate = {
+  title: 'Felles kjerne med lokal tilpasning',
+  summary: 'Delvis standardisering balanserer sammenlignbarhet mot behovet for lokal fleksibilitet i ulike saker.',
+  functional_type: 'pattern',
+  evidence_quotes: [
+    'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.',
+    'Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.'
+  ],
+  why_it_matters: 'Modellen viser hvordan styringssystemer kan kombinere felles krav med nødvendig lokal tilpasning.',
+  uncertainty: 'interpretive',
+  claim_kind: 'interpretation',
+  candidate_type: 'ai'
+};
 const payload = {
   ...activeRun,
   source_binding: { valid: true },
@@ -69,11 +82,11 @@ const payload = {
   canonicalAnalysis: {
     theme: 'Standardisering og fleksibilitet',
     mainTension: 'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.',
-    keyInsight: approvedCandidate.insight
+    keyInsight: 'Eldre canonical-tekst skal ikke slås sammen med den autoritative kandidatlisten.'
   },
-  ahaSer: { viktigsteInnsikt: approvedCandidate.insight },
+  ahaSer: { viktigsteInnsikt: 'Eldre afterwork-tekst skal ikke slås sammen med den autoritative kandidatlisten.' },
   reflection: approvedCandidate.why_it_matters,
-  insightCandidatesV2: [approvedCandidate, blockedCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
+  insightCandidatesV2: [approvedCandidate, blockedCandidate, liveApiCandidate, { insight: 'Kilde registrert', type: 'pattern' }]
 };
 
 const bridge = context.AHALiveSemanticBridgeV2;
@@ -87,15 +100,52 @@ assert.ok(semantic.concepts.length >= 4);
 assert.ok(semantic.claims.length >= 3);
 assert.ok(semantic.relations.length >= 4);
 assert.ok(semantic.tensions.length >= 1);
-assert.equal(semantic.candidate_insights.length, 2, 'metadata candidates must be excluded before semantic insight creation');
-assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 1);
+assert.equal(semantic.candidate_insights.length, 3, 'metadata candidates must be excluded before semantic insight creation');
+assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 2);
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'blocked').length, 1);
+assert.equal(semantic.candidate_insights.find((item) => item.insight === liveApiCandidate.summary).origin, 'live_analysis_candidate');
+assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre canonical-tekst'), false);
+assert.equal(JSON.stringify(semantic.candidate_insights).includes('Eldre afterwork-tekst'), false);
 assert.equal(semantic.synthesis_gate.authoritative, true);
-assert.equal(semantic.synthesis_gate.approved_count, 1);
+assert.equal(semantic.synthesis_gate.approved_count, 2);
 assert.equal(semantic.synthesis_gate.blocked_count, 1);
 assert.equal(semantic.policy.legacy_chamber_dependency, false);
 assert.equal(semantic.policy.ungated_heuristic_synthesis, false);
 bridge.CLOSED_WRITE_POLICY.forEach((key) => assert.equal(semantic.policy[key], false));
+
+const emptyAuthoritative = bridge.build({
+  activeRun,
+  sourceText,
+  payload: { ...payload, insightCandidatesV2: [] }
+});
+assert.equal(emptyAuthoritative.candidate_insights.length, 0,
+  'an explicitly empty authoritative list must not fall back to canonical or afterwork candidates');
+
+const changedLegacy = bridge.build({
+  activeRun,
+  sourceText,
+  payload: {
+    ...payload,
+    concepts: ['rapporter', 'prosjekt'],
+    canonicalAnalysis: {
+      ...payload.canonicalAnalysis,
+      concepts: ['rapporter', 'prosjekt'],
+      mainTension: 'Et prosjekt brukte én felles mal for alle rapporter.'
+    },
+    ahaSer: {
+      viktigsteInnsikt: 'En annen legacy-innsikt.',
+      begreper: ['rapporter'],
+      hovedspenning: 'Et prosjekt brukte én felles mal for alle rapporter.'
+    },
+    reflection: 'En annen legacy-refleksjon.'
+  }
+});
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.concepts)), JSON.parse(JSON.stringify(semantic.concepts)),
+  'authoritative concepts must be independent of legacy canonical and afterwork ordering');
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.tensions)), JSON.parse(JSON.stringify(semantic.tensions)),
+  'authoritative tensions must be derived from the source rather than legacy canonical fields');
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.candidate_insights)), JSON.parse(JSON.stringify(semantic.candidate_insights)),
+  'authoritative candidates must be independent of legacy reflection and canonical fallbacks');
 
 const bundle = context.AHAAnalysisBundleV2.build({ activeRun, payload, sourceText, semanticDocument: semantic });
 assert.equal(bundle.validation.valid, true);
@@ -103,15 +153,44 @@ assert.equal(bundle.semantic_document.schema, semantic.schema);
 assert.equal(bundle.semantic_document.source_sha256, sourceSha256);
 assert.equal(bundle.semantic_document.analysis_run_id, activeRun.analysisRunId);
 assert.equal(bundle.semantic_document.source_id, activeRun.sourceId);
-assert.equal(bundle.semantic_document.approved_insight_ids.length, 1);
+assert.equal(bundle.semantic_document.approved_insight_ids.length, 2);
 assert.equal(bundle.semantic_document.blocked_candidate_insight_ids.length, 1);
-assert.equal(bundle.surfaces.insights.length, 1, 'only quality-approved current insights may enter AnalysisBundleV2');
+assert.equal(bundle.surfaces.insights.length, 2, 'only quality-approved current insights may enter AnalysisBundleV2');
 assert.equal(bundle.surfaces.insights[0].value, approvedCandidate.insight);
 assert.equal(bundle.surfaces.insights[0].provenance.origin, 'semantic_document_v2_quality_approved');
 assert.equal(bundle.surfaces.overview.strongest_insight.value, approvedCandidate.insight);
 assert.ok(bundle.surfaces.concepts.every((field) => field.provenance.origin === 'semantic_document_v2_literal_concept'));
 assert.equal(JSON.stringify(bundle).includes('Kilde registrert'), false);
 assert.equal(forbiddenWrites, 0, 'building the semantic document and bundle must remain read-only');
+
+const rejectedLegacyTopicReports = context.AHAAnalysisBundleV2.build({
+  activeRun,
+  payload,
+  sourceText,
+  semanticDocument: semantic,
+  fieldReports: {
+    'insights.item': { valid: false, status: 'invalid_legacy_topic_report' },
+    'concepts.item': { valid: false, status: 'invalid_legacy_topic_report' },
+    'canonicalAnalysis.mainTension': { valid: false, status: 'invalid_legacy_topic_report' },
+    'canonicalAnalysis.keyInsight': { valid: false, status: 'invalid_legacy_topic_report' }
+  }
+});
+assert.ok(rejectedLegacyTopicReports.surfaces.insights.every((field) => field.topic.status === 'verified' && field.quality.status === 'passed'),
+  'legacy topic reports must not override authoritative source-bound insight evidence');
+assert.ok(rejectedLegacyTopicReports.surfaces.concepts.every((field) => field.topic.status === 'verified' && field.quality.status === 'passed'),
+  'legacy topic reports must not override authoritative source-bound concept evidence');
+assert.equal(rejectedLegacyTopicReports.surfaces.overview.central_tension.topic.status, 'verified');
+assert.equal(rejectedLegacyTopicReports.surfaces.overview.strongest_insight.topic.status, 'verified');
+assert.deepEqual(
+  JSON.parse(JSON.stringify(rejectedLegacyTopicReports.surfaces.insights)),
+  JSON.parse(JSON.stringify(bundle.surfaces.insights)),
+  'authoritative insight fields must be deterministic when unrelated Chat topic reports change'
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(rejectedLegacyTopicReports.surfaces.concepts)),
+  JSON.parse(JSON.stringify(bundle.surfaces.concepts)),
+  'authoritative concept fields must be deterministic when unrelated Chat topic reports change'
+);
 
 const reloaded = bridge.hydrate(JSON.parse(JSON.stringify(semantic)), { activeRun, payload, sourceText });
 assert.ok(reloaded);
