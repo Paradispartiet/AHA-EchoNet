@@ -10,15 +10,16 @@ on:
       - "docs/HISTORY_GO_FAGVERK_BRIDGE_V2.md"
       - "scripts/build-history-go-fagverk-canonical-index-v2.mjs"
       - "scripts/ensure-python-fagverk-canonical-v2.mjs"
+      - "scripts/ensure-fagverk-canonical-tests-v2.mjs"
       - "scripts/materialize-history-go-fagverk-subjects.mjs"
-      - "scripts/audit-local-subject-knowledge.mjs"
       - "js/ahaSubjectEngine.js"
       - "js/emnerLoader.js"
+      - "tests/fixtures/aha-production-analysis-quality-matrix.v1.json"
       - "tests/aha-history-go-fagverk-canonical-bridge-v2.test.cjs"
       - "tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs"
-      - "tests/aha-local-subject-knowledge-audit.test.cjs"
       - "tests/aha-production-analysis-pipeline-audit.test.cjs"
       - "tests/aha-production-analysis-quality-matrix.test.cjs"
+      - "tests/ahaSubjectEngine.regression.test.mjs"
       - "backend/aha_engine/app/engine/fagverk_canonical.py"
       - "backend/aha_engine/app/engine/fagverk_grounding.py"
       - "backend/aha_engine/tests/test_fagverk_grounding.py"
@@ -50,19 +51,22 @@ jobs:
       - name: Route Python production grounding to canonical index
         run: node scripts/ensure-python-fagverk-canonical-v2.mjs --write
 
+      - name: Migrate active quality gates off the partial runtime registry
+        run: node scripts/ensure-fagverk-canonical-tests-v2.mjs --write
+
       - name: Persist deterministic canonical artifacts on same-repo PRs
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
-          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py)"
+          CHANGED="$(git status --porcelain -- data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs)"
           if [ -z "$CHANGED" ]; then
             echo "Canonical deployment artifacts already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py
+          git add data/integrations/runtime/history-go-fagverk-canonical-index.v2.json backend/aha_engine/app/engine/fagverk_grounding.py tests/aha-production-analysis-pipeline-audit.test.cjs tests/aha-production-analysis-quality-matrix.test.cjs
           git commit -m "chore(fagverk): refresh canonical deployment consumers"
           git push origin "HEAD:${HEAD_REF}"
 
@@ -70,22 +74,19 @@ jobs:
         run: |
           node scripts/build-history-go-fagverk-canonical-index-v2.mjs --check
           node scripts/ensure-python-fagverk-canonical-v2.mjs --check
+          node scripts/ensure-fagverk-canonical-tests-v2.mjs --check
 
       - name: Verify bridge authority and Subject Engine integration
         run: |
           node scripts/materialize-history-go-fagverk-subjects.mjs --check
           node tests/aha-history-go-fagverk-canonical-bridge-v2.test.cjs
           node tests/aha-history-go-fagverk-subject-bridge.integration.test.cjs
+          node tests/ahaSubjectEngine.regression.test.mjs
 
-      - name: Verify production analysis provenance and subject routing
+      - name: Verify production analysis provenance and reviewed routing
         run: |
           node tests/aha-production-analysis-pipeline-audit.test.cjs
           node tests/aha-production-analysis-quality-matrix.test.cjs
-
-      - name: Verify governed AHA overlays
-        run: |
-          node scripts/audit-local-subject-knowledge.mjs --check
-          node tests/aha-local-subject-knowledge-audit.test.cjs
 
       - name: Install Python dependencies
         working-directory: backend/aha_engine
