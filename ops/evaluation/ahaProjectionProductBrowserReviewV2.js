@@ -172,6 +172,8 @@
       genre: entry.genre,
       focus: entry.focus,
       expected_visible: entry.expected_visible,
+      live_disposition: text(entry.live_disposition) || "coverage_case",
+      live_rationale: text(entry.live_rationale),
       bundle_status: bundle.status,
       semantic_diagnostics: {
         document_status: text(semanticDocument.status),

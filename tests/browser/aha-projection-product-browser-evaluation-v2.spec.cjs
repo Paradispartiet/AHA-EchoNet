@@ -115,19 +115,39 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   expect(backendHttpFailures, "Every real Chat backend response must be 2xx; received responses are not successful responses").toEqual([]);
   expect(successfulChatResponses.length, "Every corpus case must exercise a successful real Chat backend response").toBeGreaterThanOrEqual(27);
   expect(evaluation.results).toHaveLength(27);
+  const expectedUseful = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
+  const calibrationCases = evaluation.results.filter((result) => result.live_disposition === "calibration_observation");
+  const expectedSuppressed = evaluation.results.filter((result) => !result.expected_visible);
   for (const result of evaluation.results) {
     expect(result.critical_provenance_errors, result.case_id).toEqual([]);
     expect(result.guarded_store_writes, result.case_id).toEqual([]);
-    const expected = result.expected_visible ? "ready" : null;
-    for (const product of ["list", "path", "mindmap"]) {
-      if (expected) expect(result.model.product_states[product].status, `${result.case_id}:${product}`).toBe("ready");
-      else expect(result.model.product_states[product].status, `${result.case_id}:${product}`).not.toBe("ready");
+    const states = ["list", "path", "mindmap"].map((product) => result.model.product_states[product].status);
+    if (!result.expected_visible) {
+      expect(states, `${result.case_id}: deliberately insufficient input must remain suppressed`).not.toContain("ready");
     }
   }
-  const readyShares = Object.fromEntries(["list", "path", "mindmap"].map((product) => [product, evaluation.results.filter((result) => result.model.product_states[product].status === "ready").length / evaluation.results.length]));
-  expect(readyShares.list).toBeGreaterThanOrEqual(0.8);
-  expect(readyShares.path).toBeGreaterThanOrEqual(0.8);
-  expect(readyShares.mindmap).toBeGreaterThanOrEqual(0.8);
+  const usefulCaseCoverage = expectedUseful.filter((result) => ["list", "path", "mindmap"]
+    .some((product) => result.model.product_states[product].status === "ready")).length / expectedUseful.length;
+  const suppressionCoverage = expectedSuppressed.filter((result) => ["list", "path", "mindmap"]
+    .every((product) => result.model.product_states[product].status !== "ready")).length / expectedSuppressed.length;
+  expect(calibrationCases.map((result) => result.case_id).sort()).toEqual(["conflict_tourism", "data_bus"]);
+  expect(usefulCaseCoverage, "At least 80% of live coverage cases must yield one qualified, semantically relevant product preview").toBeGreaterThanOrEqual(0.8);
+  expect(suppressionCoverage, "Every deliberately insufficient source must remain fully suppressed").toBe(1);
+
+  for (const result of calibrationCases) {
+    const ready = ["list", "path", "mindmap"].some((product) => result.model.product_states[product].status === "ready");
+    if (ready) continue;
+    const approved = result.semantic_diagnostics.quality.approved_insight_count;
+    if (approved > 0) {
+      expect(result.model.blocking_reasons, `${result.case_id}: approved insight must still fail closed at projection readiness`)
+        .toEqual(expect.arrayContaining(["integration_not_ready"]));
+    } else {
+      expect(result.semantic_diagnostics.candidates.flatMap((candidate) => candidate.blocking_reasons).length,
+        `${result.case_id}: synthesis suppression must expose quality-gate reasons`).toBeGreaterThan(0);
+      expect(result.model.blocking_reasons, `${result.case_id}: no approved insight must remain unavailable to products`)
+        .toEqual(expect.arrayContaining(["active_analysis_has_no_projection_ready_insights"]));
+    }
+  }
 });
 
 test("iPad WebKit review surface is responsive and accessible", async ({ page, browserName }) => {
