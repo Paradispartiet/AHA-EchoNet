@@ -308,6 +308,37 @@ def _match_passes_threshold(match: GroundingMatch) -> bool:
     return match.score >= match.minimum_score and len(match.matched_terms) >= match.minimum_terms
 
 
+def _threshold_strength(match: GroundingMatch) -> float:
+    return match.score / max(match.minimum_score, 0.001)
+
+
+def _passing_match_sort_key(match: GroundingMatch) -> tuple[float, float, float, float, str, str]:
+    return (
+        -round(_threshold_strength(match), 6),
+        -round(match.score - match.minimum_score, 6),
+        -match.confidence,
+        -match.score,
+        match.subject_id,
+        match.chapter_id,
+    )
+
+
+def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
+    same_scale = (
+        top.scoring_mode == second.scoring_mode
+        and math.isclose(top.minimum_score, second.minimum_score, rel_tol=0.0, abs_tol=1e-9)
+    )
+    if same_scale:
+        return (top.score - second.score) < top.ambiguity_margin
+    normalized_gap = _threshold_strength(top) - _threshold_strength(second)
+    normalized_margin = min(
+        0.25,
+        top.ambiguity_margin / max(top.minimum_score, 1.0),
+        second.ambiguity_margin / max(second.minimum_score, 1.0),
+    )
+    return normalized_gap < normalized_margin
+
+
 def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[str, Any]:
     normalized = _normalize(message)
     if len(normalized) < 24:
@@ -319,8 +350,6 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     for entry in payload.get("entries", []):
         subject_id = str(entry.get("subject_id") or "")
         policy = subject_policies.get(subject_id)
-        if policy and entry.get("chapter_id") not in (policy.get("chapter_rules") or {}):
-            policy = None
         if policy:
             score, matched_terms, eligible, contributions = _policy_entry_score(normalized, entry, policy)
             thresholds = policy.get("thresholds", {})
@@ -364,9 +393,10 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
             "matches": [match.__dict__ for match in matches[:3]],
         }
 
+    passing_matches.sort(key=_passing_match_sort_key)
     top = passing_matches[0]
     second = passing_matches[1] if len(passing_matches) > 1 else None
-    if second and (top.score - second.score) < top.ambiguity_margin:
+    if second and _matches_are_ambiguous(top, second):
         return {
             "status": "ambiguous",
             "reason": "multiple_chapters_close",
