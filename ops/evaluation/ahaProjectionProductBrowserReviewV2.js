@@ -49,8 +49,37 @@
   function normalizeReplay(value) {
     if (Array.isArray(value)) return value.map(normalizeReplay);
     if (!value || typeof value !== "object") return value;
-    const dynamic = new Set(["analysis_id", "analysis_run_id", "created_at", "bundle_id", "analysis_bundle_id"]);
-    return Object.fromEntries(Object.entries(value).filter(([key]) => !dynamic.has(key)).map(([key, child]) => [key, normalizeReplay(child)]));
+    const dynamic = new Set(["analysis_id", "analysis_run_id", "source_id", "created_at", "bundle_id", "analysis_bundle_id"]);
+    if (dynamic.has(text(value.field)) && Object.prototype.hasOwnProperty.call(value, "value")) {
+      return Object.fromEntries(Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, child]) => [key, key === "value" ? "<run-local-identity>" : normalizeReplay(child)]));
+    }
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => !dynamic.has(key))
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, child]) => [key, normalizeReplay(child)]));
+  }
+
+  function replayDifference(left, right, path = "surfaces") {
+    if (same(left, right)) return null;
+    if (Array.isArray(left) || Array.isArray(right)) {
+      if (!Array.isArray(left) || !Array.isArray(right)) return { path, reason: "type_changed" };
+      if (left.length !== right.length) return { path, reason: "array_length_changed", left: left.length, right: right.length };
+      for (let index = 0; index < left.length; index += 1) {
+        const difference = replayDifference(left[index], right[index], `${path}[${index}]`);
+        if (difference) return difference;
+      }
+      return null;
+    }
+    if (!left || !right || typeof left !== "object" || typeof right !== "object") return { path, reason: "value_changed" };
+    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])].sort();
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(left, key) || !Object.prototype.hasOwnProperty.call(right, key)) return { path: `${path}.${key}`, reason: "field_presence_changed" };
+      const difference = replayDifference(left[key], right[key], `${path}.${key}`);
+      if (difference) return difference;
+    }
+    return { path, reason: "value_changed" };
   }
 
   function runtimeFingerprint(win) {
@@ -64,7 +93,10 @@
 
   function compareReplay(left, right) {
     if (!same(left.runtime_fingerprint, right.runtime_fingerprint)) return { comparable: false, reason: "runtime_version_changed" };
-    return { comparable: true, deterministic: same(normalizeReplay(left.model?.surfaces), normalizeReplay(right.model?.surfaces)) };
+    const leftSurfaces = normalizeReplay(left.model?.surfaces);
+    const rightSurfaces = normalizeReplay(right.model?.surfaces);
+    if (same(leftSurfaces, rightSurfaces)) return { comparable: true, deterministic: true };
+    return { comparable: true, deterministic: false, difference: replayDifference(leftSurfaces, rightSurfaces) };
   }
 
   async function loadFrame({ reload = false } = {}) {
