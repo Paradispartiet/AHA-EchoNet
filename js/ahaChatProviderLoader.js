@@ -56,6 +56,456 @@
     applicationComposition: spec("AHAChatApplicationComposition", ["create"], "create")
   });
 
+  // V2 semantic quality repair. This is deliberately a provider adapter rather
+  // than a second semantic engine: the existing SemanticDocumentV2 and Insight
+  // Quality Gate remain authoritative. The adapter only makes long-source
+  // candidate generation reachable, removes lexical/chrome noise from the
+  // semantic read path, and prevents legacy topic text from masquerading as a
+  // verified V2 field.
+  const QUALITY_REPAIR_SCHEMA = "aha_semantic_quality_repair_v2";
+  const LONG_SOURCE_LIMIT = 7600;
+  const MAX_VISIBLE_CONCEPTS = 16;
+  const MAX_VISIBLE_CLAIMS = 12;
+  const MAX_VISIBLE_TENSIONS = 6;
+  const providerRepairCache = new WeakMap();
+
+  const CONCEPT_NOISE = new Set([
+    "skrev", "skrive", "skriver", "skrevet", "henne", "hennes", "ham", "hans", "hun", "han",
+    "wrote", "write", "written", "about", "https", "http", "www",
+    "statistikk", "artikkelvisninger", "crossref", "siteringer", "sitering", "siteringsvarsel",
+    "referanser", "figurer", "figur", "dele", "favoritt", "lagre", "informasjon", "forfattere",
+    "siste", "måneder", "maaneder", "side", "abstract", "sammendragabstract"
+  ]);
+  const TITLE_NOISE = /(?:https?:\/\/|@|\b(?:statistikk|artikkelvisninger|crossref|siteringer|siteringsvarsel|lagre favoritt|referanser|figurer|informasjon og forfattere)\b)/iu;
+  const TENSION_SIGNAL = /\b(?:men|mens|samtidig|derimot|likevel|kontrast|kontrasteres|på den ene siden|på den andre siden|spenning(?:sfelt)? mellom|utfordring|problematisk)\b/iu;
+  const CONCLUSION_SIGNAL = /\b(?:konklusjon|avslutning|vi har argumentert|vi har vist|vår analyse|dette viser|dermed|derfor|sentralt|viktig|problematiserer)\b/iu;
+
+  function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
+  function array(value) { return Array.isArray(value) ? value : []; }
+  function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+  function text(value) {
+    if (value == null) return "";
+    if (["string", "number", "boolean"].includes(typeof value)) return String(value).replace(/\s+/g, " ").trim();
+    const source = object(value);
+    return text(source.insight || source.text || source.label || source.title || source.summary || source.term || source.value);
+  }
+  function normalize(value) {
+    return text(value).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim();
+  }
+  function contentTokens(value) {
+    const stop = new Set(["og","i","på","til","av","for","med","som","det","den","de","et","en","er","var","blir","kan","skal","har","om","at","fra","the","and","of","to","in","with","this","that"]);
+    return normalize(value).split(/\s+/).filter((token) => token.length > 2 && !stop.has(token));
+  }
+  function deepFreeze(value, seen = new Set()) {
+    if (!value || typeof value !== "object" || seen.has(value)) return value;
+    seen.add(value);
+    Object.keys(value).forEach((key) => deepFreeze(value[key], seen));
+    return Object.freeze(value);
+  }
+  function unique(values, keyFn = text) {
+    const seen = new Set();
+    return array(values).filter((item) => {
+      const key = normalize(keyFn(item));
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  function wholeWordCount(sourceText, label) {
+    const source = String(sourceText || "");
+    const needle = text(label);
+    if (!source || !needle) return 0;
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    let expression;
+    try { expression = new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}(?=$|[^\\p{L}\\p{N}])`, "giu"); }
+    catch { return source.toLowerCase().split(needle.toLowerCase()).length - 1; }
+    let count = 0;
+    while (expression.exec(source)) count += 1;
+    return count;
+  }
+
+  function splitSourceUnits(sourceText) {
+    const source = String(sourceText || "").replace(/\r\n?/g, "\n");
+    const paragraphs = source.split(/\n{2,}/).map((part) => part.trim()).filter((part) => part.length >= 40);
+    if (paragraphs.length >= 6) return paragraphs;
+    const sentences = [];
+    const re = /[^.!?\n]+(?:[.!?]+|$)/gu;
+    let match;
+    while ((match = re.exec(source))) {
+      const part = match[0].trim();
+      if (part.length >= 35) sentences.push(part);
+    }
+    return sentences.length ? sentences : [source.trim()].filter(Boolean);
+  }
+
+  function focusLongSource(sourceText, limit = LONG_SOURCE_LIMIT) {
+    const source = String(sourceText || "").trim();
+    if (!source || source.length <= limit) return source;
+    const units = splitSourceUnits(source);
+    if (units.length <= 1) return source.slice(0, limit);
+
+    const chosen = [];
+    const chosenKeys = new Set();
+    let used = 0;
+    const add = (unit) => {
+      const value = String(unit || "").trim();
+      const key = normalize(value);
+      if (!value || chosenKeys.has(key)) return false;
+      const extra = value.length + (chosen.length ? 2 : 0);
+      if (used + extra > limit) return false;
+      chosen.push(value);
+      chosenKeys.add(key);
+      used += extra;
+      return true;
+    };
+
+    for (let index = 0; index < Math.min(5, units.length); index += 1) add(units[index]);
+    for (let index = Math.max(0, units.length - 4); index < units.length; index += 1) add(units[index]);
+
+    const middle = units.slice(5, Math.max(5, units.length - 4)).map((unit, index) => {
+      let score = 0;
+      if (TENSION_SIGNAL.test(unit)) score += 5;
+      if (CONCLUSION_SIGNAL.test(unit)) score += 4;
+      if (/\b(?:etikk|representasjon|fortolk|mekanisme|årsak|konsekvens|prinsipp|rettighet|dilemma|kritisk)\w*/iu.test(unit)) score += 2;
+      score += Math.min(3, contentTokens(unit).length / 35);
+      return { unit, index, score };
+    }).sort((left, right) => right.score - left.score || left.index - right.index);
+    middle.forEach(({ unit }) => add(unit));
+
+    // Keep the sample in original source order so the model sees a coherent
+    // progression. Every selected unit is verbatim from the source; only the
+    // whitespace between selected units is new.
+    return chosen.sort((left, right) => source.indexOf(left) - source.indexOf(right)).join("\n\n").slice(0, limit);
+  }
+
+  function candidateConceptKeys(payload) {
+    return new Set(array(payload?.insightCandidatesV2)
+      .flatMap((candidate) => array(candidate?.concepts))
+      .map(normalize).filter(Boolean));
+  }
+
+  function citationLikeConcept(label, sourceText) {
+    const value = text(label);
+    if (!/^\p{Lu}[\p{L}\p{M}'’.-]+$/u.test(value)) return false;
+    const source = String(sourceText || "");
+    return source.includes(`${value},`) || source.includes(`${value} (`) || source.includes(`${value} et al`);
+  }
+
+  function repairSemanticDocument(document, input = {}, originalProvider = null) {
+    const sourceText = String(input.sourceText || "");
+    const payload = object(input.payload);
+    const repaired = clone(document);
+    if (!repaired || repaired.schema !== "aha_semantic_document_v2") return document;
+    const supplied = candidateConceptKeys(payload);
+    const claimMentionCounts = new Map();
+    array(repaired.claims).forEach((claim) => array(claim?.mentioned_concept_ids).forEach((id) => {
+      claimMentionCounts.set(id, (claimMentionCounts.get(id) || 0) + 1);
+    }));
+
+    const rankedConcepts = array(repaired.concepts).map((concept, index) => {
+      const label = text(concept?.label);
+      const key = normalize(label);
+      const occurrences = wholeWordCount(sourceText, label);
+      const suppliedByCandidate = supplied.has(key);
+      const wordCount = key.split(/\s+/).filter(Boolean).length;
+      let score = (suppliedByCandidate ? 10 : 0) + Math.min(6, occurrences) * 2 + Math.min(5, claimMentionCounts.get(concept?.id) || 0);
+      if (wordCount > 1) score += 3;
+      if (CONCEPT_NOISE.has(key) || TITLE_NOISE.test(label)) score = -100;
+      if (citationLikeConcept(label, sourceText) && !suppliedByCandidate) score -= 8;
+      if (!suppliedByCandidate && wordCount === 1 && occurrences < 2) score -= 6;
+      return { concept, index, score };
+    }).filter((item) => item.score >= 4)
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, MAX_VISIBLE_CONCEPTS);
+
+    const keptConceptIds = new Set(rankedConcepts.map((item) => item.concept.id));
+    repaired.concepts = rankedConcepts.sort((left, right) => left.index - right.index).map((item) => item.concept);
+    repaired.claims = array(repaired.claims).map((claim) => ({
+      ...claim,
+      mentioned_concept_ids: array(claim?.mentioned_concept_ids).filter((id) => keptConceptIds.has(id))
+    }));
+    repaired.relations = array(repaired.relations).filter((relation) => relation?.type !== "claim_mentions_concept" || keptConceptIds.has(relation?.to_id));
+
+    const tensionConceptLabels = repaired.concepts.map((concept) => normalize(concept.label));
+    repaired.tensions = array(repaired.tensions).map((tension, index) => {
+      const label = text(tension?.label);
+      let score = TENSION_SIGNAL.test(label) ? 4 : 0;
+      if (/\b(?:på den ene siden|på den andre siden|spenning(?:sfelt)? mellom|kontrasteres)\b/iu.test(label)) score += 4;
+      if (label.length >= 70 && label.length <= 330) score += 2;
+      const normalized = normalize(label);
+      score += Math.min(3, tensionConceptLabels.filter((concept) => concept && normalized.includes(concept)).length);
+      return { tension, index, score };
+    }).filter((item) => item.score >= 4)
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, 8)
+      .sort((left, right) => left.index - right.index)
+      .map((item) => item.tension);
+
+    const synthesisStatus = text(repaired.synthesis_gate?.status);
+    repaired.status = synthesisStatus === "not_run" && sourceText.length >= 1200 ? "incomplete" : repaired.status;
+    repaired.quality = {
+      ...object(repaired.quality),
+      status: synthesisStatus === "not_run" && sourceText.length >= 1200 ? "incomplete" : repaired.quality?.status,
+      concept_count: repaired.concepts.length,
+      relation_count: repaired.relations.length,
+      tension_count: repaired.tensions.length,
+      reasons: unique([
+        ...array(repaired.quality?.reasons),
+        QUALITY_REPAIR_SCHEMA,
+        ...(synthesisStatus === "not_run" && sourceText.length >= 1200 ? ["semantic_synthesis_not_run_for_substantive_source"] : [])
+      ])
+    };
+    repaired.policy = { ...object(repaired.policy), current_analysis_read_available: array(repaired.candidate_insights).some((item) => item?.status === "approved") };
+    if (originalProvider?.validate) {
+      repaired.validation = clone(originalProvider.validate(repaired, input));
+      if (repaired.validation?.valid !== true) return document;
+    }
+    return deepFreeze(repaired);
+  }
+
+  function titleLineScore(line, semanticDocument) {
+    const value = String(line || "").trim();
+    if (!value || value.length < 20 || value.length > 180 || TITLE_NOISE.test(value)) return -100;
+    if (/^(?:side\s+\d|\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d[\d\s.,-]*)$/iu.test(value)) return -100;
+    if ((value.match(/\d/g) || []).length > value.length * 0.3) return -100;
+    let score = 1;
+    const normalized = normalize(value);
+    array(semanticDocument?.concepts).forEach((concept) => {
+      const key = normalize(concept?.label);
+      if (key && normalized.includes(key)) score += key.includes(" ") ? 4 : 2;
+    });
+    if (/\b(?:og|om|mellom|i|for)\b/iu.test(value)) score += 1;
+    if (!/[.!?…]$/u.test(value)) score += 2;
+    if (/^[«"'“].*[»"'”]$/u.test(value)) score -= 1;
+    return score;
+  }
+
+  function deriveSourceTheme(sourceText, semanticDocument) {
+    const source = String(sourceText || "");
+    const lines = source.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 40);
+    const ranked = lines.map((line, index) => ({
+      line, index,
+      score: titleLineScore(line, semanticDocument) + Math.max(0, 6 - (index * 0.6))
+    }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || left.index - right.index);
+    if (ranked.length) return ranked[0].line;
+    const firstSentence = source.match(/[^.!?\n]{30,180}[.!?]?/u)?.[0]?.trim() || "";
+    return firstSentence && !TITLE_NOISE.test(firstSentence) ? firstSentence : "";
+  }
+
+  function approvedInsight(semanticDocument) {
+    return array(semanticDocument?.candidate_insights).find((item) => item?.status === "approved" && item?.eligible_for_current_analysis === true) || null;
+  }
+
+  function repairPayloadSourceFields(payload, sourceText, semanticDocument) {
+    const source = object(payload);
+    if (!Object.keys(source).length || semanticDocument?.schema !== "aha_semantic_document_v2") return source;
+    const theme = deriveSourceTheme(sourceText, semanticDocument);
+    const insight = approvedInsight(semanticDocument);
+    const tension = array(semanticDocument?.tensions)[0] || null;
+    let canonical = source.canonicalAnalysis && typeof source.canonicalAnalysis === "object"
+      ? { ...source.canonicalAnalysis }
+      : null;
+    let ahaSer = source.ahaSer && typeof source.ahaSer === "object" ? { ...source.ahaSer } : null;
+    let thoughts = source.thoughts && typeof source.thoughts === "object" ? { ...source.thoughts } : null;
+    if (theme) {
+      if (canonical) canonical.theme = theme;
+      if (ahaSer) ahaSer.tema = theme;
+      if (thoughts) thoughts.hovedspor = theme;
+    }
+    if (insight) {
+      if (canonical) canonical.keyInsight = insight.insight;
+      if (ahaSer) ahaSer.viktigsteInnsikt = insight.insight;
+      const rawCandidate = array(source.insightCandidatesV2).find((candidate) => normalize(candidate?.summary || candidate?.text) === normalize(insight.insight));
+      const nextTest = text(rawCandidate?.next_test);
+      if (nextTest && ahaSer) ahaSer.nesteSteg = nextTest;
+      if (nextTest && thoughts) thoughts.neste_steg = nextTest;
+    }
+    if (tension?.label) {
+      if (canonical) canonical.mainTension = tension.label;
+      if (ahaSer) ahaSer.hovedspenning = tension.label;
+    }
+    if (canonical) source.canonicalAnalysis = canonical;
+    if (ahaSer) source.ahaSer = ahaSer;
+    if (thoughts) source.thoughts = thoughts;
+    return source;
+  }
+
+  function verifiedThemeField(bundle, sourceText, semanticDocument) {
+    const theme = deriveSourceTheme(sourceText, semanticDocument);
+    const identity = object(bundle?.identity);
+    if (!theme || !identity.source_sha256 || !identity.analysis_run_id || !identity.source_id) return null;
+    const start = String(sourceText || "").indexOf(theme);
+    if (start < 0) return null;
+    const semanticIds = array(semanticDocument?.concepts)
+      .filter((concept) => normalize(theme).includes(normalize(concept?.label)))
+      .map((concept) => concept.id).filter(Boolean);
+    const previous = bundle?.surfaces?.overview?.theme;
+    return {
+      schema: "aha_analysis_field_v2",
+      field_id: "overview.theme",
+      item_id: previous?.item_id || `overview.theme_${normalize(theme).slice(0, 24).replace(/\s+/g, "_")}`,
+      value_type: "text",
+      value: theme,
+      source_sha256: identity.source_sha256,
+      analysis_run_id: identity.analysis_run_id,
+      source_id: identity.source_id,
+      semantic_ids: semanticIds,
+      provenance: {
+        source_sha256: identity.source_sha256,
+        analysis_run_id: identity.analysis_run_id,
+        source_id: identity.source_id,
+        origin: "semantic_quality_repair_v2_source_heading",
+        evidence: [{ excerpt: theme, start, end: start + theme.length, exact_source_match: true }],
+        status: "verified"
+      },
+      topic: { status: "verified", valid: true, reason: "exact_source_heading" },
+      quality: { status: "passed", reason: "evidence_and_topic_verified" }
+    };
+  }
+
+  function claimRecordScore(record, semanticDocument, index, count) {
+    const value = text(record?.text);
+    let score = 0;
+    if (array(record?.mentioned_concept_ids).length) score += Math.min(5, record.mentioned_concept_ids.length * 2);
+    if (TENSION_SIGNAL.test(value)) score += 3;
+    if (CONCLUSION_SIGNAL.test(value)) score += 3;
+    if (index < 5 || index >= count - 5) score += 2;
+    const approvedQuotes = array(semanticDocument?.candidate_insights)
+      .filter((candidate) => candidate?.status === "approved")
+      .flatMap((candidate) => array(candidate?.evidence).map((entry) => text(entry?.quote)));
+    if (approvedQuotes.some((quote) => quote && (value.includes(quote) || quote.includes(value)))) score += 10;
+    return score;
+  }
+
+  function trimSemanticRecords(bundle, semanticDocument) {
+    const semantic = object(bundle?.semantic_document);
+    const claims = array(semantic.claim_records);
+    semantic.claim_records = claims.map((record, index) => ({ record, index, score: claimRecordScore(record, semanticDocument, index, claims.length) }))
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, MAX_VISIBLE_CLAIMS)
+      .sort((left, right) => left.index - right.index)
+      .map((item) => item.record);
+    semantic.tension_records = array(semantic.tension_records).slice(0, MAX_VISIBLE_TENSIONS);
+    return bundle;
+  }
+
+  function collectBundleFields(value, out = []) {
+    if (!value || typeof value !== "object") return out;
+    if (value.schema === "aha_analysis_field_v2") { out.push(value); return out; }
+    if (Array.isArray(value)) value.forEach((item) => collectBundleFields(item, out));
+    else Object.values(value).forEach((item) => collectBundleFields(item, out));
+    return out;
+  }
+
+  function repairAnalysisBundle(bundle, input = {}, originalProvider = null) {
+    const repaired = clone(bundle);
+    if (!repaired || repaired.schema !== "aha_analysis_bundle_v2") return bundle;
+    const sourceText = String(input.sourceText || "");
+    const semanticDocument = input.semanticDocument;
+    const themeField = verifiedThemeField(repaired, sourceText, semanticDocument);
+    if (themeField && repaired.surfaces?.overview) repaired.surfaces.overview.theme = themeField;
+    trimSemanticRecords(repaired, semanticDocument);
+    const fields = collectBundleFields(repaired.surfaces);
+    if (repaired.quality && typeof repaired.quality === "object") {
+      repaired.quality.field_count = fields.length;
+      repaired.quality.passed_field_count = fields.filter((field) => field?.quality?.status === "passed").length;
+      repaired.quality.incomplete_field_ids = fields.filter((field) => field?.quality?.status === "incomplete").map((field) => field.item_id);
+      repaired.quality.rejected_field_ids = fields.filter((field) => field?.quality?.status === "rejected").map((field) => field.item_id);
+      if (semanticDocument?.synthesis_gate?.status === "not_run" && sourceText.length >= 1200) {
+        repaired.quality.reasons = unique([...array(repaired.quality.reasons), "semantic_synthesis_not_run_for_substantive_source"]);
+        repaired.status = "incomplete";
+        repaired.quality.status = "incomplete";
+      }
+    }
+    if (originalProvider?.validate) {
+      repaired.validation = clone(originalProvider.validate(repaired));
+      if (repaired.validation?.valid !== true) return bundle;
+    }
+    return deepFreeze(repaired);
+  }
+
+  function wrapInsightPipeline(provider) {
+    return Object.freeze({
+      ...provider,
+      create(deps) {
+        const instance = provider.create(deps);
+        if (!instance || typeof instance.generateAIInsightCandidates !== "function") return instance;
+        return Object.freeze({
+          ...instance,
+          async generateAIInsightCandidates(sourceText, context) {
+            const raw = String(sourceText || "");
+            const focused = focusLongSource(raw);
+            const nextContext = {
+              ...object(context),
+              semantic_source_focus: {
+                schema: QUALITY_REPAIR_SCHEMA,
+                source_length: raw.length,
+                focused_length: focused.length,
+                verbatim_excerpt: raw.length > focused.length
+              }
+            };
+            const candidates = await instance.generateAIInsightCandidates(focused, nextContext);
+            if (Array.isArray(candidates) && candidates.length) return candidates;
+            if (raw.length >= 1200 && typeof instance.buildSemanticInsightCandidates === "function") {
+              return instance.buildSemanticInsightCandidates(focused, { minInsights: 2, maxInsights: 4 });
+            }
+            return Array.isArray(candidates) ? candidates : [];
+          }
+        });
+      }
+    });
+  }
+
+  function wrapLiveSemanticBridge(provider) {
+    return Object.freeze({
+      ...provider,
+      build(input) {
+        return repairSemanticDocument(provider.build(input), input, provider);
+      },
+      hydrate(value, input = {}) {
+        const hydrated = provider.hydrate(value, input);
+        return hydrated ? repairSemanticDocument(hydrated, input, provider) : null;
+      }
+    });
+  }
+
+  function wrapAnalysisBundle(provider) {
+    return Object.freeze({
+      ...provider,
+      build(input = {}) {
+        repairPayloadSourceFields(input.payload, input.sourceText, input.semanticDocument);
+        return repairAnalysisBundle(provider.build(input), input, provider);
+      }
+    });
+  }
+
+  function wrapProvider(name, provider) {
+    if (!provider || (typeof provider !== "object" && typeof provider !== "function")) return provider;
+    let byName = providerRepairCache.get(provider);
+    if (!byName) { byName = new Map(); providerRepairCache.set(provider, byName); }
+    if (byName.has(name)) return byName.get(name);
+    let wrapped = provider;
+    if (name === "chat.insightPipeline" && typeof provider.create === "function") wrapped = wrapInsightPipeline(provider);
+    else if (name === "chat.liveSemanticBridgeV2" && typeof provider.build === "function") wrapped = wrapLiveSemanticBridge(provider);
+    else if (name === "chat.analysisBundleV2" && typeof provider.build === "function") wrapped = wrapAnalysisBundle(provider);
+    byName.set(name, wrapped);
+    return wrapped;
+  }
+
+  const QUALITY_REPAIR_V2 = Object.freeze({
+    schema: QUALITY_REPAIR_SCHEMA,
+    longSourceLimit: LONG_SOURCE_LIMIT,
+    focusLongSource,
+    deriveSourceTheme,
+    repairSemanticDocument,
+    repairPayloadSourceFields,
+    repairAnalysisBundle,
+    wrapProvider
+  });
+
   function create(deps = {}) {
     const moduleApi = deps.moduleApi || global.AHAModuleApi;
     const legacyRoot = deps.legacyRoot || global;
@@ -64,7 +514,8 @@
     let insightsCompatView = null;
 
     function resolveBase(name, legacyGlobal, version = 1) {
-      return moduleApi?.resolve?.(name, legacyGlobal, { version }) || legacyRoot[legacyGlobal] || null;
+      const provider = moduleApi?.resolve?.(name, legacyGlobal, { version }) || legacyRoot[legacyGlobal] || null;
+      return QUALITY_REPAIR_V2.wrapProvider(name, provider);
     }
 
     function buildInsightsCompatibilityView(insights) {
@@ -142,7 +593,7 @@
     return Object.freeze({ resolve, require: requireProvider, instantiate });
   }
 
-  const publicApi = Object.freeze({ create, CHAT_PROVIDERS });
+  const publicApi = Object.freeze({ create, CHAT_PROVIDERS, QUALITY_REPAIR_V2 });
   global.AHAChatProviderLoader = publicApi;
   global.AHAModuleApi?.register?.("chat.providerLoader", publicApi, {
     version: 1,
