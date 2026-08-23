@@ -319,6 +319,8 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     for entry in payload.get("entries", []):
         subject_id = str(entry.get("subject_id") or "")
         policy = subject_policies.get(subject_id)
+        if policy and entry.get("chapter_id") not in (policy.get("chapter_rules") or {}):
+            policy = None
         if policy:
             score, matched_terms, eligible, contributions = _policy_entry_score(normalized, entry, policy)
             thresholds = policy.get("thresholds", {})
