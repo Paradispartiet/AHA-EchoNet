@@ -264,13 +264,21 @@
       (Array.isArray(candidate.traditions) && candidate.traditions.length) ||
       (Array.isArray(candidate.theoretical_links) && candidate.theoretical_links.length)
     );
+    const groundedEvidenceQuotes = normalizeSimpleStringList(candidate.evidence_quotes, 3)
+      .filter((quote) => quote && source.includes(String(quote || "").replace(/\s+/g, " ").trim()));
+    const hasGroundedEvidencePair = new Set(groundedEvidenceQuotes.map((quote) => String(quote).toLowerCase())).size >= 2;
 
     if (!title || genericTitles.has(titleLower)) return true;
     if (!summary) return true;
     if (sourceStart && (summaryLower === sourceStart || sourceStart.startsWith(summaryLower) || summaryLower.startsWith(sourceStart))) return true;
     if (sourceStart && summaryLower.slice(0, 140) === sourceStart.slice(0, 140)) return true;
-    if (!conceptWords.length && !hasTheory) return true;
-    if (conceptWords.length > 0 && nonWeakConcepts.length === 0 && !hasTheory) return true;
+    // Concept extraction is advisory at this pre-filter boundary. A candidate
+    // with two distinct exact source quotes must reach the authoritative V2
+    // Insight Quality Gate even if the model omitted its optional concept list.
+    // That gate still enforces cross-claim evidence, semantic transformation,
+    // usefulness and causal discipline before anything can be approved.
+    if (!conceptWords.length && !hasTheory && !hasGroundedEvidencePair) return true;
+    if (conceptWords.length > 0 && nonWeakConcepts.length === 0 && !hasTheory && !hasGroundedEvidencePair) return true;
 
     return false;
   }
