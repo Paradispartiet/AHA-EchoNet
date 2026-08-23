@@ -49,6 +49,7 @@
       "bindAnalysisArtifact", "artifactMatchesActiveRun", "isActiveAnalysisRun",
       "scoreRetrievalAgainstSource", "filterRetrievalForActiveSource",
       "filterMemoryContextForActiveSource", "handleUserMessage",
+      "ingestUserMessageWithCandidates", "generateAnalysisInsightCandidates",
       "handleUserMessageInsightCandidatesInBackground", "buildAIState", "askAhaAgent"
     ),
     memory: names(
@@ -211,6 +212,8 @@
         getThemeId: b.getThemeId,
         getFieldId: b.getFieldId,
         handleUserMessage: b.handleUserMessage,
+        ingestUserMessageWithCandidates: b.ingestUserMessageWithCandidates,
+        generateAnalysisInsightCandidates: b.generateAnalysisInsightCandidates,
         handleUserMessageInsightCandidatesInBackground: b.handleUserMessageInsightCandidatesInBackground
       },
       memory: {

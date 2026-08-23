@@ -271,7 +271,10 @@
     loadChamber: loadChamberFromStorage,
     saveChamber: saveChamberToStorage
   }));
-  const { handleUserMessage, handleUserMessageInsightCandidatesInBackground } = ingestRuntime;
+  const {
+    handleUserMessage, ingestUserMessageWithCandidates, generateAnalysisInsightCandidates,
+    handleUserMessageInsightCandidatesInBackground
+  } = ingestRuntime;
 
   const academicInsightView = capabilityBindings.bind("academicInsightView", providerLoader.instantiate("academicInsightView", {
     loadAutoOutputs,

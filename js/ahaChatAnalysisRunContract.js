@@ -435,6 +435,9 @@
       && text(semanticDocument.analysis_run_id) === identity.analysis_run_id
       && text(semanticDocument.source_id) === identity.source_id
       && text(semanticDocument.source_sha256) === identity.source_sha256;
+    const authoritativeTopicReport = authoritativeSemantic
+      ? { valid: true, status: "authoritative_semantic_source_verified" }
+      : undefined;
     const make = fieldFactory(identity, input, sourceText);
     const semanticInsightCandidates = authoritativeSemantic
       ? array(semanticDocument.candidate_insights).filter((item) => item?.status === "approved" && item?.eligible_for_current_analysis === true)
@@ -448,6 +451,7 @@
         itemId: text(item?.id) || `insight_${index + 1}_${stableToken(text(item))}`,
         semanticIds: [item?.semantic_id, item?.semanticId, item?.id],
         origin: authoritativeSemantic ? "semantic_document_v2_quality_approved" : "current_analysis_run",
+        topicReport: authoritativeTopicReport,
         additionalEvidence: authoritativeSemantic
           ? array(item?.evidence).map((entry) => entry?.quote)
           : evidenceCandidates(item)
@@ -462,6 +466,7 @@
         itemId: text(item?.id) || `concept_${index + 1}_${stableToken(text(item))}`,
         semanticIds: [item?.semantic_id, item?.semanticId, item?.id],
         origin: authoritativeSemantic ? "semantic_document_v2_literal_concept" : "current_analysis_run",
+        topicReport: authoritativeTopicReport,
         additionalEvidence: authoritativeSemantic ? array(item?.mentions).map((entry) => entry?.text) : []
       }))
       .filter(Boolean);
@@ -502,12 +507,14 @@
         reportField: "canonicalAnalysis.mainTension",
         semanticIds: [semanticTension?.id],
         origin: semanticTension ? "semantic_document_v2_source_tension" : "current_analysis_run",
+        topicReport: semanticTension ? authoritativeTopicReport : undefined,
         additionalEvidence: semanticTension ? array(semanticTension.evidence_spans).map((entry) => entry?.text) : claimEvidence(payload, canonical.mainTension || ahaSer.hovedspenning)
       }),
       strongest_insight: make("overview.strongest_insight", strongestInsight, {
         reportField: "canonicalAnalysis.keyInsight",
         semanticIds: [semanticInsightCandidates[0]?.id],
         origin: authoritativeSemantic ? "semantic_document_v2_quality_approved" : "current_analysis_run",
+        topicReport: authoritativeTopicReport,
         additionalEvidence: authoritativeSemantic
           ? array(semanticInsightCandidates[0]?.evidence).map((entry) => entry?.quote)
           : claimEvidence(payload, strongestInsight)
