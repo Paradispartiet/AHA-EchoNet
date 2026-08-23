@@ -7,15 +7,33 @@
       "title": "Klima og omstilling",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["natur", "politikk", "naeringsliv", "historie"],
+        "canonical_subject_ids": [
+          "natur",
+          "politikk",
+          "naeringsliv",
+          "historie"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig omstillingslinse på klimaansvar, økonomi og samfunnsendring.",
         "rationale": "Komponerer aktive canonicale fag uten å erstatte deres kapitler eller kilder.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["omstilling", "grønn omstilling", "bærekraft", "grønt skifte", "naturens tålegrenser", "oljeavhengighet", "fossil økonomi"],
-      "keywords": ["omstillingskommisjon", "klimapolitikk", "utslipp", "grønne jobber"],
+      "core_concepts": [
+        "omstilling",
+        "grønn omstilling",
+        "bærekraft",
+        "grønt skifte",
+        "naturens tålegrenser",
+        "oljeavhengighet",
+        "fossil økonomi"
+      ],
+      "keywords": [
+        "omstillingskommisjon",
+        "klimapolitikk",
+        "utslipp",
+        "grønne jobber"
+      ],
       "summary": "Hvordan samfunn går fra oljeavhengighet til bærekraftige systemer innen naturens tålegrenser.",
       "description": "Kobler klimaansvar, grønn omstilling og avhengighet av fossil økonomi."
     },
@@ -24,15 +42,33 @@
       "title": "Naturvern og arealpolitikk",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["natur", "politikk", "historie"],
+        "canonical_subject_ids": [
+          "natur",
+          "politikk",
+          "historie"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig linse på naturvern, arealbruk og politiske beslutninger.",
         "rationale": "Komponerer aktive canonicale fag uten å etablere en alternativ Natur- eller Politikk-struktur.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["naturhensyn", "naturvern", "arealnøytralitet", "urørt natur", "villrein", "villaks", "nedbygging", "naturens premisser"],
-      "keywords": ["arealpolitikk", "naturinngrep", "økosystem", "biologisk mangfold"],
+      "core_concepts": [
+        "naturhensyn",
+        "naturvern",
+        "arealnøytralitet",
+        "urørt natur",
+        "villrein",
+        "villaks",
+        "nedbygging",
+        "naturens premisser"
+      ],
+      "keywords": [
+        "arealpolitikk",
+        "naturinngrep",
+        "økosystem",
+        "biologisk mangfold"
+      ],
       "summary": "Arealpolitikk som balanserer samfunnsutvikling med vern av natur og økosystemer.",
       "description": "Setter naturens premisser i sentrum for beslutninger om utbygging og inngrep."
     },
@@ -41,15 +77,33 @@
       "title": "Energi og industri",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["natur", "naeringsliv", "politikk", "historie"],
+        "canonical_subject_ids": [
+          "natur",
+          "naeringsliv",
+          "politikk",
+          "historie"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig linse på energisystemer, industri og omstilling.",
         "rationale": "Komponerer aktive canonicale fag uten å duplisere deres faglige grunnstruktur.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["fornybar energi", "solceller", "vindkraft", "kraft", "elektrifisering", "oljesokkelen", "fastlandsindustri"],
-      "keywords": ["energimiks", "nettkapasitet", "industriomstilling", "energisikkerhet"],
+      "core_concepts": [
+        "fornybar energi",
+        "solceller",
+        "vindkraft",
+        "kraft",
+        "elektrifisering",
+        "oljesokkelen",
+        "fastlandsindustri"
+      ],
+      "keywords": [
+        "energimiks",
+        "nettkapasitet",
+        "industriomstilling",
+        "energisikkerhet"
+      ],
       "summary": "Omstilling av energi- og industrisystemer fra fossil avhengighet til fornybare løsninger.",
       "description": "Fokuserer på kraftbehov, elektrifisering og prioriteringer mellom olje og fastlandsindustri."
     },
@@ -58,15 +112,31 @@
       "title": "Sirkulærøkonomi",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["naeringsliv", "natur", "by", "politikk"],
+        "canonical_subject_ids": [
+          "naeringsliv",
+          "natur",
+          "by",
+          "politikk"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig linse på materialstrømmer, arbeid og lokal verdiskaping.",
         "rationale": "Komponerer aktive canonicale fag rundt en omstillingsproblemstilling.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["sirkulærøkonomi", "gjenbruk", "reparasjon", "grønne jobber", "verdiskaping"],
-      "keywords": ["ressurseffektivitet", "materialstrøm", "lokal industri", "ombruk"],
+      "core_concepts": [
+        "sirkulærøkonomi",
+        "gjenbruk",
+        "reparasjon",
+        "grønne jobber",
+        "verdiskaping"
+      ],
+      "keywords": [
+        "ressurseffektivitet",
+        "materialstrøm",
+        "lokal industri",
+        "ombruk"
+      ],
       "summary": "Verdiskaping gjennom gjenbruk, reparasjon og lengre levetid for produkter og materialer.",
       "description": "Utforsker hvordan sirkulærøkonomi gir arbeidsplasser og reduserer naturbelastning."
     },
@@ -75,15 +145,32 @@
       "title": "Lokalsamfunn og maktfordeling",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["politikk", "naeringsliv", "historie", "by"],
+        "canonical_subject_ids": [
+          "politikk",
+          "naeringsliv",
+          "historie",
+          "by"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig linse på geografisk fordeling av makt, ansvar og verdiskaping.",
         "rationale": "Komponerer aktive canonicale fag uten å konkurrere med deres domeneinndeling.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["lokalsamfunn", "kommuneøkonomi", "sentralmakt", "folk i nord", "lokal verdiskaping", "maktfordeling"],
-      "keywords": ["distriktspolitikk", "kommuner", "demokratisk kontroll", "lokalt selvstyre"],
+      "core_concepts": [
+        "lokalsamfunn",
+        "kommuneøkonomi",
+        "sentralmakt",
+        "folk i nord",
+        "lokal verdiskaping",
+        "maktfordeling"
+      ],
+      "keywords": [
+        "distriktspolitikk",
+        "kommuner",
+        "demokratisk kontroll",
+        "lokalt selvstyre"
+      ],
       "summary": "Hvem som får makt og gevinster i omstilling: lokalsamfunn, regioner eller sentrale myndigheter.",
       "description": "Analyserer spenningen mellom sentralmakt og lokal verdiskaping i nord og resten av landet."
     },
@@ -92,17 +179,36 @@
       "title": "Samiske rettigheter og urfolksrettigheter",
       "local_knowledge": {
         "classification": "aha_cross_subject_lens",
-        "canonical_subject_ids": ["historie", "politikk", "natur", "naeringsliv"],
+        "canonical_subject_ids": [
+          "historie",
+          "politikk",
+          "natur",
+          "naeringsliv"
+        ],
         "related_chapter_ids": [],
         "scope": "Tverrfaglig linse på urfolksrettigheter, naturinngrep og forvaltning.",
         "rationale": "Komponerer aktive canonicale fag rundt rettighetskonflikter uten å erstatte canonical historie eller politikk.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["samiske rettigheter", "samisk kultur", "urfolk", "urfolksrettigheter", "menneskerettigheter", "naturinngrep i nord"],
-      "keywords": ["konsultasjonsplikt", "reindrift", "kulturvern", "inngrepssaker"],
+      "core_concepts": [
+        "samiske rettigheter",
+        "samisk kultur",
+        "urfolk",
+        "urfolksrettigheter",
+        "menneskerettigheter",
+        "naturinngrep i nord"
+      ],
+      "keywords": [
+        "konsultasjonsplikt",
+        "reindrift",
+        "kulturvern",
+        "inngrepssaker"
+      ],
       "summary": "Urfolks- og menneskerettigheter i møte med naturinngrep, energiutbygging og arealpolitikk i nord.",
       "description": "Belyser hvordan samisk kultur og rettigheter påvirkes av statlige og industrielle inngrep."
     }
-  ]
+  ],
+  "authority": "aha_overlay_only",
+  "canonical_source": "data/integrations/history-go-fagverk-bridge.v2.json"
 }
