@@ -163,6 +163,35 @@ assert.ok(bundle.surfaces.concepts.every((field) => field.provenance.origin === 
 assert.equal(JSON.stringify(bundle).includes('Kilde registrert'), false);
 assert.equal(forbiddenWrites, 0, 'building the semantic document and bundle must remain read-only');
 
+const rejectedLegacyTopicReports = context.AHAAnalysisBundleV2.build({
+  activeRun,
+  payload,
+  sourceText,
+  semanticDocument: semantic,
+  fieldReports: {
+    'insights.item': { valid: false, status: 'invalid_legacy_topic_report' },
+    'concepts.item': { valid: false, status: 'invalid_legacy_topic_report' },
+    'canonicalAnalysis.mainTension': { valid: false, status: 'invalid_legacy_topic_report' },
+    'canonicalAnalysis.keyInsight': { valid: false, status: 'invalid_legacy_topic_report' }
+  }
+});
+assert.ok(rejectedLegacyTopicReports.surfaces.insights.every((field) => field.topic.status === 'verified' && field.quality.status === 'passed'),
+  'legacy topic reports must not override authoritative source-bound insight evidence');
+assert.ok(rejectedLegacyTopicReports.surfaces.concepts.every((field) => field.topic.status === 'verified' && field.quality.status === 'passed'),
+  'legacy topic reports must not override authoritative source-bound concept evidence');
+assert.equal(rejectedLegacyTopicReports.surfaces.overview.central_tension.topic.status, 'verified');
+assert.equal(rejectedLegacyTopicReports.surfaces.overview.strongest_insight.topic.status, 'verified');
+assert.deepEqual(
+  JSON.parse(JSON.stringify(rejectedLegacyTopicReports.surfaces.insights)),
+  JSON.parse(JSON.stringify(bundle.surfaces.insights)),
+  'authoritative insight fields must be deterministic when unrelated Chat topic reports change'
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(rejectedLegacyTopicReports.surfaces.concepts)),
+  JSON.parse(JSON.stringify(bundle.surfaces.concepts)),
+  'authoritative concept fields must be deterministic when unrelated Chat topic reports change'
+);
+
 const reloaded = bridge.hydrate(JSON.parse(JSON.stringify(semantic)), { activeRun, payload, sourceText });
 assert.ok(reloaded);
 assert.equal(Object.isFrozen(reloaded), true);
