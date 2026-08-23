@@ -864,14 +864,20 @@
   }
   function conceptCandidates(payload, sourceText) {
     const source = object(payload);
+    const authoritativeCandidates = Array.isArray(source.insightCandidatesV2);
     const literalSourceTerms = (String(sourceText || "").match(/[\p{L}\p{M}][\p{L}\p{M}-]{4,}/gu) || [])
       .filter((value) => !STOPWORDS.has(normalize(value)) && !METADATA_INSIGHT.test(value))
       .slice(0, 24);
-    const candidates = [
-      ...array(source.concepts), ...array(source.keywords), ...array(source.canonicalAnalysis?.concepts),
-      ...array(source.ahaSer?.begreper), ...array(source.subjectMatches).flatMap((item) => array(item?.matched_terms)),
-      ...literalSourceTerms
-    ];
+    const candidates = authoritativeCandidates
+      ? [
+        ...array(source.insightCandidatesV2).flatMap((item) => array(item?.concepts)),
+        ...literalSourceTerms
+      ]
+      : [
+        ...array(source.concepts), ...array(source.keywords),
+        ...array(source.subjectMatches).flatMap((item) => array(item?.matched_terms)),
+        ...literalSourceTerms
+      ];
     return unique(candidates).map(text).filter((label) => {
       const key = normalize(label);
       const words = key.split(/\s+/).filter(Boolean);
@@ -881,6 +887,10 @@
   function buildConcepts(sourceText, sourceSha256, anchors, payload) {
     return conceptCandidates(payload, sourceText).map((label) => ({ label, spans: exactSpans(sourceText, label, anchors) }))
       .filter((item) => item.spans.length)
+      .sort((left, right) => (
+        left.spans[0].start_offset - right.spans[0].start_offset
+        || normalize(left.label).localeCompare(normalize(right.label), "no")
+      ))
       .map((item, index) => ({
         id: `con_${sourceSha256.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`,
         label: item.label,
@@ -931,7 +941,9 @@
     return pending.map((item, index) => ({ id: `rel_${sourceSha256.slice(0, 12)}_${String(index + 1).padStart(3, "0")}`, ...item }));
   }
   function buildTensions(sourceText, sourceSha256, anchors, claims, payload) {
-    const explicit = [payload?.canonicalAnalysis?.mainTension, payload?.ahaSer?.hovedspenning, payload?.hovedspenning]
+    const explicit = (Array.isArray(payload?.insightCandidatesV2)
+      ? []
+      : [payload?.canonicalAnalysis?.mainTension, payload?.ahaSer?.hovedspenning, payload?.hovedspenning])
       .map(text).filter(Boolean).map((label) => ({ label, spans: exactSpans(sourceText, label, anchors), origin: "current_chat_analysis_tension" }))
       .filter((item) => item.spans.length);
     const literal = claims.filter((claim) => TENSION_MARKER.test(claim.text)).map((claim) => ({
@@ -982,6 +994,7 @@
   }
   function buildCandidateInput(raw, payload, claims, sourceText) {
     const source = object(raw);
+    const authoritativeCandidates = Array.isArray(payload?.insightCandidatesV2);
     const insight = text(source.insight || source.summary || source.text || raw);
     const interpretation = linkedInterpretation(payload, insight);
     const evidence = candidateEvidence(raw, payload, insight, claims, sourceText);
@@ -993,11 +1006,11 @@
     const uncertainty = text(source.uncertainty || interpretation?.uncertainty);
     const confidence = text(source.confidence || interpretation?.confidence)
       || (uncertainty === "hypothesis" ? "low" : "medium");
-    const whyItMatters = text(source.why_it_matters || source.whyItMatters || payload?.reflection);
+    const whyItMatters = text(source.why_it_matters || source.whyItMatters || (authoritativeCandidates ? "" : payload?.reflection));
     const title = text(source.title);
     const abstraction = text(source.abstraction || source.semantic_transform)
       || (tokens(title).length >= 5 ? title : text([title, whyItMatters].filter(Boolean).join(": ")))
-      || text(payload?.canonicalAnalysis?.theme);
+      || (authoritativeCandidates ? "" : text(payload?.canonicalAnalysis?.theme));
     const explicitCausalEvidence = evidence.some((item) => EXPLICIT_CAUSAL_SOURCE.test(text(item?.quote)));
     const inferredCausalStatus = CAUSAL_LANGUAGE.test(insight)
       ? (explicitCausalEvidence ? "source_explicit" : "interpretive")

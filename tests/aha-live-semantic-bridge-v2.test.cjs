@@ -121,6 +121,32 @@ const emptyAuthoritative = bridge.build({
 assert.equal(emptyAuthoritative.candidate_insights.length, 0,
   'an explicitly empty authoritative list must not fall back to canonical or afterwork candidates');
 
+const changedLegacy = bridge.build({
+  activeRun,
+  sourceText,
+  payload: {
+    ...payload,
+    concepts: ['rapporter', 'prosjekt'],
+    canonicalAnalysis: {
+      ...payload.canonicalAnalysis,
+      concepts: ['rapporter', 'prosjekt'],
+      mainTension: 'Et prosjekt brukte én felles mal for alle rapporter.'
+    },
+    ahaSer: {
+      viktigsteInnsikt: 'En annen legacy-innsikt.',
+      begreper: ['rapporter'],
+      hovedspenning: 'Et prosjekt brukte én felles mal for alle rapporter.'
+    },
+    reflection: 'En annen legacy-refleksjon.'
+  }
+});
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.concepts)), JSON.parse(JSON.stringify(semantic.concepts)),
+  'authoritative concepts must be independent of legacy canonical and afterwork ordering');
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.tensions)), JSON.parse(JSON.stringify(semantic.tensions)),
+  'authoritative tensions must be derived from the source rather than legacy canonical fields');
+assert.deepEqual(JSON.parse(JSON.stringify(changedLegacy.candidate_insights)), JSON.parse(JSON.stringify(semantic.candidate_insights)),
+  'authoritative candidates must be independent of legacy reflection and canonical fallbacks');
+
 const bundle = context.AHAAnalysisBundleV2.build({ activeRun, payload, sourceText, semanticDocument: semantic });
 assert.equal(bundle.validation.valid, true);
 assert.equal(bundle.semantic_document.schema, semantic.schema);
