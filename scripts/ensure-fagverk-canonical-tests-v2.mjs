@@ -74,17 +74,43 @@ const engineChanged = migrate("js/ahaSubjectEngine.js", [
   ]
 ]);
 
-const engine = fs.readFileSync(path.join(root, "js/ahaSubjectEngine.js"), "utf8");
+const enginePath = path.join(root, "js/ahaSubjectEngine.js");
+const legacySubjectAnchor = `    const primarySupportBySubject = new Map();
+    for (const match of out) {
+      if (!["emne", "concept", "thinker", "overlay"].includes(match.type) || !match.emne_id) continue;
+      primarySupportBySubject.set(match.subject_id, Math.max(primarySupportBySubject.get(match.subject_id) || 0, Number(match.score || 0)));
+    }
+    const maxPrimarySupport = Math.max(0, ...primarySupportBySubject.values());
+    if (maxPrimarySupport >= 8) {
+      const derivedFloor = maxPrimarySupport * 0.5;
+      for (let index = out.length - 1; index >= 0; index -= 1) {
+        const match = out[index];
+        if (!["chapter", "supplement", "method"].includes(match.type)) continue;
+        if ((primarySupportBySubject.get(match.subject_id) || 0) < derivedFloor) out.splice(index, 1);
+      }
+    }
+
+`;
+let engineSource = fs.readFileSync(enginePath, "utf8");
+let anchorCleanupChanged = false;
+if (engineSource.includes("chapterSpecificityEligibleSubjects") && engineSource.includes(legacySubjectAnchor)) {
+  engineSource = engineSource.replace(legacySubjectAnchor, "");
+  anchorCleanupChanged = true;
+  if (mode === "write") fs.writeFileSync(enginePath, engineSource);
+}
+if (mode === "check" && anchorCleanupChanged) throw new Error("js/ahaSubjectEngine.js: duplicate legacy subject-anchor block detected.");
+
+const engine = fs.readFileSync(enginePath, "utf8");
 const chapterStart = engine.indexOf("  function chapterEmne(raw, subject) {");
 const chapterEnd = engine.indexOf("  function supplementEmne(raw, subject, index) {", chapterStart);
 if (chapterStart < 0 || chapterEnd < 0) throw new Error("js/ahaSubjectEngine.js: chapter loader boundary missing.");
 const chapterBlock = engine.slice(chapterStart, chapterEnd);
 if (!chapterBlock.includes('chapter_specific_terms: unique(item.semantic_terms || [])')) throw new Error("js/ahaSubjectEngine.js: chapter specificity channel missing from chapter loader.");
-if (!engine.includes('primarySupportBySubject')) throw new Error("js/ahaSubjectEngine.js: subject-anchor gate missing.");
+if ((engine.match(/const primarySupportBySubject = new Map\(\);/g) || []).length !== 1) throw new Error("js/ahaSubjectEngine.js: subject-anchor block must be unique.");
 if (!engine.includes('chapterSpecificityEligibleSubjects')) throw new Error("js/ahaSubjectEngine.js: anchored chapter-specificity gate missing.");
 if (!engine.includes('chapterSpecificEntriesWithinSubject')) throw new Error("js/ahaSubjectEngine.js: within-subject chapter specificity index missing.");
 if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ahaSubjectEngine.js: bounded chapter specificity score missing.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
 if (!engine.includes('.map(({ _chapter_specific_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter specificity evidence must not leak from matcher output.");
 
-console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged ? " with changes" : ""}.`);
+console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged || anchorCleanupChanged ? " with changes" : ""}.`);
