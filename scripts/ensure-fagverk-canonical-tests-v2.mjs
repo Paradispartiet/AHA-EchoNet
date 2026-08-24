@@ -96,9 +96,23 @@ let anchorCleanupChanged = false;
 if (engineSource.includes("chapterSpecificityEligibleSubjects") && engineSource.includes(legacySubjectAnchor)) {
   engineSource = engineSource.replace(legacySubjectAnchor, "");
   anchorCleanupChanged = true;
-  if (mode === "write") fs.writeFileSync(enginePath, engineSource);
 }
+let rankingCleanupChanged = false;
+const oldDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 8;';
+const newDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 8;';
+if (!engineSource.includes(newDecisiveChapter) && engineSource.includes(oldDecisiveChapter)) {
+  engineSource = engineSource.replace(oldDecisiveChapter, newDecisiveChapter);
+  rankingCleanupChanged = true;
+}
+const oldSubjectFirstSort = '      if (subjectFirst) {\n        const aDecisive = decisiveChapter(a);';
+const newSubjectFirstSort = '      if (subjectFirst) {\n        const primarySubjectDelta = subjectSupport(b) - subjectSupport(a);\n        if (Math.abs(primarySubjectDelta) > 1e-9) return primarySubjectDelta;\n        const aDecisive = decisiveChapter(a);';
+if (!engineSource.includes(newSubjectFirstSort) && engineSource.includes(oldSubjectFirstSort)) {
+  engineSource = engineSource.replace(oldSubjectFirstSort, newSubjectFirstSort);
+  rankingCleanupChanged = true;
+}
+if (mode === "write" && (anchorCleanupChanged || rankingCleanupChanged)) fs.writeFileSync(enginePath, engineSource);
 if (mode === "check" && anchorCleanupChanged) throw new Error("js/ahaSubjectEngine.js: duplicate legacy subject-anchor block detected.");
+if (mode === "check" && rankingCleanupChanged) throw new Error("js/ahaSubjectEngine.js: subject-first chapter ranking drift detected.");
 
 const engine = fs.readFileSync(enginePath, "utf8");
 const chapterStart = engine.indexOf("  function chapterEmne(raw, subject) {");
@@ -113,7 +127,9 @@ if ((engine.match(/const primarySupportBySubject = new Map\(\);/g) || []).length
 if (!engine.includes('chapterSpecificityEligibleSubjects')) throw new Error("js/ahaSubjectEngine.js: anchored chapter-specificity gate missing.");
 if (!engine.includes('chapterSpecificEntriesWithinSubject')) throw new Error("js/ahaSubjectEngine.js: within-subject chapter specificity index missing.");
 if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ahaSubjectEngine.js: bounded chapter specificity score missing.");
+if (!engine.includes(newDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: decisive chapter threshold must require two independently specific chapter terms.");
+if (!engine.includes(newSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: subject support must be ranked before within-subject chapter specificity.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
 if (!engine.includes('.map(({ _chapter_specific_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter specificity evidence must not leak from matcher output.");
 
-console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged || anchorCleanupChanged ? " with changes" : ""}.`);
+console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged || anchorCleanupChanged || rankingCleanupChanged ? " with changes" : ""}.`);
