@@ -66,7 +66,7 @@
       addLink("Miljøsikkerhet", ["miljøsikkerhet", "environmental security"]);
       addLink("Ressurskonflikter", ["ressursknapphet", "konflikt"]);
     }
-    if (hasAny(["forskning", "empiri", "empirisk forskning", "narrativ", "politikk", "klimadata", "nedbørsdata"])) {
+    if ((hasSahelMali || hasClimate) && hasAny(["forskning", "empiri", "empirisk forskning", "narrativ", "politikk", "klimadata", "nedbørsdata"])) {
       addLink("Vitenskap og politikk", ["forskning", "empiri", "politikk"]);
       addLink("Narrativer i internasjonal politikk", ["narrativ", "internasjonal politikk"]);
     }

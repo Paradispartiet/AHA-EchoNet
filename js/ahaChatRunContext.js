@@ -393,11 +393,20 @@
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
         const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
         const analysisText = analysis.cleanArticleText(analysisInputText);
+        // Preserve headings and section boundaries for long-source focus. The
+        // cleaned prose remains the canonical analysis input below, but it can
+        // flatten exactly the structure the subject matcher needs to select the
+        // source's disciplinary core.
+        const subjectSourceText = String(analysisInputText || analysisText);
+        const subjectAnalysisText = global.AHAChatProviderLoader?.QUALITY_REPAIR_V2?.focusLongSource?.(subjectSourceText) || subjectSourceText;
         const rawSubjectMatches = global.AHASubjectEngine?.matchText
-          ? await global.AHASubjectEngine.matchText(analysisText, { source: "chat", textType: analysis.detectTextType(cleanText) })
+          ? await global.AHASubjectEngine.matchText(subjectAnalysisText, { source: "chat", textType: analysis.detectTextType(cleanText) })
           : [];
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
-        const climateEnriched = analysis.enrichSubjectMatchesForClimateConflict(analysisText, rawSubjectMatches);
+        const canonicalSubjectMatches = typeof analysis.collapseCanonicalSubjectMatches === "function"
+          ? analysis.collapseCanonicalSubjectMatches(rawSubjectMatches)
+          : rawSubjectMatches;
+        const climateEnriched = analysis.enrichSubjectMatchesForClimateConflict(analysisText, canonicalSubjectMatches);
         const publicAdminEnriched = analysis.enrichSubjectMatchesForPublicAdministration(analysisText, climateEnriched);
         const domain = analysis.detectAutoAnalysisDomain(analysisText, { reflection: reply, subjectMatches: publicAdminEnriched });
         const subjectMatches = domain === "literary_attachment"

@@ -247,6 +247,7 @@
         askAgent: b.askAhaAgent,
         cleanArticleText: b.cleanArticleText,
         detectTextType: b.detectTextType,
+        collapseCanonicalSubjectMatches: modules.autoOutputView.collapseCanonicalSubjectMatches,
         enrichSubjectMatchesForClimateConflict: b.enrichSubjectMatchesForClimateConflict,
         enrichSubjectMatchesForPublicAdministration: b.enrichSubjectMatchesForPublicAdministration,
         detectAutoAnalysisDomain: b.detectAutoAnalysisDomain,

@@ -75,12 +75,13 @@ function repoFetch(overrides = new Map()) {
   };
 }
 
-function createContext(fetchImpl) {
+function createContext(fetchImpl, globals = {}) {
   const context = {
     console: { warn() {}, log() {} },
     structuredClone,
     fetch: fetchImpl,
-    window: null
+    window: null,
+    ...globals
   };
   context.window = context;
   vm.createContext(context);
@@ -95,6 +96,23 @@ function createContext(fetchImpl) {
   assert.ok(subjects.some((subject) => subject.subject_id === 'litteratur'));
   assert.ok(subjects.some((subject) => subject.subject_id === 'teknologi' && subject.kind === 'specialization'));
   assert.ok(subjects.every((subject) => subject.canonical === true));
+
+  const projectRequests = [];
+  const projectContext = createContext(async (url) => {
+    const href = String(url);
+    projectRequests.push(href);
+    const pathname = new URL(href).pathname;
+    const relative = pathname.replace(/^\/AHA-EchoNet\//, "");
+    const local = path.join(repoRoot, relative);
+    if (!local.startsWith(repoRoot) || !fs.existsSync(local)) return response({}, false, 404);
+    return response(JSON.parse(fs.readFileSync(local, 'utf8')));
+  }, { URL, location: { href: 'https://paradispartiet.github.io/AHA-EchoNet/chat.html' } });
+  const projectSubjects = await projectContext.AHASubjectEngine.listSubjects();
+  assert.equal(projectSubjects.length, 20);
+  assert.deepEqual(projectRequests.sort(), [
+    'https://paradispartiet.github.io/AHA-EchoNet/data/integrations/history-go-fagverk-bridge.v2.json',
+    'https://paradispartiet.github.io/AHA-EchoNet/data/integrations/runtime/history-go-fagverk-canonical-index.v2.json'
+  ]);
 
   const loadedLiterature = await context.AHASubjectEngine.loadSubject('litteratur');
   assert.equal(loadedLiterature.authority, 'history_go_canonical_fagverk');
@@ -111,6 +129,18 @@ function createContext(fetchImpl) {
   assert.equal(matches[0].provenance.kind, 'canonical_fagverk');
   assert.equal(matches[0].provenance.source_ref, bridge.canonical_source.source_ref);
   assert.ok(matches.every((match) => match.subject_id !== 'kultur_kunst'));
+
+  const longNarrativeSource = [
+    'Fortelling, identitet og omsorg',
+    'Sammendrag',
+    'Artikkelen undersøker hvordan fortellingspraksiser former representasjon og selvframstilling i individualisert omsorg.',
+    'Vi trekker veksler på litteraturteori, narrativ gerontologi og kritisk fortolkning som teoretisk rammeverk.',
+    ...Array.from({ length: 20 }, (_, index) => `Avsnitt ${index + 1}. Fortellingspraksiser og narrativ form setter kultur, identitet, relasjoner og kunnskap inn i en litterær fortolkning av roman, selvframstilling og omsorg. Samtidig kan et skjematisk verktøy komme i konflikt med en fragmentert livsfortelling.`),
+    'Avslutning',
+    'Vi har argumentert for at retten til egen fortelling krever kritisk forståelse av situert kunnskap og narrativ omsorg.'
+  ].join('\n');
+  const longNarrativeMatches = await context.AHASubjectEngine.matchText(longNarrativeSource, { maxResults: 8 });
+  assert.equal(longNarrativeMatches[0].subject_id, 'litteratur', 'specific chapters may supervise within a subject, but must not override stronger cross-subject support');
 
   const failedClosedContext = createContext(repoFetch(new Map([
     ['/data/integrations/runtime/history-go-fagverk-canonical-index.v2.json', response({}, false, 404)]
