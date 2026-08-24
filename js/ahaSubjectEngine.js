@@ -251,9 +251,18 @@
       return rank;
     };
     const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 8;
+    const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
     out.sort((a, b) => {
       if (subjectFirst) {
+        const aGlobalDecisive = globallyDecisiveChapter(a);
+        const bGlobalDecisive = globallyDecisiveChapter(b);
+        if (aGlobalDecisive !== bGlobalDecisive) return aGlobalDecisive ? -1 : 1;
+        if (aGlobalDecisive && bGlobalDecisive) {
+          const globalSpecificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);
+          if (Math.abs(globalSpecificityDelta) > 1e-9) return globalSpecificityDelta;
+          if (b.score !== a.score) return b.score - a.score;
+        }
         const primarySubjectDelta = subjectSupport(b) - subjectSupport(a);
         if (Math.abs(primarySubjectDelta) > 1e-9) return primarySubjectDelta;
         const aDecisive = decisiveChapter(a);
