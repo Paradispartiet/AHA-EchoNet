@@ -291,7 +291,6 @@
       return aligned;
     };
     const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 4;
-    const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
     const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && (match._chapter_supervision_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
     out.sort((a, b) => {

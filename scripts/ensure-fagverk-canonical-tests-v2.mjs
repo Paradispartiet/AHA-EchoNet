@@ -109,7 +109,7 @@ if (!engineSource.includes(decisiveChapter) && engineSource.includes(intermediat
   engineSource = engineSource.replace(intermediateDecisiveChapter, decisiveChapter);
   rankingCleanupChanged = true;
 }
-const globalDecisiveChapter = 'const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;';
+const globalDecisiveChapter = 'const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && (match._chapter_supervision_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;';
 if (!engineSource.includes(globalDecisiveChapter) && engineSource.includes(decisiveChapter)) {
   engineSource = engineSource.replace(decisiveChapter, `${decisiveChapter}\n    ${globalDecisiveChapter}`);
   rankingCleanupChanged = true;
