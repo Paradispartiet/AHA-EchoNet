@@ -68,7 +68,7 @@
       "canonicalSubjectId": "politikk",
       "ahaSubjectId": "politikk",
       "chapterId": "forvaltning",
-      "emneId": "fagverk_forvaltning",
+      "emneId": "fagverk_politikk_forvaltning",
       "sourceText": "Sammendrag. I denne artikkelen undersøker vi hvordan offentlig ansatte ønsker at evalueringer skal følges bedre opp og integreres i mål- og resultatstyring. Statsforvaltningen trenger evalueringsstrategier, lederforankring og bedre forvaltningsskjønn. Undersøkelsen ble sendt til 276 respondenter, og 30 prosent svarte. Respondentene etterlyser mer systematikk og fagkompetanse. Potensialet ligger ikke i å evaluere mer, men i å gjennomføre bedre evalueringer som gir samfunnsnytte.",
       "expectedConceptTerms": ["evalueringer", "mål- og resultatstyring", "samfunnsnytte"],
       "forbiddenLeakageTerms": ["pinse", "tungetale", "Den hellige ånd", "apostlene", "Babel"]

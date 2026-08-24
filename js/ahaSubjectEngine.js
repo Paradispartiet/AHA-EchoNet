@@ -5,7 +5,7 @@
   const INDEX_URL = "/data/integrations/runtime/history-go-fagverk-canonical-index.v2.json";
   const OVERLAY_URL = "/data/subjects/subjects_index.json";
   const cache = { bridge: null, index: null, overlays: null, subjects: {} };
-  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","styring","makt","samfunn","institusjon","institusjoner","historie","historisk","kapittel"]);
+  const NOISE = new Set(["og","eller","som","det","den","de","til","fra","for","med","på","av","i","om","at","er","var","kan","fag","emne","tekst","tema","analyse","canonical","active","hvordan","hvem","hva","hvorfor","får","få","gjennom","styring","makt","samfunn","institusjon","institusjoner","historie","historisk","kapittel"]);
 
   function normalize(value) { return String(value || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim(); }
   function unique(values) {
@@ -73,7 +73,8 @@
   }
   function chapterEmne(raw, subject) {
     const item = object(raw), id = String(item.chapter_id || "");
-    return { emne_id: `fagverk_${subject.subject_id}_${id}`, title: String(item.title || id), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), chapter_specific_terms: unique([...(item.semantic_terms || []), ...titleTokens(item.title || id), ...titleTokens(item.subtitle || "")]), learning_goals: [], checkpoints: [], summary: String(item.subtitle || ""), description: String(item.subtitle || ""), fagverk: { source_repo: "Paradispartiet/History-Go", source_ref: String(item.source_ref || subject.source_ref || ""), canonical_subject_id: subject.subject_id, chapter_id: id, source_path: String(item.source_path || ""), registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", package_field: "chapter_registry", minimum_matched_terms: 2, term_source: "history_go_registry_plus_manifest_emner_v2", generation_mode: "canonical_history_go_deployment_index_v2" } };
+    const chapterSupervisionTerms = unique([...titleTokens(item.title || id), ...titleTokens(item.subtitle || "")]);
+    return { emne_id: `fagverk_${subject.subject_id}_${id}`, title: String(item.title || id), core_concepts: unique(item.core_concepts || []), keywords: unique(item.keywords || []), thinkers: unique(item.thinkers || []), methods: unique(item.methods || []), chapter_specific_terms: unique([...(item.semantic_terms || []), ...chapterSupervisionTerms]), chapter_supervision_terms: chapterSupervisionTerms, learning_goals: [], checkpoints: [], summary: String(item.subtitle || ""), description: String(item.subtitle || ""), fagverk: { source_repo: "Paradispartiet/History-Go", source_ref: String(item.source_ref || subject.source_ref || ""), canonical_subject_id: subject.subject_id, chapter_id: id, source_path: String(item.source_path || ""), registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", package_field: "chapter_registry", minimum_matched_terms: 2, term_source: "history_go_registry_plus_manifest_emner_v2", generation_mode: "canonical_history_go_deployment_index_v2" } };
   }
   function supplementEmne(raw, subject, index) {
     const item = object(raw), sourcePath = String(item.source_path || ""), id = normalize(sourcePath).replace(/\s+/g, "_") || String(index + 1);
@@ -108,6 +109,19 @@
   function matched(text, values) { return unique(Array.isArray(values) ? values : [values]).filter((value) => value.length <= 180 && containsSubjectTerm(text, value)); }
   function relevant(values) { return unique(values).filter((value) => { const key = normalize(value); return key.length >= 3 && !NOISE.has(key); }); }
   function titleTokens(value) { return relevant(normalize(value).split(" ").filter((token) => token.length >= 4)); }
+  function lexicalFamily(leftValue, rightValue) {
+    const left = normalize(leftValue), right = normalize(rightValue);
+    if (!left || !right) return false;
+    if (left === right) return true;
+    if (left.length < 6 || right.length < 6) return false;
+    let common = 0;
+    while (common < left.length && common < right.length && left[common] === right[common]) common += 1;
+    return common >= 6 && common / Math.min(left.length, right.length) >= 0.7;
+  }
+  function chapterSupervisionMatches(text, values) {
+    const targetTokens = relevant(normalize(text).split(" ").filter((token) => token.length >= 4));
+    return relevant(values).filter((term) => targetTokens.some((token) => lexicalFamily(term, token)));
+  }
   function buildMatchProvenance(subject, emne) {
     if (emne?.fagverk) return { kind: "canonical_fagverk", evidence_role: "reference_support_not_source_evidence", canonical_subject_id: String(emne.fagverk.canonical_subject_id || subject.subject_id), chapter_id: String(emne.fagverk.chapter_id || ""), source_repo: String(emne.fagverk.source_repo || "Paradispartiet/History-Go"), source_ref: String(emne.fagverk.source_ref || subject.source_ref || ""), source_path: String(emne.fagverk.source_path || ""), registry_path: String(emne.fagverk.registry_path || ""), manifest_path: String(emne.fagverk.manifest_path || ""), package_field: String(emne.fagverk.package_field || ""), term_source: String(emne.fagverk.term_source || ""), generation_mode: String(emne.fagverk.generation_mode || "") };
     if (emne?.local_knowledge) return { kind: "aha_local_overlay", evidence_role: "local_reference_support_not_source_evidence", classification: String(emne.local_knowledge.classification || ""), canonical_subject_ids: unique(emne.local_knowledge.canonical_subject_ids || []), revalidate_on_runtime_change: true };
@@ -137,7 +151,7 @@
       const subjectHits = relevant(matched(target, subject.subject_label));
       if (subjectHits.length) out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: null, title: subject.subject_label, type: subject.kind || "subject", score: 1.5 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text", strong: false, provenance: { kind: "canonical_fagverk_subject", evidence_role: "reference_support_not_source_evidence", source_repo: "Paradispartiet/History-Go", source_ref: subject.source_ref, canonical_subject_id: subject.subject_id, registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", generation_mode: "canonical_history_go_deployment_index_v2" } });
       for (const emne of subject.emner || []) {
-        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matched(target, emne.chapter_specific_terms || [])) : [];
+        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matched(target, emne.chapter_specific_terms || [])) : []; const chapterSupervisionHits = kind === "chapter" ? chapterSupervisionMatches(target, emne.chapter_supervision_terms || []) : [];
         for (const [name, values, weight] of fields) {
           const hits = relevant(matched(target, values)); if (!hits.length) continue;
           for (const hit of hits) {
@@ -154,7 +168,7 @@
         const phraseBonus = kind === "method" ? 0 : found.reduce((sum, term) => sum + (normalize(term).includes(" ") ? 3 : 0), 0);
         score += Math.max(0, found.length - 1) * (kind === "method" ? 0.25 : 1.5) + (strong ? 2 : 0) + (kind === "overlay" && strong ? 1 : 0) + phraseBonus;
         const type = kind === "method" ? "method" : kind === "supplement" ? "supplement" : kind === "chapter" ? "chapter" : (emne.thinkers || []).some((value) => found.includes(value)) ? "thinker" : (emne.core_concepts || []).some((value) => found.includes(value)) ? "concept" : "emne";
-        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne), _chapter_specific_hits: chapterSpecificHits });
+        out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: emne.emne_id, title: emne.title, type, score, matched_terms: found, strong, source: options.source || "text", provenance: buildMatchProvenance(subject, emne), _chapter_specific_hits: chapterSpecificHits, _chapter_supervision_hits: chapterSupervisionHits });
       }
     }
 
@@ -270,6 +284,18 @@
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
     out.sort((a, b) => {
       if (subjectFirst) {
+        if (a.subject_id === b.subject_id) {
+          const aSupervision = a.type === "chapter" ? (a._chapter_supervision_hits || []).length : 0;
+          const bSupervision = b.type === "chapter" ? (b._chapter_supervision_hits || []).length : 0;
+          const aSupervised = aSupervision >= 2;
+          const bSupervised = bSupervision >= 2;
+          if (aSupervised !== bSupervised) return aSupervised ? -1 : 1;
+          if (a.type === "chapter" && b.type === "chapter") {
+            const scoreDelta = Number(b.score || 0) - Number(a.score || 0);
+            if (Math.abs(scoreDelta) > 2.5) return scoreDelta;
+          }
+          if (aSupervised && bSupervised && bSupervision !== aSupervision && Math.abs(Number(a.score || 0) - Number(b.score || 0)) <= 2.5) return bSupervision - aSupervision;
+        }
         const aGlobalDecisive = globallyDecisiveChapter(a);
         const bGlobalDecisive = globallyDecisiveChapter(b);
         if (aGlobalDecisive !== bGlobalDecisive) return aGlobalDecisive ? -1 : 1;
@@ -308,7 +334,7 @@
     });
     if (!out.length) return [];
     const best = out[0].score, floor = Math.max(best * 0.45, best - 5), limit = Math.min(8, Number(options.maxResults || options.limit) || 8), seen = new Set();
-    return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => { const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit).map(({ _chapter_specific_hits, ...match }) => match);
+    return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => { const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit).map(({ _chapter_specific_hits, _chapter_supervision_hits, ...match }) => match);
   }
 
   function flatten(value) { if (Array.isArray(value)) return value.map(flatten).join(" "); if (value && typeof value === "object") return Object.values(value).map(flatten).join(" "); return String(value || ""); }

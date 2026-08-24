@@ -200,19 +200,23 @@ if (chapterStart < 0 || chapterEnd < 0) throw new Error("js/ahaSubjectEngine.js:
 const chapterBlock = engine.slice(chapterStart, chapterEnd);
 if (!chapterBlock.includes('chapter_specific_terms: unique([')) throw new Error("js/ahaSubjectEngine.js: chapter specificity channel missing from chapter loader.");
 if (!chapterBlock.includes('...(item.semantic_terms || [])')) throw new Error("js/ahaSubjectEngine.js: canonical semantic terms missing from chapter specificity supervision.");
-if (!chapterBlock.includes('...titleTokens(item.title || id)')) throw new Error("js/ahaSubjectEngine.js: canonical chapter title supervision missing.");
-if (!chapterBlock.includes('...titleTokens(item.subtitle || "")')) throw new Error("js/ahaSubjectEngine.js: canonical chapter subtitle supervision missing.");
+if (!chapterBlock.includes('const chapterSupervisionTerms = unique([...titleTokens(item.title || id), ...titleTokens(item.subtitle || "")])')) throw new Error("js/ahaSubjectEngine.js: canonical chapter title/subtitle supervision missing.");
+if (!chapterBlock.includes('chapter_supervision_terms: chapterSupervisionTerms')) throw new Error("js/ahaSubjectEngine.js: canonical chapter supervision channel missing.");
 if ((engine.match(/const primarySupportBySubject = new Map\(\);/g) || []).length !== 1) throw new Error("js/ahaSubjectEngine.js: subject-anchor block must be unique.");
 if (!engine.includes('chapterSpecificityEligibleSubjects')) throw new Error("js/ahaSubjectEngine.js: anchored chapter-specificity gate missing.");
 if (!engine.includes('chapterSpecificEntriesWithinSubject')) throw new Error("js/ahaSubjectEngine.js: within-subject chapter specificity index missing.");
 if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ahaSubjectEngine.js: bounded chapter specificity score missing.");
 if (!engine.includes(decisiveChapter)) throw new Error("js/ahaSubjectEngine.js: within-subject chapter ranking must accept two independently supported terms without requiring both to be globally unique.");
 if (!engine.includes(globalDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: global chapter evidence must require at least three highly specific terms.");
-if (!engine.includes(globalSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: strong chapter evidence must precede broad subject support, while two-term evidence remains within-subject only.");
+const supervisionSortIndex = engine.indexOf('const aSupervision = a.type === "chapter" ? (a._chapter_supervision_hits || []).length : 0;');
+const globalSortIndex = engine.indexOf('const aGlobalDecisive = globallyDecisiveChapter(a);');
+if (supervisionSortIndex < 0 || globalSortIndex < 0 || supervisionSortIndex > globalSortIndex) throw new Error("js/ahaSubjectEngine.js: title/subtitle chapter supervision must run within-subject before global chapter evidence.");
+if (!engine.includes('function lexicalFamily(leftValue, rightValue)')) throw new Error("js/ahaSubjectEngine.js: generic lexical-family supervision missing.");
+if (!engine.includes('function chapterSupervisionMatches(text, values)')) throw new Error("js/ahaSubjectEngine.js: chapter supervision matcher missing.");
 if (!engine.includes('const primaryTermsBySubject = new Map();')) throw new Error("js/ahaSubjectEngine.js: top-primary subject term anchor missing.");
 if (!engine.includes('const chapterPrimaryAlignment = (match) => {')) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment function missing.");
 if ((engine.match(/const alignmentDelta = chapterPrimaryAlignment\(b\) - chapterPrimaryAlignment\(a\);/g) || []).length < 2) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment must govern decisive and fallback within-subject ordering.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
-if (!engine.includes('.map(({ _chapter_specific_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter specificity evidence must not leak from matcher output.");
+if (!engine.includes('.map(({ _chapter_specific_hits, _chapter_supervision_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter ranking evidence must not leak from matcher output.");
 
 console.log(`Canonical Fagverk contracts: ${mode === "write" ? "updated" : "verified"}${qualityChanged || pipelineChanged || engineChanged || anchorCleanupChanged || rankingCleanupChanged ? " with changes" : ""}.`);
