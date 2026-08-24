@@ -46,7 +46,7 @@ const engineChanged = migrate("js/ahaSubjectEngine.js", [
   ],
   [
     'const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map();',
-    'const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matched(target, emne.chapter_specific_terms || [])) : [];'
+    'const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matchedNormalized(target, emne.chapter_specific_terms || [])) : []; const chapterSupervisionHits = kind === "chapter" ? chapterSupervisionMatches(targetTokens, emne.chapter_supervision_terms || []) : [];'
   ],
   [
     'score += Math.max(0, found.length - 1) * (kind === "method" ? 0.25 : 1.5) + (strong ? 2 : 0) + (kind === "overlay" && strong ? 1 : 0);',
@@ -212,7 +212,9 @@ const supervisionSortIndex = engine.indexOf('const aSupervision = a.type === "ch
 const globalSortIndex = engine.indexOf('const aGlobalDecisive = globallyDecisiveChapter(a);');
 if (supervisionSortIndex < 0 || globalSortIndex < 0 || supervisionSortIndex > globalSortIndex) throw new Error("js/ahaSubjectEngine.js: title/subtitle chapter supervision must run within-subject before global chapter evidence.");
 if (!engine.includes('function lexicalFamily(leftValue, rightValue)')) throw new Error("js/ahaSubjectEngine.js: generic lexical-family supervision missing.");
-if (!engine.includes('function chapterSupervisionMatches(text, values)')) throw new Error("js/ahaSubjectEngine.js: chapter supervision matcher missing.");
+if (!engine.includes('function chapterSupervisionMatches(targetTokens, values)')) throw new Error("js/ahaSubjectEngine.js: pre-normalized chapter supervision matcher missing.");
+if (!engine.includes('function containsNormalizedSubjectTerm(haystack, term)')) throw new Error("js/ahaSubjectEngine.js: canonical matching must normalize the long source once per run.");
+if (!engine.includes('const target = normalize(cleanText(text));')) throw new Error("js/ahaSubjectEngine.js: canonical matching must pre-normalize the active source.");
 if (!engine.includes('const primaryTermsBySubject = new Map();')) throw new Error("js/ahaSubjectEngine.js: top-primary subject term anchor missing.");
 if (!engine.includes('const chapterPrimaryAlignment = (match) => {')) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment function missing.");
 if ((engine.match(/const alignmentDelta = chapterPrimaryAlignment\(b\) - chapterPrimaryAlignment\(a\);/g) || []).length < 2) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment must govern decisive and fallback within-subject ordering.");

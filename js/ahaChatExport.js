@@ -386,7 +386,7 @@
       collect(authoritativeBundle.surfaces);
       const fieldTopicReports = Object.fromEntries(fields.map((field) => [field.item_id, field.topic]));
       const quality = {
-        status: authoritativeBundle.status === "ready" ? "valid" : authoritativeBundle.status === "incomplete" ? "valid_incomplete" : "invalid",
+        status: authoritativeBundle.status === "ready" ? "valid" : authoritativeBundle.status === "incomplete" ? "blocked_incomplete" : "invalid",
         sourceBinding: {
           currentSourceTextHash: sourceTextHash,
           bindings: [{
@@ -418,7 +418,7 @@
           reason: "authoritative_analysis_bundle_v2_identity_match"
         },
         warnings: authoritativeBundle.quality.reasons.slice(),
-        failClosed: authoritativeBundle.status === "invalid"
+        failClosed: authoritativeBundle.status !== "ready"
       };
       const exportBundle = {
         version: "aha_analysis_export_v2",
