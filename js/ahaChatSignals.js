@@ -5,14 +5,14 @@
   const toSentences = global.AHAChatTextUtils.toSentences;
   const collectOpinionArticleEvidence = global.AHAChatTextUtils.collectOpinionArticleEvidence;
 
-  function detectLiteraryAttachmentSignal(text) { const lower = String(text || "").toLowerCase(); let score = 0; const terms = ["knausgård","om våren","om året","min kamp","linda boström","oktoberbarn","tilknytningsteori","tilknytning","bowlby","attachment theory","arbeidsmodell","internal working models","autofiksjon","deiksis","deiktisk","litteraturvitenskap","roman","performativ","nymaterialisme","posthumanisme","løsrivelse","sårbarhet","valborg","mellommenneskelige relasjoner"]; terms.forEach((term)=>{ if(lower.includes(term)) score+=1; }); return { score, strong: score >= 4 }; }
+  function detectLiteraryAttachmentSignal(text) { const lower = String(text || "").toLowerCase(); let score = 0; const terms = ["knausgård","om våren","om året","min kamp","linda boström","oktoberbarn","tilknytningsteori","ambivalent tilknytning","tilknytning","bowlby","attachment theory","arbeidsmodell","internal working models","autofiksjon","deiksis","deiktisk","litteraturvitenskap","roman","fortellergrep","performativ","nymaterialisme","posthumanisme","løsrivelse","sårbarhet","valborg","mellommenneskelige relasjoner"]; terms.forEach((term)=>{ if(lower.includes(term)) score+=1; }); const hasAttachmentCore = ["tilknytningsteori","ambivalent tilknytning","tilknytning","bowlby","attachment theory","arbeidsmodell","internal working models","løsrivelse"].some((term) => lower.includes(term)); const hasLiteraryCore = ["knausgård","om våren","om året","min kamp","linda boström","oktoberbarn","autofiksjon","deiksis","deiktisk","litteraturvitenskap","roman","fortellergrep","performativ"].some((term) => lower.includes(term)); return { score, strong: score >= 4 && hasAttachmentCore && hasLiteraryCore, hasAttachmentCore, hasLiteraryCore }; }
 
   function detectInstitutionalMediaHistorySignal(text) {
     const src = String(text || "").toLowerCase();
     const isNewspaperText = /\b(avis|avisa|avisen|dagsavis|ukeavis|vekeavis|nisjeavis|kulturavis|kommentaravis|redaktør|redaktor|redaksjon)\b/i.test(src);
     const isMediaText = /\b(presse|journalistikk|mediehus|medium|medier|kringkaster|allmennkringkaster|redaksjonell)\b/i.test(src);
     const isInstitutionText = /\b(institusjon|organisasjon|stiftelse|universitet|museum|bibliotek|forlag|konsern|selskap)\b/i.test(src);
-    const mediaCore = isNewspaperText || isMediaText || /\b(morgenbladet|tidsskrift|redaksjonell|redaksjon|eierskap)\b/i.test(src);
+    const mediaCore = isNewspaperText || isMediaText || /\b(morgenbladet|tidsskrift|redaksjonell|redaksjon)\b/i.test(src);
     const institutionTerms = mediaCore || isInstitutionText || /\b(mandat|profil|offentlig rolle)\b/i.test(src);
     const historicalTerms = /\b(ble grunnlagt|grunnlagt|opprettet|etablert|historie|historisk|fra .* til|tidligere|senere|på 18\d{2}|på 19\d{2}|på 20\d{2}|i 18\d{2}|i 19\d{2}|i 20\d{2}|over tid)\b/i.test(src);
     const profileTerms = /\b(konservativ|liberal|uavhengig|politisk profil|nisjeavis|kulturavis|kommentaravis|offentlighet)\b/i.test(src);
@@ -88,7 +88,7 @@
     if (!text) return "";
     if (detectInstitutionalMediaHistorySignal(text).strong) return "institutional_media_history";
     if (detectPublicAdministrationReformSignal(text).strong || countSemanticSignals(text, ["nav-reformen", "ett kontaktpunkt", "brukermøte", "brukermøtet", "etatskulturer", "styringslinjer", "styringsutfordringer", "samordning", "velferdsforvaltning", "velferdsforvaltningen", "byråkratisk kompleksitet"]) >= 1) return "public_administration_reform";
-    if (countSemanticSignals(text, ["roman", "tilknytningsteori", "ambivalent tilknytning", "fortellergrep"]) >= 1) return "literary_attachment";
+    if (detectLiteraryAttachmentSignal(text).strong) return "literary_attachment";
     if (countSemanticSignals(text, ["lærer mest", "feilene mine", "mønstrene", "vaner", "repetisjoner", "justering", "kunnskapen fester seg"]) >= 2) return "learning_reflection";
     if (countSemanticSignals(text, ["uro", "konsentrasjon", "byrom", "trikk", "folkestrøm", "oppmerksomhet", "steder", "bevegelse gir energi"]) >= 3) return "urban_attention_reflection";
     if (countSemanticSignals(text, ["eidsvoll", "1814", "grunnloven", "folkestyre", "rettigheter", "nasjonsbygging", "demokratiet", "politiske deltakere"]) >= 3) return "constitutional_democratic_history";

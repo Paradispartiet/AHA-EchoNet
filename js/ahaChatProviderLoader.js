@@ -74,7 +74,7 @@
     "statistikk", "artikkelvisninger", "crossref", "siteringer", "sitering", "siteringsvarsel",
     "referanser", "figurer", "figur", "dele", "favoritt", "lagre", "informasjon", "forfattere",
     "siste", "måneder", "maaneder", "side", "abstract", "sammendragabstract"
-  ]);
+  ].map(normalize));
   const TITLE_NOISE = /(?:https?:\/\/|@|\b(?:statistikk|artikkelvisninger|crossref|siteringer|siteringsvarsel|lagre favoritt|referanser|figurer|informasjon og forfattere)\b)/iu;
   const SOURCE_CHROME_LINE = /^(?:\*\s*)?(?:statistikk|artikkelvisninger|crossref\s+siteringer|siteringsvarsel|lagre\s+favoritt|siter\s+artikkel|informasjon\s+og\s+forfattere|referanser|figurer|dele|åpne\s+i\s+viewer|siste\s+12\s+måneder|side\s+\d+(?:\s*[–-]\s*\d+)?|figur\s+\d+\b|figurkilde\b|takkenote\s*:)/iu;
   const GENERIC_SECTION_HEADING = /^(?:sammendrag(?:abstract)?|abstract|nøkkelord|keywords?|innledning|bakgrunn|metode|materiale\s+og\s+metode|resultater?|funn|diskusjon|drøfting|begrensninger?|konklusjon|avslutning|referanser|takkenote)\s*:?$/iu;

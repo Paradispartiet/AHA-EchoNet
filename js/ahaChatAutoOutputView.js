@@ -41,12 +41,12 @@
 
   function collapseCanonicalSubjectMatches(matches, limit = 4) {
     const bySubject = new Map();
-    (Array.isArray(matches) ? matches : []).forEach((match) => {
+    (Array.isArray(matches) ? matches : []).forEach((match, index) => {
       const subjectId = String(match?.subject_id || "").trim();
       const subjectLabel = String(match?.subject_label || match?.title || subjectId).trim();
       const score = Number(match?.score || 0);
       if (!subjectId || !subjectLabel || !Number.isFinite(score) || score <= 0) return;
-      const current = bySubject.get(subjectId) || { subjectId, subjectLabel, total: 0, best: null, terms: [], provenance: null };
+      const current = bySubject.get(subjectId) || { subjectId, subjectLabel, total: 0, best: null, terms: [], provenance: null, firstIndex: index };
       current.total += score;
       if (!current.best || score > Number(current.best.score || 0)) current.best = match;
       (Array.isArray(match?.matched_terms) ? match.matched_terms : []).forEach((term) => {
@@ -56,10 +56,12 @@
       if (!current.provenance && match?.provenance) current.provenance = match.provenance;
       bySubject.set(subjectId, current);
     });
-    const ranked = Array.from(bySubject.values()).sort((left, right) => right.total - left.total || Number(right.best?.score || 0) - Number(left.best?.score || 0));
-    if (!ranked.length) return [];
-    const floor = ranked[0].total * 0.45;
-    return ranked.filter((item) => item.total >= floor).slice(0, Math.max(1, Number(limit) || 4)).map((item) => {
+    const grouped = Array.from(bySubject.values());
+    if (!grouped.length) return [];
+    const floor = Math.max(...grouped.map((item) => item.total)) * 0.45;
+    const ranked = grouped.filter((item) => item.total >= floor)
+      .sort((left, right) => left.firstIndex - right.firstIndex || right.total - left.total || Number(right.best?.score || 0) - Number(left.best?.score || 0));
+    return ranked.slice(0, Math.max(1, Number(limit) || 4)).map((item) => {
       const evidence = item.terms.slice(0, 8);
       return {
         id: item.subjectId,

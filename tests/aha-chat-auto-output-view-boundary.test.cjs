@@ -91,6 +91,12 @@ assert.deepEqual(Array.from(collapsedSubjects, (item) => item.subject_id), ["lit
 assert.match(collapsedSubjects[0].explanation, /representasjon|roman|sjanger/);
 assert.ok(collapsedSubjects[0].evidence.length >= 3);
 
+const closeCanonicalSubjects = api.collapseCanonicalSubjectMatches([
+  { subject_id: "litteratur", subject_label: "Litteratur", score: 80.5, matched_terms: ["fortelling", "representasjon"] },
+  { subject_id: "historie", subject_label: "Historie", score: 87.7, matched_terms: ["historie", "kontekst"] }
+]);
+assert.deepEqual(Array.from(closeCanonicalSubjects, (item) => item.subject_id), ["litteratur", "historie"], "the presentation layer must preserve the canonical engine's qualified subject order");
+
 let mismatchArgs = null;
 let exportEnabled = null;
 const literarySubjects = [{ subject_id: "sub_litteratur", title: "Litteratur" }];

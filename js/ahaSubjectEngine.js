@@ -14,7 +14,17 @@
   }
   function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function cleanText(value) { return global.AHAAnalysisText?.cleanTextForAnalysis ? global.AHAAnalysisText.cleanTextForAnalysis(value) : String(value || ""); }
-  async function json(url, label) { const response = await fetch(url, { cache: "force-cache" }); if (!response.ok) throw new Error(`${label || "json"} ${response.status}`); return response.json(); }
+  function runtimeAssetUrl(url) {
+    const value = String(url || "");
+    const pageHref = String(global.location?.href || "");
+    if (!pageHref) return value;
+    try {
+      return new URL(value.replace(/^\/+/, ""), pageHref).href;
+    } catch (_) {
+      return value;
+    }
+  }
+  async function json(url, label) { const response = await fetch(runtimeAssetUrl(url), { cache: "force-cache" }); if (!response.ok) throw new Error(`${label || "json"} ${response.status}`); return response.json(); }
 
   async function bridge() {
     if (cache.bridge) return cache.bridge;
@@ -281,7 +291,7 @@
       return aligned;
     };
     const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 4;
-    const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
+    const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && (match._chapter_supervision_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
     out.sort((a, b) => {
       if (subjectFirst) {

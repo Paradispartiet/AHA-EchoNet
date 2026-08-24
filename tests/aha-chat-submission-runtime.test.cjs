@@ -4,6 +4,8 @@ const vm = require('vm');
 
 const code = fs.readFileSync('js/ahaChatRunContext.js', 'utf8');
 const events = [];
+const subjectInputs = [];
+const renderedSubjectMatches = [];
 const context = {
   window: null,
   console,
@@ -16,6 +18,15 @@ const context = {
     attachAnswerEvaluation: () => events.push('attach-evaluation')
   },
   AHALinkReader: { hasUrls: () => false },
+  AHAChatProviderLoader: { QUALITY_REPAIR_V2: { focusLongSource: (value) => value.length > 7600 ? `FOKUSERT:${value.slice(0, 7000)}` : value } },
+  AHASubjectEngine: { matchText: async (value) => {
+    subjectInputs.push(value);
+    return [
+      { subject_id: 'litteratur', subject_label: 'Litteratur', score: 8 },
+      { subject_id: 'litteratur', subject_label: 'Litteratur', score: 6 },
+      { subject_id: 'musikk', subject_label: 'Musikk', score: 2 }
+    ];
+  } },
   AHAIngest: { ingest: ({ source_type }) => events.push(`ingest:${source_type}`) }
 };
 context.window = context;
@@ -69,8 +80,9 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     isActiveAnalysisRun: (run) => run === activeRun,
     buildArticleSourceTextFromAnalysis: () => '',
     askAgent: async () => ({ reply: 'Svar fra AHA', response_id: 'response_1', model: 'test' }),
-    cleanArticleText: (value) => value,
+    cleanArticleText: (value) => `CLEANED:${value}`,
     detectTextType: () => 'short_note',
+    collapseCanonicalSubjectMatches: (matches) => [{ subject_id: matches[0].subject_id, title: matches[0].subject_label, score: 14 }],
     enrichSubjectMatchesForClimateConflict: (_text, matches) => matches,
     enrichSubjectMatchesForPublicAdministration: (_text, matches) => matches,
     detectAutoAnalysisDomain: () => 'general',
@@ -84,6 +96,7 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     maybeHandleMetaAiAgentReply: () => {},
     renderAutoOutputs: async (_text, _reply, options) => {
       events.push('render-auto-output');
+      renderedSubjectMatches.push(options.subjectMatches);
       assert.equal(options.insightCandidatesV2.length, 1);
       assert.equal(options.insightCandidatesV2[0].candidate_type, 'ai');
     },
@@ -122,6 +135,14 @@ assert.equal(typeof runtime.submitAhaChatMessage, 'function');
   assert(events.includes('ensure-afterwork'));
   assert(events.includes('ingest:aha_agent'));
   assert.equal(events.at(-2), 'processing:false');
+
+  const longSource = 'Lang akademisk kildetekst med flere seksjoner. '.repeat(220);
+  await runtime.submitAhaChatMessage(longSource, { value: longSource });
+  assert.match(subjectInputs.at(-1), /^FOKUSERT:/, 'the primary Chat path must use the bounded semantic focus for long-source subject matching');
+  assert.doesNotMatch(subjectInputs.at(-1), /CLEANED:/, 'long-source subject focus must preserve source headings instead of using flattened analysis prose');
+  assert.ok(subjectInputs.at(-1).length < longSource.length, 'subject matching must not receive the entire oversized source');
+  assert.deepEqual(renderedSubjectMatches.at(-1), [{ subject_id: 'litteratur', title: 'Litteratur', score: 14 }],
+    'the primary Chat path must pass canonical subject-level matches rather than raw chapter matches');
 
   console.log('aha-chat-submission-runtime passed');
 })().catch((err) => {

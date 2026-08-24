@@ -92,7 +92,8 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
     ['con_10', 'Nora'],
     ['con_11', 'Practices'],
     ['con_12', 'Story-Telling'],
-    ['con_13', 'livsark']
+    ['con_13', 'livsark'],
+    ['con_14', 'måneder']
   ].map(([id, label]) => ({ id, label, mentions: [] }));
   const claims = Array.from({ length: 24 }, (_, index) => ({
     id: `clm_${index + 1}`,
@@ -123,7 +124,7 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
   }, { sourceText, payload: { insightCandidatesV2: [] } });
 
   const conceptLabels = semanticDocument.concepts.map((item) => item.label);
-  for (const forbidden of ['skrev', 'henne', 'wrote', 'Statistikk', 'https', 'Nora', 'Practices', 'Story-Telling']) {
+  for (const forbidden of ['skrev', 'henne', 'wrote', 'Statistikk', 'https', 'Nora', 'Practices', 'Story-Telling', 'måneder']) {
     assert.ok(!conceptLabels.includes(forbidden), `lexical/chrome noise must be suppressed: ${forbidden}`);
   }
   for (const required of ['Livsarket', 'fortellingspraksiser', 'omsorg', 'representasjon']) {
