@@ -221,8 +221,52 @@
       }
     }
 
+    const primaryRowsBySubject = new Map();
+    for (const match of out) {
+      if (!["emne", "concept", "thinker", "overlay"].includes(match.type) || !match.emne_id) continue;
+      if (!primaryRowsBySubject.has(match.subject_id)) primaryRowsBySubject.set(match.subject_id, []);
+      primaryRowsBySubject.get(match.subject_id).push(match);
+    }
+    const rankedSubjectSupportBySubject = new Map();
+    for (const [subjectId, matches] of primaryRowsBySubject.entries()) {
+      const ranked = matches.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+      const weights = [1, 0.5, 0.25];
+      let support = 0;
+      for (let index = 0; index < Math.min(3, ranked.length); index += 1) support += Number(ranked[index]?.score || 0) * weights[index];
+      const terms = new Set();
+      for (const match of ranked) for (const term of match.matched_terms || []) { const key = normalize(term); if (key) terms.add(key); }
+      support += Math.min(4, Math.max(0, terms.size - 1) * 0.75);
+      rankedSubjectSupportBySubject.set(subjectId, support);
+    }
+    const rankedSubjectMax = Math.max(0, ...rankedSubjectSupportBySubject.values());
+    const subjectFirst = rankedSubjectMax >= 8;
+    const subjectSupport = (match) => Number(rankedSubjectSupportBySubject.get(match.subject_id) || 0);
+    const chapterSpecificityRank = (match) => {
+      if (match.type !== "chapter" || !chapterSpecificityEligibleSubjects.has(match.subject_id)) return 0;
+      let rank = 0;
+      for (const term of match._chapter_specific_hits || []) {
+        const entryCount = chapterSpecificEntriesWithinSubject.get(`${match.subject_id}|${normalize(term)}`)?.size || 0;
+        rank += entryCount === 1 ? 4 : entryCount === 2 ? 2 : entryCount === 3 ? 0.75 : 0;
+      }
+      return rank;
+    };
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
-    out.sort((a, b) => b.score - a.score || (typeRank[b.type] || 0) - (typeRank[a.type] || 0) || String(a.subject_id).localeCompare(String(b.subject_id)));
+    out.sort((a, b) => {
+      if (subjectFirst) {
+        const subjectDelta = subjectSupport(b) - subjectSupport(a);
+        if (Math.abs(subjectDelta) > 1e-9) return subjectDelta;
+        if (a.subject_id === b.subject_id && a.type === "chapter" && b.type === "chapter") {
+          const aHits = (a._chapter_specific_hits || []).length;
+          const bHits = (b._chapter_specific_hits || []).length;
+          if (Math.max(aHits, bHits) >= 2) {
+            const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);
+            if (Math.abs(specificityDelta) > 1e-9) return specificityDelta;
+            if (bHits !== aHits) return bHits - aHits;
+          }
+        }
+      }
+      return b.score - a.score || (typeRank[b.type] || 0) - (typeRank[a.type] || 0) || String(a.subject_id).localeCompare(String(b.subject_id));
+    });
     if (!out.length) return [];
     const best = out[0].score, floor = Math.max(best * 0.45, best - 5), limit = Math.min(8, Number(options.maxResults || options.limit) || 8), seen = new Set();
     return out.filter((match) => match.score >= floor && (match.strong || match.matched_terms.length >= 2)).filter((match) => { const key = `${match.subject_id}|${match.emne_id || ""}|${normalize(match.title)}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit).map(({ _chapter_specific_hits, ...match }) => match);
