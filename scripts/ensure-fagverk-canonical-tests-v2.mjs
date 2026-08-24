@@ -104,10 +104,20 @@ if (!engineSource.includes(newDecisiveChapter) && engineSource.includes(oldDecis
   engineSource = engineSource.replace(oldDecisiveChapter, newDecisiveChapter);
   rankingCleanupChanged = true;
 }
+const globalDecisiveChapter = 'const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;';
+if (!engineSource.includes(globalDecisiveChapter) && engineSource.includes(newDecisiveChapter)) {
+  engineSource = engineSource.replace(newDecisiveChapter, `${newDecisiveChapter}\n    ${globalDecisiveChapter}`);
+  rankingCleanupChanged = true;
+}
 const oldSubjectFirstSort = '      if (subjectFirst) {\n        const aDecisive = decisiveChapter(a);';
-const newSubjectFirstSort = '      if (subjectFirst) {\n        const primarySubjectDelta = subjectSupport(b) - subjectSupport(a);\n        if (Math.abs(primarySubjectDelta) > 1e-9) return primarySubjectDelta;\n        const aDecisive = decisiveChapter(a);';
-if (!engineSource.includes(newSubjectFirstSort) && engineSource.includes(oldSubjectFirstSort)) {
-  engineSource = engineSource.replace(oldSubjectFirstSort, newSubjectFirstSort);
+const primarySubjectFirstSort = '      if (subjectFirst) {\n        const primarySubjectDelta = subjectSupport(b) - subjectSupport(a);\n        if (Math.abs(primarySubjectDelta) > 1e-9) return primarySubjectDelta;\n        const aDecisive = decisiveChapter(a);';
+if (!engineSource.includes(primarySubjectFirstSort) && engineSource.includes(oldSubjectFirstSort)) {
+  engineSource = engineSource.replace(oldSubjectFirstSort, primarySubjectFirstSort);
+  rankingCleanupChanged = true;
+}
+const globalSubjectFirstSort = '      if (subjectFirst) {\n        const aGlobalDecisive = globallyDecisiveChapter(a);\n        const bGlobalDecisive = globallyDecisiveChapter(b);\n        if (aGlobalDecisive !== bGlobalDecisive) return aGlobalDecisive ? -1 : 1;\n        if (aGlobalDecisive && bGlobalDecisive) {\n          const globalSpecificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);\n          if (Math.abs(globalSpecificityDelta) > 1e-9) return globalSpecificityDelta;\n          if (b.score !== a.score) return b.score - a.score;\n        }\n        const primarySubjectDelta = subjectSupport(b) - subjectSupport(a);\n        if (Math.abs(primarySubjectDelta) > 1e-9) return primarySubjectDelta;\n        const aDecisive = decisiveChapter(a);';
+if (!engineSource.includes(globalSubjectFirstSort) && engineSource.includes(primarySubjectFirstSort)) {
+  engineSource = engineSource.replace(primarySubjectFirstSort, globalSubjectFirstSort);
   rankingCleanupChanged = true;
 }
 if (mode === "write" && (anchorCleanupChanged || rankingCleanupChanged)) fs.writeFileSync(enginePath, engineSource);
@@ -127,8 +137,9 @@ if ((engine.match(/const primarySupportBySubject = new Map\(\);/g) || []).length
 if (!engine.includes('chapterSpecificityEligibleSubjects')) throw new Error("js/ahaSubjectEngine.js: anchored chapter-specificity gate missing.");
 if (!engine.includes('chapterSpecificEntriesWithinSubject')) throw new Error("js/ahaSubjectEngine.js: within-subject chapter specificity index missing.");
 if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ahaSubjectEngine.js: bounded chapter specificity score missing.");
-if (!engine.includes(newDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: decisive chapter threshold must require two independently specific chapter terms.");
-if (!engine.includes(newSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: subject support must be ranked before within-subject chapter specificity.");
+if (!engine.includes(newDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: within-subject decisive chapter threshold must require two independently specific terms.");
+if (!engine.includes(globalDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: global chapter evidence must require at least three highly specific terms.");
+if (!engine.includes(globalSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: strong chapter evidence must precede broad subject support, while two-term evidence remains within-subject only.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
 if (!engine.includes('.map(({ _chapter_specific_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter specificity evidence must not leak from matcher output.");
 
