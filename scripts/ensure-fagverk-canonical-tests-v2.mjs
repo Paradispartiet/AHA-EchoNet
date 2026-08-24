@@ -98,15 +98,20 @@ if (engineSource.includes("chapterSpecificityEligibleSubjects") && engineSource.
   anchorCleanupChanged = true;
 }
 let rankingCleanupChanged = false;
-const oldDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 8;';
-const newDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 8;';
-if (!engineSource.includes(newDecisiveChapter) && engineSource.includes(oldDecisiveChapter)) {
-  engineSource = engineSource.replace(oldDecisiveChapter, newDecisiveChapter);
+const legacyDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 8;';
+const intermediateDecisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 8;';
+const decisiveChapter = 'const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 4;';
+if (!engineSource.includes(decisiveChapter) && engineSource.includes(legacyDecisiveChapter)) {
+  engineSource = engineSource.replace(legacyDecisiveChapter, decisiveChapter);
+  rankingCleanupChanged = true;
+}
+if (!engineSource.includes(decisiveChapter) && engineSource.includes(intermediateDecisiveChapter)) {
+  engineSource = engineSource.replace(intermediateDecisiveChapter, decisiveChapter);
   rankingCleanupChanged = true;
 }
 const globalDecisiveChapter = 'const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;';
-if (!engineSource.includes(globalDecisiveChapter) && engineSource.includes(newDecisiveChapter)) {
-  engineSource = engineSource.replace(newDecisiveChapter, `${newDecisiveChapter}\n    ${globalDecisiveChapter}`);
+if (!engineSource.includes(globalDecisiveChapter) && engineSource.includes(decisiveChapter)) {
+  engineSource = engineSource.replace(decisiveChapter, `${decisiveChapter}\n    ${globalDecisiveChapter}`);
   rankingCleanupChanged = true;
 }
 const oldSubjectFirstSort = '      if (subjectFirst) {\n        const aDecisive = decisiveChapter(a);';
@@ -137,7 +142,7 @@ if ((engine.match(/const primarySupportBySubject = new Map\(\);/g) || []).length
 if (!engine.includes('chapterSpecificityEligibleSubjects')) throw new Error("js/ahaSubjectEngine.js: anchored chapter-specificity gate missing.");
 if (!engine.includes('chapterSpecificEntriesWithinSubject')) throw new Error("js/ahaSubjectEngine.js: within-subject chapter specificity index missing.");
 if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ahaSubjectEngine.js: bounded chapter specificity score missing.");
-if (!engine.includes(newDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: within-subject decisive chapter threshold must require two independently specific terms.");
+if (!engine.includes(decisiveChapter)) throw new Error("js/ahaSubjectEngine.js: within-subject chapter ranking must accept two independently supported terms without requiring both to be globally unique.");
 if (!engine.includes(globalDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: global chapter evidence must require at least three highly specific terms.");
 if (!engine.includes(globalSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: strong chapter evidence must precede broad subject support, while two-term evidence remains within-subject only.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
