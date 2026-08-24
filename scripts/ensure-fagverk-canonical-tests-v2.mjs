@@ -125,6 +125,70 @@ if (!engineSource.includes(globalSubjectFirstSort) && engineSource.includes(prim
   engineSource = engineSource.replace(primarySubjectFirstSort, globalSubjectFirstSort);
   rankingCleanupChanged = true;
 }
+
+const primaryTermsAnchor = '    const rankedSubjectSupportBySubject = new Map();';
+const primaryTermsBlock = [
+  '    const primaryTermsBySubject = new Map();',
+  '    for (const [subjectId, matches] of primaryRowsBySubject.entries()) {',
+  '      const ranked = matches.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, 3);',
+  '      const terms = new Set();',
+  '      for (const match of ranked) for (const term of match.matched_terms || []) { const key = normalize(term); if (key) terms.add(key); }',
+  '      primaryTermsBySubject.set(subjectId, terms);',
+  '    }',
+  '    const rankedSubjectSupportBySubject = new Map();'
+].join('\n');
+if (!engineSource.includes('const primaryTermsBySubject = new Map();') && engineSource.includes(primaryTermsAnchor)) {
+  engineSource = engineSource.replace(primaryTermsAnchor, primaryTermsBlock);
+  rankingCleanupChanged = true;
+}
+
+const alignmentFunctionAnchor = `    ${decisiveChapter}`;
+const alignmentFunctionBlock = [
+  '    const chapterPrimaryAlignment = (match) => {',
+  '      if (match.type !== "chapter") return 0;',
+  '      const primaryTerms = primaryTermsBySubject.get(match.subject_id);',
+  '      if (!primaryTerms?.size) return 0;',
+  '      let aligned = 0;',
+  '      for (const term of match._chapter_specific_hits || []) if (primaryTerms.has(normalize(term))) aligned += 1;',
+  '      return aligned;',
+  '    };',
+  `    ${decisiveChapter}`
+].join('\n');
+if (!engineSource.includes('const chapterPrimaryAlignment = (match) => {') && engineSource.includes(alignmentFunctionAnchor)) {
+  engineSource = engineSource.replace(alignmentFunctionAnchor, alignmentFunctionBlock);
+  rankingCleanupChanged = true;
+}
+
+const decisiveComparatorAnchor = [
+  '        if (aDecisive && bDecisive) {',
+  '          const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);'
+].join('\n');
+const decisiveComparatorBlock = [
+  '        if (aDecisive && bDecisive) {',
+  '          const alignmentDelta = chapterPrimaryAlignment(b) - chapterPrimaryAlignment(a);',
+  '          if (alignmentDelta !== 0) return alignmentDelta;',
+  '          const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);'
+].join('\n');
+if (!engineSource.includes('const alignmentDelta = chapterPrimaryAlignment(b) - chapterPrimaryAlignment(a);') && engineSource.includes(decisiveComparatorAnchor)) {
+  engineSource = engineSource.replace(decisiveComparatorAnchor, decisiveComparatorBlock);
+  rankingCleanupChanged = true;
+}
+
+const chapterFallbackAnchor = [
+  '          if (Math.max(aHits, bHits) >= 2) {',
+  '            const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);'
+].join('\n');
+const chapterFallbackBlock = [
+  '          if (Math.max(aHits, bHits) >= 2) {',
+  '            const alignmentDelta = chapterPrimaryAlignment(b) - chapterPrimaryAlignment(a);',
+  '            if (alignmentDelta !== 0) return alignmentDelta;',
+  '            const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);'
+].join('\n');
+if ((engineSource.match(/const alignmentDelta = chapterPrimaryAlignment\(b\) - chapterPrimaryAlignment\(a\);/g) || []).length < 2 && engineSource.includes(chapterFallbackAnchor)) {
+  engineSource = engineSource.replace(chapterFallbackAnchor, chapterFallbackBlock);
+  rankingCleanupChanged = true;
+}
+
 if (mode === "write" && (anchorCleanupChanged || rankingCleanupChanged)) fs.writeFileSync(enginePath, engineSource);
 if (mode === "check" && anchorCleanupChanged) throw new Error("js/ahaSubjectEngine.js: duplicate legacy subject-anchor block detected.");
 if (mode === "check" && rankingCleanupChanged) throw new Error("js/ahaSubjectEngine.js: subject-first chapter ranking drift detected.");
@@ -145,6 +209,9 @@ if (!engine.includes('Math.min(12, chapterSpecificity)')) throw new Error("js/ah
 if (!engine.includes(decisiveChapter)) throw new Error("js/ahaSubjectEngine.js: within-subject chapter ranking must accept two independently supported terms without requiring both to be globally unique.");
 if (!engine.includes(globalDecisiveChapter)) throw new Error("js/ahaSubjectEngine.js: global chapter evidence must require at least three highly specific terms.");
 if (!engine.includes(globalSubjectFirstSort)) throw new Error("js/ahaSubjectEngine.js: strong chapter evidence must precede broad subject support, while two-term evidence remains within-subject only.");
+if (!engine.includes('const primaryTermsBySubject = new Map();')) throw new Error("js/ahaSubjectEngine.js: top-primary subject term anchor missing.");
+if (!engine.includes('const chapterPrimaryAlignment = (match) => {')) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment function missing.");
+if ((engine.match(/const alignmentDelta = chapterPrimaryAlignment\(b\) - chapterPrimaryAlignment\(a\);/g) || []).length < 2) throw new Error("js/ahaSubjectEngine.js: chapter-primary alignment must govern decisive and fallback within-subject ordering.");
 if (!engine.includes('const termScores = new Map()')) throw new Error("js/ahaSubjectEngine.js: per-term max-weight scoring missing.");
 if (!engine.includes('.map(({ _chapter_specific_hits, ...match }) => match)')) throw new Error("js/ahaSubjectEngine.js: internal chapter specificity evidence must not leak from matcher output.");
 
