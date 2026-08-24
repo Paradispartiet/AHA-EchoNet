@@ -232,6 +232,23 @@
     });
   }
 
+  function primarySourceEvidence(sourceText) {
+    const source = String(sourceText || "");
+    const lines = source.replace(/[\u2028\u2029]/gu, "\n").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const preferred = lines.find((line) => line.length >= 40
+      && !/^(?:https?:\/\/|statistikk|artikkelvisninger|crossref|siteringer|side\s+\d|figur\s+\d|åpne\s+i\s+viewer)/iu.test(line)
+      && !/@\S+\.\S+/u.test(line));
+    if (preferred) {
+      if (preferred.length <= 120 && preferred !== source.trim()) return preferred;
+      let end = Math.min(120, preferred.length);
+      const boundary = preferred.lastIndexOf(" ", end);
+      if (boundary >= 60) end = boundary;
+      return preferred.slice(0, end).trim();
+    }
+    const fallback = source.match(/[^\r\n\u2028\u2029]{40,240}/u)?.[0]?.trim() || "";
+    return fallback;
+  }
+
   function buildSources(identity, input, sourceText, make) {
     const urls = Array.from(new Set((String(sourceText || "").match(/https?:\/\/[^\s)\]}>,]+/gi) || []).map((value) => value.replace(/[.,;:!?]+$/u, ""))));
     const pastedText = String(sourceText || "").replace(/https?:\/\/[^\s)\]}>,]+/gi, " ").replace(/\s+/g, " ").trim();
@@ -241,7 +258,7 @@
       kind: primaryKind,
       acquisition_status: text(input.acquisitionStatus) || (primaryKind === "pasted_text" ? "full_text_used" : "derived_source_used"),
       source_sha256: identity.source_sha256
-    }, { valueType: "record", topicApplicable: false, additionalEvidence: pastedText ? [pastedText.slice(0, 240)] : [] });
+    }, { valueType: "record", topicApplicable: false, additionalEvidence: pastedText ? [primarySourceEvidence(sourceText)] : [] });
     const explicitReferences = array(input.sourceReferences || input.payload?.sourceReferences || input.payload?.references);
     const seenReferenceUrls = new Set();
     const references = [...explicitReferences, ...urls.map((url) => ({ url, status: "reference" }))]
@@ -521,15 +538,41 @@
       }),
       next_inquiry: make("overview.next_inquiry", ahaSer.nesteSteg || canonical.suggestedActions?.[0] || payload?.thoughts?.neste_steg, { reportField: "ahaSer.nesteSteg" })
     };
+    const semanticInsightEvidence = semanticInsightCandidates.flatMap((item) => array(item?.evidence).map((entry) => entry?.quote)).filter(Boolean);
+    const semanticInsightIds = semanticInsightCandidates.map((item) => item?.id).filter(Boolean);
+    const semanticSummary = authoritativeSemantic
+      ? semanticInsightCandidates.slice(0, 2).map((item) => text(item?.insight)).filter(Boolean).join(" ")
+      : "";
+    const semanticReflection = authoritativeSemantic
+      ? text(semanticInsightCandidates[0]?.why_it_matters || semanticTension?.label)
+      : "";
     const sourceStructure = {
       problem_statement: make("source_structure.problem_statement", payload.problemStatement || payload.problem_statement || canonical.theme, { reportField: "canonicalAnalysis.theme" }),
-      main_claim: make("source_structure.main_claim", canonical.keyInsight || ahaSer.viktigsteInnsikt, { reportField: "canonicalAnalysis.keyInsight", additionalEvidence: claimEvidence(payload, canonical.keyInsight || ahaSer.viktigsteInnsikt) }),
+      main_claim: make("source_structure.main_claim", canonical.keyInsight || ahaSer.viktigsteInnsikt, {
+        reportField: "canonicalAnalysis.keyInsight",
+        semanticIds: semanticInsightIds.slice(0, 1),
+        origin: authoritativeSemantic ? "semantic_document_v2_quality_approved" : "current_analysis_run",
+        topicReport: authoritativeSemantic ? authoritativeTopicReport : undefined,
+        additionalEvidence: authoritativeSemantic ? semanticInsightEvidence : claimEvidence(payload, canonical.keyInsight || ahaSer.viktigsteInnsikt)
+      }),
       evidence_method: make("source_structure.evidence_method", array(payload.sortItems).map((item) => text(item)).filter(Boolean), { valueType: "text_list", reportField: "afterwork.sortItems" }),
       central_tension: make("source_structure.central_tension", canonical.mainTension || ahaSer.hovedspenning, { reportField: "canonicalAnalysis.mainTension" })
     };
     const afterwork = {
-      summary: make("afterwork.summary", payload.summary || canonical.summary || payload.day || ahaSer.kortSvar, { reportField: "afterwork.summary" }),
-      reflection: make("afterwork.reflection", canonical.reflection || payload.reflection, { reportField: "afterwork.reflection" }),
+      summary: make("afterwork.summary", semanticSummary || payload.summary || canonical.summary || payload.day || ahaSer.kortSvar, {
+        reportField: "afterwork.summary",
+        semanticIds: semanticInsightIds.slice(0, 2),
+        origin: semanticSummary ? "semantic_document_v2_cross_insight_summary" : "current_analysis_run",
+        topicReport: semanticSummary ? authoritativeTopicReport : undefined,
+        additionalEvidence: semanticSummary ? semanticInsightEvidence : []
+      }),
+      reflection: make("afterwork.reflection", semanticReflection || canonical.reflection || payload.reflection, {
+        reportField: "afterwork.reflection",
+        semanticIds: semanticInsightIds.slice(0, 1),
+        origin: semanticReflection ? "semantic_document_v2_why_it_matters" : "current_analysis_run",
+        topicReport: semanticReflection ? authoritativeTopicReport : undefined,
+        additionalEvidence: semanticReflection ? semanticInsightEvidence : []
+      }),
       main_thread: make("afterwork.main_thread", payload?.thoughts?.hovedspor || canonical.theme || ahaSer.tema, { reportField: "canonicalAnalysis.theme" }),
       unresolved_thought: make("afterwork.unresolved_thought", payload?.thoughts?.lose_tanker || canonical.mainTension || ahaSer.hovedspenning, { reportField: "canonicalAnalysis.mainTension" }),
       next_step: make("afterwork.next_step", payload?.thoughts?.neste_steg || ahaSer.nesteSteg || canonical.suggestedActions?.[0], { reportField: "ahaSer.nesteSteg" })
@@ -632,7 +675,7 @@
   }
 
   function fieldValue(field, fallback = "") {
-    return field?.schema === FIELD_SCHEMA && field?.quality?.status !== "rejected" ? clone(field.value) : fallback;
+    return field?.schema === FIELD_SCHEMA && field?.quality?.status === "passed" ? clone(field.value) : fallback;
   }
 
   function toLegacyView(bundle) {

@@ -39,6 +39,45 @@
     return value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : null;
   }
 
+  function collapseCanonicalSubjectMatches(matches, limit = 4) {
+    const bySubject = new Map();
+    (Array.isArray(matches) ? matches : []).forEach((match) => {
+      const subjectId = String(match?.subject_id || "").trim();
+      const subjectLabel = String(match?.subject_label || match?.title || subjectId).trim();
+      const score = Number(match?.score || 0);
+      if (!subjectId || !subjectLabel || !Number.isFinite(score) || score <= 0) return;
+      const current = bySubject.get(subjectId) || { subjectId, subjectLabel, total: 0, best: null, terms: [], provenance: null };
+      current.total += score;
+      if (!current.best || score > Number(current.best.score || 0)) current.best = match;
+      (Array.isArray(match?.matched_terms) ? match.matched_terms : []).forEach((term) => {
+        const value = String(term || "").trim();
+        if (value && !current.terms.some((existing) => existing.toLowerCase() === value.toLowerCase())) current.terms.push(value);
+      });
+      if (!current.provenance && match?.provenance) current.provenance = match.provenance;
+      bySubject.set(subjectId, current);
+    });
+    const ranked = Array.from(bySubject.values()).sort((left, right) => right.total - left.total || Number(right.best?.score || 0) - Number(left.best?.score || 0));
+    if (!ranked.length) return [];
+    const floor = ranked[0].total * 0.45;
+    return ranked.filter((item) => item.total >= floor).slice(0, Math.max(1, Number(limit) || 4)).map((item) => {
+      const evidence = item.terms.slice(0, 8);
+      return {
+        id: item.subjectId,
+        subject_id: item.subjectId,
+        subject_label: item.subjectLabel,
+        title: item.subjectLabel,
+        score: Number(item.total.toFixed(3)),
+        matched_terms: evidence,
+        evidence,
+        explanation: evidence.length
+          ? `Kildeteksten matcher ${item.subjectLabel} gjennom ${evidence.slice(0, 5).join(", ")}.`
+          : `Kildeteksten har samlet kanonisk støtte i ${item.subjectLabel}.`,
+        source: "history_go_canonical_fagverk",
+        provenance: item.provenance || item.best?.provenance || null
+      };
+    });
+  }
+
   function harmonizeAnalysisPayload(payload, sourceText = "") {
     const safe = payload && typeof payload === "object" ? payload : {};
     const canonical = safe.canonicalAnalysis && typeof safe.canonicalAnalysis === "object"
@@ -465,6 +504,52 @@
         deps.setExportButtonsEnabled(false);
         return;
       }
+      const bundleStatus = String(payload?.analysisBundleV2?.status || "");
+      const bundleReasons = Array.isArray(payload?.analysisBundleV2?.quality?.reasons)
+        ? payload.analysisBundleV2.quality.reasons.filter(Boolean)
+        : [];
+      const coreBlockingIds = [
+        ...(Array.isArray(payload?.analysisBundleV2?.quality?.blocking_field_ids) ? payload.analysisBundleV2.quality.blocking_field_ids : []),
+        ...(Array.isArray(payload?.analysisBundleV2?.quality?.required_missing_field_ids) ? payload.analysisBundleV2.quality.required_missing_field_ids : [])
+      ].filter(Boolean);
+      const coreAnalysisBlocked = bundleStatus === "invalid"
+        || coreBlockingIds.length > 0
+        || bundleReasons.includes("core_analysis_readiness_blocked")
+        || bundleReasons.includes("authoritative_semantic_synthesis_not_ready");
+      if (bundleStatus && bundleStatus !== "ready" && coreAnalysisBlocked) {
+        const reasons = bundleReasons.length ? bundleReasons.join(", ") : "core_analysis_not_ready";
+        host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Analysen er bundet til aktiv tekst, men bestod ikke alle kjerneportene.</p></div>
+          <section class="auto-output-group auto-output-primary" data-group="quality-gate">
+            <h3>AHA-analysen er blokkert</h3>
+            <article class="auto-card auto-card-primary"><p>${safeMarkupText(reasons)}</p><p><strong>Ingen analysepåstander vises som kvalitetssikret før kjernen er klar.</strong></p></article>
+          </section>${deps.renderAnalysisDebugPanel(payload)}`;
+        deps.setExportButtonsEnabled(true);
+        deps.refreshAhaExplorer();
+        return;
+      }
+      if (bundleStatus && bundleStatus !== "ready") {
+        const verifiedClaims = [
+          ["Tema", payload?.canonicalAnalysis?.theme],
+          ["Hovedspenning", payload?.canonicalAnalysis?.mainTension],
+          ["Viktigste innsikt", payload?.canonicalAnalysis?.keyInsight],
+          ["Oppsummering", payload?.summary],
+          ["Refleksjon", payload?.reflection],
+          ...(Array.isArray(payload?.insightCards) ? payload.insightCards.map((value) => ["Innsikt", value]) : [])
+        ].map(([label, value]) => [label, displayText(value).trim()])
+          .filter(([, value], index, items) => value && items.findIndex((item) => item[1] === value) === index);
+        const withheldCount = Number(payload?.analysisBundleV2?.quality?.incomplete_field_ids?.length || 0)
+          + Number(payload?.analysisBundleV2?.quality?.rejected_field_ids?.length || 0);
+        host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Kun kildeverifiserte analysefelt vises.</p></div>
+          <section class="auto-output-group auto-output-primary" data-group="quality-gate">
+            <h3>Delvis analyse</h3>
+            <article class="auto-card auto-card-primary"><p>${safeMarkupText(withheldCount ? `${withheldCount} felt er holdt tilbake av kvalitetssperren.` : "Ufullstendige felt er holdt tilbake av kvalitetssperren.")}</p></article>
+          </section>
+          ${verifiedClaims.length ? `<section class="auto-output-group" data-group="verified-claims"><h3>Kildeverifiserte funn</h3><div class="auto-output-grid">${verifiedClaims.map(([label, value]) => `<article class="auto-card"><h4>${safeMarkupText(label)}</h4><p>${safeMarkupText(value)}</p></article>`).join("")}</div></section>` : `<section class="auto-output-group"><article class="auto-card"><p><strong>Ingen analysepåstander er kvalitetssikret ennå.</strong></p></article></section>`}
+          ${deps.renderAnalysisDebugPanel(payload)}`;
+        deps.setExportButtonsEnabled(true);
+        deps.refreshAhaExplorer();
+        return;
+      }
       if (payload?.qualityGate?.suppressClaims === true) {
         host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Automatisk analyse av siste melding og svar.</p></div>
           <section class="auto-output-group auto-output-primary" data-group="quality-gate">
@@ -635,6 +720,15 @@
           if (calibratedMatches.length) payload.subjectMatches = calibratedMatches;
         } catch (err) {
           global.console.warn("AHACalibration.matchText feilet", err);
+        }
+      }
+      if (!articleAnalysis && !payload.subjectMatches.length && global.AHASubjectEngine?.matchText) {
+        try {
+          const focusedSubjectSource = global.AHAChatProviderLoader?.QUALITY_REPAIR_V2?.focusLongSource?.(sourceText) || sourceText.slice(0, 7600);
+          const canonicalMatches = await global.AHASubjectEngine.matchText(focusedSubjectSource, { maxResults: 8, source: "live_analysis" });
+          payload.subjectMatches = collapseCanonicalSubjectMatches(canonicalMatches);
+        } catch (err) {
+          global.console.warn("AHASubjectEngine.matchText feilet", err);
         }
       }
       if (domain === "literary_attachment") {
@@ -870,7 +964,7 @@
   global.AHAChatAutoOutputStore = storeApi;
   global.AHAModuleApi?.register?.("chat.autoOutputStore", storeApi, { version: 1, legacyGlobal: "AHAChatAutoOutputStore", exports: Object.keys(storeApi) });
 
-  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime, harmonizeAnalysisPayload, finalizeAnalysisQuality });
+  const publicApi = Object.assign({}, global.AHAChatAutoOutputView || {}, { create, createRuntime, harmonizeAnalysisPayload, finalizeAnalysisQuality, collapseCanonicalSubjectMatches });
   global.AHAChatAutoOutputView = publicApi;
   global.AHAModuleApi?.register?.("chat.autoOutputView", publicApi, { version: 1, legacyGlobal: "AHAChatAutoOutputView", exports: Object.keys(publicApi) });
 })(window);

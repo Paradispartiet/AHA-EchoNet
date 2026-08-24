@@ -95,6 +95,37 @@ assert.equal(typeof api.buildAhaAnalysisExportBundle, "function");
 assert.equal(typeof api.createRuntime, "function");
 
 {
+  const sourceText = "Denne fagteksten undersøker hvordan dokumenterte funn må skilles fra foreløpige tolkninger. Kilden gir et eksplisitt analysegrunnlag.";
+  const sourceSha256 = "c".repeat(64);
+  const activeRun = {
+    analysisId: "analysis_incomplete",
+    analysisRunId: "run_incomplete",
+    runId: "run_incomplete",
+    sourceId: "source_incomplete",
+    sourceText,
+    sourceTextHash: sourceSha256,
+    sourceSha256,
+    source_sha256: sourceSha256,
+    createdAt: "2026-08-24T10:00:00.000Z"
+  };
+  const analysisBundleV2 = loaded.window.AHAAnalysisBundleV2.build({
+    activeRun,
+    sourceText,
+    payload: { canonicalAnalysis: { theme: "Dokumenterte funn og foreløpige tolkninger" } },
+    primarySourceKind: "pasted_text",
+    acquisitionStatus: "full_text_used"
+  });
+  assert.equal(analysisBundleV2.status, "incomplete");
+  const deps = baseDeps({ currentHash: sourceSha256, sourceText });
+  deps.getActiveAnalysisRun = () => ({ ...activeRun, analysisBundleV2 });
+  deps.analysisBundleV2 = loaded.window.AHAAnalysisBundleV2;
+  const exportBundle = api.buildAhaAnalysisExportBundle(deps);
+  assert.equal(exportBundle.quality.status, "blocked_incomplete");
+  assert.equal(exportBundle.quality.failClosed, true, "incomplete authoritative analysis must never be exported as valid");
+  assert.equal(exportBundle.analysisBinding.valid, false);
+}
+
+{
   assert.throws(() => api.createRuntime({}), /mangler avhengighet: loadAutoOutputs/);
   const runtime = api.createRuntime({
     ...baseDeps({

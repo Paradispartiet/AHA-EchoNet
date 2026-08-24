@@ -76,18 +76,20 @@
     "siste", "måneder", "maaneder", "side", "abstract", "sammendragabstract"
   ]);
   const TITLE_NOISE = /(?:https?:\/\/|@|\b(?:statistikk|artikkelvisninger|crossref|siteringer|siteringsvarsel|lagre favoritt|referanser|figurer|informasjon og forfattere)\b)/iu;
+  const SOURCE_CHROME_LINE = /^(?:\*\s*)?(?:statistikk|artikkelvisninger|crossref\s+siteringer|siteringsvarsel|lagre\s+favoritt|siter\s+artikkel|informasjon\s+og\s+forfattere|referanser|figurer|dele|åpne\s+i\s+viewer|siste\s+12\s+måneder|side\s+\d+(?:\s*[–-]\s*\d+)?|figur\s+\d+\b|figurkilde\b|takkenote\s*:)/iu;
+  const GENERIC_SECTION_HEADING = /^(?:sammendrag(?:abstract)?|abstract|nøkkelord|keywords?|innledning|bakgrunn|metode|materiale\s+og\s+metode|resultater?|funn|diskusjon|drøfting|begrensninger?|konklusjon|avslutning|referanser|takkenote)\s*:?$/iu;
   const TENSION_SIGNAL = /\b(?:men|mens|samtidig|derimot|likevel|kontrast|kontrasteres|på den ene siden|på den andre siden|spenning(?:sfelt)? mellom|utfordring|problematisk)\b/iu;
   const CONCLUSION_SIGNAL = /\b(?:konklusjon|avslutning|vi har argumentert|vi har vist|vår analyse|dette viser|dermed|derfor|sentralt|viktig|problematiserer)\b/iu;
   const ACADEMIC_ROLE_ORDER = Object.freeze([
     "research_question", "method", "framework", "findings", "limitations", "conclusion"
   ]);
   const ACADEMIC_ROLE_SIGNALS = Object.freeze({
-    research_question: /\b(?:problemstilling(?:en)?|forskningsspørsmål(?:et|ene)?|research question|formål(?:et)? med (?:studien|artikkelen)|hensikt(?:en)? med (?:studien|artikkelen)|vi undersøker|artikkelen undersøker|studien undersøker|(?:the|this) (?:article|study) asks|the study asks)\b/iu,
-    method: /\b(?:metode(?:n|r)?|metodisk|datamateriale|materiale og metode|utvalg(?:et)?|informant(?:er|ene)?|intervju(?:er|ene)?|observasjon(?:er|ene)?|casestudie|case study|kvalitativ|kvantitativ|empiri(?:sk)?|analysemetode|semi-structured interviews?|thematic analysis|qualitative|quantitative)\b/iu,
-    framework: /\b(?:teori(?:en|er)?|teoretisk|rammeverk(?:et)?|perspektiv(?:et|er)?|begrep(?:et|er)?|conceptual framework|theoretical framework|analytisk tilnærming)\b/iu,
-    findings: /\b(?:resultat(?:er|ene)?|funn(?:ene)?|analysen viser|studien viser|vi finner|vi fant|hovedtema(?:ene)?|temaene|informantene (?:beskriver|forteller)|deltakerne (?:beskriver|forteller)|findings?|results?|the analysis identifies|the study finds)\b/iu,
-    limitations: /\b(?:begrensning(?:er|ene)?|forbehold|usikkerhet|kan ikke fastslå|ikke nødvendigvis|videre forskning|limitations?|cannot establish|further research)\b/iu,
-    conclusion: /\b(?:konklusjon(?:en)?|avslutning|vi konkluderer|vi har vist|vi har argumentert|dette viser|samlet sett|overall|conclusion|the study concludes)\b/iu
+    research_question: /\b(?:problemstilling(?:en)?|forskningsspørsmål(?:et|ene)?|research question|formål(?:et)? med (?:studien|artikkelen)|hensikt(?:en)? med (?:studien|artikkelen)|vi (?:undersøker|diskuterer|drøfter|analyserer)|artikkelen (?:undersøker|diskuterer|drøfter|analyserer)|studien undersøker|vårt utgangspunkt er|sentralt for vår analyse|(?:the|this) (?:article|study) asks|the study asks)\b/iu,
+    method: /\b(?:metode(?:n|r)?|metodisk|datamateriale|materiale og metode|utvalg(?:et)?|informant(?:er|ene)?|intervju(?:er|ene)?|observasjon(?:er|ene)?|casestudie|case study|kvalitativ|kvantitativ|empiri(?:sk)?|analysemetode|vi (?:trekker veksler på|leser|analyserer)|med utgangspunkt i|kontekstualiserer?|semi-structured interviews?|thematic analysis|qualitative|quantitative)\b/iu,
+    framework: /\b(?:teori(?:en|er)?|teoretisk|vitenskapsteoretisk|rammeverk(?:et)?|perspektiv(?:et|er)?|begrep(?:et|er)?|litteraturteori|omsorgsforsk(?:ing|ning)|narrativ gerontologi|situert kunnskap|conceptual framework|theoretical framework|analytisk tilnærming)\b/iu,
+    findings: /\b(?:resultat(?:er|ene)?|funn(?:ene)?|analysen viser|vår analyse (?:viser|peker|synliggjør)|studien viser|vi finner|vi fant|vi (?:argumenterer|problematiserer|understreker|fremhever)|hovedtema(?:ene)?|temaene|informantene (?:beskriver|forteller)|deltakerne (?:beskriver|forteller)|findings?|results?|the analysis identifies|the study finds)\b/iu,
+    limitations: /\b(?:begrensning(?:er|ene)?|forbehold|usikkerhet|kan ikke fastslå|ikke nødvendigvis|videre forskning|videre diskusjon|mye mer kan og bør sies|limitations?|cannot establish|further research)\b/iu,
+    conclusion: /\b(?:konklusjon(?:en)?|avslutning|åpning til videre diskusjon|vi konkluderer|vi har vist|vi har argumentert|vi har kommet med et innspill|dette viser|samlet sett|overall|conclusion|the study concludes)\b/iu
   });
   const ROLE_HEADING_SIGNALS = Object.freeze({
     research_question: /^(?:problemstilling|forskningsspørsmål|research question)\b/iu,
@@ -143,18 +145,65 @@
     return count;
   }
 
+  function isSourceChromeLine(value) {
+    const line = String(value || "").trim();
+    if (!line) return true;
+    if (SOURCE_CHROME_LINE.test(line) || /^https?:\/\/\S+$/iu.test(line) || /@\S+\.\S+/u.test(line)) return true;
+    if (/^(?:\d[\d\s.,]*|\d{1,2}[./-]\d{1,2}[./-]\d{2,4})$/u.test(line)) return true;
+    return false;
+  }
+
+  function sourceSentenceChunks(value, limit = 1400) {
+    const input = String(value || "").trim();
+    if (!input) return [];
+    const sentences = input.match(/[^.!?…]+(?:[.!?…]+|$)/gu)?.map((part) => part.trim()).filter(Boolean) || [input];
+    const chunks = [];
+    let current = "";
+    const flush = () => { if (current.trim()) chunks.push(current.trim()); current = ""; };
+    sentences.forEach((sentence) => {
+      if (sentence.length > limit) {
+        flush();
+        let cursor = 0;
+        while (cursor < sentence.length) {
+          let end = Math.min(sentence.length, cursor + limit);
+          if (end < sentence.length) {
+            const boundary = sentence.lastIndexOf(" ", end);
+            if (boundary > cursor + Math.floor(limit * 0.6)) end = boundary;
+          }
+          chunks.push(sentence.slice(cursor, end).trim());
+          cursor = end;
+        }
+        return;
+      }
+      const next = current ? `${current} ${sentence}` : sentence;
+      if (current && next.length > limit) flush();
+      current = current ? `${current} ${sentence}` : sentence;
+    });
+    flush();
+    return chunks.filter((part) => part.length >= 35);
+  }
+
   function splitSourceUnits(sourceText) {
-    const source = String(sourceText || "").replace(/\r\n?/g, "\n");
-    const paragraphs = source.split(/\n{2,}/).map((part) => part.trim()).filter((part) => part.length >= 40);
-    if (paragraphs.length >= 6) return paragraphs;
-    const sentences = [];
-    const re = /[^.!?\n]+(?:[.!?]+|$)/gu;
-    let match;
-    while ((match = re.exec(source))) {
-      const part = match[0].trim();
-      if (part.length >= 35) sentences.push(part);
-    }
-    return sentences.length ? sentences : [source.trim()].filter(Boolean);
+    const source = String(sourceText || "").replace(/\r\n?/g, "\n").replace(/[\u2028\u2029]/gu, "\n");
+    const lines = source.split(/\n+/).map((part) => part.trim()).filter(Boolean);
+    const units = [];
+    let pendingHeading = "";
+    const pushContent = (value) => sourceSentenceChunks(value).forEach((part) => units.push(part));
+    lines.forEach((line) => {
+      if (isSourceChromeLine(line)) return;
+      const heading = line.length < 70 && !/[.!?…]$/u.test(line) && line.split(/\s+/).length <= 10;
+      if (heading) {
+        if (pendingHeading && !GENERIC_SECTION_HEADING.test(pendingHeading)) pushContent(pendingHeading);
+        pendingHeading = line;
+        return;
+      }
+      const combined = pendingHeading ? `${pendingHeading}\n${line}` : line;
+      pendingHeading = "";
+      pushContent(combined);
+    });
+    if (pendingHeading && !GENERIC_SECTION_HEADING.test(pendingHeading)) pushContent(pendingHeading);
+    if (units.length) return units;
+    return sourceSentenceChunks(source);
   }
 
   function rolesForUnit(unit) {
@@ -191,6 +240,7 @@
     if (coverage.roles.length < 3) return "";
     const units = splitSourceUnits(source);
     if (units.length <= 1) return source.slice(0, limit);
+    const unitOrder = new Map(units.map((unit, index) => [normalize(unit), index]));
     const chosen = [];
     const chosenKeys = new Set();
     let used = 0;
@@ -205,16 +255,17 @@
       used += extra;
       return true;
     };
-    for (let index = 0; index < Math.min(4, units.length); index += 1) add(units[index]);
-    for (let index = Math.max(0, units.length - 3); index < units.length; index += 1) add(units[index]);
-    const interior = units.slice(4, Math.max(4, units.length - 3));
-    ACADEMIC_ROLE_ORDER.forEach((role) => {
-      const candidate = interior.map((unit, index) => ({ unit, index, score: roleUnitScore(unit, role, index) }))
+    add(units[0]);
+    const rolePriority = ["research_question", "conclusion", "framework", "method", "findings", "limitations"];
+    rolePriority.forEach((role) => {
+      const candidate = units.map((unit, index) => ({ unit, index, score: roleUnitScore(unit, role, index) }))
         .filter((item) => item.score >= 10)
         .sort((left, right) => right.score - left.score || left.index - right.index)[0];
       if (candidate) add(candidate.unit);
     });
-    interior.map((unit, index) => ({
+    units.slice(0, Math.min(8, units.length)).forEach(add);
+    units.slice(Math.max(0, units.length - 5)).forEach(add);
+    units.map((unit, index) => ({
       unit,
       index,
       score: (rolesForUnit(unit).length * 6)
@@ -223,7 +274,7 @@
         + Math.min(3, contentTokens(unit).length / 45)
     })).sort((left, right) => right.score - left.score || left.index - right.index)
       .forEach(({ unit }) => add(unit));
-    return chosen.sort((left, right) => source.indexOf(left) - source.indexOf(right)).join("\n\n").slice(0, limit);
+    return chosen.sort((left, right) => (unitOrder.get(normalize(left)) ?? Number.MAX_SAFE_INTEGER) - (unitOrder.get(normalize(right)) ?? Number.MAX_SAFE_INTEGER)).join("\n\n").slice(0, limit);
   }
 
   function focusLongSource(sourceText, limit = LONG_SOURCE_LIMIT) {
@@ -233,6 +284,7 @@
     if (academic) return academic;
     const units = splitSourceUnits(source);
     if (units.length <= 1) return source.slice(0, limit);
+    const unitOrder = new Map(units.map((unit, index) => [normalize(unit), index]));
 
     const chosen = [];
     const chosenKeys = new Set();
@@ -262,13 +314,79 @@
     }).sort((left, right) => right.score - left.score || left.index - right.index);
     middle.forEach(({ unit }) => add(unit));
 
-    return chosen.sort((left, right) => source.indexOf(left) - source.indexOf(right)).join("\n\n").slice(0, limit);
+    return chosen.sort((left, right) => (unitOrder.get(normalize(left)) ?? Number.MAX_SAFE_INTEGER) - (unitOrder.get(normalize(right)) ?? Number.MAX_SAFE_INTEGER)).join("\n\n").slice(0, limit);
   }
 
   function candidateConceptKeys(payload) {
     return new Set(array(payload?.insightCandidatesV2)
       .flatMap((candidate) => array(candidate?.concepts))
       .map(normalize).filter(Boolean));
+  }
+
+  function headerMetadataConceptKeys(sourceText) {
+    const keys = new Set();
+    String(sourceText || "").replace(/[\u2028\u2029]/gu, "\n").split(/\r?\n/).slice(0, 30).forEach((line) => {
+      if (!/@\S+\.\S+/u.test(line)) return;
+      line.replace(/[^\p{L}\p{M}'’.-]+/gu, " ").split(/\s+/).filter((token) => token.length >= 3)
+        .forEach((token) => keys.add(normalize(token)));
+    });
+    return keys;
+  }
+
+  function alternateLanguageTitleConceptKeys(sourceText) {
+    const source = String(sourceText || "").replace(/[\u2028\u2029]/gu, "\n");
+    const norwegianBody = (source.match(/\b(?:og|som|ikke|denne|artikkelen|fortelling|omsorg)\b/giu) || []).length >= 8;
+    if (!norwegianBody) return new Set();
+    const keys = new Set();
+    source.split(/\r?\n/).slice(0, 25).forEach((line) => {
+      const englishSignals = line.match(/\b(?:the|and|of|about|with|from|into)\b/giu) || [];
+      if (englishSignals.length < 2) return;
+      normalize(line).split(/\s+/).filter((token) => token.length >= 4 && !["with", "from", "into", "about"].includes(token))
+        .forEach((token) => keys.add(token));
+    });
+    return keys;
+  }
+
+  function closeMorphologicalDuplicate(leftValue, rightValue) {
+    const left = normalize(leftValue).replace(/-/gu, ""), right = normalize(rightValue).replace(/-/gu, "");
+    if (!left || !right) return false;
+    if (left === right) return true;
+    const [shorter, longer] = left.length <= right.length ? [left, right] : [right, left];
+    return shorter.length >= 6 && longer.startsWith(shorter) && longer.length - shorter.length <= 4;
+  }
+
+  function candidateEvidencePositions(candidate) {
+    return array(candidate?.evidence).flatMap((entry) => array(entry?.spans))
+      .map((span) => Number(span?.start_offset)).filter((value) => Number.isInteger(value) && value >= 0);
+  }
+
+  function academicCandidateSalience(candidate, sourceText, coreUnits) {
+    const sourceLength = Math.max(1, String(sourceText || "").length);
+    const positions = candidateEvidencePositions(candidate).sort((left, right) => left - right);
+    const candidateKeys = new Set(contentTokens([candidate?.insight, candidate?.abstraction, candidate?.why_it_matters].filter(Boolean).join(" ")));
+    const coreKeys = new Set(contentTokens(coreUnits.join(" ")));
+    let score = Number(candidate?.quality_metrics?.quality_score || 0) * 4;
+    candidateKeys.forEach((key) => { if (coreKeys.has(key)) score += 0.35; });
+    if (positions.some((position) => position <= sourceLength * 0.25)) score += 2;
+    if (positions.some((position) => position >= sourceLength * 0.72)) score += 4;
+    if (positions.length >= 2) {
+      const spread = (positions[positions.length - 1] - positions[0]) / sourceLength;
+      score += Math.min(5, spread * 8);
+      if (spread < 0.035) score -= 4;
+    }
+    const representedRoles = new Set();
+    positions.forEach((position) => rolesForUnit(String(sourceText || "").slice(Math.max(0, position - 500), Math.min(sourceLength, position + 700))).forEach((role) => representedRoles.add(role)));
+    score += Math.min(4, representedRoles.size);
+    return score;
+  }
+
+  function rankAcademicCandidates(candidates, sourceText) {
+    const coverage = detectAcademicCoverage(sourceText);
+    if (coverage.roles.length < 3) return array(candidates);
+    const coreUnits = splitSourceUnits(sourceText).filter((unit) => rolesForUnit(unit).some((role) => ["research_question", "findings", "conclusion"].includes(role)));
+    return array(candidates).map((candidate, index) => ({ candidate, index, score: academicCandidateSalience(candidate, sourceText, coreUnits) }))
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .map((item) => item.candidate);
   }
 
   function citationLikeConcept(label, sourceText) {
@@ -285,6 +403,8 @@
     if (!repaired || repaired.schema !== "aha_semantic_document_v2") return document;
     if (sourceText.length < SUBSTANTIVE_SOURCE_MIN) return document;
     const supplied = candidateConceptKeys(payload);
+    const headerMetadata = headerMetadataConceptKeys(sourceText);
+    const alternateTitleNoise = alternateLanguageTitleConceptKeys(sourceText);
     const claimMentionCounts = new Map();
     array(repaired.claims).forEach((claim) => array(claim?.mentioned_concept_ids).forEach((id) => {
       claimMentionCounts.set(id, (claimMentionCounts.get(id) || 0) + 1);
@@ -299,11 +419,12 @@
       let score = (suppliedByCandidate ? 10 : 0) + Math.min(6, occurrences) * 2 + Math.min(5, claimMentionCounts.get(concept?.id) || 0);
       if (wordCount > 1) score += 3;
       if (CONCEPT_NOISE.has(key) || TITLE_NOISE.test(label)) score = -100;
-      if (citationLikeConcept(label, sourceText) && !suppliedByCandidate) score -= 8;
+      if (headerMetadata.has(key) || alternateTitleNoise.has(key) || (citationLikeConcept(label, sourceText) && occurrences < 2)) score = -100;
       if (!suppliedByCandidate && wordCount === 1 && occurrences < 2) score -= 6;
       return { concept, index, score };
     }).filter((item) => item.score >= 4)
       .sort((left, right) => right.score - left.score || left.index - right.index)
+      .filter((item, index, ranked) => !ranked.slice(0, index).some((earlier) => closeMorphologicalDuplicate(earlier.concept?.label, item.concept?.label)))
       .slice(0, MAX_VISIBLE_CONCEPTS);
 
     const keptConceptIds = new Set(rankedConcepts.map((item) => item.concept.id));
@@ -328,6 +449,12 @@
       .slice(0, 8)
       .sort((left, right) => left.index - right.index)
       .map((item) => item.tension);
+
+    repaired.candidate_insights = rankAcademicCandidates(repaired.candidate_insights, sourceText);
+    if (repaired.synthesis_gate && typeof repaired.synthesis_gate === "object") {
+      repaired.synthesis_gate.approved_candidate_ids = repaired.candidate_insights.filter((item) => item?.status === "approved").map((item) => item.id);
+      repaired.synthesis_gate.blocked_candidate_ids = repaired.candidate_insights.filter((item) => item?.status === "blocked").map((item) => item.id);
+    }
 
     const synthesisStatus = text(repaired.synthesis_gate?.status);
     repaired.status = synthesisStatus === "not_run" ? "incomplete" : repaired.status;

@@ -36,20 +36,23 @@ const header = [
   'Siste 12 måneder',
   'Sammendrag',
   'Livsarket er et fortellende verktøy i demensomsorgen og skal bidra til individualisert omsorg.',
-  'Samtidig reiser livsarket etiske spørsmål om representasjon, identitet og retten til egen fortelling.'
+  'Samtidig reiser livsarket etiske spørsmål om representasjon, identitet og retten til egen fortelling.',
+  'I denne artikkelen diskuterer vi livsark som fortellende sjanger og undersøker premissene for individualisert omsorg.',
+  'Vi trekker veksler på litteraturteori, humanistisk omsorgsforskning og narrativ gerontologi som teoretisk rammeverk.'
 ].join('\n');
 const body = Array.from({ length: 90 }, (_, index) => [
   `Avsnitt ${index}. Fortellingspraksiser og omsorg må forstås i lys av representasjon og fortolkning.`,
   index % 3 === 0
     ? 'Samtidig kan et skjematisk verktøy komme i konflikt med en fragmentert livsfortelling.'
     : 'Kritisk lesning krever oppmerksomhet på hvem som forteller og hva som blir holdt utenfor.'
-].join(' ')).join('\n\n');
+].join(' ')).join('\n');
 const conclusion = [
   'Avslutning',
   'Vi har argumentert for at livsarket krever kritisk forståelse av fortellingspraksiser, selvframstilling og tilgangskompetanse.',
   'Retten til egen fortelling står sentralt i narrativ omsorg.'
 ].join('\n');
-const sourceText = `${header}\n\n${body}\n\n${conclusion}`;
+const chromeBlocks = Array.from({ length: 6 }, (_, index) => `Statistikk og artikkelvisninger ${index + 1}: navigasjon, lagring og siteringsvarsel.`).join('\n\n');
+const sourceText = `${header}\n\n${chromeBlocks}\n\n${body}\n${conclusion}`;
 assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure');
 
 (async () => {
@@ -58,6 +61,7 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
   assert.match(focused, /Livsarket og fortellinger om identitet og omsorg/);
   assert.match(focused, /Vi har argumentert for/);
   assert.match(focused, /Samtidig kan et skjematisk verktøy/);
+  assert.doesNotMatch(focused, /Statistikk og artikkelvisninger 6/);
 
   let receivedSource = '';
   const wrappedPipeline = repair.wrapProvider('chat.insightPipeline', {
@@ -84,7 +88,11 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
     ['con_6', 'wrote'],
     ['con_7', 'Statistikk'],
     ['con_8', 'representasjon'],
-    ['con_9', 'https']
+    ['con_9', 'https'],
+    ['con_10', 'Nora'],
+    ['con_11', 'Practices'],
+    ['con_12', 'Story-Telling'],
+    ['con_13', 'livsark']
   ].map(([id, label]) => ({ id, label, mentions: [] }));
   const claims = Array.from({ length: 24 }, (_, index) => ({
     id: `clm_${index + 1}`,
@@ -115,12 +123,13 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
   }, { sourceText, payload: { insightCandidatesV2: [] } });
 
   const conceptLabels = semanticDocument.concepts.map((item) => item.label);
-  for (const forbidden of ['skrev', 'henne', 'wrote', 'Statistikk', 'https']) {
+  for (const forbidden of ['skrev', 'henne', 'wrote', 'Statistikk', 'https', 'Nora', 'Practices', 'Story-Telling']) {
     assert.ok(!conceptLabels.includes(forbidden), `lexical/chrome noise must be suppressed: ${forbidden}`);
   }
   for (const required of ['Livsarket', 'fortellingspraksiser', 'omsorg', 'representasjon']) {
     assert.ok(conceptLabels.includes(required), `substantive recurring concept must survive: ${required}`);
   }
+  assert.equal(conceptLabels.filter((label) => /^livsark(?:et)?$/i.test(label)).length, 1, 'close inflectional duplicates must collapse to one visible concept');
   assert.equal(semanticDocument.quality.status, 'incomplete', 'substantive source with synthesis not_run must never claim semantic quality passed');
   assert.ok(semanticDocument.quality.reasons.includes('semantic_synthesis_not_run_for_substantive_source'));
   assert.equal(semanticDocument.policy.canonical_write, false);
@@ -183,6 +192,29 @@ assert.ok(sourceText.length > 8000, 'fixture must reproduce the old >8k failure'
   assert.ok(bundle.semantic_document.claim_records.length <= 12, 'Knowledge Map must not dump every source sentence as a visible claim node');
   assert.ok(bundle.semantic_document.tension_records.length <= 6, 'Knowledge Map must cap visible tension records');
   assert.equal(bundle.status, 'incomplete', 'not_run synthesis on a substantive source must remain fail-closed');
+
+  const introPosition = sourceText.indexOf('Livsarket er et fortellende verktøy');
+  const clusteredPosition = sourceText.indexOf('Avsnitt 30.');
+  const conclusionPosition = sourceText.indexOf('Vi har argumentert for');
+  const semanticWithCandidates = repair.repairSemanticDocument({
+    schema: 'aha_semantic_document_v2', status: 'ready', concepts: [], claims: [], relations: [], tensions: [],
+    candidate_insights: [
+      {
+        id: 'clustered_side_point', insight: 'Ett avgrenset delpoeng beskriver en lokal praktisk observasjon.',
+        abstraction: 'Avgrenset observasjon', why_it_matters: 'Delpoenget kan undersøkes videre.', status: 'approved', eligible_for_current_analysis: true,
+        quality_metrics: { quality_score: 0.9 }, evidence: [{ spans: [{ start_offset: clusteredPosition }] }, { spans: [{ start_offset: clusteredPosition + 120 }] }]
+      },
+      {
+        id: 'cross_section_main_claim', insight: 'Fortellingspraksiser krever kritisk forståelse når livsfortellinger brukes som grunnlag for omsorg.',
+        abstraction: 'Etisk hovedargument', why_it_matters: 'Det samler problemstillingen og konklusjonen.', status: 'approved', eligible_for_current_analysis: true,
+        quality_metrics: { quality_score: 0.8 }, evidence: [{ spans: [{ start_offset: introPosition }] }, { spans: [{ start_offset: conclusionPosition }] }]
+      }
+    ],
+    synthesis_gate: { status: 'passed', approved_candidate_ids: ['clustered_side_point', 'cross_section_main_claim'], blocked_candidate_ids: [] },
+    quality: { status: 'passed', reasons: [] }, policy: {}
+  }, { sourceText, payload: { insightCandidatesV2: [] } });
+  assert.equal(semanticWithCandidates.candidate_insights[0].id, 'cross_section_main_claim', 'cross-section academic salience must outrank a locally clustered side point');
+  assert.deepEqual(Array.from(semanticWithCandidates.synthesis_gate.approved_candidate_ids), ['cross_section_main_claim', 'clustered_side_point']);
 
   console.log('AHA V2 long-source semantic quality regression passed');
 })().catch((error) => {

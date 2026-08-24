@@ -30,6 +30,7 @@ const api = context.AHAChatAutoOutputView;
 assert.equal(typeof api.create, "function");
 assert.equal(typeof api.harmonizeAnalysisPayload, "function");
 assert.equal(typeof api.finalizeAnalysisQuality, "function");
+assert.equal(typeof api.collapseCanonicalSubjectMatches, "function");
 assert.throws(() => api.create({}), /mangler avhengighet: enforceCanonicalSourceGrounding/);
 
 const harmonized = api.harmonizeAnalysisPayload({
@@ -79,6 +80,16 @@ assert.ok(["improved", "needs_review"].includes(finalized.qualityGate.status));
 const withheld = api.finalizeAnalysisQuality({ canonicalAnalysis: { theme: "Skole", keyInsight: "Et mulig funn." } }, "For kort.");
 assert.equal(withheld.qualityGate.status, "needs_more_source");
 assert.equal(withheld.qualityGate.suppressClaims, true);
+
+const collapsedSubjects = api.collapseCanonicalSubjectMatches([
+  { subject_id: "musikk", subject_label: "Musikkvitenskap", score: 35.5, matched_terms: ["kultur", "identitet"] },
+  { subject_id: "litteratur", subject_label: "Litteratur", score: 80.5, matched_terms: ["representasjon", "roman", "sjanger"] },
+  { subject_id: "litteratur", subject_label: "Litteratur", score: 67.9, matched_terms: ["fortolkning", "fortelling"] },
+  { subject_id: "litteratur", subject_label: "Litteratur", score: 53.5, matched_terms: ["narrativ", "minne"] }
+]);
+assert.deepEqual(Array.from(collapsedSubjects, (item) => item.subject_id), ["litteratur"], "weak cross-subject noise must not outrank accumulated canonical support");
+assert.match(collapsedSubjects[0].explanation, /representasjon|roman|sjanger/);
+assert.ok(collapsedSubjects[0].evidence.length >= 3);
 
 let mismatchArgs = null;
 let exportEnabled = null;
@@ -138,5 +149,24 @@ view.renderAutoOutputPayload({ runId: "run_current", reflection: "Analyse" });
 assert.equal(mismatchArgs[2], "Aktiv kildetekst", "topic mismatch must receive the rendered source text");
 assert.equal(exportEnabled, false, "mismatched output must fail closed");
 assert.match(host.innerHTML, /matcher ikke aktiv tekst/);
+
+deps.analysisTopicMismatch = () => false;
+const blockedView = api.create(deps);
+blockedView.renderAutoOutputPayload({
+  runId: "run_current",
+  reflection: "Denne påstanden skal ikke vises.",
+  insightCards: ["Uverifisert innsikt"],
+  analysisBundleV2: {
+    status: "incomplete",
+    quality: {
+      reasons: ["core_analysis_readiness_blocked"],
+      blocking_field_ids: ["overview.strongest_insight_blocked"]
+    }
+  }
+});
+assert.equal(exportEnabled, true, "blocked runs must remain exportable as diagnostic evidence");
+assert.match(host.innerHTML, /AHA-analysen er blokkert/);
+assert.match(host.innerHTML, /Ingen analysepåstander vises som kvalitetssikret/);
+assert.doesNotMatch(host.innerHTML, /Uverifisert innsikt|Denne påstanden skal ikke vises/);
 
 console.log("aha-chat-auto-output-view-boundary.test.cjs passed");

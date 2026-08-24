@@ -105,8 +105,9 @@
   }
   async function loadAllSubjects() { return (await Promise.all((await listSubjects()).map((subject) => loadSubject(subject.subject_id)))).filter(Boolean); }
 
-  function containsSubjectTerm(text, term) { const haystack = normalize(text), needle = normalize(term); return Boolean(haystack && needle && ` ${haystack} `.includes(` ${needle} `)); }
-  function matched(text, values) { return unique(Array.isArray(values) ? values : [values]).filter((value) => value.length <= 180 && containsSubjectTerm(text, value)); }
+  function containsNormalizedSubjectTerm(haystack, term) { const needle = normalize(term); return Boolean(haystack && needle && ` ${haystack} `.includes(` ${needle} `)); }
+  function containsSubjectTerm(text, term) { return containsNormalizedSubjectTerm(normalize(text), term); }
+  function matchedNormalized(haystack, values) { return unique(Array.isArray(values) ? values : [values]).filter((value) => value.length <= 180 && containsNormalizedSubjectTerm(haystack, value)); }
   function relevant(values) { return unique(values).filter((value) => { const key = normalize(value); return key.length >= 3 && !NOISE.has(key); }); }
   function titleTokens(value) { return relevant(normalize(value).split(" ").filter((token) => token.length >= 4)); }
   function lexicalFamily(leftValue, rightValue) {
@@ -118,8 +119,7 @@
     while (common < left.length && common < right.length && left[common] === right[common]) common += 1;
     return common >= 6 && common / Math.min(left.length, right.length) >= 0.7;
   }
-  function chapterSupervisionMatches(text, values) {
-    const targetTokens = relevant(normalize(text).split(" ").filter((token) => token.length >= 4));
+  function chapterSupervisionMatches(targetTokens, values) {
     return relevant(values).filter((term) => targetTokens.some((token) => lexicalFamily(term, token)));
   }
   function buildMatchProvenance(subject, emne) {
@@ -143,17 +143,18 @@
   }
 
   async function matchText(text, options = {}) {
-    const target = cleanText(text).trim(); if (!target) return [];
+    const target = normalize(cleanText(text)); if (!target) return [];
+    const targetTokens = relevant(target.split(" ").filter((token) => token.length >= 4));
     let subjects;
     try { subjects = await loadAllSubjects(); } catch (error) { console.warn("AHASubjectEngine: canonical Fagverk deployment index unavailable; fail closed", error); return []; }
     const out = [];
     for (const subject of subjects) {
-      const subjectHits = relevant(matched(target, subject.subject_label));
+      const subjectHits = relevant(matchedNormalized(target, subject.subject_label));
       if (subjectHits.length) out.push({ subject_id: subject.subject_id, subject_label: subject.subject_label, emne_id: null, title: subject.subject_label, type: subject.kind || "subject", score: 1.5 + subjectHits.length, matched_terms: subjectHits, source: options.source || "text", strong: false, provenance: { kind: "canonical_fagverk_subject", evidence_role: "reference_support_not_source_evidence", source_repo: "Paradispartiet/History-Go", source_ref: subject.source_ref, canonical_subject_id: subject.subject_id, registry_path: "data/fagverk/fagverk_registry.json", manifest_path: "data/fag/fag_manifest.json", generation_mode: "canonical_history_go_deployment_index_v2" } });
       for (const emne of subject.emner || []) {
-        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matched(target, emne.chapter_specific_terms || [])) : []; const chapterSupervisionHits = kind === "chapter" ? chapterSupervisionMatches(target, emne.chapter_supervision_terms || []) : [];
+        const kind = matchClass(emne), fields = fieldsForClass(emne, kind); let strong = false; const termScores = new Map(); const chapterSpecificHits = kind === "chapter" ? relevant(matchedNormalized(target, emne.chapter_specific_terms || [])) : []; const chapterSupervisionHits = kind === "chapter" ? chapterSupervisionMatches(targetTokens, emne.chapter_supervision_terms || []) : [];
         for (const [name, values, weight] of fields) {
-          const hits = relevant(matched(target, values)); if (!hits.length) continue;
+          const hits = relevant(matchedNormalized(target, values)); if (!hits.length) continue;
           for (const hit of hits) {
             const key = normalize(hit); if (!key) continue;
             const previous = termScores.get(key);
