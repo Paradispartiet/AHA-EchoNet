@@ -227,6 +227,13 @@
       if (!primaryRowsBySubject.has(match.subject_id)) primaryRowsBySubject.set(match.subject_id, []);
       primaryRowsBySubject.get(match.subject_id).push(match);
     }
+    const primaryTermsBySubject = new Map();
+    for (const [subjectId, matches] of primaryRowsBySubject.entries()) {
+      const ranked = matches.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, 3);
+      const terms = new Set();
+      for (const match of ranked) for (const term of match.matched_terms || []) { const key = normalize(term); if (key) terms.add(key); }
+      primaryTermsBySubject.set(subjectId, terms);
+    }
     const rankedSubjectSupportBySubject = new Map();
     for (const [subjectId, matches] of primaryRowsBySubject.entries()) {
       const ranked = matches.slice().sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
@@ -250,6 +257,14 @@
       }
       return rank;
     };
+    const chapterPrimaryAlignment = (match) => {
+      if (match.type !== "chapter") return 0;
+      const primaryTerms = primaryTermsBySubject.get(match.subject_id);
+      if (!primaryTerms?.size) return 0;
+      let aligned = 0;
+      for (const term of match._chapter_specific_hits || []) if (primaryTerms.has(normalize(term))) aligned += 1;
+      return aligned;
+    };
     const decisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 2 && chapterSpecificityRank(match) >= 4;
     const globallyDecisiveChapter = (match) => match.type === "chapter" && (match._chapter_specific_hits || []).length >= 3 && chapterSpecificityRank(match) >= 12;
     const typeRank = { supplement: 6, chapter: 5, concept: 4, thinker: 4, emne: 3, method: 1, subject: 0 };
@@ -269,6 +284,8 @@
         const bDecisive = decisiveChapter(b);
         if (aDecisive !== bDecisive) return aDecisive ? -1 : 1;
         if (aDecisive && bDecisive) {
+          const alignmentDelta = chapterPrimaryAlignment(b) - chapterPrimaryAlignment(a);
+          if (alignmentDelta !== 0) return alignmentDelta;
           const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);
           if (Math.abs(specificityDelta) > 1e-9) return specificityDelta;
           if (b.score !== a.score) return b.score - a.score;
@@ -279,6 +296,8 @@
           const aHits = (a._chapter_specific_hits || []).length;
           const bHits = (b._chapter_specific_hits || []).length;
           if (Math.max(aHits, bHits) >= 2) {
+            const alignmentDelta = chapterPrimaryAlignment(b) - chapterPrimaryAlignment(a);
+            if (alignmentDelta !== 0) return alignmentDelta;
             const specificityDelta = chapterSpecificityRank(b) - chapterSpecificityRank(a);
             if (Math.abs(specificityDelta) > 1e-9) return specificityDelta;
             if (bHits !== aHits) return bHits - aHits;
