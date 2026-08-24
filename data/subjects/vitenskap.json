@@ -7,18 +7,38 @@
       "title": "Dialektikk og selvbevissthet",
       "local_knowledge": {
         "classification": "awaiting_canonical_activation",
-        "canonical_subject_ids": ["vitenskap"],
+        "canonical_subject_ids": [
+          "vitenskap"
+        ],
         "related_chapter_ids": [],
         "scope": "Filosofisk linse på dialektikk, erkjennelse og selvbevissthet.",
         "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["selvbevissthet", "godt/ondt", "antagonistiske krefter", "aksjon/reaksjon"],
-      "keywords": ["dialektikk", "erkjennelse", "motsigelser"],
-      "thinkers": ["Hegel", "Nietzsche"],
-      "learning_goals": ["forstå dialektisk tenkning", "analysere motsetninger i moral"],
-      "checkpoints": ["kan forklare tese-antitese-bevegelse", "kan knytte selvbevissthet til konflikt"],
+      "core_concepts": [
+        "selvbevissthet",
+        "godt/ondt",
+        "antagonistiske krefter",
+        "aksjon/reaksjon"
+      ],
+      "keywords": [
+        "dialektikk",
+        "erkjennelse",
+        "motsigelser"
+      ],
+      "thinkers": [
+        "Hegel",
+        "Nietzsche"
+      ],
+      "learning_goals": [
+        "forstå dialektisk tenkning",
+        "analysere motsetninger i moral"
+      ],
+      "checkpoints": [
+        "kan forklare tese-antitese-bevegelse",
+        "kan knytte selvbevissthet til konflikt"
+      ],
       "summary": "Utforsker hvordan motsetninger driver utvikling i tanke og samfunn.",
       "description": "Ser på hvordan subjektet formes gjennom kamp, negasjon og refleksjon."
     },
@@ -27,20 +47,39 @@
       "title": "Makt, kunnskap og institusjoner",
       "local_knowledge": {
         "classification": "awaiting_canonical_activation",
-        "canonical_subject_ids": ["vitenskap"],
+        "canonical_subject_ids": [
+          "vitenskap"
+        ],
         "related_chapter_ids": [],
         "scope": "Vitenskapsfilosofisk linse på kunnskapsproduksjon, normalisering og institusjoner.",
         "rationale": "Midlertidig lokalt emne fram til canonical Vitenskap blir runtime-aktivt i Subject Bridge.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["makt", "institusjon", "normalisering"],
-      "keywords": ["fengsel", "disiplin", "kontroll"],
-      "thinkers": ["Foucault", "Agamben"],
-      "learning_goals": ["forstå forholdet mellom kunnskap og styring"],
-      "checkpoints": ["kan identifisere institusjonelle maktformer"],
+      "core_concepts": [
+        "makt",
+        "institusjon",
+        "normalisering"
+      ],
+      "keywords": [
+        "fengsel",
+        "disiplin",
+        "kontroll"
+      ],
+      "thinkers": [
+        "Foucault",
+        "Agamben"
+      ],
+      "learning_goals": [
+        "forstå forholdet mellom kunnskap og styring"
+      ],
+      "checkpoints": [
+        "kan identifisere institusjonelle maktformer"
+      ],
       "summary": "Teorier om hvordan sannhet og normer produseres i systemer.",
       "description": "Knytter vitenskapelig kategorisering til politisk praksis og kontrollregimer."
     }
-  ]
+  ],
+  "authority": "aha_overlay_only",
+  "canonical_source": "data/integrations/history-go-fagverk-bridge.v2.json"
 }

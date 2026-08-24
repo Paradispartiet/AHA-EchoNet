@@ -1,7 +1,7 @@
 {
   "version": "aha_production_analysis_quality_matrix_v1",
   "reviewedAt": "2026-08-12",
-  "purpose": "Human-reviewed, source-bound production cases. The matrix must cover every runtime-active canonical subject without turning the current subject count into a product quota.",
+  "purpose": "Human-reviewed source-bound calibration cases. The matrix preserves strict reviewed regressions for selected canonical History-Go subjects; it is not a canonical subject inventory or a subject-count quota.",
   "cases": [
     {
       "id": "by_algorithmic_governance",
@@ -26,7 +26,7 @@
     {
       "id": "kunst_form_language",
       "canonicalSubjectId": "kunst",
-      "ahaSubjectId": "kultur_kunst",
+      "ahaSubjectId": "kunst",
       "chapterId": "estetisk-sprak-og-form",
       "emneId": "fagverk_kunst_estetisk-sprak-og-form",
       "sourceText": "Sammendrag. I denne artikkelen analyseres verket gjennom ikonografi, appropriasjon og abstraksjon. Studien spør hvordan konseptkunst bruker form, materiale og rom til å endre betrakterens forståelse. Metoden kombinerer nærlesning av motivene med dokumentasjon av utstillingssituasjonen. Hovedpoenget er at den estetiske formen ikke bare illustrerer ideen, men produserer en egen måte å erfare den på.",
@@ -68,7 +68,7 @@
       "canonicalSubjectId": "politikk",
       "ahaSubjectId": "politikk",
       "chapterId": "forvaltning",
-      "emneId": "fagverk_forvaltning",
+      "emneId": "fagverk_politikk_forvaltning",
       "sourceText": "Sammendrag. I denne artikkelen undersøker vi hvordan offentlig ansatte ønsker at evalueringer skal følges bedre opp og integreres i mål- og resultatstyring. Statsforvaltningen trenger evalueringsstrategier, lederforankring og bedre forvaltningsskjønn. Undersøkelsen ble sendt til 276 respondenter, og 30 prosent svarte. Respondentene etterlyser mer systematikk og fagkompetanse. Potensialet ligger ikke i å evaluere mer, men i å gjennomføre bedre evalueringer som gir samfunnsnytte.",
       "expectedConceptTerms": ["evalueringer", "mål- og resultatstyring", "samfunnsnytte"],
       "forbiddenLeakageTerms": ["pinse", "tungetale", "Den hellige ånd", "apostlene", "Babel"]

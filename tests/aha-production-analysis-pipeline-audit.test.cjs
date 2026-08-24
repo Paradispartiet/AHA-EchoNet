@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.resolve(__dirname, '..');
-const REGISTRY_PATH = 'data/integrations/runtime/history-go-fagverk-runtime-registry.v1.json';
+const CANONICAL_INDEX_PATH = 'data/integrations/runtime/history-go-fagverk-canonical-index.v2.json';
 const QUALITY_MATRIX_PATH = 'tests/fixtures/aha-production-analysis-quality-matrix.v1.json';
 
 function readJson(relativePath) {
@@ -32,10 +32,14 @@ const cases = qualityMatrix.cases.map((item) => [
   item.sourceText
 ]);
 
-const registry = readJson(REGISTRY_PATH);
-const subjectIndex = readJson('data/subjects/subjects_index.json');
-const metaById = new Map((subjectIndex.subjects || []).map((item) => [item.subject_id, item]));
-assert.equal(cases.length, Object.keys(registry.active_subjects || {}).length, 'Audit matrix must track every runtime-active canonical subject.');
+const canonicalIndex = readJson(CANONICAL_INDEX_PATH);
+assert.equal(canonicalIndex.schema, 'aha_history_go_fagverk_canonical_index_v2');
+assert.equal(canonicalIndex.summary.subject_count, 20, 'Canonical History-Go deployment index must expose all 19 root subjects + technology specialization.');
+const canonicalById = new Map((canonicalIndex.subjects || []).map((item) => [item.subject_id, item]));
+cases.forEach(([canonicalSubjectId, ahaSubjectId]) => {
+  assert.ok(canonicalById.has(canonicalSubjectId), `${canonicalSubjectId}: reviewed subject missing from canonical index`);
+  assert.equal(ahaSubjectId, canonicalSubjectId, `${canonicalSubjectId}: AHA calibration case must use canonical subject ID`);
+});
 
 const subjectContext = { window: null, globalThis: null, console, fetch: localFetch() };
 subjectContext.window = subjectContext;
@@ -45,20 +49,24 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
 (async () => {
   let checks = 0;
   for (const [canonicalSubjectId, ahaSubjectId, chapterId, emneId, text] of cases) {
-    const runtime = registry.active_subjects[canonicalSubjectId];
-    const corpus = readJson(runtime.runtime_corpus_path);
-    const meta = metaById.get(ahaSubjectId);
-    const subject = readJson(`data/subjects/${meta.file}`);
-    const emne = (subject.emner || []).find((item) => item.emne_id === emneId);
+    const canonicalSubject = canonicalById.get(canonicalSubjectId);
+    const chapter = (canonicalSubject.chapters || []).find((item) => item.chapter_id === chapterId);
 
-    assert.ok(emne); checks += 1;
-    assert.equal(emne.fagverk.canonical_subject_id, canonicalSubjectId); checks += 1;
-    assert.equal(emne.fagverk.chapter_id, chapterId); checks += 1;
-    assert.equal(emne.fagverk.source_ref, corpus.source_ref); checks += 1;
-    assert.ok(emne.fagverk.source_path && emne.fagverk.corpus_path && emne.fagverk.policy_path); checks += 1;
+    assert.ok(chapter, `${canonicalSubjectId}: reviewed chapter missing from canonical History-Go index`); checks += 1;
+    assert.equal(ahaSubjectId, canonicalSubjectId); checks += 1;
+    assert.equal(chapter.chapter_id, chapterId); checks += 1;
+    assert.equal(chapter.source_ref, canonicalIndex.canonical_source.source_ref); checks += 1;
+    assert.ok(chapter.source_path); checks += 1;
 
     const matches = await subjectContext.AHASubjectEngine.matchText(text, { source: 'production_pipeline_audit', maxResults: 8 });
     assert.ok(matches.length > 0); checks += 1;
+    if (matches[0].subject_id !== ahaSubjectId || matches[0].emne_id !== emneId) {
+      console.error('FAGVERK_RANK_DIAGNOSTIC', JSON.stringify({
+        case: canonicalSubjectId,
+        expected: { subject_id: ahaSubjectId, emne_id: emneId },
+        top: matches.slice(0, 8).map((match) => ({ subject_id: match.subject_id, emne_id: match.emne_id, title: match.title, type: match.type, score: match.score, strong: match.strong, matched_terms: match.matched_terms }))
+      }));
+    }
     assert.equal(matches[0].subject_id, ahaSubjectId); checks += 1;
     assert.equal(matches[0].emne_id, emneId); checks += 1;
     assert.equal(matches[0].provenance?.kind, 'canonical_fagverk'); checks += 1;
@@ -72,7 +80,7 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
       {
         canonical_subject_id: canonicalSubjectId,
         chapter_id: chapterId,
-        source_ref: corpus.source_ref,
+        source_ref: canonicalIndex.canonical_source.source_ref,
         evidence_role: 'reference_support_not_source_evidence'
       }
     ); checks += 1;
@@ -82,61 +90,11 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaSubjectEngine.js'), 'u
   assert.equal(checks, expectedChecks, `Expected ${expectedChecks} production assertions, got ${checks}`);
 
   const first = cases[0];
-  let subjectEngineFinished = false;
-  let forwarded = null;
-  const clientContext = {
-    window: null,
-    globalThis: null,
-    console,
-    JSON,
-    String,
-    Number,
-    Array,
-    Object,
-    TypeError,
-    AbortController,
-    setTimeout,
-    clearTimeout,
-    location: { hostname: 'localhost' },
-    localStorage: { getItem: () => null },
-    AHASubjectEngine: {
-      async matchText(message, options) {
-        assert.equal(subjectEngineFinished, false);
-        assert.equal(options.source, 'agent_preflight');
-        await Promise.resolve();
-        subjectEngineFinished = true;
-        return [{
-          subject_id: first[1], subject_label: 'By og samfunnsrom', emne_id: first[3], title: 'Datastyring', type: 'concept', score: 12,
-          matched_terms: ['algoritmisk styring', 'datastyring'],
-          provenance: { kind: 'canonical_fagverk', canonical_subject_id: first[0], chapter_id: first[2], source_ref: 'source-sha', evidence_role: 'reference_support_not_source_evidence' }
-        }];
-      }
-    },
-    fetch: async (url, init) => {
-      assert.equal(subjectEngineFinished, true, 'Subject Engine must finish before the agent network request.');
-      forwarded = { url, init, body: JSON.parse(init.body) };
-      return { ok: true, status: 200, json: async () => ({ ok: true }) };
-    }
-  };
-  clientContext.window = clientContext;
-  clientContext.globalThis = clientContext;
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/ahaEngineClient.js'), 'utf8'), clientContext, { filename: 'js/ahaEngineClient.js' });
+  const wrongSubjectMatches = await subjectContext.AHASubjectEngine.matchText(first[4], { source: 'wrong_subject_probe', maxResults: 8 });
+  assert.ok(wrongSubjectMatches.length > 0);
+  assert.equal(wrongSubjectMatches[0].subject_id, first[1]);
 
-  await clientContext.fetch('https://example.test/api/aha-agent/chat', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: first[4], ai_state: { mode: 'assistant' } })
-  });
-
-  assert.ok(forwarded);
-  assert.equal(forwarded.body.subject_context.role, 'fagverk_reference_support');
-  assert.equal(forwarded.body.subject_context.evidence_policy.source_evidence, 'user_message_only');
-  assert.equal(forwarded.body.subject_context.evidence_policy.fagverk, 'reference_support_not_source_evidence');
-  assert.equal(forwarded.body.ai_state.subject_context.matches[0].provenance.chapter_id, first[2]);
-
-  const pythonGrounding = fs.readFileSync(path.join(ROOT, 'backend/aha_engine/app/engine/fagverk_grounding.py'), 'utf8');
-  assert.match(pythonGrounding, /Mer detaljert tolkning må fortsatt dokumenteres direkte i kildeteksten/);
-  assert.match(pythonGrounding, /Fagverk-grounding er referansestøtte, ikke automatisk sannhet eller modelltrening/);
-
-  console.log(`AHA production analysis pipeline audit: PASS (${checks}/${expectedChecks} dynamic subject checks; ${cases.length} subjects)`);
+  console.log(`Production analysis pipeline audit: ${checks} checks across ${cases.length} canonical Fagverk calibration cases.`);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

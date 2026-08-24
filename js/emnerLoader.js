@@ -1,35 +1,33 @@
 // emnerLoader.js
-// Felles, enkel loader for emne-filer (History Go / AHA)
+// Compatibility API. Canonical emner eies av History-Go Fagverk og lastes
+// gjennom AHASubjectEngine. Denne filen skal ikke vedlikeholde en egen fagliste.
 
 window.Emner = (function () {
-  const EMNER_INDEX = {
-    historie:       "/emner/emner_historie.json",
-    by:             "/emner/emner_by.json",
-    kunst:          "/emner/emner_kunst.json",
-    musikk:         "/emner/emner_musikk.json",
-    natur:          "/emner/emner_natur.json",
-    vitenskap:      "/emner/emner_vitenskap.json",
-    litteratur:     "/emner/emner_litteratur.json",
-    populaerkultur: "/emner/emner_populaerkultur.json",
-    naeringsliv:    "/emner/emner_naeringsliv.json",
-
-    // de som manglet før:
-    sport:          "/emner/emner_sport.json",
-    politikk:       "/emner/emner_politikk.json",
-    subkultur:      "/emner/emner_subkultur.json",
-    psykologi:      "/emner/emner_psykologi.json"   // NY
-  };
-
   async function loadForSubject(subjectId) {
-    const url = EMNER_INDEX[subjectId];
-    if (!url) return [];
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn("Kunne ikke laste emner for", subjectId, res.status);
+    const id = String(subjectId || "").trim();
+    if (!id) return [];
+    if (!window.AHASubjectEngine?.loadSubject) {
+      console.warn("Emner: AHASubjectEngine is unavailable; canonical Fagverk fails closed.");
       return [];
     }
-    return res.json();
+    try {
+      const subject = await window.AHASubjectEngine.loadSubject(id);
+      return Array.isArray(subject?.emner) ? subject.emner : [];
+    } catch (err) {
+      console.warn("Emner: could not load canonical History-Go subject", id, err);
+      return [];
+    }
   }
 
-  return { loadForSubject };
+  async function listSubjects() {
+    if (!window.AHASubjectEngine?.listSubjects) return [];
+    try {
+      return await window.AHASubjectEngine.listSubjects();
+    } catch (err) {
+      console.warn("Emner: canonical History-Go subject inventory unavailable", err);
+      return [];
+    }
+  }
+
+  return { loadForSubject, listSubjects };
 })();

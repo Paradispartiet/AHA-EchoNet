@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from app.engine.analyzer import analyze_message
+from app.engine.fagverk_canonical import load_canonical_fagverk_corpus
 from app.schemas import AnalyzeRequest, CanonicalAhaAnalysis, Confidence, HistoryGoLink
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -307,12 +308,47 @@ def _match_passes_threshold(match: GroundingMatch) -> bool:
     return match.score >= match.minimum_score and len(match.matched_terms) >= match.minimum_terms
 
 
+def _threshold_strength(match: GroundingMatch) -> float:
+    return match.score / max(match.minimum_score, 0.001)
+
+
+def _passing_match_sort_key(match: GroundingMatch) -> tuple[float, float, float, float, str, str]:
+    return (
+        -round(_threshold_strength(match), 6),
+        -round(match.score - match.minimum_score, 6),
+        -match.confidence,
+        -match.score,
+        match.subject_id,
+        match.chapter_id,
+    )
+
+
+def _matches_are_ambiguous(top: GroundingMatch, second: GroundingMatch) -> bool:
+    top_reviewed = top.scoring_mode.startswith("subject_policy_")
+    second_reviewed = second.scoring_mode.startswith("subject_policy_")
+    if top_reviewed and not second_reviewed:
+        return False
+    same_scale = (
+        top.scoring_mode == second.scoring_mode
+        and math.isclose(top.minimum_score, second.minimum_score, rel_tol=0.0, abs_tol=1e-9)
+    )
+    if same_scale:
+        return (top.score - second.score) < top.ambiguity_margin
+    normalized_gap = _threshold_strength(top) - _threshold_strength(second)
+    normalized_margin = min(
+        0.25,
+        top.ambiguity_margin / max(top.minimum_score, 1.0),
+        second.ambiguity_margin / max(second.minimum_score, 1.0),
+    )
+    return normalized_gap < normalized_margin
+
+
 def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[str, Any]:
     normalized = _normalize(message)
     if len(normalized) < 24:
         return {"status": "unsupported", "reason": "source_too_short", "matches": []}
 
-    payload = corpus or load_fagverk_corpus()
+    payload = corpus or load_canonical_fagverk_corpus()
     subject_policies = payload.get("subject_policies", {})
     matches: list[GroundingMatch] = []
     for entry in payload.get("entries", []):
@@ -327,8 +363,8 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
             ambiguity_margin = float(thresholds.get("ambiguity_margin", 3.0))
         else:
             score, matched_terms, eligible, contributions = _generic_entry_score(normalized, entry)
-            scoring_mode = "generic_v1"
-            minimum_score = 8.0
+            scoring_mode = "canonical_generic_v2" if payload.get("status") == "canonical_history_go_deployment_index_v2" else "generic_v1"
+            minimum_score = 10.0 if scoring_mode == "canonical_generic_v2" else 8.0
             minimum_terms = 2
             ambiguity_margin = 3.0
         if not eligible or score <= 0:
@@ -353,31 +389,34 @@ def ground_message(message: str, corpus: dict[str, Any] | None = None) -> dict[s
     if not matches:
         return {"status": "unsupported", "reason": "no_fagverk_evidence", "matches": []}
 
-    top = matches[0]
-    second = matches[1] if len(matches) > 1 else None
-    if not _match_passes_threshold(top):
+    passing_matches = [match for match in matches if _match_passes_threshold(match)]
+    if not passing_matches:
         return {
             "status": "unsupported",
             "reason": "insufficient_fagverk_evidence",
             "matches": [match.__dict__ for match in matches[:3]],
         }
-    if second and _match_passes_threshold(second) and (top.score - second.score) < top.ambiguity_margin:
+
+    passing_matches.sort(key=_passing_match_sort_key)
+    top = passing_matches[0]
+    second = passing_matches[1] if len(passing_matches) > 1 else None
+    if second and _matches_are_ambiguous(top, second):
         return {
             "status": "ambiguous",
             "reason": "multiple_chapters_close",
-            "matches": [match.__dict__ for match in matches[:3]],
+            "matches": [match.__dict__ for match in passing_matches[:3]],
         }
 
     related_matches = [
-        match for match in matches[1:]
-        if _match_passes_threshold(match) and match.subject_id != top.subject_id
+        match for match in passing_matches[1:]
+        if match.subject_id != top.subject_id
     ][:2]
     return {
         "status": "grounded",
         "reason": "chapter_evidence_threshold_met",
         "match": top.__dict__,
         "related_matches": [match.__dict__ for match in related_matches],
-        "matches": [match.__dict__ for match in matches[:3]],
+        "matches": [match.__dict__ for match in passing_matches[:3]],
         "corpus": {
             "schema": payload.get("schema"),
             "version": payload.get("version"),

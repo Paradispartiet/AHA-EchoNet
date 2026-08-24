@@ -7,18 +7,37 @@
       "title": "Lek, læring og kreativitet",
       "local_knowledge": {
         "classification": "awaiting_canonical_activation",
-        "canonical_subject_ids": ["psykologi"],
+        "canonical_subject_ids": [
+          "psykologi"
+        ],
         "related_chapter_ids": [],
         "scope": "Psykologisk og pedagogisk linse på lek, motivasjon og utvikling.",
         "rationale": "Midlertidig lokalt emne fram til canonical Psykologi blir runtime-aktivt i Subject Bridge.",
         "revalidate_on_runtime_change": true,
         "minimum_matched_terms": 2
       },
-      "core_concepts": ["lek", "læring", "kreativitet", "motivasjon", "utvikling"],
-      "keywords": ["barn", "pedagogikk", "sosial læring", "fantasi", "trygghet"],
-      "thinkers": ["John Dewey", "Donald Winnicott"],
+      "core_concepts": [
+        "lek",
+        "læring",
+        "kreativitet",
+        "motivasjon",
+        "utvikling"
+      ],
+      "keywords": [
+        "barn",
+        "pedagogikk",
+        "sosial læring",
+        "fantasi",
+        "trygghet"
+      ],
+      "thinkers": [
+        "John Dewey",
+        "Donald Winnicott"
+      ],
       "summary": "Lek forstått som kunnskapsform og grunnlag for emosjonell, sosial og kognitiv vekst.",
       "description": "Undersøker sammenhengen mellom fri utforskning, relasjoner, språk og dyp læring."
     }
-  ]
+  ],
+  "authority": "aha_overlay_only",
+  "canonical_source": "data/integrations/history-go-fagverk-bridge.v2.json"
 }
