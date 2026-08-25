@@ -14,12 +14,26 @@
     needs_evidence: "Trenger mer belegg",
     not_relevant: "Ikke relevant for denne teksten"
   });
+  const USER_REASON_LABELS = Object.freeze({
+    active_analysis_has_no_projection_ready_insights: "Ingen innsikt bestod den kildebundne kvalitetskontrollen ennå.",
+    no_projection_ready_insights: "Ingen innsikt hadde nok belegg til å danne dette produktet.",
+    integration_not_ready: "Produktet bestod ikke hele integrasjonskontrollen.",
+    evidence_not_cross_claim: "Belegget må dekke minst to forskjellige kildepåstander.",
+    evidence_count_invalid: "Innsikten mangler riktig mengde kildebelegg.",
+    evidence_semantic_disconnect: "Kildebelegget støtter ikke innsikten tydelig nok.",
+    mindmap_too_small: "Tankekartet har for få godkjente noder.",
+    mindmap_has_too_few_branches: "Tankekartet har for få tydelige begrepsgrener."
+  });
 
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
   function arr(value) { return Array.isArray(value) ? value : []; }
   function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function text(value) { return String(value == null ? "" : value).replace(/\s+/g, " ").trim(); }
   function isSha256(value) { return /^[a-f0-9]{64}$/u.test(text(value).toLowerCase()); }
+  function userReason(value) {
+    const reason = text(value);
+    return USER_REASON_LABELS[reason] || reason.replace(/_/g, " ");
+  }
 
   function read(key, fallback) {
     try {
@@ -247,9 +261,10 @@
       : product === "path" ? arr(quality?.paths).flatMap((item) => arr(item?.reasons))
         : arr(quality?.mindmap?.reasons);
     const reasons = [...new Set([...qualityReasons, ...arr(model?.blocking_reasons)])].filter(Boolean);
+    const visibleReasons = [...new Set(reasons.map(userReason))];
     return {
       status: "needs_evidence",
-      reason: reasons.length ? `Forslaget ble holdt tilbake: ${reasons.join(", ")}.` : "Analysen mangler nok godkjente innsikter eller relasjoner for dette produktet.",
+      reason: visibleReasons.length ? `Forslaget ble holdt tilbake: ${visibleReasons.join(" ")}` : "Analysen mangler nok godkjente innsikter eller relasjoner for dette produktet.",
       candidate_count: 0
     };
   }
@@ -332,9 +347,9 @@
   }
 
   const api = Object.freeze({
-    MODULE_SCHEMA, MODULE_VERSION, STORAGE_KEYS, PRODUCTS, STATUS_LABELS,
+    MODULE_SCHEMA, MODULE_VERSION, STORAGE_KEYS, PRODUCTS, STATUS_LABELS, USER_REASON_LABELS,
     activeIdentity, approvedInsights, requestContext, snapshot, build, surface,
-    productStates, productUrl, shouldOpenProduct
+    productStates, productUrl, shouldOpenProduct, userReason
   });
   global.AHAProjectionRuntimeSourceV2 = api;
   global.AHAModuleApi?.register?.("projectionRuntimeSourceV2", api, {

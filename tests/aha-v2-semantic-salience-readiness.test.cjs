@@ -133,25 +133,47 @@ assert.equal(synthesisBlocked.status, 'incomplete');
 assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synthesis_not_ready'));
 
 (async () => {
-  let seenText = '';
-  let seenContext = null;
+  const calls = [];
+  context.AHASemanticDocument = { sha256Hex: () => 'a'.repeat(64) };
+  context.AHAInsightQualityGateV2 = { evaluateCandidate() {} };
+  context.AHALiveSemanticBridgeV2 = {
+    build({ payload }) {
+      const repaired = payload.insightCandidatesV2.some((item) => item.summary === 'repaired candidate');
+      return {
+        synthesis_gate: {
+          candidate_count: payload.insightCandidatesV2.length,
+          approved_count: repaired ? 1 : 0
+        },
+        candidate_insights: payload.insightCandidatesV2.map(() => ({
+          status: repaired ? 'approved' : 'blocked',
+          blocking_reasons: repaired ? [] : ['evidence_not_cross_claim', 'why_it_matters_weak']
+        }))
+      };
+    }
+  };
   const provider = guard.wrapInsightPipeline({
     create() {
       return {
         async generateAIInsightCandidates(value, nextContext) {
-          seenText = value;
-          seenContext = nextContext;
-          return [{ summary: 'candidate' }];
+          calls.push({ value, nextContext });
+          return [{ summary: nextContext.authoritative_quality_retry ? 'repaired candidate' : 'candidate' }];
         }
       };
     }
   });
   const pipeline = provider.create({});
-  await pipeline.generateAIInsightCandidates(sourceText, { caller: 'regression' });
-  assert.ok(seenText.length <= guard.longSourceLimit);
-  assert.equal(seenContext.caller, 'regression');
-  assert.equal(seenContext.semantic_source_focus.require_cross_section_semantic_diversity, true);
-  assert.ok(seenContext.semantic_source_focus.academic_roles_present.includes('method'));
+  const result = await pipeline.generateAIInsightCandidates(sourceText, { caller: 'regression' });
+  assert.equal(result[0].summary, 'repaired candidate');
+  assert.equal(calls.length, 2, 'an all-blocked authoritative probe gets exactly one bounded repair attempt');
+  assert.ok(calls.every((item) => item.value.length <= guard.longSourceLimit));
+  assert.equal(calls[0].nextContext.caller, 'regression');
+  assert.equal(calls[0].nextContext.semantic_source_focus.require_cross_section_semantic_diversity, true);
+  assert.ok(calls[0].nextContext.semantic_source_focus.academic_roles_present.includes('method'));
+  assert.equal(calls[0].nextContext.semantic_source_focus.authoritative_gate_contract.minimum_exact_evidence_quotes, 2);
+  assert.deepEqual(Array.from(calls[1].nextContext.authoritative_quality_retry.blocking_reasons), [
+    'evidence_not_cross_claim', 'why_it_matters_weak'
+  ]);
+  assert.equal(calls[1].nextContext.authoritative_quality_retry.attempt, 1);
   console.log('AHA V2 semantic salience and optional-readiness regression passed');
 })().catch((error) => {
   console.error(error);

@@ -117,6 +117,13 @@
       evidence_quotes: evidenceQuotes,
       uncertainty,
       claim_kind: claimKind,
+      abstraction: String(candidate.abstraction || "").replace(/\s+/g, " ").trim().slice(0, 240),
+      confidence: ["high", "medium", "low"].includes(String(candidate.confidence || "").trim().toLowerCase())
+        ? String(candidate.confidence).trim().toLowerCase()
+        : "",
+      causal_status: ["not_causal", "source_explicit", "interpretive"].includes(String(candidate.causal_status || "").trim().toLowerCase())
+        ? String(candidate.causal_status).trim().toLowerCase()
+        : "",
       why_it_matters: String(candidate.why_it_matters || "").replace(/\s+/g, " ").trim().slice(0, 280),
       next_test: String(candidate.next_test || "").replace(/\s+/g, " ").trim().slice(0, 280),
       candidate_type: "ai"

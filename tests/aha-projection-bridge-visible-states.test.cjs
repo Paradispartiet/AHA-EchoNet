@@ -175,6 +175,8 @@ assert.equal(weakModel.status, "blocked");
 for (const product of ["list", "path", "mindmap"]) {
   assert.equal(weakModel.product_states[product].status, "needs_evidence");
   assert.equal(weakModel.product_states[product].label, "Trenger mer belegg");
+  assert.match(weakModel.product_states[product].reason, /Ingen innsikt bestod den kildebundne kvalitetskontrollen ennå/);
+  assert.doesNotMatch(weakModel.product_states[product].reason, /active_analysis_has_no_projection_ready_insights/);
 }
 assert.equal(writes, 0);
 
