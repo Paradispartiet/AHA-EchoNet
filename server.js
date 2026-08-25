@@ -277,6 +277,13 @@ function sanitizeInsightCandidate(candidate, fallbackText) {
     evidence_status: evidence_quotes.length ? "verified_against_request_source" : "missing",
     uncertainty: evidence_quotes.length ? uncertainty : "hypothesis",
     claim_kind: evidence_quotes.length ? claim_kind : "hypothesis",
+    abstraction: normalizeWhitespace(candidate.abstraction, 240),
+    confidence: ["high", "medium", "low"].includes(String(candidate.confidence || "").trim().toLowerCase())
+      ? String(candidate.confidence).trim().toLowerCase()
+      : "",
+    causal_status: ["not_causal", "source_explicit", "interpretive"].includes(String(candidate.causal_status || "").trim().toLowerCase())
+      ? String(candidate.causal_status).trim().toLowerCase()
+      : "",
     why_it_matters: normalizeWhitespace(candidate.why_it_matters, 280),
     next_test: normalizeWhitespace(candidate.next_test, 280),
     candidate_type: "ai"
@@ -479,7 +486,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       return res.status(400).json({ ok: false, error: "invalid_context" });
     }
 
-    const systemInstruction = "Du lager kvalitetsvurderte innsiktskandidater for AHA. Returner KUN gyldig JSON, uten markdown eller tekst utenfor JSON. Returner et objekt med candidates (array). Lag 3–5 ulike kandidater for mellomlange/lange tekster og 1–3 for korte tekster. Kandidatene skal konkurrere: de må uttrykke ulike funn, spenninger eller konsekvenser, ikke samme poeng med nye ord. Ikke bruk generiske titler som «Observasjon», «Innsikt» eller «Analyse». Hver kandidat skal ha presis norsk title, summary (1–2 setninger), why_it_matters og next_test. summary skal tilføre syntese uten å påstå mer enn kilden tillater. evidence_quotes skal inneholde 1–2 korte, ordrette sitater fra den mottatte teksten; aldri konstruer sitater. claim_kind må være source_observation, interpretation, hypothesis, question eller action. uncertainty må være supported, interpretive eller hypothesis. Bruk supported bare for direkte kildeobservasjoner; tolkninger er interpretive; antakelser uten tydelig belegg er hypothesis. Concepts skal være konkrete. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Teorikoblinger skal bare brukes når teksten faktisk støtter dem, og theoretical_links skal ha name og relation.";
+    const systemInstruction = "Du lager kvalitetsvurderte innsiktskandidater for AHA. Returner KUN gyldig JSON, uten markdown eller tekst utenfor JSON. Returner et objekt med candidates (array). Lag 3–5 ulike kandidater for mellomlange/lange tekster og 1–3 for korte tekster. Kandidatene skal konkurrere: de må uttrykke ulike funn, spenninger eller konsekvenser, ikke samme poeng med nye ord. Ikke bruk generiske titler som «Observasjon», «Innsikt» eller «Analyse». Hver kandidat skal ha presis norsk title med minst fem meningsbærende ord, summary (1–2 setninger), abstraction, why_it_matters og next_test. summary skal være en reell semantisk syntese, ikke et direkte sitat eller en nær omskriving av én kildesetning, og skal ikke påstå mer enn kilden tillater. evidence_quotes skal inneholde 2–3 korte, ordrette sitater fra minst to forskjellige setninger i den mottatte teksten; aldri konstruer sitater. abstraction og why_it_matters skal være konkrete og ha minst fem meningsbærende ord. confidence må være high, medium eller low. causal_status må være not_causal, source_explicit eller interpretive, og må samsvare med kandidatens ordvalg og kildebelegg. claim_kind må være source_observation, interpretation, hypothesis, question eller action. uncertainty må være supported, interpretive eller hypothesis. Bruk supported bare for direkte kildeobservasjoner; tolkninger er interpretive; antakelser uten tydelig belegg er hypothesis. Concepts skal være konkrete. functional_type må være en av: principle, observation, pattern, question, problem, solution, learning_point, definition, contradiction, memory, task, decision. Teorikoblinger skal bare brukes når teksten faktisk støtter dem, og theoretical_links skal ha name og relation. Hvis context.authoritative_quality_retry finnes, skal blocking_reasons brukes til å lage nye kandidater som retter de konkrete kvalitetsfeilene uten å endre eller utvide kildegrunnlaget.";
     const userPayload = JSON.stringify({
       text,
       context: context || {},

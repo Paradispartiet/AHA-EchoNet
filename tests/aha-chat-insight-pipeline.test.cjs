@@ -6,6 +6,7 @@ const source = fs.readFileSync("js/ahaChatInsightPipeline.js", "utf8");
 const qualitySource = fs.readFileSync("js/ahaAnalysisQualityEvaluator.js", "utf8");
 const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatProviderLoader.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatCapabilityBindings.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8") + "\n" + fs.readFileSync('js/ahaChatApplicationComposition.js', 'utf8') + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
+const serverSource = fs.readFileSync("server.js", "utf8");
 const context = { window: null, console };
 context.window = context;
 vm.runInNewContext(qualitySource, context, { filename: "js/ahaAnalysisQualityEvaluator.js" });
@@ -27,6 +28,20 @@ const dependencies = {
   weakConceptWords: new Set(["innsikt", "analyse"])
 };
 const pipeline = context.AHAChatInsightPipeline.create(dependencies);
+
+const schemaAlignedCandidate = pipeline.normalizeInsightCandidate({
+  title: "Situert fortolkning krever kritisk tilgangskompetanse",
+  summary: "Fortellingens form og omsorgens brukskrav skaper et etisk tolkningsrom.",
+  abstraction: "Dokumentformer fordeler tolkningsmakt mellom aktører",
+  confidence: "medium",
+  causal_status: "not_causal",
+  concepts: ["fortolkning"],
+  evidence_quotes: ["Fortellingen har en kontekst."],
+  why_it_matters: "Det synliggjør hvem som får definere en livshistorie."
+});
+assert.equal(schemaAlignedCandidate.abstraction, "Dokumentformer fordeler tolkningsmakt mellom aktører");
+assert.equal(schemaAlignedCandidate.confidence, "medium");
+assert.equal(schemaAlignedCandidate.causal_status, "not_causal");
 
 for (const type of Array.from(context.AHAChatInsightPipeline.FUNCTIONAL_TYPES)) {
   assert.equal(pipeline.normalizeFunctionalType(type), type, `${type} must remain canonical`);
@@ -102,5 +117,8 @@ assert.equal(chatSource.includes("function buildPlayCityFallbackCandidates"), fa
 assert.doesNotMatch(chatSource, /AHA_INSIGHT_CONTRACT|INSIGHT_NOISE_PATTERN|LEADING_PUNCTUATION_PATTERN|LES_OGSA_TEASER_PATTERN|TEASER_TITLE_PATTERN/);
 assert.doesNotMatch(chatSource, /function (?:getInsightPipeline|normalizeInsightCandidate|isWeakInsightCandidate|normalizeFunctionalType|normalizeCandidateConcepts)\s*\(/);
 assert.ok(chatHtml.indexOf("js/ahaChatInsightPipeline.js") < chatHtml.indexOf("js/ahaChat.js"));
+assert.match(serverSource, /evidence_quotes skal inneholde 2–3 korte, ordrette sitater fra minst to forskjellige setninger/);
+assert.match(serverSource, /abstraction: normalizeWhitespace\(candidate\.abstraction, 240\)/);
+assert.match(serverSource, /authoritative_quality_retry/);
 
 verifyCandidateDiversityContract().then(() => console.log("aha-chat-insight-pipeline passed"));

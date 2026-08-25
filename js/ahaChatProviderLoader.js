@@ -664,6 +664,46 @@
     return { ready, gate, fields, coreBlocked, optionalBlockedIds, missingRequired };
   }
 
+  function probeAuthoritativeInsightCandidates(sourceText, candidates) {
+    const source = String(sourceText || "");
+    const items = array(candidates);
+    const semanticApi = global.AHAModuleApi?.resolve?.("semanticDocument", "AHASemanticDocument", { version: 1 })
+      || global.AHASemanticDocument;
+    const bridgeApi = global.AHAModuleApi?.resolve?.("chat.liveSemanticBridgeV2", "AHALiveSemanticBridgeV2", { version: 2 })
+      || global.AHALiveSemanticBridgeV2;
+    const gateApi = global.AHAModuleApi?.resolve?.("insightQualityGateV2", "AHAInsightQualityGateV2", { version: 2 })
+      || global.AHAInsightQualityGateV2;
+    if (!source || !items.length || typeof semanticApi?.sha256Hex !== "function"
+      || typeof bridgeApi?.build !== "function" || typeof gateApi?.evaluateCandidate !== "function") {
+      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, blockingReasons: [] };
+    }
+    try {
+      const sourceSha256 = semanticApi.sha256Hex(source);
+      const document = bridgeApi.build({
+        sourceText: source,
+        activeRun: {
+          analysisId: "analysis_quality_probe",
+          analysisRunId: "run_quality_probe",
+          sourceId: "source_quality_probe",
+          sourceSha256
+        },
+        payload: { insightCandidatesV2: items },
+        semanticDocumentApi: semanticApi,
+        qualityGateApi: gateApi
+      });
+      const approvedCount = Number(document?.synthesis_gate?.approved_count || 0);
+      return {
+        available: true,
+        ready: approvedCount > 0,
+        candidateCount: Number(document?.synthesis_gate?.candidate_count || items.length),
+        approvedCount,
+        blockingReasons: unique(array(document?.candidate_insights).flatMap((item) => array(item?.blocking_reasons)))
+      };
+    } catch (_) {
+      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, blockingReasons: [] };
+    }
+  }
+
   function repairAnalysisBundle(bundle, input = {}, originalProvider = null) {
     const repaired = clone(bundle);
     if (!repaired || repaired.schema !== "aha_analysis_bundle_v2") return bundle;
@@ -777,11 +817,39 @@
                   minimum_distinct_roles: Math.min(4, coverage.roles.length),
                   require_cross_section_semantic_diversity: true,
                   preserve_source_uncertainty: true
-                } : {})
+                } : {}),
+                authoritative_gate_contract: {
+                  minimum_exact_evidence_quotes: 2,
+                  maximum_exact_evidence_quotes: 3,
+                  require_distinct_source_sentences: true,
+                  require_semantic_transformation: true,
+                  require_explicit_usefulness: true,
+                  require_causal_discipline: true
+                }
               }
             };
             const candidates = await instance.generateAIInsightCandidates(focused, nextContext);
-            if (Array.isArray(candidates) && candidates.length) return candidates;
+            if (Array.isArray(candidates) && candidates.length) {
+              const firstGate = probeAuthoritativeInsightCandidates(raw, candidates);
+              if (firstGate.available !== true || firstGate.ready === true) return candidates;
+
+              // One bounded repair attempt is allowed only after the unchanged
+              // authoritative gate has rejected every candidate. The retry gets
+              // gate reasons, not looser thresholds or alternative source data.
+              const retry = await instance.generateAIInsightCandidates(focused, {
+                ...nextContext,
+                authoritative_quality_retry: {
+                  schema: QUALITY_REPAIR_SCHEMA,
+                  attempt: 1,
+                  candidate_count: firstGate.candidateCount,
+                  approved_count: firstGate.approvedCount,
+                  blocking_reasons: firstGate.blockingReasons,
+                  instruction: "Return new candidates that satisfy the authoritative gate while preserving source uncertainty and exact evidence."
+                }
+              });
+              if (Array.isArray(retry) && retry.length) return retry;
+              return candidates;
+            }
             if (raw.length >= SUBSTANTIVE_SOURCE_MIN && typeof instance.buildSemanticInsightCandidates === "function") {
               return instance.buildSemanticInsightCandidates(focused, { minInsights: 2, maxInsights: 4 });
             }
@@ -855,6 +923,7 @@
     analyzeCoreReadiness,
     repairAnalysisBundle,
     repairAnalysisReadModel,
+    probeAuthoritativeInsightCandidates,
     wrapInsightPipeline,
     wrapProvider
   });

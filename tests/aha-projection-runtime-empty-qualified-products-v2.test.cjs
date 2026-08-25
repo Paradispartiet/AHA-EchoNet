@@ -121,7 +121,8 @@ assert.deepEqual(
   ['needs_evidence', 'needs_evidence', 'needs_evidence'],
   'product-specific states must preserve the quality hold-back explanation'
 );
-assert.ok(model.product_states.mindmap.reason.includes('mindmap_too_small'));
+assert.match(model.product_states.mindmap.reason, /for få godkjente noder/);
+assert.doesNotMatch(model.product_states.mindmap.reason, /mindmap_too_small/);
 assert.equal(context.AHAProjectionRuntimeSourceV2.surface('lists'), null, 'blocked readiness must not expose a product surface');
 assert.equal(model.policy.product_store_write, false);
 assert.equal(model.policy.automatic_product_write, false);

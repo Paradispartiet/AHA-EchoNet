@@ -153,7 +153,7 @@
     if (document.getElementById("aha-analysis-product-state-styles")) return;
     const style = document.createElement("style");
     style.id = "aha-analysis-product-state-styles";
-    style.textContent = '.exp-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.exp-product-card{display:flex;flex-direction:column;gap:9px;min-height:190px}.exp-product-card h4,.exp-product-card p{margin:0}.exp-product-status{align-self:flex-start;border:1px solid rgba(255,210,74,.34);border-radius:999px;padding:5px 9px;font-size:.76rem;font-weight:750}.exp-product-status[data-status="ready"]{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.36)}.exp-product-status[data-status="not_relevant"]{opacity:.72}.exp-product-card .exp-action-btn{margin-top:auto;align-self:flex-start}@media(max-width:760px){.exp-product-grid{grid-template-columns:1fr}}';
+    style.textContent = '.exp-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.exp-product-card{display:flex;flex-direction:column;gap:9px;min-width:0;min-height:190px}.exp-product-card h4,.exp-product-card p{margin:0;overflow-wrap:anywhere;word-break:normal}.exp-product-status{align-self:flex-start;max-width:100%;overflow-wrap:anywhere;border:1px solid rgba(255,210,74,.34);border-radius:999px;padding:5px 9px;font-size:.76rem;font-weight:750}.exp-product-status[data-status="ready"]{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.36)}.exp-product-status[data-status="not_relevant"]{opacity:.72}.exp-product-card .exp-action-btn{margin-top:auto;align-self:flex-start}@media(max-width:760px){.exp-product-grid{grid-template-columns:1fr}}';
     document.head.appendChild(style);
   }
 
