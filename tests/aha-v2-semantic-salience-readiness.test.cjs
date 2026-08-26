@@ -210,6 +210,43 @@ assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synt
   assert.equal(breadthCalls[1].nextContext.authoritative_quality_retry.required_total_approved_count, 2);
   assert.deepEqual(Array.from(breadthCalls[1].nextContext.authoritative_quality_retry.covered_primary_types), ['tension']);
   assert.deepEqual(Array.from(breadthResult.map((item) => item.summary)), ['first approved relation', 'second approved relation']);
+
+  const accumulatedCalls = [];
+  const accumulatedProvider = guard.wrapInsightPipeline({
+    create() {
+      return {
+        reviewInsightCandidates(items) {
+          const seen = new Set();
+          return {
+            selected: items.filter((item) => {
+              const key = String(item.summary || '').toLowerCase();
+              if (!key || seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            })
+          };
+        },
+        async generateAIInsightCandidates(value, nextContext) {
+          accumulatedCalls.push({ value, nextContext });
+          if (!nextContext.authoritative_quality_retry) return [{ summary: 'first approved relation', type: 'tension' }];
+          if (nextContext.authoritative_quality_retry.attempt === 1) return [{ summary: 'first approved relation', type: 'tension' }];
+          return [{ summary: 'second approved relation', type: 'boundary' }];
+        }
+      };
+    }
+  });
+  const accumulatedResult = await accumulatedProvider.create({}).generateAIInsightCandidates(
+    'Første kildepåstand avgrenser et felles begrep. Andre kildepåstand viser en annen relasjon til det samme begrepet.',
+    {}
+  );
+  assert.equal(accumulatedCalls.length, 3, 'the bounded diversity phase retries only while distinct approved breadth is still missing');
+  assert.equal(accumulatedCalls[1].nextContext.authoritative_quality_retry.attempt, 1);
+  assert.equal(accumulatedCalls[2].nextContext.authoritative_quality_retry.attempt, 2);
+  assert.deepEqual(
+    Array.from(accumulatedCalls[2].nextContext.authoritative_quality_retry.avoid_repeating_insights),
+    ['first approved relation']
+  );
+  assert.deepEqual(Array.from(accumulatedResult.map((item) => item.summary)), ['first approved relation', 'second approved relation']);
   console.log('AHA V2 semantic salience and optional-readiness regression passed');
 })().catch((error) => {
   console.error(error);

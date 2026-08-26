@@ -122,13 +122,19 @@ const wrapped = context.AHAChatProviderLoader.QUALITY_REPAIR_V2.wrapProvider('ch
   );
   context.AHA_FRONTEND_BUILD_SHA = 'f'.repeat(40);
   const candidates = await wrapped.generateAIInsightCandidates(source, { subject_id: 'literature' });
-  assert.equal(requests.length, 2, 'one approved candidate triggers one bounded projection-breadth attempt');
+  assert.equal(requests.length, 3, 'one approved candidate triggers a bounded two-attempt projection-diversity phase');
   assert.match(requests[0].url, /\/semantic-document$/);
   assert.equal(requests[0].body.format, 'aha_insight_synthesis_output_v2');
   assert.ok(requests[0].body.semantic_context.source_claims.length >= 2);
   assert.ok(requests[0].body.context.deterministic_evidence_packets.length >= 2);
-  assert.equal(requests[1].body.context.authoritative_quality_retry.mode, 'projection_diversity_expansion');
-  assert.equal(requests[1].body.context.authoritative_quality_retry.required_total_approved_count, 2);
+  assert.deepEqual(
+    requests.slice(1).map((request) => request.body.context.authoritative_quality_retry.attempt),
+    [1, 2]
+  );
+  requests.slice(1).forEach((request) => {
+    assert.equal(request.body.context.authoritative_quality_retry.mode, 'projection_diversity_expansion');
+    assert.equal(request.body.context.authoritative_quality_retry.required_total_approved_count, 2);
+  });
   assert.equal(candidates.length, 2);
 
   const sourceSha256 = context.AHASemanticDocument.sha256Hex(source);
@@ -156,6 +162,8 @@ const wrapped = context.AHAChatProviderLoader.QUALITY_REPAIR_V2.wrapProvider('ch
   assert.equal(trace.backend.backend_build_sha, 'f'.repeat(40));
   assert.equal(trace.frontend_build_sha, 'f'.repeat(40));
   assert.equal(trace.final_authoritative_gate_status, 'passed');
+  assert.equal(trace.projection_breadth_ready, false);
+  assert.equal(trace.authoritative_gate_attempts.length, 3);
   assert.equal(trace.evidence_plan.schema, 'aha_deterministic_evidence_packets_v1');
 
   const bundle = context.AHAAnalysisBundleV2.build({

@@ -142,9 +142,16 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     }
 
     if (!synthesis) {
-      return sendJson(res, 502, synthesisErrorBody("insight_synthesis_validation_failed", {
-        validation_errors: lastValidationErrors
-      }));
+      const blockedEnvelope = buildSynthesisResponseEnvelope({
+        synthesis: { schema: SYNTHESIS_OUTPUT_SCHEMA, candidates: [] },
+        model: response?.model || model,
+        responseId: response?.id || null
+      });
+      blockedEnvelope.runtime = buildRuntimeManifest();
+      blockedEnvelope.synthesis_attempts = MAX_VALIDATION_ATTEMPTS;
+      blockedEnvelope.validation_status = "blocked";
+      blockedEnvelope.validation_errors = lastValidationErrors;
+      return sendJson(res, 200, blockedEnvelope);
     }
 
     const envelope = buildSynthesisResponseEnvelope({
@@ -154,6 +161,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     });
     envelope.runtime = buildRuntimeManifest();
     envelope.synthesis_attempts = successfulAttempt;
+    envelope.validation_status = "passed";
     return sendJson(res, 200, envelope);
   };
 }

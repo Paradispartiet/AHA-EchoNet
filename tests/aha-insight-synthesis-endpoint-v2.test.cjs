@@ -119,14 +119,22 @@ async function run() {
   {
     const invalid = structuredClone(validSynthesis);
     invalid.candidates[0].evidence[1].quote = "Dette finnes ikke i source.";
+    let calls = 0;
     const handler = createSemanticModelHandler({
       hasOpenAIKey: true,
       model: "gpt-test",
-      openai: { responses: { create: async () => ({ id: "resp_bad", model: "gpt-test", output_parsed: invalid }) } }
+      openai: { responses: { create: async () => {
+        calls += 1;
+        return { id: "resp_bad", model: "gpt-test", output_parsed: invalid };
+      } } }
     });
     const res = await invoke(handler, { format: "aha_insight_synthesis_output_v2", text: source, semantic_context: semanticContext });
-    assert.equal(res.statusCode, 502);
-    assert.equal(res.body.error, "insight_synthesis_validation_failed");
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.ok, true);
+    assert.equal(res.body.validation_status, "blocked");
+    assert.equal(res.body.synthesis_attempts, 4);
+    assert.deepEqual(res.body.synthesis.candidates, []);
+    assert.equal(calls, 4);
     assert.ok(res.body.validation_errors.some((item) => item.includes("quote_not_in_source")));
     assert.equal(JSON.stringify(res.body).includes("Dette finnes ikke i source."), false);
     assert.equal(res.body.policy.synthesis_allowed, false);
@@ -165,6 +173,7 @@ async function run() {
     assert.equal(res.statusCode, 200);
     assert.equal(calls, 2);
     assert.equal(res.body.synthesis_attempts, 2);
+    assert.equal(res.body.validation_status, "passed");
     assert.equal(res.body.synthesis.candidates.length, 2);
     assert.equal(capturedRequests[0].text.format.schema.properties.candidates.minItems, 2);
     assert.match(capturedRequests[1].input[0].content, /MANDATORY BREADTH CORRECTION/);

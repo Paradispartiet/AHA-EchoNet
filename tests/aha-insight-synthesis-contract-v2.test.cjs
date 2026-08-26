@@ -53,6 +53,7 @@ async function run() {
   assert.match(request.input[0].content, /grensene mellom ansvarsområdene/i);
   assert.match(request.input[0].content, /plasseringen av uenighet/i);
   assert.match(request.input[0].content, /pattern eller tension/i);
+  assert.match(request.input[0].content, /avoid_repeating_insights/);
 
   const expansionContext = {
     authoritative_quality_retry: {
