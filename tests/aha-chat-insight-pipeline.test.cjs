@@ -7,6 +7,7 @@ const qualitySource = fs.readFileSync("js/ahaAnalysisQualityEvaluator.js", "utf8
 const chatSource = fs.readFileSync("js/ahaChatAnalysisRunContract.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatAcademicInsightView.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatUiRuntime.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatProviderLoader.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatCapabilityBindings.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeFacade.js", "utf8") + "\n" + fs.readFileSync("js/ahaChatRuntimeComposition.js", "utf8") + "\n" + fs.readFileSync('js/ahaChatApplicationComposition.js', 'utf8') + "\n" + fs.readFileSync("js/ahaChat.js", "utf8");
 const chatHtml = fs.readFileSync("chat.html", "utf8");
 const serverSource = fs.readFileSync("server.js", "utf8");
+const synthesisContractSource = fs.readFileSync("server/ahaInsightSynthesisContractV2.js", "utf8");
 const context = { window: null, console };
 context.window = context;
 vm.runInNewContext(qualitySource, context, { filename: "js/ahaAnalysisQualityEvaluator.js" });
@@ -36,12 +37,19 @@ const schemaAlignedCandidate = pipeline.normalizeInsightCandidate({
   confidence: "medium",
   causal_status: "not_causal",
   concepts: ["fortolkning"],
-  evidence_quotes: ["Fortellingen har en kontekst."],
+  evidence: [
+    { quote: "Fortellingen har en kontekst.", role: "supports" },
+    { quote: "Konteksten setter også en grense.", role: "limits" }
+  ],
   why_it_matters: "Det synliggjør hvem som får definere en livshistorie."
 });
 assert.equal(schemaAlignedCandidate.abstraction, "Dokumentformer fordeler tolkningsmakt mellom aktører");
 assert.equal(schemaAlignedCandidate.confidence, "medium");
 assert.equal(schemaAlignedCandidate.causal_status, "not_causal");
+assert.deepEqual(JSON.parse(JSON.stringify(schemaAlignedCandidate.evidence)), [
+  { quote: "Fortellingen har en kontekst.", role: "supports" },
+  { quote: "Konteksten setter også en grense.", role: "limits" }
+]);
 
 for (const type of Array.from(context.AHAChatInsightPipeline.FUNCTIONAL_TYPES)) {
   assert.equal(pipeline.normalizeFunctionalType(type), type, `${type} must remain canonical`);
@@ -58,21 +66,104 @@ async function verifyCandidateDiversityContract() {
     window: null,
     console,
     AHA_AGENT_API: "https://example.test/api/aha-agent",
-    fetch: async (_url, options) => {
+    fetch: async (url, options = {}) => {
+      if (String(url).endsWith('/health')) {
+        return {
+          ok: true,
+          json: async () => ({ runtime: {
+            analysis_contract: 'aha_active_analysis_contract_v3',
+            synthesis_contract: 'aha_insight_synthesis_contract_v2',
+            synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+            prompt_version: 'aha_insight_synthesis_prompt_v3',
+            quality_gate_schema: 'aha_insight_quality_gate_v2',
+            semantic_document_schema: 'aha_semantic_document_v2'
+          } })
+        };
+      }
       requests.push(JSON.parse(options.body));
-      return { ok: true, json: async () => ({ candidates: [] }) };
+      return { ok: true, json: async () => ({
+        ok: true,
+        schema: 'aha_insight_synthesis_contract_v2',
+        synthesis: { schema: 'aha_insight_synthesis_output_v2', candidates: [] },
+        runtime: {
+          analysis_contract: 'aha_active_analysis_contract_v3',
+          synthesis_contract: 'aha_insight_synthesis_contract_v2',
+          synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+          prompt_version: 'aha_insight_synthesis_prompt_v3',
+          quality_gate_schema: 'aha_insight_quality_gate_v2',
+          semantic_document_schema: 'aha_semantic_document_v2'
+        }
+      }) };
     }
   };
   requestContext.window = requestContext;
   vm.createContext(requestContext);
   vm.runInContext(source, requestContext, { filename: "js/ahaChatInsightPipeline.js" });
   const requestPipeline = requestContext.AHAChatInsightPipeline.create(dependencies);
-  await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", { theme_id: "tema" });
+  await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", {
+    theme_id: "tema",
+    ai_state: { meta_profile: { forbidden: true }, top_insights: ["skal ikke krysse grensen"] },
+    memory_context: { title: "skal heller ikke sendes" }
+  });
   assert.equal(requests.length, 1);
+  assert.equal(requests[0].format, 'aha_insight_synthesis_output_v2');
+  assert.ok(requests[0].semantic_context.source_claims.length >= 2);
+  assert.equal(requests[0].context.active_analysis_contract, 'aha_active_analysis_contract_v3');
+  assert.ok(Array.isArray(requests[0].context.deterministic_evidence_packets));
   assert.equal(requests[0].context.theme_id, "tema");
   assert.equal(requests[0].context.candidate_diversity_contract.source_sentence_count, 2);
   assert.equal(requests[0].context.candidate_diversity_contract.require_cross_sentence_evidence, true);
   assert.equal(requests[0].context.candidate_diversity_contract.require_distinct_primary_relation, true);
+  assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "ai_state"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "memory_context"), false);
+  assert.equal(JSON.stringify(requests[0].context).includes("meta_profile"), false);
+}
+
+async function verifyRuntimeRecoveryContract() {
+  let healthCalls = 0;
+  let synthesisCalls = 0;
+  const retryContext = {
+    window: null,
+    console,
+    AHA_AGENT_API: "https://example.test/api/aha-agent",
+    fetch: async (url) => {
+      if (String(url).endsWith('/health')) {
+        healthCalls += 1;
+        if (healthCalls === 1) return { ok: false, status: 503 };
+        return { ok: true, json: async () => ({ runtime: {
+          analysis_contract: 'aha_active_analysis_contract_v3',
+          synthesis_contract: 'aha_insight_synthesis_contract_v2',
+          synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+          prompt_version: 'aha_insight_synthesis_prompt_v3',
+          quality_gate_schema: 'aha_insight_quality_gate_v2',
+          semantic_document_schema: 'aha_semantic_document_v2'
+        } }) };
+      }
+      synthesisCalls += 1;
+      return { ok: true, json: async () => ({
+        ok: true,
+        schema: 'aha_insight_synthesis_contract_v2',
+        synthesis: { schema: 'aha_insight_synthesis_output_v2', candidates: [] },
+        runtime: {
+          analysis_contract: 'aha_active_analysis_contract_v3',
+          synthesis_contract: 'aha_insight_synthesis_contract_v2',
+          synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+          prompt_version: 'aha_insight_synthesis_prompt_v3',
+          quality_gate_schema: 'aha_insight_quality_gate_v2',
+          semantic_document_schema: 'aha_semantic_document_v2'
+        }
+      }) };
+    }
+  };
+  retryContext.window = retryContext;
+  vm.createContext(retryContext);
+  vm.runInContext(source, retryContext, { filename: "js/ahaChatInsightPipeline.js" });
+  const retryPipeline = retryContext.AHAChatInsightPipeline.create(dependencies);
+  const retrySource = "Første kildepåstand dokumenterer rammen. Andre kildepåstand dokumenterer en tydelig avgrensning.";
+  assert.deepEqual(Array.from(await retryPipeline.generateAIInsightCandidates(retrySource, {})), []);
+  assert.deepEqual(Array.from(await retryPipeline.generateAIInsightCandidates(retrySource, {})), []);
+  assert.equal(healthCalls, 2, "a failed runtime check must be retried by the next analysis");
+  assert.equal(synthesisCalls, 1, "the recovered analysis may call synthesis only after runtime compatibility is restored");
 }
 
 const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring trenger trygghet i parker, torg, bibliotek og andre byrom.", {});
@@ -112,6 +203,36 @@ assert.ok(reviewed.rejected.some((candidate) => candidate.rejection_reason === "
 assert.ok(reviewed.rejected.some((candidate) => candidate.claim_kind === "hypothesis"));
 assert.equal(reviewed.selected[0].evidence[0].relation, "supports_interpretation");
 
+const projectionDiversityReviewed = pipeline.reviewProjectionDiversityCandidates([
+  {
+    title: "Bemanning og risiko",
+    summary: "Lav bemanning gjør fredagslanseringen til en operativ risikobeslutning.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    why_it_matters: "Uten beredskap kan en feil bli stående gjennom helgen.",
+    next_test: "Kontroller hvem som kan overvåke de første timene.",
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  },
+  {
+    title: "Avgrenset gevinst",
+    summary: "Fredagslanseringen er en risikobeslutning fordi bemanningen er lav.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    why_it_matters: "Rask tilbakemelding må veies mot begrenset overvåking.",
+    next_test: "Sammenlign gevinst og beredskap før beslutningen.",
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  },
+  {
+    title: "Eksakt kopi",
+    summary: "Fredagslanseringen er en risikobeslutning fordi bemanningen er lav.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  }
+], "Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer. Mandagslansering gir full beredskap.", { minimumScore: 0.35 });
+assert.equal(projectionDiversityReviewed.selected.length, 2, "projection expansion must preserve lexical overlap for authoritative semantic classification");
+assert.ok(projectionDiversityReviewed.rejected.some((candidate) => candidate.rejection_reason === "exact_duplicate"));
+
 assert.ok(chatSource.includes('providerLoader.instantiate("insightPipeline", {'));
 assert.equal(chatSource.includes("function buildPlayCityFallbackCandidates"), false, "candidate generation implementation must live outside ahaChat.js");
 assert.doesNotMatch(chatSource, /AHA_INSIGHT_CONTRACT|INSIGHT_NOISE_PATTERN|LEADING_PUNCTUATION_PATTERN|LES_OGSA_TEASER_PATTERN|TEASER_TITLE_PATTERN/);
@@ -120,5 +241,9 @@ assert.ok(chatHtml.indexOf("js/ahaChatInsightPipeline.js") < chatHtml.indexOf("j
 assert.match(serverSource, /evidence_quotes skal inneholde 2–3 korte, ordrette sitater fra minst to forskjellige setninger/);
 assert.match(serverSource, /abstraction: normalizeWhitespace\(candidate\.abstraction, 240\)/);
 assert.match(serverSource, /authoritative_quality_retry/);
+assert.match(synthesisContractSource, /projection_diversity_expansion/);
 
-verifyCandidateDiversityContract().then(() => console.log("aha-chat-insight-pipeline passed"));
+Promise.all([
+  verifyCandidateDiversityContract(),
+  verifyRuntimeRecoveryContract()
+]).then(() => console.log("aha-chat-insight-pipeline passed"));

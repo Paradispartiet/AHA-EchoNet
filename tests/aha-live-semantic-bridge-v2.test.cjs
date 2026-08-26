@@ -51,7 +51,7 @@ const approvedCandidate = {
   abstraction: 'Kobler ulempen ved én fast struktur med løsningen der noen felt er faste og andre valgfrie.',
   evidence: [
     { quote: 'Det gjorde sammenligning enklere, men tvang også svært ulike saker inn i samme struktur.', role: 'supports' },
-    { quote: 'Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.', role: 'supports' }
+    { quote: 'Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.', role: 'limits' }
   ],
   why_it_matters: 'Prinsippet kan brukes når et system må kombinere en felles kjerne med lokal tilpasning.',
   confidence: 'high',
@@ -116,6 +116,8 @@ assert.equal(semantic.candidate_insights.length, 4, 'metadata candidates must be
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'approved').length, 3);
 assert.equal(semantic.candidate_insights.filter((item) => item.status === 'blocked').length, 1);
 assert.equal(semantic.candidate_insights.find((item) => item.insight === liveApiCandidate.summary).origin, 'live_analysis_candidate');
+assert.equal(semantic.candidate_insights[0].evidence[1].role, 'limits',
+  'the live semantic bridge must not flatten limiting evidence into supporting evidence');
 const sparseSemanticCandidate = semantic.candidate_insights.find((item) => item.insight === sparseEvidenceCandidate.summary);
 assert.equal(sparseSemanticCandidate.status, 'approved', 'the bridge must complete sparse exact evidence across distinct source claims');
 assert.ok(sparseSemanticCandidate.quality_metrics.evidence_sentence_count >= 2);

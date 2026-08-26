@@ -30,7 +30,7 @@ vm.runInContext(fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserRevie
 });
 
 const compare = context.AHAProjectionProductReviewV2.compareReplay;
-const fingerprint = { semantic_document: 1, analysis_bundle: 2, projection_runtime: 2, product_contract: 0 };
+const fingerprint = { semantic_document: 1, analysis_bundle: 2, projection_runtime: 2, product_contract: 2 };
 const result = (sourceId, sourceSha256 = 'a'.repeat(64), insight = 'Kildebeviset består.') => ({
   runtime_fingerprint: fingerprint,
   model: {

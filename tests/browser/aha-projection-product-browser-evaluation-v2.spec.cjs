@@ -1,5 +1,35 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
+const TRANSIENT_HTTP_STATUSES = new Set([429, 502, 503, 504]);
+const LIVE_CORPUS_TEST_TIMEOUT_MS = 35 * 60 * 1000;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function postWithBoundedTransientRetry(apiRequest, url, options) {
+  const delays = [0, 5000, 10000];
+  const statuses = [];
+  let response = null;
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await wait(delays[attempt]);
+    response = await apiRequest.post(url, options);
+    statuses.push(response.status());
+    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+  }
+  return { response, attempts: statuses.length, statuses };
+}
+
+async function fetchRouteWithBoundedTransientRetry(route, headers) {
+  const delays = [0, 1500, 3500];
+  let response = null;
+  let attempts = 0;
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await wait(delays[attempt]);
+    response = await route.fetch({ headers, timeout: 60000 });
+    attempts = attempt + 1;
+    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+  }
+  return { response, attempts };
+}
 
 async function runEvaluation(page) {
   await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
@@ -78,20 +108,24 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
 });
 
 test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName, request: apiRequest }) => {
-  test.setTimeout(18 * 60 * 1000);
+  test.setTimeout(LIVE_CORPUS_TEST_TIMEOUT_MS);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
-  const preflightResponse = await apiRequest.post("https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
+  await apiRequest.get("https://aha-agent-7a3y.onrender.com/api/aha-agent/health", { timeout: 60000 }).catch(() => null);
+  const preflightAttempt = await postWithBoundedTransientRetry(apiRequest, "https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
     headers: { origin: "https://paradispartiet.github.io" },
     data: { message: "AHA live product corpus preflight.", ai_state: {}, memory_context: null },
     timeout: 60000
   });
+  const preflightResponse = preflightAttempt.response;
   const preflight = {
     schema: "aha_projection_product_live_backend_preflight_v2",
     checked_at: new Date().toISOString(),
     endpoint: "configured_aha_agent_chat",
     status: preflightResponse.status(),
-    successful_2xx: preflightResponse.ok()
+    successful_2xx: preflightResponse.ok(),
+    transport_attempts: preflightAttempt.attempts,
+    transport_statuses: preflightAttempt.statuses
   };
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-backend-preflight-v2.json", `${JSON.stringify(preflight, null, 2)}\n`);
@@ -102,8 +136,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const response = await route.fetch({ headers: outboundHeaders, timeout: 60000 });
-      proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status() });
+      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const response = transport.response;
+      proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
         response,
         headers: {
@@ -134,6 +169,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
   const successfulChatResponses = chatResponses.filter((request) => request.status >= 200 && request.status < 300);
   const backendHttpFailures = chatResponses.filter((request) => request.status < 200 || request.status >= 300);
+  const synthesisResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/semantic-document"));
+  const successfulSynthesisResponses = synthesisResponses.filter((request) => request.status >= 200 && request.status < 300);
+  const synthesisHttpFailures = synthesisResponses.filter((request) => request.status < 200 || request.status >= 300);
   const chatStatusCounts = Object.fromEntries([...new Set(chatResponses.map((request) => request.status))]
     .sort((left, right) => left - right)
     .map((status) => [String(status), chatResponses.filter((request) => request.status === status).length]));
@@ -142,8 +180,11 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     received_response_count: proxiedAgentRequests.length,
     chat_response_count: chatResponses.length,
     successful_chat_count: successfulChatResponses.length,
+    synthesis_response_count: synthesisResponses.length,
+    successful_synthesis_count: successfulSynthesisResponses.length,
     chat_status_counts: chatStatusCounts,
     backend_http_failures: backendHttpFailures.map((request) => ({ method: request.method, status: request.status })),
+    synthesis_http_failures: synthesisHttpFailures.map((request) => ({ method: request.method, status: request.status })),
     auxiliary_insight_candidate_failures: proxyFailures.filter((failure) => failure.includes("/insight-candidates")),
     critical_failures: criticalProxyFailures
   };
@@ -155,6 +196,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   expect(chatResponses.length, "Every corpus case must exercise a real Chat backend response").toBeGreaterThanOrEqual(27);
   expect(backendHttpFailures, "Every real Chat backend response must be 2xx; received responses are not successful responses").toEqual([]);
   expect(successfulChatResponses.length, "Every corpus case must exercise a successful real Chat backend response").toBeGreaterThanOrEqual(27);
+  expect(synthesisResponses.length, "Every substantive live corpus case must exercise the strict synthesis endpoint").toBeGreaterThanOrEqual(22);
+  expect(synthesisHttpFailures, "Every strict synthesis response must be 2xx; contract rejections must remain visible").toEqual([]);
+  expect(successfulSynthesisResponses.length, "The live corpus must receive successful strict synthesis envelopes").toBeGreaterThanOrEqual(22);
   expect(evaluation.results).toHaveLength(27);
   const expectedUseful = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
   const calibrationCases = evaluation.results.filter((result) => result.live_disposition === "calibration_observation");
@@ -205,8 +249,9 @@ test("controlled save journey survives reload and protects user edits for all th
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const response = await route.fetch({ headers: outboundHeaders, timeout: 60000 });
-      journeyRequests.push({ method: request.method(), url: request.url(), status: response.status() });
+      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const response = transport.response;
+      journeyRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
         response,
         headers: {
@@ -226,6 +271,7 @@ test("controlled save journey survives reload and protects user edits for all th
   expect(prepared.guarded_store_writes).toEqual([]);
   expect(journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))).toEqual([]);
   expect(journeyRequests.filter((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 300)).toHaveLength(1);
+  expect(journeyRequests.filter((request) => request.url.endsWith("/semantic-document") && request.status >= 200 && request.status < 300).length).toBeGreaterThanOrEqual(1);
   expect(["list", "path", "mindmap"].map((product) => prepared.model.product_states[product].status)).toEqual(["ready", "ready", "ready"]);
   const chamberBefore = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
 

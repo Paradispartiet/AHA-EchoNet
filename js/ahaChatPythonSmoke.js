@@ -181,6 +181,19 @@
       insightCards: artifact?.insightCards
     };
     const sourceTerms = topTopicTerms(sourceText, 24);
+    const canonicalSubjects = [
+      ...(Array.isArray(artifact?.subjectMatches) ? artifact.subjectMatches : []),
+      ...(Array.isArray(artifact?.subjectLinks) ? artifact.subjectLinks : [])
+    ].filter((item) => {
+      const provenance = item?.provenance && typeof item.provenance === "object" ? item.provenance : {};
+      return String(item?.source || "") === "history_go_canonical_fagverk"
+        && ["canonical_fagverk", "canonical_fagverk_subject"].includes(String(provenance.kind || ""))
+        && Boolean(String(provenance.canonical_subject_id || item?.subject_id || "").trim());
+    }).map((item) => ({
+      id: String(item?.provenance?.canonical_subject_id || item?.subject_id || item?.id || "").trim(),
+      label: String(item?.subject_label || item?.title || item?.label || "").trim(),
+      source_ref: String(item?.provenance?.source_ref || "").trim()
+    })).filter((item) => item.id && item.label);
     const termsOverlap = (left, right) => left === right || (
       left.length >= 6 && right.length >= 6 && (left.startsWith(right.slice(0, 6)) || right.startsWith(left.slice(0, 6)))
     );
@@ -193,7 +206,19 @@
       const groundingField = /(?:theme|mainTension|keyInsight|summary|reflection|fieldConnections|fagkoblinger|^reflection$|^day$|sortItems|^list$|insightCards)$/u.test(field);
       const labelField = /(?:fieldConnections|fagkoblinger)$/u.test(field);
       const eligible = groundingField && sourceTerms.length >= 4 && outputTerms.length >= (labelField ? 1 : 2);
-      const valid = !eligible || overlappingTerms.length > 0;
+      const labelValues = Array.isArray(value)
+        ? value.map((item) => flattenTopicValue(item)).filter(Boolean)
+        : String(value || "").split(/\s*[·,]\s*/u).filter(Boolean);
+      const canonicalMatches = field === "ahaSer.fagkoblinger"
+        ? labelValues.map((label) => canonicalSubjects.find((subject) => {
+          const normalizedLabel = normalizeTopicText(label);
+          return normalizedLabel === normalizeTopicText(subject.label) || normalizedLabel === normalizeTopicText(subject.id);
+        })).filter(Boolean)
+        : [];
+      const canonicalVerified = field === "ahaSer.fagkoblinger"
+        && labelValues.length > 0
+        && canonicalMatches.length === labelValues.length;
+      const valid = !eligible || canonicalVerified || overlappingTerms.length > 0;
       reports[field] = {
         field,
         status: valid ? "valid" : "invalid_semantic_topic_mismatch",
@@ -201,7 +226,10 @@
         sourceTerms,
         outputTerms,
         overlappingTerms,
-        reason: valid ? "field_topic_overlap_ok" : "field_has_no_source_topic_overlap"
+        canonicalSubjectProvenance: canonicalMatches,
+        reason: canonicalVerified
+          ? "canonical_subject_provenance_verified"
+          : (valid ? "field_topic_overlap_ok" : "field_has_no_source_topic_overlap")
       };
     });
     const invalidFields = Object.values(reports).filter((report) => report.valid === false);
@@ -348,7 +376,9 @@
       day: bundle.afterwork?.summary,
       sortItems: bundle.afterwork?.sortItems,
       list: bundle.afterwork?.list,
-      path: bundle.afterwork?.path
+      path: bundle.afterwork?.path,
+      subjectMatches: bundle.subjectMatches,
+      subjectLinks: bundle.subjectLinks
     };
     const semanticReport = buildSemanticTopicReport(sourceText, structuredArtifact);
     const fieldReport = buildSemanticFieldReports(sourceText, structuredArtifact);
@@ -572,6 +602,7 @@
     installObserver: installAutoOutputBindingRepairObserver,
     getLatestAutoOutput,
     buildSemanticTopicReport,
+    buildSemanticFieldReports,
     hardenExportBundle,
     installExportIntegrityGuard
   });

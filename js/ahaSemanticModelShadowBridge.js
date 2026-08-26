@@ -992,6 +992,11 @@
     });
   }
   function candidateEvidence(raw, payload, insight, claims, sourceText) {
+    const source = object(raw);
+    const explicitRoleByQuote = new Map(array(source.evidence).map((item) => {
+      const quote = text(item?.quote);
+      return [normalize(quote), item?.role === "limits" ? "limits" : "supports"];
+    }).filter(([quote]) => quote));
     const values = evidenceValues(raw);
     const interpretation = linkedInterpretation(payload, insight);
     values.push(...evidenceValues([interpretation?.evidenceText, interpretation?.evidence_text]));
@@ -1017,7 +1022,10 @@
     rankedClaims.forEach((claim) => {
       if (exact.length < 3 && !hasExactEvidence(claim.text)) exact.push(claim.text);
     });
-    return unique(exact).slice(0, 3).map((quote) => ({ quote, role: "supports" }));
+    return unique(exact).slice(0, 3).map((quote) => ({
+      quote,
+      role: explicitRoleByQuote.get(normalize(quote)) || "supports"
+    }));
   }
   function buildCandidateInput(raw, payload, claims, sourceText) {
     const source = object(raw);
@@ -1030,7 +1038,7 @@
       observation: "generalization", question: "generalization", definition: "generalization", learning_point: "generalization",
       contradiction: "tension", task: "consequence", problem: "consequence", solution: "consequence", decision: "consequence"
     };
-    const uncertainty = text(source.uncertainty || interpretation?.uncertainty);
+    const uncertainty = text(source.uncertainty_detail || source.uncertainty || interpretation?.uncertainty);
     const confidence = text(source.confidence || interpretation?.confidence)
       || (uncertainty === "hypothesis" ? "low" : "medium");
     const whyItMatters = text(source.why_it_matters || source.whyItMatters || (authoritativeCandidates ? "" : payload?.reflection));
