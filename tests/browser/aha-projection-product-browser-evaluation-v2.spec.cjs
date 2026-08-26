@@ -1,6 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 const TRANSIENT_HTTP_STATUSES = new Set([429, 502, 503, 504]);
+const LIVE_CORPUS_TEST_TIMEOUT_MS = 35 * 60 * 1000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -107,7 +108,7 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
 });
 
 test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName, request: apiRequest }) => {
-  test.setTimeout(18 * 60 * 1000);
+  test.setTimeout(LIVE_CORPUS_TEST_TIMEOUT_MS);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
   await apiRequest.get("https://aha-agent-7a3y.onrender.com/api/aha-agent/health", { timeout: 60000 }).catch(() => null);
