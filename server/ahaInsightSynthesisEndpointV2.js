@@ -4,6 +4,7 @@
 import {
   SYNTHESIS_OUTPUT_SCHEMA,
   SYNTHESIS_MAX_SOURCE_CHARS,
+  synthesisResponseRequirements,
   buildSynthesisResponsesRequest,
   requireValidSynthesisPayload,
   buildSynthesisResponseEnvelope
@@ -14,6 +15,7 @@ import {
   validateStabilitySynthesis,
   addRetryInstruction
 } from "./ahaInsightSynthesisStabilityV2.js";
+import { buildRuntimeManifest } from "./ahaRuntimeManifest.js";
 
 function synthesisFailurePolicy() {
   return {
@@ -79,7 +81,12 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
 
     const sourceText = body.text;
     let request;
+    let responseRequirements;
     try {
+      responseRequirements = synthesisResponseRequirements({
+        context: body.context || {},
+        semanticContext: body.semantic_context
+      });
       request = applyStabilityRequestPolicy(buildSynthesisResponsesRequest({
         model,
         sourceText,
@@ -96,6 +103,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     let response = null;
     let synthesis = null;
     let lastValidationErrors = [];
+    let successfulAttempt = 0;
 
     for (let attempt = 1; attempt <= MAX_VALIDATION_ATTEMPTS; attempt += 1) {
       try {
@@ -111,7 +119,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
         : response?.output_text;
 
       try {
-        synthesis = requireValidSynthesisPayload(rawPayload, sourceText);
+        synthesis = requireValidSynthesisPayload(rawPayload, sourceText, responseRequirements);
         lastValidationErrors = [];
       } catch (error) {
         synthesis = null;
@@ -120,7 +128,10 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
 
       if (synthesis) {
         const stability = validateStabilitySynthesis(synthesis, sourceText);
-        if (stability.ok) break;
+        if (stability.ok) {
+          successfulAttempt = attempt;
+          break;
+        }
         lastValidationErrors = stability.errors.map((item) => String(item).slice(0, 180)).slice(0, 32);
         synthesis = null;
       }
@@ -131,16 +142,27 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     }
 
     if (!synthesis) {
-      return sendJson(res, 502, synthesisErrorBody("insight_synthesis_validation_failed", {
-        validation_errors: lastValidationErrors
-      }));
+      const blockedEnvelope = buildSynthesisResponseEnvelope({
+        synthesis: { schema: SYNTHESIS_OUTPUT_SCHEMA, candidates: [] },
+        model: response?.model || model,
+        responseId: response?.id || null
+      });
+      blockedEnvelope.runtime = buildRuntimeManifest();
+      blockedEnvelope.synthesis_attempts = MAX_VALIDATION_ATTEMPTS;
+      blockedEnvelope.validation_status = "blocked";
+      blockedEnvelope.validation_errors = lastValidationErrors;
+      return sendJson(res, 200, blockedEnvelope);
     }
 
-    return sendJson(res, 200, buildSynthesisResponseEnvelope({
+    const envelope = buildSynthesisResponseEnvelope({
       synthesis,
       model: response?.model || model,
       responseId: response?.id || null
-    }));
+    });
+    envelope.runtime = buildRuntimeManifest();
+    envelope.synthesis_attempts = successfulAttempt;
+    envelope.validation_status = "passed";
+    return sendJson(res, 200, envelope);
   };
 }
 
