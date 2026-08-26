@@ -88,9 +88,24 @@ async function run() {
   {
     const breadthRetry = stability.addRetryInstruction({
       input: [{ role: "system", content: "base instruction" }]
-    }, ["candidates_below_requested_minimum:2"]);
+    }, ["candidates_below_requested_minimum:2", "candidate:1:insight_duplicates_candidate:0"]);
     assert.match(breadthRetry.input[0].content, /MANDATORY BREADTH CORRECTION/i);
     assert.match(breadthRetry.input[0].content, /requested number of new/i);
+    assert.match(breadthRetry.input[0].content, /MANDATORY SEMANTIC NOVELTY CORRECTION/i);
+  }
+
+  {
+    const norwegianSource = "Deltakere som sov etter øving husket flere ord dagen etter. Gruppene var små, og motivasjon ble ikke målt direkte.";
+    const englishCandidate = {
+      insight: "Sleeping after practice is associated with stronger recall while the groups were small.",
+      abstraction: "The result links sleep and recall with a limitation in the study design.",
+      uncertainty: "The source does not establish whether motivation explains the difference."
+    };
+    const mismatch = stability.validateStabilitySynthesis({ candidates: [englishCandidate] }, norwegianSource);
+    assert.equal(mismatch.ok, false);
+    assert.ok(mismatch.errors.includes("candidate:0:source_language_not_preserved:no"));
+    const retry = stability.addRetryInstruction({ input: [{ role: "system", content: "base instruction" }] }, mismatch.errors);
+    assert.match(retry.input[0].content, /MANDATORY LANGUAGE CORRECTION/i);
   }
 
   const mixedUseSource = "En gate fikk flere boliger og butikker. Fotgjengertrafikken ble jevnere fordelt. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster.";
