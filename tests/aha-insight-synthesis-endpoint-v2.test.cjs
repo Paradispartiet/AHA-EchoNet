@@ -143,6 +143,12 @@ async function run() {
   {
     let calls = 0;
     const capturedRequests = [];
+    const repeatedSynthesis = structuredClone(validSynthesis);
+    repeatedSynthesis.candidates.push({
+      ...structuredClone(validSynthesis.candidates[0]),
+      insight: "Delvis standardisering bevarer sammenlignbarhet samtidig som ulike saker får nødvendig fleksibilitet.",
+      type: "principle"
+    });
     const expandedSynthesis = structuredClone(validSynthesis);
     expandedSynthesis.candidates.push(secondValidCandidate);
     const handler = createSemanticModelHandler({
@@ -154,7 +160,7 @@ async function run() {
         return {
           id: `resp_breadth_${calls}`,
           model: "gpt-test",
-          output_parsed: calls === 1 ? validSynthesis : expandedSynthesis
+          output_parsed: calls === 1 ? repeatedSynthesis : expandedSynthesis
         };
       } } }
     });
@@ -176,7 +182,7 @@ async function run() {
     assert.equal(res.body.validation_status, "passed");
     assert.equal(res.body.synthesis.candidates.length, 2);
     assert.equal(capturedRequests[0].text.format.schema.properties.candidates.minItems, 2);
-    assert.match(capturedRequests[1].input[0].content, /MANDATORY BREADTH CORRECTION/);
+    assert.match(capturedRequests[1].input[0].content, /MANDATORY SEMANTIC NOVELTY CORRECTION/);
   }
 
   console.log("aha-insight-synthesis-endpoint-v2 passed");
