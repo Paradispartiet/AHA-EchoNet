@@ -731,16 +731,13 @@
 
   function mergeDistinctInsightCandidates(instance, sourceText, first, second) {
     const combined = [...array(first), ...array(second)];
-    if (typeof instance?.reviewInsightCandidates !== "function") {
-      const seen = new Set();
-      return combined.filter((candidate) => {
-        const key = normalize(candidate?.summary || candidate?.insight || candidate?.text || candidate?.title);
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      }).slice(0, 5);
-    }
-    return instance.reviewInsightCandidates(combined, sourceText, { limit: 5 }).selected;
+    const seen = new Set();
+    return combined.filter((candidate) => {
+      const key = normalize(candidate?.summary || candidate?.insight || candidate?.text || candidate?.title);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 12);
   }
 
   function repairAnalysisBundle(bundle, input = {}, originalProvider = null) {

@@ -329,7 +329,10 @@
         .map((candidate) => normalizeInsightCandidate(candidate))
         .filter(Boolean)
         .filter((candidate) => !isWeakInsightCandidate(candidate, raw));
-      const reviewed = reviewInsightCandidates(normalized, raw, { limit: 5 });
+      const projectionDiversityExpansion = context?.authoritative_quality_retry?.mode === "projection_diversity_expansion";
+      const reviewed = projectionDiversityExpansion
+        ? reviewProjectionDiversityCandidates(normalized, raw, { limit: 5 })
+        : reviewInsightCandidates(normalized, raw, { limit: 5 });
       setRuntimeTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: reviewed.selected.length ? "synthesis_received" : "blocked_client_prefilter",
@@ -341,6 +344,7 @@
         provider_validation_attempts: Number(data.synthesis_attempts || 0),
         transport_attempts: transport.transport_attempts,
         authoritative_retry_attempt: requestAttempt,
+        candidate_prefilter_mode: projectionDiversityExpansion ? "authoritative_projection_diversity" : "legacy_review",
         candidate_count_received: candidates.length,
         candidate_count_after_prefilter: reviewed.selected.length,
         prefilter_rejected_count: reviewed.rejected.length,
@@ -560,6 +564,31 @@
     return { selected, rejected, considered: enriched.length, minimumScore };
   }
 
+  function reviewProjectionDiversityCandidates(candidates, sourceText, options = {}) {
+    const limit = Math.max(1, Number(options.limit || 5));
+    const minimumScore = Number.isFinite(Number(options.minimumScore)) ? Number(options.minimumScore) : 0.46;
+    const enriched = (Array.isArray(candidates) ? candidates : []).map((candidate) => enrichInsightCandidate(candidate, sourceText));
+    const selected = [];
+    const rejected = [];
+    const seen = new Set();
+    enriched.sort((left, right) => right.quality_score - left.quality_score);
+    enriched.forEach((candidate) => {
+      const summary = candidateSummary(candidate).replace(/\s+/g, " ").trim().toLowerCase();
+      const duplicate = !summary || seen.has(summary);
+      if (duplicate || candidate.quality_score < minimumScore) {
+        rejected.push({ ...candidate, rejection_reason: duplicate ? "exact_duplicate" : "below_quality_threshold" });
+        return;
+      }
+      if (selected.length < limit) {
+        selected.push(candidate);
+        seen.add(summary);
+      } else {
+        rejected.push({ ...candidate, rejection_reason: "rank_limit" });
+      }
+    });
+    return { selected, rejected, considered: enriched.length, minimumScore };
+  }
+
   function isWeakInsightCandidate(candidate, sourceText) {
     if (!candidate || typeof candidate !== "object") return true;
 
@@ -746,6 +775,7 @@
       evidenceQuotesForCandidate,
       enrichInsightCandidate,
       reviewInsightCandidates,
+      reviewProjectionDiversityCandidates,
       buildSemanticInsightCandidates,
       normalizeFunctionalType,
       normalizeCandidateConcepts,

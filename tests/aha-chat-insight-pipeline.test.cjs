@@ -203,6 +203,36 @@ assert.ok(reviewed.rejected.some((candidate) => candidate.rejection_reason === "
 assert.ok(reviewed.rejected.some((candidate) => candidate.claim_kind === "hypothesis"));
 assert.equal(reviewed.selected[0].evidence[0].relation, "supports_interpretation");
 
+const projectionDiversityReviewed = pipeline.reviewProjectionDiversityCandidates([
+  {
+    title: "Bemanning og risiko",
+    summary: "Lav bemanning gjør fredagslanseringen til en operativ risikobeslutning.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    why_it_matters: "Uten beredskap kan en feil bli stående gjennom helgen.",
+    next_test: "Kontroller hvem som kan overvåke de første timene.",
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  },
+  {
+    title: "Avgrenset gevinst",
+    summary: "Fredagslanseringen er en risikobeslutning fordi bemanningen er lav.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    why_it_matters: "Rask tilbakemelding må veies mot begrenset overvåking.",
+    next_test: "Sammenlign gevinst og beredskap før beslutningen.",
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  },
+  {
+    title: "Eksakt kopi",
+    summary: "Fredagslanseringen er en risikobeslutning fordi bemanningen er lav.",
+    evidence_quotes: ["Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer."],
+    uncertainty: "interpretive",
+    claim_kind: "interpretation"
+  }
+], "Fredagslansering gir raskere tilbakemelding, men overvåkingen er bare bemannet i to timer. Mandagslansering gir full beredskap.", { minimumScore: 0.35 });
+assert.equal(projectionDiversityReviewed.selected.length, 2, "projection expansion must preserve lexical overlap for authoritative semantic classification");
+assert.ok(projectionDiversityReviewed.rejected.some((candidate) => candidate.rejection_reason === "exact_duplicate"));
+
 assert.ok(chatSource.includes('providerLoader.instantiate("insightPipeline", {'));
 assert.equal(chatSource.includes("function buildPlayCityFallbackCandidates"), false, "candidate generation implementation must live outside ahaChat.js");
 assert.doesNotMatch(chatSource, /AHA_INSIGHT_CONTRACT|INSIGHT_NOISE_PATTERN|LEADING_PUNCTUATION_PATTERN|LES_OGSA_TEASER_PATTERN|TEASER_TITLE_PATTERN/);
