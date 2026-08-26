@@ -85,6 +85,14 @@ async function run() {
     assert.deepEqual(retryPayload.semantic_context.relations, []);
   }
 
+  {
+    const breadthRetry = stability.addRetryInstruction({
+      input: [{ role: "system", content: "base instruction" }]
+    }, ["candidates_below_requested_minimum:2"]);
+    assert.match(breadthRetry.input[0].content, /MANDATORY BREADTH CORRECTION/i);
+    assert.match(breadthRetry.input[0].content, /requested number of new/i);
+  }
+
   const mixedUseSource = "En gate fikk flere boliger og butikker. Fotgjengertrafikken ble jevnere fordelt. Materialet peker ikke ut ett enkelt tiltak som årsak, men viser at flere bruksformer opptrer samtidig med et bredere tidsmønster.";
   const missingLimit = {
     schema: "aha_insight_synthesis_output_v2",
@@ -393,8 +401,10 @@ async function run() {
       } } }
     });
     const res = await invoke(handler, { format: "aha_insight_synthesis_output_v2", text: source, semantic_context: semanticContext });
-    assert.equal(res.statusCode, 502);
-    assert.equal(res.body.error, "insight_synthesis_validation_failed");
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.validation_status, "blocked");
+    assert.deepEqual(res.body.synthesis.candidates, []);
+    assert.ok(res.body.validation_errors.some((item) => item.includes("quote_not_in_source")));
     assert.equal(calls, 4);
     assert.equal(res.body.policy.canonical_write, false);
   }

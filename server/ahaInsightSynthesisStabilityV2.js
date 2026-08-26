@@ -169,6 +169,12 @@ function retryInstruction(validationErrors = []) {
       "Return exactly two distinct evidence quotes: one exact quote containing 'hente fram innholdet fra hukommelsen' and one exact quote containing 'opplevde arbeidet som vanskeligere, men husket mer en uke senere'. Keep both quotes exact and inside SOURCE_TEXT."
     );
   }
+  if (errors.some((item) => item.startsWith("candidates_below_requested_minimum:"))) {
+    instructions.push(
+      "MANDATORY BREADTH CORRECTION: Return at least the requested number of new, independently gated candidates from the same SOURCE_TEXT.",
+      "Keep the precise central source concept where appropriate, but give each candidate a distinct secondary relation, boundary or consequence. Do not satisfy the count with paraphrases or duplicates."
+    );
+  }
   return instructions.join("\n");
 }
 

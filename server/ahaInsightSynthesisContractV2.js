@@ -4,6 +4,7 @@
 
 const SYNTHESIS_OUTPUT_SCHEMA = "aha_insight_synthesis_output_v2";
 const SYNTHESIS_CONTRACT = "aha_insight_synthesis_contract_v2";
+const SYNTHESIS_PROMPT_VERSION = "aha_insight_synthesis_prompt_v3";
 const SYNTHESIS_MAX_SOURCE_CHARS = 8000;
 const INSIGHT_TYPES = Object.freeze(["principle", "mechanism", "pattern", "tension", "consequence", "generalization"]);
 const CONFIDENCE_VALUES = Object.freeze(["high", "medium", "low"]);
@@ -70,6 +71,23 @@ function normalizeForComparison(value) {
 
 function safeObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function synthesisResponseRequirements({ context, semanticContext } = {}) {
+  const requestContext = safeObject(context) || {};
+  const retry = safeObject(requestContext.authoritative_quality_retry) || {};
+  const sourceClaims = Array.isArray(semanticContext?.source_claims)
+    ? semanticContext.source_claims
+    : [];
+  const requested = Number(retry.required_new_candidate_count);
+  const requestedCount = Number.isFinite(requested) ? Math.trunc(requested) : 0;
+  const minimumCandidateCount = retry.mode === "projection_diversity_expansion"
+    && sourceClaims.length >= 2
+    && requestedCount >= 2
+    ? Math.min(4, requestedCount, sourceClaims.length)
+    : 0;
+
+  return { minimum_candidate_count: minimumCandidateCount };
 }
 
 function containsForbiddenKeys(value) {
@@ -177,12 +195,16 @@ function validateSemanticContext(input, sourceText) {
 
 function buildSynthesisInstruction() {
   return [
-    "Du er AHA Interpretation / Insight Synthesis V2. Returner bare data som passer JSON-schemaet.",
+    `Du er AHA Interpretation / Insight Synthesis V2 (${SYNTHESIS_PROMPT_VERSION}). Returner bare data som passer JSON-schemaet.`,
     "SOURCE_TEXT er eneste evidensautoritet. SEMANTIC_CONTEXT er strukturhjelp, ikke selvstendig bevis.",
     "Ikke bruk tidligere interpretationer, assistant-svar, Meta, minne eller Chamber som råstoff.",
     "Målet er høyereordens forståelse: prinsipp, mekanisme, mønster, spenning, konsekvens eller generaliserbar forståelse.",
     "Et source-utdrag, en lett parafrase, en oppsummering av én setning eller en omdøpt source claim er IKKE en synthesized Insight.",
     "Hver kandidat må kombinere minst to distinkte ordrette evidence quotes fra SOURCE_TEXT og tilføre en tydelig semantisk transformasjon.",
+    "Når context.deterministic_evidence_packets finnes, bruk pakkene som en deterministisk søkeplan for å dekke ulike deler av SOURCE_TEXT. Pakkene er ikke selvstendig bevis; evidence må fortsatt være ordrett i SOURCE_TEXT.",
+    "Når context.authoritative_quality_retry finnes, rett hver oppgitt blocking_reason eksplisitt. Behold samme SOURCE_TEXT, samme terskler og samme evidensautoritet.",
+    "Når SOURCE_TEXT har minst to distinkte source claims, søk etter 2–4 selvstendige kandidater som kan bestå porten hver for seg. Behold ett presist sentralt source-begrep på tvers der det er faglig riktig, men la kandidatene uttrykke ulike sekundære relasjoner, grenser eller konsekvenser. Ikke fyll kvoten med duplikater eller svake kandidater.",
+    "Når authoritative_quality_retry.mode=projection_diversity_expansion, returner nye kandidater som utfyller covered_primary_types. Unngå excluded_primary_types, prioriter en source-støttet type fra preferred_primary_types, og ikke parafraser eller gjenta innsiktene i avoid_repeating_insights.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
     "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
@@ -209,6 +231,11 @@ function buildSynthesisResponsesRequest({ model, sourceText, semanticContext, co
   if (containsForbiddenKeys(requestContext)) throw new TypeError("insight_synthesis_context_forbidden_data");
   const modelName = normalizeWhitespace(model);
   if (!modelName) throw new TypeError("insight_synthesis_model_required");
+  const requirements = synthesisResponseRequirements({ context: requestContext, semanticContext: semantic });
+  const responseSchema = JSON.parse(JSON.stringify(SYNTHESIS_JSON_SCHEMA));
+  if (requirements.minimum_candidate_count > 0) {
+    responseSchema.properties.candidates.minItems = requirements.minimum_candidate_count;
+  }
 
   return {
     model: modelName,
@@ -221,7 +248,7 @@ function buildSynthesisResponsesRequest({ model, sourceText, semanticContext, co
         type: "json_schema",
         name: SYNTHESIS_OUTPUT_SCHEMA,
         strict: true,
-        schema: SYNTHESIS_JSON_SCHEMA
+        schema: responseSchema
       }
     }
   };
@@ -237,9 +264,14 @@ function parseSynthesisPayload(raw) {
   return safeObject(raw);
 }
 
-function validateSynthesisPayload(payloadInput, sourceText) {
+function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = {}) {
   const source = String(sourceText || "");
   const payload = parseSynthesisPayload(payloadInput);
+  const requirements = safeObject(requirementsInput) || {};
+  const requestedMinimum = Number(requirements.minimum_candidate_count);
+  const minimumCandidateCount = Number.isFinite(requestedMinimum)
+    ? Math.max(0, Math.min(4, Math.trunc(requestedMinimum)))
+    : 0;
   const errors = [];
   if (!payload) return { ok: false, errors: ["payload_not_object"] };
   if (!source.trim()) return { ok: false, errors: ["source_text_required"] };
@@ -250,6 +282,9 @@ function validateSynthesisPayload(payloadInput, sourceText) {
   const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
   if (!Array.isArray(payload.candidates)) errors.push("candidates_not_array");
   if (candidates.length > 5) errors.push("candidates_too_many");
+  if (minimumCandidateCount > 0 && candidates.length < minimumCandidateCount) {
+    errors.push(`candidates_below_requested_minimum:${minimumCandidateCount}`);
+  }
 
   candidates.forEach((candidate, index) => {
     const label = `candidate:${index}`;
@@ -308,9 +343,9 @@ function validateSynthesisPayload(payloadInput, sourceText) {
   return { ok: errors.length === 0, errors };
 }
 
-function requireValidSynthesisPayload(payloadInput, sourceText) {
+function requireValidSynthesisPayload(payloadInput, sourceText, requirements = {}) {
   const payload = parseSynthesisPayload(payloadInput);
-  const validation = validateSynthesisPayload(payload, sourceText);
+  const validation = validateSynthesisPayload(payload, sourceText, requirements);
   if (!validation.ok) {
     const error = new Error(`insight_synthesis_validation_failed:${validation.errors.join(",")}`);
     error.code = "insight_synthesis_validation_failed";
@@ -345,10 +380,12 @@ function buildSynthesisResponseEnvelope({ synthesis, model, responseId } = {}) {
 export {
   SYNTHESIS_OUTPUT_SCHEMA,
   SYNTHESIS_CONTRACT,
+  SYNTHESIS_PROMPT_VERSION,
   SYNTHESIS_MAX_SOURCE_CHARS,
   SYNTHESIS_JSON_SCHEMA,
   INSIGHT_TYPES,
   buildSynthesisInstruction,
+  synthesisResponseRequirements,
   buildSynthesisResponsesRequest,
   parseSynthesisPayload,
   validateSynthesisPayload,

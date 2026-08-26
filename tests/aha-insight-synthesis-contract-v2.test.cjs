@@ -53,6 +53,28 @@ async function run() {
   assert.match(request.input[0].content, /grensene mellom ansvarsområdene/i);
   assert.match(request.input[0].content, /plasseringen av uenighet/i);
   assert.match(request.input[0].content, /pattern eller tension/i);
+  assert.match(request.input[0].content, /avoid_repeating_insights/);
+
+  const expansionContext = {
+    authoritative_quality_retry: {
+      mode: "projection_diversity_expansion",
+      required_new_candidate_count: 2,
+      covered_primary_types: ["tension"]
+    }
+  };
+  const expansionRequirements = api.synthesisResponseRequirements({
+    context: expansionContext,
+    semanticContext
+  });
+  assert.deepEqual(expansionRequirements, { minimum_candidate_count: 2 });
+  const expansionRequest = api.buildSynthesisResponsesRequest({
+    model: "gpt-test",
+    sourceText: source,
+    semanticContext,
+    context: expansionContext
+  });
+  assert.equal(expansionRequest.text.format.schema.properties.candidates.minItems, 2);
+  assert.equal(Object.prototype.hasOwnProperty.call(request.text.format.schema.properties.candidates, "minItems"), false);
 
   assert.throws(() => api.buildSynthesisResponsesRequest({
     model: "gpt-test",
@@ -96,6 +118,12 @@ async function run() {
   const validation = api.validateSynthesisPayload(validPayload, source);
   assert.equal(validation.ok, true, JSON.stringify(validation.errors));
   assert.deepEqual(api.requireValidSynthesisPayload(validPayload, source), validPayload);
+
+  {
+    const result = api.validateSynthesisPayload(validPayload, source, expansionRequirements);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidates_below_requested_minimum:2"));
+  }
 
   {
     const invalid = structuredClone(validPayload);
