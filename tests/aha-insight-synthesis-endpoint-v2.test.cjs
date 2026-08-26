@@ -48,6 +48,19 @@ async function run() {
       causal_status: "not_causal"
     }]
   };
+  const secondValidCandidate = {
+    insight: "En felles rapportkjerne kan sameksistere med sakstilpasning når strukturen skiller mellom faste og valgfrie felt.",
+    type: "principle",
+    abstraction: "Kobler behovet for en felles kjerne med skillet mellom obligatoriske og valgfrie deler.",
+    evidence: [
+      { quote: "Et prosjekt brukte én felles mal for alle rapporter.", role: "supports" },
+      { quote: "Da malen fikk noen faste felt og noen valgfrie felt, beholdt rapportene en felles kjerne samtidig som de kunne tilpasses saken.", role: "supports" }
+    ],
+    why_it_matters: "Det gir et generelt strukturprinsipp for formater som må støtte både sammenligning og variasjon.",
+    confidence: "high",
+    uncertainty: "",
+    causal_status: "not_causal"
+  };
 
   {
     const handler = createSemanticModelHandler({ openai: null, model: "gpt-test", hasOpenAIKey: false });
@@ -117,6 +130,44 @@ async function run() {
     assert.ok(res.body.validation_errors.some((item) => item.includes("quote_not_in_source")));
     assert.equal(JSON.stringify(res.body).includes("Dette finnes ikke i source."), false);
     assert.equal(res.body.policy.synthesis_allowed, false);
+  }
+
+  {
+    let calls = 0;
+    const capturedRequests = [];
+    const expandedSynthesis = structuredClone(validSynthesis);
+    expandedSynthesis.candidates.push(secondValidCandidate);
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async (request) => {
+        capturedRequests.push(request);
+        calls += 1;
+        return {
+          id: `resp_breadth_${calls}`,
+          model: "gpt-test",
+          output_parsed: calls === 1 ? validSynthesis : expandedSynthesis
+        };
+      } } }
+    });
+    const res = await invoke(handler, {
+      format: "aha_insight_synthesis_output_v2",
+      text: source,
+      semantic_context: semanticContext,
+      context: {
+        authoritative_quality_retry: {
+          mode: "projection_diversity_expansion",
+          required_new_candidate_count: 2,
+          covered_primary_types: ["tension"]
+        }
+      }
+    });
+    assert.equal(res.statusCode, 200);
+    assert.equal(calls, 2);
+    assert.equal(res.body.synthesis_attempts, 2);
+    assert.equal(res.body.synthesis.candidates.length, 2);
+    assert.equal(capturedRequests[0].text.format.schema.properties.candidates.minItems, 2);
+    assert.match(capturedRequests[1].input[0].content, /MANDATORY BREADTH CORRECTION/);
   }
 
   console.log("aha-insight-synthesis-endpoint-v2 passed");

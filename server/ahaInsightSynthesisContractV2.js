@@ -73,6 +73,23 @@ function safeObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 
+function synthesisResponseRequirements({ context, semanticContext } = {}) {
+  const requestContext = safeObject(context) || {};
+  const retry = safeObject(requestContext.authoritative_quality_retry) || {};
+  const sourceClaims = Array.isArray(semanticContext?.source_claims)
+    ? semanticContext.source_claims
+    : [];
+  const requested = Number(retry.required_new_candidate_count);
+  const requestedCount = Number.isFinite(requested) ? Math.trunc(requested) : 0;
+  const minimumCandidateCount = retry.mode === "projection_diversity_expansion"
+    && sourceClaims.length >= 2
+    && requestedCount >= 2
+    ? Math.min(4, requestedCount, sourceClaims.length)
+    : 0;
+
+  return { minimum_candidate_count: minimumCandidateCount };
+}
+
 function containsForbiddenKeys(value) {
   const visit = (item) => {
     if (!item || typeof item !== "object") return false;
@@ -214,6 +231,11 @@ function buildSynthesisResponsesRequest({ model, sourceText, semanticContext, co
   if (containsForbiddenKeys(requestContext)) throw new TypeError("insight_synthesis_context_forbidden_data");
   const modelName = normalizeWhitespace(model);
   if (!modelName) throw new TypeError("insight_synthesis_model_required");
+  const requirements = synthesisResponseRequirements({ context: requestContext, semanticContext: semantic });
+  const responseSchema = JSON.parse(JSON.stringify(SYNTHESIS_JSON_SCHEMA));
+  if (requirements.minimum_candidate_count > 0) {
+    responseSchema.properties.candidates.minItems = requirements.minimum_candidate_count;
+  }
 
   return {
     model: modelName,
@@ -226,7 +248,7 @@ function buildSynthesisResponsesRequest({ model, sourceText, semanticContext, co
         type: "json_schema",
         name: SYNTHESIS_OUTPUT_SCHEMA,
         strict: true,
-        schema: SYNTHESIS_JSON_SCHEMA
+        schema: responseSchema
       }
     }
   };
@@ -242,9 +264,14 @@ function parseSynthesisPayload(raw) {
   return safeObject(raw);
 }
 
-function validateSynthesisPayload(payloadInput, sourceText) {
+function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = {}) {
   const source = String(sourceText || "");
   const payload = parseSynthesisPayload(payloadInput);
+  const requirements = safeObject(requirementsInput) || {};
+  const requestedMinimum = Number(requirements.minimum_candidate_count);
+  const minimumCandidateCount = Number.isFinite(requestedMinimum)
+    ? Math.max(0, Math.min(4, Math.trunc(requestedMinimum)))
+    : 0;
   const errors = [];
   if (!payload) return { ok: false, errors: ["payload_not_object"] };
   if (!source.trim()) return { ok: false, errors: ["source_text_required"] };
@@ -255,6 +282,9 @@ function validateSynthesisPayload(payloadInput, sourceText) {
   const candidates = Array.isArray(payload.candidates) ? payload.candidates : [];
   if (!Array.isArray(payload.candidates)) errors.push("candidates_not_array");
   if (candidates.length > 5) errors.push("candidates_too_many");
+  if (minimumCandidateCount > 0 && candidates.length < minimumCandidateCount) {
+    errors.push(`candidates_below_requested_minimum:${minimumCandidateCount}`);
+  }
 
   candidates.forEach((candidate, index) => {
     const label = `candidate:${index}`;
@@ -313,9 +343,9 @@ function validateSynthesisPayload(payloadInput, sourceText) {
   return { ok: errors.length === 0, errors };
 }
 
-function requireValidSynthesisPayload(payloadInput, sourceText) {
+function requireValidSynthesisPayload(payloadInput, sourceText, requirements = {}) {
   const payload = parseSynthesisPayload(payloadInput);
-  const validation = validateSynthesisPayload(payload, sourceText);
+  const validation = validateSynthesisPayload(payload, sourceText, requirements);
   if (!validation.ok) {
     const error = new Error(`insight_synthesis_validation_failed:${validation.errors.join(",")}`);
     error.code = "insight_synthesis_validation_failed";
@@ -355,6 +385,7 @@ export {
   SYNTHESIS_JSON_SCHEMA,
   INSIGHT_TYPES,
   buildSynthesisInstruction,
+  synthesisResponseRequirements,
   buildSynthesisResponsesRequest,
   parseSynthesisPayload,
   validateSynthesisPayload,

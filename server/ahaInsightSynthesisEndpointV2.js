@@ -4,6 +4,7 @@
 import {
   SYNTHESIS_OUTPUT_SCHEMA,
   SYNTHESIS_MAX_SOURCE_CHARS,
+  synthesisResponseRequirements,
   buildSynthesisResponsesRequest,
   requireValidSynthesisPayload,
   buildSynthesisResponseEnvelope
@@ -80,7 +81,12 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
 
     const sourceText = body.text;
     let request;
+    let responseRequirements;
     try {
+      responseRequirements = synthesisResponseRequirements({
+        context: body.context || {},
+        semanticContext: body.semantic_context
+      });
       request = applyStabilityRequestPolicy(buildSynthesisResponsesRequest({
         model,
         sourceText,
@@ -113,7 +119,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
         : response?.output_text;
 
       try {
-        synthesis = requireValidSynthesisPayload(rawPayload, sourceText);
+        synthesis = requireValidSynthesisPayload(rawPayload, sourceText, responseRequirements);
         lastValidationErrors = [];
       } catch (error) {
         synthesis = null;
