@@ -66,7 +66,11 @@ async function run() {
     context: expansionContext,
     semanticContext
   });
-  assert.deepEqual(expansionRequirements, { minimum_candidate_count: 2 });
+  assert.deepEqual(expansionRequirements, {
+    minimum_candidate_count: 2,
+    require_semantic_novelty: true,
+    avoid_repeating_insights: []
+  });
   const expansionRequest = api.buildSynthesisResponsesRequest({
     model: "gpt-test",
     sourceText: source,
@@ -123,6 +127,29 @@ async function run() {
     const result = api.validateSynthesisPayload(validPayload, source, expansionRequirements);
     assert.equal(result.ok, false);
     assert.ok(result.errors.includes("candidates_below_requested_minimum:2"));
+  }
+
+  {
+    const repeated = structuredClone(validPayload);
+    repeated.candidates.push({
+      ...structuredClone(validPayload.candidates[0]),
+      insight: "Delegering flytter koordinasjonsproblemer fra selve beslutningen til grensene mellom ansvarsområder.",
+      type: "principle"
+    });
+    const requirements = api.synthesisResponseRequirements({
+      context: {
+        authoritative_quality_retry: {
+          mode: "projection_diversity_expansion",
+          required_new_candidate_count: 2,
+          avoid_repeating_insights: [validPayload.candidates[0].insight]
+        }
+      },
+      semanticContext
+    });
+    const result = api.validateSynthesisPayload(repeated, source, requirements);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate:0:insight_repeats_avoided_insight"));
+    assert.ok(result.errors.includes("candidate:1:insight_duplicates_candidate:0"));
   }
 
   {

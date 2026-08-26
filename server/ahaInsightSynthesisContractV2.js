@@ -12,6 +12,12 @@ const CAUSAL_STATUS_VALUES = Object.freeze(["not_causal", "source_explicit", "in
 const EVIDENCE_ROLE_VALUES = Object.freeze(["supports", "limits"]);
 const RELATION_TYPES = Object.freeze(["associated_with", "part_of", "influences", "causes", "supports", "contradicts", "explains", "precedes", "other"]);
 const EPISTEMIC_VALUES = Object.freeze(["source_explicit", "interpretation", "inference"]);
+const SEMANTIC_REPEAT_THRESHOLD = 0.72;
+const SEMANTIC_REPEAT_STOPWORDS = Object.freeze(new Set([
+  "og", "i", "på", "til", "av", "for", "med", "som", "det", "den", "de", "et", "en", "er", "var", "ble", "blir",
+  "kan", "kunne", "skal", "har", "hadde", "om", "at", "fra", "når", "etter", "før", "mellom", "samtidig", "også",
+  "the", "a", "an", "and", "or", "of", "to", "in", "for", "with", "that", "this", "is", "are", "was", "were", "can"
+]));
 const FORBIDDEN_KEYS = Object.freeze(new Set([
   "assistantreply", "assistant_reply", "chatresponse", "chat_response", "airesponse", "ai_response",
   "candidate_insights", "candidateinsights", "meta_profile", "metaprofile", "chamber", "memory"
@@ -69,6 +75,34 @@ function normalizeForComparison(value) {
   return normalizeWhitespace(value).toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function semanticContentTokens(value) {
+  return normalizeForComparison(value)
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .split(/\s+/)
+    .filter((token) => token.length > 2 && !SEMANTIC_REPEAT_STOPWORDS.has(token));
+}
+
+function setOverlap(leftInput, rightInput) {
+  const left = new Set(leftInput);
+  const right = new Set(rightInput);
+  if (!left.size || !right.size) return { jaccard: 0, containment: 0 };
+  let intersection = 0;
+  left.forEach((value) => { if (right.has(value)) intersection += 1; });
+  return {
+    jaccard: intersection / new Set([...left, ...right]).size,
+    containment: intersection / Math.min(left.size, right.size)
+  };
+}
+
+function semanticRepeatScore(left, right) {
+  const normalizedLeft = normalizeForComparison(left);
+  const normalizedRight = normalizeForComparison(right);
+  if (!normalizedLeft || !normalizedRight) return 0;
+  if (normalizedLeft === normalizedRight) return 1;
+  const overlap = setOverlap(semanticContentTokens(normalizedLeft), semanticContentTokens(normalizedRight));
+  return Math.max(overlap.jaccard, overlap.containment * 0.82);
+}
+
 function safeObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
@@ -81,13 +115,21 @@ function synthesisResponseRequirements({ context, semanticContext } = {}) {
     : [];
   const requested = Number(retry.required_new_candidate_count);
   const requestedCount = Number.isFinite(requested) ? Math.trunc(requested) : 0;
-  const minimumCandidateCount = retry.mode === "projection_diversity_expansion"
+  const diversityExpansion = retry.mode === "projection_diversity_expansion";
+  const minimumCandidateCount = diversityExpansion
     && sourceClaims.length >= 2
     && requestedCount >= 2
     ? Math.min(4, requestedCount, sourceClaims.length)
     : 0;
+  const avoidRepeatingInsights = diversityExpansion && Array.isArray(retry.avoid_repeating_insights)
+    ? retry.avoid_repeating_insights.map(normalizeWhitespace).filter(Boolean).slice(-12)
+    : [];
 
-  return { minimum_candidate_count: minimumCandidateCount };
+  return {
+    minimum_candidate_count: minimumCandidateCount,
+    require_semantic_novelty: diversityExpansion,
+    avoid_repeating_insights: avoidRepeatingInsights
+  };
 }
 
 function containsForbiddenKeys(value) {
@@ -204,7 +246,8 @@ function buildSynthesisInstruction() {
     "Når context.deterministic_evidence_packets finnes, bruk pakkene som en deterministisk søkeplan for å dekke ulike deler av SOURCE_TEXT. Pakkene er ikke selvstendig bevis; evidence må fortsatt være ordrett i SOURCE_TEXT.",
     "Når context.authoritative_quality_retry finnes, rett hver oppgitt blocking_reason eksplisitt. Behold samme SOURCE_TEXT, samme terskler og samme evidensautoritet.",
     "Når SOURCE_TEXT har minst to distinkte source claims, søk etter 2–4 selvstendige kandidater som kan bestå porten hver for seg. Behold ett presist sentralt source-begrep på tvers der det er faglig riktig, men la kandidatene uttrykke ulike sekundære relasjoner, grenser eller konsekvenser. Ikke fyll kvoten med duplikater eller svake kandidater.",
-    "Når authoritative_quality_retry.mode=projection_diversity_expansion, returner nye kandidater som utfyller covered_primary_types. Unngå excluded_primary_types, prioriter en source-støttet type fra preferred_primary_types, og ikke parafraser eller gjenta innsiktene i avoid_repeating_insights.",
+    "Når authoritative_quality_retry.mode=projection_diversity_expansion, returner nye kandidater som utfyller covered_primary_types. Unngå excluded_primary_types, prioriter en source-støttet type fra preferred_primary_types, og ikke parafraser eller gjenta innsiktene i avoid_repeating_insights. Hver ny kandidat må uttrykke en annen hovedrelasjon enn både tidligere og øvrige kandidater; ulike typeetiketter alene gjør ikke to parafraser semantisk forskjellige.",
+    "Skriv insight, abstraction, why_it_matters og uncertainty på samme hovedspråk som SOURCE_TEXT. Ordrette evidence quotes beholder naturligvis kildens språk.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
     "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
@@ -272,6 +315,10 @@ function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = 
   const minimumCandidateCount = Number.isFinite(requestedMinimum)
     ? Math.max(0, Math.min(4, Math.trunc(requestedMinimum)))
     : 0;
+  const requireSemanticNovelty = requirements.require_semantic_novelty === true;
+  const avoidRepeatingInsights = Array.isArray(requirements.avoid_repeating_insights)
+    ? requirements.avoid_repeating_insights.map(normalizeWhitespace).filter(Boolean).slice(-12)
+    : [];
   const errors = [];
   if (!payload) return { ok: false, errors: ["payload_not_object"] };
   if (!source.trim()) return { ok: false, errors: ["source_text_required"] };
@@ -299,6 +346,15 @@ function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = 
 
     const insight = typeof candidate?.insight === "string" ? candidate.insight : "";
     if (insight && source.includes(insight)) errors.push(`${label}:insight_is_literal_source`);
+    if (requireSemanticNovelty && insight) {
+      if (avoidRepeatingInsights.some((prior) => semanticRepeatScore(insight, prior) >= SEMANTIC_REPEAT_THRESHOLD)) {
+        errors.push(`${label}:insight_repeats_avoided_insight`);
+      }
+      const duplicateIndex = candidates.slice(0, index).findIndex((prior) => (
+        semanticRepeatScore(insight, prior?.insight) >= SEMANTIC_REPEAT_THRESHOLD
+      ));
+      if (duplicateIndex >= 0) errors.push(`${label}:insight_duplicates_candidate:${duplicateIndex}`);
+    }
     const evidence = Array.isArray(candidate?.evidence) ? candidate.evidence : [];
     if (!Array.isArray(candidate?.evidence) || evidence.length < 2 || evidence.length > 3) {
       errors.push(`${label}:evidence_count_invalid`);
@@ -384,6 +440,8 @@ export {
   SYNTHESIS_MAX_SOURCE_CHARS,
   SYNTHESIS_JSON_SCHEMA,
   INSIGHT_TYPES,
+  SEMANTIC_REPEAT_THRESHOLD,
+  semanticRepeatScore,
   buildSynthesisInstruction,
   synthesisResponseRequirements,
   buildSynthesisResponsesRequest,

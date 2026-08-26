@@ -82,10 +82,33 @@ function candidateReviewText(candidate) {
     .join(" ");
 }
 
+function languageMarkerCount(value, pattern) {
+  return (String(value || "").toLowerCase().match(pattern) || []).length;
+}
+
+function primaryLanguage(value) {
+  const text = String(value || "");
+  const norwegian = languageMarkerCount(text, /\b(?:og|ikke|som|mens|samtidig|etter|før|blir|ble|har|kan|på|med|til|av|en|et|den|det)\b/giu);
+  const english = languageMarkerCount(text, /\b(?:and|not|that|while|after|before|is|are|was|were|has|can|with|to|of|the|a|an)\b/giu);
+  if (norwegian >= 3 && norwegian >= english * 2) return "no";
+  if (english >= 3 && english >= norwegian * 2) return "en";
+  return null;
+}
+
 function validateStabilitySynthesis(synthesis, sourceText) {
   const source = String(sourceText || "");
   const errors = [];
   const candidates = Array.isArray(synthesis?.candidates) ? synthesis.candidates : [];
+  const sourceLanguage = primaryLanguage(source);
+
+  if (sourceLanguage) {
+    candidates.forEach((candidate, index) => {
+      const candidateLanguage = primaryLanguage(candidateReviewText(candidate));
+      if (candidateLanguage && candidateLanguage !== sourceLanguage) {
+        errors.push(`candidate:${index}:source_language_not_preserved:${sourceLanguage}`);
+      }
+    });
+  }
 
   LIMITATION_RULES.forEach((rule) => {
     if (!rule.source.test(source)) return;
@@ -173,6 +196,17 @@ function retryInstruction(validationErrors = []) {
     instructions.push(
       "MANDATORY BREADTH CORRECTION: Return at least the requested number of new, independently gated candidates from the same SOURCE_TEXT.",
       "Keep the precise central source concept where appropriate, but give each candidate a distinct secondary relation, boundary or consequence. Do not satisfy the count with paraphrases or duplicates."
+    );
+  }
+  if (errors.some((item) => item.includes(":insight_repeats_avoided_insight") || item.includes(":insight_duplicates_candidate:"))) {
+    instructions.push(
+      "MANDATORY SEMANTIC NOVELTY CORRECTION: At least one candidate repeats the same primary relation as a prior or sibling candidate.",
+      "Rewrite the whole breadth set around distinct secondary relations, boundaries, consequences or decisions that are separately supported by SOURCE_TEXT. Changing only the type label, abstraction wording or sentence order does not create a new insight."
+    );
+  }
+  if (errors.some((item) => item.includes(":source_language_not_preserved:"))) {
+    instructions.push(
+      "MANDATORY LANGUAGE CORRECTION: Write insight, abstraction, why_it_matters and uncertainty in the same primary language as SOURCE_TEXT. Keep evidence quotes exact."
     );
   }
   return instructions.join("\n");
