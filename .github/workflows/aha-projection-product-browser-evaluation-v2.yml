@@ -30,7 +30,7 @@ jobs:
           fi
 
           changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
-          non_backend_files="$(printf '%s\n' "$changed_files" | grep -Ev '^(server\.js|server/|tests/aha-insight-synthesis-(contract|endpoint|stability)-v2\.test\.cjs|\.github/workflows/aha-projection-product-browser-evaluation-v2\.yml)$' || true)"
+          non_backend_files="$(printf '%s\n' "$changed_files" | grep -Ev '^(server\.js|server/.*|tests/aha-insight-synthesis-(contract|endpoint|stability)-v2\.test\.cjs|\.github/workflows/aha-projection-product-browser-evaluation-v2\.yml)$' || true)"
           if [[ -z "$non_backend_files" ]]; then
             echo "require_live=0" >> "$GITHUB_OUTPUT"
             echo "wait_for_backend=0" >> "$GITHUB_OUTPUT"
