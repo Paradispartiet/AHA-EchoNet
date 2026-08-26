@@ -183,7 +183,13 @@ assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synt
           candidate_count: payload.insightCandidatesV2.length,
           approved_count: payload.insightCandidatesV2.length
         },
-        candidate_insights: payload.insightCandidatesV2.map(() => ({ status: 'approved', blocking_reasons: [] }))
+        candidate_insights: payload.insightCandidatesV2.map((item, index) => ({
+          id: `candidate_${index + 1}`,
+          insight: item.summary,
+          type: item.type,
+          status: 'approved',
+          blocking_reasons: []
+        }))
       };
     }
   };
@@ -212,25 +218,26 @@ assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synt
   assert.deepEqual(Array.from(breadthResult.map((item) => item.summary)), ['first approved relation', 'second approved relation']);
 
   const accumulatedCalls = [];
+  context.AHAInsightRelationClassifierV2 = {
+    classifySet(items) {
+      const tension = items.find((item) => item.type === 'tension');
+      const pattern = items.find((item) => item.type === 'pattern');
+      return {
+        equivalence_groups: tension && pattern
+          ? [{ member_ids: [tension.id, pattern.id], dedupe_eligible: true }]
+          : []
+      };
+    }
+  };
   const accumulatedProvider = guard.wrapInsightPipeline({
     create() {
       return {
-        reviewInsightCandidates(items) {
-          const seen = new Set();
-          return {
-            selected: items.filter((item) => {
-              const key = String(item.summary || '').toLowerCase();
-              if (!key || seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            })
-          };
-        },
+        reviewInsightCandidates(items) { return { selected: items }; },
         async generateAIInsightCandidates(value, nextContext) {
           accumulatedCalls.push({ value, nextContext });
           if (!nextContext.authoritative_quality_retry) return [{ summary: 'first approved relation', type: 'tension' }];
-          if (nextContext.authoritative_quality_retry.attempt === 1) return [{ summary: 'first approved relation', type: 'tension' }];
-          return [{ summary: 'second approved relation', type: 'boundary' }];
+          if (nextContext.authoritative_quality_retry.attempt === 1) return [{ summary: 'equivalent approved paraphrase', type: 'pattern' }];
+          return [{ summary: 'distinct approved consequence', type: 'consequence' }];
         }
       };
     }
@@ -243,10 +250,17 @@ assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synt
   assert.equal(accumulatedCalls[1].nextContext.authoritative_quality_retry.attempt, 1);
   assert.equal(accumulatedCalls[2].nextContext.authoritative_quality_retry.attempt, 2);
   assert.deepEqual(
-    Array.from(accumulatedCalls[2].nextContext.authoritative_quality_retry.avoid_repeating_insights),
-    ['first approved relation']
+    Array.from(accumulatedCalls[2].nextContext.authoritative_quality_retry.covered_primary_types),
+    ['tension', 'pattern'],
+    'the second request must remember types from equivalent candidates that projection will collapse'
   );
-  assert.deepEqual(Array.from(accumulatedResult.map((item) => item.summary)), ['first approved relation', 'second approved relation']);
+  assert.deepEqual(
+    Array.from(accumulatedCalls[2].nextContext.authoritative_quality_retry.avoid_repeating_insights),
+    ['first approved relation', 'equivalent approved paraphrase']
+  );
+  assert.deepEqual(Array.from(accumulatedResult.map((item) => item.summary)), [
+    'first approved relation', 'equivalent approved paraphrase', 'distinct approved consequence'
+  ]);
   console.log('AHA V2 semantic salience and optional-readiness regression passed');
 })().catch((error) => {
   console.error(error);

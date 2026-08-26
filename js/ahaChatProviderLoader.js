@@ -63,6 +63,9 @@
   const QUALITY_REPAIR_SCHEMA = "aha_semantic_quality_repair_v2";
   const MIN_PRODUCT_READY_APPROVED_INSIGHTS = 2;
   const MAX_PROJECTION_DIVERSITY_ATTEMPTS = 2;
+  const PROJECTION_DIVERSITY_TYPE_ORDER = Object.freeze([
+    "consequence", "principle", "generalization", "mechanism", "pattern", "tension"
+  ]);
   const LONG_SOURCE_LIMIT = 7600;
   const SUBSTANTIVE_SOURCE_MIN = 1200;
   const MAX_VISIBLE_CONCEPTS = 16;
@@ -677,7 +680,7 @@
       || global.AHAInsightQualityGateV2;
     if (!source || !items.length || typeof semanticApi?.sha256Hex !== "function"
       || typeof bridgeApi?.build !== "function" || typeof gateApi?.evaluateCandidate !== "function") {
-      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, blockingReasons: [] };
+      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, distinctApprovedCount: 0, blockingReasons: [] };
     }
     try {
       const sourceSha256 = semanticApi.sha256Hex(source);
@@ -694,15 +697,30 @@
         qualityGateApi: gateApi
       });
       const approvedCount = Number(document?.synthesis_gate?.approved_count || 0);
+      const approvedCandidates = array(document?.candidate_insights).filter((item) => item?.status === "approved");
+      let distinctApprovedCount = approvedCount;
+      const relationApi = global.AHAModuleApi?.resolve?.("insightRelationClassifierV2", "AHAInsightRelationClassifierV2", { version: 2 })
+        || global.AHAInsightRelationClassifierV2;
+      if (approvedCandidates.length > 1 && typeof relationApi?.classifySet === "function") {
+        try {
+          const relationSet = relationApi.classifySet(approvedCandidates);
+          const collapsedMembers = array(relationSet?.equivalence_groups)
+            .reduce((count, group) => count + Math.max(0, unique(array(group?.member_ids)).length - 1), 0);
+          distinctApprovedCount = Math.max(0, approvedCount - collapsedMembers);
+        } catch (_) {
+          distinctApprovedCount = approvedCount;
+        }
+      }
       return {
         available: true,
         ready: approvedCount > 0,
         candidateCount: Number(document?.synthesis_gate?.candidate_count || items.length),
         approvedCount,
+        distinctApprovedCount,
         blockingReasons: unique(array(document?.candidate_insights).flatMap((item) => array(item?.blocking_reasons)))
       };
     } catch (_) {
-      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, blockingReasons: [] };
+      return { available: false, ready: null, candidateCount: items.length, approvedCount: 0, distinctApprovedCount: 0, blockingReasons: [] };
     }
   }
 
@@ -716,7 +734,7 @@
     if (typeof instance?.reviewInsightCandidates !== "function") {
       const seen = new Set();
       return combined.filter((candidate) => {
-        const key = normalize(candidate?.summary || candidate?.text || candidate?.title);
+        const key = normalize(candidate?.summary || candidate?.insight || candidate?.text || candidate?.title);
         if (!key || seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -858,6 +876,7 @@
                 ready: firstGate.ready,
                 candidate_count: firstGate.candidateCount,
                 approved_count: firstGate.approvedCount,
+                distinct_approved_count: firstGate.distinctApprovedCount,
                 blocking_reasons: firstGate.blockingReasons
               };
               global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
@@ -868,7 +887,7 @@
 
               const needsQualityRepair = firstGate.ready !== true;
               const needsProjectionBreadth = firstGate.ready === true
-                && firstGate.approvedCount < MIN_PRODUCT_READY_APPROVED_INSIGHTS
+                && firstGate.distinctApprovedCount < MIN_PRODUCT_READY_APPROVED_INSIGHTS
                 && hasCrossClaimSource(focused);
               if (!needsQualityRepair && !needsProjectionBreadth) return candidates;
 
@@ -884,11 +903,14 @@
               let finalGate = firstGate;
               const gateAttempts = [firstGateTrace];
               const attemptLimit = needsProjectionBreadth ? MAX_PROJECTION_DIVERSITY_ATTEMPTS : 1;
+              const encounteredTypes = new Set(array(candidates)
+                .map((candidate) => text(candidate?.type || candidate?.functional_type)).filter(Boolean));
+              const avoidRepeatingHistory = unique(array(candidates)
+                .map((candidate) => text(candidate?.summary || candidate?.insight || candidate?.text || candidate?.title)).filter(Boolean));
               for (let attempt = 1; attempt <= attemptLimit; attempt += 1) {
-                const coveredTypes = unique(array(finalCandidates)
-                  .map((candidate) => text(candidate?.type || candidate?.functional_type)).filter(Boolean));
-                const avoidRepeating = unique(array(finalCandidates)
-                  .map((candidate) => text(candidate?.summary || candidate?.text || candidate?.title)).filter(Boolean)).slice(0, 5);
+                const coveredTypes = [...encounteredTypes];
+                const preferredTypes = PROJECTION_DIVERSITY_TYPE_ORDER.filter((type) => !encounteredTypes.has(type)).slice(0, 4);
+                const avoidRepeating = avoidRepeatingHistory.slice(-5);
                 const retry = await instance.generateAIInsightCandidates(focused, {
                   ...nextContext,
                   authoritative_quality_retry: {
@@ -901,13 +923,21 @@
                     required_total_approved_count: MIN_PRODUCT_READY_APPROVED_INSIGHTS,
                     required_new_candidate_count: needsProjectionBreadth ? 2 : 1,
                     covered_primary_types: coveredTypes,
+                    excluded_primary_types: coveredTypes,
+                    preferred_primary_types: preferredTypes,
                     avoid_repeating_insights: avoidRepeating,
                     instruction: needsProjectionBreadth
-                      ? "Return 2–4 new candidates from the same SOURCE_TEXT. Keep one precise central source concept explicit across candidates, but synthesize distinct secondary relations or boundaries. Do not repeat covered primary semantic types or any insight listed in avoid_repeating_insights. Every candidate must independently satisfy the unchanged evidence, transformation, usefulness and causal-discipline gates."
+                      ? `Return 2–4 new candidates from the same SOURCE_TEXT. Keep one precise central source concept explicit across candidates, but synthesize distinct secondary relations or boundaries. Types already represented are [${coveredTypes.join(", ") || "none"}]; prefer an unrepresented type from [${preferredTypes.join(", ") || "any source-supported type"}]. Do not repeat any represented type or insight listed in avoid_repeating_insights when the source supports a distinct relation. Every candidate must independently satisfy the unchanged evidence, transformation, usefulness and causal-discipline gates.`
                       : "Return new candidates that satisfy the authoritative gate while preserving source uncertainty and exact evidence."
                   }
                 });
                 if (Array.isArray(retry) && retry.length) {
+                  array(retry).forEach((candidate) => {
+                    const candidateType = text(candidate?.type || candidate?.functional_type);
+                    const candidateText = text(candidate?.summary || candidate?.insight || candidate?.text || candidate?.title);
+                    if (candidateType) encounteredTypes.add(candidateType);
+                    if (candidateText && !avoidRepeatingHistory.includes(candidateText)) avoidRepeatingHistory.push(candidateText);
+                  });
                   finalCandidates = needsProjectionBreadth
                     ? mergeDistinctInsightCandidates(instance, focused, finalCandidates, retry)
                     : retry;
@@ -919,17 +949,18 @@
                   ready: finalGate.ready,
                   candidate_count: finalGate.candidateCount,
                   approved_count: finalGate.approvedCount,
+                  distinct_approved_count: finalGate.distinctApprovedCount,
                   blocking_reasons: finalGate.blockingReasons
                 });
                 if (!needsProjectionBreadth
                   || finalGate.available !== true
-                  || finalGate.approvedCount >= MIN_PRODUCT_READY_APPROVED_INSIGHTS) break;
+                  || finalGate.distinctApprovedCount >= MIN_PRODUCT_READY_APPROVED_INSIGHTS) break;
               }
               global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
                 authoritative_gate_attempts: gateAttempts,
                 final_authoritative_gate_status: finalGate.available !== true ? "unavailable" : (finalGate.ready ? "passed" : "blocked"),
                 projection_breadth_target: MIN_PRODUCT_READY_APPROVED_INSIGHTS,
-                projection_breadth_ready: finalGate.approvedCount >= MIN_PRODUCT_READY_APPROVED_INSIGHTS
+                projection_breadth_ready: finalGate.distinctApprovedCount >= MIN_PRODUCT_READY_APPROVED_INSIGHTS
               });
               return finalCandidates;
             }

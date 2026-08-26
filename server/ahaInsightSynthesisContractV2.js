@@ -204,7 +204,7 @@ function buildSynthesisInstruction() {
     "Når context.deterministic_evidence_packets finnes, bruk pakkene som en deterministisk søkeplan for å dekke ulike deler av SOURCE_TEXT. Pakkene er ikke selvstendig bevis; evidence må fortsatt være ordrett i SOURCE_TEXT.",
     "Når context.authoritative_quality_retry finnes, rett hver oppgitt blocking_reason eksplisitt. Behold samme SOURCE_TEXT, samme terskler og samme evidensautoritet.",
     "Når SOURCE_TEXT har minst to distinkte source claims, søk etter 2–4 selvstendige kandidater som kan bestå porten hver for seg. Behold ett presist sentralt source-begrep på tvers der det er faglig riktig, men la kandidatene uttrykke ulike sekundære relasjoner, grenser eller konsekvenser. Ikke fyll kvoten med duplikater eller svake kandidater.",
-    "Når authoritative_quality_retry.mode=projection_diversity_expansion, returner nye kandidater som utfyller covered_primary_types; ikke parafraser eller gjenta den allerede dekkede relasjonstypen eller innsiktene i avoid_repeating_insights.",
+    "Når authoritative_quality_retry.mode=projection_diversity_expansion, returner nye kandidater som utfyller covered_primary_types. Unngå excluded_primary_types, prioriter en source-støttet type fra preferred_primary_types, og ikke parafraser eller gjenta innsiktene i avoid_repeating_insights.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
     "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
