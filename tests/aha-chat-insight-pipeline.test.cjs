@@ -92,7 +92,11 @@ async function verifyCandidateDiversityContract() {
   vm.createContext(requestContext);
   vm.runInContext(source, requestContext, { filename: "js/ahaChatInsightPipeline.js" });
   const requestPipeline = requestContext.AHAChatInsightPipeline.create(dependencies);
-  await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", { theme_id: "tema" });
+  await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", {
+    theme_id: "tema",
+    ai_state: { meta_profile: { forbidden: true }, top_insights: ["skal ikke krysse grensen"] },
+    memory_context: { title: "skal heller ikke sendes" }
+  });
   assert.equal(requests.length, 1);
   assert.equal(requests[0].format, 'aha_insight_synthesis_output_v2');
   assert.ok(requests[0].semantic_context.source_claims.length >= 2);
@@ -102,6 +106,9 @@ async function verifyCandidateDiversityContract() {
   assert.equal(requests[0].context.candidate_diversity_contract.source_sentence_count, 2);
   assert.equal(requests[0].context.candidate_diversity_contract.require_cross_sentence_evidence, true);
   assert.equal(requests[0].context.candidate_diversity_contract.require_distinct_primary_relation, true);
+  assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "ai_state"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "memory_context"), false);
+  assert.equal(JSON.stringify(requests[0].context).includes("meta_profile"), false);
 }
 
 const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring trenger trygghet i parker, torg, bibliotek og andre byrom.", {});

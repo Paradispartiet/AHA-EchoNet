@@ -14,6 +14,10 @@
   const SEMANTIC_DOCUMENT_SCHEMA = "aha_semantic_document_v2";
   const DETERMINISTIC_EVIDENCE_SCHEMA = "aha_deterministic_evidence_packets_v1";
   const TRANSIENT_SYNTHESIS_HTTP = new Set([429, 502, 503, 504]);
+  const FORBIDDEN_SYNTHESIS_CONTEXT_KEYS = new Set([
+    "assistantreply", "assistant_reply", "chatresponse", "chat_response", "airesponse", "ai_response",
+    "candidate_insights", "candidateinsights", "meta_profile", "metaprofile", "chamber", "memory"
+  ]);
   const CONTEXT_STOPWORDS = new Set([
     "dette", "denne", "disse", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal",
     "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "gjennom", "etter", "også", "ogsa",
@@ -89,6 +93,27 @@
     }
     if (lastError) throw lastError;
     return { response: lastResponse, transport_attempts: delays.length };
+  }
+
+  function sanitizeSynthesisContextValue(value, depth = 0) {
+    if (depth > 6 || value == null || ["string", "number", "boolean"].includes(typeof value)) return value;
+    if (Array.isArray(value)) return value.slice(0, 32).map((item) => sanitizeSynthesisContextValue(item, depth + 1));
+    if (typeof value !== "object") return undefined;
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => !FORBIDDEN_SYNTHESIS_CONTEXT_KEYS.has(String(key || "").toLowerCase()))
+      .map(([key, child]) => [key, sanitizeSynthesisContextValue(child, depth + 1)])
+      .filter(([, child]) => child !== undefined));
+  }
+
+  function buildSynthesisCallerContext(context) {
+    const source = context && typeof context === "object" && !Array.isArray(context) ? context : {};
+    const allowed = {};
+    for (const key of ["subject_id", "theme_id", "field_id", "semantic_source_focus", "authoritative_quality_retry"]) {
+      if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+      const value = sanitizeSynthesisContextValue(source[key]);
+      if (value !== undefined) allowed[key] = value;
+    }
+    return allowed;
   }
 
   function setRuntimeTrace(value) {
@@ -238,7 +263,7 @@
     const body = {
       text: raw,
       context: {
-        ...callerContext,
+        ...buildSynthesisCallerContext(callerContext),
         active_analysis_contract: ACTIVE_ANALYSIS_CONTRACT,
         deterministic_evidence_packets: evidencePlan.packets,
         candidate_diversity_contract: {

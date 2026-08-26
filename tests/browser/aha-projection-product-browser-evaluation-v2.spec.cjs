@@ -168,6 +168,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
   const successfulChatResponses = chatResponses.filter((request) => request.status >= 200 && request.status < 300);
   const backendHttpFailures = chatResponses.filter((request) => request.status < 200 || request.status >= 300);
+  const synthesisResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/semantic-document"));
+  const successfulSynthesisResponses = synthesisResponses.filter((request) => request.status >= 200 && request.status < 300);
+  const synthesisHttpFailures = synthesisResponses.filter((request) => request.status < 200 || request.status >= 300);
   const chatStatusCounts = Object.fromEntries([...new Set(chatResponses.map((request) => request.status))]
     .sort((left, right) => left - right)
     .map((status) => [String(status), chatResponses.filter((request) => request.status === status).length]));
@@ -176,8 +179,11 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     received_response_count: proxiedAgentRequests.length,
     chat_response_count: chatResponses.length,
     successful_chat_count: successfulChatResponses.length,
+    synthesis_response_count: synthesisResponses.length,
+    successful_synthesis_count: successfulSynthesisResponses.length,
     chat_status_counts: chatStatusCounts,
     backend_http_failures: backendHttpFailures.map((request) => ({ method: request.method, status: request.status })),
+    synthesis_http_failures: synthesisHttpFailures.map((request) => ({ method: request.method, status: request.status })),
     auxiliary_insight_candidate_failures: proxyFailures.filter((failure) => failure.includes("/insight-candidates")),
     critical_failures: criticalProxyFailures
   };
@@ -189,6 +195,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   expect(chatResponses.length, "Every corpus case must exercise a real Chat backend response").toBeGreaterThanOrEqual(27);
   expect(backendHttpFailures, "Every real Chat backend response must be 2xx; received responses are not successful responses").toEqual([]);
   expect(successfulChatResponses.length, "Every corpus case must exercise a successful real Chat backend response").toBeGreaterThanOrEqual(27);
+  expect(synthesisResponses.length, "Every substantive live corpus case must exercise the strict synthesis endpoint").toBeGreaterThanOrEqual(22);
+  expect(synthesisHttpFailures, "Every strict synthesis response must be 2xx; contract rejections must remain visible").toEqual([]);
+  expect(successfulSynthesisResponses.length, "The live corpus must receive successful strict synthesis envelopes").toBeGreaterThanOrEqual(22);
   expect(evaluation.results).toHaveLength(27);
   const expectedUseful = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
   const calibrationCases = evaluation.results.filter((result) => result.live_disposition === "calibration_observation");
@@ -261,6 +270,7 @@ test("controlled save journey survives reload and protects user edits for all th
   expect(prepared.guarded_store_writes).toEqual([]);
   expect(journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))).toEqual([]);
   expect(journeyRequests.filter((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 300)).toHaveLength(1);
+  expect(journeyRequests.filter((request) => request.url.endsWith("/semantic-document") && request.status >= 200 && request.status < 300).length).toBeGreaterThanOrEqual(1);
   expect(["list", "path", "mindmap"].map((product) => prepared.model.product_states[product].status)).toEqual(["ready", "ready", "ready"]);
   const chamberBefore = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
 
