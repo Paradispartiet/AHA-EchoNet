@@ -174,6 +174,42 @@ assert.ok(synthesisBlocked.quality.reasons.includes('authoritative_semantic_synt
     'evidence_not_cross_claim', 'why_it_matters_weak'
   ]);
   assert.equal(calls[1].nextContext.authoritative_quality_retry.attempt, 1);
+
+  const breadthCalls = [];
+  context.AHALiveSemanticBridgeV2 = {
+    build({ payload }) {
+      return {
+        synthesis_gate: {
+          candidate_count: payload.insightCandidatesV2.length,
+          approved_count: payload.insightCandidatesV2.length
+        },
+        candidate_insights: payload.insightCandidatesV2.map(() => ({ status: 'approved', blocking_reasons: [] }))
+      };
+    }
+  };
+  const breadthProvider = guard.wrapInsightPipeline({
+    create() {
+      return {
+        reviewInsightCandidates(items) { return { selected: items }; },
+        async generateAIInsightCandidates(value, nextContext) {
+          breadthCalls.push({ value, nextContext });
+          return nextContext.authoritative_quality_retry
+            ? [{ summary: 'second approved relation', type: 'boundary' }]
+            : [{ summary: 'first approved relation', type: 'tension' }];
+        }
+      };
+    }
+  });
+  const breadthPipeline = breadthProvider.create({});
+  const breadthResult = await breadthPipeline.generateAIInsightCandidates(
+    'Første kildepåstand avgrenser et felles begrep. Andre kildepåstand viser en annen relasjon til det samme begrepet.',
+    {}
+  );
+  assert.equal(breadthCalls.length, 2, 'one approved candidate gets exactly one bounded projection-breadth attempt');
+  assert.equal(breadthCalls[1].nextContext.authoritative_quality_retry.mode, 'projection_diversity_expansion');
+  assert.equal(breadthCalls[1].nextContext.authoritative_quality_retry.required_total_approved_count, 2);
+  assert.deepEqual(Array.from(breadthCalls[1].nextContext.authoritative_quality_retry.covered_primary_types), ['tension']);
+  assert.deepEqual(Array.from(breadthResult.map((item) => item.summary)), ['first approved relation', 'second approved relation']);
   console.log('AHA V2 semantic salience and optional-readiness regression passed');
 })().catch((error) => {
   console.error(error);

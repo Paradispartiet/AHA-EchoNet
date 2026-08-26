@@ -61,6 +61,7 @@
   // authoritative. The adapter improves long-source reach/salience and prevents
   // optional enrichment from masquerading as a failed core analysis.
   const QUALITY_REPAIR_SCHEMA = "aha_semantic_quality_repair_v2";
+  const MIN_PRODUCT_READY_APPROVED_INSIGHTS = 2;
   const LONG_SOURCE_LIMIT = 7600;
   const SUBSTANTIVE_SOURCE_MIN = 1200;
   const MAX_VISIBLE_CONCEPTS = 16;
@@ -704,6 +705,25 @@
     }
   }
 
+  function hasCrossClaimSource(value) {
+    const claims = String(value || "").match(/[^.!?…\n]+[.!?…]+|[^.!?…\n]+$/gu) || [];
+    return claims.map(text).filter(Boolean).length >= 2;
+  }
+
+  function mergeDistinctInsightCandidates(instance, sourceText, first, second) {
+    const combined = [...array(first), ...array(second)];
+    if (typeof instance?.reviewInsightCandidates !== "function") {
+      const seen = new Set();
+      return combined.filter((candidate) => {
+        const key = normalize(candidate?.summary || candidate?.text || candidate?.title);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 5);
+    }
+    return instance.reviewInsightCandidates(combined, sourceText, { limit: 5 }).selected;
+  }
+
   function repairAnalysisBundle(bundle, input = {}, originalProvider = null) {
     const repaired = clone(bundle);
     if (!repaired || repaired.schema !== "aha_analysis_bundle_v2") return bundle;
@@ -843,24 +863,44 @@
                 authoritative_gate_attempts: [firstGateTrace],
                 final_authoritative_gate_status: firstGate.available !== true ? "unavailable" : (firstGate.ready ? "passed" : "blocked")
               });
-              if (firstGate.available !== true || firstGate.ready === true) return candidates;
+              if (firstGate.available !== true) return candidates;
 
-              // One bounded repair attempt is allowed only after the unchanged
-              // authoritative gate has rejected every candidate. The retry gets
-              // gate reasons, not looser thresholds or alternative source data.
+              const needsQualityRepair = firstGate.ready !== true;
+              const needsProjectionBreadth = firstGate.ready === true
+                && firstGate.approvedCount < MIN_PRODUCT_READY_APPROVED_INSIGHTS
+                && hasCrossClaimSource(focused);
+              if (!needsQualityRepair && !needsProjectionBreadth) return candidates;
+
+              // One bounded repair attempt is allowed after either an all-blocked
+              // authoritative gate or an approved result that is too narrow to
+              // form a meaningful multi-insight projection. It uses the unchanged
+              // source and gates; product breadth never lowers a quality threshold.
+              const retryReasons = needsQualityRepair
+                ? firstGate.blockingReasons
+                : ["projection_approved_insight_count_below_minimum", "projection_semantic_diversity_insufficient"];
+              const coveredTypes = unique(array(candidates).map((candidate) => text(candidate?.type || candidate?.functional_type)).filter(Boolean));
               const retry = await instance.generateAIInsightCandidates(focused, {
                 ...nextContext,
                 authoritative_quality_retry: {
                   schema: QUALITY_REPAIR_SCHEMA,
                   attempt: 1,
+                  mode: needsQualityRepair ? "quality_repair" : "projection_diversity_expansion",
                   candidate_count: firstGate.candidateCount,
                   approved_count: firstGate.approvedCount,
-                  blocking_reasons: firstGate.blockingReasons,
-                  instruction: "Return new candidates that satisfy the authoritative gate while preserving source uncertainty and exact evidence."
+                  blocking_reasons: retryReasons,
+                  required_total_approved_count: MIN_PRODUCT_READY_APPROVED_INSIGHTS,
+                  required_new_candidate_count: needsProjectionBreadth ? 2 : 1,
+                  covered_primary_types: coveredTypes,
+                  instruction: needsProjectionBreadth
+                    ? "Return 2–4 new candidates from the same SOURCE_TEXT. Keep one precise central source concept explicit across candidates, but synthesize distinct secondary relations or boundaries. Do not repeat the already covered primary semantic types. Every candidate must independently satisfy the unchanged evidence, transformation, usefulness and causal-discipline gates."
+                    : "Return new candidates that satisfy the authoritative gate while preserving source uncertainty and exact evidence."
                 }
               });
               if (Array.isArray(retry) && retry.length) {
-                const retryGate = probeAuthoritativeInsightCandidates(raw, retry);
+                const finalCandidates = needsProjectionBreadth
+                  ? mergeDistinctInsightCandidates(instance, focused, candidates, retry)
+                  : retry;
+                const retryGate = probeAuthoritativeInsightCandidates(raw, finalCandidates);
                 global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
                   authoritative_gate_attempts: [
                     firstGateTrace,
@@ -873,9 +913,11 @@
                       blocking_reasons: retryGate.blockingReasons
                     }
                   ],
-                  final_authoritative_gate_status: retryGate.available !== true ? "unavailable" : (retryGate.ready ? "passed" : "blocked")
+                  final_authoritative_gate_status: retryGate.available !== true ? "unavailable" : (retryGate.ready ? "passed" : "blocked"),
+                  projection_breadth_target: MIN_PRODUCT_READY_APPROVED_INSIGHTS,
+                  projection_breadth_ready: retryGate.approvedCount >= MIN_PRODUCT_READY_APPROVED_INSIGHTS
                 });
-                return retry;
+                return finalCandidates;
               }
               return candidates;
             }

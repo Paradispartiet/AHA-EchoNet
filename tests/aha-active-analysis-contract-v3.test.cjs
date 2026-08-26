@@ -122,11 +122,13 @@ const wrapped = context.AHAChatProviderLoader.QUALITY_REPAIR_V2.wrapProvider('ch
   );
   context.AHA_FRONTEND_BUILD_SHA = 'f'.repeat(40);
   const candidates = await wrapped.generateAIInsightCandidates(source, { subject_id: 'literature' });
-  assert.equal(requests.length, 1);
+  assert.equal(requests.length, 2, 'one approved candidate triggers one bounded projection-breadth attempt');
   assert.match(requests[0].url, /\/semantic-document$/);
   assert.equal(requests[0].body.format, 'aha_insight_synthesis_output_v2');
   assert.ok(requests[0].body.semantic_context.source_claims.length >= 2);
   assert.ok(requests[0].body.context.deterministic_evidence_packets.length >= 2);
+  assert.equal(requests[1].body.context.authoritative_quality_retry.mode, 'projection_diversity_expansion');
+  assert.equal(requests[1].body.context.authoritative_quality_retry.required_total_approved_count, 2);
   assert.equal(candidates.length, 2);
 
   const sourceSha256 = context.AHASemanticDocument.sha256Hex(source);
@@ -145,6 +147,8 @@ const wrapped = context.AHAChatProviderLoader.QUALITY_REPAIR_V2.wrapProvider('ch
   assert.equal(semantic.synthesis_gate.approved_count, 1);
   assert.equal(semantic.synthesis_gate.blocked_count, 1);
   assert.deepEqual(Array.from(semantic.candidate_insights[0].blocking_reasons), []);
+  assert.equal(semantic.candidate_insights[0].evidence[1].role, 'limits',
+    'structured limiting evidence must retain its role through synthesis normalization and the semantic bridge');
   assert.ok(semantic.candidate_insights[1].blocking_reasons.includes('abstraction_too_thin'));
   assert.ok(semantic.candidate_insights[1].blocking_reasons.includes('why_it_matters_weak'));
 

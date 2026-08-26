@@ -87,7 +87,7 @@
       semantic_document: Number(win.AHASemanticDocument?.VERSION || 0),
       analysis_bundle: Number(win.AHAAnalysisBundleV2?.VERSION || 0),
       projection_runtime: Number(win.AHAProjectionRuntimeSourceV2?.MODULE_VERSION || 0),
-      product_contract: Number(win.AHAProjectionProductContractV2?.VERSION || win.AHAProjectionProductContractV2?.MODULE_VERSION || 0)
+      product_contract: Number(win.AHAProjectionProductContractV2?.CONTRACT_VERSION || win.AHAProjectionProductContractV2?.VERSION || win.AHAProjectionProductContractV2?.MODULE_VERSION || 0)
     };
   }
 

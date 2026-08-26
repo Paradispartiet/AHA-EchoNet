@@ -233,7 +233,9 @@
         })
         .catch((error) => ({ compatible: false, runtime: null, reasons: [String(error?.message || "runtime_health_unavailable")] }));
     }
-    return clone(await runtimeManifestPromise);
+    const result = await runtimeManifestPromise;
+    if (result.compatible !== true) runtimeManifestPromise = null;
+    return clone(result);
   }
 
   async function generateAIInsightCandidates(text, context) {
@@ -382,10 +384,23 @@
     const theories = normalizeSimpleStringList(candidate.theories, 5);
     const traditions = normalizeSimpleStringList(candidate.traditions, 5);
     const theoreticalLinks = normalizeTheoreticalLinks(candidate.theoretical_links, 5);
-    const evidenceQuotes = normalizeSimpleStringList(
-      Array.isArray(candidate.evidence_quotes) ? candidate.evidence_quotes : (Array.isArray(candidate.evidence) ? candidate.evidence.map((item) => item?.quote) : []),
-      3
-    );
+    const rawEvidence = Array.isArray(candidate.evidence)
+      ? candidate.evidence
+      : (Array.isArray(candidate.evidence_quotes) ? candidate.evidence_quotes.map((quote) => ({ quote, role: "supports" })) : []);
+    const evidenceByQuote = new Map();
+    rawEvidence.forEach((item) => {
+      const quote = String(item?.quote || item || "").replace(/\s+/g, " ").trim();
+      if (!quote) return;
+      const key = quote.toLowerCase();
+      if (!evidenceByQuote.has(key)) {
+        evidenceByQuote.set(key, { quote, role: item?.role === "limits" ? "limits" : "supports" });
+      }
+    });
+    const evidenceQuotes = normalizeSimpleStringList(Array.from(evidenceByQuote.values()).map((item) => item.quote), 3);
+    const evidence = evidenceQuotes.map((quote) => ({
+      quote,
+      role: evidenceByQuote.get(String(quote || "").replace(/\s+/g, " ").trim().toLowerCase())?.role || "supports"
+    }));
     const uncertainty = normalizeUncertainty(candidate.uncertainty);
     const uncertaintyDetail = String(candidate.uncertainty || "").replace(/\s+/g, " ").trim().slice(0, 320);
     const claimKind = normalizeClaimKind(candidate.claim_kind);
@@ -402,6 +417,7 @@
       traditions,
       theoretical_links: theoreticalLinks,
       evidence_quotes: evidenceQuotes,
+      evidence,
       uncertainty,
       uncertainty_detail: uncertaintyDetail,
       claim_kind: claimKind,
@@ -451,6 +467,14 @@
     return scored.filter((item) => item.score >= minimum).slice(0, 2).map((item) => item.quote);
   }
 
+  function evidenceRoleForQuote(candidate, quote) {
+    const key = String(quote || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const match = Array.isArray(candidate?.evidence)
+      ? candidate.evidence.find((item) => String(item?.quote || "").replace(/\s+/g, " ").trim().toLowerCase() === key)
+      : null;
+    return match?.role === "limits" ? "limits" : "supports";
+  }
+
   function scoreInsightCandidate(candidate, sourceText, evidenceQuotes) {
     const evaluator = global.AHAAnalysisQualityEvaluator;
     const summary = candidateSummary(candidate);
@@ -494,6 +518,7 @@
       evidence: evidenceQuotes.map((quote, index) => ({
         id: `source_sentence_${splitIntoSentences(sourceText).indexOf(quote) + 1 || index + 1}`,
         quote,
+        role: evidenceRoleForQuote(candidate, quote),
         relation: claimKind === "source_observation" ? "direct_source_observation" : "supports_interpretation"
       })),
       claim_kind: claimKind,
