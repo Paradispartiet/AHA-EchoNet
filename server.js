@@ -11,6 +11,7 @@ import OpenAI from "openai";
 import dns from "node:dns/promises";
 import net from "node:net";
 import { createSemanticModelHandler } from "./server/ahaSemanticModelEndpoint.js";
+import { buildRuntimeManifest } from "./server/ahaRuntimeManifest.js";
 
 const PORT = Number(process.env.PORT || 3030);
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
@@ -312,7 +313,8 @@ app.get("/api/aha-agent/health", (_req, res) => {
     has_openai_key: Boolean(OPENAI_API_KEY),
     openai_model: OPENAI_MODEL,
     has_voyage_key: Boolean(VOYAGE_API_KEY),
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    runtime: buildRuntimeManifest()
   });
 });
 
