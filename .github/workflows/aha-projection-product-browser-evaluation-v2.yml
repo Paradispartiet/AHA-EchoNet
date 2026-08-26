@@ -3,15 +3,42 @@ name: AHA projection product browser evaluation v2
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   browser-evaluation:
     name: Browser corpus and iPad WebKit gate
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Classify browser verification scope
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "require_live=1" >> "$GITHUB_OUTPUT"
+            echo "wait_for_backend=$([[ "$EVENT_NAME" == "push" ]] && echo 1 || echo 0)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
+          non_backend_files="$(printf '%s\n' "$changed_files" | grep -Ev '^(server\.js|server/|tests/aha-insight-synthesis-(contract|endpoint|stability)-v2\.test\.cjs|\.github/workflows/aha-projection-product-browser-evaluation-v2\.yml)$' || true)"
+          if [[ -z "$non_backend_files" ]]; then
+            echo "require_live=0" >> "$GITHUB_OUTPUT"
+            echo "wait_for_backend=0" >> "$GITHUB_OUTPUT"
+            echo "Backend-only rollout: live corpus is deferred until the exact main SHA is deployed."
+          else
+            echo "require_live=1" >> "$GITHUB_OUTPUT"
+            echo "wait_for_backend=0" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -19,10 +46,28 @@ jobs:
       - run: npm ci
       - name: Install browser engines
         run: npx playwright install --with-deps chromium webkit
+      - name: Wait for exact backend deployment
+        if: steps.scope.outputs.wait_for_backend == '1'
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          HEALTH_URL: https://aha-agent-7a3y.onrender.com/api/aha-agent/health
+        run: |
+          for attempt in $(seq 1 80); do
+            deployed_sha="$(curl --fail --silent --show-error --max-time 20 "$HEALTH_URL" | jq -r '.runtime.backend_build_sha // empty' || true)"
+            if [[ "$deployed_sha" == "$EXPECTED_SHA" ]]; then
+              echo "Render is serving the exact main SHA: $EXPECTED_SHA"
+              exit 0
+            fi
+            echo "Waiting for Render deployment ($attempt/80): ${deployed_sha:-unavailable}"
+            sleep 15
+          done
+          echo "Render did not deploy the exact main SHA within 20 minutes." >&2
+          exit 1
       - name: Run real browser product evaluation
         run: npm run test:projection-products:browser
         env:
-          AHA_REQUIRE_LIVE_PRODUCT_CORPUS: "1"
+          AHA_REQUIRE_LIVE_PRODUCT_CORPUS: ${{ steps.scope.outputs.require_live }}
       - name: Upload browser evaluation evidence
         if: always()
         uses: actions/upload-artifact@v4
