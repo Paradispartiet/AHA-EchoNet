@@ -14,6 +14,7 @@ import {
   validateStabilitySynthesis,
   addRetryInstruction
 } from "./ahaInsightSynthesisStabilityV2.js";
+import { buildRuntimeManifest } from "./ahaRuntimeManifest.js";
 
 function synthesisFailurePolicy() {
   return {
@@ -96,6 +97,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     let response = null;
     let synthesis = null;
     let lastValidationErrors = [];
+    let successfulAttempt = 0;
 
     for (let attempt = 1; attempt <= MAX_VALIDATION_ATTEMPTS; attempt += 1) {
       try {
@@ -120,7 +122,10 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
 
       if (synthesis) {
         const stability = validateStabilitySynthesis(synthesis, sourceText);
-        if (stability.ok) break;
+        if (stability.ok) {
+          successfulAttempt = attempt;
+          break;
+        }
         lastValidationErrors = stability.errors.map((item) => String(item).slice(0, 180)).slice(0, 32);
         synthesis = null;
       }
@@ -136,11 +141,14 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
       }));
     }
 
-    return sendJson(res, 200, buildSynthesisResponseEnvelope({
+    const envelope = buildSynthesisResponseEnvelope({
       synthesis,
       model: response?.model || model,
       responseId: response?.id || null
-    }));
+    });
+    envelope.runtime = buildRuntimeManifest();
+    envelope.synthesis_attempts = successfulAttempt;
+    return sendJson(res, 200, envelope);
   };
 }
 

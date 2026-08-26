@@ -831,6 +831,18 @@
             const candidates = await instance.generateAIInsightCandidates(focused, nextContext);
             if (Array.isArray(candidates) && candidates.length) {
               const firstGate = probeAuthoritativeInsightCandidates(raw, candidates);
+              const firstGateTrace = {
+                attempt: 0,
+                available: firstGate.available,
+                ready: firstGate.ready,
+                candidate_count: firstGate.candidateCount,
+                approved_count: firstGate.approvedCount,
+                blocking_reasons: firstGate.blockingReasons
+              };
+              global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
+                authoritative_gate_attempts: [firstGateTrace],
+                final_authoritative_gate_status: firstGate.available !== true ? "unavailable" : (firstGate.ready ? "passed" : "blocked")
+              });
               if (firstGate.available !== true || firstGate.ready === true) return candidates;
 
               // One bounded repair attempt is allowed only after the unchanged
@@ -847,8 +859,32 @@
                   instruction: "Return new candidates that satisfy the authoritative gate while preserving source uncertainty and exact evidence."
                 }
               });
-              if (Array.isArray(retry) && retry.length) return retry;
+              if (Array.isArray(retry) && retry.length) {
+                const retryGate = probeAuthoritativeInsightCandidates(raw, retry);
+                global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
+                  authoritative_gate_attempts: [
+                    firstGateTrace,
+                    {
+                      attempt: 1,
+                      available: retryGate.available,
+                      ready: retryGate.ready,
+                      candidate_count: retryGate.candidateCount,
+                      approved_count: retryGate.approvedCount,
+                      blocking_reasons: retryGate.blockingReasons
+                    }
+                  ],
+                  final_authoritative_gate_status: retryGate.available !== true ? "unavailable" : (retryGate.ready ? "passed" : "blocked")
+                });
+                return retry;
+              }
               return candidates;
+            }
+            if (provider?.ACTIVE_ANALYSIS_CONTRACT === "aha_active_analysis_contract_v3") {
+              global.AHAChatInsightPipeline?.recordRuntimeTrace?.({
+                final_authoritative_gate_status: "blocked",
+                blocking_reasons: global.AHAChatInsightPipeline?.getLastRuntimeTrace?.()?.blocking_reasons || ["strict_synthesis_returned_no_candidates"]
+              });
+              return [];
             }
             if (raw.length >= SUBSTANTIVE_SOURCE_MIN && typeof instance.buildSemanticInsightCandidates === "function") {
               return instance.buildSemanticInsightCandidates(focused, { minInsights: 2, maxInsights: 4 });

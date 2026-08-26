@@ -286,6 +286,14 @@
     })).filter((item) => item.excerpt && Number.isInteger(item.start) && Number.isInteger(item.end) && item.end > item.start);
   }
 
+  function candidateBlockingReasons(item) {
+    const reasons = uniqueText(item?.blocking_reasons);
+    if (text(item?.status) === "blocked" && !reasons.length) {
+      return ["blocked_by_authoritative_quality_gate:details_unavailable_legacy_input"];
+    }
+    return reasons;
+  }
+
   function semanticRecords(document) {
     const src = object(document);
     return {
@@ -326,6 +334,27 @@
         quality_gate_schema: text(item?.quality_gate_schema),
         origin: text(item?.origin),
         evidence: array(item?.evidence).flatMap((entry) => semanticEvidence(entry?.spans))
+      })).filter((item) => item.id && item.insight),
+      candidate_diagnostics: array(src.candidate_insights).map((item) => ({
+        id: text(item?.id),
+        insight: text(item?.insight),
+        type: text(item?.type),
+        abstraction: text(item?.abstraction),
+        why_it_matters: text(item?.why_it_matters),
+        confidence: text(item?.confidence),
+        uncertainty: text(item?.uncertainty),
+        causal_status: text(item?.causal_status),
+        status: text(item?.status),
+        eligible_for_current_analysis: item?.eligible_for_current_analysis === true,
+        blocking_reasons: candidateBlockingReasons(item),
+        quality_metrics: clone(object(item?.quality_metrics)),
+        quality_gate_schema: text(item?.quality_gate_schema),
+        origin: text(item?.origin),
+        evidence: array(item?.evidence).map((entry) => ({
+          quote: text(entry?.quote),
+          role: text(entry?.role),
+          spans: semanticEvidence(entry?.spans)
+        })).filter((entry) => entry.quote)
       })).filter((item) => item.id && item.insight)
     };
   }
@@ -392,7 +421,7 @@
       for (const key of ["concept_ids", "claim_ids", "relation_ids", "tension_ids", "candidate_insight_ids", "approved_insight_ids", "blocked_candidate_insight_ids"]) {
         if (!Array.isArray(semantic[key])) errors.push(`semantic_document_${key}_invalid`);
       }
-      for (const key of ["claim_records", "relation_records", "tension_records", "approved_insight_records"]) {
+      for (const key of ["claim_records", "relation_records", "tension_records", "approved_insight_records", "candidate_diagnostics"]) {
         if (key in semantic && !Array.isArray(semantic[key])) errors.push(`semantic_document_${key}_invalid`);
       }
       const candidateIds = new Set(array(semantic.candidate_insight_ids));
@@ -418,6 +447,10 @@
       });
       array(semantic.approved_insight_records).forEach((record) => {
         if (!approvedIds.includes(record?.id) || !text(record?.insight)) errors.push("semantic_document_approved_insight_record_invalid");
+      });
+      array(semantic.candidate_diagnostics).forEach((record) => {
+        if (!candidateIds.has(record?.id) || !text(record?.insight)) errors.push("semantic_document_candidate_diagnostic_invalid");
+        if (record?.status === "blocked" && !array(record?.blocking_reasons).length) errors.push("semantic_document_blocked_candidate_diagnostic_without_reason");
       });
       const gate = object(semantic.synthesis_gate);
       if (gate.authoritative !== true) errors.push("semantic_document_synthesis_gate_not_authoritative");
@@ -603,6 +636,7 @@
       bundle_id: `analysis_bundle_${stableToken(`${identity.analysis_id}|${identity.analysis_run_id}|${identity.source_sha256}`)}`,
       status,
       identity,
+      runtime: clone(object(payload.analysisRuntime)),
       semantic_document: {
         schema: text(semanticDocument.schema) || "aha_semantic_document_v1",
         document_id: text(semanticDocument.id || semanticDocument.document_id) || null,
@@ -635,7 +669,11 @@
           status: text(semanticDocument.synthesis_gate?.status),
           candidate_count: Number(semanticDocument.synthesis_gate?.candidate_count || 0),
           approved_count: Number(semanticDocument.synthesis_gate?.approved_count || 0),
-          blocked_count: Number(semanticDocument.synthesis_gate?.blocked_count || 0)
+          blocked_count: Number(semanticDocument.synthesis_gate?.blocked_count || 0),
+          approved_candidate_ids: uniqueText(semanticDocument.synthesis_gate?.approved_candidate_ids),
+          blocked_candidate_ids: uniqueText(semanticDocument.synthesis_gate?.blocked_candidate_ids),
+          runtime: clone(object(payload.analysisRuntime)),
+          authoritative_gate_attempts: clone(array(payload.analysisRuntime?.authoritative_gate_attempts))
         } : null
       },
       surfaces,

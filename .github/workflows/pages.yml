@@ -29,6 +29,12 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Stamp exact frontend revision
+        run: >-
+          sed -i
+          "s#global.AHA_FRONTEND_BUILD_SHA = global.AHA_FRONTEND_BUILD_SHA || \"local\"; // AHA_FRONTEND_REVISION_STAMP#global.AHA_FRONTEND_BUILD_SHA = \"$GITHUB_SHA\"; // AHA_FRONTEND_REVISION_STAMP#"
+          js/ahaChatInsightPipeline.js
+
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4
         with:

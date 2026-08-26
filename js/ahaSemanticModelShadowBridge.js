@@ -1030,7 +1030,7 @@
       observation: "generalization", question: "generalization", definition: "generalization", learning_point: "generalization",
       contradiction: "tension", task: "consequence", problem: "consequence", solution: "consequence", decision: "consequence"
     };
-    const uncertainty = text(source.uncertainty || interpretation?.uncertainty);
+    const uncertainty = text(source.uncertainty_detail || source.uncertainty || interpretation?.uncertainty);
     const confidence = text(source.confidence || interpretation?.confidence)
       || (uncertainty === "hypothesis" ? "low" : "medium");
     const whyItMatters = text(source.why_it_matters || source.whyItMatters || (authoritativeCandidates ? "" : payload?.reflection));

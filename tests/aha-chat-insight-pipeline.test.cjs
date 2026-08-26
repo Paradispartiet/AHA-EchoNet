@@ -58,9 +58,34 @@ async function verifyCandidateDiversityContract() {
     window: null,
     console,
     AHA_AGENT_API: "https://example.test/api/aha-agent",
-    fetch: async (_url, options) => {
+    fetch: async (url, options = {}) => {
+      if (String(url).endsWith('/health')) {
+        return {
+          ok: true,
+          json: async () => ({ runtime: {
+            analysis_contract: 'aha_active_analysis_contract_v3',
+            synthesis_contract: 'aha_insight_synthesis_contract_v2',
+            synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+            prompt_version: 'aha_insight_synthesis_prompt_v3',
+            quality_gate_schema: 'aha_insight_quality_gate_v2',
+            semantic_document_schema: 'aha_semantic_document_v2'
+          } })
+        };
+      }
       requests.push(JSON.parse(options.body));
-      return { ok: true, json: async () => ({ candidates: [] }) };
+      return { ok: true, json: async () => ({
+        ok: true,
+        schema: 'aha_insight_synthesis_contract_v2',
+        synthesis: { schema: 'aha_insight_synthesis_output_v2', candidates: [] },
+        runtime: {
+          analysis_contract: 'aha_active_analysis_contract_v3',
+          synthesis_contract: 'aha_insight_synthesis_contract_v2',
+          synthesis_output_schema: 'aha_insight_synthesis_output_v2',
+          prompt_version: 'aha_insight_synthesis_prompt_v3',
+          quality_gate_schema: 'aha_insight_quality_gate_v2',
+          semantic_document_schema: 'aha_semantic_document_v2'
+        }
+      }) };
     }
   };
   requestContext.window = requestContext;
@@ -69,6 +94,10 @@ async function verifyCandidateDiversityContract() {
   const requestPipeline = requestContext.AHAChatInsightPipeline.create(dependencies);
   await requestPipeline.generateAIInsightCandidates("Første påstand har ett poeng. Andre påstand setter en tydelig grense.", { theme_id: "tema" });
   assert.equal(requests.length, 1);
+  assert.equal(requests[0].format, 'aha_insight_synthesis_output_v2');
+  assert.ok(requests[0].semantic_context.source_claims.length >= 2);
+  assert.equal(requests[0].context.active_analysis_contract, 'aha_active_analysis_contract_v3');
+  assert.ok(Array.isArray(requests[0].context.deterministic_evidence_packets));
   assert.equal(requests[0].context.theme_id, "tema");
   assert.equal(requests[0].context.candidate_diversity_contract.source_sentence_count, 2);
   assert.equal(requests[0].context.candidate_diversity_contract.require_cross_sentence_evidence, true);

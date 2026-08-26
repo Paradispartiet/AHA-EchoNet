@@ -4,6 +4,7 @@
 
 const SYNTHESIS_OUTPUT_SCHEMA = "aha_insight_synthesis_output_v2";
 const SYNTHESIS_CONTRACT = "aha_insight_synthesis_contract_v2";
+const SYNTHESIS_PROMPT_VERSION = "aha_insight_synthesis_prompt_v3";
 const SYNTHESIS_MAX_SOURCE_CHARS = 8000;
 const INSIGHT_TYPES = Object.freeze(["principle", "mechanism", "pattern", "tension", "consequence", "generalization"]);
 const CONFIDENCE_VALUES = Object.freeze(["high", "medium", "low"]);
@@ -177,12 +178,14 @@ function validateSemanticContext(input, sourceText) {
 
 function buildSynthesisInstruction() {
   return [
-    "Du er AHA Interpretation / Insight Synthesis V2. Returner bare data som passer JSON-schemaet.",
+    `Du er AHA Interpretation / Insight Synthesis V2 (${SYNTHESIS_PROMPT_VERSION}). Returner bare data som passer JSON-schemaet.`,
     "SOURCE_TEXT er eneste evidensautoritet. SEMANTIC_CONTEXT er strukturhjelp, ikke selvstendig bevis.",
     "Ikke bruk tidligere interpretationer, assistant-svar, Meta, minne eller Chamber som råstoff.",
     "Målet er høyereordens forståelse: prinsipp, mekanisme, mønster, spenning, konsekvens eller generaliserbar forståelse.",
     "Et source-utdrag, en lett parafrase, en oppsummering av én setning eller en omdøpt source claim er IKKE en synthesized Insight.",
     "Hver kandidat må kombinere minst to distinkte ordrette evidence quotes fra SOURCE_TEXT og tilføre en tydelig semantisk transformasjon.",
+    "Når context.deterministic_evidence_packets finnes, bruk pakkene som en deterministisk søkeplan for å dekke ulike deler av SOURCE_TEXT. Pakkene er ikke selvstendig bevis; evidence må fortsatt være ordrett i SOURCE_TEXT.",
+    "Når context.authoritative_quality_retry finnes, rett hver oppgitt blocking_reason eksplisitt. Behold samme SOURCE_TEXT, samme terskler og samme evidensautoritet.",
     "abstraction skal kort forklare hva som er abstrahert eller koblet sammen utover de enkelte source claims.",
     "why_it_matters skal forklare hvorfor forståelsen er nyttig, ikke bare si at den er viktig.",
     "Foretrekk etablerte canonical concept-labels fra SEMANTIC_CONTEXT når de presist uttrykker forståelsen; unngå unødvendige synonymer som gjør betydningen mindre stabil.",
@@ -345,6 +348,7 @@ function buildSynthesisResponseEnvelope({ synthesis, model, responseId } = {}) {
 export {
   SYNTHESIS_OUTPUT_SCHEMA,
   SYNTHESIS_CONTRACT,
+  SYNTHESIS_PROMPT_VERSION,
   SYNTHESIS_MAX_SOURCE_CHARS,
   SYNTHESIS_JSON_SCHEMA,
   INSIGHT_TYPES,
