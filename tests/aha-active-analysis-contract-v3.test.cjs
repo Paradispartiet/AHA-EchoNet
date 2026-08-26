@@ -109,6 +109,18 @@ const wrapped = context.AHAChatProviderLoader.QUALITY_REPAIR_V2.wrapProvider('ch
     Array.from(context.AHAChatInsightPipeline.deploymentMismatchReasons({ ...runtime, backend_build_sha: 'b'.repeat(40) })),
     ['runtime_build_mismatch:frontend_backend_sha']
   );
+  assert.deepEqual(
+    Array.from(context.AHAChatInsightPipeline.runtimeCompatibilityReasons(null)),
+    ['runtime_manifest_missing:backend'],
+    'revision-locked production frontend must reject a backend without a runtime manifest'
+  );
+  context.AHA_FRONTEND_BUILD_SHA = 'local';
+  assert.deepEqual(
+    Array.from(context.AHAChatInsightPipeline.runtimeCompatibilityReasons(null)),
+    [],
+    'unstamped local/PR browser builds may negotiate the strict V2 response envelope during a staged rollout'
+  );
+  context.AHA_FRONTEND_BUILD_SHA = 'f'.repeat(40);
   const candidates = await wrapped.generateAIInsightCandidates(source, { subject_id: 'literature' });
   assert.equal(requests.length, 1);
   assert.match(requests[0].url, /\/semantic-document$/);

@@ -1,5 +1,34 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
+const TRANSIENT_HTTP_STATUSES = new Set([429, 502, 503, 504]);
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function postWithBoundedTransientRetry(apiRequest, url, options) {
+  const delays = [0, 5000, 10000];
+  const statuses = [];
+  let response = null;
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await wait(delays[attempt]);
+    response = await apiRequest.post(url, options);
+    statuses.push(response.status());
+    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+  }
+  return { response, attempts: statuses.length, statuses };
+}
+
+async function fetchRouteWithBoundedTransientRetry(route, headers) {
+  const delays = [0, 1500, 3500];
+  let response = null;
+  let attempts = 0;
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await wait(delays[attempt]);
+    response = await route.fetch({ headers, timeout: 60000 });
+    attempts = attempt + 1;
+    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+  }
+  return { response, attempts };
+}
 
 async function runEvaluation(page) {
   await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
@@ -81,17 +110,21 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   test.setTimeout(18 * 60 * 1000);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
   test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
-  const preflightResponse = await apiRequest.post("https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
+  await apiRequest.get("https://aha-agent-7a3y.onrender.com/api/aha-agent/health", { timeout: 60000 }).catch(() => null);
+  const preflightAttempt = await postWithBoundedTransientRetry(apiRequest, "https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
     headers: { origin: "https://paradispartiet.github.io" },
     data: { message: "AHA live product corpus preflight.", ai_state: {}, memory_context: null },
     timeout: 60000
   });
+  const preflightResponse = preflightAttempt.response;
   const preflight = {
     schema: "aha_projection_product_live_backend_preflight_v2",
     checked_at: new Date().toISOString(),
     endpoint: "configured_aha_agent_chat",
     status: preflightResponse.status(),
-    successful_2xx: preflightResponse.ok()
+    successful_2xx: preflightResponse.ok(),
+    transport_attempts: preflightAttempt.attempts,
+    transport_statuses: preflightAttempt.statuses
   };
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-backend-preflight-v2.json", `${JSON.stringify(preflight, null, 2)}\n`);
@@ -102,8 +135,9 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const response = await route.fetch({ headers: outboundHeaders, timeout: 60000 });
-      proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status() });
+      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const response = transport.response;
+      proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
         response,
         headers: {
@@ -205,8 +239,9 @@ test("controlled save journey survives reload and protects user edits for all th
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const response = await route.fetch({ headers: outboundHeaders, timeout: 60000 });
-      journeyRequests.push({ method: request.method(), url: request.url(), status: response.status() });
+      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const response = transport.response;
+      journeyRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
         response,
         headers: {

@@ -13,6 +13,7 @@
   const QUALITY_GATE_SCHEMA = "aha_insight_quality_gate_v2";
   const SEMANTIC_DOCUMENT_SCHEMA = "aha_semantic_document_v2";
   const DETERMINISTIC_EVIDENCE_SCHEMA = "aha_deterministic_evidence_packets_v1";
+  const TRANSIENT_SYNTHESIS_HTTP = new Set([429, 502, 503, 504]);
   const CONTEXT_STOPWORDS = new Set([
     "dette", "denne", "disse", "eller", "ikke", "som", "med", "for", "til", "fra", "har", "kan", "skal",
     "det", "der", "seg", "sin", "sitt", "sine", "mens", "viser", "gjennom", "etter", "også", "ogsa",
@@ -58,7 +59,36 @@
   }
 
   function runtimeCompatibilityReasons(runtime) {
+    if (!runtime || typeof runtime !== "object" || Array.isArray(runtime)) {
+      const frontendSha = String(global.AHA_FRONTEND_BUILD_SHA || "").trim().toLowerCase();
+      return /^[a-f0-9]{40}$/.test(frontendSha) ? ["runtime_manifest_missing:backend"] : [];
+    }
     return [...runtimeMismatchReasons(runtime), ...deploymentMismatchReasons(runtime)];
+  }
+
+  function waitForRetry(ms) {
+    return new Promise((resolve) => global.setTimeout(resolve, ms));
+  }
+
+  async function fetchSynthesisWithBoundedTransportRetry(url, init) {
+    const delays = [0, 1200, 3200];
+    let lastResponse = null;
+    let lastError = null;
+    for (let attempt = 0; attempt < delays.length; attempt += 1) {
+      if (delays[attempt]) await waitForRetry(delays[attempt]);
+      try {
+        lastResponse = await fetch(url, init);
+        lastError = null;
+        if (!TRANSIENT_SYNTHESIS_HTTP.has(Number(lastResponse?.status || 0)) || attempt === delays.length - 1) {
+          return { response: lastResponse, transport_attempts: attempt + 1 };
+        }
+      } catch (error) {
+        lastError = error;
+        if (attempt === delays.length - 1) throw error;
+      }
+    }
+    if (lastError) throw lastError;
+    return { response: lastResponse, transport_attempts: delays.length };
   }
 
   function setRuntimeTrace(value) {
@@ -229,11 +259,12 @@
     };
 
     try {
-      const res = await fetch(synthesisUrl, {
+      const transport = await fetchSynthesisWithBoundedTransportRetry(synthesisUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
+      const res = transport.response;
       if (!res.ok) {
         setRuntimeTrace({
           schema: "aha_analysis_runtime_trace_v1",
@@ -241,6 +272,7 @@
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
           backend: runtime.runtime,
           http_status: Number(res.status || 0),
+          transport_attempts: transport.transport_attempts,
           blocking_reasons: [`synthesis_http_${Number(res.status || 0)}`],
           authoritative_retry_attempt: requestAttempt,
           evidence_plan: { schema: evidencePlan.schema, selected_source_claim_count: evidencePlan.selected_source_claim_count, packet_count: evidencePlan.packets.length }
@@ -280,6 +312,7 @@
         provider_model: data.model || null,
         provider_response_id: data.response_id || null,
         provider_validation_attempts: Number(data.synthesis_attempts || 0),
+        transport_attempts: transport.transport_attempts,
         authoritative_retry_attempt: requestAttempt,
         candidate_count_received: candidates.length,
         candidate_count_after_prefilter: reviewed.selected.length,
