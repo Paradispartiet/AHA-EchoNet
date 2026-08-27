@@ -193,16 +193,42 @@ async function run() {
           create: async () => {
             const error = new Error("SECRET upstream body that must not leak");
             error.status = 429;
+            error.type = "rate_limit_error";
             throw error;
           }
         }
       }
     });
     const res = await invoke(handler, { text: sourceText });
-    assert.equal(res.statusCode, 502);
-    assert.equal(res.body.error, "semantic_model_openai_error");
+    assert.equal(res.statusCode, 429);
+    assert.equal(res.body.error, "openai_rate_limited");
     assert.equal(res.body.status, 429);
+    assert.equal(res.body.retryable, true);
     assert.equal(JSON.stringify(res.body).includes("SECRET upstream body"), false);
+  }
+
+  {
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: {
+        responses: {
+          create: async () => {
+            const error = new Error("SECRET billing details that must not leak");
+            error.status = 429;
+            error.type = "insufficient_quota";
+            throw error;
+          }
+        }
+      }
+    });
+    const res = await invoke(handler, { text: sourceText });
+    assert.equal(res.statusCode, 429);
+    assert.equal(res.body.error, "openai_quota_exhausted");
+    assert.equal(res.body.status, 429);
+    assert.equal(res.body.type, "insufficient_quota");
+    assert.equal(res.body.retryable, false);
+    assert.equal(JSON.stringify(res.body).includes("SECRET billing details"), false);
   }
 
   {

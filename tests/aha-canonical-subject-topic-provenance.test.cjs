@@ -17,6 +17,7 @@ const context = {
 context.window = context;
 context.globalThis = context;
 vm.createContext(context);
+vm.runInContext(fs.readFileSync('js/ahaChatSubjects.js', 'utf8'), context, { filename: 'js/ahaChatSubjects.js' });
 vm.runInContext(fs.readFileSync('js/ahaChatPythonSmoke.js', 'utf8'), context, { filename: 'js/ahaChatPythonSmoke.js' });
 
 const sourceText = Array.from({ length: 12 }, () => (
@@ -42,6 +43,15 @@ const artifact = {
   ahaSer: { fagkoblinger: ['Litteratur'] },
   subjectMatches: [canonicalMatch]
 };
+const normalizedCanonicalMatch = context.AHAChatSubjects.normalizeSubjectLinks([canonicalMatch])[0];
+assert.equal(normalizedCanonicalMatch.source, 'history_go_canonical_fagverk');
+assert.equal(normalizedCanonicalMatch.provenance.kind, 'canonical_fagverk');
+assert.equal(normalizedCanonicalMatch.provenance.canonical_subject_id, 'literature');
+assert.equal(normalizedCanonicalMatch.subject_label, 'Litteratur');
+const normalizedArtifact = structuredClone(artifact);
+normalizedArtifact.subjectMatches = [normalizedCanonicalMatch];
+const normalizedReport = context.AHAAutoOutputSourceBinding.buildSemanticFieldReports(sourceText, normalizedArtifact);
+assert.equal(normalizedReport.fields['ahaSer.fagkoblinger'].valid, true, 'canonical provenance must survive subject normalization');
 const report = context.AHAAutoOutputSourceBinding.buildSemanticFieldReports(sourceText, artifact);
 assert.equal(report.fields['ahaSer.fagkoblinger'].valid, true);
 assert.equal(report.fields['ahaSer.fagkoblinger'].reason, 'canonical_subject_provenance_verified');

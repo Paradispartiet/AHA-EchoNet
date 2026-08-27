@@ -54,6 +54,8 @@ async function run() {
   assert.match(request.input[0].content, /plasseringen av uenighet/i);
   assert.match(request.input[0].content, /pattern eller tension/i);
   assert.match(request.input[0].content, /avoid_repeating_insights/);
+  assert.match(request.input[0].content, /ikke i seg selv en innsikt/i);
+  assert.match(request.input[0].content, /ikke gjentas som samme setningsramme/i);
 
   const expansionContext = {
     authoritative_quality_retry: {
@@ -150,6 +152,19 @@ async function run() {
     assert.equal(result.ok, false);
     assert.ok(result.errors.includes("candidate:0:insight_repeats_avoided_insight"));
     assert.ok(result.errors.includes("candidate:1:insight_duplicates_candidate:0"));
+  }
+
+  {
+    const repetitiveFrame = structuredClone(validPayload);
+    repetitiveFrame.candidates = [0, 1].map((index) => ({
+      ...structuredClone(validPayload.candidates[0]),
+      insight: index === 0
+        ? "Delegering er forbundet med raskere lokale valg, samtidig som uenighet samler seg ved ansvarsgrensene."
+        : "Felles beslutninger er forbundet med stopp i lanseringer, samtidig som fravær blir synlig ved ansvarsgrensene."
+    }));
+    const result = api.validateSynthesisPayload(repetitiveFrame, source);
+    assert.equal(result.ok, false);
+    assert.ok(result.errors.includes("candidate_set_repetitive_relation_frame:0-1"));
   }
 
   {

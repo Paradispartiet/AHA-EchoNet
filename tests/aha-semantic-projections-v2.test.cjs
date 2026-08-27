@@ -147,7 +147,9 @@ const conceptIds = new Set(result.projections.concepts.map((item) => item.id));
 assert.ok(result.projections.concepts.some((concept) => concept.key === "standardisering" && concept.insight_ids.length === 2));
 result.projections.concepts.forEach((concept) => concept.insight_ids.forEach((id) => assert.ok(insightIds.has(id), `concept ${concept.id} has unresolved insight ${id}`)));
 
-assert.ok(result.projections.lists.length >= 2, "shared core and repeated concepts should yield list candidates");
+assert.ok(result.projections.lists.length >= 1 && result.projections.lists.length <= 3, "product lists must be useful and bounded");
+assert.equal(new Set(result.projections.lists.map((list) => [...list.meta.member_ref_ids].sort().join("|"))).size, result.projections.lists.length,
+  "lists with the same insight membership must collapse to one product candidate");
 result.projections.lists.forEach((list) => {
   assert.equal(list.meta.candidate_only, true);
   assert.equal(list.meta.read_only, true);
@@ -163,12 +165,14 @@ result.projections.lists.forEach((list) => {
   });
 });
 
-assert.ok(result.projections.paths.length >= 1);
+assert.equal(result.projections.paths.length, 1, "one analysis should expose one strongest learning path instead of template duplicates");
 result.projections.paths.forEach((path) => {
   assert.equal(path.status, "candidate");
   assert.equal(path.meta.candidate_only, true);
   assert.equal(path.meta.semantic_shape, "ordered_inquiry_v2");
   assert.equal(path.meta.stage_selection, "semantic_role_ranked_not_round_robin");
+  assert.ok(path.meta.semantic_basis);
+  assert.ok(path.meta.semantic_basis_label || path.meta.semantic_basis === "resonance");
   path.steps.forEach((step) => {
     assert.equal(step.type, "insight");
     assert.equal(step.source, "aha_semantic_v2");

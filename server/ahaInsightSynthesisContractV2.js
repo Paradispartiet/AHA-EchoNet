@@ -257,7 +257,7 @@ function buildSynthesisInstruction() {
     "causal_status=source_explicit er bare tillatt når hele årsaksrelasjonen i selve synthesized insight er uttrykt eksplisitt i kandidatens evidence quotes, ikke bare én lokal delrelasjon et annet sted i SOURCE_TEXT.",
     "En mekanisme som kobler sammen flere source claims til en ny årsaksforklaring er interpretive selv om enkelte delrelasjoner er source-explicit.",
     "Når causal_status=interpretive må confidence være medium eller low og uncertainty må være ikke-tom og konkret beskrive hva source ikke beviser.",
-    "Når causal_status=not_causal må selve insight-formuleringen også være ikke-kausal. Unngå uttrykk som 'fører ... til', 'skaper/skapes', 'gir', 'øker', 'reduserer', 'muliggjør', 'gjør at' og tilsvarende. Bruk heller 'samtidig som', 'opptrer sammen med', 'er forbundet med' eller en tydelig spenning/mønster-formulering.",
+    "Når causal_status=not_causal må selve insight-formuleringen også være ikke-kausal. Unngå uttrykk som 'fører ... til', 'skaper/skapes', 'gir', 'øker', 'reduserer', 'muliggjør', 'gjør at' og tilsvarende. Navngi i stedet den konkrete relasjonen, spenningen, grensen eller forskjellen som SOURCE_TEXT faktisk viser. 'Samtidig som', 'opptrer sammen med' og 'er forbundet med' kan brukes, men er ikke i seg selv en innsikt og skal ikke gjentas som samme setningsramme på tvers av kandidatene.",
     "Hvis SOURCE_TEXT uttrykkelig sier at materialet ikke fastslår, peker ut eller identifiserer en årsak, skal kandidaten ikke bruke en kausal mekanisme. Velg pattern, tension eller generalization, sett causal_status=not_causal og gjør selve årsaksbegrensningen synlig i insight eller uncertainty.",
     "Ved observasjonelle før/etter-mønstre uten eksplisitt komplett kausalitet: foretrekk pattern eller tension. Hvis den mest nyttige forståelsen likevel er en mulig mekanisme, merk den interpretive med medium/low confidence og konkret uncertainty.",
     "Bruk uncertainty aktivt når evidensen begrenser generalisering, kausalitet eller rekkevidde. Tom streng er tillatt bare når ingen materiell usikkerhet må synliggjøres.",
@@ -395,6 +395,14 @@ function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = 
       errors.push(`${label}:causal_claim_contradicts_source_limitation`);
     }
   });
+
+  const repeatedNeutralFrameIndexes = candidates.map((candidate, index) => ({
+    index,
+    insight: normalizeForComparison(candidate?.insight)
+  })).filter((entry) => entry.insight.includes("er forbundet med") && entry.insight.includes("samtidig som"));
+  if (repeatedNeutralFrameIndexes.length >= 2) {
+    errors.push(`candidate_set_repetitive_relation_frame:${repeatedNeutralFrameIndexes.map((entry) => entry.index).join("-")}`);
+  }
 
   return { ok: errors.length === 0, errors };
 }

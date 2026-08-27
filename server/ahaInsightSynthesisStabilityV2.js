@@ -175,8 +175,8 @@ function retryInstruction(validationErrors = []) {
   if (hasValidationCode(errors, "not_causal_contains_causal_language")) {
     instructions.push(
       "MANDATORY WORDING CORRECTION: Keep causal_status=not_causal, but remove causal verbs such as 'fører til', 'skaper', 'gir', 'øker', 'reduserer' and 'muliggjør' from insight. State only the grounded association or tension.",
-      "The rewritten insight MUST use this non-causal sentence frame: '[source-grounded structure or method] er forbundet med [source-grounded observation], samtidig som [source-grounded contrast or second observation].'",
-      "In the rewritten insight, use only neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med'. Do not reuse the rejected sentence, do not use a causal synonym, and do not change causal_status away from not_causal."
+      "The rewritten insight MUST name the source-grounded relation, tension, boundary or difference directly without implying causality.",
+      "Use neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med' only where they add precision. Do not reuse the rejected sentence or a boilerplate frame, do not use a causal synonym, and do not change causal_status away from not_causal."
     );
   }
   if (hasValidationCode(errors, "source_evidence_premise_not_preserved:coordination_delay")) {
@@ -202,6 +202,12 @@ function retryInstruction(validationErrors = []) {
     instructions.push(
       "MANDATORY SEMANTIC NOVELTY CORRECTION: At least one candidate repeats the same primary relation as a prior or sibling candidate.",
       "Rewrite the whole breadth set around distinct secondary relations, boundaries, consequences or decisions that are separately supported by SOURCE_TEXT. Changing only the type label, abstraction wording or sentence order does not create a new insight."
+    );
+  }
+  if (errors.some((item) => item.startsWith("candidate_set_repetitive_relation_frame:"))) {
+    instructions.push(
+      "MANDATORY RELATION-FRAME CORRECTION: Multiple candidates used the same generic association template.",
+      "Rewrite the set so each insight names its own source-grounded relation, tension, boundary or consequence. Do not repeat the combined 'er forbundet med ... samtidig som ...' frame."
     );
   }
   if (errors.some((item) => item.includes(":source_language_not_preserved:"))) {

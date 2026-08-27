@@ -146,9 +146,21 @@ assert.equal(legacy.afterwork.reflection, 'Tolkning må skilles fra sikre innsik
 assert.ok(legacy.insights.every((item) => typeof item === 'string'));
 
 let canonicalBuildCalls = 0;
+const projectionProducts = {
+  status: 'ready',
+  identity: bundle.identity,
+  blocking_reasons: [],
+  product_states: { list: { status: 'ready' }, path: { status: 'ready' }, mindmap: { status: 'ready' } },
+  surfaces: {
+    lists: [{ title: 'Kildebundne sammenhenger', items: [{ title: 'Kildebelegg og tolkning' }] }],
+    paths: [{ title: 'Undersøk kildebelegg', steps: [{ title: '1. Orientering' }, { title: '2. Påstand og belegg' }] }],
+    mindmap: { nodes: [{ type: 'theme', title: 'Kildebelegg og tolkning' }], edges: [] }
+  }
+};
 const exportBundle = context.AHAChatExport.buildAhaAnalysisExportBundle({
   analysisBundleV2: api,
   analysisRunContract: context.AHAChatAnalysisRunContract,
+  projectionRuntimeSourceV2: { build: () => projectionProducts },
   loadAutoOutputs: () => ({
     activeRun: { ...run, analysisBundleV2: bundle },
     payload: { ...payload, analysisBundleV2: bundle },
@@ -180,6 +192,11 @@ assert.equal(exportBundle.canonicalAnalysis.keyInsight, 'Kildebelegg må spores.
 assert.deepEqual(JSON.parse(JSON.stringify(exportBundle.rawAutoPayload)), {});
 assert.equal(exportBundle.rawAutoPayloadStatus, 'excluded_by_analysis_bundle_v2_authority');
 assert.equal(exportBundle.selectedAfterworkStatus, 'historical_afterwork_not_merged');
+assert.deepEqual(JSON.parse(JSON.stringify(exportBundle.projectionProducts)), JSON.parse(JSON.stringify(projectionProducts)));
+const exportMarkdown = context.AHAChatExport.formatAhaAnalysisExportMarkdown(exportBundle);
+assert.match(exportMarkdown, /## Liste\n- Kildebundne sammenhenger — Kildebelegg og tolkning/);
+assert.match(exportMarkdown, /## Læringssti\n- Undersøk kildebelegg — 1\. Orientering → 2\. Påstand og belegg/);
+assert.match(exportMarkdown, /## Tankekart\n- theme: Kildebelegg og tolkning/);
 assert.equal(JSON.stringify(exportBundle.relevantAfterworks).includes('Morgenbladet'), false, 'historical content may be related by id but never merged');
 
 console.log('aha-analysis-bundle-v2.test.cjs passed');

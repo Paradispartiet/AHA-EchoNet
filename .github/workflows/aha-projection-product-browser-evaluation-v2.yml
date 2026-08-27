@@ -6,6 +6,21 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      live_mode:
+        description: "Paid model verification mode"
+        required: true
+        default: offline
+        type: choice
+        options:
+          - offline
+          - smoke
+          - release
+      live_cost_ack:
+        description: "For smoke enter RUN_AHA_LIVE_SMOKE; for release enter RUN_AHA_LIVE_RELEASE"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   browser-evaluation:
@@ -21,28 +36,29 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GIT_REF: ${{ github.ref }}
+          REQUESTED_MODE: ${{ inputs.live_mode }}
         run: |
-          if [[ "$EVENT_NAME" == "push" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            echo "require_live=1" >> "$GITHUB_OUTPUT"
-            echo "wait_for_backend=$([[ "$EVENT_NAME" == "push" ]] && echo 1 || echo 0)" >> "$GITHUB_OUTPUT"
-            exit 0
+          mode="offline"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then mode="${REQUESTED_MODE:-offline}"; fi
+          if [[ "$mode" != "offline" && "$GIT_REF" != "refs/heads/main" ]]; then
+            echo "Paid model verification is allowed only from the deployed main branch." >&2
+            exit 1
           fi
-
-          changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
-          non_backend_files="$(printf '%s\n' "$changed_files" | grep -Ev '^(server\.js|server/.*|tests/aha-insight-synthesis-(contract|endpoint|stability)-v2\.test\.cjs|\.github/workflows/aha-projection-product-browser-evaluation-v2\.yml)$' || true)"
-          if [[ -z "$non_backend_files" ]]; then
-            echo "require_live=0" >> "$GITHUB_OUTPUT"
-            echo "wait_for_backend=0" >> "$GITHUB_OUTPUT"
-            echo "Backend-only rollout: live corpus is deferred until the exact main SHA is deployed."
-          else
-            echo "require_live=1" >> "$GITHUB_OUTPUT"
-            echo "wait_for_backend=0" >> "$GITHUB_OUTPUT"
-          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "wait_for_backend=$([[ "$mode" == "offline" ]] && echo 0 || echo 1)" >> "$GITHUB_OUTPUT"
+          echo "Automatic pull-request and push runs are model-call free; paid modes require explicit workflow dispatch."
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
+      - name: Plan and authorize live model budget
+        id: budget
+        env:
+          AHA_LIVE_PRODUCT_MODE: ${{ steps.scope.outputs.mode }}
+          AHA_LIVE_COST_ACK: ${{ inputs.live_cost_ack }}
+          AHA_LIVE_MODEL_NAME: gpt-4.1-mini
+        run: node scripts/plan-aha-live-model-budget.mjs
       - run: npm ci
       - name: Install browser engines
         run: npx playwright install --with-deps chromium webkit
@@ -67,11 +83,18 @@ jobs:
       - name: Run real browser product evaluation
         run: npm run test:projection-products:browser
         env:
-          AHA_REQUIRE_LIVE_PRODUCT_CORPUS: ${{ steps.scope.outputs.require_live }}
+          AHA_LIVE_PRODUCT_MODE: ${{ steps.budget.outputs.mode }}
+          AHA_LIVE_MAX_CHAT_REQUESTS: ${{ steps.budget.outputs.max_chat_requests }}
+          AHA_LIVE_MAX_SYNTHESIS_REQUESTS: ${{ steps.budget.outputs.max_synthesis_requests }}
+          AHA_LIVE_SYNTHESIS_ATTEMPT_LIMIT: ${{ steps.budget.outputs.synthesis_attempt_limit }}
+          AHA_LIVE_MAX_MODEL_CALLS: ${{ steps.budget.outputs.max_model_calls }}
+          AHA_LIVE_BUDGET_ID: ${{ github.run_id }}:${{ github.run_attempt }}:${{ steps.budget.outputs.mode }}
       - name: Upload browser evaluation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aha-projection-product-browser-evaluation-v2
-          path: test-results/
+          path: |
+            cost-evidence/
+            test-results/
           if-no-files-found: warn

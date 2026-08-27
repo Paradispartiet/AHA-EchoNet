@@ -74,6 +74,18 @@
     return new Promise((resolve) => global.setTimeout(resolve, ms));
   }
 
+  async function responseExplicitlyDisablesRetry(response) {
+    if (!response || typeof response.clone !== "function") return false;
+    try {
+      const body = await response.clone().json();
+      return body?.retryable === false
+        || body?.error === "openai_quota_exhausted"
+        || (Number(body?.status) === 429 && body?.type === "insufficient_quota");
+    } catch {
+      return false;
+    }
+  }
+
   async function fetchSynthesisWithBoundedTransportRetry(url, init) {
     const delays = [0, 1200, 3200];
     let lastResponse = null;
@@ -83,7 +95,9 @@
       try {
         lastResponse = await fetch(url, init);
         lastError = null;
-        if (!TRANSIENT_SYNTHESIS_HTTP.has(Number(lastResponse?.status || 0)) || attempt === delays.length - 1) {
+        const transientStatus = TRANSIENT_SYNTHESIS_HTTP.has(Number(lastResponse?.status || 0));
+        const retryDisabled = transientStatus && await responseExplicitlyDisablesRetry(lastResponse);
+        if (!transientStatus || retryDisabled || attempt === delays.length - 1) {
           return { response: lastResponse, transport_attempts: attempt + 1 };
         }
       } catch (error) {
@@ -113,6 +127,8 @@
       const value = sanitizeSynthesisContextValue(source[key]);
       if (value !== undefined) allowed[key] = value;
     }
+    const costControl = sanitizeSynthesisContextValue(source.cost_control || global.AHA_SYNTHESIS_COST_CONTROL);
+    if (costControl && typeof costControl === "object" && !Array.isArray(costControl)) allowed.cost_control = costControl;
     return allowed;
   }
 
@@ -342,6 +358,7 @@
         provider_model: data.model || null,
         provider_response_id: data.response_id || null,
         provider_validation_attempts: Number(data.synthesis_attempts || 0),
+        provider_cost_control: clone(data.cost_control || null),
         transport_attempts: transport.transport_attempts,
         authoritative_retry_attempt: requestAttempt,
         candidate_prefilter_mode: projectionDiversityExpansion ? "authoritative_projection_diversity" : "legacy_review",

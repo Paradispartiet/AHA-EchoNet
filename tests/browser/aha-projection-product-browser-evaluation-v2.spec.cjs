@@ -2,38 +2,141 @@ const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 const TRANSIENT_HTTP_STATUSES = new Set([429, 502, 503, 504]);
 const LIVE_CORPUS_TEST_TIMEOUT_MS = 35 * 60 * 1000;
+const LIVE_MODE = String(process.env.AHA_LIVE_PRODUCT_MODE || "offline");
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function postWithBoundedTransientRetry(apiRequest, url, options) {
-  const delays = [0, 5000, 10000];
-  const statuses = [];
-  let response = null;
-  for (let attempt = 0; attempt < delays.length; attempt += 1) {
-    if (delays[attempt]) await wait(delays[attempt]);
-    response = await apiRequest.post(url, options);
-    statuses.push(response.status());
-    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+async function readResponseBody(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
   }
-  return { response, attempts: statuses.length, statuses };
 }
 
-async function fetchRouteWithBoundedTransientRetry(route, headers) {
+function envLimit(name) {
+  const value = Number(process.env[name] || 0);
+  if (!Number.isInteger(value) || value < 0) throw new Error(`invalid_live_budget_env:${name}`);
+  return value;
+}
+
+function modelEndpoint(url) {
+  if (String(url).endsWith("/chat")) return "chat";
+  if (String(url).endsWith("/semantic-document")) return "synthesis";
+  if (String(url).endsWith("/insight-candidates")) return "legacy_candidates";
+  return null;
+}
+
+function quotaExhausted(body) {
+  return body?.error === "openai_quota_exhausted"
+    || (Number(body?.status) === 429 && body?.type === "insufficient_quota");
+}
+
+function createLiveBudget() {
+  const limits = {
+    max_chat_requests: envLimit("AHA_LIVE_MAX_CHAT_REQUESTS"),
+    max_synthesis_requests: envLimit("AHA_LIVE_MAX_SYNTHESIS_REQUESTS"),
+    synthesis_validation_attempt_limit: envLimit("AHA_LIVE_SYNTHESIS_ATTEMPT_LIMIT"),
+    max_model_calls: envLimit("AHA_LIVE_MAX_MODEL_CALLS")
+  };
+  const usage = { chat_requests: 0, synthesis_requests: 0, legacy_candidate_requests: 0, reserved_model_calls: 0, reported_model_calls: 0 };
+  const events = [];
+  let halted = false;
+  let haltReason = null;
+  function reserve(url) {
+    const endpoint = modelEndpoint(url);
+    if (!endpoint) return;
+    if (halted) throw new Error(`live_model_budget_halted:${haltReason}`);
+    const reservation = endpoint === "synthesis" ? limits.synthesis_validation_attempt_limit : 1;
+    if (endpoint === "chat" && usage.chat_requests + 1 > limits.max_chat_requests) throw new Error("live_model_budget_exceeded:chat_requests");
+    if (endpoint === "synthesis" && usage.synthesis_requests + 1 > limits.max_synthesis_requests) throw new Error("live_model_budget_exceeded:synthesis_requests");
+    if (endpoint === "legacy_candidates") throw new Error("live_model_budget_blocked:legacy_candidates");
+    if (usage.reserved_model_calls + reservation > limits.max_model_calls) throw new Error("live_model_budget_exceeded:model_calls");
+    if (endpoint === "chat") usage.chat_requests += 1;
+    if (endpoint === "synthesis") usage.synthesis_requests += 1;
+    usage.reserved_model_calls += reservation;
+    events.push({ event: "reserved", endpoint, reservation });
+  }
+  function record(url, status, body) {
+    const endpoint = modelEndpoint(url);
+    if (!endpoint) return;
+    const reported = endpoint === "synthesis"
+      ? Number(body?.cost_control?.model_call_count ?? body?.synthesis_attempts ?? (status >= 500 || status === 429 ? 1 : 0))
+      : 1;
+    usage.reported_model_calls += Math.max(0, Number.isFinite(reported) ? reported : 0);
+    events.push({ event: "response", endpoint, status, reported_model_calls: reported, error: body?.error || null });
+    if (quotaExhausted(body)) {
+      halted = true;
+      haltReason = "openai_quota_exhausted";
+      events.push({ event: "halted", reason: haltReason });
+    }
+  }
+  function evidence() {
+    return {
+      schema: "aha_live_model_budget_usage_v1",
+      generated_at: new Date().toISOString(),
+      mode: LIVE_MODE,
+      model: process.env.AHA_LIVE_MODEL_NAME || "gpt-4.1-mini",
+      budget_id: process.env.AHA_LIVE_BUDGET_ID || null,
+      hard_limits: limits,
+      usage: { ...usage },
+      halted,
+      halt_reason: haltReason,
+      within_budget: usage.chat_requests <= limits.max_chat_requests
+        && usage.synthesis_requests <= limits.max_synthesis_requests
+        && usage.reserved_model_calls <= limits.max_model_calls,
+      events
+    };
+  }
+  return { reserve, record, evidence, isHalted: () => halted, haltReason: () => haltReason };
+}
+
+const liveBudget = createLiveBudget();
+
+function writeLiveBudgetEvidence() {
+  fs.mkdirSync("test-results", { recursive: true });
+  fs.writeFileSync("test-results/aha-live-model-budget-usage-v1.json", `${JSON.stringify(liveBudget.evidence(), null, 2)}\n`);
+}
+
+function costControl(mode) {
+  return {
+    schema: "aha_insight_synthesis_cost_control_v1",
+    mode: mode === "smoke" ? "live_smoke" : "live_release",
+    budget_id: String(process.env.AHA_LIVE_BUDGET_ID || `${mode}:local-budget`),
+    synthesis_validation_attempt_limit: envLimit("AHA_LIVE_SYNTHESIS_ATTEMPT_LIMIT")
+  };
+}
+
+async function configureReviewCostControl(page, mode) {
+  const control = costControl(mode);
+  await page.evaluate((value) => window.AHAProjectionProductReviewV2.configureCostControl(value), control);
+  return control;
+}
+
+async function fetchRouteWithBoundedTransientRetry(route, request, headers) {
   const delays = [0, 1500, 3500];
   let response = null;
+  let responseBody = null;
   let attempts = 0;
   for (let attempt = 0; attempt < delays.length; attempt += 1) {
     if (delays[attempt]) await wait(delays[attempt]);
+    liveBudget.reserve(request.url());
     response = await route.fetch({ headers, timeout: 60000 });
+    responseBody = await readResponseBody(response);
+    liveBudget.record(request.url(), response.status(), responseBody);
     attempts = attempt + 1;
-    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+    if (liveBudget.isHalted()) throw new Error(liveBudget.haltReason());
+    const transientStatus = TRANSIENT_HTTP_STATUSES.has(response.status());
+    const retryDisabled = transientStatus && (responseBody?.retryable === false || quotaExhausted(responseBody));
+    if (!transientStatus || retryDisabled || attempt === delays.length - 1) break;
   }
-  return { response, attempts };
+  return { response, responseBody, attempts };
 }
 
-async function runEvaluation(page) {
+async function runEvaluation(page, control = null) {
   await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Produktnytte: faktisk browser-output" })).toBeVisible();
+  if (control) await page.evaluate((value) => window.AHAProjectionProductReviewV2.configureCostControl(value), control);
   return page.evaluate(() => window.AHAProjectionProductReviewV2.runAll({ renderEach: false }));
 }
 
@@ -107,36 +210,70 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
   expect(repeated.changed_runtime_version_guard).toEqual({ comparable: false, reason: "runtime_version_changed" });
 });
 
+test("one-attempt paid synthesis smoke stays inside its explicit budget", async ({ browserName, request: apiRequest }) => {
+  test.skip(browserName !== "chromium", "The paid smoke runs once in Chromium.");
+  test.skip(LIVE_MODE !== "smoke", "Paid smoke requires an explicit smoke workflow dispatch.");
+  const sourceText = "En felles rapportmal gjorde sammenligning enklere. Valgfrie felt lot samtidig ulike saker beholde nødvendig variasjon.";
+  const control = costControl("smoke");
+  const url = "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-document";
+  liveBudget.reserve(url);
+  const response = await apiRequest.post(url, {
+    headers: { origin: "https://paradispartiet.github.io" },
+    data: {
+      format: "aha_insight_synthesis_output_v2",
+      text: sourceText,
+      semantic_context: {
+        entities: [],
+        concepts: [{ label: "rapportmal" }, { label: "valgfrie felt" }],
+        source_claims: [
+          { text: "En felles rapportmal gjorde sammenligning enklere." },
+          { text: "Valgfrie felt lot samtidig ulike saker beholde nødvendig variasjon." }
+        ],
+        relations: []
+      },
+      context: { cost_control: control }
+    },
+    timeout: 60000
+  });
+  const body = await readResponseBody(response);
+  liveBudget.record(url, response.status(), body);
+  writeLiveBudgetEvidence();
+  expect(liveBudget.isHalted(), "Quota/payment failures must halt the paid run immediately").toBe(false);
+  expect(response.ok(), `Paid synthesis smoke must return 2xx; received HTTP ${response.status()}`).toBe(true);
+  expect(body?.schema).toBe("aha_insight_synthesis_contract_v2");
+  expect(body?.cost_control).toMatchObject({
+    schema: "aha_insight_synthesis_cost_control_v1",
+    mode: "live_smoke",
+    budget_id: control.budget_id,
+    synthesis_validation_attempt_limit: 1,
+    model_call_count: 1
+  });
+  expect(liveBudget.evidence().usage.reserved_model_calls).toBe(1);
+});
+
 test("27-case live semantic browser corpus yields qualified product previews", async ({ page, browserName, request: apiRequest }) => {
   test.setTimeout(LIVE_CORPUS_TEST_TIMEOUT_MS);
   test.skip(browserName !== "chromium", "The live corpus runs once in Chromium.");
-  test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "Live model corpus is an explicit CI/release gate.");
-  await apiRequest.get("https://aha-agent-7a3y.onrender.com/api/aha-agent/health", { timeout: 60000 }).catch(() => null);
-  const preflightAttempt = await postWithBoundedTransientRetry(apiRequest, "https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", {
-    headers: { origin: "https://paradispartiet.github.io" },
-    data: { message: "AHA live product corpus preflight.", ai_state: {}, memory_context: null },
-    timeout: 60000
-  });
-  const preflightResponse = preflightAttempt.response;
+  test.skip(LIVE_MODE !== "release", "The full live model corpus requires an explicit release workflow dispatch.");
+  const preflightResponse = await apiRequest.get("https://aha-agent-7a3y.onrender.com/api/aha-agent/health", { timeout: 60000 });
   const preflight = {
-    schema: "aha_projection_product_live_backend_preflight_v2",
+    schema: "aha_projection_product_live_backend_preflight_v3",
     checked_at: new Date().toISOString(),
-    endpoint: "configured_aha_agent_chat",
+    endpoint: "configured_aha_agent_health",
     status: preflightResponse.status(),
     successful_2xx: preflightResponse.ok(),
-    transport_attempts: preflightAttempt.attempts,
-    transport_statuses: preflightAttempt.statuses
+    model_calls: 0
   };
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-backend-preflight-v2.json", `${JSON.stringify(preflight, null, 2)}\n`);
-  expect(preflightResponse.ok(), `Live Chat preflight must return 2xx before the 27-case model corpus runs; received HTTP ${preflight.status}`).toBe(true);
+  expect(preflightResponse.ok(), `Free health preflight must return 2xx before the 27-case model corpus runs; received HTTP ${preflight.status}`).toBe(true);
   const proxiedAgentRequests = [];
   const proxyFailures = [];
   await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const transport = await fetchRouteWithBoundedTransientRetry(route, request, outboundHeaders);
       const response = transport.response;
       proxiedAgentRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
@@ -152,7 +289,12 @@ test("27-case live semantic browser corpus yields qualified product previews", a
       await route.abort("connectionfailed");
     }
   });
-  const evaluation = await runEvaluation(page);
+  let evaluation;
+  try {
+    evaluation = await runEvaluation(page, costControl("release"));
+  } finally {
+    writeLiveBudgetEvidence();
+  }
   const initialCoverageCases = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
   const initialUsefulCaseCoverage = initialCoverageCases.filter(hasReadyProduct).length / initialCoverageCases.length;
   let retryResults = [];
@@ -188,10 +330,12 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     auxiliary_insight_candidate_failures: proxyFailures.filter((failure) => failure.includes("/insight-candidates")),
     critical_failures: criticalProxyFailures
   };
+  evaluation.live_model_budget = liveBudget.evidence();
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/aha-projection-product-live-browser-evaluation-v2.json", `${JSON.stringify(evaluation, null, 2)}\n`);
 
   expect(criticalProxyFailures, "The CI transport proxy must receive successful responses from every required semantic/chat backend call").toEqual([]);
+  expect(evaluation.live_model_budget.within_budget, "The full release corpus must remain inside the pre-authorized model-call ceiling").toBe(true);
   expect(proxiedAgentRequests.length, "The live release corpus must actually reach the configured semantic/chat backend").toBeGreaterThan(0);
   expect(chatResponses.length, "Every corpus case must exercise a real Chat backend response").toBeGreaterThanOrEqual(27);
   expect(backendHttpFailures, "Every real Chat backend response must be 2xx; received responses are not successful responses").toEqual([]);
@@ -242,14 +386,14 @@ test("27-case live semantic browser corpus yields qualified product previews", a
 
 test("controlled save journey survives reload and protects user edits for all three products", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The complete controlled-write journey runs once in Chromium.");
-  test.skip(process.env.AHA_REQUIRE_LIVE_PRODUCT_CORPUS !== "1", "The controlled-write journey requires a qualified live AnalysisBundle.");
+  test.skip(LIVE_MODE !== "release", "The controlled-write journey requires an explicit release workflow dispatch.");
   const journeyRequests = [];
   const journeyProxyFailures = [];
   await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
-      const transport = await fetchRouteWithBoundedTransientRetry(route, outboundHeaders);
+      const transport = await fetchRouteWithBoundedTransientRetry(route, request, outboundHeaders);
       const response = transport.response;
       journeyRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
       await route.fulfill({
@@ -266,7 +410,13 @@ test("controlled save journey survives reload and protects user edits for all th
     }
   });
   await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
-  const prepared = await page.evaluate(() => window.AHAProjectionProductReviewV2.prepareControlledJourney("news_school_meals"));
+  await configureReviewCostControl(page, "release");
+  let prepared;
+  try {
+    prepared = await page.evaluate(() => window.AHAProjectionProductReviewV2.prepareControlledJourney("news_school_meals"));
+  } finally {
+    writeLiveBudgetEvidence();
+  }
   expect(prepared.critical_provenance_errors).toEqual([]);
   expect(prepared.guarded_store_writes).toEqual([]);
   expect(journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))).toEqual([]);

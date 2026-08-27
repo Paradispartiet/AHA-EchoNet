@@ -12,6 +12,7 @@ import dns from "node:dns/promises";
 import net from "node:net";
 import { createSemanticModelHandler } from "./server/ahaSemanticModelEndpoint.js";
 import { buildRuntimeManifest } from "./server/ahaRuntimeManifest.js";
+import { classifyOpenAIError } from "./server/ahaOpenAIError.js";
 
 const PORT = Number(process.env.PORT || 3030);
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
@@ -461,12 +462,16 @@ app.post("/api/aha-agent/chat", async (req, res) => {
     });
   } catch (err) {
     console.error("[aha-agent] chat crashed", err);
-    res.status(500).json({
+    const providerError = classifyOpenAIError(err, {
+      defaultError: "openai_error",
+      defaultHttpStatus: 500
+    });
+    res.status(providerError.httpStatus).json({
       ok: false,
-      error: "openai_error",
-      message: err?.message || "Unknown OpenAI error",
-      status: err?.status || err?.code || null,
-      type: err?.type || null
+      error: providerError.error,
+      status: providerError.status,
+      type: providerError.type,
+      retryable: providerError.retryable
     });
   }
 });
@@ -554,12 +559,16 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
     return res.json(responseBody);
   } catch (err) {
     console.error("[aha-agent] insight-candidates crashed", err);
-    return res.status(500).json({
+    const providerError = classifyOpenAIError(err, {
+      defaultError: "openai_error",
+      defaultHttpStatus: 500
+    });
+    return res.status(providerError.httpStatus).json({
       ok: false,
-      error: "openai_error",
-      message: err?.message || "Unknown OpenAI error",
-      status: err?.status || err?.code || null,
-      type: err?.type || null
+      error: providerError.error,
+      status: providerError.status,
+      type: providerError.type,
+      retryable: providerError.retryable
     });
   }
 });

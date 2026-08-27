@@ -169,11 +169,13 @@
     const next = clone(path) || {};
     next.meta = { ...(next.meta || {}) };
     const refs = refIdsFromPath(next);
-    const theme = sourceThemeFromRefs(refs, context);
+    const sourceTheme = sourceThemeFromRefs(refs, context);
+    const basisLabel = text(next.meta.semantic_basis_label);
+    const theme = basisLabel && !isLowInformationLabel(basisLabel) ? basisLabel : sourceTheme;
     next.meta.original_title = next.meta.original_title || text(next.title);
     next.meta.display_refinement = DISPLAY_REFINEMENT;
     next.meta.display_theme = theme;
-    next.meta.display_theme_source = "source_bound_insight_text";
+    next.meta.display_theme_source = theme === basisLabel ? "semantic_basis_label" : "source_bound_insight_text";
     if (theme) {
       next.title = capTitle(`Undersøk: ${theme}`);
       next.description = `En kildebundet læringssti som undersøker forholdet mellom ${theme}.`;

@@ -66,6 +66,12 @@ async function verifyCandidateDiversityContract() {
     window: null,
     console,
     AHA_AGENT_API: "https://example.test/api/aha-agent",
+    AHA_SYNTHESIS_COST_CONTROL: {
+      schema: "aha_insight_synthesis_cost_control_v1",
+      mode: "live_smoke",
+      budget_id: "smoke:pipeline-test",
+      synthesis_validation_attempt_limit: 1
+    },
     fetch: async (url, options = {}) => {
       if (String(url).endsWith('/health')) {
         return {
@@ -114,6 +120,8 @@ async function verifyCandidateDiversityContract() {
   assert.equal(requests[0].context.candidate_diversity_contract.source_sentence_count, 2);
   assert.equal(requests[0].context.candidate_diversity_contract.require_cross_sentence_evidence, true);
   assert.equal(requests[0].context.candidate_diversity_contract.require_distinct_primary_relation, true);
+  assert.equal(requests[0].context.cost_control.synthesis_validation_attempt_limit, 1);
+  assert.equal(requests[0].context.cost_control.budget_id, "smoke:pipeline-test");
   assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "ai_state"), false);
   assert.equal(Object.prototype.hasOwnProperty.call(requests[0].context, "memory_context"), false);
   assert.equal(JSON.stringify(requests[0].context).includes("meta_profile"), false);
@@ -164,6 +172,91 @@ async function verifyRuntimeRecoveryContract() {
   assert.deepEqual(Array.from(await retryPipeline.generateAIInsightCandidates(retrySource, {})), []);
   assert.equal(healthCalls, 2, "a failed runtime check must be retried by the next analysis");
   assert.equal(synthesisCalls, 1, "the recovered analysis may call synthesis only after runtime compatibility is restored");
+}
+
+async function verifyQuotaDoesNotRetryContract() {
+  let synthesisCalls = 0;
+  const quotaBody = {
+    ok: false,
+    error: "openai_quota_exhausted",
+    status: 429,
+    type: "insufficient_quota",
+    retryable: false
+  };
+  const quotaContext = {
+    window: null,
+    console,
+    AHA_AGENT_API: "https://example.test/api/aha-agent",
+    setTimeout,
+    fetch: async (url) => {
+      if (String(url).endsWith("/health")) {
+        return { ok: true, json: async () => ({ runtime: {
+          analysis_contract: "aha_active_analysis_contract_v3",
+          synthesis_contract: "aha_insight_synthesis_contract_v2",
+          synthesis_output_schema: "aha_insight_synthesis_output_v2",
+          prompt_version: "aha_insight_synthesis_prompt_v3",
+          quality_gate_schema: "aha_insight_quality_gate_v2",
+          semantic_document_schema: "aha_semantic_document_v2"
+        } }) };
+      }
+      synthesisCalls += 1;
+      return {
+        ok: false,
+        status: 429,
+        clone: () => ({ json: async () => quotaBody }),
+        json: async () => quotaBody
+      };
+    }
+  };
+  quotaContext.window = quotaContext;
+  vm.createContext(quotaContext);
+  vm.runInContext(source, quotaContext, { filename: "js/ahaChatInsightPipeline.js" });
+  const quotaPipeline = quotaContext.AHAChatInsightPipeline.create(dependencies);
+  const quotaSource = "Første kildepåstand dokumenterer rammen. Andre kildepåstand dokumenterer en tydelig avgrensning.";
+  assert.deepEqual(Array.from(await quotaPipeline.generateAIInsightCandidates(quotaSource, {})), []);
+  assert.equal(synthesisCalls, 1, "an explicitly non-retryable quota error must stop after the first synthesis response");
+}
+
+async function verifyLegacyWrappedQuotaDoesNotRetryContract() {
+  let synthesisCalls = 0;
+  const legacyBody = {
+    ok: false,
+    error: "insight_synthesis_openai_error",
+    status: 429,
+    type: "insufficient_quota"
+  };
+  const legacyContext = {
+    window: null,
+    console,
+    AHA_AGENT_API: "https://example.test/api/aha-agent",
+    setTimeout,
+    fetch: async (url) => {
+      if (String(url).endsWith("/health")) {
+        return { ok: true, json: async () => ({ runtime: {
+          analysis_contract: "aha_active_analysis_contract_v3",
+          synthesis_contract: "aha_insight_synthesis_contract_v2",
+          synthesis_output_schema: "aha_insight_synthesis_output_v2",
+          prompt_version: "aha_insight_synthesis_prompt_v3",
+          quality_gate_schema: "aha_insight_quality_gate_v2",
+          semantic_document_schema: "aha_semantic_document_v2"
+        } }) };
+      }
+      synthesisCalls += 1;
+      return {
+        ok: false,
+        status: 502,
+        clone: () => ({ json: async () => legacyBody }),
+        json: async () => legacyBody
+      };
+    }
+  };
+  legacyContext.window = legacyContext;
+  vm.createContext(legacyContext);
+  vm.runInContext(source, legacyContext, { filename: "js/ahaChatInsightPipeline.js" });
+  const legacyPipeline = legacyContext.AHAChatInsightPipeline.create(dependencies);
+  const quotaSource = "Første kildepåstand dokumenterer rammen. Andre kildepåstand dokumenterer en tydelig avgrensning.";
+  assert.deepEqual(Array.from(await legacyPipeline.generateAIInsightCandidates(quotaSource, {})), []);
+  assert.equal(synthesisCalls, 1, "a legacy 502 wrapper around insufficient_quota must also stop immediately");
 }
 
 const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring trenger trygghet i parker, torg, bibliotek og andre byrom.", {});
@@ -245,5 +338,7 @@ assert.match(synthesisContractSource, /projection_diversity_expansion/);
 
 Promise.all([
   verifyCandidateDiversityContract(),
-  verifyRuntimeRecoveryContract()
+  verifyRuntimeRecoveryContract(),
+  verifyQuotaDoesNotRetryContract(),
+  verifyLegacyWrappedQuotaDoesNotRetryContract()
 ]).then(() => console.log("aha-chat-insight-pipeline passed"));

@@ -16,6 +16,11 @@ import {
   addRetryInstruction
 } from "./ahaInsightSynthesisStabilityV2.js";
 import { buildRuntimeManifest } from "./ahaRuntimeManifest.js";
+import { classifyOpenAIError } from "./ahaOpenAIError.js";
+import {
+  resolveSynthesisCostControl,
+  costControlEvidence
+} from "./ahaInsightSynthesisCostControlV1.js";
 
 function synthesisFailurePolicy() {
   return {
@@ -82,7 +87,9 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     const sourceText = body.text;
     let request;
     let responseRequirements;
+    let costControl;
     try {
+      costControl = resolveSynthesisCostControl(body.context || {}, MAX_VALIDATION_ATTEMPTS);
       responseRequirements = synthesisResponseRequirements({
         context: body.context || {},
         semanticContext: body.semantic_context
@@ -104,13 +111,22 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     let synthesis = null;
     let lastValidationErrors = [];
     let successfulAttempt = 0;
+    let modelCallCount = 0;
+    const validationAttemptLimit = costControl.synthesis_validation_attempt_limit;
 
-    for (let attempt = 1; attempt <= MAX_VALIDATION_ATTEMPTS; attempt += 1) {
+    for (let attempt = 1; attempt <= validationAttemptLimit; attempt += 1) {
       try {
+        modelCallCount += 1;
         response = await openai.responses.create(request);
       } catch (error) {
-        return sendJson(res, 502, synthesisErrorBody("insight_synthesis_openai_error", {
-          status: error?.status || error?.code || null
+        const providerError = classifyOpenAIError(error, {
+          defaultError: "insight_synthesis_openai_error"
+        });
+        return sendJson(res, providerError.httpStatus, synthesisErrorBody(providerError.error, {
+          status: providerError.status,
+          type: providerError.type,
+          retryable: providerError.retryable,
+          cost_control: costControlEvidence(costControl, modelCallCount)
         }));
       }
 
@@ -136,7 +152,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
         synthesis = null;
       }
 
-      if (attempt < MAX_VALIDATION_ATTEMPTS) {
+      if (attempt < validationAttemptLimit) {
         request = addRetryInstruction(request, lastValidationErrors);
       }
     }
@@ -148,9 +164,10 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
         responseId: response?.id || null
       });
       blockedEnvelope.runtime = buildRuntimeManifest();
-      blockedEnvelope.synthesis_attempts = MAX_VALIDATION_ATTEMPTS;
+      blockedEnvelope.synthesis_attempts = modelCallCount;
       blockedEnvelope.validation_status = "blocked";
       blockedEnvelope.validation_errors = lastValidationErrors;
+      if (costControl.requested) blockedEnvelope.cost_control = costControlEvidence(costControl, modelCallCount);
       return sendJson(res, 200, blockedEnvelope);
     }
 
@@ -162,6 +179,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
     envelope.runtime = buildRuntimeManifest();
     envelope.synthesis_attempts = successfulAttempt;
     envelope.validation_status = "passed";
+    if (costControl.requested) envelope.cost_control = costControlEvidence(costControl, modelCallCount);
     return sendJson(res, 200, envelope);
   };
 }

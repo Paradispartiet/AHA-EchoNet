@@ -51,8 +51,10 @@ assert.equal(humanReview.release_rule.reviewer_attestation_required, true);
 assert.equal(humanReview.rubric.acceptable_score_minimum, 4);
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 
-assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v2/);
+assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v3/);
 assert.match(browserSpec, /preflightResponse\.ok\(\)/);
+assert.match(browserSpec, /AHA_LIVE_PRODUCT_MODE \|\| "offline"/);
+assert.match(browserSpec, /aha_insight_synthesis_cost_control_v1/);
 assert.match(browserSpec, /successfulChatResponses\.length/);
 assert.match(browserSpec, /backend_http_failures/);
 assert.match(browserSpec, /initialUsefulCaseCoverage/);

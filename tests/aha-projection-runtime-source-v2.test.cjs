@@ -23,6 +23,13 @@ const bundle = {
   semantic_document: {
     candidate_insight_ids: ["insight_livsarket"],
     approved_insight_ids: ["insight_livsarket"],
+    candidate_diagnostics: [{
+      id: "insight_livsarket",
+      evidence: [
+        { quote: "Livsarket samler erfaringer og kilder.", role: "limits" },
+        { quote: "Kildebelegget følger hvert analysefelt.", role: "supports" }
+      ]
+    }],
     approved_insight_records: [{
       id: "insight_livsarket",
       insight: "Feltvis kildebelegg gjør analysen kontrollerbar.",
@@ -127,7 +134,8 @@ assert.deepEqual(Array.from(snapshot.legacy_insights, (item) => item.id), ["insi
 assert.equal(snapshot.legacy_insights[0].source_text_hash, sha);
 assert.equal(snapshot.legacy_insights[0].analysis_id, identity.analysis_id);
 assert.equal(snapshot.legacy_insights[0].evidence.length, 2);
-assert.ok(snapshot.legacy_insights[0].semantic_concepts.length <= 2, "projection signature must stay discriminating");
+assert.ok(snapshot.legacy_insights[0].semantic_concepts.length <= 3, "projection signature must stay discriminating");
+assert.equal(snapshot.legacy_insights[0].evidence[0].role, "limits", "limiting evidence must remain limiting through the projection boundary");
 assert.deepEqual(Array.from(snapshot.legacy_lists), []);
 assert.deepEqual(Array.from(snapshot.legacy_paths), []);
 
