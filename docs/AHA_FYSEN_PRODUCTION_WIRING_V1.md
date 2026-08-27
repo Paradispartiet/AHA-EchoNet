@@ -6,7 +6,7 @@ The Azure Container App template now keeps the Fysen integration enabled across 
 
 The exact production redirect allowlist is:
 
-`https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback`
+`https://fysen.vercel.app/api/aha/callback`
 
 The authorization lifetime remains 180 seconds.
 
