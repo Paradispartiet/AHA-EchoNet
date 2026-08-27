@@ -30,7 +30,7 @@ jobs:
       AHA_AZURE_LOCATION: ${{ vars.AHA_PRODUCTION_AZURE_LOCATION || 'westeurope' }}
       AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
       AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
-      AHA_FYSEN_CALLBACK: https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback
+      AHA_FYSEN_CALLBACK: https://fysen.vercel.app/api/aha/callback
 
     steps:
       - name: Checkout repository
