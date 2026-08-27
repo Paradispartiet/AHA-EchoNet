@@ -29,6 +29,11 @@
   function arr(value) { return Array.isArray(value) ? value : []; }
   function object(value) { return value && typeof value === "object" && !Array.isArray(value) ? value : {}; }
   function text(value) { return String(value == null ? "" : value).replace(/\s+/g, " ").trim(); }
+  function normalize(value) {
+    return text(value).toLocaleLowerCase("no").normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replace(/\s+/g, " ").trim();
+  }
   function isSha256(value) { return /^[a-f0-9]{64}$/u.test(text(value).toLowerCase()); }
   function userReason(value) {
     const reason = text(value);
@@ -118,9 +123,64 @@
     })).filter((item) => item.id && item.label);
   }
 
+  const CONCEPT_STOPWORDS = new Set([
+    "alle", "andre", "av", "bare", "blant", "blir", "bort", "den", "denne", "der", "det", "dette", "disse",
+    "eller", "en", "enn", "er", "et", "etter", "flere", "for", "fordi", "forbundet", "fra", "gjennom", "grunnleggende",
+    "har", "hennes", "hvert", "hvilken", "hvordan", "i", "ikke", "ingen", "kan", "med", "mellom", "mens", "mot",
+    "og", "ogsa", "om", "over", "refleksjoner", "samme", "seg", "selv", "siden", "sine", "sitt", "slik", "som",
+    "samtidig", "tekst", "teksten", "til", "under", "uten", "ved", "være", "viser", "source", "innsikt", "forståelse"
+  ]);
+
+  function conceptSlug(value) {
+    return normalize(value).replace(/\s+/g, "_").slice(0, 72);
+  }
+
+  function sourceBoundConcepts(record, diagnostics, existingConcepts) {
+    const narrative = normalize([record?.insight, record?.abstraction, record?.why_it_matters].map(text).join(" "));
+    const diagnostic = arr(diagnostics).find((item) => text(item?.id) === text(record?.id));
+    const excerpts = arr(record?.evidence).map((entry) => text(entry?.excerpt)).filter(Boolean);
+    const quoted = arr(diagnostic?.evidence).map((entry) => text(entry?.quote)).filter(Boolean);
+    const evidenceSegments = [...excerpts, ...quoted].map(text).filter(Boolean);
+    const candidates = [];
+    for (let size = 4; size >= 1; size -= 1) {
+      for (const segment of evidenceSegments) {
+        const sourceWords = segment.replace(/[^\p{L}\p{N}-]+/gu, " ").trim().split(/\s+/).filter(Boolean);
+        const words = sourceWords.map(normalize);
+        for (let index = 0; index <= words.length - size; index += 1) {
+          const tokens = words.slice(index, index + size);
+          const phrase = tokens.join(" ");
+          const label = sourceWords.slice(index, index + size).join(" ");
+          const meaningful = tokens.filter((word) => word.length >= 4 && !CONCEPT_STOPWORDS.has(word));
+          if (!meaningful.length || (size > 1 && meaningful.length < 2) || (size === 1 && phrase.length < 8)) continue;
+          if (CONCEPT_STOPWORDS.has(tokens[0]) || CONCEPT_STOPWORDS.has(tokens[tokens.length - 1])) continue;
+          if (!narrative.includes(phrase)) continue;
+          candidates.push({
+            id: `evidence_concept_${conceptSlug(phrase)}`,
+            label,
+            evidence: clone(arr(record?.evidence)),
+            source_bound: true,
+            score: size * 3 + meaningful.reduce((sum, word) => sum + Math.min(word.length, 14) / 14, 0)
+          });
+        }
+      }
+    }
+    const existingKeys = new Set(arr(existingConcepts).map((item) => normalize(item?.label)));
+    const selected = [];
+    candidates.sort((left, right) => right.score - left.score || right.label.length - left.label.length || left.label.localeCompare(right.label, "no"));
+    candidates.forEach((item) => {
+      const key = normalize(item.label);
+      if (selected.length >= 3 || existingKeys.has(key)) return;
+      if (selected.some((entry) => normalize(entry.label).includes(key) || key.includes(normalize(entry.label)))) return;
+      const { score: _score, ...concept } = item;
+      selected.push(concept);
+    });
+    return selected;
+  }
+
   function approvedInsights(bundle) {
     const identity = bundleIdentity(bundle);
     const concepts = passedConcepts(bundle);
+    const diagnostics = arr(bundle?.semantic_document?.candidate_diagnostics);
     const approvedIds = new Set(arr(bundle?.semantic_document?.approved_insight_ids).map(text).filter(Boolean));
     return arr(bundle?.semantic_document?.approved_insight_records).filter((record) => (
       approvedIds.has(text(record?.id))
@@ -130,10 +190,12 @@
       && ["not_causal", "source_explicit", "interpretive"].includes(text(record?.causal_status))
       && arr(record?.evidence).length >= 2
     )).map((record) => {
+      const diagnostic = diagnostics.find((item) => text(item?.id) === text(record?.id));
+      const diagnosticRoles = new Map(arr(diagnostic?.evidence).map((entry) => [normalize(entry?.quote), text(entry?.role) || "supports"]));
       const evidence = arr(record.evidence).map((entry) => ({
         quote: text(entry?.excerpt),
         text: text(entry?.excerpt),
-        role: "supports",
+        role: diagnosticRoles.get(normalize(entry?.excerpt)) || "supports",
         start: Number(entry?.start),
         end: Number(entry?.end),
         exact_source_match: true
@@ -150,7 +212,11 @@
       // Product projections need a small, discriminating concept signature per
       // insight. Evidence still remains complete in provenance, but must not
       // make every insight inherit every source concept.
-      const relatedConcepts = [...narrativeConcepts, ...evidenceConcepts].slice(0, 2);
+      const canonicalConcepts = [...narrativeConcepts, ...evidenceConcepts];
+      const derivedConcepts = sourceBoundConcepts(record, diagnostics, canonicalConcepts);
+      const relatedConcepts = [...derivedConcepts.slice(0, 2), ...canonicalConcepts.slice(0, 1)]
+        .filter((concept, index, list) => list.findIndex((item) => normalize(item.label) === normalize(concept.label)) === index)
+        .slice(0, 3);
       return {
         id: text(record.id),
         insight: text(record.insight),

@@ -942,19 +942,27 @@
     const blocked = [];
     const semantic = object(verified.semantic_document);
     const sections = Object.fromEntries(bundleApi.SURFACES.map((surface) => [surface, mapFields(verified.surfaces[surface], surface, semantic, verified.identity, blocked)]));
+    const blockedFieldIds = Array.from(new Set(blocked)).sort();
+    const optionalWithheldIds = Array.from(new Set(array(verified?.quality?.optional_withheld_field_ids).map(text).filter((id) => blockedFieldIds.includes(id)))).sort();
+    const optionalWithheldSet = new Set(optionalWithheldIds);
+    const blockingFieldIds = blockedFieldIds.filter((id) => !optionalWithheldSet.has(id));
     const model = {
       schema: ANALYSIS_SCHEMA,
       version: VERSION,
       read_model_id: `analysis_read_${stableToken(verified.bundle_id)}`,
-      status: verified.status === "invalid" ? "invalid" : blocked.length ? "incomplete" : "ready",
+      status: verified.status === "invalid" ? "invalid" : blockingFieldIds.length ? "incomplete" : "ready",
       identity: clone(verified.identity),
       semantic_document: clone(semantic),
       sections,
-      blocked_field_ids: Array.from(new Set(blocked)).sort(),
+      blocked_field_ids: blockedFieldIds,
       quality: {
         source_bundle_status: verified.status,
         visible_field_count: allItems(sections).length,
-        blocked_field_count: new Set(blocked).size,
+        blocked_field_count: blockedFieldIds.length,
+        blocking_field_count: blockingFieldIds.length,
+        blocking_field_ids: blockingFieldIds,
+        optional_withheld_field_count: optionalWithheldIds.length,
+        optional_withheld_field_ids: optionalWithheldIds,
         synthesis_gate: clone(semantic.synthesis_gate)
       },
       validation: { valid: false, errors: [] },

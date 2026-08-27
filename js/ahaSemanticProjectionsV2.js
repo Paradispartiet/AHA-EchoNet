@@ -92,6 +92,21 @@
     return words.length > 11 ? `${title} …` : title;
   }
 
+  function conciseUnitTitle(value, concepts, type) {
+    const labels = arr(concepts).map((concept) => text(concept?.label)).filter(Boolean)
+      .sort((left, right) => right.split(/\s+/).length - left.split(/\s+/).length || right.length - left.length)
+      .filter((label, index, list) => list.findIndex((item) => normalize(item) === normalize(label)) === index)
+      .slice(0, 2);
+    const selectedLabels = labels.length >= 2 && labels.reduce((sum, label) => sum + label.split(/\s+/).length, 0) > 6
+      ? labels.slice(0, 1)
+      : labels;
+    const typeLabel = ({
+      tension: "Spenning", contrast: "Kontrast", mechanism: "Mekanisme", consequence: "Konsekvens",
+      principle: "Prinsipp", pattern: "Mønster", generalization: "Hovedidé", observation: "Observasjon"
+    })[normalize(type)] || "Innsikt";
+    return selectedLabels.length ? `${typeLabel}: ${selectedLabels.join(" og ")}` : insightTitle(value);
+  }
+
   function conceptInputLabel(entry) {
     if (typeof entry === "string") return text(entry);
     if (!entry || typeof entry !== "object") return "";
@@ -310,7 +325,7 @@
           canonical_member_id: representative.id,
           member_ids: memberIds,
           equivalence_collapsed: memberIds.length > 1,
-          title: insightTitle(repText),
+          title: conciseUnitTitle(repText, concepts, extractType(representative.item)),
           insight: repText,
           summary: repText,
           type: extractType(representative.item),
@@ -550,7 +565,24 @@
       });
     }
 
-    return candidates.sort((a, b) => a.id.localeCompare(b.id));
+    const ranked = candidates.slice().sort((left, right) => {
+      const leftFallback = left.meta?.semantic_basis === "fallback_core" ? 1 : 0;
+      const rightFallback = right.meta?.semantic_basis === "fallback_core" ? 1 : 0;
+      if (leftFallback !== rightFallback) return leftFallback - rightFallback;
+      const memberDifference = arr(right.meta?.member_ref_ids).length - arr(left.meta?.member_ref_ids).length;
+      if (memberDifference) return memberDifference;
+      const leftResonance = left.meta?.semantic_basis === "resonance" ? 1 : 0;
+      const rightResonance = right.meta?.semantic_basis === "resonance" ? 1 : 0;
+      if (leftResonance !== rightResonance) return leftResonance - rightResonance;
+      return left.id.localeCompare(right.id);
+    });
+    const seenMemberSets = new Set();
+    return ranked.filter((candidate) => {
+      const memberSet = arr(candidate.meta?.member_ref_ids).slice().sort().join("|");
+      if (!memberSet || seenMemberSets.has(memberSet)) return false;
+      seenMemberSets.add(memberSet);
+      return true;
+    }).slice(0, 3);
   }
 
   function semanticProfileText(unit) {
@@ -641,7 +673,16 @@
       }
     ];
     const byInsight = new Map(arr(units).map((unit) => [unit.id, unit]));
-    return arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice(0, 6).map((list) => {
+    const bestList = arr(listCandidates).filter((list) => arr(list.items).length >= 2).slice().sort((left, right) => {
+      const leftFallback = left.meta?.semantic_basis === "fallback_core" ? 1 : 0;
+      const rightFallback = right.meta?.semantic_basis === "fallback_core" ? 1 : 0;
+      if (leftFallback !== rightFallback) return leftFallback - rightFallback;
+      const leftResonance = left.meta?.semantic_basis === "resonance" ? 1 : 0;
+      const rightResonance = right.meta?.semantic_basis === "resonance" ? 1 : 0;
+      if (leftResonance !== rightResonance) return leftResonance - rightResonance;
+      return arr(right.items).length - arr(left.items).length || left.id.localeCompare(right.id);
+    })[0];
+    return (bestList ? [bestList] : []).map((list) => {
       const related = arr(list.items).map((item) => byInsight.get(item.refId)).filter(Boolean);
       const selectedStages = selectStageUnits(related);
       return {
@@ -685,6 +726,8 @@
           projection_id: projectionId,
           semantic_shape: "ordered_inquiry_v2",
           source_list_candidate_id: list.id,
+          semantic_basis: list.meta?.semantic_basis || "",
+          semantic_basis_label: list.meta?.semantic_basis_label || "",
           stage_selection: "semantic_role_ranked_not_round_robin",
           read_only: true,
           candidate_only: true

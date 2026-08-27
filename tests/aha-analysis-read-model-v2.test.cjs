@@ -91,6 +91,15 @@ assert.equal(JSON.stringify(analysis).includes('Kilde registrert'), false);
 assert.equal(JSON.stringify(analysis).includes('[object Object]'), false);
 assert.equal(JSON.stringify(analysis).includes('Skal aldri nå Kildens struktur'), false);
 
+const optionalOnlyBundle = JSON.parse(JSON.stringify(bundle));
+optionalOnlyBundle.status = 'ready';
+optionalOnlyBundle.quality.optional_withheld_field_ids = analysis.blocked_field_ids.slice();
+const optionalOnlyAnalysis = context.AHAAnalysisReadModelV2.build(optionalOnlyBundle);
+assert.ok(optionalOnlyAnalysis);
+assert.equal(optionalOnlyAnalysis.status, 'ready', 'optional enrichment withholding must not make the analysis incomplete');
+assert.equal(optionalOnlyAnalysis.quality.blocking_field_count, 0);
+assert.equal(optionalOnlyAnalysis.quality.optional_withheld_field_count, analysis.blocked_field_ids.length);
+
 const knowledge = context.AHAKnowledgeMapReadModelV2.build({
   analysisReadModel: analysis,
   historicalRelations: [

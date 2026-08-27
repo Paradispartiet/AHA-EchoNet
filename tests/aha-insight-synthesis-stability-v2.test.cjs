@@ -78,8 +78,8 @@ async function run() {
     }, ["candidate:0:not_causal_contains_causal_language"]);
     assert.match(wordingRetry.input[0].content, /MANDATORY WORDING CORRECTION/i);
     assert.match(wordingRetry.input[0].content, /Keep causal_status=not_causal/i);
-    assert.match(wordingRetry.input[0].content, /MUST use this non-causal sentence frame/i);
-    assert.match(wordingRetry.input[0].content, /er forbundet med.*samtidig som/i);
+    assert.match(wordingRetry.input[0].content, /name the source-grounded relation, tension, boundary or difference/i);
+    assert.doesNotMatch(wordingRetry.input[0].content, /MUST use this non-causal sentence frame/i);
     assert.match(wordingRetry.input[0].content, /do not use a causal synonym/i);
     const retryPayload = JSON.parse(wordingRetry.input[1].content);
     assert.deepEqual(retryPayload.semantic_context.relations, []);

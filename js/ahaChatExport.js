@@ -420,6 +420,17 @@
         warnings: authoritativeBundle.quality.reasons.slice(),
         failClosed: authoritativeBundle.status !== "ready"
       };
+      const projectionRuntime = deps?.projectionRuntimeSourceV2 || global.AHAProjectionRuntimeSourceV2;
+      const projectionProducts = projectionRuntime?.build
+        ? projectionRuntime.build({ analysisBundleV2: authoritativeBundle, ignoreRequest: true })
+        : null;
+      const projectionIdentityMatches = !projectionProducts || Boolean(
+        projectionProducts?.identity?.analysis_id === identity.analysis_id
+        && projectionProducts?.identity?.analysis_run_id === identity.analysis_run_id
+        && projectionProducts?.identity?.source_id === identity.source_id
+        && projectionProducts?.identity?.source_sha256 === identity.source_sha256
+      );
+      if (!projectionIdentityMatches) throw new Error("ProjectionProducts matcher ikke aktiv analyseidentitet.");
       const exportBundle = {
         version: "aha_analysis_export_v2",
         exportedAt: nowIso,
@@ -453,6 +464,8 @@
         insights: view.insights,
         concepts: view.concepts,
         subjectMatches: view.subjectMatches,
+        projectionProducts,
+        productStates: projectionProducts?.product_states || {},
         rawAutoPayload: {},
         rawAutoPayloadStatus: "excluded_by_analysis_bundle_v2_authority",
         selectedAfterwork: {},
@@ -762,6 +775,22 @@
     const sortItems = Array.isArray(afterwork.sortItems) ? afterwork.sortItems : [];
     const asBullet = (items) => (Array.isArray(items) && items.length ? items.map((item) => `- ${typeof item === "string" ? item : (item?.label ? `${item.label}: ${item.text || ""}` : JSON.stringify(item))}`).join("\n") : "- (ingen)");
     const quality = b.quality || {};
+    const projectionProducts = b.projectionProducts && typeof b.projectionProducts === "object" ? b.projectionProducts : {};
+    const projectionSurfaces = projectionProducts.surfaces && typeof projectionProducts.surfaces === "object" ? projectionProducts.surfaces : {};
+    const productLists = Array.isArray(projectionSurfaces.lists) ? projectionSurfaces.lists : [];
+    const productPaths = Array.isArray(projectionSurfaces.paths) ? projectionSurfaces.paths : [];
+    const productMindmap = projectionSurfaces.mindmap && typeof projectionSurfaces.mindmap === "object" ? projectionSurfaces.mindmap : {};
+    const listMarkdown = productLists.length ? productLists.map((list) => {
+      const items = Array.isArray(list?.items) ? list.items.map((item) => item?.title).filter(Boolean).join("; ") : "";
+      return `- ${list?.title || "Liste"}${items ? ` — ${items}` : ""}`;
+    }).join("\n") : asBullet(afterwork.list);
+    const pathMarkdown = productPaths.length ? productPaths.map((path) => {
+      const steps = Array.isArray(path?.steps) ? path.steps.map((step) => step?.title).filter(Boolean).join(" → ") : "";
+      return `- ${path?.title || "Læringssti"}${steps ? ` — ${steps}` : ""}`;
+    }).join("\n") : asBullet(afterwork.path);
+    const mindmapMarkdown = Array.isArray(productMindmap.nodes) && productMindmap.nodes.length
+      ? productMindmap.nodes.map((node) => `- ${node?.type || "node"}: ${node?.title || ""}`).join("\n")
+      : "- (ingen)";
     return `# AHA analyse
 
 ## Kildetekst
@@ -788,10 +817,13 @@ ${afterwork.reflection || ""}
 ${sortItems.length ? sortItems.map((item) => `- ${item?.label || "Punkt"}: ${item?.text || ""}`).join("\n") : "- (ingen)"}
 
 ## Liste
-${asBullet(afterwork.list)}
+${listMarkdown}
 
 ## Læringssti
-${asBullet(afterwork.path)}
+${pathMarkdown}
+
+## Tankekart
+${mindmapMarkdown}
 
 ## Innsikter
 ${asBullet(b.insights)}
@@ -814,6 +846,9 @@ ${asBullet(b.concepts)}
 - topicConsistency.matchedForbiddenTerms: ${Array.isArray(quality.topicConsistency?.matchedForbiddenTerms) && quality.topicConsistency.matchedForbiddenTerms.length ? quality.topicConsistency.matchedForbiddenTerms.join(", ") : "(ingen)"}
 - inferredFields: ${Array.isArray(quality.sourceBinding?.inferredFields) && quality.sourceBinding.inferredFields.length ? quality.sourceBinding.inferredFields.join(", ") : "(ingen)"}
 - ahaReplyBinding: ${b.ahaReplySourceBinding?.status || "unknown"}
+- productStatus: ${projectionProducts.status || "unavailable"}
+- productBlockingReasons: ${Array.isArray(projectionProducts.blocking_reasons) && projectionProducts.blocking_reasons.length ? projectionProducts.blocking_reasons.join(", ") : "(ingen)"}
+- productStates: ${JSON.stringify(safeSerializeForExport(b.productStates || {}))}
 
 ## Teknisk
 - sourceTextHash: ${b.sourceTextHash || ""}

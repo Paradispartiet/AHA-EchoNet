@@ -24,8 +24,18 @@
         else if (match.subject_label != null) normalized.title = String(match.subject_label);
         if (match.subject_id != null) normalized.subject_id = match.subject_id;
         else if (match.emne_id != null) normalized.subject_id = match.emne_id;
+        if (match.subject_label != null) normalized.subject_label = String(match.subject_label);
         if (match.score != null && Number.isFinite(Number(match.score))) normalized.score = Number(match.score);
         if (Array.isArray(match.matched_terms)) normalized.matched_terms = match.matched_terms.map((term) => String(term));
+        if (match.source != null) normalized.source = String(match.source);
+        if (match.explanation != null) normalized.explanation = String(match.explanation);
+        if (match.provenance && typeof match.provenance === "object" && !Array.isArray(match.provenance)) {
+          const provenance = {};
+          ["kind", "canonical_subject_id", "source_ref", "source_path", "registry_path", "manifest_path"].forEach((key) => {
+            if (match.provenance[key] != null) provenance[key] = String(match.provenance[key]);
+          });
+          if (Object.keys(provenance).length) normalized.provenance = provenance;
+        }
       }
       return normalized;
     }).filter((item) => {
