@@ -99,7 +99,7 @@ async function main() {
     model: process.env.AHA_LIVE_MODEL_NAME || "gpt-4.1-mini",
     corpus
   });
-  const outputDirectory = path.join(root, "test-results");
+  const outputDirectory = path.join(root, "cost-evidence");
   fs.mkdirSync(outputDirectory, { recursive: true });
   fs.writeFileSync(path.join(outputDirectory, "aha-live-model-budget-plan-v1.json"), `${JSON.stringify(plan, null, 2)}\n`);
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, githubOutput(plan));

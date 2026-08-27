@@ -94,5 +94,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: aha-projection-product-browser-evaluation-v2
-          path: test-results/
+          path: |
+            cost-evidence/
+            test-results/
           if-no-files-found: warn

@@ -36,6 +36,7 @@ async function run() {
   assert.match(workflow, /RUN_AHA_LIVE_RELEASE/);
   assert.match(workflow, /Automatic pull-request and push runs are model-call free/);
   assert.match(workflow, /plan-aha-live-model-budget\.mjs/);
+  assert.match(workflow, /cost-evidence\//);
   assert.doesNotMatch(workflow, /AHA_REQUIRE_LIVE_PRODUCT_CORPUS/);
   assert.match(browserGate, /LIVE_MODE !== "smoke"/);
   assert.match(browserGate, /LIVE_MODE !== "release"/);

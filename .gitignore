@@ -5,6 +5,7 @@ ahaConfig.local.js
 .DS_Store
 node_modules/
 test-results/
+cost-evidence/
 playwright-report/
 __pycache__/
 *.pyc
