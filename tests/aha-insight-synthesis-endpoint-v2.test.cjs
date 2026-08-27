@@ -141,6 +141,70 @@ async function run() {
   }
 
   {
+    const invalid = structuredClone(validSynthesis);
+    invalid.candidates[0].evidence[1].quote = "Dette finnes ikke i source.";
+    let calls = 0;
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async () => {
+        calls += 1;
+        return { id: "resp_bounded_smoke", model: "gpt-test", output_parsed: invalid };
+      } } }
+    });
+    const res = await invoke(handler, {
+      format: "aha_insight_synthesis_output_v2",
+      text: source,
+      semantic_context: semanticContext,
+      context: {
+        cost_control: {
+          schema: "aha_insight_synthesis_cost_control_v1",
+          mode: "live_smoke",
+          budget_id: "smoke:test-20260827",
+          synthesis_validation_attempt_limit: 1
+        }
+      }
+    });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.validation_status, "blocked");
+    assert.equal(res.body.synthesis_attempts, 1);
+    assert.equal(calls, 1, "live smoke must make at most one model validation attempt");
+    assert.deepEqual(res.body.cost_control, {
+      schema: "aha_insight_synthesis_cost_control_v1",
+      mode: "live_smoke",
+      budget_id: "smoke:test-20260827",
+      synthesis_validation_attempt_limit: 1,
+      model_call_count: 1
+    });
+  }
+
+  {
+    let calls = 0;
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async () => { calls += 1; return {}; } } }
+    });
+    const res = await invoke(handler, {
+      format: "aha_insight_synthesis_output_v2",
+      text: source,
+      semantic_context: semanticContext,
+      context: {
+        cost_control: {
+          schema: "aha_insight_synthesis_cost_control_v1",
+          mode: "live_release",
+          budget_id: "release:test-20260827",
+          synthesis_validation_attempt_limit: 5
+        }
+      }
+    });
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.error, "invalid_insight_synthesis_request");
+    assert.match(res.body.reason, /cost_control_attempt_limit_invalid/);
+    assert.equal(calls, 0, "invalid budget must fail before any model call");
+  }
+
+  {
     const handler = createSemanticModelHandler({
       hasOpenAIKey: true,
       model: "gpt-test",

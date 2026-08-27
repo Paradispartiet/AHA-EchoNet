@@ -78,7 +78,9 @@
     if (!response || typeof response.clone !== "function") return false;
     try {
       const body = await response.clone().json();
-      return body?.retryable === false;
+      return body?.retryable === false
+        || body?.error === "openai_quota_exhausted"
+        || (Number(body?.status) === 429 && body?.type === "insufficient_quota");
     } catch {
       return false;
     }
@@ -125,6 +127,8 @@
       const value = sanitizeSynthesisContextValue(source[key]);
       if (value !== undefined) allowed[key] = value;
     }
+    const costControl = sanitizeSynthesisContextValue(source.cost_control || global.AHA_SYNTHESIS_COST_CONTROL);
+    if (costControl && typeof costControl === "object" && !Array.isArray(costControl)) allowed.cost_control = costControl;
     return allowed;
   }
 
@@ -354,6 +358,7 @@
         provider_model: data.model || null,
         provider_response_id: data.response_id || null,
         provider_validation_attempts: Number(data.synthesis_attempts || 0),
+        provider_cost_control: clone(data.cost_control || null),
         transport_attempts: transport.transport_attempts,
         authoritative_retry_attempt: requestAttempt,
         candidate_prefilter_mode: projectionDiversityExpansion ? "authoritative_projection_diversity" : "legacy_review",

@@ -6,7 +6,7 @@
   const GUARDED_KEYS = Object.freeze([...PRODUCT_KEYS, "aha_insight_chamber_v1"]);
   const PRODUCTS = Object.freeze(["lists", "paths", "mindmap"]);
   const SEED_TEXT = "Morgenbladet er en norsk avis. Teksten drøfter pressehistorie, redaksjonell uavhengighet, eierskapsskifter og akademisk offentlighet.";
-  const state = { corpus: null, results: [], running: false, frame: null };
+  const state = { corpus: null, results: [], running: false, frame: null, cost_control: null };
 
   const byId = (id) => global.document.getElementById(id);
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -115,6 +115,7 @@
       await loaded;
     }
     const win = await waitFor(() => state.frame?.contentWindow?.AHAChat?.submitAhaChatMessage && state.frame.contentWindow, "AHA Chat runtime");
+    win.AHA_SYNTHESIS_COST_CONTROL = clone(state.cost_control);
     win.AHAMemoryControls?.enableSaving?.();
     win.AHAMemoryControls?.disableMemoryUse?.();
     await win.AHAAnalysisArtifacts?.ensureV2Dependencies?.();
@@ -267,6 +268,22 @@
     }
   }
 
+  function configureCostControl(value) {
+    if (state.running) throw new Error("Kan ikke endre kostnadsgrensen mens evalueringen kjører.");
+    if (value == null) state.cost_control = null;
+    else {
+      const control = clone(value);
+      if (control?.schema !== "aha_insight_synthesis_cost_control_v1") throw new Error("Ugyldig cost-control-schema.");
+      if (!["live_smoke", "live_release"].includes(control?.mode)) throw new Error("Ugyldig cost-control-modus.");
+      if (!Number.isInteger(Number(control?.synthesis_validation_attempt_limit)) || Number(control.synthesis_validation_attempt_limit) < 1) {
+        throw new Error("Ugyldig synteseforsøksgrense.");
+      }
+      state.cost_control = control;
+    }
+    if (state.frame?.contentWindow) state.frame.contentWindow.AHA_SYNTHESIS_COST_CONTROL = clone(state.cost_control);
+    return clone(state.cost_control);
+  }
+
   async function runCases(caseIds = []) {
     if (state.running) return [];
     state.running = true;
@@ -345,5 +362,5 @@
   byId("run")?.addEventListener("click", () => { void runAll().catch((error) => { byId("status").textContent = error.message; }); });
   byId("export")?.addEventListener("click", downloadReview);
 
-  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, prepareControlledJourney, collectHumanReview, compareReplay, getState: () => clone(state) });
+  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, prepareControlledJourney, configureCostControl, collectHumanReview, compareReplay, getState: () => clone(state) });
 })(window);
