@@ -74,6 +74,16 @@
     return new Promise((resolve) => global.setTimeout(resolve, ms));
   }
 
+  async function responseExplicitlyDisablesRetry(response) {
+    if (!response || typeof response.clone !== "function") return false;
+    try {
+      const body = await response.clone().json();
+      return body?.retryable === false;
+    } catch {
+      return false;
+    }
+  }
+
   async function fetchSynthesisWithBoundedTransportRetry(url, init) {
     const delays = [0, 1200, 3200];
     let lastResponse = null;
@@ -83,7 +93,9 @@
       try {
         lastResponse = await fetch(url, init);
         lastError = null;
-        if (!TRANSIENT_SYNTHESIS_HTTP.has(Number(lastResponse?.status || 0)) || attempt === delays.length - 1) {
+        const transientStatus = TRANSIENT_SYNTHESIS_HTTP.has(Number(lastResponse?.status || 0));
+        const retryDisabled = transientStatus && await responseExplicitlyDisablesRetry(lastResponse);
+        if (!transientStatus || retryDisabled || attempt === delays.length - 1) {
           return { response: lastResponse, transport_attempts: attempt + 1 };
         }
       } catch (error) {

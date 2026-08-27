@@ -16,6 +16,7 @@ import {
   addRetryInstruction
 } from "./ahaInsightSynthesisStabilityV2.js";
 import { buildRuntimeManifest } from "./ahaRuntimeManifest.js";
+import { classifyOpenAIError } from "./ahaOpenAIError.js";
 
 function synthesisFailurePolicy() {
   return {
@@ -109,8 +110,13 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
       try {
         response = await openai.responses.create(request);
       } catch (error) {
-        return sendJson(res, 502, synthesisErrorBody("insight_synthesis_openai_error", {
-          status: error?.status || error?.code || null
+        const providerError = classifyOpenAIError(error, {
+          defaultError: "insight_synthesis_openai_error"
+        });
+        return sendJson(res, providerError.httpStatus, synthesisErrorBody(providerError.error, {
+          status: providerError.status,
+          type: providerError.type,
+          retryable: providerError.retryable
         }));
       }
 

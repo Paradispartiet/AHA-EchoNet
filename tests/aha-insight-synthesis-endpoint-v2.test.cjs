@@ -141,6 +141,32 @@ async function run() {
   }
 
   {
+    const handler = createSemanticModelHandler({
+      hasOpenAIKey: true,
+      model: "gpt-test",
+      openai: { responses: { create: async () => {
+        const error = new Error("SECRET quota message that must not leak");
+        error.status = 429;
+        error.type = "insufficient_quota";
+        throw error;
+      } } }
+    });
+    const res = await invoke(handler, {
+      format: "aha_insight_synthesis_output_v2",
+      text: source,
+      semantic_context: semanticContext
+    });
+    assert.equal(res.statusCode, 429);
+    assert.equal(res.body.error, "openai_quota_exhausted");
+    assert.equal(res.body.status, 429);
+    assert.equal(res.body.type, "insufficient_quota");
+    assert.equal(res.body.retryable, false);
+    assert.equal(res.body.policy.synthesis_allowed, false);
+    assert.equal(res.body.policy.canonical_write, false);
+    assert.equal(JSON.stringify(res.body).includes("SECRET quota message"), false);
+  }
+
+  {
     let calls = 0;
     const capturedRequests = [];
     const repeatedSynthesis = structuredClone(validSynthesis);

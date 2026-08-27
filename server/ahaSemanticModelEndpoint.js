@@ -11,6 +11,7 @@ import {
 } from "./ahaSemanticModelContract.js";
 import { SYNTHESIS_OUTPUT_SCHEMA } from "./ahaInsightSynthesisContractV2.js";
 import { createInsightSynthesisHandlerV2 } from "./ahaInsightSynthesisEndpointV2.js";
+import { classifyOpenAIError } from "./ahaOpenAIError.js";
 
 function failurePolicy() {
   return {
@@ -98,8 +99,13 @@ function createSemanticModelHandler({ openai, model, hasOpenAIKey } = {}) {
     try {
       response = await openai.responses.create(request);
     } catch (error) {
-      return sendJson(res, 502, semanticModelErrorBody("semantic_model_openai_error", {
-        status: error?.status || error?.code || null
+      const providerError = classifyOpenAIError(error, {
+        defaultError: "semantic_model_openai_error"
+      });
+      return sendJson(res, providerError.httpStatus, semanticModelErrorBody(providerError.error, {
+        status: providerError.status,
+        type: providerError.type,
+        retryable: providerError.retryable
       }));
     }
 

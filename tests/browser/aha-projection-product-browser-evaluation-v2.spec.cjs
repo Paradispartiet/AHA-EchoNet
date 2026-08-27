@@ -5,6 +5,15 @@ const LIVE_CORPUS_TEST_TIMEOUT_MS = 35 * 60 * 1000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function responseExplicitlyDisablesRetry(response) {
+  try {
+    const body = await response.json();
+    return body?.retryable === false;
+  } catch {
+    return false;
+  }
+}
+
 async function postWithBoundedTransientRetry(apiRequest, url, options) {
   const delays = [0, 5000, 10000];
   const statuses = [];
@@ -13,7 +22,9 @@ async function postWithBoundedTransientRetry(apiRequest, url, options) {
     if (delays[attempt]) await wait(delays[attempt]);
     response = await apiRequest.post(url, options);
     statuses.push(response.status());
-    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+    const transientStatus = TRANSIENT_HTTP_STATUSES.has(response.status());
+    const retryDisabled = transientStatus && await responseExplicitlyDisablesRetry(response);
+    if (!transientStatus || retryDisabled || attempt === delays.length - 1) break;
   }
   return { response, attempts: statuses.length, statuses };
 }
@@ -26,7 +37,9 @@ async function fetchRouteWithBoundedTransientRetry(route, headers) {
     if (delays[attempt]) await wait(delays[attempt]);
     response = await route.fetch({ headers, timeout: 60000 });
     attempts = attempt + 1;
-    if (!TRANSIENT_HTTP_STATUSES.has(response.status()) || attempt === delays.length - 1) break;
+    const transientStatus = TRANSIENT_HTTP_STATUSES.has(response.status());
+    const retryDisabled = transientStatus && await responseExplicitlyDisablesRetry(response);
+    if (!transientStatus || retryDisabled || attempt === delays.length - 1) break;
   }
   return { response, attempts };
 }

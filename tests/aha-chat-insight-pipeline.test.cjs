@@ -166,6 +166,49 @@ async function verifyRuntimeRecoveryContract() {
   assert.equal(synthesisCalls, 1, "the recovered analysis may call synthesis only after runtime compatibility is restored");
 }
 
+async function verifyQuotaDoesNotRetryContract() {
+  let synthesisCalls = 0;
+  const quotaBody = {
+    ok: false,
+    error: "openai_quota_exhausted",
+    status: 429,
+    type: "insufficient_quota",
+    retryable: false
+  };
+  const quotaContext = {
+    window: null,
+    console,
+    AHA_AGENT_API: "https://example.test/api/aha-agent",
+    setTimeout,
+    fetch: async (url) => {
+      if (String(url).endsWith("/health")) {
+        return { ok: true, json: async () => ({ runtime: {
+          analysis_contract: "aha_active_analysis_contract_v3",
+          synthesis_contract: "aha_insight_synthesis_contract_v2",
+          synthesis_output_schema: "aha_insight_synthesis_output_v2",
+          prompt_version: "aha_insight_synthesis_prompt_v3",
+          quality_gate_schema: "aha_insight_quality_gate_v2",
+          semantic_document_schema: "aha_semantic_document_v2"
+        } }) };
+      }
+      synthesisCalls += 1;
+      return {
+        ok: false,
+        status: 429,
+        clone: () => ({ json: async () => quotaBody }),
+        json: async () => quotaBody
+      };
+    }
+  };
+  quotaContext.window = quotaContext;
+  vm.createContext(quotaContext);
+  vm.runInContext(source, quotaContext, { filename: "js/ahaChatInsightPipeline.js" });
+  const quotaPipeline = quotaContext.AHAChatInsightPipeline.create(dependencies);
+  const quotaSource = "Første kildepåstand dokumenterer rammen. Andre kildepåstand dokumenterer en tydelig avgrensning.";
+  assert.deepEqual(Array.from(await quotaPipeline.generateAIInsightCandidates(quotaSource, {})), []);
+  assert.equal(synthesisCalls, 1, "an explicitly non-retryable quota error must stop after the first synthesis response");
+}
+
 const candidates = pipeline.buildSemanticInsightCandidates("Lek og læring trenger trygghet i parker, torg, bibliotek og andre byrom.", {});
 assert.equal(candidates.length, 3);
 assert.ok(candidates.every((candidate) => candidate.candidate_type === "semantic"));
@@ -245,5 +288,6 @@ assert.match(synthesisContractSource, /projection_diversity_expansion/);
 
 Promise.all([
   verifyCandidateDiversityContract(),
-  verifyRuntimeRecoveryContract()
+  verifyRuntimeRecoveryContract(),
+  verifyQuotaDoesNotRetryContract()
 ]).then(() => console.log("aha-chat-insight-pipeline passed"));
