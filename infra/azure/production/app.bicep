@@ -20,7 +20,7 @@ param allowedProfileIdsSecretUri string = ''
 param canonicalSyncEnabled bool = false
 param runtimeActivated bool = false
 param fysenIntegrationEnabled bool = true
-param fysenRedirectUris string = 'https://fysen-matsgran-8572s-projects.vercel.app/api/aha/callback'
+param fysenRedirectUris string = 'https://fysen.vercel.app/api/aha/callback'
 @minValue(60)
 @maxValue(600)
 param fysenAuthorizationTtlSeconds int = 180
