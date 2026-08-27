@@ -4,7 +4,7 @@
   "use strict";
 
   const VERSION = "aha_fysen_handoff_v1";
-  const HANDOFF_ENDPOINT = "https://fysen-matsgran-8572s-projects.vercel.app/api/aha/handoff";
+  const HANDOFF_ENDPOINT = "https://fysen.vercel.app/api/aha/handoff";
   const PENDING_PROMPT_KEY = "aha_pending_chat_prompt_v1";
 
   function text(value) { return String(value ?? "").trim(); }

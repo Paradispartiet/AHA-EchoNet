@@ -9,7 +9,8 @@ assert.match(app, /param fysenIntegrationEnabled bool = true/);
 assert.match(app, /AHA_FYSEN_INTEGRATION_ENABLED'[\s\S]*?fysenIntegrationEnabled \? 'true' : 'false'/);
 assert.match(app, /AHA_FYSEN_AUTHORIZATION_TTL_SECONDS'[\s\S]*?string\(fysenAuthorizationTtlSeconds\)/);
 assert.match(app, /AHA_FYSEN_REDIRECT_URIS'[\s\S]*?fysenRedirectUris/);
-assert.match(app, /https:\/\/fysen-matsgran-8572s-projects\.vercel\.app\/api\/aha\/callback/);
+assert.match(app, /https:\/\/fysen\.vercel\.app\/api\/aha\/callback/);
+assert.doesNotMatch(app, /fysen-matsgran-8572s-projects\.vercel\.app/);
 assert.match(app, /AHA_AUDIT_HASH_SALT'[\s\S]*?secretRef:\s*'audit-salt'/);
 assert.doesNotMatch(app, /AHA_FYSEN_AUTHORIZATION_SECRET/);
 

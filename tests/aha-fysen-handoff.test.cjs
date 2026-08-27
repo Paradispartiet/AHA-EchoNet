@@ -13,6 +13,7 @@ function loadBrowserModule() {
 }
 
 const handoff = loadBrowserModule();
+assert.equal(handoff.HANDOFF_ENDPOINT, 'https://fysen.vercel.app/api/aha/handoff');
 const token = 'a'.repeat(64);
 const location = { hash: `#handoff=${token}`, pathname: '/AHA-EchoNet/fysen.html', search: '', assign: (value) => { location.assigned = value; } };
 assert.equal(handoff.handoffToken(location), token);
