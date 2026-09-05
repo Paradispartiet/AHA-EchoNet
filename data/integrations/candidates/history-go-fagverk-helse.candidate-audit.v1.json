@@ -1,0 +1,5445 @@
+{
+  "schema": "aha_fagverk_corpus_audit_v1",
+  "version": "1.0.0",
+  "source_repo": "Paradispartiet/History-Go",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "helse"
+  ],
+  "coverage": {
+    "expected": 12,
+    "registered": 12,
+    "materialized": 12,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
+  },
+  "chapters": [
+    {
+      "subject_id": "helse",
+      "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+      "title": "Anatomi og fysiologi: struktur, funksjon og regulering",
+      "source_path": "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering.json",
+      "module_source_paths": [
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/01-anatomisk-sprak-og-struktur.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/02-transport-og-homeostase.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/03-eksitabelt-vev-og-oksygentransport.json",
+        "data/fagverk/helse/anatomi-fysiologi-struktur-funksjon-og-regulering/04-nyre-endokrin-og-integrasjon.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 17,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+      "title": "Epidemiologi: design, mål, bias, confounding og kausalitet",
+      "source_path": "data/fagverk/helse/epidemiologi-design-mal-bias-confounding-og-kausalitet.json",
+      "module_source_paths": [
+        "data/fagverk/helse/epidemiologi-design-mal-bias-confounding-og-kausalitet/01-populasjon-tid-og-forekomst.json",
+        "data/fagverk/helse/epidemiologi-design-mal-bias-confounding-og-kausalitet/02-studiedesign-og-assosiasjon.json",
+        "data/fagverk/helse/epidemiologi-design-mal-bias-confounding-og-kausalitet/03-bias-confounding-og-kausal-struktur.json",
+        "data/fagverk/helse/epidemiologi-design-mal-bias-confounding-og-kausalitet/04-usikkerhet-heterogenitet-og-transport.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 14,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+      "title": "Ernæring og metabolisme: energi, næringsstoffer, regulering og kostmønster",
+      "source_path": "data/fagverk/helse/ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster.json",
+      "module_source_paths": [
+        "data/fagverk/helse/ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster/01-energi-og-karbohydratmetabolisme.json",
+        "data/fagverk/helse/ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster/02-fett-protein-og-metabolsk-integrasjon.json",
+        "data/fagverk/helse/ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster/03-mikronaeringsstoffer-og-homeostase.json",
+        "data/fagverk/helse/ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster/04-kostmonster-evidens-og-referanseverdier.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 13,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+      "title": "Farmakologi: virkning, omsetning, dose–respons og legemiddelsikkerhet",
+      "source_path": "data/fagverk/helse/farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet.json",
+      "module_source_paths": [
+        "data/fagverk/helse/farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet/01-farmakodynamikk-og-dose-respons.json",
+        "data/fagverk/helse/farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet/02-farmakokinetikk-og-eksponering.json",
+        "data/fagverk/helse/farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet/03-interaksjoner-og-variasjon.json",
+        "data/fagverk/helse/farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet/04-legemiddelsikkerhet-og-livslop.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 13,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+      "title": "Folkehelse: populasjon, determinanter, forebygging og ulikhet",
+      "source_path": "data/fagverk/helse/folkehelse-populasjon-determinanter-forebygging-og-ulikhet.json",
+      "module_source_paths": [
+        "data/fagverk/helse/folkehelse-populasjon-determinanter-forebygging-og-ulikhet/01-populasjon-determinanter-og-ulikhet.json",
+        "data/fagverk/helse/folkehelse-populasjon-determinanter-forebygging-og-ulikhet/02-helsefremming-og-forebyggingsstrategier.json",
+        "data/fagverk/helse/folkehelse-populasjon-determinanter-forebygging-og-ulikhet/03-overvaking-og-evaluering.json",
+        "data/fagverk/helse/folkehelse-populasjon-determinanter-forebygging-og-ulikhet/04-komplekse-tiltak-og-politikk.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+      "title": "Helsetjenester og helseøkonomi: organisering, kvalitet, prioritering og ressursbruk",
+      "source_path": "data/fagverk/helse/helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk.json",
+      "module_source_paths": [
+        "data/fagverk/helse/helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk/01-system-og-tilgang.json",
+        "data/fagverk/helse/helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk/02-kvalitet-og-finansiering.json",
+        "data/fagverk/helse/helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk/03-helseokonomi-og-prioritering.json",
+        "data/fagverk/helse/helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk/04-equity-og-systemytelse.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 14,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+      "title": "Klinisk medisin: informasjon, testing, beslutning og oppfølging",
+      "source_path": "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging.json",
+      "module_source_paths": [
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/01-klinisk-informasjon-og-testing.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/02-sannsynlighet-maling-og-usikkerhet.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/03-diagnostisk-sikkerhet-og-behandlingsevidens.json",
+        "data/fagverk/helse/klinisk-medisin-informasjon-testing-beslutning-og-oppfolging/04-oppfolging-samvalg-og-plan.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+      "title": "Medisinsk etikk, evidens og ansvarlig beslutning",
+      "source_path": "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning.json",
+      "module_source_paths": [
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/01-autonomi-samtykke-og-stotte.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/02-nytte-skade-og-forskningsansvar.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/03-evidens-anbefaling-og-samvalg.json",
+        "data/fagverk/helse/medisinsk-etikk-evidens-og-ansvarlig-beslutning/04-rettferdighet-og-profesjonsansvar.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 14,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+      "title": "Mikrobiologi og infeksjon: mikrober, smitte, vertrespons og resistens",
+      "source_path": "data/fagverk/helse/mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens.json",
+      "module_source_paths": [
+        "data/fagverk/helse/mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens/01-mikrober-kolonisering-og-patogenese.json",
+        "data/fagverk/helse/mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens/02-transmisjon-og-vertrespons.json",
+        "data/fagverk/helse/mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens/03-laboratorieevidens-og-resistens.json",
+        "data/fagverk/helse/mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens/04-smittevern-utbrudd-og-genomikk.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+      "title": "Psykisk helse: lidelse, tjenester, recovery og rettigheter",
+      "source_path": "data/fagverk/helse/psykisk-helse-lidelse-tjenester-recovery-og-rettigheter.json",
+      "module_source_paths": [
+        "data/fagverk/helse/psykisk-helse-lidelse-tjenester-recovery-og-rettigheter/01-begreper-og-klassifikasjon.json",
+        "data/fagverk/helse/psykisk-helse-lidelse-tjenester-recovery-og-rettigheter/02-determinanter-evidens-og-omsorgsniva.json",
+        "data/fagverk/helse/psykisk-helse-lidelse-tjenester-recovery-og-rettigheter/03-tjenestesystem-og-recovery.json",
+        "data/fagverk/helse/psykisk-helse-lidelse-tjenester-recovery-og-rettigheter/04-medvirkning-rettigheter-og-ansvar.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+      "title": "Rehabilitering og funksjon: ICF, mål, deltakelse og tverrprofesjonell praksis",
+      "source_path": "data/fagverk/helse/rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis.json",
+      "module_source_paths": [
+        "data/fagverk/helse/rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis/01-icf-funksjon-og-kontekst.json",
+        "data/fagverk/helse/rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis/02-rehabiliteringsmal-vurdering-og-intervensjon.json",
+        "data/fagverk/helse/rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis/03-hjelpemidler-samarbeid-og-koordinering.json",
+        "data/fagverk/helse/rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis/04-utfall-equity-og-helsesystem.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 15,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "helse",
+      "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+      "title": "Sykdom og patofysiologi: mekanisme, skade og systemsvikt",
+      "source_path": "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt.json",
+      "module_source_paths": [
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/01-mekanisme-celleskade-og-inflammasjon.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/02-immunologi-sirkulasjon-og-systemsvikt.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/03-genetisk-sarbarhet-og-kreft.json",
+        "data/fagverk/helse/sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt/04-biomarkorer-fenotype-og-kausal-tolkning.json"
+      ],
+      "module_file_count": 4,
+      "title_term_count": 16,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 99,
+    "high_risk": 59,
+    "medium_risk": 40,
+    "low_risk": 0
+  },
+  "high_risk_terms": [
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "individuell",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "klinisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontekst",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "biologisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "diagnose",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skille",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tiltak",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "utfall",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksponering",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "person",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avhenger",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "barrierer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behandling",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behov",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bestemt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "biologiske",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forhold",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "funksjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "informasjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kausal",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mengde",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "relevante",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skade",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tjenester",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vise",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vurdering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 12,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 11,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 10,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 9,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "individuell",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 8,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 7,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "klinisk",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontekst",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "biologisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "diagnose",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "effekt",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skille",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tiltak",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "utfall",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "eksponering",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "endring",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "person",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "avhenger",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "barrierer",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behandling",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "behov",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bestemt",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "biologiske",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "evidens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forhold",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "funksjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "informasjon",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kausal",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mengde",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "relevante",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skade",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tjenester",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vise",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "vurdering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "aktivitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "alternativer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "beskrives",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "beslutning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "blant",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "definert",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "deltakere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "diagnostisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "direkte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forebygging",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forklare",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjøre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "helse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ingen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "integrasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mekanisme",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mekanismer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mot",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "oppfølging",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "overvåking",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "populasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prioritering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prognose",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regulering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "relevant",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "ernaering-metabolisme-energi-naeringsstoffer-regulering-og-kostmonster",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "respons",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risiko",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "helsetjenester-helseokonomi-organisering-kvalitet-prioritering-og-ressursbruk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtykke",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samvalg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "medisinsk-etikk-evidens-og-ansvarlig-beslutning",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "struktur",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "støtte",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-lidelse-tjenester-recovery-og-rettigheter",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "rehabilitering-funksjon-icf-mal-deltakelse-og-tverrprofesjonell-praksis",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sykdom",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "mikrobiologi-infeksjon-mikrober-smitte-vertrespons-og-resistens",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "systematisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "epidemiologi-design-mal-bias-confounding-og-kausalitet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "folkehelse-populasjon-determinanter-forebygging-og-ulikhet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "variasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "vev",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "anatomi-fysiologi-struktur-funksjon-og-regulering",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sykdom-og-patofysiologi-mekanisme-skade-og-systemsvikt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "vurderes",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "farmakologi-virkning-omsetning-dose-respons-og-legemiddelsikkerhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klinisk-medisin-informasjon-testing-beslutning-og-oppfolging",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
+  "gate": {
+    "passed": true,
+    "errors": []
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
+}

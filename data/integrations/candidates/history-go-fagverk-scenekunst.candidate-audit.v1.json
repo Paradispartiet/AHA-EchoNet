@@ -1,34 +1,1319 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
-  "subject_id": "scenekunst",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "scenekunst"
+  ],
   "coverage": {
-    "declared_package_files": 7,
-    "expected_existing_package_files": 7,
-    "materialized_existing_package_files": 7,
-    "required_package_files": 4,
-    "optional_package_files": 3,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 4,
+    "registered": 4,
+    "materialized": 4,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "9c8e2077da13b18d6c667460d877ea6e4b9554b10d0d93772f2af82f44f3ab42",
-    "structure_sha256": "60c7b8d70a78e60bd673849625da6b66b967b114a56be1fbf9acb59599cf40ec",
-    "content_sha256": "9c8e2077da13b18d6c667460d877ea6e4b9554b10d0d93772f2af82f44f3ab42"
+  "chapters": [
+    {
+      "subject_id": "scenekunst",
+      "chapter_id": "dans-musikkteater-komikk-hybridformer",
+      "title": "Dans, musikkteater, komikk og hybride former",
+      "source_path": "data/fagverk/scenekunst/dans-musikkteater-komikk-hybridformer.json",
+      "module_source_paths": [
+        "data/fagverk/scenekunst/dans-musikkteater-komikk-hybridformer/01-fulltekst.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 16,
+      "concept_term_count": 11,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "scenekunst",
+      "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+      "title": "Dramaturgi, utøver, regi og scenisk form",
+      "source_path": "data/fagverk/scenekunst/dramaturgi-utover-regi-scenisk-form.json",
+      "module_source_paths": [
+        "data/fagverk/scenekunst/dramaturgi-utover-regi-scenisk-form/01-fulltekst.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 14,
+      "concept_term_count": 15,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "scenekunst",
+      "chapter_id": "institusjon-historie-produksjonsfelt",
+      "title": "Institusjon, historie og produksjonsfelt",
+      "source_path": "data/fagverk/scenekunst/institusjon-historie-produksjonsfelt.json",
+      "module_source_paths": [
+        "data/fagverk/scenekunst/institusjon-historie-produksjonsfelt/01-fulltekst.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 14,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "scenekunst",
+      "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+      "title": "Publikum, resepsjon, deltakelse og etikk",
+      "source_path": "data/fagverk/scenekunst/publikum-resepsjon-deltakelse-etikk.json",
+      "module_source_paths": [
+        "data/fagverk/scenekunst/publikum-resepsjon-deltakelse-etikk/01-fulltekst.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 14,
+      "concept_term_count": 13,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 34,
+    "high_risk": 15,
+    "medium_risk": 19,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "khios",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "publikum",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "scenekunst",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "valg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "analysen",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "khios",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "publikum",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "scenekunst",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "valg",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "arbeid",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bevegelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "del",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dramaturgisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "egen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ett",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forestilling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forestillingen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "former",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjøre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "handling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "komposisjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kropp",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "levende",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "rom",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "dans-musikkteater-komikk-hybridformer",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "dramaturgi-utover-regi-scenisk-form",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "seg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "institusjon-historie-produksjonsfelt",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "publikum-resepsjon-deltakelse-etikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

@@ -4,8 +4,8 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "release_sha256": "93f6ebb471e5529b7d23995123350f9be27a83a810d9eb09549815af3ce54594",
   "subject_id": "religion",
   "package_status": "complete",
   "chapter_status": "not_materialized",
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "1c0d0af736e46db7402d0bb514d2aca03553eb46d1580a57a83ef709700e3acf",
+    "package_content_sha256": "7911db77427f9b9431477fe6dba11420fcc390748e032ed5e16126efa5f97dd1",
     "structure_sha256": "b0d15d6d852934f96b8703a62499287f09e96eb83b20fc32cad3e0f52e5b899b",
-    "content_sha256": "1c0d0af736e46db7402d0bb514d2aca03553eb46d1580a57a83ef709700e3acf"
+    "content_sha256": "7911db77427f9b9431477fe6dba11420fcc390748e032ed5e16126efa5f97dd1"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

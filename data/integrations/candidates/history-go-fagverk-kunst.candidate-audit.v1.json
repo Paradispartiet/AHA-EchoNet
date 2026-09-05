@@ -2,9 +2,9 @@
   "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "registry_version": "2.58.0",
-  "registry_updated_at": "2026-08-10",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
   "subject_filter": [
     "kunst"
   ],

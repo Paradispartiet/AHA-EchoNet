@@ -1,36 +1,1911 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "sport",
-  "package_status": "complete_with_optional_gaps",
-  "chapter_status": "not_materialized",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "sport"
+  ],
   "coverage": {
-    "declared_package_files": 11,
-    "expected_existing_package_files": 10,
-    "materialized_existing_package_files": 10,
-    "required_package_files": 4,
-    "optional_package_files": 7,
-    "optional_gaps": [
-      "README/KNOWLEDGE_MEMORY_CHAMBER.md"
-    ],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 6,
+    "registered": 6,
+    "materialized": 6,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "c3192eff524cbcb12bf002528628cdac8e71193727d76cd8f88a896939e96a87",
-    "structure_sha256": "b1f3f7d43885fc54691541e5be8523561f524a4e31fb5b9c5251b2202da4cfcc",
-    "content_sha256": "c3192eff524cbcb12bf002528628cdac8e71193727d76cd8f88a896939e96a87"
+  "chapters": [
+    {
+      "subject_id": "sport",
+      "chapter_id": "arenaer-steder-groundhopper",
+      "title": "Arenaer, steder og Groundhopper: hvordan idrett blir sted",
+      "source_path": "data/fagverk/sport/arenaer-steder-groundhopper.json",
+      "module_source_paths": [
+        "data/fagverk/sport/arenaer-steder-groundhopper/01-sted-arena-groundhopper.json",
+        "data/fagverk/sport/arenaer-steder-groundhopper/02-infrastruktur-tilgang.json",
+        "data/fagverk/sport/arenaer-steder-groundhopper/03-fellesskap-minne-endring.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 36,
+      "support_term_count": 13
+    },
+    {
+      "subject_id": "sport",
+      "chapter_id": "inkludering-helse-lek-samfunn",
+      "title": "Inkludering, helse, lek og samfunn: hvem får delta",
+      "source_path": "data/fagverk/sport/inkludering-helse-lek-samfunn.json",
+      "module_source_paths": [
+        "data/fagverk/sport/inkludering-helse-lek-samfunn/01-kapittel.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 18,
+      "concept_term_count": 27,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "sport",
+      "chapter_id": "klubber-lag-frivillighet",
+      "title": "Klubber, lag og frivillighet: organisasjonen bak aktiviteten",
+      "source_path": "data/fagverk/sport/klubber-lag-frivillighet.json",
+      "module_source_paths": [
+        "data/fagverk/sport/klubber-lag-frivillighet/01-kapittel.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 17,
+      "concept_term_count": 28,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "sport",
+      "chapter_id": "kropp-trening-prestasjon",
+      "title": "Kropp, trening og prestasjon: fra øving til belastningsstyring",
+      "source_path": "data/fagverk/sport/kropp-trening-prestasjon.json",
+      "module_source_paths": [
+        "data/fagverk/sport/kropp-trening-prestasjon/01-kapittel.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 17,
+      "concept_term_count": 28,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "sport",
+      "chapter_id": "regler-spill-konkurranse",
+      "title": "Regler, spill og konkurranse: hvordan sport blir sammenlignbar",
+      "source_path": "data/fagverk/sport/regler-spill-konkurranse.json",
+      "module_source_paths": [
+        "data/fagverk/sport/regler-spill-konkurranse/01-kapittel.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 17,
+      "concept_term_count": 28,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "sport",
+      "chapter_id": "supportere-publikum-kultur",
+      "title": "Supportere, publikum og idrettskultur: fra kampdag til kollektivt minne",
+      "source_path": "data/fagverk/sport/supportere-publikum-kultur.json",
+      "module_source_paths": [
+        "data/fagverk/sport/supportere-publikum-kultur/01-kapittel.json"
+      ],
+      "module_file_count": 1,
+      "title_term_count": 18,
+      "concept_term_count": 25,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 62,
+    "high_risk": 13,
+    "medium_risk": 42,
+    "low_risk": 7
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "aktivitet",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "aktivitet",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "over",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "praksis",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "analyseres",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "anlegg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arena",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "arenaer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "deltakelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dugnad",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "egne",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "enn",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "frafall",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "frivillighet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "fysisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "helse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "identitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "idrett",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "idrettens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "klubb",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "klubber",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "konkurranse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kostnader",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "legger",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "lek",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "lokal",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "medbestemmelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "medlemskap",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "måling",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "nifs",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "organisert",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prestasjonstall",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "publikum",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "påvirker",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regelverk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "rivalisering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "supportere-publikum-kultur",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "seleksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "klubber-lag-frivillighet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "sport",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "ulike",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "arenaer-steder-groundhopper",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "inkludering-helse-lek-samfunn",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bruke canonicale sport-metoder på konkrete idrettscase uten å blande observasjon og tolkning",
+      "token_count": 10,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "er en observerbar praksis det samme som en regel eller institusjonell målsetting?",
+      "token_count": 6,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "kan ett tall eller én hendelse forklare en større idrettslig prosess?",
+      "token_count": 7,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "koble hvert fagavsnitt til eksplisitte claims og inspiserbare eksterne kilder",
+      "token_count": 8,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "nei. kapittelet holder regel, organisering, faktisk praksis og tolkning som separate evidensnivåer.",
+      "token_count": 10,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "nei. tall og hendelser må plasseres i metode, tidsrom og kildekontekst før årsaksforklaringer trekkes.",
+      "token_count": 10,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    },
+    {
+      "term": "skille regel, institusjon, praksis, data og kulturell fortolkning der disse overlapper",
+      "token_count": 9,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kropp-trening-prestasjon",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "regler-spill-konkurranse",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "low"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

@@ -1,34 +1,1980 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "media",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "media"
+  ],
   "coverage": {
-    "declared_package_files": 8,
-    "expected_existing_package_files": 8,
-    "materialized_existing_package_files": 8,
-    "required_package_files": 4,
-    "optional_package_files": 4,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 6,
+    "registered": 6,
+    "materialized": 6,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "bd077770a8ed3d1dfaf8cbc14e6d922dee68c03ba5bcc7cf1bac867b2cc5fce6",
-    "structure_sha256": "4eb9097a813ae97f1a7c6a598f591086174010e208aee590403ed76e1fd1826b",
-    "content_sha256": "bd077770a8ed3d1dfaf8cbc14e6d922dee68c03ba5bcc7cf1bac867b2cc5fce6"
+  "chapters": [
+    {
+      "subject_id": "media",
+      "chapter_id": "kilder-kritikk-og-sannhet",
+      "title": "Kilder, kritikk og sannhet: fra påstand til offentlig fakta",
+      "source_path": "data/fagverk/media/kilder-kritikk-og-sannhet.json",
+      "module_source_paths": [
+        "data/fagverk/media/kilder-kritikk-og-sannhet/01-grunnlag.json",
+        "data/fagverk/media/kilder-kritikk-og-sannhet/02-fordypning.json",
+        "data/fagverk/media/kilder-kritikk-og-sannhet/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 45,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "media",
+      "chapter_id": "medieokonomi-eierskap-og-arbeid",
+      "title": "Medieøkonomi, eierskap og arbeid: hvem betaler for journalistikken?",
+      "source_path": "data/fagverk/media/medieokonomi-eierskap-og-arbeid.json",
+      "module_source_paths": [
+        "data/fagverk/media/medieokonomi-eierskap-og-arbeid/01-grunnlag.json",
+        "data/fagverk/media/medieokonomi-eierskap-og-arbeid/02-fordypning.json",
+        "data/fagverk/media/medieokonomi-eierskap-og-arbeid/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 48,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "media",
+      "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+      "title": "Offentlighet, ytringsfrihet og medieetikk: frihet, ansvar og tillit",
+      "source_path": "data/fagverk/media/offentlighet-ytringsfrihet-og-medieetikk.json",
+      "module_source_paths": [
+        "data/fagverk/media/offentlighet-ytringsfrihet-og-medieetikk/01-grunnlag.json",
+        "data/fagverk/media/offentlighet-ytringsfrihet-og-medieetikk/02-fordypning.json",
+        "data/fagverk/media/offentlighet-ytringsfrihet-og-medieetikk/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 50,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "media",
+      "chapter_id": "plattformer-algoritmer-og-distribusjon",
+      "title": "Plattformer, algoritmer og distribusjon: hvem styrer synligheten?",
+      "source_path": "data/fagverk/media/plattformer-algoritmer-og-distribusjon.json",
+      "module_source_paths": [
+        "data/fagverk/media/plattformer-algoritmer-og-distribusjon/01-grunnlag.json",
+        "data/fagverk/media/plattformer-algoritmer-og-distribusjon/02-fordypning.json",
+        "data/fagverk/media/plattformer-algoritmer-og-distribusjon/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 47,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "media",
+      "chapter_id": "presse-redaksjoner-og-avishus",
+      "title": "Presse, redaksjoner og avishus: hvordan nyheter blir til",
+      "source_path": "data/fagverk/media/presse-redaksjoner-og-avishus.json",
+      "module_source_paths": [
+        "data/fagverk/media/presse-redaksjoner-og-avishus/01-grunnlag.json",
+        "data/fagverk/media/presse-redaksjoner-og-avishus/02-fordypning.json",
+        "data/fagverk/media/presse-redaksjoner-og-avishus/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 52,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "media",
+      "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+      "title": "Propaganda, påvirkning og informasjonskrig: kampen om virkeligheten",
+      "source_path": "data/fagverk/media/propaganda-pavirkning-og-informasjonskrig.json",
+      "module_source_paths": [
+        "data/fagverk/media/propaganda-pavirkning-og-informasjonskrig/01-grunnlag.json",
+        "data/fagverk/media/propaganda-pavirkning-og-informasjonskrig/02-fordypning.json",
+        "data/fagverk/media/propaganda-pavirkning-og-informasjonskrig/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 16,
+      "concept_term_count": 42,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 46,
+    "high_risk": 22,
+    "medium_risk": 24,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kilde",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kilder",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "publisering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "redaksjonell",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skiller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvem",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "ansvar",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kilde",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kilder",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "offentlig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "publisering",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "redaksjonell",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "skiller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "bruk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumenter",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "følg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "får",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gjelder",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hele",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "plattformer-algoritmer-og-distribusjon",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "offentlighet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "produksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "påstand",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "redaksjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "redaksjonelle",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "presse-redaksjoner-og-avishus",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "redaktoransvar",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "redaktøransvar",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "title_terms",
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "medieokonomi-eierskap-og-arbeid",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kilder-kritikk-og-sannhet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "åpen",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "offentlighet-ytringsfrihet-og-medieetikk",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "propaganda-pavirkning-og-informasjonskrig",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

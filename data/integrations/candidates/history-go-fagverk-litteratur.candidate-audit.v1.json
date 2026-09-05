@@ -4,8 +4,8 @@
   "candidate_kind": "package_inventory",
   "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "release_sha256": "93f6ebb471e5529b7d23995123350f9be27a83a810d9eb09549815af3ce54594",
   "subject_id": "litteratur",
   "package_status": "complete",
   "chapter_status": "not_materialized",
@@ -20,9 +20,9 @@
     "missing_chapter_files": []
   },
   "digests": {
-    "package_content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
+    "package_content_sha256": "3923269647745d38f7f3292b5a4630296bcecf3c4f76e867b5021301d6e19b9a",
     "structure_sha256": "99926d393ec27754b0768624e119da7190a0d3f2dbcb11c252eff0cbc27cc442",
-    "content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607"
+    "content_sha256": "3923269647745d38f7f3292b5a4630296bcecf3c4f76e867b5021301d6e19b9a"
   },
   "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
   "approval_required": true,

@@ -2,9 +2,9 @@
   "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "registry_version": "2.19.0",
-  "registry_updated_at": "2026-08-04",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
   "subject_filter": [
     "politikk"
   ],

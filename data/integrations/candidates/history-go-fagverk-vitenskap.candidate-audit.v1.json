@@ -1,34 +1,2081 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "vitenskap",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "vitenskap"
+  ],
   "coverage": {
-    "declared_package_files": 7,
-    "expected_existing_package_files": 7,
-    "materialized_existing_package_files": 7,
-    "required_package_files": 4,
-    "optional_package_files": 3,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 5,
+    "registered": 5,
+    "materialized": 5,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e",
-    "structure_sha256": "a8862d834e23e8c3c1f0d8759acb0d3f3886c8cc40a08e90b4801b18f58eb651",
-    "content_sha256": "4657773fc809d95f24e8c33c34824f555d11e89d34578cf4739b6caf22bec31e"
+  "chapters": [
+    {
+      "subject_id": "vitenskap",
+      "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+      "title": "Fra observasjon til etterprøvbar kunnskap",
+      "source_path": "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap.json",
+      "module_source_paths": [
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/01-grunnlag.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/02-fordypning.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/03-anvendelse.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/04-metoder-maling-modeller.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/05-institusjoner-laboratorier-kunnskapssteder.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/06-samfunn-makt-etikk.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/07-teknologi-data-infrastruktur.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/08-natur-medisin-miljo.json",
+        "data/fagverk/vitenskap/vitenskap-fra-observasjon-til-etterprovbar-kunnskap/09-paradigmer-teorier-sannhet.json"
+      ],
+      "module_file_count": 9,
+      "title_term_count": 20,
+      "concept_term_count": 96,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "vitenskap",
+      "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+      "title": "Fysikk fra bevegelse til kosmos",
+      "source_path": "data/fagverk/vitenskap/vitenskap-fysikk-fra-bevegelse-til-kosmos.json",
+      "module_source_paths": [
+        "data/fagverk/vitenskap/vitenskap-fysikk-fra-bevegelse-til-kosmos/01-grunnlag.json",
+        "data/fagverk/vitenskap/vitenskap-fysikk-fra-bevegelse-til-kosmos/02-fordypning.json",
+        "data/fagverk/vitenskap/vitenskap-fysikk-fra-bevegelse-til-kosmos/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 18,
+      "concept_term_count": 44,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "vitenskap",
+      "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+      "title": "Kjemi fra atomstruktur til materialegenskap",
+      "source_path": "data/fagverk/vitenskap/vitenskap-kjemi-fra-atomstruktur-til-materialegenskap.json",
+      "module_source_paths": [
+        "data/fagverk/vitenskap/vitenskap-kjemi-fra-atomstruktur-til-materialegenskap/01-grunnlag.json",
+        "data/fagverk/vitenskap/vitenskap-kjemi-fra-atomstruktur-til-materialegenskap/02-fordypning.json",
+        "data/fagverk/vitenskap/vitenskap-kjemi-fra-atomstruktur-til-materialegenskap/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 20,
+      "concept_term_count": 43,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "vitenskap",
+      "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+      "title": "Matematisk bevis, struktur og modell",
+      "source_path": "data/fagverk/vitenskap/vitenskap-matematisk-bevis-struktur-og-modell.json",
+      "module_source_paths": [
+        "data/fagverk/vitenskap/vitenskap-matematisk-bevis-struktur-og-modell/01-grunnlag.json",
+        "data/fagverk/vitenskap/vitenskap-matematisk-bevis-struktur-og-modell/02-fordypning.json",
+        "data/fagverk/vitenskap/vitenskap-matematisk-bevis-struktur-og-modell/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 22,
+      "concept_term_count": 42,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "vitenskap",
+      "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+      "title": "Medisin fra mekanisme til folkehelse",
+      "source_path": "data/fagverk/vitenskap/vitenskap-medisin-fra-mekanisme-til-folkehelse.json",
+      "module_source_paths": [
+        "data/fagverk/vitenskap/vitenskap-medisin-fra-mekanisme-til-folkehelse/01-grunnlag.json",
+        "data/fagverk/vitenskap/vitenskap-medisin-fra-mekanisme-til-folkehelse/02-fordypning.json",
+        "data/fagverk/vitenskap/vitenskap-medisin-fra-mekanisme-til-folkehelse/03-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 50,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 43,
+    "high_risk": 26,
+    "medium_risk": 17,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modell",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forskjellige",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "instrument",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modellen",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modeller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvilken",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modell",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "alene",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "analyse",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "data",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "fordi",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "forskjellige",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "hvorfor",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "instrument",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mens",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modellen",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "modeller",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "egenskaper",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "epidemiologi",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "evidenskjeden",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "gir",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "hele",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kalibrering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "krever",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mits",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "referansedata",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "statistisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "struktur",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "synlige",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fysikk-fra-bevegelse-til-kosmos",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-kjemi-fra-atomstruktur-til-materialegenskap",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "usikkerhet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-fra-observasjon-til-etterprovbar-kunnskap",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "validering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "vitenskap-matematisk-bevis-struktur-og-modell",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "vitenskap-medisin-fra-mekanisme-til-folkehelse",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

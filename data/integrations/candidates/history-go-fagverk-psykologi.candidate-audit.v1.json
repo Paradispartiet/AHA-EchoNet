@@ -1,34 +1,2328 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "psykologi",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "fd4d36f72044aec588c87cee6ec25001d574e223",
+  "registry_version": "3.14.0",
+  "registry_updated_at": "2026-09-02",
+  "subject_filter": [
+    "psykologi"
+  ],
   "coverage": {
-    "declared_package_files": 8,
-    "expected_existing_package_files": 8,
-    "materialized_existing_package_files": 8,
-    "required_package_files": 4,
-    "optional_package_files": 4,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 6,
+    "registered": 6,
+    "materialized": 6,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "99d35a4d11d9f71defe2bcec243fbf1f76840c14b5cf204fa04be88d8d2e69ee",
-    "structure_sha256": "df892ece742a32737ccee26a0506d87f62ad9e753e37a808f4c922cc68eba1e8",
-    "content_sha256": "99d35a4d11d9f71defe2bcec243fbf1f76840c14b5cf204fa04be88d8d2e69ee"
+  "chapters": [
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "fagtradisjoner-teori-og-sinnet",
+      "title": "Fagtradisjoner, teori og forståelsen av sinnet",
+      "source_path": "data/fagverk/psykologi/fagtradisjoner-teori-og-sinnet.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/fagtradisjoner-teori-og-sinnet/01-fag-som-vitenskap.json",
+        "data/fagverk/psykologi/fagtradisjoner-teori-og-sinnet/02-fagtradisjoner.json",
+        "data/fagverk/psykologi/fagtradisjoner-teori-og-sinnet/03-sinn-hjerne-og-person.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 15,
+      "concept_term_count": 54,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "kognisjon-folelser-og-atferd",
+      "title": "Kognisjon, følelser og atferd",
+      "source_path": "data/fagverk/psykologi/kognisjon-folelser-og-atferd.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/kognisjon-folelser-og-atferd/01-persepsjon-oppmerksomhet-og-tenkning.json",
+        "data/fagverk/psykologi/kognisjon-folelser-og-atferd/02-valg-bias-og-hverdagsatferd.json",
+        "data/fagverk/psykologi/kognisjon-folelser-og-atferd/03-folelser-regulering-og-stress.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 10,
+      "concept_term_count": 56,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+      "title": "Psykisk helse, institusjoner og behandling",
+      "source_path": "data/fagverk/psykologi/psykisk-helse-institusjoner-og-behandling.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/psykisk-helse-institusjoner-og-behandling/01-grunnlag.json",
+        "data/fagverk/psykologi/psykisk-helse-institusjoner-og-behandling/02-rettigheter-og-praksis.json",
+        "data/fagverk/psykologi/psykisk-helse-institusjoner-og-behandling/03-institusjon-sted-og-krise.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 13,
+      "concept_term_count": 30,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+      "title": "Sosialpsykologi, normalitet og stigma",
+      "source_path": "data/fagverk/psykologi/sosialpsykologi-normalitet-og-stigma.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/sosialpsykologi-normalitet-og-stigma/01-grupper-roller-og-pavirkning.json",
+        "data/fagverk/psykologi/sosialpsykologi-normalitet-og-stigma/02-kategorier-normalitet-og-diagnose.json",
+        "data/fagverk/psykologi/sosialpsykologi-normalitet-og-stigma/03-stigma-offentlighet-og-tilhorighet.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 11,
+      "concept_term_count": 56,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "traume-krise-resiliens-og-omsorg",
+      "title": "Traume, krise, resiliens og omsorg",
+      "source_path": "data/fagverk/psykologi/traume-krise-resiliens-og-omsorg.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/traume-krise-resiliens-og-omsorg/01-traume-vold-og-trygghet.json",
+        "data/fagverk/psykologi/traume-krise-resiliens-og-omsorg/02-sorg-krise-og-omsorg.json",
+        "data/fagverk/psykologi/traume-krise-resiliens-og-omsorg/03-risiko-resiliens-og-anvendelse.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 17,
+      "concept_term_count": 50,
+      "support_term_count": 48
+    },
+    {
+      "subject_id": "psykologi",
+      "chapter_id": "utvikling-oppvekst-og-laring",
+      "title": "Utvikling, oppvekst og læring",
+      "source_path": "data/fagverk/psykologi/utvikling-oppvekst-og-laring.json",
+      "module_source_paths": [
+        "data/fagverk/psykologi/utvikling-oppvekst-og-laring/01-tidlig-utvikling-og-relasjoner.json",
+        "data/fagverk/psykologi/utvikling-oppvekst-og-laring/02-laring-skole-og-motivasjon.json",
+        "data/fagverk/psykologi/utvikling-oppvekst-og-laring/03-ungdom-identitet-og-livslop.json"
+      ],
+      "module_file_count": 3,
+      "title_term_count": 12,
+      "concept_term_count": 57,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 53,
+    "high_risk": 26,
+    "medium_risk": 27,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "atferd",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "diagnose",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "history",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontekst",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mennesker",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "støtte",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    }
+  ],
+  "term_collisions": [
+    {
+      "term": "beskriver",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "derfor",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "men",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "viser",
+      "token_count": 1,
+      "chapter_count": 6,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bare",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "faktisk",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "før",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "uten",
+      "token_count": 1,
+      "chapter_count": 5,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "brukes",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "bør",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "både",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samme",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "sosial",
+      "token_count": 1,
+      "chapter_count": 4,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "andre",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "atferd",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "diagnose",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "flere",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "gjør",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "history",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "kontekst",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mennesker",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "mål",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "når",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "samtidig",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "støtte",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "være",
+      "token_count": 1,
+      "chapter_count": 3,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "high"
+    },
+    {
+      "term": "automatisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "belastning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "dokumentert",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "effekten",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "erfaring",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "forskning",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "følelse",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "historisk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "identitet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "title_terms",
+            "concept_terms",
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "individuell",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "informasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kognitiv",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "title_terms",
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "kontroll",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "mer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "motivasjon",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "omsorg",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "title_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "prosesser",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "påvirker",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "regulering",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "kognisjon-folelser-og-atferd",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "risikofaktor",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "concept_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "concept_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "skill",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "språk",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "fagtradisjoner-teori-og-sinnet",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tid",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilgang",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tilhørighet",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "title_terms"
+          ]
+        },
+        {
+          "chapter_id": "utvikling-oppvekst-og-laring",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "tjenester",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "psykisk-helse-institusjoner-og-behandling",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    },
+    {
+      "term": "varierer",
+      "token_count": 1,
+      "chapter_count": 2,
+      "chapters": [
+        {
+          "chapter_id": "sosialpsykologi-normalitet-og-stigma",
+          "groups": [
+            "support_terms"
+          ]
+        },
+        {
+          "chapter_id": "traume-krise-resiliens-og-omsorg",
+          "groups": [
+            "support_terms"
+          ]
+        }
+      ],
+      "risk": "medium"
+    }
+  ],
+  "activation_recommendation": "review_required_before_runtime_activation",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }
