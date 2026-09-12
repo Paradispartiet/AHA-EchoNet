@@ -74,7 +74,7 @@ jobs:
             --advanced-diagnostic-consent "No" \
             --problem-classification "$problem_classification" \
             --severity "minimal" \
-            --acquire-policy-token true \
+            --acquire-policy-token \
             --only-show-errors -o json > "$response"
 
           ticket_id="$(jq -r '.properties.supportTicketId // empty' "$response")"
