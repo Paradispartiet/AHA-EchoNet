@@ -1,0 +1,149 @@
+name: AHA Azure billing support request
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/aha-azure-billing-support-g183505786.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  open-billing-support-request:
+    name: Open Azure billing support request for G183505786
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: aha-canonical-production-infra
+
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    steps:
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Register Microsoft.Support provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          az provider register --namespace Microsoft.Support --wait --only-show-errors
+
+      - name: Discover current Billing service and problem classification
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+          services="$RUNNER_TEMP/support-services.json"
+          classifications="$RUNNER_TEMP/support-classifications.json"
+
+          az rest             --method get             --url "https://management.azure.com/providers/Microsoft.Support/services?api-version=2024-04-01"             > "$services"
+
+          billing_id="$(jq -r '.value[] | select((.properties.displayName // "" | ascii_downcase) == "billing") | .id' "$services" | head -n1)"
+          if [[ -z "$billing_id" || "$billing_id" == "null" ]]; then
+            echo "Could not discover Microsoft.Support Billing service." >&2
+            exit 1
+          fi
+
+          billing_name="${billing_id##*/}"
+          az rest             --method get             --url "https://management.azure.com/providers/Microsoft.Support/services/${billing_name}/problemClassifications?api-version=2024-04-01"             > "$classifications"
+
+          problem_id="$(jq -r '
+            [
+              .value[]
+              | select((.properties.displayName // "") | test("invoice|charge|billing|usage|unexpected"; "i"))
+              | .id
+            ][0] // empty
+          ' "$classifications")"
+
+          if [[ -z "$problem_id" ]]; then
+            problem_id="$(jq -r '.value[0].id // empty' "$classifications")"
+          fi
+
+          if [[ -z "$problem_id" ]]; then
+            echo "Could not discover a Billing problem classification." >&2
+            exit 1
+          fi
+
+          echo "billing_id=$billing_id" >> "$GITHUB_OUTPUT"
+          echo "problem_id=$problem_id" >> "$GITHUB_OUTPUT"
+
+          echo "Billing service: $billing_id"
+          jq -r --arg id "$problem_id" '.value[] | select(.id == $id) | "Problem classification: " + (.properties.displayName // .name)' "$classifications"
+
+      - name: Create billing support request once
+        id: ticket
+        shell: bash
+        env:
+          BILLING_SERVICE_ID: ${{ steps.classify.outputs.billing_id }}
+          PROBLEM_CLASSIFICATION_ID: ${{ steps.classify.outputs.problem_id }}
+        run: |
+          set -euo pipefail
+
+          title="Unexpected Azure invoice G183505786 - AHA production pilot"
+          ticket_name="aha-unexpected-invoice-g183505786"
+          tickets="$RUNNER_TEMP/existing-support-tickets.json"
+
+          az rest             --method get             --url "https://management.azure.com/subscriptions/$AZURE_SUBSCRIPTION_ID/providers/Microsoft.Support/supportTickets?api-version=2024-04-01"             > "$tickets"
+
+          existing_id="$(jq -r --arg title "$title" '.value[] | select(.properties.title == $title) | .properties.supportTicketId // empty' "$tickets" | head -n1)"
+          if [[ -n "$existing_id" ]]; then
+            echo "Support request already exists: $existing_id"
+            echo "ticket_id=$existing_id" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          body="$RUNNER_TEMP/billing-support-request.json"
+          jq -n             --arg title "$title"             --arg serviceId "$BILLING_SERVICE_ID"             --arg problemClassificationId "$PROBLEM_CLASSIFICATION_ID"             '{
+              properties: {
+                title: $title,
+                description: ("I received Microsoft Azure invoice G183505786 for NOK 920.44 including VAT, covering the billing period August 17-31, 2026. The invoice is dominated by Azure database charges (NOK 681.31 before VAT), with smaller Compute, Networking and Security charges. The charges came from an AHA/EchoNet development and bounded production-pilot environment that provisioned a dedicated Azure Database for PostgreSQL Flexible Server and supporting Azure resources. I did not intend this short pilot to create an ongoing monthly cost at this level. On September 12, 2026 I initiated an emergency reversible cost hold: PostgreSQL is being stopped, Container Apps are being scaled to zero, and the Container Registry is being downgraded to Basic; an automated guard will keep paid compute stopped if PostgreSQL auto-starts. The invoice payment attempts have been declined and the invoice remains unpaid. Please review invoice G183505786 and the underlying resource usage, confirm that the cost-generating resources are no longer accruing material compute charges, and consider a one-time goodwill credit/refund/waiver for this first unexpected pilot invoice. Please also advise if any remaining Azure resource must be deleted rather than stopped to prevent further charges. The resource group is rg-aha-canonical-prod."),
+                advancedDiagnosticConsent: "No",
+                contactDetails: {
+                  country: "NOR",
+                  firstName: "Mats",
+                  lastName: "Gran",
+                  preferredContactMethod: "email",
+                  preferredSupportLanguage: "en-US",
+                  preferredTimeZone: "W. Europe Standard Time",
+                  primaryEmailAddress: "paradispartiet@gmail.com"
+                },
+                problemClassificationId: $problemClassificationId,
+                serviceId: $serviceId,
+                severity: "minimal"
+              }
+            }' > "$body"
+
+          response="$RUNNER_TEMP/billing-support-response.json"
+          az rest             --method put             --url "https://management.azure.com/subscriptions/$AZURE_SUBSCRIPTION_ID/providers/Microsoft.Support/supportTickets/$ticket_name?api-version=2024-04-01"             --headers "Content-Type=application/json"             --body "@$body"             > "$response"
+
+          ticket_id="$(jq -r '.properties.supportTicketId // empty' "$response")"
+          status="$(jq -r '.properties.status // empty' "$response")"
+
+          if [[ -z "$ticket_id" ]]; then
+            echo "Microsoft.Support did not return a supportTicketId." >&2
+            jq '{name, properties: {title: .properties.title, status: .properties.status, serviceDisplayName: .properties.serviceDisplayName, problemClassificationDisplayName: .properties.problemClassificationDisplayName}}' "$response" >&2
+            exit 1
+          fi
+
+          echo "ticket_id=$ticket_id" >> "$GITHUB_OUTPUT"
+          echo "Azure billing support request created: $ticket_id ($status)"
+
+          {
+            echo "### Azure billing support request"
+            echo ""
+            echo "- Invoice: **G183505786**"
+            echo "- Amount: **NOK 920.44**"
+            echo "- Support ticket: **$ticket_id**"
+            echo "- Status: **$status**"
+            echo "- Request: review charges and consider one-time goodwill credit/refund/waiver after emergency cost stop"
+          } >> "$GITHUB_STEP_SUMMARY"
