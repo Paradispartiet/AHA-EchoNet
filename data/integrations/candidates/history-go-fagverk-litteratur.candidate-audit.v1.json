@@ -1,34 +1,48 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_audit_v1",
+  "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate_audit",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "litteratur",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
+  "source_ref": "2d0684a89e3a54a4298d8b4890d9fa12839de84d",
+  "registry_version": "3.15.0",
+  "registry_updated_at": "2026-09-11",
+  "subject_filter": [
+    "litteratur"
+  ],
   "coverage": {
-    "declared_package_files": 13,
-    "expected_existing_package_files": 13,
-    "materialized_existing_package_files": 13,
-    "required_package_files": 4,
-    "optional_package_files": 9,
-    "optional_gaps": [],
-    "missing_required_files": [],
-    "missing_chapter_files": []
+    "expected": 1,
+    "registered": 1,
+    "materialized": 1,
+    "missing": [],
+    "unexpected": [],
+    "duplicate_chapter_ids": []
   },
-  "digests": {
-    "package_content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
-    "structure_sha256": "99926d393ec27754b0768624e119da7190a0d3f2dbcb11c252eff0cbc27cc442",
-    "content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607"
+  "chapters": [
+    {
+      "subject_id": "litteratur",
+      "chapter_id": "lesekultur_bokdeling_offentlighet",
+      "title": "Lesekultur, bokdeling og offentlighet",
+      "source_path": "data/fagverk/litteratur/lesekultur_bokdeling_offentlighet.json",
+      "module_source_paths": [],
+      "module_file_count": 0,
+      "title_term_count": 9,
+      "concept_term_count": 35,
+      "support_term_count": 48
+    }
+  ],
+  "term_collision_summary": {
+    "total": 0,
+    "high_risk": 0,
+    "medium_risk": 0,
+    "low_risk": 0
   },
-  "activation_recommendation": "subject_specific_review_gates_required_before_runtime_activation",
-  "approval_required": true,
-  "runtime_activation_allowed": false,
+  "high_risk_terms": [],
+  "term_collisions": [],
+  "activation_recommendation": "coverage_gate_passed_review_still_required",
   "gate": {
     "passed": true,
     "errors": []
-  }
+  },
+  "lifecycle_stage": "imported_review_candidate_audit",
+  "approval_required": true,
+  "runtime_activation_allowed": false
 }

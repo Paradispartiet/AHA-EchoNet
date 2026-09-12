@@ -1,147 +1,128 @@
 {
-  "schema": "aha_history_go_fagverk_package_candidate_v1",
-  "version": "1.0.0",
-  "candidate_kind": "package_inventory",
-  "lifecycle_stage": "imported_review_candidate",
-  "status": "generated_package_review_candidate",
+  "schema": "aha_history_go_fagverk_corpus_v1",
+  "version": "1.1.0",
+  "status": "generated_subject_audit_corpus",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "release_sha256": "387dca2da02c5062738d7a0e7a97ab1fe7ec0c2d95be85aacaaa9bd0f3a011ed",
-  "subject_id": "litteratur",
-  "title": "litteratur",
-  "kind": "subject",
-  "parent_subject_id": null,
-  "schema_family": "standard_canonical",
-  "package_status": "complete",
-  "chapter_status": "not_materialized",
-  "package_file_count": 13,
-  "existing_package_file_count": 13,
-  "required_package_file_count": 4,
-  "optional_package_file_count": 9,
-  "referenced_file_count": 13,
-  "package_content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
-  "structure_sha256": "99926d393ec27754b0768624e119da7190a0d3f2dbcb11c252eff0cbc27cc442",
-  "content_sha256": "e343d0fc163adaae3eecf78aac9fb43bdfbd5cc1dcb955c3b114e90b027d0607",
-  "package_files": [
+  "source_ref": "2d0684a89e3a54a4298d8b4890d9fa12839de84d",
+  "registry_version": "3.15.0",
+  "subject_filter": "litteratur",
+  "content_sha256": "76018ede553a58cd430dd9af7b7af3faf8fe34ca9922886e6b7a1e800827f5b6",
+  "generation_mode": "deterministic_registry_build",
+  "entries": [
     {
-      "path": "data/fag/litteratur/emnemapping_litteratur_canonical_v4_5.json",
-      "required": false,
-      "fields": [
-        "emneMappings"
+      "subject_id": "litteratur",
+      "chapter_id": "lesekultur_bokdeling_offentlighet",
+      "primary_domain_id": "sted_leser_offentlighet",
+      "title": "Lesekultur, bokdeling og offentlighet",
+      "source_path": "data/fagverk/litteratur/lesekultur_bokdeling_offentlighet.json",
+      "module_source_paths": [],
+      "title_terms": [
+        "bokdeling",
+        "byen",
+        "bøker",
+        "flytter",
+        "lesekultur",
+        "lesekultur, bokdeling og offentlighet",
+        "når",
+        "når bøker flytter ut i byen",
+        "offentlighet"
       ],
-      "exists": true,
-      "content_sha256": "488c0abb5028f49d9f0dd234a4d4e0ced5cb6ec17eca23fa9f04b4d8e458448b"
-    },
-    {
-      "path": "data/fag/litteratur/emner_litteratur_canonical_v4_5.json",
-      "required": true,
-      "fields": [
-        "emner"
+      "concept_terms": [
+        "alle røde telefonkiosker er lesekiosker.",
+        "alle steder med gratis bøker er biblioteker.",
+        "analysere hvordan fysisk tilgjengelighet påvirker møter mellom lesere og bøker",
+        "arenaer og relasjoner der litteratur blir publisert, distribuert, lest, vurdert og diskutert.",
+        "bare kiosker som faktisk er omgjort til og dokumentert som bokdelingssteder skal klassifiseres slik.",
+        "beholdningen alene dokumenterer ikke bruk, omløpshastighet eller lesing.",
+        "bibliotek er institusjoner med egen samlings- og tjenesteforvaltning; fri bokdeling kan organiseres på andre måter.",
+        "boka forstått som fysisk gjenstand med format, papir, slitasje, eierskap og sirkulasjon.",
+        "bokas materialitet",
+        "bokas-materialitet",
+        "bokdeling",
+        "er en åpen bokhylle det samme som et bibliotek?",
+        "forklare forskjellen mellom bibliotekutlån, bokbytte og fri bokdeling",
+        "forstå bokas sirkulasjon som en del av litteraturens offentlighet",
+        "forteller antall bøker i en kiosk alene hvor mye den blir lest?",
+        "hvis en kiosk har mange bøker, blir den mye brukt.",
+        "lesekultur",
+        "lesere offentlighet formidling",
+        "litteraer-offentlighet",
+        "litteraere steder og bytekst",
+        "litteraturfelt institusjoner",
+        "litterær offentlighet",
+        "møte med en bok eller tekst uten at brukeren på forhånd søkte etter akkurat den.",
+        "må litterær offentlighet foregå i en litteraturinstitusjon?",
+        "nei. det viser beholdning på et tidspunkt, ikke nødvendigvis utlån, lesing eller videre sirkulasjon.",
+        "nei. litteratur kan sirkulere og diskuteres i mange typer offentlige og halv-offentlige rom.",
+        "ordning der bøker overføres mellom brukere gjennom innlevering, bytte eller fri overtakelse.",
+        "praktiske, økonomiske, fysiske og sosiale vilkår for å kunne bruke et litterært tilbud.",
+        "skille dokumentert stedshistorie fra generelle påstander om lesing",
+        "sosiale praksiser, vaner, institusjoner og forestillinger knyttet til lesing og tekster.",
+        "tilfeldig oppdagelse",
+        "tilfeldig-oppdagelse",
+        "tilgang",
+        "undersøke hvordan små litteratursteder kan kobles til større institusjoner og nærmiljø",
+        "vurdere hvordan gjenbruk av bøker kan forlenge både fysisk og kulturell levetid"
       ],
-      "exists": true,
-      "content_sha256": "d108509e92db95d25690fc7dbfa0e8d6d74bf193d6cd45d1179f2374de7c3f85"
-    },
-    {
-      "path": "data/fag/litteratur/fagkart_litteratur_canonical_v4_5.json",
-      "required": true,
-      "fields": [
-        "fagkart"
+      "support_terms": [
+        "bøker",
+        "fysisk",
+        "når",
+        "ordningen",
+        "stedet",
+        "tilgang",
+        "uten",
+        "bokdeling",
+        "gjør",
+        "hvem",
+        "litteratur",
+        "litterær",
+        "plassering",
+        "sirkulasjon",
+        "analyseres",
+        "andre",
+        "bibliotek",
+        "bok",
+        "del",
+        "dokumenteres",
+        "finnes",
+        "historie",
+        "kilder",
+        "objekt",
+        "offentlighet",
+        "ombruk",
+        "påvirker",
+        "samme",
+        "synlig",
+        "boka",
+        "bør",
+        "enn",
+        "faktisk",
+        "flere",
+        "fysiske",
+        "kiosken",
+        "lesekultur",
+        "men",
+        "prosjektets",
+        "står",
+        "videre",
+        "adresser",
+        "akkurat",
+        "alene",
+        "anta",
+        "automatisk",
+        "beholdes",
+        "beskriv"
       ],
-      "exists": true,
-      "content_sha256": "b5e547049912c38e34b1ed91209de29b385f0bc9265cbe4aa830b517363679e3"
-    },
-    {
-      "path": "data/fag/litteratur/litteraturpensum_canonical_v4_5.json",
-      "required": true,
-      "fields": [
-        "pensum"
-      ],
-      "exists": true,
-      "content_sha256": "9089ab6530e88e67b122843528209fbf4f8d712dda97d80f8534f1a130a85d6f"
-    },
-    {
-      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/coverage_contract_v1.json",
-      "required": false,
-      "fields": [
-        "coverageContract"
-      ],
-      "exists": true,
-      "content_sha256": "be7b7a742eae8a06d580bbde2288f5d6248a9913629b98786661bc9d34da5668"
-    },
-    {
-      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/index.json",
-      "required": false,
-      "fields": [
-        "scientificPackage"
-      ],
-      "exists": true,
-      "content_sha256": "3d2c7320ff7958f54e3c7489a4e22cedff8a81f5ea13f6497913c599231be98e"
-    },
-    {
-      "path": "data/fag/litteratur/litteraturvitenskap_canonical_v1/topic_foundations_v1.json",
-      "required": false,
-      "fields": [
-        "topicFoundations"
-      ],
-      "exists": true,
-      "content_sha256": "b4f6e4a4d93e6c09f771ed882280796be31f066038b4723752f03f3eb36ee28e"
-    },
-    {
-      "path": "data/fag/litteratur/methods_litteratur_canonical_v4_5.json",
-      "required": true,
-      "fields": [
-        "methods"
-      ],
-      "exists": true,
-      "content_sha256": "e9f57ff2c9e4a03fdb084b1132806565af483348b22a0aaa95affb4e98cac300"
-    },
-    {
-      "path": "data/fag/litteratur/supersetQUIZMAL_litteratur.json",
-      "required": false,
-      "fields": [
-        "supersetQuizMal"
-      ],
-      "exists": true,
-      "content_sha256": "6f02fcd363bbacd3b16ff26ac23229798ad07a574f173ba112e13b532085c6b0"
-    },
-    {
-      "path": "data/quiz/litteratur/litteratur_subject_pathways_v1.json",
-      "required": false,
-      "fields": [
-        "subjectPathwayPackage"
-      ],
-      "exists": true,
-      "content_sha256": "c7d49e027681ccbb641ca51e62794bf7240bf5ad45e5e4919386f912a3117707"
-    },
-    {
-      "path": "data/quiz/regler/QUIZ_PRODUCTION_CANONICAL.md",
-      "required": false,
-      "fields": [
-        "quizStandard"
-      ],
-      "exists": true,
-      "content_sha256": "98b23395fb461f7a7cf4920774551902060facc20d9013e5fe4d3e8327aceb33"
-    },
-    {
-      "path": "data/quiz/regler/QUIZ_QUESTION_SCHEMA_V2.json",
-      "required": false,
-      "fields": [
-        "quizQuestionSchema"
-      ],
-      "exists": true,
-      "content_sha256": "f16c375238d416b175a744c9f0e36b621cd3b0a92686f30a111a15b72c836c46"
-    },
-    {
-      "path": "data/quiz/regler/QUIZ_SUBJECT_PATHWAY_PACKAGE_SCHEMA_V1.json",
-      "required": false,
-      "fields": [
-        "subjectPathwaySchema"
-      ],
-      "exists": true,
-      "content_sha256": "f19ed931d5a47c3969551cf58d9895049a399aff71dc397a3ea63ac76e31d2c5"
+      "provenance": {
+        "chapter_schema": "history_go_fagverk_chapter_v1",
+        "review_status": "unknown",
+        "source_kind": "canonical_fagverk_chapter",
+        "module_file_count": 0
+      }
     }
   ],
-  "optional_gaps": [],
+  "lifecycle_stage": "imported_review_candidate",
   "approval_required": true,
   "runtime_activation_allowed": false
 }

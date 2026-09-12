@@ -2,9 +2,9 @@
   "schema": "aha_fagverk_corpus_audit_v1",
   "version": "1.0.0",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "registry_version": "2.58.0",
-  "registry_updated_at": "2026-08-10",
+  "source_ref": "2d0684a89e3a54a4298d8b4890d9fa12839de84d",
+  "registry_version": "3.15.0",
+  "registry_updated_at": "2026-09-11",
   "subject_filter": [
     "by"
   ],
@@ -74,7 +74,7 @@
       ],
       "module_file_count": 3,
       "title_term_count": 23,
-      "concept_term_count": 37,
+      "concept_term_count": 39,
       "support_term_count": 48
     },
     {
