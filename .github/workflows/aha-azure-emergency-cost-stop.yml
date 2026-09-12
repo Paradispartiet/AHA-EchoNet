@@ -1,0 +1,164 @@
+name: AHA Azure emergency cost stop
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/aha-azure-emergency-cost-stop.yml
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aha-azure-emergency-cost-stop
+  cancel-in-progress: false
+
+jobs:
+  cost-stop:
+    name: Keep paid AHA Azure compute stopped
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: aha-canonical-production-infra
+
+    env:
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+
+    steps:
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Verify production resource group exists
+        id: rg
+        shell: bash
+        run: |
+          set -euo pipefail
+          exists="$(az group exists --name "$AHA_PRODUCTION_RESOURCE_GROUP")"
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+          if [[ "$exists" != "true" ]]; then
+            echo "AHA production resource group is already absent; no Azure compute can accrue there."
+          fi
+
+      - name: Stop all PostgreSQL Flexible Servers in AHA production
+        if: steps.rg.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t servers < <(az postgres flexible-server list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].name" -o tsv)
+
+          if [[ ${#servers[@]} -eq 0 ]]; then
+            echo "No PostgreSQL Flexible Servers found."
+            exit 0
+          fi
+
+          for server in "${servers[@]}"; do
+            state="$(az postgres flexible-server show               --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"               --name "$server"               --query state -o tsv)"
+            echo "PostgreSQL $server initial state: $state"
+
+            if [[ "$state" != "Stopped" ]]; then
+              az postgres flexible-server stop                 --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"                 --name "$server"                 --only-show-errors
+            fi
+
+            for attempt in {1..30}; do
+              state="$(az postgres flexible-server show                 --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"                 --name "$server"                 --query state -o tsv)"
+              if [[ "$state" == "Stopped" ]]; then
+                echo "PostgreSQL $server: STOPPED"
+                break
+              fi
+              if [[ "$attempt" == 30 ]]; then
+                echo "PostgreSQL $server did not reach Stopped state." >&2
+                exit 1
+              fi
+              sleep 10
+            done
+          done
+
+      - name: Scale all production Container Apps to zero
+        if: steps.rg.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t apps < <(az containerapp list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].name" -o tsv)
+
+          if [[ ${#apps[@]} -eq 0 ]]; then
+            echo "No Container Apps found."
+            exit 0
+          fi
+
+          for app in "${apps[@]}"; do
+            az containerapp update               --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"               --name "$app"               --min-replicas 0               --only-show-errors >/dev/null
+            min="$(az containerapp show               --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"               --name "$app"               --query properties.template.scale.minReplicas -o tsv)"
+            if [[ "$min" != "0" ]]; then
+              echo "Container App $app still has minReplicas=$min" >&2
+              exit 1
+            fi
+            echo "Container App $app: minReplicas=0"
+          done
+
+      - name: Downgrade production Azure Container Registry to Basic
+        if: steps.rg.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t registries < <(az acr list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].name" -o tsv)
+
+          for registry in "${registries[@]}"; do
+            sku="$(az acr show --name "$registry" --query sku.name -o tsv)"
+            echo "ACR $registry initial SKU: $sku"
+            if [[ "$sku" != "Basic" ]]; then
+              az acr update --name "$registry" --sku Basic --only-show-errors >/dev/null
+            fi
+            sku="$(az acr show --name "$registry" --query sku.name -o tsv)"
+            if [[ "$sku" != "Basic" ]]; then
+              echo "ACR $registry did not downgrade to Basic." >&2
+              exit 1
+            fi
+            echo "ACR $registry: Basic"
+          done
+
+      - name: Final cost-stop verification
+        if: steps.rg.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "### AHA Azure emergency cost stop" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Resource group:** `$AHA_PRODUCTION_RESOURCE_GROUP`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "#### PostgreSQL" >> "$GITHUB_STEP_SUMMARY"
+          az postgres flexible-server list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].{name:name,state:state,sku:sku.name,tier:sku.tier}"             -o table >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "#### Container Apps" >> "$GITHUB_STEP_SUMMARY"
+          az containerapp list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].{name:name,minReplicas:properties.template.scale.minReplicas,maxReplicas:properties.template.scale.maxReplicas}"             -o table >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "#### Container Registries" >> "$GITHUB_STEP_SUMMARY"
+          az acr list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[].{name:name,sku:sku.name}"             -o table >> "$GITHUB_STEP_SUMMARY"
+
+          running_db="$(az postgres flexible-server list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[?state!='Stopped'].name | length(@)" -o tsv)"
+          nonzero_apps="$(az containerapp list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[?properties.template.scale.minReplicas!=\`0\`].name | length(@)" -o tsv)"
+          nonbasic_acr="$(az acr list             --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP"             --query "[?sku.name!='Basic'].name | length(@)" -o tsv)"
+
+          if [[ "$running_db" != "0" || "$nonzero_apps" != "0" || "$nonbasic_acr" != "0" ]]; then
+            echo "Cost-stop verification failed: running_db=$running_db nonzero_apps=$nonzero_apps nonbasic_acr=$nonbasic_acr" >&2
+            exit 1
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cost-heavy AHA Azure compute is stopped. The scheduled run re-applies this hold if Azure auto-starts PostgreSQL." >> "$GITHUB_STEP_SUMMARY"
