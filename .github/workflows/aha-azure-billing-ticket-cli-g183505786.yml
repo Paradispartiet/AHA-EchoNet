@@ -1,0 +1,123 @@
+name: AHA Azure billing ticket CLI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/aha-azure-billing-ticket-cli-g183505786.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  create-billing-ticket:
+    name: Create Azure billing ticket G183505786 via CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: aha-canonical-production-infra
+
+    steps:
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install current Azure Support CLI extension
+        shell: bash
+        run: |
+          set -euo pipefail
+          az extension add --name support --upgrade --only-show-errors
+
+      - name: Discover Billing problem classification
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+          services="$RUNNER_TEMP/services.json"
+          classifications="$RUNNER_TEMP/classifications.json"
+
+          az support services list --only-show-errors -o json > "$services"
+          service_name="$(jq -r '.[] | select((.properties.displayName // "" | ascii_downcase) == "billing") | .name' "$services" | head -n1)"
+          if [[ -z "$service_name" || "$service_name" == "null" ]]; then
+            echo "Billing service not found." >&2
+            exit 1
+          fi
+
+          az support services problem-classifications list \
+            --service-name "$service_name" \
+            --only-show-errors -o json > "$classifications"
+
+          problem_id="$(jq -r '
+            [
+              .[]
+              | select((.properties.displayName // "") | test("invoice|bill|charge|discrep"; "i"))
+              | .id
+            ][0] // empty
+          ' "$classifications")"
+
+          if [[ -z "$problem_id" ]]; then
+            echo "Billing invoice problem classification not found." >&2
+            exit 1
+          fi
+
+          echo "problem_id=$problem_id" >> "$GITHUB_OUTPUT"
+          jq -r --arg id "$problem_id" '.[] | select(.id == $id) | "Selected: " + (.properties.displayName // .name)' "$classifications"
+
+      - name: Create or reuse billing ticket
+        shell: bash
+        env:
+          PROBLEM_CLASSIFICATION_ID: ${{ steps.classify.outputs.problem_id }}
+        run: |
+          set -euo pipefail
+
+          ticket_name="aha-billing-g183505786"
+          title="Unexpected Azure invoice G183505786 - AHA production pilot"
+          description="Invoice G183505786 is NOK 920.44 including VAT for August 17-31, 2026. NOK 681.31 before VAT is Azure database usage, with smaller Compute, Networking and Security charges. The cost came from an AHA/EchoNet development and bounded production-pilot environment. On September 12, 2026 we stopped the PostgreSQL Flexible Server, scaled the production Container App to zero, downgraded ACR to Basic, and installed a recurring cost hold. The invoice is unpaid because the card attempts were declined. Please review the charges, confirm remaining cost exposure, and consider a one-time goodwill credit, waiver, or refund for this first unexpected pilot invoice. Please also advise whether any remaining stopped resources must be deleted to prevent material future charges."
+
+          existing="$(az support no-subscription tickets list --only-show-errors -o json 2>/dev/null || echo '[]')"
+          existing_id="$(jq -r --arg title "$title" '.[] | select(.properties.title == $title) | .properties.supportTicketId // empty' <<<"$existing" | head -n1)"
+          if [[ -n "$existing_id" ]]; then
+            echo "Azure billing support ticket already exists: $existing_id"
+            exit 0
+          fi
+
+          response="$RUNNER_TEMP/support-ticket.json"
+          az support no-subscription tickets create \
+            --ticket-name "$ticket_name" \
+            --title "$title" \
+            --contact-country "NOR" \
+            --contact-email "paradispartiet@gmail.com" \
+            --contact-first-name "Mats" \
+            --contact-last-name "Gran" \
+            --contact-language "en-us" \
+            --contact-method "email" \
+            --contact-timezone "W. Europe Standard Time" \
+            --description "$description" \
+            --advanced-diagnostic-consent "No" \
+            --problem-classification "$PROBLEM_CLASSIFICATION_ID" \
+            --severity "minimal" \
+            --only-show-errors -o json > "$response"
+
+          ticket_id="$(jq -r '.properties.supportTicketId // empty' "$response")"
+          status="$(jq -r '.properties.status // empty' "$response")"
+
+          if [[ -z "$ticket_id" ]]; then
+            echo "Azure Support CLI did not return a ticket ID." >&2
+            jq '{name, id, properties: {title: .properties.title, status: .properties.status, supportPlanType: .properties.supportPlanType}}' "$response" >&2 || true
+            exit 1
+          fi
+
+          echo "Azure billing support ticket: $ticket_id ($status)"
+          {
+            echo "### Azure billing support ticket"
+            echo ""
+            echo "- Invoice: **G183505786**"
+            echo "- Amount: **NOK 920.44**"
+            echo "- Ticket: **$ticket_id**"
+            echo "- Status: **$status**"
+          } >> "$GITHUB_STEP_SUMMARY"
