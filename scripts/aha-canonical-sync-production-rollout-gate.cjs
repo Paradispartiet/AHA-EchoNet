@@ -52,8 +52,8 @@ function contract() {
   if (!fs.existsSync(POLICY_PATH)) fail("production rollout policy is missing");
   const policy = readJson(POLICY_PATH);
   if (policy.version !== "aha_canonical_sync_production_rollout_v1") fail("unexpected production rollout policy version");
-  if (policy.productionActivationEnabled !== true || policy.activation?.enabled !== true) fail("production policy must reflect the active bounded manual pilot");
-  if (policy.status !== "active_bounded_manual_pilot") fail("rollout policy must reflect the active bounded manual pilot");
+  if (policy.productionActivationEnabled !== false || policy.activation?.enabled !== false) fail("production activation must remain disabled during the egress cost hold");
+  if (policy.status !== "cost_hold_remote_disabled") fail("rollout policy must reflect the remote egress cost hold");
 
   if (policy.hosting?.target !== "azure_container_apps") fail("ADR-006 requires Azure Container Apps as the production hosting target");
   if (policy.hosting?.renderProductionAllowed !== false) fail("Render must remain staging-only for canonical sync");
