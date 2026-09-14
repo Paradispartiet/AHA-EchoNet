@@ -7,7 +7,7 @@
   const VERSION = "aha_canonical_sync_production_pilot_bridge_v1";
   const QUERY_GATE = "ahaCanonicalProductionPilot";
   const QUERY_VALUE = "1";
-  const CONFIRMATION_PHRASE = "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC";
+  const CONFIRMATION_PHRASE = "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC";\n  const REMOTE_EGRESS_COST_HOLD = true;\n  const REMOTE_EGRESS_REVIEW_NOT_BEFORE = "2026-09-22T00:00:00Z";
   const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   let running = false;
 
@@ -81,7 +81,7 @@
     });
   }
 
-  function assertExecutionInput(input, options = {}) {
+  function assertExecutionInput(input, options = {}) {\n    if (REMOTE_EGRESS_COST_HOLD) {\n      const error = new Error("production remote sync is disabled by egress cost hold");\n      error.code = "AHA_PRODUCTION_EGRESS_COST_HOLD";\n      throw error;\n    }
     if (!isPilotGateOpen(options)) {
       throw new Error(`production pilot URL gate is closed; add ?${QUERY_GATE}=${QUERY_VALUE}`);
     }
@@ -179,7 +179,7 @@
   }
 
   function renderGate(form, status, options = {}) {
-    const open = isPilotGateOpen(options);
+    const open = !REMOTE_EGRESS_COST_HOLD && isPilotGateOpen(options);
     if (form) {
       for (const element of Array.from(form.elements || [])) element.disabled = !open;
     }
@@ -251,7 +251,7 @@
       version: VERSION,
       queryGate: `${QUERY_GATE}=${QUERY_VALUE}`,
       gateOpen: isPilotGateOpen(options),
-      confirmationPhrase: CONFIRMATION_PHRASE,
+      confirmationPhrase: CONFIRMATION_PHRASE,\n      remoteNetworkAllowed: !REMOTE_EGRESS_COST_HOLD,\n      egressCostHoldActive: REMOTE_EGRESS_COST_HOLD,\n      egressCostHoldReviewNotBefore: REMOTE_EGRESS_REVIEW_NOT_BEFORE,
       autoSync: false,
       loginTriggersSync: false,
       authReadyTriggersSync: false,
@@ -274,7 +274,7 @@
     VERSION,
     QUERY_GATE,
     QUERY_VALUE,
-    CONFIRMATION_PHRASE,
+    CONFIRMATION_PHRASE,\n    REMOTE_EGRESS_COST_HOLD,\n    REMOTE_EGRESS_REVIEW_NOT_BEFORE,
     isPilotGateOpen,
     normalizeApiBaseUrl,
     readAuthenticatedSession,
