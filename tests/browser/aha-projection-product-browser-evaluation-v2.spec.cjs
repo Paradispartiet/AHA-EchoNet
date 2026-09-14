@@ -386,10 +386,14 @@ test("27-case live semantic browser corpus yields qualified product previews", a
 
 test("controlled save journey survives reload and protects user edits for all three products", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The complete controlled-write journey runs once in Chromium.");
-  test.skip(LIVE_MODE !== "release", "The controlled-write journey requires an explicit release workflow dispatch.");
   const journeyRequests = [];
   const journeyProxyFailures = [];
   await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
+    if (LIVE_MODE !== "release") {
+      journeyProxyFailures.push(`offline_remote_blocked:${request.method()} ${request.url()}`);
+      await route.abort("connectionfailed");
+      return;
+    }
     try {
       const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
       delete outboundHeaders.host;
@@ -410,7 +414,7 @@ test("controlled save journey survives reload and protects user edits for all th
     }
   });
   await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
-  await configureReviewCostControl(page, "release");
+  if (LIVE_MODE === "release") await configureReviewCostControl(page, "release");
   let prepared;
   try {
     prepared = await page.evaluate(() => window.AHAProjectionProductReviewV2.prepareControlledJourney("news_school_meals"));
@@ -419,9 +423,14 @@ test("controlled save journey survives reload and protects user edits for all th
   }
   expect(prepared.critical_provenance_errors).toEqual([]);
   expect(prepared.guarded_store_writes).toEqual([]);
-  expect(journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))).toEqual([]);
-  expect(journeyRequests.filter((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 300)).toHaveLength(1);
-  expect(journeyRequests.filter((request) => request.url.endsWith("/semantic-document") && request.status >= 200 && request.status < 300).length).toBeGreaterThanOrEqual(1);
+  if (LIVE_MODE === "release") {
+    expect(journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))).toEqual([]);
+    expect(journeyRequests.filter((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 300)).toHaveLength(1);
+    expect(journeyRequests.filter((request) => request.url.endsWith("/semantic-document") && request.status >= 200 && request.status < 300).length).toBeGreaterThanOrEqual(1);
+  } else {
+    expect(journeyRequests).toEqual([]);
+    expect(journeyProxyFailures.every((failure) => failure.startsWith("offline_remote_blocked:"))).toBe(true);
+  }
   expect(["list", "path", "mindmap"].map((product) => prepared.model.product_states[product].status)).toEqual(["ready", "ready", "ready"]);
   const chamberBefore = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
 
@@ -516,9 +525,13 @@ test("controlled save journey survives reload and protects user edits for all th
     },
     policy: { one_artifact_per_explicit_action: true, local_only: true, automatic_write: false, remote_write: false, sync_write: false, chamber_write_after_analysis: false, meta_write: false },
     transport: {
+      mode: LIVE_MODE,
       successful_chat_count: journeyRequests.filter((request) => request.url.endsWith("/chat") && request.status >= 200 && request.status < 300).length,
+      offline_remote_blocks: LIVE_MODE === "release" ? [] : journeyProxyFailures.filter((failure) => failure.startsWith("offline_remote_blocked:")),
       auxiliary_insight_candidate_failures: journeyProxyFailures.filter((failure) => failure.includes("/insight-candidates")),
-      critical_failures: journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))
+      critical_failures: LIVE_MODE === "release"
+        ? journeyProxyFailures.filter((failure) => !failure.includes("/insight-candidates"))
+        : []
     }
   };
   fs.mkdirSync("test-results", { recursive: true });
