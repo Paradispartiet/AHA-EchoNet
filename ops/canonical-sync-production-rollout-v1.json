@@ -1,7 +1,7 @@
 {
   "version": "aha_canonical_sync_production_rollout_v1",
-  "status": "active_bounded_manual_pilot",
-  "productionActivationEnabled": true,
+  "status": "cost_hold_remote_disabled",
+  "productionActivationEnabled": false,
   "hosting": {
     "target": "azure_container_apps",
     "adr": "docs/adr/ADR-006-azure-container-apps-before-aks.md",
@@ -39,7 +39,10 @@
     "manualProductionHomeSyncImplemented": true,
     "manualProductionHomeSyncUsesConfiguredEndpoint": true,
     "manualProductionHomeSyncRequiresExplicitUserAction": true,
-    "manualProductionHomeSyncRequiresExplicitConsent": true
+    "manualProductionHomeSyncRequiresExplicitConsent": true,
+    "remoteProductionSyncAllowed": false,
+    "egressCostHoldActive": true,
+    "egressCostHoldReviewNotBefore": "2026-09-22T00:00:00Z"
   },
   "pilot": {
     "mode": "bounded_manual_allowlist",
@@ -154,7 +157,7 @@
     "emergencyRollbackWorkflowImplemented": true,
     "manualPilotSyncRequiresSeparateExplicitUserAction": true,
     "manualPilotSyncConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC",
-    "enabled": true,
+    "enabled": false,
     "currentVerifiedProfileCount": 2,
     "exactPilotConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ACTIVATION",
     "exactPilotRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_ROLLBACK",
@@ -202,5 +205,22 @@
       "exactPerProfileRollbackConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_PROFILE_ROLLBACK",
       "exactPostActivationVerificationConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_PILOT_POST_ACTIVATION_VERIFY"
     }
+  },
+  "costHold": {
+    "active": true,
+    "reason": "cost_control_and_supabase_egress_recovery",
+    "startedAt": "2026-09-12T21:17:28Z",
+    "reviewNotBefore": "2026-09-22T00:00:00Z",
+    "remoteNetworkAllowed": false,
+    "productionActivationAllowed": false,
+    "productionCodeRefreshAllowed": false,
+    "automaticRetryAllowed": false,
+    "resumeRequiresExplicitPolicyChange": true,
+    "resumeRequirements": [
+      "supabase_egress_counter_reset_verified",
+      "egress_source_identified_or_bounded",
+      "single_probe_budget_defined",
+      "post_probe_usage_checked"
+    ]
   }
 }
