@@ -133,7 +133,7 @@ const runner = {
 (async () => {
   await assert.rejects(
     api.execute({ explicitUserAction: false, explicitConsent: true, origin: "https://paradispartiet.github.io" }, { bridge, runner, storage }),
-    /explicit production sync user action is required/
+    /egress cost hold/
   );
   assert.equal(authReads, 0);
   assert.equal(runnerCalls, 0);
