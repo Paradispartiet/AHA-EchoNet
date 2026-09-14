@@ -21,7 +21,7 @@ const workflow = fs.readFileSync(WORKFLOW, "utf8");
 const adr = fs.readFileSync(ADR, "utf8");
 
 assert.equal(policy.productionActivationEnabled, false);
-assert.equal(policy.activation.enabled, true);
+assert.equal(policy.activation.enabled, false);
 assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.hosting.target, "azure_container_apps");
 assert.equal(policy.hosting.renderProductionAllowed, false);
