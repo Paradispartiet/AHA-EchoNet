@@ -29,7 +29,7 @@
       <div>
         <p class="eyebrow">AHA · beskyttet operatorflate</p>
         <h1 id="aha-canonical-production-pilot-title">Canonical Sync · Production pilot</h1>
-        <p>Denne siden er en diagnostisk operatorflate for den aktive bounded production-piloten. Vanlig pilotbruk skjer fra AHA Home via «Synkroniser nå». Ingen sync er koblet til login eller bakgrunnskjøring.</p>
+        <p>Denne operatorflaten er midlertidig satt på cost hold. Remote production-sync er slått av mens egress og kostnader undersøkes, med ny vurdering tidligst 22. september.</p>
       </div>
 
       <div class="aha-canonical-production-pilot-warning" role="note">
@@ -40,28 +40,28 @@
         <p>Production har nå to verifiserte pilotprofiler. Denne siden velger aldri profil eller workspace manuelt; innlogget Supabase-identitet bestemmer alltid privat workspace, og cross-profile tilgang skal fortsatt avvises.</p>
       </div>
 
-      <p id="aha-canonical-production-pilot-status" role="status" aria-live="polite">Kontrollerer production-pilotport …</p>
+      <p id="aha-canonical-production-pilot-status" role="status" aria-live="polite">Production-pilotport er stengt av egress cost hold. Ingen auth, sync eller remote production-kall skal startes her.</p>
 
       <form id="aha-canonical-production-pilot-form" class="aha-canonical-production-pilot-form" autocomplete="off">
         <label class="aha-canonical-production-pilot-field">
           <span>Production NestJS API-origin</span>
-          <input name="apiBaseUrl" type="url" inputmode="url" placeholder="https://aha-api-production.example" spellcheck="false" required />
+          <input name="apiBaseUrl" type="url" disabled aria-disabled="true" inputmode="url" placeholder="https://aha-api-production.example" spellcheck="false" required />
           <small>Diagnostisk operatorfelt. Vanlig AHA Home-sync bruker det konfigurerte production-endpointet automatisk. Her godtas kun origin uten credentials, path, query eller fragment; HTTPS kreves utenfor localhost.</small>
         </label>
 
         <label class="aha-canonical-production-pilot-field">
           <span>Bekreftelsesfrase</span>
-          <input name="confirmation" type="text" value="" placeholder="RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC" spellcheck="false" required />
+          <input name="confirmation" type="text" disabled aria-disabled="true" value="" placeholder="RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC" spellcheck="false" required />
           <small>Skriv nøyaktig <code>RUN_AHA_CANONICAL_PRODUCTION_PILOT_SYNC</code>.</small>
         </label>
 
         <label class="aha-canonical-production-pilot-consent">
-          <input name="explicitConsent" type="checkbox" required />
+          <input name="explicitConsent" type="checkbox" disabled aria-disabled="true" required />
           <span>Jeg bekrefter at production-piloten er aktivert for min allowlistede profil, og at denne eksplisitte kjøringen kan pushe canonical data til production og anvende bootstrap/pull tilbake på mitt ekte lokale AHA-lager.</span>
         </label>
 
         <div class="aha-canonical-production-pilot-actions">
-          <button class="aha-cta-primary" type="submit">Kjør production pilot-sync</button>
+          <button class="aha-cta-primary" type="submit" disabled aria-disabled="true">Production-sync midlertidig stengt</button>
           <a class="aha-cta-secondary" href="index.html">Tilbake til AHA Home</a>
         </div>
       </form>
@@ -84,6 +84,6 @@
   <script src="js/ahaCanonicalLocalApplyAdapter.js"></script>
   <script src="js/ahaCanonicalSyncApiClient.js"></script>
   <script src="js/ahaCanonicalManualSyncRunner.js"></script>
-  <script src="js/ahaCanonicalSyncProductionPilotBridge.js"></script>
+  <!-- Cost hold: js/ahaCanonicalSyncProductionPilotBridge.js is intentionally not executed until explicit policy reactivation. -->
 </body>
 </html>
