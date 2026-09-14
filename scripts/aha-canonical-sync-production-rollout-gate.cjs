@@ -172,7 +172,7 @@ async function main() {
   if (mode === "contract") {
     contract();
     console.log("AHA canonical production rollout contract: READY");
-    console.log("AHA canonical production activation: ACTIVE_BOUNDED_MANUAL_PILOT");
+    console.log("AHA canonical production activation: COST_HOLD_REMOTE_DISABLED");
     return;
   }
   if (mode === "readiness") {
