@@ -6,7 +6,7 @@
 
   const VERSION = "aha_canonical_production_home_sync_v1";
   const PRODUCTION_API_ORIGIN = "https://aha-canonical-api-production.redground-9c6e20c2.northeurope.azurecontainerapps.io";
-  const PRODUCTION_FRONTEND_ORIGIN = "https://paradispartiet.github.io";
+  const PRODUCTION_FRONTEND_ORIGIN = "https://paradispartiet.github.io";\n  const REMOTE_EGRESS_COST_HOLD = true;\n  const REMOTE_EGRESS_REVIEW_NOT_BEFORE = "2026-09-22T00:00:00Z";
 
   const CANONICAL_SCRIPT_PATHS = Object.freeze([
     "js/ahaCanonicalSyncHash.js",
@@ -47,7 +47,7 @@
       mode: "explicit_manual_canonical_sync_production",
       productionApiOrigin: PRODUCTION_API_ORIGIN,
       productionFrontendOrigin: PRODUCTION_FRONTEND_ORIGIN,
-      frontendOriginAllowed: isAllowedFrontendOrigin(origin),
+      frontendOriginAllowed: isAllowedFrontendOrigin(origin),\n      remoteNetworkAllowed: !REMOTE_EGRESS_COST_HOLD,\n      egressCostHoldActive: REMOTE_EGRESS_COST_HOLD,\n      egressCostHoldReviewNotBefore: REMOTE_EGRESS_REVIEW_NOT_BEFORE,
       autoSync: false,
       loginTriggersSync: false,
       authReadyTriggersSync: false,
@@ -64,7 +64,7 @@
     });
   }
 
-  function assertExplicitExecution(input = {}) {
+  function assertExplicitExecution(input = {}) {\n    if (REMOTE_EGRESS_COST_HOLD) {\n      const error = new Error("production remote sync is disabled by egress cost hold");\n      error.code = "AHA_PRODUCTION_EGRESS_COST_HOLD";\n      throw error;\n    }
     if (input.explicitUserAction !== true) throw new Error("explicit production sync user action is required");
     if (input.explicitConsent !== true) throw new Error("explicit production sync consent is required");
     const origin = input.origin ?? global.location?.origin ?? "";
@@ -131,7 +131,7 @@
     const message = text(error?.message);
     const combined = `${code} ${message}`.toLowerCase();
 
-    if (status === 403 || /canonical_sync_pilot_forbidden|pilot.*forbidden|forbidden/.test(combined)) {
+    if (/aha_production_egress_cost_hold|egress cost hold/.test(combined)) {\n      return "Production-sync er midlertidig slått av mens egress og kostnader undersøkes. Ny vurdering tidligst 22. september.";\n    }\n    if (status === 403 || /canonical_sync_pilot_forbidden|pilot.*forbidden|forbidden/.test(combined)) {
       return "Production-sync er foreløpig bare tilgjengelig for den godkjente pilotprofilen.";
     }
     if (/logg inn|authenticated aha session|session provider|auth/.test(combined)) {
@@ -201,7 +201,7 @@
   const api = Object.freeze({
     VERSION,
     PRODUCTION_API_ORIGIN,
-    PRODUCTION_FRONTEND_ORIGIN,
+    PRODUCTION_FRONTEND_ORIGIN,\n    REMOTE_EGRESS_COST_HOLD,\n    REMOTE_EGRESS_REVIEW_NOT_BEFORE,
     CANONICAL_SCRIPT_PATHS,
     isAllowedFrontendOrigin,
     getStatus,
