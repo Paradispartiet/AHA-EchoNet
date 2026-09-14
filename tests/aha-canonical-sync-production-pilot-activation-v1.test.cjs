@@ -136,9 +136,12 @@ assert.doesNotMatch(source.dbRunner, /grant\s+(insert|update|delete|truncate)/i)
 // Repository policy reflects the live bounded manual pilot. The initial activation
 // workflow remains one-profile only; later profiles can only be added one at a time
 // through the separately guarded expansion workflow.
-assert.equal(policy.productionActivationEnabled, true);
-assert.equal(policy.activation.enabled, true);
-assert.equal(policy.status, "active_bounded_manual_pilot");
+assert.equal(policy.productionActivationEnabled, false);
+assert.equal(policy.activation.enabled, false);
+assert.equal(policy.status, "cost_hold_remote_disabled");
+assert.equal(policy.costHold.active, true);
+assert.equal(policy.costHold.remoteNetworkAllowed, false);
+assert.equal(policy.costHold.resumeRequiresExplicitPolicyChange, true);
 assert.equal(policy.activation.workflowImplemented, true);
 assert.equal(policy.activation.sameShaRolloutGateRequired, true);
 assert.equal(policy.activation.protectedPilotProfileRequired, true);

@@ -20,9 +20,9 @@ const dbGate = fs.readFileSync(DB_GATE, "utf8");
 const workflow = fs.readFileSync(WORKFLOW, "utf8");
 const adr = fs.readFileSync(ADR, "utf8");
 
-assert.equal(policy.productionActivationEnabled, true);
-assert.equal(policy.activation.enabled, true);
-assert.equal(policy.status, "active_bounded_manual_pilot");
+assert.equal(policy.productionActivationEnabled, false);
+assert.equal(policy.activation.enabled, false);
+assert.equal(policy.status, "cost_hold_remote_disabled");
 assert.equal(policy.hosting.target, "azure_container_apps");
 assert.equal(policy.hosting.renderProductionAllowed, false);
 assert.equal(policy.database.target, "dedicated_production_postgresql");
@@ -140,7 +140,7 @@ assert.doesNotMatch(gate, /AHA_PRODUCTION_DATABASE_CA_CERT/);
 const contractRun = spawnSync(process.execPath, [GATE, "contract"], { encoding: "utf8" });
 assert.equal(contractRun.status, 0, contractRun.stderr || contractRun.stdout);
 assert.match(contractRun.stdout, /production rollout contract: READY/);
-assert.match(contractRun.stdout, /production activation: ACTIVE_BOUNDED_MANUAL_PILOT/);
+assert.match(contractRun.stdout, /production activation: COST_HOLD_REMOTE_DISABLED/);
 
 const blockedReadiness = spawnSync(process.execPath, [GATE, "readiness"], {
   encoding: "utf8",
@@ -151,6 +151,6 @@ const blockedReadiness = spawnSync(process.execPath, [GATE, "readiness"], {
   }
 });
 assert.notEqual(blockedReadiness.status, 0, "remote readiness must fail closed when protected production values are absent");
-assert.match(blockedReadiness.stderr, /missing protected production readiness value/);
+assert.match(blockedReadiness.stderr, /missing protected production readiness value: AHA_PRODUCTION_EGRESS_COST_HOLD_RELEASE/);
 
 console.log("aha-canonical-sync-production-rollout-gate-v1.test.cjs passed");

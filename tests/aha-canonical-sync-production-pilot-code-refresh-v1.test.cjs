@@ -90,7 +90,7 @@ assert.match(app, /AHA_CANONICAL_SYNC_ALLOWED_PROFILE_IDS_JSON/);
 assert.match(app, /AHA_FYSEN_INTEGRATION_ENABLED/);
 
 // Refresh is allowed during the stability gate only because it cannot expand the fleet.
-assert.equal(policy.status, "active_bounded_manual_pilot");
+assert.equal(policy.status, "cost_hold_remote_disabled");
 assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
 assert.equal(policy.pilot.nextExpansionPaused, true);
 assert.equal(policy.pilot.automaticExpansionAllowed, false);

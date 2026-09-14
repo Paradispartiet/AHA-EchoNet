@@ -107,8 +107,8 @@ assert.doesNotMatch(source.verify, /\/v1\/sync\/push/);
 assert.doesNotMatch(source.verify, /mode=(?:add_pilot_profile|activate_pilot|deactivate_pilot)/);
 
 const expansion = policy.activation.expansion;
-assert.equal(policy.productionActivationEnabled, true);
-assert.equal(policy.activation.enabled, true);
+assert.equal(policy.productionActivationEnabled, false);
+assert.equal(policy.activation.enabled, false);
 assert.equal(policy.pilot.currentVerifiedProfileCount, 2);
 assert.equal(policy.pilot.nextExpansionPaused, true);
 assert.equal(policy.activation.roundTrip.requiredBeforeNextExpansion, true);

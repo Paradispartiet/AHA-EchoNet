@@ -36,9 +36,9 @@ const rollout = JSON.parse(source.rollout);
 
 // The reusable platform still deploys fail-closed by default, while current
 // operational policy records the separately activated bounded manual pilot.
-assert.equal(rollout.productionActivationEnabled, true);
-assert.equal(rollout.activation.enabled, true);
-assert.equal(rollout.status, "active_bounded_manual_pilot");
+assert.equal(rollout.productionActivationEnabled, false);
+assert.equal(rollout.activation.enabled, false);
+assert.equal(rollout.status, "cost_hold_remote_disabled");
 assert.equal(rollout.pilot.mode, "bounded_manual_allowlist");
 assert.equal(rollout.pilot.currentVerifiedProfileCount, 2);
 assert.equal(rollout.pilot.maxProfiles, 10);
