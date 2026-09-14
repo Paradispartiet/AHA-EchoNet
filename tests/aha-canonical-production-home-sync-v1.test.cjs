@@ -74,6 +74,8 @@ assert.equal(status.requiresExplicitConsent, true);
 assert.equal(status.userSelectableWorkspace, false);
 assert.equal(status.workspaceDerivedFromAuthenticatedSubject, true);
 assert.equal(status.pilotIdentityEnforcedServerSide, true);
+assert.equal(status.egressCostHoldActive, true);
+assert.equal(status.remoteNetworkAllowed, false);
 
 let authReads = 0;
 let runnerCalls = 0;
