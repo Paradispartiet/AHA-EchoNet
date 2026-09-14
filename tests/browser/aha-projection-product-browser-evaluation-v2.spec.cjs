@@ -148,6 +148,115 @@ async function readLocalStore(page, key) {
   return page.evaluate((storeKey) => JSON.parse(localStorage.getItem(storeKey) || "[]"), key);
 }
 
+function controlledJourneyFixtureModel() {
+  const model = {
+    schema: "aha_projection_product_read_model_v2",
+    mode: "read_only",
+    status: "ready",
+    projection_id: "projection_v2_offline_journey",
+    identity: {
+      analysis_id: "analysis_v2_offline_journey",
+      analysis_run_id: "run_v2_offline_journey",
+      source_id: "source_v2_offline_journey",
+      source_sha256: "a".repeat(64)
+    },
+    validation: { valid: true, errors: [] },
+    policy: Object.fromEntries([
+      "product_surface_binding_authority", "product_store_write_authority", "automatic_projection_authority",
+      "chamber_write", "canonical_write", "insights_write", "concepts_write", "lists_write", "paths_write",
+      "mindmap_write", "meta_write", "persistent_write", "remote_write", "normal_chat_persistence_authority"
+    ].map((key) => [key, false])),
+    surfaces: {
+      insights: [],
+      concepts: [],
+      lists: [{
+        id: "list_candidate",
+        title: "Utforsk representasjon",
+        type: "concepts",
+        description: "To sider av samme tema.",
+        tags: ["Representasjon"],
+        source: "aha_semantic_v2",
+        meta: {
+          projection_id: "projection_v2_offline_journey", candidate_only: true, read_only: true,
+          semantic_shape: "thematic_membership_v2", semantic_basis: "shared_concept", semantic_basis_label: "representasjon",
+          membership_rule: "all_members_share_named_source_concept", member_ref_ids: ["i1", "i2"]
+        },
+        quality: { passed: true, score: 0.9 },
+        items: [
+          { id: "i1", refId: "i1", title: "Valg former representasjon", type: "insight", membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", meta: { member_ids: ["legacy_1"], quality_score: 0.9, membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", semantic_basis: "shared_concept", semantic_basis_label: "representasjon" } },
+          { id: "i2", refId: "i2", title: "Deltakelse former legitimitet", type: "insight", membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", meta: { member_ids: ["legacy_2"], quality_score: 0.88, membership_reason: "Innsikten tilhører listen fordi kildebegrepet representasjon er eksplisitt felles.", semantic_basis: "shared_concept", semantic_basis_label: "representasjon" } }
+        ]
+      }],
+      paths: [{
+        id: "path_candidate",
+        title: "Undersøk representasjon",
+        type: "learning",
+        mode: "learning",
+        description: "Kontrollert progresjon.",
+        goal: "Forstå sammenhengen.",
+        learningOutcome: "Forklar med belegg.",
+        source: "aha_semantic_v2",
+        meta: { projection_id: "projection_v2_offline_journey", candidate_only: true, read_only: true, semantic_shape: "ordered_inquiry_v2", stage_selection: "semantic_role_ranked_not_round_robin", source_list_candidate_id: "list_candidate" },
+        quality: { passed: true, score: 0.94 },
+        steps: ["orientation", "claim_evidence", "tension_counterexample", "uncertainty", "synthesis_next_inquiry"].map((stage, index) => ({
+          id: `s${index + 1}`,
+          refId: `i${index % 2 + 1}`,
+          title: `Steg ${index + 1}`,
+          type: "insight",
+          order: index,
+          narrative: `Narrativ ${index + 1}`,
+          learningOutcome: `Læringspunkt ${index + 1}`,
+          meta: { stage, semantic_role: stage, semantic_basis: "shared_concept", selection_reason: `best_source_bound_fit_for_${stage}`, source_bound_narrative: true }
+        }))
+      }],
+      mindmap: {
+        read_only: true,
+        nodes: [
+          { id: "root", title: "Representasjon: oversikt", type: "theme" },
+          { id: "concept", title: "Representasjon", type: "concept" },
+          { id: "insight", title: "Valg former representasjon", type: "insight" }
+        ],
+        edges: [
+          { id: "e1", from: "root", to: "concept", type: "theme_branch", label: "gren" },
+          { id: "e2", from: "concept", to: "insight", type: "supports_insight", label: "belyser" }
+        ],
+        meta: { root_id: "root", projection_id: "projection_v2_offline_journey", candidate_only: true, read_only: true, semantic_shape: "ranked_hierarchy_v2", branch_assignment: "one_primary_hierarchy_parent_per_insight", branch_count: 1 },
+        quality: { passed: true, score: 0.92 }
+      }
+    }
+  };
+  const query = (product) => new URLSearchParams({
+    product,
+    analysis_id: model.identity.analysis_id,
+    projection_id: model.projection_id,
+    source_sha256: model.identity.source_sha256
+  }).toString();
+  model.product_states = {
+    list: { status: "ready", label: "Klar til forhåndsvisning", candidate_count: 1, href: `lists.html?${query("list")}` },
+    path: { status: "ready", label: "Klar til forhåndsvisning", candidate_count: 1, href: `paths.html?${query("path")}` },
+    mindmap: { status: "ready", label: "Klar til forhåndsvisning", candidate_count: 3, href: `mindmap.html?${query("mindmap")}` }
+  };
+  return model;
+}
+
+function controlledJourneyRuntimeStub(model) {
+  return `(function(global){
+    "use strict";
+    const MODEL = ${JSON.stringify(model)};
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+    const api = Object.freeze({
+      MODULE_SCHEMA: "aha_projection_runtime_source_v2",
+      MODULE_VERSION: 2,
+      build: () => clone(MODEL),
+      surface: (name) => clone(MODEL.surfaces?.[name] ?? null),
+      productStates: () => clone(MODEL.product_states),
+      productUrl: (product) => MODEL.product_states?.[product]?.href || null,
+      shouldOpenProduct: (product) => new URLSearchParams(global.location.search).get("product") === product
+    });
+    global.AHAProjectionRuntimeSourceV2 = api;
+  })(window);`;
+}
+
 test("controlled-write actions honor the hidden state", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "The shared product CSS is verified once in Chromium.");
   await page.goto("/lists.html", { waitUntil: "domcontentloaded" });
@@ -388,38 +497,50 @@ test("controlled save journey survives reload and protects user edits for all th
   test.skip(browserName !== "chromium", "The complete controlled-write journey runs once in Chromium.");
   const journeyRequests = [];
   const journeyProxyFailures = [];
-  await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
-    if (LIVE_MODE !== "release") {
-      journeyProxyFailures.push(`offline_remote_blocked:${request.method()} ${request.url()}`);
-      await route.abort("connectionfailed");
-      return;
-    }
-    try {
-      const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
-      delete outboundHeaders.host;
-      const transport = await fetchRouteWithBoundedTransientRetry(route, request, outboundHeaders);
-      const response = transport.response;
-      journeyRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
-      await route.fulfill({
-        response,
-        headers: {
-          ...response.headers(),
-          "access-control-allow-origin": "http://127.0.0.1:4177",
-          "access-control-allow-credentials": "true"
-        }
-      });
-    } catch (error) {
-      journeyProxyFailures.push(`${request.method()} ${request.url()}: ${error.message}`);
-      await route.abort("connectionfailed");
-    }
-  });
-  await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
-  if (LIVE_MODE === "release") await configureReviewCostControl(page, "release");
   let prepared;
-  try {
-    prepared = await page.evaluate(() => window.AHAProjectionProductReviewV2.prepareControlledJourney("news_school_meals"));
-  } finally {
-    writeLiveBudgetEvidence();
+
+  if (LIVE_MODE === "release") {
+    await page.route("https://aha-agent-7a3y.onrender.com/**", async (route, request) => {
+      try {
+        const outboundHeaders = { ...request.headers(), origin: "https://paradispartiet.github.io" };
+        delete outboundHeaders.host;
+        const transport = await fetchRouteWithBoundedTransientRetry(route, request, outboundHeaders);
+        const response = transport.response;
+        journeyRequests.push({ method: request.method(), url: request.url(), status: response.status(), transport_attempts: transport.attempts });
+        await route.fulfill({
+          response,
+          headers: {
+            ...response.headers(),
+            "access-control-allow-origin": "http://127.0.0.1:4177",
+            "access-control-allow-credentials": "true"
+          }
+        });
+      } catch (error) {
+        journeyProxyFailures.push(`${request.method()} ${request.url()}: ${error.message}`);
+        await route.abort("connectionfailed");
+      }
+    });
+    await page.goto("/projection-product-review-v2.html", { waitUntil: "domcontentloaded" });
+    await configureReviewCostControl(page, "release");
+    try {
+      prepared = await page.evaluate(() => window.AHAProjectionProductReviewV2.prepareControlledJourney("news_school_meals"));
+    } finally {
+      writeLiveBudgetEvidence();
+    }
+  } else {
+    const model = controlledJourneyFixtureModel();
+    await page.route("**/js/ahaProjectionRuntimeSourceV2.js", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: controlledJourneyRuntimeStub(model)
+    }));
+    prepared = {
+      case_id: "offline_controlled_fixture",
+      identity: model.identity,
+      model,
+      critical_provenance_errors: [],
+      guarded_store_writes: []
+    };
   }
   expect(prepared.critical_provenance_errors).toEqual([]);
   expect(prepared.guarded_store_writes).toEqual([]);
@@ -517,7 +638,7 @@ test("controlled save journey survives reload and protects user edits for all th
     source_case: prepared.case_id,
     identity: prepared.identity,
     projection_id: prepared.model.projection_id,
-    journey: "raw_chat_to_preview_to_explicit_save_to_edit_to_reload_to_safe_undo",
+    journey: LIVE_MODE === "release" ? "raw_chat_to_preview_to_explicit_save_to_edit_to_reload_to_safe_undo" : "deterministic_v2_read_model_to_preview_to_explicit_save_to_edit_to_reload_to_safe_undo",
     products: {
       list: { unchanged_reload_undo: true, edited_through_product_ui: true, edited_reload_undo_refusal: listUndoRefusal.reason },
       path: { unchanged_reload_undo: true, edited_through_product_ui: true, edited_reload_undo_refusal: pathUndoRefusal.reason },
