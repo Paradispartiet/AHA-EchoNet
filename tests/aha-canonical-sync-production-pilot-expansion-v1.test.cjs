@@ -119,7 +119,7 @@ assert.match(source.gate, /capturing execution logs before cleanup/i);
 // authorizing only explicitly dispatched expansion. The next addition is paused
 // until both existing profiles have real-data round-trip evidence.
 assert.equal(policy.productionActivationEnabled, false);
-assert.equal(policy.activation.enabled, true);
+assert.equal(policy.activation.enabled, false);
 assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
 assert.equal(policy.pilot.maxProfiles, 10);
