@@ -553,10 +553,10 @@ test("controlled save journey survives reload and protects user edits for all th
     expect(journeyProxyFailures.every((failure) => failure.startsWith("offline_remote_blocked:"))).toBe(true);
   }
   expect(["list", "path", "mindmap"].map((product) => prepared.model.product_states[product].status)).toEqual(["ready", "ready", "ready"]);
-  const chamberBefore = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
 
   const list = prepared.model.surfaces.lists[0];
   await page.goto(prepared.model.product_states.list.href, { waitUntil: "domcontentloaded" });
+  const chamberBefore = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
   const listSave = page.locator(`[data-v2-list-materialize="${list.id}"]`);
   await expect(listSave).toBeVisible();
   await listSave.click();
