@@ -151,6 +151,6 @@ const blockedReadiness = spawnSync(process.execPath, [GATE, "readiness"], {
   }
 });
 assert.notEqual(blockedReadiness.status, 0, "remote readiness must fail closed when protected production values are absent");
-assert.match(blockedReadiness.stderr, /production remote readiness is blocked by the egress cost hold/);
+assert.match(blockedReadiness.stderr, /missing protected production readiness value: AHA_PRODUCTION_EGRESS_COST_HOLD_RELEASE/);
 
 console.log("aha-canonical-sync-production-rollout-gate-v1.test.cjs passed");
