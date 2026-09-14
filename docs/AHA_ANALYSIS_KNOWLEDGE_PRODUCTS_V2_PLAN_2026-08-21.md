@@ -1,6 +1,6 @@
 # AHA Analysis, Knowledge Map and Products V2 — authoritative integration plan
 
-Status: **PR 1–PR 6 and product-specific semantic shapes merged through #894; PR 7 controlled-save journey implemented in the current change; independent human review and final release gate remain**
+Status: **PR 1–PR 6 and product-specific semantic shapes merged through #894; PR #919 test-locks the local controlled-save journey in normal offline browser CI; paid live journey, independent human review and final release gate remain**
 
 Date: 2026-08-21
 
@@ -19,11 +19,11 @@ This document is the authoritative plan for the production chain from active Cha
 | PR 5 / #891 | Merged | Active-bundle projection bridge, visible product states, stable preview links and blocked preview shells |
 | PR 6 / #892 | Merged | 27-case real Chat browser corpus, live-backend release gate and read-only human-review operator; independent human review remains open |
 | Semantic shapes / #894 | Merged | Explicit List membership, role-ranked Path progression and a balanced one-parent Mindmap hierarchy |
-| PR 7 | Implemented in current change | Reload-safe save state, exact identity/semantic parity and live preview → save → edit → reload → safe-undo proof |
+| PR 7 verification / #919 | Merged | Reload-safe save state plus automatic model-free browser proof for preview → save → reload → undo → edit → reload → protected undo across Lists, Paths and Mindmap |
 
-The complete live production chain remains unfinished until PR 7 passes its live CI journey and the independent human gate passes. #894 changed the List, Path and Mindmap builders without widening automatic or remote write authority.
+The local controlled-save product journey is now automatically test-locked by PR #919. The complete live production chain remains unfinished until the explicit paid raw-Chat → live semantic → preview → controlled-save journey passes on the release gate and the independent human gate passes. #894 changed the List, Path and Mindmap builders without widening automatic or remote write authority.
 
-PR #892 added a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. Its final live run received 29/29 HTTP 200 responses, reached 81.82% useful-case coverage on the first pass, used no retry and recorded zero critical provenance errors and zero guarded preview writes. #894 reran and preserved that baseline. PR 7 extends the same live workflow with a qualified raw-Chat journey through all three product stores. Automated runs still cannot self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
+PR #892 added a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. Its final live run received 29/29 HTTP 200 responses, reached 81.82% useful-case coverage on the first pass, used no retry and recorded zero critical provenance errors and zero guarded preview writes. #894 reran and preserved that baseline. PR #919 separates the controlled-save proof into two layers: normal PR/push CI now runs the model-free local product journey against a deterministic quality-approved V2 read model, while only explicit release dispatch may spend model budget to prove the raw-Chat live semantic transport path. Automated runs still cannot self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
 
 ## Product distinctions
 
