@@ -119,6 +119,7 @@
     "githubEnvironment": "aha-canonical-production-readiness",
     "exactConfirmation": "RUN_AHA_CANONICAL_PRODUCTION_ROLLOUT_GATE",
     "requiredProtectedValues": [
+      "AHA_PRODUCTION_EGRESS_COST_HOLD_RELEASE",
       "AHA_PRODUCTION_API_ORIGIN",
       "AHA_PRODUCTION_PILOT_PROFILE_ID",
       "AHA_PRODUCTION_ROLLBACK_REVISION",
