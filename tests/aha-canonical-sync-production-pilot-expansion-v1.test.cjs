@@ -118,7 +118,7 @@ assert.match(source.gate, /capturing execution logs before cleanup/i);
 // Repository policy reflects the already-active bounded pilot while still
 // authorizing only explicitly dispatched expansion. The next addition is paused
 // until both existing profiles have real-data round-trip evidence.
-assert.equal(policy.productionActivationEnabled, true);
+assert.equal(policy.productionActivationEnabled, false);
 assert.equal(policy.activation.enabled, true);
 assert.equal(policy.status, "active_bounded_manual_pilot");
 assert.equal(policy.pilot.mode, "bounded_manual_allowlist");
