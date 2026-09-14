@@ -140,14 +140,14 @@ const runner = {
 
   await assert.rejects(
     api.execute({ explicitUserAction: true, explicitConsent: false, origin: "https://paradispartiet.github.io" }, { bridge, runner, storage }),
-    /explicit production sync consent is required/
+    /egress cost hold/
   );
   assert.equal(authReads, 0);
   assert.equal(runnerCalls, 0);
 
   await assert.rejects(
     api.execute({ explicitUserAction: true, explicitConsent: true, origin: "https://aha-echonet.vercel.app" }, { bridge, runner, storage }),
-    /production sync frontend origin is not allowed/
+    /egress cost hold/
   );
   assert.equal(authReads, 0);
   assert.equal(runnerCalls, 0);
