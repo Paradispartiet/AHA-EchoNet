@@ -4,7 +4,7 @@
 
 The shared V2 semantic projection is consumed through a validated read-only product model. Lists, Paths and Mindmap render distinct, quality-filtered semantic shapes without writing them into product stores.
 
-The authoritative AnalysisBundle, source isolation, Knowledge Map separation, real-browser product gate and product-specific semantic shapes are merged through PR #894. The controlled save journey is implemented in the current change. Independent human usefulness review and green live journey evidence remain release blockers as described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
+The authoritative AnalysisBundle, source isolation, Knowledge Map separation, real-browser product gate and product-specific semantic shapes are merged through PR #894. PR #919 makes the deterministic local Lists/Paths/Mindmap save → reload → undo → edit → reload → protected-undo journey part of normal model-free browser CI. The paid live raw-Chat journey and the independent human usefulness review remain release blockers as described in [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md).
 
 ## Runtime chain
 
@@ -45,6 +45,7 @@ Product-page preview availability depends on an active, identity-matched Analysi
 
 Still required:
 
-- pass the extended live browser journey for all three products;
+- keep PR #919's automatic offline controlled-save journey green for all three products;
+- pass the explicit paid release journey from raw Chat through live semantic analysis into the same controlled product save boundary;
 - complete the independent 1–5 usefulness review;
 - keep all automatic, Chamber, canonical, Meta, sync and remote write authority closed.

@@ -1,6 +1,6 @@
 # AHA Insight Engine V2 — product quality review (2026-08-21)
 
-Status: **PR #892 browser gate merged; product-specific semantic shapes implemented in the current change; independent human usefulness review remains open**.
+Status: **PR #919 automatic offline controlled-save journey merged; paid live raw-Chat journey and independent human usefulness review remain open**.
 
 The authoritative next-phase production integration plan is [`AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md`](./AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md). It distinguishes Chat analysis, Knowledge Map and the three products, and it records the remaining seven-PR path from live source isolation to preview, human evaluation and controlled save.
 
@@ -152,10 +152,13 @@ The explicit #875/#879 local materializer remains a separate one-artifact-per-us
 
 The remaining product-quality sequence is:
 
-1. pass the extended live browser proof for analysis → preview → explicit local save → edit → reload → safe undo across all three products;
-2. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
-3. record the 1–5 rubric scores without replacing them with agent scores;
-4. fix any remaining recurring defect class found by that review;
-5. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout.
+1. keep the automatic offline browser proof from PR #919 green for preview → explicit local save → reload → undo → edit → reload → protected undo across Lists, Paths and Mindmap;
+2. run the explicit paid release browser proof for raw Chat → live semantic analysis → preview → controlled save without weakening provenance or write boundaries;
+3. run the independent per-case usefulness review only on successful live-browser Lists, Paths and Mindmaps;
+4. record the 1–5 rubric scores without replacing them with agent scores;
+5. fix any remaining recurring defect class found by that review;
+6. require at least 80% acceptable artifacts and zero critical provenance errors before considering any broader rollout.
+
+PR #919 deliberately separates the model-free local product journey from the paid live semantic transport proof. Normal PR/push CI now exercises the real product pages, materializer, reload state, product editing and fail-closed undo behavior with a deterministic quality-approved V2 read model; it does not make external model calls.
 
 The max=2 controlled Insight write boundary does not need to expand for this work.
