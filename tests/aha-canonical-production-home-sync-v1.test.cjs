@@ -152,17 +152,15 @@ const runner = {
   assert.equal(authReads, 0);
   assert.equal(runnerCalls, 0);
 
-  const result = await api.execute(
-    { explicitUserAction: true, explicitConsent: true, origin: "https://paradispartiet.github.io" },
-    { bridge, runner, storage }
+  await assert.rejects(
+    api.execute(
+      { explicitUserAction: true, explicitConsent: true, origin: "https://paradispartiet.github.io" },
+      { bridge, runner, storage }
+    ),
+    /egress cost hold/
   );
-  assert.equal(authReads, 1);
-  assert.equal(runnerCalls, 1);
-  assert.equal(result.ok, true);
-  assert.equal(result.localPrepared, 1);
-  assert.equal(result.localChanged, 0);
-  assert.equal(result.pushed, 0);
-  assert.equal(result.conflictCount, 0);
+  assert.equal(authReads, 0);
+  assert.equal(runnerCalls, 0);
 
   assert.equal(api.safeErrorMessage({ status: 403, message: "CANONICAL_SYNC_PILOT_FORBIDDEN" }), "Production-sync er foreløpig bare tilgjengelig for den godkjente pilotprofilen.");
   assert.equal(api.safeErrorMessage(new Error("Load failed")), "Kunne ikke nå production-sync akkurat nå. Ingen automatisk retry kjøres.");
