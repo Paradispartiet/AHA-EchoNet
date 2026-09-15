@@ -16,7 +16,8 @@
     <div class="toolbar">
       <button id="run" class="primary" type="button">Kjør 27-case browsermatrise</button>
       <label class="import-label">Åpne arkivert live-evaluering<input id="live-import" type="file" accept="application/json,.json" /></label>
-      <button id="export" class="secondary" type="button" disabled>Eksporter menneskelig review</button>
+      <label class="import-label">Fortsett fra review-utkast<input id="review-import" type="file" accept="application/json,.json" /></label>
+      <button id="export" class="secondary" type="button" disabled>Eksporter review / utkast</button>
       <progress id="progress" max="27" value="0"></progress>
       <span id="status" aria-live="polite">Ikke startet.</span>
     </div>
@@ -28,7 +29,8 @@
         <label class="attestation"><input id="attestation" type="checkbox" /> Jeg bekrefter at vurderingen er gjort av et menneske etter å ha lest outputene.</label>
       </div>
       <p id="gate">Human-porten er åpen. Alle tre produkttyper må ha minst 80 % akseptable vurderinger og null kritiske proveniensfeil.</p>
-      <p class="lead">Arkivert baseline: live browser-run 32633381518 / artifact 9491725428, generert 2026-08-23T09:13:09.989Z. <a href="https://github.com/Paradispartiet/AHA-EchoNet/actions/runs/32633381518" target="_blank" rel="noreferrer">Åpne den arkiverte runnen i GitHub</a>, last ned <code>aha-projection-product-browser-evaluation-v2</code>, pakk ut og velg <code>aha-projection-product-live-browser-evaluation-v2.json</code>. Importen validerer datasettet før review.</p>
+      <p id="review-progress" class="lead">Review-fremdrift: 0/81 produktscorer · 0/27 cases komplette.</p>
+      <p class="lead">Arkivert baseline: live browser-run 32633381518 / artifact 9491725428, generert 2026-08-23T10:24:44.775Z. <a href="https://github.com/Paradispartiet/AHA-EchoNet/actions/runs/32633381518" target="_blank" rel="noreferrer">Åpne den arkiverte runnen i GitHub</a>, last ned <code>aha-projection-product-browser-evaluation-v2</code>, pakk ut og velg <code>aha-projection-product-live-browser-evaluation-v2.json</code>. Dette er PR #894 semantic-shapes-baselinen med thematic_membership_v2, ordered_inquiry_v2 og ranked_hierarchy_v2. Importen validerer datasettet før review.</p>
     </section>
     <div id="results"></div>
   </main>
