@@ -64,7 +64,12 @@ assert.equal(liveArchive.critical_transport_failures, 0);
 assert.equal(liveArchive.critical_provenance_errors_in_archived_results, 0);
 assert.equal(liveArchive.new_model_calls_required, false);
 assert.equal(liveArchive.independent_human_review_complete, false);
-assert.equal(liveArchive.human_review_must_not_be_autofilled, true);\nassert.equal(liveArchive.pull_request, 894);\nassert.equal(liveArchive.semantic_shapes_applied, true);\nassert.equal(liveArchive.product_shapes.lists, "thematic_membership_v2");\nassert.equal(liveArchive.product_shapes.paths, "ordered_inquiry_v2");\nassert.equal(liveArchive.product_shapes.mindmap, "ranked_hierarchy_v2");
+assert.equal(liveArchive.human_review_must_not_be_autofilled, true);
+assert.equal(liveArchive.pull_request, 894);
+assert.equal(liveArchive.semantic_shapes_applied, true);
+assert.equal(liveArchive.product_shapes.lists, "thematic_membership_v2");
+assert.equal(liveArchive.product_shapes.paths, "ordered_inquiry_v2");
+assert.equal(liveArchive.product_shapes.mindmap, "ranked_hierarchy_v2");
 
 assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v3/);
 assert.match(browserSpec, /preflightResponse\.ok\(\)/);
