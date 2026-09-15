@@ -288,23 +288,26 @@
     return loadArchivedLiveEvaluation(archive);
   }
 
-  function validateHumanReviewDraft(draft) {
+  function validateHumanReviewDraft(draft, options = {}) {
     if (!draft || typeof draft !== "object") throw new Error("Review-utkast mangler.");
     if (draft.schema !== "aha_projection_product_human_review_v2" || Number(draft.version) !== 2) {
       throw new Error("Ugyldig review-utkast-schema.");
     }
-    if (!state.results.length || !state.corpus?.cases?.length) {
+    const reviewResults = Array.isArray(options.results) ? options.results : state.results;
+    const reviewCorpus = options.corpus || state.corpus;
+    const reviewSource = options.review_source || state.review_source;
+    if (!reviewResults.length || !reviewCorpus?.cases?.length) {
       throw new Error("Åpne live-evalueringen før review-utkastet.");
     }
-    if (!Array.isArray(draft.case_reviews) || draft.case_reviews.length !== state.results.length) {
+    if (!Array.isArray(draft.case_reviews) || draft.case_reviews.length !== reviewResults.length) {
       throw new Error("Review-utkastet må inneholde de samme 27 casene som den åpne evalueringen.");
     }
-    const expectedIds = state.results.map((entry) => text(entry.case_id)).sort();
+    const expectedIds = reviewResults.map((entry) => text(entry.case_id)).sort();
     const actualIds = draft.case_reviews.map((entry) => text(entry.case_id)).sort();
     if (new Set(actualIds).size !== actualIds.length || !same(expectedIds, actualIds)) {
       throw new Error("Case-IDene i review-utkastet samsvarer ikke med den åpne evalueringen.");
     }
-    if (state.review_source?.mode === "archived_live") {
+    if (reviewSource?.mode === "archived_live") {
       const source = draft?.browser_evaluation?.source;
       if (!source || Number(source.workflow_run_id) !== ARCHIVED_LIVE_BASELINE.workflow_run_id || Number(source.artifact_id) !== ARCHIVED_LIVE_BASELINE.artifact_id) {
         throw new Error("Review-utkastet er ikke knyttet til den samme arkiverte live-baselinen.");
