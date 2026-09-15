@@ -30,6 +30,8 @@ vm.runInContext(fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserRevie
 });
 
 const compare = context.AHAProjectionProductReviewV2.compareReplay;
+const validateArchive = context.AHAProjectionProductReviewV2.validateArchivedLiveEvaluation;
+const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
 const fingerprint = { semantic_document: 1, analysis_bundle: 2, projection_runtime: 2, product_contract: 2 };
 const result = (sourceId, sourceSha256 = 'a'.repeat(64), insight = 'Kildebeviset består.') => ({
   runtime_fingerprint: fingerprint,
@@ -71,5 +73,36 @@ const changedRuntime = compare(result('chat_message_first'), {
   runtime_fingerprint: { ...fingerprint, projection_runtime: 3 }
 });
 assert.deepEqual(JSON.parse(JSON.stringify(changedRuntime)), { comparable: false, reason: 'runtime_version_changed' });
+
+const corpus = JSON.parse(fs.readFileSync('tests/fixtures/aha-projection-product-evaluation-v2.json', 'utf8'));
+const archivedResult = (caseId) => ({
+  case_id: caseId,
+  model: { surfaces: { lists: [], paths: [], mindmap: { nodes: [], edges: [] } }, product_states: { list: {}, path: {}, mindmap: {} } },
+  critical_provenance_errors: []
+});
+const archivedLive = {
+  schema: 'aha_projection_product_browser_evaluation_v2',
+  version: 2,
+  generated_at: baseline.generated_at,
+  corpus_cases: 27,
+  results: corpus.cases.map((entry) => archivedResult(entry.id)),
+  live_transport: { successful_chat_count: 29, backend_http_failures: [], critical_failures: [] }
+};
+assert.deepEqual(
+  JSON.parse(JSON.stringify(validateArchive(archivedLive, corpus))),
+  { valid: true, cases: 27, generated_at: baseline.generated_at, successful_chat_count: 29, critical_transport_failures: 0 }
+);
+assert.throws(
+  () => validateArchive({ ...archivedLive, generated_at: '2026-09-01T00:00:00.000Z' }, corpus),
+  /godkjente arkiverte baseline-runnen/
+);
+assert.throws(
+  () => validateArchive({ ...archivedLive, results: archivedLive.results.slice(1) }, corpus),
+  /nøyaktig 27 cases/
+);
+const html = fs.readFileSync('projection-product-review-v2.html', 'utf8');
+assert.match(html, /id="live-import"/);
+assert.match(html, /run 32630087938 \/ artifact 9490861618/);
+assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
 
 console.log('aha-projection-product-browser-review-v2.test.cjs: OK');

@@ -7,9 +7,24 @@
   "rubric": {
     "scale": "1-5",
     "acceptable_score_minimum": 4,
-    "lists": ["tematisk_koherens", "ikke_triviell", "begrunnet_medlemskap", "kildebevaring"],
-    "paths": ["progresjon", "overganger", "laeringsutbytte", "aapent_spoersmaal"],
-    "mindmap": ["hierarki", "meningsfulle_grener", "stoeykontroll", "resonans_semantikk"]
+    "lists": [
+      "tematisk_koherens",
+      "ikke_triviell",
+      "begrunnet_medlemskap",
+      "kildebevaring"
+    ],
+    "paths": [
+      "progresjon",
+      "overganger",
+      "laeringsutbytte",
+      "aapent_spoersmaal"
+    ],
+    "mindmap": [
+      "hierarki",
+      "meningsfulle_grener",
+      "stoeykontroll",
+      "resonans_semantikk"
+    ]
   },
   "release_rule": {
     "minimum_acceptable_share": 0.8,
@@ -20,45 +35,272 @@
     "reviewer_attestation_required": true
   },
   "review_rows": [
-    { "case_group": "news", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "research", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "essay", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "policy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "personal_reflection", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "data_heavy", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "ambiguous", "cases": 3, "agent_pre_review": "correctly_suppressed", "independent_human_review": "open" },
-    { "case_group": "contradictory", "cases": 3, "agent_pre_review": "acceptable", "independent_human_review": "open" },
-    { "case_group": "literature_health", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" },
-    { "case_group": "health", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" },
-    { "case_group": "source_precedence", "cases": 1, "agent_pre_review": "browser_review_required", "independent_human_review": "open" }
+    {
+      "case_group": "news",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "research",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "essay",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "policy",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "personal_reflection",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "data_heavy",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "ambiguous",
+      "cases": 3,
+      "agent_pre_review": "correctly_suppressed",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "contradictory",
+      "cases": 3,
+      "agent_pre_review": "acceptable",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "literature_health",
+      "cases": 1,
+      "agent_pre_review": "browser_review_required",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "health",
+      "cases": 1,
+      "agent_pre_review": "browser_review_required",
+      "independent_human_review": "open"
+    },
+    {
+      "case_group": "source_precedence",
+      "cases": 1,
+      "agent_pre_review": "browser_review_required",
+      "independent_human_review": "open"
+    }
   ],
   "case_reviews": [
-    { "case_id": "news_transit", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "news_health", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "news_school_meals", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "research_heat", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "research_sleep", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "research_language", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "essay_archive", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "essay_attention", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "essay_public_space", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "policy_children", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "policy_housing", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "policy_ai", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "personal_work", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "personal_learning", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "personal_routines", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "data_bus", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "data_energy", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "data_library", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "weak_slogan", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "weak_assertion", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "weak_secret", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "conflict_remote_work", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "conflict_tourism", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "conflict_standardization", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "literature_livsarket", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "health_patient_path", "lists": null, "paths": null, "mindmap": null, "review_status": "open" },
-    { "case_id": "pasted_text_inaccessible_url", "lists": null, "paths": null, "mindmap": null, "review_status": "open" }
-  ]
+    {
+      "case_id": "news_transit",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "news_health",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "news_school_meals",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "research_heat",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "research_sleep",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "research_language",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "essay_archive",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "essay_attention",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "essay_public_space",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "policy_children",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "policy_housing",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "policy_ai",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "personal_work",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "personal_learning",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "personal_routines",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "data_bus",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "data_energy",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "data_library",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "weak_slogan",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "weak_assertion",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "weak_secret",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "conflict_remote_work",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "conflict_tourism",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "conflict_standardization",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "literature_livsarket",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "health_patient_path",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    },
+    {
+      "case_id": "pasted_text_inaccessible_url",
+      "lists": null,
+      "paths": null,
+      "mindmap": null,
+      "review_status": "open"
+    }
+  ],
+  "archived_live_review_input": {
+    "available": true,
+    "manifest": "ops/evaluation/aha-projection-product-live-review-archive-v2.json",
+    "workflow_run_id": 32630087938,
+    "artifact_id": 9490861618,
+    "generated_at": "2026-08-23T09:13:09.989Z",
+    "import_surface": "projection-product-review-v2.html",
+    "new_model_calls_required": false,
+    "reviewer_scores_autofilled": false
+  }
 }

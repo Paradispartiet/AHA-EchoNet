@@ -6,7 +6,15 @@
   const GUARDED_KEYS = Object.freeze([...PRODUCT_KEYS, "aha_insight_chamber_v1"]);
   const PRODUCTS = Object.freeze(["lists", "paths", "mindmap"]);
   const SEED_TEXT = "Morgenbladet er en norsk avis. Teksten drøfter pressehistorie, redaksjonell uavhengighet, eierskapsskifter og akademisk offentlighet.";
-  const state = { corpus: null, results: [], running: false, frame: null, cost_control: null };
+  const ARCHIVED_LIVE_BASELINE = Object.freeze({
+    workflow_run_id: 32630087938,
+    artifact_id: 9490861618,
+    head_sha: "88076fa2e70f746df1cee99a1cc4c66c1d747995",
+    generated_at: "2026-08-23T09:13:09.989Z",
+    corpus_cases: 27,
+    successful_chat_count: 29
+  });
+  const state = { corpus: null, results: [], running: false, frame: null, cost_control: null, review_source: null };
 
   const byId = (id) => global.document.getElementById(id);
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -216,9 +224,75 @@
     return model?.surfaces?.mindmap || { nodes: [], edges: [], read_only: true };
   }
 
+  function validateArchivedLiveEvaluation(archive, corpus) {
+    if (!archive || typeof archive !== "object") throw new Error("Arkivert live-evaluering mangler.");
+    if (archive.schema !== "aha_projection_product_browser_evaluation_v2" || Number(archive.version) !== 2) {
+      throw new Error("Ugyldig live-evaluation-schema.");
+    }
+    if (archive.generated_at !== ARCHIVED_LIVE_BASELINE.generated_at) throw new Error("Live-evalueringen er ikke den godkjente arkiverte baseline-runnen.");
+    if (Number(archive.corpus_cases) !== ARCHIVED_LIVE_BASELINE.corpus_cases || !Array.isArray(archive.results) || archive.results.length !== ARCHIVED_LIVE_BASELINE.corpus_cases) {
+      throw new Error("Arkivert live-evaluering må inneholde nøyaktig 27 cases.");
+    }
+    if (Number(archive?.live_transport?.successful_chat_count) !== ARCHIVED_LIVE_BASELINE.successful_chat_count) {
+      throw new Error("Arkivert live-evaluering mangler 29/29 vellykkede Chat-svar.");
+    }
+    if ((archive?.live_transport?.backend_http_failures || []).length || (archive?.live_transport?.critical_failures || []).length) {
+      throw new Error("Arkivert live-evaluering inneholder transportfeil.");
+    }
+    if (!corpus || !Array.isArray(corpus.cases) || corpus.cases.length !== ARCHIVED_LIVE_BASELINE.corpus_cases) {
+      throw new Error("27-case corpus er utilgjengelig eller ugyldig.");
+    }
+    const expectedIds = corpus.cases.map((entry) => text(entry.id)).sort();
+    const resultIds = archive.results.map((entry) => text(entry.case_id)).sort();
+    if (new Set(resultIds).size !== resultIds.length || !same(expectedIds, resultIds)) {
+      throw new Error("Case-IDene i arkivet samsvarer ikke med canonical 27-case corpus.");
+    }
+    for (const result of archive.results) {
+      if (!result?.model?.surfaces || !result?.model?.product_states || !Array.isArray(result?.critical_provenance_errors)) {
+        throw new Error(`${text(result?.case_id) || "ukjent_case"}: live-resultatet mangler produkt- eller proveniensdata.`);
+      }
+    }
+    return {
+      valid: true,
+      cases: archive.results.length,
+      generated_at: archive.generated_at,
+      successful_chat_count: Number(archive.live_transport.successful_chat_count),
+      critical_transport_failures: 0
+    };
+  }
+
+  async function loadArchivedLiveEvaluation(archive) {
+    if (state.running) throw new Error("Kan ikke importere mens en browser-evaluering kjører.");
+    state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
+    const validation = validateArchivedLiveEvaluation(archive, state.corpus);
+    state.results = clone(archive.results);
+    state.review_source = {
+      mode: "archived_live",
+      workflow_run_id: ARCHIVED_LIVE_BASELINE.workflow_run_id,
+      artifact_id: ARCHIVED_LIVE_BASELINE.artifact_id,
+      head_sha: ARCHIVED_LIVE_BASELINE.head_sha,
+      generated_at: validation.generated_at,
+      successful_chat_count: validation.successful_chat_count
+    };
+    if (byId("progress")) byId("progress").value = state.results.length;
+    if (byId("status")) byId("status").textContent = `Arkivert live-evaluering lastet: ${state.results.length}/${state.corpus.cases.length} cases · ingen nye modellkall.`;
+    updateSummary();
+    return clone({ validation, review_source: state.review_source });
+  }
+
+  async function importArchivedLiveEvaluationFile(file) {
+    if (!file?.text) throw new Error("Velg JSON-filen aha-projection-product-live-browser-evaluation-v2.json.");
+    let archive;
+    try { archive = JSON.parse(await file.text()); }
+    catch { throw new Error("Kunne ikke lese live-evalueringen som JSON."); }
+    return loadArchivedLiveEvaluation(archive);
+  }
+
   function renderResult(result) {
     const status = result.critical_provenance_errors.length ? "critical" : (result.model?.status === "ready" ? "ready" : "");
-    return `<article class="case" data-case-id="${escapeHtml(result.case_id)}"><div class="case-head"><div><span class="badge">${escapeHtml(result.genre)}</span><h3>${escapeHtml(result.focus)}</h3><p>${escapeHtml(result.case_id)} · ${escapeHtml(result.identity?.source_sha256 || "")}</p></div><span class="badge ${status}">${result.critical_provenance_errors.length ? `${result.critical_provenance_errors.length} kritiske feil` : escapeHtml(result.model?.status || "ukjent")}</span></div><div class="products">${PRODUCTS.map((product) => `<section class="product"><h4>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"}</h4><pre>${escapeHtml(JSON.stringify(productOutput(result.model, product), null, 2))}</pre></section>`).join("")}</div><div class="review">${PRODUCTS.map((product) => `<label>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"} (1–5)<select data-review-score="${escapeHtml(result.case_id)}:${product}"><option value="">Ikke vurdert</option>${[1,2,3,4,5].map((score) => `<option value="${score}">${score}</option>`).join("")}</select></label>`).join("")}</div><label class="critical-row"><input type="checkbox" data-critical="${escapeHtml(result.case_id)}" /> Kritisk proveniensfeil funnet av reviewer</label><label>Notat<textarea rows="3" data-review-note="${escapeHtml(result.case_id)}"></textarea></label></article>`;
+    const source = state.corpus?.cases?.find((entry) => entry.id === result.case_id) || {};
+    const claims = Array.isArray(source.claims) ? source.claims : [];
+    return `<article class="case" data-case-id="${escapeHtml(result.case_id)}"><div class="case-head"><div><span class="badge">${escapeHtml(result.genre || source.genre)}</span><h3>${escapeHtml(result.focus || source.focus)}</h3><p>${escapeHtml(result.case_id)} · ${escapeHtml(result.identity?.source_sha256 || "")}</p></div><span class="badge ${status}">${result.critical_provenance_errors.length ? `${result.critical_provenance_errors.length} kritiske feil` : escapeHtml(result.model?.status || "ukjent")}</span></div><details class="source-evidence" open><summary>Kildetekst og forventede kildepåstander</summary><p>${escapeHtml(source.source_text || "Kildetekst mangler.")}</p>${claims.length ? `<ul>${claims.map((claim) => `<li>${escapeHtml(claim)}</li>`).join("")}</ul>` : ""}<p>Forventet produktoutput: ${source.expected_visible === false ? "skal undertrykkes ved utilstrekkelig belegg" : "kan være synlig dersom kvalitetsportene består"}.</p></details><div class="products">${PRODUCTS.map((product) => `<section class="product"><h4>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"}</h4><pre>${escapeHtml(JSON.stringify(productOutput(result.model, product), null, 2))}</pre></section>`).join("")}</div><div class="review">${PRODUCTS.map((product) => `<label>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"} (1–5)<select data-review-score="${escapeHtml(result.case_id)}:${product}"><option value="">Ikke vurdert</option>${[1,2,3,4,5].map((score) => `<option value="${score}">${score}</option>`).join("")}</select></label>`).join("")}</div><label class="critical-row"><input type="checkbox" data-critical="${escapeHtml(result.case_id)}" /> Kritisk proveniensfeil funnet av reviewer</label><label>Notat<textarea rows="3" data-review-note="${escapeHtml(result.case_id)}"></textarea></label></article>`;
   }
 
   function updateSummary() {
@@ -228,7 +302,7 @@
 
   async function runAll(options = {}) {
     if (state.running) return null;
-    state.running = true; state.results = [];
+    state.running = true; state.results = []; state.review_source = { mode: "runtime_generated" };
     const runButton = byId("run"); if (runButton) runButton.disabled = true;
     const originalStorage = fullStorageSnapshot(global.localStorage);
     try {
@@ -349,7 +423,7 @@
     const complete = Boolean(reviewer && reviewedAt && attested && caseReviews.every((entry) => entry.review_status === "complete"));
     const critical = caseReviews.filter((entry) => entry.critical_provenance_error).length + state.results.reduce((sum, entry) => sum + entry.critical_provenance_errors.length, 0);
     const passed = complete && critical === 0 && PRODUCTS.every((product) => shares[product] >= 0.8);
-    return { schema: "aha_projection_product_human_review_v2", version: 2, reviewer: { name: reviewer, reviewed_at: reviewedAt, human_attestation: attested }, status: passed ? "independent_human_review_passed" : complete ? "independent_human_review_failed" : "independent_human_review_open", release_rule: { minimum_acceptable_share: 0.8, independent_human_review_required: true, critical_provenance_errors_allowed: 0, automatic_persistence_allowed: false }, acceptable_share: shares, critical_provenance_error_count: critical, browser_evaluation: { cases: state.results.length, runtime_generated: true }, case_reviews: caseReviews };
+    return { schema: "aha_projection_product_human_review_v2", version: 2, reviewer: { name: reviewer, reviewed_at: reviewedAt, human_attestation: attested }, status: passed ? "independent_human_review_passed" : complete ? "independent_human_review_failed" : "independent_human_review_open", release_rule: { minimum_acceptable_share: 0.8, independent_human_review_required: true, critical_provenance_errors_allowed: 0, automatic_persistence_allowed: false }, acceptable_share: shares, critical_provenance_error_count: critical, browser_evaluation: { cases: state.results.length, runtime_generated: state.review_source?.mode !== "archived_live", source: clone(state.review_source) }, case_reviews: caseReviews };
   }
 
   function downloadReview() {
@@ -360,7 +434,24 @@
   }
 
   byId("run")?.addEventListener("click", () => { void runAll().catch((error) => { byId("status").textContent = error.message; }); });
+  byId("live-import")?.addEventListener("change", (event) => {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+    void importArchivedLiveEvaluationFile(file).catch((error) => { byId("status").textContent = error.message; });
+  });
   byId("export")?.addEventListener("click", downloadReview);
 
-  global.AHAProjectionProductReviewV2 = Object.freeze({ runAll, runCases, prepareControlledJourney, configureCostControl, collectHumanReview, compareReplay, getState: () => clone(state) });
+  global.AHAProjectionProductReviewV2 = Object.freeze({
+    ARCHIVED_LIVE_BASELINE,
+    runAll,
+    runCases,
+    prepareControlledJourney,
+    configureCostControl,
+    loadArchivedLiveEvaluation,
+    importArchivedLiveEvaluationFile,
+    validateArchivedLiveEvaluation,
+    collectHumanReview,
+    compareReplay,
+    getState: () => clone(state)
+  });
 })(window);
