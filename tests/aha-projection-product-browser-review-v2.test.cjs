@@ -32,6 +32,7 @@ vm.runInContext(fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserRevie
 const compare = context.AHAProjectionProductReviewV2.compareReplay;
 const validateArchive = context.AHAProjectionProductReviewV2.validateArchivedLiveEvaluation;
 const validateDraft = context.AHAProjectionProductReviewV2.validateHumanReviewDraft;
+const rubricModel = context.AHAProjectionProductReviewV2.rubricModel;
 const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
 assert.equal(baseline.workflow_run_id, 32633381518);
 assert.equal(baseline.artifact_id, 9491725428);
@@ -79,6 +80,21 @@ const changedRuntime = compare(result('chat_message_first'), {
 assert.deepEqual(JSON.parse(JSON.stringify(changedRuntime)), { comparable: false, reason: 'runtime_version_changed' });
 
 const corpus = JSON.parse(fs.readFileSync('tests/fixtures/aha-projection-product-evaluation-v2.json', 'utf8'));
+const humanReviewContract = JSON.parse(fs.readFileSync('ops/evaluation/aha-projection-product-human-review-v2.json', 'utf8'));
+const canonicalRubric = JSON.parse(JSON.stringify(rubricModel(humanReviewContract)));
+assert.deepEqual(canonicalRubric, {
+  scale: '1-5',
+  acceptable_score_minimum: 4,
+  criteria: {
+    lists: ['tematisk_koherens', 'ikke_triviell', 'begrunnet_medlemskap', 'kildebevaring'],
+    paths: ['progresjon', 'overganger', 'laeringsutbytte', 'aapent_spoersmaal'],
+    mindmap: ['hierarki', 'meningsfulle_grener', 'stoeykontroll', 'resonans_semantikk']
+  }
+});
+assert.throws(
+  () => rubricModel({ ...humanReviewContract, rubric: { ...humanReviewContract.rubric, acceptable_score_minimum: 6 } }),
+  /ugyldig skala eller terskel/
+);
 const archivedResult = (caseId) => ({
   case_id: caseId,
   model: { surfaces: { lists: [], paths: [], mindmap: { nodes: [], edges: [] } }, product_states: { list: {}, path: {}, mindmap: {} } },
@@ -167,6 +183,7 @@ assert.throws(
 const html = fs.readFileSync('projection-product-review-v2.html', 'utf8');
 assert.match(html, /id="live-import"/);
 assert.match(html, /id="review-import"/);
+assert.match(html, /id="rubric"/);
 assert.match(html, /review-progress/);
 assert.match(html, /Eksporter review \/ utkast/);
 assert.match(html, /run 32633381518 \/ artifact 9491725428/);
@@ -174,5 +191,8 @@ assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);
 assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
+assert.match(reviewRuntime, /HUMAN_REVIEW_URL/);
+assert.match(reviewRuntime, /data-rubric-product/);
+assert.match(reviewRuntime, /acceptable_score_minimum/);
 
 console.log('aha-projection-product-browser-review-v2.test.cjs: OK');
