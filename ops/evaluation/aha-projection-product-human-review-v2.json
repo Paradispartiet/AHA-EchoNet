@@ -304,5 +304,13 @@
     "reviewer_scores_autofilled": false,
     "pull_request": 894,
     "semantic_shapes_applied": true
+  },
+  "review_workflow": {
+    "explicit_draft_export": true,
+    "explicit_draft_import": true,
+    "automatic_browser_persistence": false,
+    "imported_scores_and_notes_restored": true,
+    "imported_human_attestation_restored": false,
+    "final_attestation_must_be_reconfirmed": true
   }
 }
