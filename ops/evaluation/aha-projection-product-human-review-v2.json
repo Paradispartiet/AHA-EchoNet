@@ -311,6 +311,8 @@
     "automatic_browser_persistence": false,
     "imported_scores_and_notes_restored": true,
     "imported_human_attestation_restored": false,
-    "final_attestation_must_be_reconfirmed": true
+    "final_attestation_must_be_reconfirmed": true,
+    "canonical_rubric_rendered_in_review_surface": true,
+    "rubric_source": "ops/evaluation/aha-projection-product-human-review-v2.json"
   }
 }

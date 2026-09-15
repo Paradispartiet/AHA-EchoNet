@@ -2,6 +2,7 @@
   "use strict";
 
   const CORPUS_URL = "tests/fixtures/aha-projection-product-evaluation-v2.json";
+  const HUMAN_REVIEW_URL = "ops/evaluation/aha-projection-product-human-review-v2.json";
   const PRODUCT_KEYS = Object.freeze(["aha_lists_v1", "aha_paths_v1", "aha_concept_lists_v1"]);
   const GUARDED_KEYS = Object.freeze([...PRODUCT_KEYS, "aha_insight_chamber_v1"]);
   const PRODUCTS = Object.freeze(["lists", "paths", "mindmap"]);
@@ -14,7 +15,7 @@
     corpus_cases: 27,
     successful_chat_count: 29
   });
-  const state = { corpus: null, results: [], running: false, frame: null, cost_control: null, review_source: null };
+  const state = { corpus: null, results: [], running: false, frame: null, cost_control: null, review_source: null, review_contract: null };
 
   const byId = (id) => global.document.getElementById(id);
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
@@ -224,6 +225,56 @@
     return model?.surfaces?.mindmap || { nodes: [], edges: [], read_only: true };
   }
 
+  function rubricModel(contract) {
+    if (!contract || contract.schema !== "aha_projection_product_human_review_v2") {
+      throw new Error("Canonical human-review-ledger mangler eller har ugyldig schema.");
+    }
+    const rubric = contract.rubric || {};
+    const acceptable = Number(rubric.acceptable_score_minimum);
+    if (rubric.scale !== "1-5" || !Number.isInteger(acceptable) || acceptable < 1 || acceptable > 5) {
+      throw new Error("Canonical human-review-rubric har ugyldig skala eller terskel.");
+    }
+    const criteria = {};
+    for (const product of PRODUCTS) {
+      if (!Array.isArray(rubric[product]) || !rubric[product].length || rubric[product].some((entry) => !text(entry))) {
+        throw new Error(`Canonical human-review-rubric mangler kriterier for ${product}.`);
+      }
+      criteria[product] = rubric[product].map(text);
+    }
+    return Object.freeze({ scale: rubric.scale, acceptable_score_minimum: acceptable, criteria: clone(criteria) });
+  }
+
+  function rubricCriterionLabel(value) {
+    const known = {
+      tematisk_koherens: "tematisk koherens",
+      ikke_triviell: "ikke triviell",
+      begrunnet_medlemskap: "begrunnet medlemskap",
+      kildebevaring: "kildebevaring",
+      progresjon: "progresjon",
+      overganger: "overganger",
+      laeringsutbytte: "læringsutbytte",
+      aapent_spoersmaal: "åpent spørsmål",
+      hierarki: "hierarki",
+      meningsfulle_grener: "meningsfulle grener",
+      stoeykontroll: "støykontroll",
+      resonans_semantikk: "resonanssemantikk"
+    };
+    return known[value] || text(value).replace(/_/g, " ");
+  }
+
+  function renderReviewRubric() {
+    const target = byId("rubric");
+    if (!target) return null;
+    if (!state.review_contract) {
+      target.innerHTML = '<strong>Scoringskriterier</strong><p class="rubric-meta">Canonical human-review-ledger er ikke lastet ennå.</p>';
+      return null;
+    }
+    const model = rubricModel(state.review_contract);
+    const names = { lists: "Lister", paths: "Stier", mindmap: "Tankekart" };
+    target.innerHTML = `<strong>Scoringskriterier</strong><p class="rubric-meta">Skala ${escapeHtml(model.scale)} · akseptabel score er ${model.acceptable_score_minimum} eller 5. Hver produktscore skal vurderes mot alle fire kriteriene under.</p><div class="rubric-grid">${PRODUCTS.map((product) => `<section class="rubric-card" data-rubric-product="${product}"><h4>${names[product]}</h4><ul>${model.criteria[product].map((criterion) => `<li data-rubric-criterion="${escapeHtml(criterion)}">${escapeHtml(rubricCriterionLabel(criterion))}</li>`).join("")}</ul></section>`).join("")}</div>`;
+    return clone(model);
+  }
+
   function validateArchivedLiveEvaluation(archive, corpus) {
     if (!archive || typeof archive !== "object") throw new Error("Arkivert live-evaluering mangler.");
     if (archive.schema !== "aha_projection_product_browser_evaluation_v2" || Number(archive.version) !== 2) {
@@ -264,6 +315,8 @@
   async function loadArchivedLiveEvaluation(archive) {
     if (state.running) throw new Error("Kan ikke importere mens en browser-evaluering kjører.");
     state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
+    state.review_contract ||= await global.fetch(HUMAN_REVIEW_URL).then((response) => response.json());
+    rubricModel(state.review_contract);
     const validation = validateArchivedLiveEvaluation(archive, state.corpus);
     state.results = clone(archive.results);
     state.review_source = {
@@ -398,6 +451,7 @@
   function updateSummary() {
     byId("results").innerHTML = state.results.map(renderResult).join("");
     byId("export").disabled = state.results.length !== state.corpus?.cases?.length;
+    renderReviewRubric();
     updateReviewProgress();
   }
 
@@ -408,6 +462,8 @@
     const originalStorage = fullStorageSnapshot(global.localStorage);
     try {
       state.corpus ||= await global.fetch(CORPUS_URL).then((response) => response.json());
+      state.review_contract ||= await global.fetch(HUMAN_REVIEW_URL).then((response) => response.json());
+      rubricModel(state.review_contract);
       global.localStorage.clear();
       let win = await loadFrame({ reload: Boolean(state.frame) });
       win.localStorage.clear();
@@ -562,6 +618,8 @@
     applyHumanReviewDraft,
     importHumanReviewDraftFile,
     updateReviewProgress,
+    rubricModel,
+    renderReviewRubric,
     collectHumanReview,
     compareReplay,
     getState: () => clone(state)
