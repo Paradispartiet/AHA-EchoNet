@@ -7,10 +7,10 @@
   const PRODUCTS = Object.freeze(["lists", "paths", "mindmap"]);
   const SEED_TEXT = "Morgenbladet er en norsk avis. Teksten drøfter pressehistorie, redaksjonell uavhengighet, eierskapsskifter og akademisk offentlighet.";
   const ARCHIVED_LIVE_BASELINE = Object.freeze({
-    workflow_run_id: 32630087938,
-    artifact_id: 9490861618,
-    head_sha: "88076fa2e70f746df1cee99a1cc4c66c1d747995",
-    generated_at: "2026-08-23T09:13:09.989Z",
+    workflow_run_id: 32633381518,
+    artifact_id: 9491725428,
+    head_sha: "5aab589eed30012c349f4679c201ee87f0a27602",
+    generated_at: "2026-08-23T10:24:44.775Z",
     corpus_cases: 27,
     successful_chat_count: 29
   });
