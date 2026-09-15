@@ -1,0 +1,30 @@
+{
+  "schema": "aha_projection_product_live_review_archive_v2",
+  "version": 2,
+  "status": "archived_live_output_available_for_independent_human_review",
+  "workflow_run_id": 32630087938,
+  "artifact_id": 9490861618,
+  "artifact_name": "aha-projection-product-browser-evaluation-v2",
+  "artifact_filename": "aha-projection-product-live-browser-evaluation-v2.json",
+  "head_sha": "88076fa2e70f746df1cee99a1cc4c66c1d747995",
+  "generated_at": "2026-08-23T09:13:09.989Z",
+  "artifact_expires_at": "2026-11-21T09:06:38Z",
+  "corpus_cases": 27,
+  "successful_chat_count": 29,
+  "chat_status_counts": {
+    "200": 29
+  },
+  "backend_http_failures": 0,
+  "critical_transport_failures": 0,
+  "critical_provenance_errors_in_archived_results": 0,
+  "review_surface": "projection-product-review-v2.html",
+  "import_mode": "local_json_file_only",
+  "new_model_calls_required": false,
+  "independent_human_review_complete": false,
+  "human_review_must_not_be_autofilled": true,
+  "notes": [
+    "The archived live evaluation is evidence input, not a human review result.",
+    "Reviewer scores and attestation remain explicit manual actions.",
+    "The review surface validates the exact archived baseline before rendering it."
+  ]
+}
