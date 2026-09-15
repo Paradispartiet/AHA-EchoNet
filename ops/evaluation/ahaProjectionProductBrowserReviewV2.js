@@ -288,6 +288,103 @@
     return loadArchivedLiveEvaluation(archive);
   }
 
+  function validateHumanReviewDraft(draft) {
+    if (!draft || typeof draft !== "object") throw new Error("Review-utkast mangler.");
+    if (draft.schema !== "aha_projection_product_human_review_v2" || Number(draft.version) !== 2) {
+      throw new Error("Ugyldig review-utkast-schema.");
+    }
+    if (!state.results.length || !state.corpus?.cases?.length) {
+      throw new Error("Åpne live-evalueringen før review-utkastet.");
+    }
+    if (!Array.isArray(draft.case_reviews) || draft.case_reviews.length !== state.results.length) {
+      throw new Error("Review-utkastet må inneholde de samme 27 casene som den åpne evalueringen.");
+    }
+    const expectedIds = state.results.map((entry) => text(entry.case_id)).sort();
+    const actualIds = draft.case_reviews.map((entry) => text(entry.case_id)).sort();
+    if (new Set(actualIds).size !== actualIds.length || !same(expectedIds, actualIds)) {
+      throw new Error("Case-IDene i review-utkastet samsvarer ikke med den åpne evalueringen.");
+    }
+    if (state.review_source?.mode === "archived_live") {
+      const source = draft?.browser_evaluation?.source;
+      if (!source || Number(source.workflow_run_id) !== ARCHIVED_LIVE_BASELINE.workflow_run_id || Number(source.artifact_id) !== ARCHIVED_LIVE_BASELINE.artifact_id) {
+        throw new Error("Review-utkastet er ikke knyttet til den samme arkiverte live-baselinen.");
+      }
+    }
+    const normalizedCases = draft.case_reviews.map((entry) => {
+      const normalized = { case_id: text(entry.case_id) };
+      for (const product of PRODUCTS) {
+        const value = entry?.[product];
+        if (value == null || value === "") normalized[product] = null;
+        else {
+          const score = Number(value);
+          if (!Number.isInteger(score) || score < 1 || score > 5) throw new Error(`${normalized.case_id}: ugyldig ${product}-score i review-utkastet.`);
+          normalized[product] = score;
+        }
+      }
+      normalized.critical_provenance_error = entry?.critical_provenance_error === true;
+      normalized.notes = text(entry?.notes);
+      return normalized;
+    });
+    return {
+      reviewer: {
+        name: text(draft?.reviewer?.name),
+        reviewed_at: text(draft?.reviewer?.reviewed_at)
+      },
+      case_reviews: normalizedCases
+    };
+  }
+
+  function updateReviewProgress() {
+    if (!state.results.length) {
+      if (byId("review-progress")) byId("review-progress").textContent = "Review-fremdrift: 0/81 produktscorer · 0/27 cases komplette.";
+      return { scored: 0, total: 81, complete_cases: 0, total_cases: 27 };
+    }
+    let scored = 0;
+    let completeCases = 0;
+    for (const result of state.results) {
+      let caseScored = 0;
+      for (const product of PRODUCTS) {
+        const value = Number(global.document.querySelector(`[data-review-score="${result.case_id}:${product}"]`)?.value);
+        if (Number.isInteger(value) && value >= 1 && value <= 5) {
+          scored += 1;
+          caseScored += 1;
+        }
+      }
+      if (caseScored === PRODUCTS.length) completeCases += 1;
+    }
+    const total = state.results.length * PRODUCTS.length;
+    if (byId("review-progress")) byId("review-progress").textContent = `Review-fremdrift: ${scored}/${total} produktscorer · ${completeCases}/${state.results.length} cases komplette.`;
+    return { scored, total, complete_cases: completeCases, total_cases: state.results.length };
+  }
+
+  function applyHumanReviewDraft(draft) {
+    const normalized = validateHumanReviewDraft(draft);
+    if (byId("reviewer")) byId("reviewer").value = normalized.reviewer.name;
+    if (byId("review-date")) byId("review-date").value = normalized.reviewer.reviewed_at;
+    if (byId("attestation")) byId("attestation").checked = false;
+    for (const entry of normalized.case_reviews) {
+      for (const product of PRODUCTS) {
+        const select = global.document.querySelector(`[data-review-score="${entry.case_id}:${product}"]`);
+        if (select) select.value = entry[product] == null ? "" : String(entry[product]);
+      }
+      const critical = global.document.querySelector(`[data-critical="${entry.case_id}"]`);
+      if (critical) critical.checked = entry.critical_provenance_error;
+      const note = global.document.querySelector(`[data-review-note="${entry.case_id}"]`);
+      if (note) note.value = entry.notes;
+    }
+    const progress = updateReviewProgress();
+    if (byId("status")) byId("status").textContent = `Review-utkast lastet: ${progress.scored}/${progress.total} scorer. Menneskelig attestasjon må bekreftes på nytt før sluttresultat.`;
+    return clone({ ...normalized, human_attestation_restored: false, progress });
+  }
+
+  async function importHumanReviewDraftFile(file) {
+    if (!file?.text) throw new Error("Velg et eksportert human-review JSON-utkast.");
+    let draft;
+    try { draft = JSON.parse(await file.text()); }
+    catch { throw new Error("Kunne ikke lese review-utkastet som JSON."); }
+    return applyHumanReviewDraft(draft);
+  }
+
   function renderResult(result) {
     const status = result.critical_provenance_errors.length ? "critical" : (result.model?.status === "ready" ? "ready" : "");
     const source = state.corpus?.cases?.find((entry) => entry.id === result.case_id) || {};
@@ -298,6 +395,7 @@
   function updateSummary() {
     byId("results").innerHTML = state.results.map(renderResult).join("");
     byId("export").disabled = state.results.length !== state.corpus?.cases?.length;
+    updateReviewProgress();
   }
 
   async function runAll(options = {}) {
@@ -439,6 +537,13 @@
     if (!file) return;
     void importArchivedLiveEvaluationFile(file).catch((error) => { byId("status").textContent = error.message; });
   });
+  byId("review-import")?.addEventListener("change", (event) => {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+    void importHumanReviewDraftFile(file).catch((error) => { byId("status").textContent = error.message; });
+  });
+  byId("results")?.addEventListener("change", updateReviewProgress);
+  byId("results")?.addEventListener("input", updateReviewProgress);
   byId("export")?.addEventListener("click", downloadReview);
 
   global.AHAProjectionProductReviewV2 = Object.freeze({
@@ -450,6 +555,10 @@
     loadArchivedLiveEvaluation,
     importArchivedLiveEvaluationFile,
     validateArchivedLiveEvaluation,
+    validateHumanReviewDraft,
+    applyHumanReviewDraft,
+    importHumanReviewDraftFile,
+    updateReviewProgress,
     collectHumanReview,
     compareReplay,
     getState: () => clone(state)
