@@ -62,8 +62,8 @@ assert.equal(humanReview.review_workflow.final_attestation_must_be_reconfirmed, 
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 
 assert.equal(liveArchive.schema, "aha_projection_product_live_review_archive_v2");
-assert.equal(liveArchive.workflow_run_id, 32630087938);
-assert.equal(liveArchive.artifact_id, 9490861618);
+assert.equal(liveArchive.workflow_run_id, 32633381518);
+assert.equal(liveArchive.artifact_id, 9491725428);
 assert.equal(liveArchive.corpus_cases, 27);
 assert.equal(liveArchive.successful_chat_count, 29);
 assert.equal(liveArchive.critical_transport_failures, 0);
@@ -71,6 +71,11 @@ assert.equal(liveArchive.critical_provenance_errors_in_archived_results, 0);
 assert.equal(liveArchive.new_model_calls_required, false);
 assert.equal(liveArchive.independent_human_review_complete, false);
 assert.equal(liveArchive.human_review_must_not_be_autofilled, true);
+assert.equal(liveArchive.pull_request, 894);
+assert.equal(liveArchive.semantic_shapes_applied, true);
+assert.equal(liveArchive.product_shapes.lists, "thematic_membership_v2");
+assert.equal(liveArchive.product_shapes.paths, "ordered_inquiry_v2");
+assert.equal(liveArchive.product_shapes.mindmap, "ranked_hierarchy_v2");
 
 assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v3/);
 assert.match(browserSpec, /preflightResponse\.ok\(\)/);

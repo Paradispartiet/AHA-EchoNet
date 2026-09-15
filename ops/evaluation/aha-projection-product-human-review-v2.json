@@ -296,12 +296,14 @@
   "archived_live_review_input": {
     "available": true,
     "manifest": "ops/evaluation/aha-projection-product-live-review-archive-v2.json",
-    "workflow_run_id": 32630087938,
-    "artifact_id": 9490861618,
-    "generated_at": "2026-08-23T09:13:09.989Z",
+    "workflow_run_id": 32633381518,
+    "artifact_id": 9491725428,
+    "generated_at": "2026-08-23T10:24:44.775Z",
     "import_surface": "projection-product-review-v2.html",
     "new_model_calls_required": false,
-    "reviewer_scores_autofilled": false
+    "reviewer_scores_autofilled": false,
+    "pull_request": 894,
+    "semantic_shapes_applied": true
   },
   "review_workflow": {
     "explicit_draft_export": true,

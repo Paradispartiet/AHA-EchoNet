@@ -33,6 +33,9 @@ const compare = context.AHAProjectionProductReviewV2.compareReplay;
 const validateArchive = context.AHAProjectionProductReviewV2.validateArchivedLiveEvaluation;
 const validateDraft = context.AHAProjectionProductReviewV2.validateHumanReviewDraft;
 const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
+assert.equal(baseline.workflow_run_id, 32633381518);
+assert.equal(baseline.artifact_id, 9491725428);
+assert.equal(baseline.head_sha, '5aab589eed30012c349f4679c201ee87f0a27602');
 const fingerprint = { semantic_document: 1, analysis_bundle: 2, projection_runtime: 2, product_contract: 2 };
 const result = (sourceId, sourceSha256 = 'a'.repeat(64), insight = 'Kildebeviset består.') => ({
   runtime_fingerprint: fingerprint,
@@ -166,7 +169,7 @@ assert.match(html, /id="live-import"/);
 assert.match(html, /id="review-import"/);
 assert.match(html, /review-progress/);
 assert.match(html, /Eksporter review \/ utkast/);
-assert.match(html, /run 32630087938 \/ artifact 9490861618/);
+assert.match(html, /run 32633381518 \/ artifact 9491725428/);
 assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);

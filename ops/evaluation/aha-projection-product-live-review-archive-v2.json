@@ -2,13 +2,13 @@
   "schema": "aha_projection_product_live_review_archive_v2",
   "version": 2,
   "status": "archived_live_output_available_for_independent_human_review",
-  "workflow_run_id": 32630087938,
-  "artifact_id": 9490861618,
+  "workflow_run_id": 32633381518,
+  "artifact_id": 9491725428,
   "artifact_name": "aha-projection-product-browser-evaluation-v2",
   "artifact_filename": "aha-projection-product-live-browser-evaluation-v2.json",
-  "head_sha": "88076fa2e70f746df1cee99a1cc4c66c1d747995",
-  "generated_at": "2026-08-23T09:13:09.989Z",
-  "artifact_expires_at": "2026-11-21T09:06:38Z",
+  "head_sha": "5aab589eed30012c349f4679c201ee87f0a27602",
+  "generated_at": "2026-08-23T10:24:44.775Z",
+  "artifact_expires_at": "2026-11-21T10:18:11Z",
   "corpus_cases": 27,
   "successful_chat_count": 29,
   "chat_status_counts": {
@@ -23,8 +23,16 @@
   "independent_human_review_complete": false,
   "human_review_must_not_be_autofilled": true,
   "notes": [
+    "This archive is the PR #894 live semantic-shapes baseline and supersedes the older PR #892 live artifact for human product review.",
     "The archived live evaluation is evidence input, not a human review result.",
     "Reviewer scores and attestation remain explicit manual actions.",
     "The review surface validates the exact archived baseline before rendering it."
-  ]
+  ],
+  "pull_request": 894,
+  "semantic_shapes_applied": true,
+  "product_shapes": {
+    "lists": "thematic_membership_v2",
+    "paths": "ordered_inquiry_v2",
+    "mindmap": "ranked_hierarchy_v2"
+  }
 }
