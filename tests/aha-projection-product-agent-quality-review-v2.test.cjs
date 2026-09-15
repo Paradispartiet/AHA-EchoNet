@@ -59,6 +59,8 @@ assert.equal(humanReview.review_workflow.automatic_browser_persistence, false);
 assert.equal(humanReview.review_workflow.imported_scores_and_notes_restored, true);
 assert.equal(humanReview.review_workflow.imported_human_attestation_restored, false);
 assert.equal(humanReview.review_workflow.final_attestation_must_be_reconfirmed, true);
+assert.equal(humanReview.review_workflow.canonical_rubric_rendered_in_review_surface, true);
+assert.equal(humanReview.review_workflow.rubric_source, "ops/evaluation/aha-projection-product-human-review-v2.json");
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 
 assert.equal(liveArchive.schema, "aha_projection_product_live_review_archive_v2");
