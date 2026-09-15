@@ -53,6 +53,12 @@ assert.equal(humanReview.rubric.acceptable_score_minimum, 4);
 assert.equal(humanReview.archived_live_review_input.available, true);
 assert.equal(humanReview.archived_live_review_input.new_model_calls_required, false);
 assert.equal(humanReview.archived_live_review_input.reviewer_scores_autofilled, false);
+assert.equal(humanReview.review_workflow.explicit_draft_export, true);
+assert.equal(humanReview.review_workflow.explicit_draft_import, true);
+assert.equal(humanReview.review_workflow.automatic_browser_persistence, false);
+assert.equal(humanReview.review_workflow.imported_scores_and_notes_restored, true);
+assert.equal(humanReview.review_workflow.imported_human_attestation_restored, false);
+assert.equal(humanReview.review_workflow.final_attestation_must_be_reconfirmed, true);
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 
 assert.equal(liveArchive.schema, "aha_projection_product_live_review_archive_v2");
