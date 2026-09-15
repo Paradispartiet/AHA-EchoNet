@@ -4,6 +4,7 @@ const fs = require("fs");
 const audit = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-agent-quality-review-v2.json", "utf8"));
 const humanReview = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-human-review-v2.json", "utf8"));
 const browserSpec = fs.readFileSync("tests/browser/aha-projection-product-browser-evaluation-v2.spec.cjs", "utf8");
+const liveArchive = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-live-review-archive-v2.json", "utf8"));
 
 assert.equal(audit.schema, "aha_projection_product_agent_quality_review_v2");
 assert.equal(audit.scope.cases, 27);
@@ -49,7 +50,21 @@ assert.equal(humanReview.release_rule.critical_provenance_errors_allowed, 0);
 assert.equal(humanReview.release_rule.automatic_persistence_allowed, false);
 assert.equal(humanReview.release_rule.reviewer_attestation_required, true);
 assert.equal(humanReview.rubric.acceptable_score_minimum, 4);
+assert.equal(humanReview.archived_live_review_input.available, true);
+assert.equal(humanReview.archived_live_review_input.new_model_calls_required, false);
+assert.equal(humanReview.archived_live_review_input.reviewer_scores_autofilled, false);
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
+
+assert.equal(liveArchive.schema, "aha_projection_product_live_review_archive_v2");
+assert.equal(liveArchive.workflow_run_id, 32630087938);
+assert.equal(liveArchive.artifact_id, 9490861618);
+assert.equal(liveArchive.corpus_cases, 27);
+assert.equal(liveArchive.successful_chat_count, 29);
+assert.equal(liveArchive.critical_transport_failures, 0);
+assert.equal(liveArchive.critical_provenance_errors_in_archived_results, 0);
+assert.equal(liveArchive.new_model_calls_required, false);
+assert.equal(liveArchive.independent_human_review_complete, false);
+assert.equal(liveArchive.human_review_must_not_be_autofilled, true);
 
 assert.match(browserSpec, /aha_projection_product_live_backend_preflight_v3/);
 assert.match(browserSpec, /preflightResponse\.ok\(\)/);
