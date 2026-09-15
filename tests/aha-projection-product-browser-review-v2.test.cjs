@@ -102,7 +102,7 @@ assert.throws(
 );
 const html = fs.readFileSync('projection-product-review-v2.html', 'utf8');
 assert.match(html, /id="live-import"/);
-assert.match(html, /run 32630087938 \/ artifact 9490861618/);
+assert.match(html, /run 32633381518 \/ artifact 9491725428/);
 assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
 
 console.log('aha-projection-product-browser-review-v2.test.cjs: OK');
