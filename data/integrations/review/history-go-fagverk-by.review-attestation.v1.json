@@ -37,7 +37,7 @@
     },
     "fixtures": {
       "file": "aha-by-fixtures.json",
-      "sha256": "9a4b73f2bc4d4badd50596643143c7decc3594155666970dfa424a6fa480340a",
+      "sha256": "36f66a98499ce6dc4241486bf7f66c4cf7409d02e0276a79a33a578b61150821",
       "summary": {
         "total": 16,
         "passed": 16,
