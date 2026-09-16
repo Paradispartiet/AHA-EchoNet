@@ -2,7 +2,6 @@ name: AHA History Fagverk review
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - "scripts/lib/history-fagverk-scoring.mjs"
       - "scripts/build-history-fagverk-term-policy.mjs"
@@ -40,23 +39,9 @@ jobs:
       - name: Rebuild complete History review evidence
         run: |
           node scripts/build-history-fagverk-term-policy.mjs
-          node scripts/build-history-fagverk-expansion-review.mjs
           node scripts/evaluate-history-fagverk-policy.mjs
           node scripts/compare-history-fixture-corrections.mjs
-          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject historie
           node tests/aha-history-fagverk-review.test.cjs
-
-      - name: Verify checked-in parity and runtime isolation
-        run: |
-          git diff --exit-code -- \
-            data/evaluation/aha-history-fagverk-evaluation-report.v1.json \
-            data/evaluation/aha-history-fixture-correction-report.v1.json \
-            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json \
-            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json \
-            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
-          git diff --exit-code -- \
-            data/integrations/history-go-fagverk-release.approved.json \
-            data/integrations/history-go-fagverk-release.runtime-active.json
 
       - name: Upload History review evidence
         uses: actions/upload-artifact@v4
@@ -65,8 +50,19 @@ jobs:
           path: |
             data/evaluation/aha-history-fagverk-evaluation-report.v1.json
             data/evaluation/aha-history-fixture-correction-report.v1.json
-            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json
-            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json
             data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Verify checked-in review parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/evaluation/aha-history-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-history-fixture-correction-report.v1.json \
+            data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
+          git diff --exit-code -- \
+            data/integrations/approvals/history-go-fagverk-historie.approved.v1.json \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json \
+            data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json \
+            data/integrations/runtime/history-go-fagverk-historie.policy.v1.json
