@@ -40,16 +40,16 @@ assert.equal(candidate.approval_required, true);
 assert.equal(candidate.runtime_activation_allowed, false);
 assert.equal(audit.gate.passed, true);
 assert.deepEqual(audit.coverage, {
-  expected: 11,
-  registered: 11,
-  materialized: 11,
+  expected: 12,
+  registered: 12,
+  materialized: 12,
   missing: [],
   unexpected: [],
   duplicate_chapter_ids: []
 });
 assert.deepEqual(audit.term_collision_summary, {
-  total: 99,
-  high_risk: 37,
+  total: 103,
+  high_risk: 41,
   medium_risk: 53,
   low_risk: 9
 });
@@ -91,13 +91,13 @@ assert.equal(matrix.ambiguity_cases.length, 12);
 assert.equal(new Set(matrix.positive_cases.map((item) => item.expected_chapter_id)).size, 12);
 assert.equal(evaluation.status, "passed_review_gate");
 assert.deepEqual(evaluation.summary, {
-  total: 34,
-  passed: 34,
+  total: 36,
+  passed: 36,
   failed: 0,
-  positive: 11,
-  confusion: 11,
+  positive: 12,
+  confusion: 12,
   ambiguity: 12,
-  chapters_covered: 11,
+  chapters_covered: 12,
   evidence_errors: 0
 });
 
