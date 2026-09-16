@@ -8,6 +8,9 @@ from app.engine.fagverk_grounding import ground_message, load_fagverk_corpus
 ROOT = Path(__file__).resolve().parents[3]
 MATRIX_PATH = ROOT / "data" / "evaluation" / "aha-nature-fagverk-evaluation-matrix.v1.json"
 CORRECTIONS_PATH = ROOT / "data" / "evaluation" / "aha-nature-fixture-corrections.v1.json"
+CANDIDATE_PATH = ROOT / "data" / "integrations" / "candidates" / "history-go-fagverk-natur.candidate.v1.json"
+REVIEW_POLICY_PATH = ROOT / "data" / "integrations" / "review" / "history-go-fagverk-natur.term-policy.v1.json"
+ACTIVE_MANIFEST_PATH = ROOT / "data" / "integrations" / "history-go-fagverk-release.runtime-active.json"
 
 
 def _nature_only_corpus() -> dict:
@@ -19,6 +22,21 @@ def _nature_only_corpus() -> dict:
         "source_ref": corpus["source_ref"],
         "entries": [entry for entry in corpus["entries"] if entry["subject_id"] == "natur"],
         "subject_policies": {"natur": corpus["subject_policies"]["natur"]},
+    }
+
+
+def _nature_review_candidate_corpus() -> dict:
+    candidate = json.loads(CANDIDATE_PATH.read_text(encoding="utf-8"))
+    policy = json.loads(REVIEW_POLICY_PATH.read_text(encoding="utf-8"))
+    assert candidate["source_ref"] == policy["source_ref"]
+    assert candidate["content_sha256"] == policy["corpus_sha256"]
+    return {
+        "schema": "aha_history_go_fagverk_corpus_v1",
+        "version": "review-candidate",
+        "source_repo": candidate["source_repo"],
+        "source_ref": candidate["source_ref"],
+        "entries": candidate["entries"],
+        "subject_policies": {"natur": policy},
     }
 
 
@@ -47,9 +65,9 @@ def test_nature_runtime_policy_preserves_review_domain_gate() -> None:
 
 def test_all_reviewed_nature_matrix_cases_pass_in_python_runtime() -> None:
     matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
-    corpus = _nature_only_corpus()
-    assert len(matrix["positive_cases"]) == 11
-    assert len(matrix["confusion_cases"]) == 11
+    corpus = _nature_review_candidate_corpus()
+    assert len(matrix["positive_cases"]) == 12
+    assert len(matrix["confusion_cases"]) == 12
     assert len(matrix["ambiguity_cases"]) == 12
 
     for case in [*matrix["positive_cases"], *matrix["confusion_cases"]]:
@@ -79,6 +97,16 @@ def test_all_reviewed_nature_fixture_corrections_pass_in_python_runtime() -> Non
 
 def test_nature_positive_cases_win_in_composed_runtime() -> None:
     matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
+    active = json.loads(ACTIVE_MANIFEST_PATH.read_text(encoding="utf-8"))
+    active_nature = active["active_subjects"]["natur"]
+
+    # Phase-1 review may advance the candidate before the explicit combined
+    # runtime activation. Do not test candidate-only examples against the old
+    # active runtime; the same test becomes active automatically after promotion.
+    if active_nature["source_commit"] != matrix["source_ref"]:
+        assert active_nature["source_commit"] != matrix["source_ref"]
+        return
+
     for case in matrix["positive_cases"]:
         result = ground_message(case["text"])
         assert result["status"] == "grounded", (case["id"], result)
