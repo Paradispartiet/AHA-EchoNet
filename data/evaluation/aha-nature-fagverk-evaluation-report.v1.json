@@ -1,20 +1,20 @@
 {
   "schema": "aha_nature_fagverk_evaluation_report_v1",
   "version": "1.0.0",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "corpus_sha256": "766debf495ebfac69866fb97b70d9bdd9dbdea8916d7e0c0400ed773e79f6065",
   "policy_version": "1.0.0",
   "matrix_version": "1.0.0",
   "status": "passed_review_gate",
   "runtime_activation_allowed": false,
   "summary": {
-    "total": 34,
-    "passed": 34,
+    "total": 36,
+    "passed": 36,
     "failed": 0,
-    "positive": 11,
-    "confusion": 11,
+    "positive": 12,
+    "confusion": 12,
     "ambiguity": 12,
-    "chapters_covered": 11,
+    "chapters_covered": 12,
     "evidence_errors": 0
   },
   "chapter_coverage": [
@@ -26,6 +26,7 @@
     "miljopavirkning_forvaltning_regenerasjon",
     "okosystem_mangfold_habitat",
     "organismebiologi_fysiologi",
+    "sopp_lav_mikroorganismer",
     "urban_okologi_gronnstruktur",
     "vann_hydrologi_kretslop",
     "zoologi_dyreliv"
@@ -84,40 +85,6 @@
             ]
           },
           {
-            "chapter_id": "klima_energi_resiliens",
-            "title": "Klima, energi og resiliens",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "organismebiologi_fysiologi",
-            "title": "Organismebiologi og fysiologi",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "botanikk_vegetasjon",
             "title": "Botanikk og vegetasjon",
             "score": 0,
@@ -129,6 +96,24 @@
           {
             "chapter_id": "evolusjon_biologisk_mangfold",
             "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi og naturhistorie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -200,40 +185,6 @@
             ]
           },
           {
-            "chapter_id": "klima_energi_resiliens",
-            "title": "Klima, energi og resiliens",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "organismebiologi_fysiologi",
-            "title": "Organismebiologi og fysiologi",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "artskunnskap_systematikk",
             "title": "Artskunnskap og systematikk",
             "score": 0,
@@ -245,6 +196,24 @@
           {
             "chapter_id": "evolusjon_biologisk_mangfold",
             "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi og naturhistorie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -329,106 +298,15 @@
             ]
           },
           {
-            "chapter_id": "artskunnskap_systematikk",
-            "title": "Artskunnskap og systematikk",
-            "score": 0,
+            "chapter_id": "sopp_lav_mikroorganismer",
+            "title": "Sopp, lav og mikroorganismer",
+            "score": 1.5,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "botanikk_vegetasjon",
-            "title": "Botanikk og vegetasjon",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          }
-        ]
-      }
-    },
-    {
-      "id": "nature-positive-geologi_landskap_tid",
-      "kind": "positive",
-      "passed": true,
-      "errors": [],
-      "result": {
-        "status": "grounded",
-        "selected_chapter_id": "geologi_landskap_tid",
-        "top_score": 22.5,
-        "second_score": 0,
-        "domain_evidence": {
-          "matched_terms": [
-            "bergart"
-          ],
-          "eligible": true
-        },
-        "ranking": [
-          {
-            "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
-            "score": 22.5,
-            "eligible": true,
-            "eligibility_reason": "eligible",
-            "matched_anchor_terms": [
-              "bergart"
-            ],
             "matched_terms": [
               {
-                "term": "berggrunn og løsmasser",
-                "group": "supplemental_evidence_terms",
-                "base_weight": 4,
-                "multiplier": 1,
-                "contribution": 4
-              },
-              {
-                "term": "geologisk tidsdybde",
-                "group": "supplemental_evidence_terms",
-                "base_weight": 4,
-                "multiplier": 1,
-                "contribution": 4
-              },
-              {
-                "term": "sedimentær avsetning",
-                "group": "supplemental_evidence_terms",
-                "base_weight": 4,
-                "multiplier": 1,
-                "contribution": 4
-              },
-              {
-                "term": "avsetning",
-                "group": "concept_terms",
-                "base_weight": 3,
-                "multiplier": 1,
-                "contribution": 3
-              },
-              {
-                "term": "berggrunn",
-                "group": "concept_terms",
-                "base_weight": 3,
-                "multiplier": 1,
-                "contribution": 3
-              },
-              {
-                "term": "løsmasser",
-                "group": "concept_terms",
-                "base_weight": 3,
-                "multiplier": 1,
-                "contribution": 3
-              },
-              {
-                "term": "geologisk",
+                "term": "reproduktiv",
                 "group": "support_terms",
                 "base_weight": 1.5,
                 "multiplier": 1,
@@ -453,10 +331,148 @@
             "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-positive-geologi_landskap_tid",
+      "kind": "positive",
+      "passed": true,
+      "errors": [],
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "geologi_landskap_tid",
+        "top_score": 31,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [
+            "platetektonikk"
+          ],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi og naturhistorie",
+            "score": 31,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "platetektonikk",
+              "fossiler",
+              "geologisk tid"
+            ],
+            "matched_terms": [
+              {
+                "term": "fossiler",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "platetektonikk",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "fossiler og geologisk tid",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "plategrenser og tektonikk",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "relativ og numerisk datering",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "geologisk tid",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "datering",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "geologisk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "numerisk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "relativ",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
           },
           {
-            "chapter_id": "evolusjon_biologisk_mangfold",
-            "title": "Evolusjon og biologisk mangfold",
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -464,8 +480,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "klima_energi_resiliens",
-            "title": "Klima, energi og resiliens",
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -641,40 +657,6 @@
             ]
           },
           {
-            "chapter_id": "klima_energi_resiliens",
-            "title": "Klima, energi og resiliens",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "organismebiologi_fysiologi",
-            "title": "Organismebiologi og fysiologi",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "før",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "urban_okologi_gronnstruktur",
             "title": "Urban økologi og grønnstruktur",
             "score": 1.5,
@@ -707,6 +689,24 @@
                 "contribution": 1.5
               }
             ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
           }
         ]
       }
@@ -1180,7 +1180,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1256,6 +1256,23 @@
             ]
           },
           {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi og naturhistorie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "skiller",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "artskunnskap_systematikk",
             "title": "Artskunnskap og systematikk",
             "score": 0,
@@ -1281,10 +1298,135 @@
             "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
             "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-positive-sopp_lav_mikroorganismer",
+      "kind": "positive",
+      "passed": true,
+      "errors": [],
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "sopp_lav_mikroorganismer",
+        "top_score": 29.5,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [
+            "hyfe",
+            "mycel"
+          ],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "sopp_lav_mikroorganismer",
+            "title": "Sopp, lav og mikroorganismer",
+            "score": 29.5,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "hyfe",
+              "mycel"
+            ],
+            "matched_terms": [
+              {
+                "term": "hyfer",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "lav",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "lav som symbiotisk system",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "mikrobiell aktivitet dokumentert",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "soppens mycel og hyfer",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "hyfe",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "mycel",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "mikrobiell",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
           },
           {
-            "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "chapter_id": "vann_hydrologi_kretslop",
+            "title": "Vann, hydrologi og kretsløp",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "lav",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "evolusjon_biologisk_mangfold",
+            "title": "Evolusjon og biologisk mangfold",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1302,7 +1444,7 @@
       "result": {
         "status": "grounded",
         "selected_chapter_id": "artskunnskap_systematikk",
-        "top_score": 9.5,
+        "top_score": 11,
         "second_score": 0,
         "domain_evidence": {
           "matched_terms": [
@@ -1315,7 +1457,7 @@
           {
             "chapter_id": "artskunnskap_systematikk",
             "title": "Artskunnskap og systematikk",
-            "score": 9.5,
+            "score": 11,
             "eligible": true,
             "eligibility_reason": "eligible",
             "matched_anchor_terms": [
@@ -1343,6 +1485,30 @@
                 "base_weight": 1.5,
                 "multiplier": 1,
                 "contribution": 1.5
+              },
+              {
+                "term": "viser",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "viser",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
               }
             ]
           },
@@ -1366,16 +1532,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "klima_energi_resiliens",
-            "title": "Klima, energi og resiliens",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1448,7 +1605,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1551,7 +1708,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1578,7 +1735,7 @@
       "result": {
         "status": "grounded",
         "selected_chapter_id": "geologi_landskap_tid",
-        "top_score": 8,
+        "top_score": 24,
         "second_score": 0,
         "domain_evidence": {
           "matched_terms": [
@@ -1589,27 +1746,56 @@
         "ranking": [
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
-            "score": 8,
+            "title": "Geologi og naturhistorie",
+            "score": 24,
             "eligible": true,
             "eligibility_reason": "eligible",
             "matched_anchor_terms": [
-              "bergart"
+              "bergart",
+              "mineral"
             ],
             "matched_terms": [
               {
-                "term": "glasial landskapsforming",
+                "term": "indre",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "jordas",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              },
+              {
+                "term": "jordas indre og seismiske data",
                 "group": "supplemental_evidence_terms",
                 "base_weight": 4,
                 "multiplier": 1,
                 "contribution": 4
               },
               {
-                "term": "tektonisk prosess",
+                "term": "mineral og bergart",
                 "group": "supplemental_evidence_terms",
                 "base_weight": 4,
                 "multiplier": 1,
                 "contribution": 4
+              },
+              {
+                "term": "bergart",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "mineral",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
               }
             ]
           },
@@ -1696,6 +1882,23 @@
             ]
           },
           {
+            "chapter_id": "sopp_lav_mikroorganismer",
+            "title": "Sopp, lav og mikroorganismer",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "kretsløp",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
             "chapter_id": "vann_hydrologi_kretslop",
             "title": "Vann, hydrologi og kretsløp",
             "score": 5,
@@ -1724,15 +1927,6 @@
           {
             "chapter_id": "botanikk_vegetasjon",
             "title": "Botanikk og vegetasjon",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "evolusjon_biologisk_mangfold",
-            "title": "Evolusjon og biologisk mangfold",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -2354,7 +2548,135 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nature-confusion-sopp_lav_mikroorganismer",
+      "kind": "confusion",
+      "passed": true,
+      "errors": [],
+      "result": {
+        "status": "grounded",
+        "selected_chapter_id": "sopp_lav_mikroorganismer",
+        "top_score": 17,
+        "second_score": 0,
+        "domain_evidence": {
+          "matched_terms": [
+            "biofilm",
+            "prokaryot"
+          ],
+          "eligible": true
+        },
+        "ranking": [
+          {
+            "chapter_id": "sopp_lav_mikroorganismer",
+            "title": "Sopp, lav og mikroorganismer",
+            "score": 17,
+            "eligible": true,
+            "eligibility_reason": "eligible",
+            "matched_anchor_terms": [
+              "biofilm",
+              "prokaryot"
+            ],
+            "matched_terms": [
+              {
+                "term": "mikrobiell energiomsetning",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "prokaryote domener",
+                "group": "supplemental_evidence_terms",
+                "base_weight": 4,
+                "multiplier": 1,
+                "contribution": 4
+              },
+              {
+                "term": "biofilm",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "prokaryot",
+                "group": "concept_terms",
+                "base_weight": 3,
+                "multiplier": 1,
+                "contribution": 3
+              },
+              {
+                "term": "domener",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              },
+              {
+                "term": "mikrobiell",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "zoologi_dyreliv",
+            "title": "Zoologi og dyreliv",
+            "score": 5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "dyreliv",
+                "group": "title_terms",
+                "base_weight": 5,
+                "multiplier": 1,
+                "contribution": 5
+              }
+            ]
+          },
+          {
+            "chapter_id": "klima_energi_resiliens",
+            "title": "Klima, energi og resiliens",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "vurderes",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
+            "chapter_id": "artskunnskap_systematikk",
+            "title": "Artskunnskap og systematikk",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "botanikk_vegetasjon",
+            "title": "Botanikk og vegetasjon",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -2408,7 +2730,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2443,23 +2765,6 @@
         },
         "ranking": [
           {
-            "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
-            "score": 5,
-            "eligible": false,
-            "eligibility_reason": "missing_nature_domain_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "lang",
-                "group": "title_terms",
-                "base_weight": 5,
-                "multiplier": 1,
-                "contribution": 5
-              }
-            ]
-          },
-          {
             "chapter_id": "artskunnskap_systematikk",
             "title": "Artskunnskap og systematikk",
             "score": 0,
@@ -2480,6 +2785,15 @@
           {
             "chapter_id": "evolusjon_biologisk_mangfold",
             "title": "Evolusjon og biologisk mangfold",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "geologi_landskap_tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2542,7 +2856,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2605,7 +2919,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2685,7 +2999,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2760,7 +3074,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -2814,7 +3128,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2877,7 +3191,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -2940,7 +3254,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -3028,7 +3342,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -3082,7 +3396,7 @@
           },
           {
             "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
+            "title": "Geologi og naturhistorie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
@@ -3134,6 +3448,23 @@
             ]
           },
           {
+            "chapter_id": "sopp_lav_mikroorganismer",
+            "title": "Sopp, lav og mikroorganismer",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_nature_domain_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "beskrives",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "artskunnskap_systematikk",
             "title": "Artskunnskap og systematikk",
             "score": 0,
@@ -3154,15 +3485,6 @@
           {
             "chapter_id": "evolusjon_biologisk_mangfold",
             "title": "Evolusjon og biologisk mangfold",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_nature_domain_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "geologi_landskap_tid",
-            "title": "Geologi, landskap og lang tid",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_nature_domain_anchor",
