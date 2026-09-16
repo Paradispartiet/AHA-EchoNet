@@ -4,7 +4,7 @@
   "status": "review_artifacts_attested_passed",
   "subject_id": "kunst",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
   "corpus_sha256": "0bd12a658e1b18bac17f1da8c6a251e88ebd8ca9db0ffce9328058a27ffa48bc",
   "review_head_sha": "c27ea2856de4fbb9391da4b618ba4f729c6b5909",
   "workflow_run_id": 31439097050,
@@ -15,17 +15,37 @@
     "policy": {
       "file": "aha-kunst-policy.json",
       "sha256": "7f7928be3623ec5c4a8f045050f95dc2f5bd745ce1045125b643d5e1a7293415",
-      "summary": {"total":150,"non_scoring":37,"down_weight":95,"context_only":18}
+      "summary": {
+        "total": 150,
+        "non_scoring": 37,
+        "down_weight": 95,
+        "context_only": 18
+      }
     },
     "evaluation": {
       "file": "aha-kunst-evaluation.json",
       "sha256": "4e7f1de80e21e621f4b170d21feab5403a92181bf4662b593d5f4a96d0a2812c",
-      "summary": {"total":20,"passed":20,"failed":0,"positive":12,"abstention":8,"chapters_covered":6,"evidence_errors":0}
+      "summary": {
+        "total": 20,
+        "passed": 20,
+        "failed": 0,
+        "positive": 12,
+        "abstention": 8,
+        "chapters_covered": 6,
+        "evidence_errors": 0
+      }
     },
     "fixtures": {
       "file": "aha-kunst-fixtures.json",
       "sha256": "a59e93ba269b1105c6239fd2f086884db2b5a1f3ae69185296e2f19b76dab470",
-      "summary": {"total":16,"passed":16,"failed":0,"unsupported":16,"false_positives":0,"evidence_errors":0}
+      "summary": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0,
+        "unsupported": 16,
+        "false_positives": 0,
+        "evidence_errors": 0
+      }
     }
   },
   "approval_required": true,
