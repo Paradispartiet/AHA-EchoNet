@@ -2,8 +2,8 @@
   "schema": "aha_history_fagverk_evaluation_matrix_v1",
   "version": "1.0.0",
   "status": "review_matrix_not_runtime_active",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "corpus_sha256": "643838c2dbdc1d9a801a4e2424563e53aeaf53b59e5b014b95c4799efd9aa2b0",
   "subject_id": "historie",
   "positive_cases": [
     {

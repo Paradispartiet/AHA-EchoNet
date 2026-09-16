@@ -1,8 +1,8 @@
 {
   "schema": "aha_history_fixture_correction_report_v1",
   "version": "1.0.0",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "corpus_sha256": "643838c2dbdc1d9a801a4e2424563e53aeaf53b59e5b014b95c4799efd9aa2b0",
   "policy_version": "1.0.0",
   "status": "passed_correction_gate",
   "runtime_activation_allowed": false,
@@ -54,42 +54,42 @@
             ]
           },
           {
-            "chapter_id": "global_kolonial_transnasjonal",
-            "title": "Global, kolonial og transnasjonal historie",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "kulturell",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "migrasjon_minoritet_tilhorighet",
-            "title": "Migrasjon, minoritet og tilhørighet",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "gruppe",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "1814_statsdannelse",
             "title": "1814, grunnlov og statsdannelse",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -97,8 +97,8 @@
             "matched_terms": []
           },
           {
-            "chapter_id": "byhistorie_stedsendring",
-            "title": "Byhistorie og stedsendring",
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -183,24 +183,40 @@
           {
             "chapter_id": "1814_statsdannelse",
             "title": "1814, grunnlov og statsdannelse",
-            "score": 0,
+            "score": 0.45,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": []
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
+            "score": 0.45,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
           },
           {
             "chapter_id": "byhistorie_stedsendring",
             "title": "Byhistorie og stedsendring",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "forhistorie_arkeologi",
-            "title": "Forhistorie og arkeologi",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -231,7 +247,7 @@
           {
             "chapter_id": "velferd_rett_hverdagsliv",
             "title": "Velferd, rett og hverdagsliv",
-            "score": 1.5,
+            "score": 5,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
@@ -240,25 +256,8 @@
                 "term": "tjenester",
                 "group": "title_terms",
                 "base_weight": 5,
-                "multiplier": 0.3,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "okonomi_handel_materielle_systemer",
-            "title": "Økonomi, handel og materielle systemer",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "tjenester",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
+                "multiplier": 1,
+                "contribution": 5
               }
             ]
           },
@@ -283,6 +282,15 @@
           {
             "chapter_id": "forhistorie_arkeologi",
             "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -328,6 +336,23 @@
             ]
           },
           {
+            "chapter_id": "makt_stat_institusjoner",
+            "title": "Makt, stat og institusjoner",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "konflikt",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "middelalder_kirke_kongemakt",
             "title": "Middelalder, kirke og kongemakt",
             "score": 1.5,
@@ -362,38 +387,13 @@
             ]
           },
           {
-            "chapter_id": "forste_verdenskrig_mellomkrig",
-            "title": "Første verdenskrig og mellomkrigstiden",
-            "score": 0.45,
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "konflikt",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
-            "chapter_id": "makt_stat_institusjoner",
-            "title": "Makt, stat og institusjoner",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "konflikt",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
+            "matched_terms": []
           }
         ]
       }
@@ -509,23 +509,6 @@
             ]
           },
           {
-            "chapter_id": "katastrofer_brudd_ulykker",
-            "title": "Katastrofer, branner, ulykker og historiske brudd",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "funksjoner",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "1814_statsdannelse",
             "title": "1814, grunnlov og statsdannelse",
             "score": 0,
@@ -546,6 +529,15 @@
           {
             "chapter_id": "forhistorie_arkeologi",
             "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -608,40 +600,6 @@
             ]
           },
           {
-            "chapter_id": "1814_statsdannelse",
-            "title": "1814, grunnlov og statsdannelse",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "mot",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
-            "chapter_id": "kald_krig_etterkrig",
-            "title": "Den kalde krigen og etterkrigssamfunnet 1945–1991",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "mot",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
             "chapter_id": "kjonn_familie_livslop",
             "title": "Kjønn, familie, seksualitet og livsløp",
             "score": 0.45,
@@ -657,6 +615,24 @@
                 "contribution": 0.45
               }
             ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
           }
         ]
       }
@@ -680,26 +656,9 @@
         },
         "ranking": [
           {
-            "chapter_id": "forhistorie_arkeologi",
-            "title": "Forhistorie og arkeologi",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "sammen",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
             "chapter_id": "forste_verdenskrig_mellomkrig",
             "title": "Første verdenskrig og mellomkrigstiden",
-            "score": 0.45,
+            "score": 1.5,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
@@ -708,8 +667,8 @@
                 "term": "sammen",
                 "group": "support_terms",
                 "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
+                "multiplier": 1,
+                "contribution": 1.5
               }
             ]
           },
@@ -725,6 +684,15 @@
           {
             "chapter_id": "byhistorie_stedsendring",
             "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -814,6 +782,23 @@
             ]
           },
           {
+            "chapter_id": "miljo_klima_landskap",
+            "title": "Miljø-, klima- og landskapshistorie",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "langsom",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "religion_reformasjon_livssyn",
             "title": "Religion, reformasjon og livssyn",
             "score": 0.9,
@@ -833,20 +818,19 @@
           {
             "chapter_id": "1814_statsdannelse",
             "title": "1814, grunnlov og statsdannelse",
-            "score": 0,
+            "score": 0.45,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": []
-          },
-          {
-            "chapter_id": "byhistorie_stedsendring",
-            "title": "Byhistorie og stedsendring",
-            "score": 0,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": []
+            "matched_terms": [
+              {
+                "term": "norsk",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 0.3,
+                "contribution": 0.45
+              }
+            ]
           }
         ]
       }
@@ -872,30 +856,6 @@
         },
         "ranking": [
           {
-            "chapter_id": "1814_statsdannelse",
-            "title": "1814, grunnlov og statsdannelse",
-            "score": 1.95,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "dermed",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              },
-              {
-                "term": "mot",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
             "chapter_id": "kilder_arkiv_spor",
             "title": "Kilder, arkiv og spor",
             "score": 1.95,
@@ -920,6 +880,23 @@
             ]
           },
           {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "dermed",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "middelalder_kirke_kongemakt",
             "title": "Middelalder, kirke og kongemakt",
             "score": 1.5,
@@ -933,23 +910,6 @@
                 "base_weight": 1.5,
                 "multiplier": 1,
                 "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "kald_krig_etterkrig",
-            "title": "Den kalde krigen og etterkrigssamfunnet 1945–1991",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "mot",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
               }
             ]
           },
@@ -969,6 +929,15 @@
                 "contribution": 0.45
               }
             ]
+          },
+          {
+            "chapter_id": "byhistorie_stedsendring",
+            "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
           }
         ]
       }
@@ -994,7 +963,7 @@
           {
             "chapter_id": "forhistorie_arkeologi",
             "title": "Forhistorie og arkeologi",
-            "score": 1.95,
+            "score": 1.5,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
@@ -1005,30 +974,6 @@
                 "base_weight": 1.5,
                 "multiplier": 1,
                 "contribution": 1.5
-              },
-              {
-                "term": "enn",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
-            "chapter_id": "kilder_arkiv_spor",
-            "title": "Kilder, arkiv og spor",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "enn",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
               }
             ]
           },
@@ -1053,6 +998,15 @@
           {
             "chapter_id": "forste_verdenskrig_mellomkrig",
             "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "global_kolonial_transnasjonal",
+            "title": "Global, kolonial og transnasjonal historie",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
@@ -1100,7 +1054,7 @@
           {
             "chapter_id": "miljo_klima_landskap",
             "title": "Miljø-, klima- og landskapshistorie",
-            "score": 1.5,
+            "score": 5,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
@@ -1109,61 +1063,37 @@
                 "term": "energi",
                 "group": "title_terms",
                 "base_weight": 5,
-                "multiplier": 0.3,
-                "contribution": 1.5
+                "multiplier": 1,
+                "contribution": 5
               }
             ]
+          },
+          {
+            "chapter_id": "1814_statsdannelse",
+            "title": "1814, grunnlov og statsdannelse",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
           },
           {
             "chapter_id": "forhistorie_arkeologi",
             "title": "Forhistorie og arkeologi",
-            "score": 0.45,
+            "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "enn",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
+            "matched_terms": []
           },
           {
-            "chapter_id": "industri_arbeid_sosialhistorie",
-            "title": "Industri, arbeid og sosialhistorie",
-            "score": 0.45,
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "energi",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
-            "chapter_id": "kilder_arkiv_spor",
-            "title": "Kilder, arkiv og spor",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "enn",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
+            "matched_terms": []
           }
         ]
       }
@@ -1227,40 +1157,6 @@
             ]
           },
           {
-            "chapter_id": "global_kolonial_transnasjonal",
-            "title": "Global, kolonial og transnasjonal historie",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "norge",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "offentlighet_mobilisering_bevegelser",
-            "title": "Offentlighet, mobilisering og sosiale bevegelser",
-            "score": 1.5,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "politiske",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 1,
-                "contribution": 1.5
-              }
-            ]
-          },
-          {
             "chapter_id": "historisk_tid_periodisering",
             "title": "Historisk tid og periodisering",
             "score": 0.45,
@@ -1280,6 +1176,24 @@
           {
             "chapter_id": "byhistorie_stedsendring",
             "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_required_anchor",
@@ -1367,6 +1281,23 @@
             ]
           },
           {
+            "chapter_id": "forste_verdenskrig_mellomkrig",
+            "title": "Første verdenskrig og mellomkrigstiden",
+            "score": 1.5,
+            "eligible": false,
+            "eligibility_reason": "missing_required_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": [
+              {
+                "term": "sammen",
+                "group": "support_terms",
+                "base_weight": 1.5,
+                "multiplier": 1,
+                "contribution": 1.5
+              }
+            ]
+          },
+          {
             "chapter_id": "global_kolonial_transnasjonal",
             "title": "Global, kolonial og transnasjonal historie",
             "score": 1.5,
@@ -1380,37 +1311,6 @@
                 "base_weight": 1.5,
                 "multiplier": 1,
                 "contribution": 1.5
-              }
-            ]
-          },
-          {
-            "chapter_id": "forhistorie_arkeologi",
-            "title": "Forhistorie og arkeologi",
-            "score": 1.35,
-            "eligible": false,
-            "eligibility_reason": "missing_required_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "enn",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              },
-              {
-                "term": "identitet",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              },
-              {
-                "term": "sammen",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
               }
             ]
           },
@@ -1453,26 +1353,9 @@
         },
         "ranking": [
           {
-            "chapter_id": "forhistorie_arkeologi",
-            "title": "Forhistorie og arkeologi",
-            "score": 0.45,
-            "eligible": false,
-            "eligibility_reason": "missing_temporal_anchor",
-            "matched_anchor_terms": [],
-            "matched_terms": [
-              {
-                "term": "sammen",
-                "group": "support_terms",
-                "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
-              }
-            ]
-          },
-          {
             "chapter_id": "forste_verdenskrig_mellomkrig",
             "title": "Første verdenskrig og mellomkrigstiden",
-            "score": 0.45,
+            "score": 1.5,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
             "matched_anchor_terms": [],
@@ -1481,8 +1364,8 @@
                 "term": "sammen",
                 "group": "support_terms",
                 "base_weight": 1.5,
-                "multiplier": 0.3,
-                "contribution": 0.45
+                "multiplier": 1,
+                "contribution": 1.5
               }
             ]
           },
@@ -1498,6 +1381,15 @@
           {
             "chapter_id": "byhistorie_stedsendring",
             "title": "Byhistorie og stedsendring",
+            "score": 0,
+            "eligible": false,
+            "eligibility_reason": "missing_temporal_anchor",
+            "matched_anchor_terms": [],
+            "matched_terms": []
+          },
+          {
+            "chapter_id": "forhistorie_arkeologi",
+            "title": "Forhistorie og arkeologi",
             "score": 0,
             "eligible": false,
             "eligibility_reason": "missing_temporal_anchor",
