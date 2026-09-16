@@ -12,6 +12,7 @@ execFileSync(process.execPath, ["scripts/review-musikk-fagverk.mjs","--policy-ou
 
 const config=JSON.parse(fs.readFileSync("data/integrations/review/history-go-fagverk-musikk.review-config.v1.json","utf8"));
 const audit=JSON.parse(fs.readFileSync("data/integrations/candidates/history-go-fagverk-musikk.candidate-audit.v1.json","utf8"));
+const candidate=JSON.parse(fs.readFileSync("data/integrations/candidates/history-go-fagverk-musikk.candidate.v1.json","utf8"));
 const matrix=JSON.parse(fs.readFileSync("data/evaluation/aha-musikk-fagverk-evaluation-matrix.v1.json","utf8"));
 const policy=JSON.parse(fs.readFileSync(policyPath,"utf8"));
 const evaluation=JSON.parse(fs.readFileSync(evaluationPath,"utf8"));
@@ -24,6 +25,10 @@ assert.equal(audit.gate.passed,true);
 assert.deepEqual(audit.coverage,{expected:8,registered:8,materialized:8,missing:[],unexpected:[],duplicate_chapter_ids:[]});
 assert.deepEqual(audit.term_collision_summary,{total:60,high_risk:24,medium_risk:36,low_risk:0});
 assert.equal(Object.keys(config.chapter_rules).length,8);
+assert.equal(config.source_ref,candidate.source_ref);
+assert.equal(config.corpus_sha256,candidate.content_sha256);
+assert.equal(policy.source_ref,candidate.source_ref);
+assert.equal(policy.corpus_sha256,candidate.content_sha256);
 assert.equal(policy.schema,"aha_musikk_fagverk_term_policy_v1");
 assert.equal(policy.status,"review_policy_full_fixture_candidate_not_runtime_active");
 assert.equal(policy.approval_required,true);
@@ -49,7 +54,9 @@ assert.equal(fixtures.summary.evidence_errors,0);
 
 const activeMusikk=runtime.active_subjects?.musikk;
 assert.equal(activeMusikk.subject_id,"musikk");
-assert.equal(activeMusikk.source_commit,config.source_ref);
+assert.equal(activeMusikk.source_commit,runtimeCorpus.source_ref);
+assert.equal(runtimePolicy.source_ref,runtimeCorpus.source_ref);
+assert.notEqual(activeMusikk.source_commit,config.source_ref,"review-only source update must not move runtime before explicit activation");
 assert.equal(activeMusikk.chapter_count,8);
 assert.equal(activeMusikk.activation_status,"runtime_subject_active");
 assert.equal(activeMusikk.corpus_path,"data/integrations/runtime/history-go-fagverk-musikk.corpus.v1.json");
