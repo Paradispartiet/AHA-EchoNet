@@ -34,7 +34,7 @@ const registry = read(paths.registry);
 const runtime = read(paths.runtime);
 
 assert.equal(candidate.subject_filter, "natur");
-assert.equal(candidate.entries.length, 11);
+assert.equal(candidate.entries.length, 12);
 assert.equal(candidate.entries.reduce((sum, entry) => sum + entry.module_source_paths.length, 0), 0);
 assert.equal(candidate.approval_required, true);
 assert.equal(candidate.runtime_activation_allowed, false);
@@ -57,14 +57,14 @@ assert.deepEqual(audit.term_collision_summary, {
 assert.equal(policy.schema, "aha_nature_fagverk_term_policy_v1");
 assert.equal(policy.source_ref, candidate.source_ref);
 assert.equal(policy.corpus_sha256, candidate.content_sha256);
-assert.equal(policy.summary.total, 99);
-assert.equal(policy.summary.risks.high, 37);
+assert.equal(policy.summary.total, 103);
+assert.equal(policy.summary.risks.high, 41);
 assert.equal(policy.summary.risks.medium, 53);
 assert.equal(policy.summary.risks.low, 9);
-assert.equal(policy.summary.chapter_count, 11);
+assert.equal(policy.summary.chapter_count, 12);
 assert.equal(policy.summary.module_file_count, 0);
-assert.equal(Object.keys(policy.chapter_rules).length, 11);
-assert.equal(policy.chapters.length, 11);
+assert.equal(Object.keys(policy.chapter_rules).length, 12);
+assert.equal(policy.chapters.length, 12);
 assert.equal(policy.domain_gate.required, true);
 assert.equal(policy.runtime_activation_allowed, false);
 for (const entry of candidate.entries) {
@@ -85,10 +85,10 @@ assert.equal(expansion.materialization_assessment.chapter_contract_sufficient_fo
 assert.equal(expansion.materialization_assessment.module_absence_is_visible_review_debt, true);
 assert.equal(expansion.runtime_activation_allowed, false);
 
-assert.equal(matrix.positive_cases.length, 11);
-assert.equal(matrix.confusion_cases.length, 11);
+assert.equal(matrix.positive_cases.length, 12);
+assert.equal(matrix.confusion_cases.length, 12);
 assert.equal(matrix.ambiguity_cases.length, 12);
-assert.equal(new Set(matrix.positive_cases.map((item) => item.expected_chapter_id)).size, 11);
+assert.equal(new Set(matrix.positive_cases.map((item) => item.expected_chapter_id)).size, 12);
 assert.equal(evaluation.status, "passed_review_gate");
 assert.deepEqual(evaluation.summary, {
   total: 34,
@@ -113,20 +113,23 @@ assert.equal(correctionReport.summary.ambiguous, 0);
 
 assert.equal(registry.subjects.natur.subject_id, "natur");
 assert.equal(registry.runtime_activation_allowed, false);
+
+const activeNature = runtime.active_subjects?.natur;
+assert.equal(activeNature.subject_id, "natur");
+assert.equal(activeNature.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f31b");
+assert.notEqual(activeNature.source_commit, candidate.source_ref, "review-only Nature update must not move runtime before combined activation");
+assert.equal(activeNature.chapter_count, 11);
+
 assert.equal(approval.status, "subject_review_approved_not_runtime_active");
 assert.equal(approval.subject_id, "natur");
-assert.equal(approval.source_ref, candidate.source_ref);
+assert.equal(approval.source_ref, activeNature.source_commit);
+assert.notEqual(approval.source_ref, candidate.source_ref, "review-only Nature update must not rewrite approval before combined approval");
 assert.equal(approval.candidate.chapter_count, 11);
 assert.equal(approval.gate_summary.total, 5);
 assert.equal(approval.gate_summary.passed, 5);
 assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
-
-const activeNature = runtime.active_subjects?.natur;
-assert.equal(activeNature.subject_id, "natur");
-assert.equal(activeNature.source_commit, candidate.source_ref);
-assert.equal(activeNature.chapter_count, 11);
 assert.equal(activeNature.corpus_path, "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json");
 assert.equal(activeNature.policy_path, "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json");
 assert.equal(activeNature.activation_status, "runtime_subject_active");
