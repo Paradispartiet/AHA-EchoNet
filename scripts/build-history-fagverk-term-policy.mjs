@@ -849,8 +849,8 @@ function validateInputs(corpus, audit) {
     throw new Error("History corpus must contain 69 registered module files.");
   }
   const summary = audit.term_collision_summary || {};
-  if (summary.total !== 292 || summary.high_risk !== 96 || summary.medium_risk !== 108 || summary.low_risk !== 88) {
-    throw new Error("History collision audit summary differs from the reviewed 292-term baseline.");
+  if (summary.total !== 275 || summary.high_risk !== 95 || summary.medium_risk !== 92 || summary.low_risk !== 88) {
+    throw new Error("History collision audit summary differs from the reviewed History Go 3.16.0 baseline.");
   }
 }
 
