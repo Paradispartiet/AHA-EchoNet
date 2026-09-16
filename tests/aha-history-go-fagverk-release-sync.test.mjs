@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs";
 import test from "node:test";
 
 import { buildUpdateReport, compareObserved, markdownForReport, observedFromRelease } from "../scripts/sync-history-go-fagverk-release.mjs";
@@ -144,4 +145,15 @@ test("reports no change for an already observed v2 release", () => {
   assert.equal(report.status, "no_change");
   assert.equal(report.summary.changed_subject_count, 0);
   assert.deepEqual(report.changed_subjects, []);
+});
+
+
+test("scheduled sync tolerates only the known GitHub Actions PR-creation policy block", () => {
+  const workflow = fs.readFileSync(".github/workflows/aha-history-go-fagverk-release-sync.yml", "utf8");
+  assert.match(workflow, /AHA_FAGVERK_AUTOMATION_TOKEN \|\| github\.token/);
+  assert.match(workflow, /GitHub Actions is not permitted to create or approve pull requests/);
+  assert.match(workflow, /History Go Fagverk review branch ready/);
+  assert.match(workflow, /runtime activation remains disabled/);
+  assert.match(workflow, /else\s+exit 1\s+fi/);
+  assert.match(workflow, /automation\/history-go-fagverk-release/);
 });
