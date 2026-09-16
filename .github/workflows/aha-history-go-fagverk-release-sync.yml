@@ -75,10 +75,19 @@ jobs:
           NODE
       - name: Prepare automation branch from current main
         working-directory: aha
+        env:
+          GH_TOKEN: ${{ secrets.AHA_FAGVERK_AUTOMATION_TOKEN || github.token }}
         run: |
           git fetch origin main
           git fetch origin automation/history-go-fagverk-release:refs/remotes/origin/automation/history-go-fagverk-release || true
-          git checkout -B automation/history-go-fagverk-release origin/main
+          PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head automation/history-go-fagverk-release --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ] && git show-ref --verify --quiet refs/remotes/origin/automation/history-go-fagverk-release; then
+            echo "Preserving manual review commits from open PR #$PR_NUMBER."
+            git checkout -B automation/history-go-fagverk-release origin/automation/history-go-fagverk-release
+            git merge --no-edit origin/main
+          else
+            git checkout -B automation/history-go-fagverk-release origin/main
+          fi
       - name: Observe release and build semantic update report
         working-directory: aha
         run: node scripts/sync-history-go-fagverk-release.mjs --history-go-root ../history-go
