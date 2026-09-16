@@ -102,9 +102,9 @@ function validateInputs(corpus, policy, matrix) {
   if (matrix.subject_id !== "natur") errors.push("Matrix is not Nature-scoped.");
   if (corpus.source_ref !== policy.source_ref || corpus.source_ref !== matrix.source_ref) errors.push("Source refs differ.");
   if (corpus.content_sha256 !== policy.corpus_sha256 || corpus.content_sha256 !== matrix.corpus_sha256) errors.push("Corpus digests differ.");
-  if (corpus.entries.length !== 11) errors.push("Nature corpus does not contain 11 chapters.");
-  if (matrix.positive_cases.length !== 11) errors.push("Evaluation matrix must contain one positive case per chapter.");
-  if (matrix.confusion_cases.length !== 11) errors.push("Evaluation matrix must contain one confusion case per chapter.");
+  if (corpus.entries.length !== 12) errors.push("Nature corpus does not contain 12 chapters.");
+  if (matrix.positive_cases.length !== 12) errors.push("Evaluation matrix must contain one positive case per chapter.");
+  if (matrix.confusion_cases.length !== 12) errors.push("Evaluation matrix must contain one confusion case per chapter.");
   if (matrix.ambiguity_cases.length !== 12) errors.push("Evaluation matrix must contain 12 cross-subject abstention cases.");
   return errors;
 }
