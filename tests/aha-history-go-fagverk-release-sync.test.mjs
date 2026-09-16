@@ -157,3 +157,13 @@ test("scheduled sync tolerates only the known GitHub Actions PR-creation policy 
   assert.match(workflow, /else\s+exit 1\s+fi/);
   assert.match(workflow, /automation\/history-go-fagverk-release/);
 });
+
+
+test("scheduled sync preserves manual commits on an open Fagverk review PR", () => {
+  const workflow = fs.readFileSync(".github/workflows/aha-history-go-fagverk-release-sync.yml", "utf8");
+  assert.match(workflow, /gh pr list --repo "\$GITHUB_REPOSITORY" --head automation\/history-go-fagverk-release --base main --state open/);
+  assert.match(workflow, /Preserving manual review commits from open PR/);
+  assert.match(workflow, /git checkout -B automation\/history-go-fagverk-release origin\/automation\/history-go-fagverk-release/);
+  assert.match(workflow, /git merge --no-edit origin\/main/);
+  assert.match(workflow, /else\s+git checkout -B automation\/history-go-fagverk-release origin\/main\s+fi/);
+});
