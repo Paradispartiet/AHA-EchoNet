@@ -25,7 +25,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate-business-review:
@@ -33,8 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -56,22 +54,6 @@ jobs:
             data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
-
-      - name: Materialize reviewed Business artifacts on review branch
-        if: github.event_name == 'pull_request' && github.head_ref == 'review/naeringsliv-fagverk-3-16-0-20260916'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            data/evaluation/aha-business-fagverk-evaluation-report.v1.json \
-            data/evaluation/aha-business-fixture-correction-report.v1.json \
-            data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
-          if git diff --cached --quiet; then
-            echo "Business review artifacts already materialized."
-          else
-            git commit -m "Materialize Næringsliv 3.16.0 review artifacts"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
 
       - name: Verify checked-in review parity and runtime isolation
         run: |
