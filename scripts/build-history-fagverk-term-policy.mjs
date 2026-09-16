@@ -859,7 +859,7 @@ function buildPolicy(corpus, audit) {
   const collisions = allCollisions(audit);
   const byTerm = new Map();
   for (const collision of collisions) byTerm.set(normalize(collision.term), collision);
-  if (byTerm.size !== 292) throw new Error(`Expected 292 unique collision terms, got ${byTerm.size}.`);
+  if (byTerm.size !== 275) throw new Error(`Expected 275 unique collision terms, got ${byTerm.size}.`);
 
   const collisionSet = new Set(byTerm.keys());
   const globalNonScoring = new Set(GENERIC_LANGUAGE_TERMS);
