@@ -129,7 +129,27 @@ Når History Go har en annen release-digest enn siste observerte release, oppret
 automation/history-go-fagverk-release
 ```
 
-og en pull request mot `main`.
+og forsøker å opprette eller oppdatere en pull request mot `main`.
+
+Hvis `AHA_FAGVERK_AUTOMATION_TOKEN` er konfigurert, brukes den. Ellers brukes workflowens `github.token`.
+
+Noen GitHub-repository-policyer tillater at Actions pusher review-branchen, men blokkerer selve PR-opprettelsen med:
+
+```text
+GitHub Actions is not permitted to create or approve pull requests
+```
+
+Denne ene kjente policyfeilen gjør ikke lenger en ellers gyldig synk rød. Workflowen beholder den verifiserte review-branchen, skriver en tydelig job summary og avslutter grønt. PR-en kan da opprettes manuelt fra den eksisterende branchen. Andre `gh pr create`-feil forblir blocking failures.
+
+Dette endrer ingen runtime-grense: branch-ready review-kandidater er fortsatt ikke godkjente eller runtime-aktive.
+
+### Bevaring av åpen review-branch
+
+Når `automation/history-go-fagverk-release` allerede har en åpen PR mot `main`, starter neste sync fra den eksisterende review-branchen og merger inn siste `main` før ny observasjon/materialisering kjøres. Dermed bevares manuelle fagreview-commits på den åpne PR-en.
+
+Hvis merge mot siste `main` gir konflikt, skal workflowen feile i stedet for å overskrive review-arbeidet.
+
+Hvis det ikke finnes en åpen review-PR, starter automasjonen som før fra ren `origin/main`.
 
 PR-en inneholder:
 
