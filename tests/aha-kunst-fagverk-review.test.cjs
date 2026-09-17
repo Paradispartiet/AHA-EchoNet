@@ -12,6 +12,7 @@ execFileSync(process.execPath, ["scripts/review-kunst-fagverk.mjs","--policy-out
 
 const config=JSON.parse(fs.readFileSync("data/integrations/review/history-go-fagverk-kunst.review-config.v1.json","utf8"));
 const audit=JSON.parse(fs.readFileSync("data/integrations/candidates/history-go-fagverk-kunst.candidate-audit.v1.json","utf8"));
+const candidate=JSON.parse(fs.readFileSync("data/integrations/candidates/history-go-fagverk-kunst.candidate.v1.json","utf8"));
 const matrix=JSON.parse(fs.readFileSync("data/evaluation/aha-kunst-fagverk-evaluation-matrix.v1.json","utf8"));
 const policy=JSON.parse(fs.readFileSync(policyPath,"utf8"));
 const evaluation=JSON.parse(fs.readFileSync(evaluationPath,"utf8"));
@@ -24,6 +25,10 @@ assert.equal(audit.gate.passed,true);
 assert.deepEqual(audit.coverage,{expected:6,registered:6,materialized:6,missing:[],unexpected:[],duplicate_chapter_ids:[]});
 assert.deepEqual(audit.term_collision_summary,{total:66,high_risk:27,medium_risk:39,low_risk:0});
 assert.equal(Object.keys(config.chapter_rules).length,6);
+assert.equal(config.source_ref,candidate.source_ref);
+assert.equal(config.corpus_sha256,candidate.content_sha256);
+assert.equal(policy.source_ref,candidate.source_ref);
+assert.equal(policy.corpus_sha256,candidate.content_sha256);
 assert.equal(policy.schema,"aha_kunst_fagverk_term_policy_v1");
 assert.equal(policy.status,"review_policy_full_fixture_candidate_not_runtime_active");
 assert.equal(policy.approval_required,true);
@@ -49,7 +54,9 @@ assert.equal(fixtures.summary.evidence_errors,0);
 
 const activeKunst=runtime.active_subjects?.kunst;
 assert.equal(activeKunst.subject_id,"kunst");
-assert.equal(activeKunst.source_commit,config.source_ref);
+assert.equal(activeKunst.source_commit,runtimeCorpus.source_ref);
+assert.equal(runtimePolicy.source_ref,runtimeCorpus.source_ref);
+assert.notEqual(activeKunst.source_commit,config.source_ref,"review-only source update must not move runtime before explicit activation");
 assert.equal(activeKunst.chapter_count,6);
 assert.equal(activeKunst.activation_status,"runtime_subject_active");
 assert.equal(activeKunst.corpus_path,"data/integrations/runtime/history-go-fagverk-kunst.corpus.v1.json");

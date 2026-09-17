@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "status": "review_fixture_expectations_not_runtime_active",
   "subject_id": "naeringsliv",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
   "corpus_sha256": "a1c399977c2656d567ee461228b8e7d21f457da8e0863bf53a7888a8ac5fbfea",
   "runtime_activation_allowed": false,
   "cases": [

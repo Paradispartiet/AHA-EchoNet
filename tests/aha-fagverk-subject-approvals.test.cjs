@@ -63,7 +63,7 @@ for (const [subjectId, chapterCount] of projected) {
   assert.equal(approval.reviewed_corpus.chapter_count, chapterCount);
   assert.equal(approval.gate_summary.total, 4);
   assert.equal(approval.gate_summary.passed, 4);
-  assert.equal(approval.source_ref, 'd52cebbe2c6c01e5780be301e9b0e4a9c61c5254');
+  assert.equal(approval.source_ref, '0e693a0c489580288446c00deb6a076b12c14eb5');
 }
 
 const compatibilityRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-subject-compatibility-'));

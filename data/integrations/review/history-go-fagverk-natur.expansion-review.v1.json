@@ -14,15 +14,15 @@
     ]
   },
   "candidate": {
-    "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
+    "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
     "corpus_path": "data/integrations/candidates/history-go-fagverk-natur.candidate.v1.json",
-    "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
-    "chapter_count": 11,
+    "corpus_sha256": "766debf495ebfac69866fb97b70d9bdd9dbdea8916d7e0c0400ed773e79f6065",
+    "chapter_count": 12,
     "module_file_count": 0
   },
   "delta": {
     "retained_chapter_count": 1,
-    "added_chapter_count": 10,
+    "added_chapter_count": 11,
     "removed_chapter_count": 0,
     "retained_chapter_ids": [
       "okosystem_mangfold_habitat"
@@ -35,6 +35,7 @@
       "klima_energi_resiliens",
       "miljopavirkning_forvaltning_regenerasjon",
       "organismebiologi_fysiologi",
+      "sopp_lav_mikroorganismer",
       "urban_okologi_gronnstruktur",
       "vann_hydrologi_kretslop",
       "zoologi_dyreliv"
@@ -50,7 +51,7 @@
     "module_absence_is_visible_review_debt": true,
     "runtime_activation_requires_separate_pull_request": true
   },
-  "review_finding": "Nature expands from one legacy ecosystem seed to the complete 11-chapter registered subject. The canonical chapter files are sufficient for subject review, while the absence of separate module files remains explicit and runtime activation requires a separate pull request.",
+  "review_finding": "Nature expands from one legacy ecosystem seed to the complete 12-chapter registered subject. The canonical chapter files are sufficient for subject review, while the absence of separate module files remains explicit and runtime activation requires a separate pull request.",
   "approval_required": true,
   "runtime_activation_allowed": false,
   "explicit_runtime_activation_pull_request_required": true

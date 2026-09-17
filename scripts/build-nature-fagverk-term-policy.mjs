@@ -35,7 +35,12 @@ const DOMAIN_GATE_TERMS = Object.freeze([
   "nedbørfelt",
   "hydrologi",
   "zoologi",
-  "fauna"
+  "fauna",
+  "hyfe",
+  "mycel",
+  "biofilm",
+  "fermentering",
+  "prokaryot"
 ]);
 const CHAPTER_RULES = Object.freeze({
   "artskunnskap_systematikk": {
@@ -135,29 +140,29 @@ const CHAPTER_RULES = Object.freeze({
     "required_anchor_terms": [
       "bergart",
       "platetektonikk",
-      "erosjon",
-      "sediment",
-      "kvartærgeologi"
+      "mineral",
+      "fossiler",
+      "geologisk tid"
     ],
     "supplemental_evidence_terms": [
       {
-        "term": "geologisk tidsdybde",
+        "term": "jordas indre og seismiske data",
         "weight": 4
       },
       {
-        "term": "berggrunn og løsmasser",
+        "term": "mineral og bergart",
         "weight": 4
       },
       {
-        "term": "glasial landskapsforming",
+        "term": "plategrenser og tektonikk",
         "weight": 4
       },
       {
-        "term": "sedimentær avsetning",
+        "term": "relativ og numerisk datering",
         "weight": 4
       },
       {
-        "term": "tektonisk prosess",
+        "term": "fossiler og geologisk tid",
         "weight": 4
       }
     ]
@@ -282,6 +287,37 @@ const CHAPTER_RULES = Object.freeze({
       },
       {
         "term": "organismens energibalanse",
+        "weight": 4
+      }
+    ]
+  },
+  "sopp_lav_mikroorganismer": {
+    "required_anchor_terms": [
+      "hyfe",
+      "mycel",
+      "biofilm",
+      "fermentering",
+      "prokaryot"
+    ],
+    "supplemental_evidence_terms": [
+      {
+        "term": "soppens mycel og hyfer",
+        "weight": 4
+      },
+      {
+        "term": "lav som symbiotisk system",
+        "weight": 4
+      },
+      {
+        "term": "mikrobiell aktivitet dokumentert",
+        "weight": 4
+      },
+      {
+        "term": "prokaryote domener",
+        "weight": 4
+      },
+      {
+        "term": "mikrobiell energiomsetning",
         "weight": 4
       }
     ]
@@ -425,8 +461,8 @@ function buildPolicy(corpus, audit) {
   if (corpus.subject_filter !== "natur") throw new Error("Corpus is not Nature-scoped.");
   if (audit.subject_filter?.[0] !== "natur") throw new Error("Audit is not Nature-scoped.");
   if (corpus.source_ref !== audit.source_ref) throw new Error("Nature corpus and audit source refs differ.");
-  if (corpus.entries.length !== 11) throw new Error("Nature corpus must contain 11 chapters.");
-  if (audit.coverage?.materialized !== 11 || audit.coverage?.missing?.length) throw new Error("Nature audit coverage is incomplete.");
+  if (corpus.entries.length !== 12) throw new Error("Nature corpus must contain 12 chapters.");
+  if (audit.coverage?.materialized !== 12 || audit.coverage?.missing?.length) throw new Error("Nature audit coverage is incomplete.");
   const reviewed = reviewedTerms();
   const terms = collisionRows(audit).map((item) => {
     const term = normalize(item.term);

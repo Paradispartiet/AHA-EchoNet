@@ -849,8 +849,8 @@ function validateInputs(corpus, audit) {
     throw new Error("History corpus must contain 69 registered module files.");
   }
   const summary = audit.term_collision_summary || {};
-  if (summary.total !== 292 || summary.high_risk !== 96 || summary.medium_risk !== 108 || summary.low_risk !== 88) {
-    throw new Error("History collision audit summary differs from the reviewed 292-term baseline.");
+  if (summary.total !== 275 || summary.high_risk !== 95 || summary.medium_risk !== 92 || summary.low_risk !== 88) {
+    throw new Error("History collision audit summary differs from the reviewed History Go 3.16.0 baseline.");
   }
 }
 
@@ -859,7 +859,7 @@ function buildPolicy(corpus, audit) {
   const collisions = allCollisions(audit);
   const byTerm = new Map();
   for (const collision of collisions) byTerm.set(normalize(collision.term), collision);
-  if (byTerm.size !== 292) throw new Error(`Expected 292 unique collision terms, got ${byTerm.size}.`);
+  if (byTerm.size !== 275) throw new Error(`Expected 275 unique collision terms, got ${byTerm.size}.`);
 
   const collisionSet = new Set(byTerm.keys());
   const globalNonScoring = new Set(GENERIC_LANGUAGE_TERMS);

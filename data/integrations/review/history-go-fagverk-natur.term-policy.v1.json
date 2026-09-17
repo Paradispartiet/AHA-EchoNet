@@ -5,8 +5,8 @@
   "lifecycle_stage": "subject_release_review",
   "subject_id": "natur",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "corpus_sha256": "d29f05a0b08fd5673e4bc0d320e896e4f75ec67ff217284188d0e77bed14b00e",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "corpus_sha256": "766debf495ebfac69866fb97b70d9bdd9dbdea8916d7e0c0400ed773e79f6065",
   "thresholds": {
     "minimum_score": 7,
     "minimum_terms": 2,
@@ -52,7 +52,12 @@
       "nedbørfelt",
       "hydrologi",
       "zoologi",
-      "fauna"
+      "fauna",
+      "hyfe",
+      "mycel",
+      "biofilm",
+      "fermentering",
+      "prokaryot"
     ]
   },
   "global_non_scoring_terms": [
@@ -216,29 +221,29 @@
       "required_anchor_terms": [
         "bergart",
         "platetektonikk",
-        "erosjon",
-        "sediment",
-        "kvartærgeologi"
+        "mineral",
+        "fossiler",
+        "geologisk tid"
       ],
       "supplemental_evidence_terms": [
         {
-          "term": "geologisk tidsdybde",
+          "term": "jordas indre og seismiske data",
           "weight": 4
         },
         {
-          "term": "berggrunn og løsmasser",
+          "term": "mineral og bergart",
           "weight": 4
         },
         {
-          "term": "glasial landskapsforming",
+          "term": "plategrenser og tektonikk",
           "weight": 4
         },
         {
-          "term": "sedimentær avsetning",
+          "term": "relativ og numerisk datering",
           "weight": 4
         },
         {
-          "term": "tektonisk prosess",
+          "term": "fossiler og geologisk tid",
           "weight": 4
         }
       ]
@@ -367,6 +372,37 @@
         }
       ]
     },
+    "sopp_lav_mikroorganismer": {
+      "required_anchor_terms": [
+        "hyfe",
+        "mycel",
+        "biofilm",
+        "fermentering",
+        "prokaryot"
+      ],
+      "supplemental_evidence_terms": [
+        {
+          "term": "soppens mycel og hyfer",
+          "weight": 4
+        },
+        {
+          "term": "lav som symbiotisk system",
+          "weight": 4
+        },
+        {
+          "term": "mikrobiell aktivitet dokumentert",
+          "weight": 4
+        },
+        {
+          "term": "prokaryote domener",
+          "weight": 4
+        },
+        {
+          "term": "mikrobiell energiomsetning",
+          "weight": 4
+        }
+      ]
+    },
     "urban_okologi_gronnstruktur": {
       "required_anchor_terms": [
         "urban økologi",
@@ -463,9 +499,17 @@
   },
   "terms": [
     {
-      "term": "art",
+      "term": "andre",
       "risk": "high",
       "chapter_count": 3,
+      "category": "generic_language",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
+      "term": "art",
+      "risk": "high",
+      "chapter_count": 4,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -481,7 +525,7 @@
     {
       "term": "bare",
       "risk": "high",
-      "chapter_count": 3,
+      "chapter_count": 4,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -495,17 +539,33 @@
       "multiplier": 0
     },
     {
+      "term": "bygger",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
       "term": "både",
       "risk": "high",
-      "chapter_count": 5,
+      "chapter_count": 4,
       "category": "generic_language",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
+      "term": "celler",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
       "action": "non_scoring",
       "multiplier": 0
     },
     {
       "term": "data",
       "risk": "high",
-      "chapter_count": 4,
+      "chapter_count": 5,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -519,7 +579,23 @@
       "multiplier": 0
     },
     {
+      "term": "dokumentert",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
       "term": "drift",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
+      "term": "eksponering",
       "risk": "high",
       "chapter_count": 3,
       "category": "high_risk_collision",
@@ -529,7 +605,7 @@
     {
       "term": "endring",
       "risk": "high",
-      "chapter_count": 3,
+      "chapter_count": 4,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -551,6 +627,14 @@
       "multiplier": 0
     },
     {
+      "term": "ett",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
       "term": "fare",
       "risk": "high",
       "chapter_count": 3,
@@ -561,8 +645,16 @@
     {
       "term": "flere",
       "risk": "high",
-      "chapter_count": 4,
+      "chapter_count": 6,
       "category": "generic_language",
+      "action": "non_scoring",
+      "multiplier": 0
+    },
+    {
+      "term": "før",
+      "risk": "high",
+      "chapter_count": 3,
+      "category": "high_risk_collision",
       "action": "non_scoring",
       "multiplier": 0
     },
@@ -576,22 +668,6 @@
     },
     {
       "term": "hvem",
-      "risk": "high",
-      "chapter_count": 3,
-      "category": "high_risk_collision",
-      "action": "non_scoring",
-      "multiplier": 0
-    },
-    {
-      "term": "jord",
-      "risk": "high",
-      "chapter_count": 3,
-      "category": "high_risk_collision",
-      "action": "non_scoring",
-      "multiplier": 0
-    },
-    {
-      "term": "konkret",
       "risk": "high",
       "chapter_count": 3,
       "category": "high_risk_collision",
@@ -617,7 +693,7 @@
     {
       "term": "men",
       "risk": "high",
-      "chapter_count": 7,
+      "chapter_count": 8,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -625,7 +701,7 @@
     {
       "term": "mens",
       "risk": "high",
-      "chapter_count": 8,
+      "chapter_count": 9,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -639,15 +715,15 @@
       "multiplier": 0
     },
     {
-      "term": "over",
+      "term": "organismer",
       "risk": "high",
-      "chapter_count": 4,
+      "chapter_count": 3,
       "category": "high_risk_collision",
       "action": "non_scoring",
       "multiplier": 0
     },
     {
-      "term": "påvirker",
+      "term": "over",
       "risk": "high",
       "chapter_count": 3,
       "category": "high_risk_collision",
@@ -657,7 +733,7 @@
     {
       "term": "samme",
       "risk": "high",
-      "chapter_count": 5,
+      "chapter_count": 6,
       "category": "high_risk_collision",
       "action": "non_scoring",
       "multiplier": 0
@@ -697,7 +773,7 @@
     {
       "term": "ulike",
       "risk": "high",
-      "chapter_count": 5,
+      "chapter_count": 7,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
@@ -705,7 +781,7 @@
     {
       "term": "usikkerhet",
       "risk": "high",
-      "chapter_count": 3,
+      "chapter_count": 4,
       "category": "high_risk_collision",
       "action": "non_scoring",
       "multiplier": 0
@@ -721,21 +797,13 @@
     {
       "term": "vann",
       "risk": "high",
-      "chapter_count": 5,
+      "chapter_count": 4,
       "category": "generic_language",
       "action": "non_scoring",
       "multiplier": 0
     },
     {
       "term": "vegetasjon",
-      "risk": "high",
-      "chapter_count": 3,
-      "category": "high_risk_collision",
-      "action": "non_scoring",
-      "multiplier": 0
-    },
-    {
-      "term": "viser",
       "risk": "high",
       "chapter_count": 3,
       "category": "high_risk_collision",
@@ -783,7 +851,7 @@
     },
     {
       "chapter_id": "geologi_landskap_tid",
-      "title": "Geologi, landskap og lang tid",
+      "title": "Geologi og naturhistorie",
       "module_file_count": 0,
       "required_anchor_count": 5,
       "supplemental_evidence_count": 5
@@ -817,6 +885,13 @@
       "supplemental_evidence_count": 5
     },
     {
+      "chapter_id": "sopp_lav_mikroorganismer",
+      "title": "Sopp, lav og mikroorganismer",
+      "module_file_count": 0,
+      "required_anchor_count": 5,
+      "supplemental_evidence_count": 5
+    },
+    {
       "chapter_id": "urban_okologi_gronnstruktur",
       "title": "Urban økologi og grønnstruktur",
       "module_file_count": 0,
@@ -839,19 +914,19 @@
     }
   ],
   "summary": {
-    "total": 99,
+    "total": 103,
     "risks": {
-      "high": 37,
+      "high": 41,
       "medium": 53,
       "low": 9
     },
     "actions": {
-      "non_scoring": 37,
+      "non_scoring": 41,
       "down_weight": 0,
       "context_only": 0,
       "chapter_scoped": 0
     },
-    "chapter_count": 11,
+    "chapter_count": 12,
     "module_file_count": 0
   },
   "approval_required": true,

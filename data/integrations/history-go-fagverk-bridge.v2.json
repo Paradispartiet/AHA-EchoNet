@@ -5,7 +5,7 @@
   "status": "active",
   "canonical_source": {
     "repository": "Paradispartiet/History-Go",
-    "source_ref": "847a2e8ca3e71a3bfdd9bc41e7029a41e1c9dec4",
+    "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
     "pin_mode": "exact_commit",
     "paths": {
       "release": "data/fagverk/fagverk_release.json",
@@ -15,12 +15,12 @@
     }
   },
   "expected": {
-    "registry_sha256": "76ecdd251d9ce74ef9f18624b24e7dd2ecb97d492c2366f095021421574df22d",
-    "subject_inventory_sha256": "5cefdaa14b36c1c8962b96e132766e0ca4cba8ddfe1e64c079da0935decf2c6f",
-    "fag_manifest_sha256": "8f93bd18df3e64ad6ddb471ed026c7f271c9896a8ac1008a7622816ecb0b60df",
+    "registry_sha256": "8a749c2fa0bdfc08ad3267613ab74445761df95b55b124613b1931fe621b626f",
+    "subject_inventory_sha256": "1cdf54ba9dc36ffb21da65a7f01f547953afa13a13da52d189f1b0f83975fd2b",
+    "fag_manifest_sha256": "c852e90f6b71c943e12082c6d780a96ff16d5adce9f72b8b5977ce715d3c8b58",
     "root_subject_count": 19,
     "specialization_count": 1,
-    "chapter_count": 174,
+    "chapter_count": 190,
     "missing_file_count": 0
   },
   "consumer_policy": {

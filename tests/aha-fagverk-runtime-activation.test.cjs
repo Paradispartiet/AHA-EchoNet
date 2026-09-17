@@ -135,13 +135,53 @@ assert.equal(runtimeCode.includes('domain_gate'), true);
 assert.equal(runtimeCode.includes('minimum_reviewed_evidence_terms'), true);
 assert.equal(runtimeCode.includes('non_decisive_review_context_only'), true);
 
+const reviewApprovals = Object.fromEntries(subjectIds.map((subjectId) => {
+  const approval = JSON.parse(fs.readFileSync(registry.active_subjects[subjectId].approval_path, 'utf8'));
+  assert.equal(approval.status, 'subject_review_approved_not_runtime_active', `${subjectId}: current approval remains review-only`);
+  assert.equal(approval.runtime_activation_allowed, false, `${subjectId}: review approval cannot activate runtime`);
+  assert.equal(approval.runtime_approved_pointer_changed, false, `${subjectId}: review approval did not move runtime approval`);
+  assert.equal(approval.runtime_active_pointer_changed, false, `${subjectId}: review approval did not move runtime active state`);
+  return [subjectId, approval];
+}));
+const pendingReviewSubjectIds = subjectIds.filter((subjectId) => reviewApprovals[subjectId].source_ref !== active.active_subjects[subjectId].source_commit);
+
 const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aha-fagverk-runtime-'));
 const result = spawnSync(process.execPath, ['scripts/build-history-go-fagverk-runtime-activation.mjs', '--output-root', outputRoot], { encoding: 'utf8' });
 assert.equal(result.status, 0, result.stderr || result.stdout);
-for (const checkedPath of checkedPaths) {
-  const generatedPath = path.join(outputRoot, path.basename(checkedPath));
-  assert.equal(fs.existsSync(generatedPath), true, `missing generated artifact: ${generatedPath}`);
-  assert.equal(fs.readFileSync(generatedPath).equals(fs.readFileSync(checkedPath)), true, `stale runtime artifact: ${checkedPath}`);
+
+if (pendingReviewSubjectIds.length === 0) {
+  for (const checkedPath of checkedPaths) {
+    const generatedPath = path.join(outputRoot, path.basename(checkedPath));
+    assert.equal(fs.existsSync(generatedPath), true, `missing generated artifact: ${generatedPath}`);
+    assert.equal(fs.readFileSync(generatedPath).equals(fs.readFileSync(checkedPath)), true, `stale runtime artifact: ${checkedPath}`);
+  }
+} else {
+  const generatedApproved = JSON.parse(fs.readFileSync(path.join(outputRoot, path.basename(approvedPath)), 'utf8'));
+  const generatedActive = JSON.parse(fs.readFileSync(path.join(outputRoot, path.basename(activePath)), 'utf8'));
+  assert.notEqual(generatedApproved.artifact_sha256, approved.artifact_sha256, 'prospective runtime approval must remain separate from checked-in runtime while review approvals are pending');
+  assert.notEqual(generatedActive.artifact_sha256, active.artifact_sha256, 'prospective runtime activation must remain separate from checked-in runtime while review approvals are pending');
+
+  for (const subjectId of subjectIds) {
+    const config = registry.active_subjects[subjectId];
+    const reviewApproval = reviewApprovals[subjectId];
+    const generatedCorpusPath = path.join(outputRoot, path.basename(config.runtime_corpus_path));
+    const generatedPolicyPath = path.join(outputRoot, path.basename(config.runtime_policy_path));
+    assert.equal(fs.existsSync(generatedCorpusPath), true, `missing prospective runtime corpus: ${generatedCorpusPath}`);
+    assert.equal(fs.existsSync(generatedPolicyPath), true, `missing prospective runtime policy: ${generatedPolicyPath}`);
+    const generatedCorpus = JSON.parse(fs.readFileSync(generatedCorpusPath, 'utf8'));
+    const generatedPolicy = JSON.parse(fs.readFileSync(generatedPolicyPath, 'utf8'));
+    assert.equal(generatedApproved.approved_subjects[subjectId].source_commit, reviewApproval.source_ref, `${subjectId}: prospective approval must use current reviewed source`);
+    assert.equal(generatedActive.active_subjects[subjectId].source_commit, reviewApproval.source_ref, `${subjectId}: prospective activation must use current reviewed source`);
+    assert.equal(generatedCorpus.source_ref, reviewApproval.source_ref, `${subjectId}: prospective corpus must use current reviewed source`);
+    assert.equal(generatedPolicy.source_ref, reviewApproval.source_ref, `${subjectId}: prospective policy must use current reviewed source`);
+    if (pendingReviewSubjectIds.includes(subjectId)) {
+      assert.notEqual(active.active_subjects[subjectId].source_commit, reviewApproval.source_ref, `${subjectId}: pending review source must not already be runtime-active`);
+    } else {
+      assert.equal(fs.readFileSync(generatedCorpusPath).equals(fs.readFileSync(config.runtime_corpus_path)), true, `${subjectId}: unchanged runtime corpus must remain reproducible`);
+      assert.equal(fs.readFileSync(generatedPolicyPath).equals(fs.readFileSync(config.runtime_policy_path)), true, `${subjectId}: unchanged runtime policy must remain reproducible`);
+    }
+  }
 }
+
 fs.rmSync(outputRoot, { recursive: true, force: true });
 console.log('aha-fagverk-runtime-activation tests passed');

@@ -17,6 +17,7 @@ const paths = {
   corrections: "data/evaluation/aha-history-fixture-corrections.v1.json",
   correctionReport: "data/evaluation/aha-history-fixture-correction-report.v1.json",
   approval: "data/integrations/approvals/history-go-fagverk-historie.approved.v1.json",
+  approvalBaseline: "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json",
   registry: "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json",
   runtime: "data/integrations/history-go-fagverk-release.runtime-active.json"
 };
@@ -30,6 +31,7 @@ const evaluation = read(paths.evaluation);
 const corrections = read(paths.corrections);
 const correctionReport = read(paths.correctionReport);
 const approval = read(paths.approval);
+const subjectApprovalBaseline = read(paths.approvalBaseline);
 const registry = read(paths.registry);
 const runtime = read(paths.runtime);
 
@@ -48,18 +50,18 @@ assert.deepEqual(audit.coverage, {
   duplicate_chapter_ids: []
 });
 assert.deepEqual(audit.term_collision_summary, {
-  total: 292,
-  high_risk: 96,
-  medium_risk: 108,
+  total: 275,
+  high_risk: 95,
+  medium_risk: 92,
   low_risk: 88
 });
 
 assert.equal(policy.schema, "aha_history_fagverk_term_policy_v1");
 assert.equal(policy.source_ref, candidate.source_ref);
 assert.equal(policy.corpus_sha256, candidate.content_sha256);
-assert.equal(policy.summary.total, 292);
-assert.equal(policy.summary.risks.high, 96);
-assert.equal(policy.summary.risks.medium, 108);
+assert.equal(policy.summary.total, 275);
+assert.equal(policy.summary.risks.high, 95);
+assert.equal(policy.summary.risks.medium, 92);
 assert.equal(policy.summary.risks.low, 88);
 assert.equal(Object.keys(policy.chapter_rules).length, 23);
 assert.equal(policy.chapters.length, 23);
@@ -109,19 +111,29 @@ assert.equal(correctionReport.summary.ambiguous, 0);
 
 assert.equal(registry.subjects.historie.subject_id, "historie");
 assert.equal(registry.runtime_activation_allowed, false);
+
+const activeHistory = runtime.active_subjects?.historie;
+assert.equal(activeHistory.subject_id, "historie");
+assert.equal(activeHistory.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f31b");
+assert.notEqual(activeHistory.source_commit, candidate.source_ref, "review-only source update must not move History runtime before explicit activation");
+
+const historyApprovalBaseline = subjectApprovalBaseline.subjects.historie;
 assert.equal(approval.status, "subject_review_approved_not_runtime_active");
 assert.equal(approval.subject_id, "historie");
-assert.equal(approval.source_ref, candidate.source_ref);
-assert.equal(approval.candidate.chapter_count, 23);
+assert.equal(approval.source_ref, historyApprovalBaseline.approved_source_ref);
+assert.equal(approval.observed_release_sha256, historyApprovalBaseline.approved_release_sha256);
+if (approval.source_ref === candidate.source_ref) {
+  assert.equal(approval.candidate.corpus_sha256, candidate.content_sha256);
+  assert.equal(approval.candidate.chapter_count, candidate.entries.length);
+} else {
+  assert.equal(approval.source_ref, activeHistory.source_commit);
+  assert.equal(approval.candidate.corpus_sha256, activeHistory.corpus_sha256);
+}
 assert.equal(approval.gate_summary.total, 5);
 assert.equal(approval.gate_summary.passed, 5);
 assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
-
-const activeHistory = runtime.active_subjects?.historie;
-assert.equal(activeHistory.subject_id, "historie");
-assert.equal(activeHistory.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f31b");
 assert.equal(activeHistory.chapter_count, 23);
 assert.equal(activeHistory.corpus_path, "data/integrations/runtime/history-go-fagverk-historie.corpus.v1.json");
 assert.equal(activeHistory.policy_path, "data/integrations/runtime/history-go-fagverk-historie.policy.v1.json");

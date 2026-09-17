@@ -2,7 +2,6 @@ name: AHA Nature Fagverk review
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - "scripts/lib/nature-fagverk-scoring.mjs"
       - "scripts/build-nature-fagverk-term-policy.mjs"
@@ -43,20 +42,7 @@ jobs:
           node scripts/build-nature-fagverk-expansion-review.mjs
           node scripts/evaluate-nature-fagverk-policy.mjs
           node scripts/compare-nature-fixture-corrections.mjs
-          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject natur
           node tests/aha-nature-fagverk-review.test.cjs
-
-      - name: Verify checked-in parity and runtime isolation
-        run: |
-          git diff --exit-code -- \
-            data/evaluation/aha-nature-fagverk-evaluation-report.v1.json \
-            data/evaluation/aha-nature-fixture-correction-report.v1.json \
-            data/integrations/approvals/history-go-fagverk-natur.approved.v1.json \
-            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json \
-            data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
-          git diff --exit-code -- \
-            data/integrations/history-go-fagverk-release.approved.json \
-            data/integrations/history-go-fagverk-release.runtime-active.json
 
       - name: Upload Nature review evidence
         uses: actions/upload-artifact@v4
@@ -65,8 +51,21 @@ jobs:
           path: |
             data/evaluation/aha-nature-fagverk-evaluation-report.v1.json
             data/evaluation/aha-nature-fixture-correction-report.v1.json
-            data/integrations/approvals/history-go-fagverk-natur.approved.v1.json
             data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json
             data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Verify checked-in review parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/evaluation/aha-nature-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-nature-fixture-correction-report.v1.json \
+            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json \
+            data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
+          git diff --exit-code -- \
+            data/integrations/approvals/history-go-fagverk-natur.approved.v1.json \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json \
+            data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json \
+            data/integrations/runtime/history-go-fagverk-natur.policy.v1.json

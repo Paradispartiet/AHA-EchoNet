@@ -4,27 +4,27 @@
   "status": "review_artifacts_attested_passed",
   "subject_id": "by",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "d52cebbe2c6c01e5780be301e9b0e4a9c61c5254",
-  "corpus_sha256": "823e79dcd7c767ee3251a924d7697b0b2cee51cbb89699dda7d318aa81c9e10b",
-  "review_head_sha": "353cc48ca2a7eaaf38629d7912ef662532614228",
-  "workflow_run_id": 31434460743,
-  "artifact_id": 9080413019,
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "corpus_sha256": "c3362c455578d583db61128bf1334bd492850439d56a376e7968e1bc7fd04a0f",
+  "review_head_sha": "e39d4468c5c7b13f195f828a209f16a135efb0d0",
+  "workflow_run_id": 35123281975,
+  "artifact_id": 10457499129,
   "artifact_name": "aha-by-fagverk-review",
-  "artifact_sha256": "da490aac9009e680143c97d05d2e9369265cb4133ffd476c626b0214ae4ea384",
+  "artifact_sha256": "f26db375646fbaed4dcf77df9d1bdc01852c4838a611d2e70bfeb9657f37e9a1",
   "outputs": {
     "policy": {
       "file": "aha-by-policy.json",
-      "sha256": "f962b0e318161b8bc808c935dac69f6fc7b9091810bebf98f7c99f0eeeb63cdb",
+      "sha256": "42004c3da9fe9a5a93e3fcc6b9533a5535775ebf4a5c1352342d64e5719b5049",
       "summary": {
-        "total": 311,
+        "total": 336,
         "non_scoring": 74,
-        "down_weight": 219,
+        "down_weight": 244,
         "context_only": 18
       }
     },
     "evaluation": {
       "file": "aha-by-evaluation.json",
-      "sha256": "c128bb09037c8a72f39f35bfb4aa1c783a2527033f6293d68f782178b814c3f0",
+      "sha256": "29344a13c1651d097c7242103cb34b210fc2480447fbad38b51c830bf16d62fa",
       "summary": {
         "total": 42,
         "passed": 42,
@@ -37,7 +37,7 @@
     },
     "fixtures": {
       "file": "aha-by-fixtures.json",
-      "sha256": "9a4b73f2bc4d4badd50596643143c7decc3594155666970dfa424a6fa480340a",
+      "sha256": "36f66a98499ce6dc4241486bf7f66c4cf7409d02e0276a79a33a578b61150821",
       "summary": {
         "total": 16,
         "passed": 16,

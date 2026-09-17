@@ -2,7 +2,6 @@ name: AHA Business Fagverk review
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - "scripts/lib/business-fagverk-scoring.mjs"
       - "scripts/build-business-fagverk-term-policy.mjs"
@@ -44,21 +43,7 @@ jobs:
           node scripts/build-business-fagverk-expansion-review.mjs
           node scripts/evaluate-business-fagverk-policy.mjs
           node scripts/compare-business-fixture-corrections.mjs
-          node scripts/build-history-go-fagverk-subject-approvals.mjs --subject naeringsliv
           node tests/aha-business-fagverk-review.test.cjs
-          node tests/aha-fagverk-subject-approvals.test.cjs
-
-      - name: Verify checked-in parity and runtime isolation
-        run: |
-          git diff --exit-code -- \
-            data/evaluation/aha-business-fagverk-evaluation-report.v1.json \
-            data/evaluation/aha-business-fixture-correction-report.v1.json \
-            data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json \
-            data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json \
-            data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
-          git diff --exit-code -- \
-            data/integrations/history-go-fagverk-release.approved.json \
-            data/integrations/history-go-fagverk-release.runtime-active.json
 
       - name: Upload Business review evidence
         uses: actions/upload-artifact@v4
@@ -67,8 +52,21 @@ jobs:
           path: |
             data/evaluation/aha-business-fagverk-evaluation-report.v1.json
             data/evaluation/aha-business-fixture-correction-report.v1.json
-            data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json
             data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json
             data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Verify checked-in review parity and runtime isolation
+        run: |
+          git diff --exit-code -- \
+            data/evaluation/aha-business-fagverk-evaluation-report.v1.json \
+            data/evaluation/aha-business-fixture-correction-report.v1.json \
+            data/integrations/review/history-go-fagverk-naeringsliv.expansion-review.v1.json \
+            data/integrations/review/history-go-fagverk-naeringsliv.term-policy.v1.json
+          git diff --exit-code -- \
+            data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json \
+            data/integrations/history-go-fagverk-release.approved.json \
+            data/integrations/history-go-fagverk-release.runtime-active.json \
+            data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json \
+            data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json

@@ -18,6 +18,7 @@ const paths = {
   corrections: 'data/evaluation/aha-business-fixture-corrections.v1.json',
   correctionReport: 'data/evaluation/aha-business-fixture-correction-report.v1.json',
   approval: 'data/integrations/approvals/history-go-fagverk-naeringsliv.approved.v1.json',
+  approvalBaseline: 'data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json',
   registry: 'data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json',
   runtime: 'data/integrations/history-go-fagverk-release.runtime-active.json'
 };
@@ -32,6 +33,7 @@ const evaluation = read(paths.evaluation);
 const corrections = read(paths.corrections);
 const correctionReport = read(paths.correctionReport);
 const approval = read(paths.approval);
+const subjectApprovalBaseline = read(paths.approvalBaseline);
 const registry = read(paths.registry);
 const runtime = read(paths.runtime);
 
@@ -138,9 +140,19 @@ assert.equal(correctionReport.cases.every((item) => item.passed === true), true)
 
 assert.equal(registry.subjects.naeringsliv.subject_id, 'naeringsliv');
 assert.equal(registry.runtime_activation_allowed, false);
+
+const activeBusiness = runtime.active_subjects?.naeringsliv;
+assert.equal(activeBusiness.subject_id, 'naeringsliv');
+assert.equal(activeBusiness.source_commit, 'c16a187453d16a40f9cab4ca694c32e96014f31b');
+assert.notEqual(activeBusiness.source_commit, candidate.source_ref, 'review-only source rebind must not move Business runtime before combined activation');
+assert.equal(activeBusiness.corpus_sha256, candidate.content_sha256, 'Business content digest must remain byte-identical across the source rebind');
+
+const businessApprovalBaseline = subjectApprovalBaseline.subjects.naeringsliv;
 assert.equal(approval.status, 'subject_review_approved_not_runtime_active');
 assert.equal(approval.subject_id, 'naeringsliv');
-assert.equal(approval.source_ref, candidate.source_ref);
+assert.equal(approval.source_ref, businessApprovalBaseline.approved_source_ref);
+assert.equal(approval.observed_release_sha256, businessApprovalBaseline.approved_release_sha256);
+assert.equal(approval.candidate.corpus_sha256, candidate.content_sha256);
 assert.equal(approval.candidate.chapter_count, 12);
 assert.equal(approval.reviewed_corpus.chapter_count, 12);
 assert.equal(approval.gate_summary.total, 5);
@@ -148,10 +160,6 @@ assert.equal(approval.gate_summary.passed, 5);
 assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
-
-const activeBusiness = runtime.active_subjects?.naeringsliv;
-assert.equal(activeBusiness.subject_id, 'naeringsliv');
-assert.equal(activeBusiness.source_commit, candidate.source_ref);
 assert.equal(activeBusiness.chapter_count, 12);
 assert.equal(activeBusiness.corpus_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.corpus.v1.json');
 assert.equal(activeBusiness.policy_path, 'data/integrations/runtime/history-go-fagverk-naeringsliv.policy.v1.json');

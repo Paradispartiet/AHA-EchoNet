@@ -31,7 +31,7 @@ vm.runInContext(engineSource, context, { filename: 'ahaSubjectEngine.js' });
   assert.equal(canonicalIndex.summary.subject_count, 20);
   assert.equal(canonicalIndex.summary.root_subject_count, 19);
   assert.equal(canonicalIndex.summary.specialization_count, 1);
-  assert.equal(canonicalIndex.summary.chapter_count, 174);
+  assert.equal(canonicalIndex.summary.chapter_count, bridge.expected.chapter_count);
   assert.equal(canonicalIndex.canonical_source.source_ref, bridge.canonical_source.source_ref);
   assert.equal(overlays.authority, 'overlay_only');
 

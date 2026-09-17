@@ -17,6 +17,7 @@ const paths = {
   corrections: "data/evaluation/aha-nature-fixture-corrections.v1.json",
   correctionReport: "data/evaluation/aha-nature-fixture-correction-report.v1.json",
   approval: "data/integrations/approvals/history-go-fagverk-natur.approved.v1.json",
+  approvalBaseline: "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json",
   registry: "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json",
   runtime: "data/integrations/history-go-fagverk-release.runtime-active.json"
 };
@@ -30,26 +31,27 @@ const evaluation = read(paths.evaluation);
 const corrections = read(paths.corrections);
 const correctionReport = read(paths.correctionReport);
 const approval = read(paths.approval);
+const subjectApprovalBaseline = read(paths.approvalBaseline);
 const registry = read(paths.registry);
 const runtime = read(paths.runtime);
 
 assert.equal(candidate.subject_filter, "natur");
-assert.equal(candidate.entries.length, 11);
+assert.equal(candidate.entries.length, 12);
 assert.equal(candidate.entries.reduce((sum, entry) => sum + entry.module_source_paths.length, 0), 0);
 assert.equal(candidate.approval_required, true);
 assert.equal(candidate.runtime_activation_allowed, false);
 assert.equal(audit.gate.passed, true);
 assert.deepEqual(audit.coverage, {
-  expected: 11,
-  registered: 11,
-  materialized: 11,
+  expected: 12,
+  registered: 12,
+  materialized: 12,
   missing: [],
   unexpected: [],
   duplicate_chapter_ids: []
 });
 assert.deepEqual(audit.term_collision_summary, {
-  total: 99,
-  high_risk: 37,
+  total: 103,
+  high_risk: 41,
   medium_risk: 53,
   low_risk: 9
 });
@@ -57,14 +59,14 @@ assert.deepEqual(audit.term_collision_summary, {
 assert.equal(policy.schema, "aha_nature_fagverk_term_policy_v1");
 assert.equal(policy.source_ref, candidate.source_ref);
 assert.equal(policy.corpus_sha256, candidate.content_sha256);
-assert.equal(policy.summary.total, 99);
-assert.equal(policy.summary.risks.high, 37);
+assert.equal(policy.summary.total, 103);
+assert.equal(policy.summary.risks.high, 41);
 assert.equal(policy.summary.risks.medium, 53);
 assert.equal(policy.summary.risks.low, 9);
-assert.equal(policy.summary.chapter_count, 11);
+assert.equal(policy.summary.chapter_count, 12);
 assert.equal(policy.summary.module_file_count, 0);
-assert.equal(Object.keys(policy.chapter_rules).length, 11);
-assert.equal(policy.chapters.length, 11);
+assert.equal(Object.keys(policy.chapter_rules).length, 12);
+assert.equal(policy.chapters.length, 12);
 assert.equal(policy.domain_gate.required, true);
 assert.equal(policy.runtime_activation_allowed, false);
 for (const entry of candidate.entries) {
@@ -76,28 +78,28 @@ for (const entry of candidate.entries) {
 
 assert.equal(expansion.status, "reviewed_subject_expansion_not_runtime_active");
 assert.equal(expansion.baseline.chapter_count, 1);
-assert.equal(expansion.candidate.chapter_count, 11);
+assert.equal(expansion.candidate.chapter_count, 12);
 assert.equal(expansion.candidate.module_file_count, 0);
 assert.equal(expansion.delta.retained_chapter_count, 1);
-assert.equal(expansion.delta.added_chapter_count, 10);
+assert.equal(expansion.delta.added_chapter_count, 11);
 assert.equal(expansion.delta.removed_chapter_count, 0);
 assert.equal(expansion.materialization_assessment.chapter_contract_sufficient_for_subject_review, true);
 assert.equal(expansion.materialization_assessment.module_absence_is_visible_review_debt, true);
 assert.equal(expansion.runtime_activation_allowed, false);
 
-assert.equal(matrix.positive_cases.length, 11);
-assert.equal(matrix.confusion_cases.length, 11);
+assert.equal(matrix.positive_cases.length, 12);
+assert.equal(matrix.confusion_cases.length, 12);
 assert.equal(matrix.ambiguity_cases.length, 12);
-assert.equal(new Set(matrix.positive_cases.map((item) => item.expected_chapter_id)).size, 11);
+assert.equal(new Set(matrix.positive_cases.map((item) => item.expected_chapter_id)).size, 12);
 assert.equal(evaluation.status, "passed_review_gate");
 assert.deepEqual(evaluation.summary, {
-  total: 34,
-  passed: 34,
+  total: 36,
+  passed: 36,
   failed: 0,
-  positive: 11,
-  confusion: 11,
+  positive: 12,
+  confusion: 12,
   ambiguity: 12,
-  chapters_covered: 11,
+  chapters_covered: 12,
   evidence_errors: 0
 });
 
@@ -113,20 +115,30 @@ assert.equal(correctionReport.summary.ambiguous, 0);
 
 assert.equal(registry.subjects.natur.subject_id, "natur");
 assert.equal(registry.runtime_activation_allowed, false);
+
+const activeNature = runtime.active_subjects?.natur;
+assert.equal(activeNature.subject_id, "natur");
+assert.equal(activeNature.source_commit, "c16a187453d16a40f9cab4ca694c32e96014f31b");
+assert.notEqual(activeNature.source_commit, candidate.source_ref, "review-only Nature update must not move runtime before combined activation");
+assert.equal(activeNature.chapter_count, 11);
+
+const natureApprovalBaseline = subjectApprovalBaseline.subjects.natur;
 assert.equal(approval.status, "subject_review_approved_not_runtime_active");
 assert.equal(approval.subject_id, "natur");
-assert.equal(approval.source_ref, candidate.source_ref);
-assert.equal(approval.candidate.chapter_count, 11);
+assert.equal(approval.source_ref, natureApprovalBaseline.approved_source_ref);
+assert.equal(approval.observed_release_sha256, natureApprovalBaseline.approved_release_sha256);
+if (approval.source_ref === candidate.source_ref) {
+  assert.equal(approval.candidate.corpus_sha256, candidate.content_sha256);
+  assert.equal(approval.candidate.chapter_count, 12);
+} else {
+  assert.equal(approval.source_ref, activeNature.source_commit);
+  assert.equal(approval.candidate.chapter_count, 11);
+}
 assert.equal(approval.gate_summary.total, 5);
 assert.equal(approval.gate_summary.passed, 5);
 assert.equal(approval.gate_summary.failed, 0);
 assert.equal(approval.runtime_activation_allowed, false);
 assert.equal(approval.runtime_active_pointer_changed, false);
-
-const activeNature = runtime.active_subjects?.natur;
-assert.equal(activeNature.subject_id, "natur");
-assert.equal(activeNature.source_commit, candidate.source_ref);
-assert.equal(activeNature.chapter_count, 11);
 assert.equal(activeNature.corpus_path, "data/integrations/runtime/history-go-fagverk-natur.corpus.v1.json");
 assert.equal(activeNature.policy_path, "data/integrations/runtime/history-go-fagverk-natur.policy.v1.json");
 assert.equal(activeNature.activation_status, "runtime_subject_active");
