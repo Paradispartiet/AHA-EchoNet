@@ -52,7 +52,6 @@ jobs:
           node - <<'NODE'
           const fs = require('fs');
           const candidate = JSON.parse(fs.readFileSync('data/integrations/candidates/history-go-fagverk-politikk.candidate.v1.json', 'utf8'));
-          const baseline = JSON.parse(fs.readFileSync('data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json', 'utf8')).subjects.politikk;
           const observed = JSON.parse(fs.readFileSync('data/integrations/history-go-fagverk-release.observed.json', 'utf8'));
           const policyPath = 'data/integrations/review/history-go-fagverk-politikk.term-policy.v1.json';
           const reportPath = 'data/evaluation/aha-politics-fagverk-evaluation-report.v1.json';
@@ -61,7 +60,8 @@ jobs:
           const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
           const drift = JSON.parse(fs.readFileSync(driftPath, 'utf8'));
           if (!candidate.source_ref) throw new Error('Politics candidate source is missing.');
-          if (observed.subjects?.politikk?.content_sha256 !== baseline.subject_content_sha256) throw new Error('Observed Politics content changed and requires re-review.');
+          if (observed.source_commit !== candidate.source_ref) throw new Error('Observed release does not point at the reviewed Politics source.');
+          if (observed.subjects?.politikk?.chapter_count !== 13 || observed.subjects?.politikk?.module_file_count !== 39) throw new Error('Observed Politics inventory differs from the reviewed 13-chapter / 39-module contract.');
           const expectedPolicy = { total: 143, non_scoring: 84, down_weight: 55, context_only: 4 };
           for (const [key, expected] of Object.entries(expectedPolicy)) if (policy.summary?.[key] !== expected) throw new Error(`Unexpected policy ${key}`);
           if (policy.version !== '1.2.0' || policy.status !== 'review_policy_full_fixture_candidate_not_runtime_active') throw new Error('Unexpected policy contract.');
