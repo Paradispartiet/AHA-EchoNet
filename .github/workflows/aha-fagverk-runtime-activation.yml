@@ -2,6 +2,7 @@ name: AHA canonical Fagverk bridge
 
 on:
   pull_request:
+    # Release activation is reviewed on the automation branch before the release PR reaches main.
     branches: [main, automation/history-go-fagverk-release]
     paths:
       - "data/integrations/history-go-fagverk-bridge.v2.json"
