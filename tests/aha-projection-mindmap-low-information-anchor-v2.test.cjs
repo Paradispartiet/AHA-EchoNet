@@ -84,7 +84,7 @@ assert.ok(!meaningful.reasons.includes("mindmap_branch_anchor_low_information"))
 
 for (const anchor of ["antall", "samtidig", "hyppig"]) {
   const quality = api.evaluateMindmap(mindmapWithAnchor(anchor));
-  assert.equal(quality.passed, false, `${anchor} must fail closed as a low-information branch anchor`);
+  assert.equal(quality.passed, false, `${anchor} must fail closed as an unrefined low-information branch anchor`);
   assert.ok(
     quality.reasons.includes("mindmap_branch_anchor_low_information"),
     `${anchor} must expose the low-information anchor reason`
@@ -98,7 +98,29 @@ const masked = api.evaluateMindmap(
     "antall"
   )
 );
-assert.equal(masked.passed, false, "display refinement must not hide a weak semantic concept key");
+assert.equal(masked.passed, false, "an arbitrary display title must not hide a weak semantic concept key");
 assert.ok(masked.reasons.includes("mindmap_branch_anchor_low_information"));
+
+const refinedModel = api.refineReadModel({
+  status: "ready",
+  validation: { valid: true },
+  projection_id: "projection_anchor_regression",
+  surfaces: {
+    insights: [
+      { id: "a", insight: "Gratis lunsj kan påvirke arbeidsroen etter pausen." },
+      { id: "b", insight: "Fraværet var foreløpig uendret i forsøket." }
+    ],
+    concepts: [],
+    lists: [],
+    paths: [],
+    mindmap: mindmapWithAnchor("antall")
+  }
+});
+const refinedBranch = refinedModel.surfaces.mindmap.nodes.find((node) => node.id === "concept_a");
+assert.equal(refinedBranch.meta.display_theme_source, "source_bound_insight_text");
+assert.notEqual(refinedBranch.title, "antall");
+const refinedQuality = api.evaluateMindmap(refinedModel.surfaces.mindmap);
+assert.equal(refinedQuality.passed, true, "source-bound refinement may recover a weak raw branch anchor");
+assert.ok(!refinedQuality.reasons.includes("mindmap_branch_anchor_low_information"));
 
 console.log("aha-projection-mindmap-low-information-anchor-v2.test.cjs: OK");
