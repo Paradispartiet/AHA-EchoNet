@@ -2,7 +2,7 @@ name: AHA canonical Fagverk bridge
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, automation/history-go-fagverk-release]
     paths:
       - "data/integrations/history-go-fagverk-bridge.v2.json"
       - "data/integrations/runtime/history-go-fagverk-canonical-index.v2.json"
