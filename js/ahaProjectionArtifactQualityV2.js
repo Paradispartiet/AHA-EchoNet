@@ -360,8 +360,12 @@
     const invalidResonance = edges.filter((edge) => edge.type === "resonates_with" && edge.meta?.dedupe_eligible !== false);
     const invalidEquivalence = nodes.filter((node) => node.type === "insight" && node.meta?.equivalence_collapsed === true && arr(node.meta?.member_ids).length < 2);
     const missingRootTitle = roots.filter((node) => text(node?.title || node?.label).length < 4);
-    const weakBranchTitles = nodes.filter((node) => branchIds.has(node.id) && text(node?.title || node?.label).length < 4);
     const branchNodes = nodes.filter((node) => branchIds.has(node.id));
+    const weakBranchTitles = branchNodes.filter((node) => text(node?.title || node?.label).length < 4);
+    const lowInformationBranchAnchors = branchNodes.filter((node) => {
+      const semanticAnchor = text(node?.meta?.concept_key || node?.meta?.original_title || node?.title || node?.label);
+      return Boolean(semanticAnchor) && isLowInformationLabel(semanticAnchor);
+    });
     const hierarchyParentCounts = insightNodes.map((node) => hierarchyEdges.filter((edge) => edge.to === node.id).length);
     const invalidHierarchyParents = hierarchyParentCounts.filter((count) => count !== 1).length;
     const invalidBranchSemantics = branchNodes.filter((node) => node.type !== "concept" || text(node?.meta?.branch_reason).length < 30).length
@@ -381,6 +385,7 @@
     if (invalidEquivalence.length) reasons.push("mindmap_equivalence_semantics_invalid");
     if (missingRootTitle.length) reasons.push("mindmap_root_title_missing");
     if (weakBranchTitles.length) reasons.push("mindmap_branch_title_missing");
+    if (lowInformationBranchAnchors.length) reasons.push("mindmap_branch_anchor_low_information");
     if (invalidHierarchyParents) reasons.push("mindmap_insight_hierarchy_parent_invalid");
     if (invalidBranchSemantics) reasons.push("mindmap_branch_semantics_missing");
     const score = round(
@@ -390,7 +395,7 @@
       + (!emptyBranches && !excessiveHierarchyEdges ? 0.15 : 0)
       + (!unresolved.length ? 0.1 : 0)
       + (!invalidResonance.length && !invalidEquivalence.length ? 0.1 : 0)
-      + (!missingRootTitle.length && !weakBranchTitles.length ? 0.1 : 0)
+      + (!missingRootTitle.length && !weakBranchTitles.length && !lowInformationBranchAnchors.length ? 0.1 : 0)
     );
     return clone({ schema: QUALITY_SCHEMA, artifact_type: "mindmap", artifact_id: mindmap?.meta?.projection_id || null, score, passed: reasons.length === 0 && score >= 0.8, reasons });
   }
