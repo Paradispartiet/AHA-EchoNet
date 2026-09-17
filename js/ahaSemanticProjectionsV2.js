@@ -522,9 +522,8 @@
     if (!units.length) return [];
     const byInsight = new Map(units.map((unit) => [unit.id, unit]));
     const candidates = [];
-    const selectableConcepts = primaryConceptCandidates(concepts);
 
-    selectableConcepts.filter((concept) => concept.insight_ids.length >= 2).forEach((concept) => {
+    concepts.filter((concept) => concept.insight_ids.length >= 2).forEach((concept) => {
       const related = concept.insight_ids.map((id) => byInsight.get(id)).filter(Boolean)
         .sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id));
       candidates.push({
@@ -589,7 +588,7 @@
     });
 
     if (!candidates.length && units.length >= 2) {
-      const focus = selectableConcepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key))[0];
+      const focus = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key))[0];
       candidates.push({
         id: `list_v2_${hash(`${projectionId}:fallback`)}`,
         title: focus ? `Mulig sammenheng rundt ${focus.label}` : "Mulig semantisk sammenheng",
