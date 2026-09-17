@@ -2,8 +2,6 @@ name: AHA Politics Fagverk corpus audit
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - "scripts/build-history-go-fagverk-corpus.mjs"
       - "tests/aha-politics-fagverk-corpus-builder.test.cjs"
