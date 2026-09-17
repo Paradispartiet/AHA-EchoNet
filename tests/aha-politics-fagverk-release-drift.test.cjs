@@ -17,11 +17,12 @@ const runtimeCode = fs.readFileSync('backend/aha_engine/app/engine/fagverk_groun
 assert.equal(baseline.status, 'review_baseline_not_runtime_input');
 assert.equal(baseline.runtime_activation_allowed, false);
 assert.equal(observed.subjects.politikk.content_sha256, subjectBaseline.subject_content_sha256, 'current observed Politics content remains review-compatible');
-assert.equal(candidate.source_ref, subjectBaseline.approved_source_ref);
+assert.notEqual(candidate.source_ref, subjectBaseline.approved_source_ref, '3.16.0 Politics review must not rewrite the previous subject approval source');
+assert.equal(candidate.content_sha256, baseline.corpus_sha256, '3.16.0 Politics candidate remains content-identical to the reviewed Politics corpus');
 assert.equal(drift.schema, 'aha_politics_fagverk_release_drift_v1');
 assert.equal(drift.status, 'source_rebased_no_semantic_drift');
 assert.equal(drift.previous_source_ref, baseline.source_ref);
-assert.equal(drift.observed_source_ref, subjectBaseline.approved_source_ref);
+assert.equal(drift.observed_source_ref, candidate.source_ref);
 assert.equal(drift.observed_release_sha256, subjectBaseline.approved_release_sha256);
 assert.equal(drift.reviewed_source_ref, candidate.source_ref);
 assert.equal(drift.reviewed_source_ref, corpus.source_ref);
