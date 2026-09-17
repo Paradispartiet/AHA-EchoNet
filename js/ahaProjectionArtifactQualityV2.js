@@ -225,8 +225,16 @@
           const childIds = edges.filter((edge) => edge.type === "supports_insight" && text(edge.from) === text(node.id)).map((edge) => text(edge.to));
           const branchTheme = sourceThemeFromRefs(childIds, context)
             || childIds.map((id) => compact(text(nodeById.get(id)?.title), 6, 52)).filter(Boolean)[0];
-          if (branchTheme) node.title = capTitle(`Spor: ${branchTheme}`);
-        } else node.title = capTitle(current);
+          if (branchTheme) {
+            node.title = capTitle(`Spor: ${branchTheme}`);
+            node.meta.display_theme = branchTheme;
+            node.meta.display_theme_source = "source_bound_insight_text";
+          }
+        } else {
+          node.title = capTitle(current);
+          node.meta.display_theme = branchAnchor;
+          node.meta.display_theme_source = "semantic_basis_label";
+        }
       }
     });
     next.nodes = nodes;
@@ -364,7 +372,9 @@
     const weakBranchTitles = branchNodes.filter((node) => text(node?.title || node?.label).length < 4);
     const lowInformationBranchAnchors = branchNodes.filter((node) => {
       const semanticAnchor = text(node?.meta?.concept_key || node?.meta?.original_title || node?.title || node?.label);
-      return Boolean(semanticAnchor) && isLowInformationLabel(semanticAnchor);
+      return Boolean(semanticAnchor)
+        && isLowInformationLabel(semanticAnchor)
+        && text(node?.meta?.display_theme_source) !== "source_bound_insight_text";
     });
     const hierarchyParentCounts = insightNodes.map((node) => hierarchyEdges.filter((edge) => edge.to === node.id).length);
     const invalidHierarchyParents = hierarchyParentCounts.filter((count) => count !== 1).length;
