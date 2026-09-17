@@ -16,7 +16,18 @@ for (const file of [
 const api = context.AHASemanticProjectionsV2;
 assert.ok(api);
 
-function makeInsight(id, insight, type, concepts) {
+function makeInsight({
+  id,
+  insight,
+  type,
+  concepts,
+  quality,
+  abstraction = "",
+  why_it_matters = "",
+  confidence = "high",
+  uncertainty = "",
+  causal_status = "not_causal"
+}) {
   return {
     id,
     source_event_id: `source_${id}`,
@@ -25,8 +36,11 @@ function makeInsight(id, insight, type, concepts) {
     candidate: {
       insight,
       type,
-      causal_status: "not_causal",
-      confidence: "high",
+      abstraction,
+      why_it_matters,
+      confidence,
+      uncertainty,
+      causal_status,
       evidence: [
         { quote: `Første dokumenterte belegg for ${id}.`, role: "supports" },
         { quote: `Andre dokumenterte belegg for ${id}.`, role: "context" }
@@ -35,7 +49,7 @@ function makeInsight(id, insight, type, concepts) {
     gate_decision: {
       eligible_for_insight_review: true,
       blocking_reasons: [],
-      metrics: { quality_score: 0.86 }
+      metrics: { quality_score: quality }
     }
   };
 }
@@ -45,30 +59,50 @@ function sourceListForPath(result, path) {
 }
 
 const rich = api.project({ insights: [
-  makeInsight(
-    "a_principle",
-    "Offentlige beslutninger må kunne etterprøves gjennom søkbare dokumenter og forklarende metadata.",
-    "principle",
-    ["offentlighet", "etterprøvbarhet"]
-  ),
-  makeInsight(
-    "b_pattern",
-    "Åpne datasett styrker kontrollen, men samtidig øker behovet for kontekst for å unngå feiltolkning.",
-    "pattern",
-    ["offentlighet", "kontekst"]
-  ),
-  makeInsight(
-    "c_mechanism",
-    "Integrerte datakilder reduserer manuelle overføringer og gjør kontrollsporet enklere å følge.",
-    "mechanism",
-    ["offentlighet", "integrasjon"]
-  ),
-  makeInsight(
-    "d_consequence",
-    "Bedre dokumentasjon gjør det lettere å oppdage forsinkelser og avvik i beslutningsprosessen.",
-    "consequence",
-    ["offentlighet", "dokumentasjon"]
-  )
+  makeInsight({
+    id: "news_generalization_a",
+    insight: "Forutsigbarhet i ruteplanlegging oppleves som en nøkkelfaktor for tilfredshet blant kveldsreisende, utover bare antallet avganger.",
+    type: "generalization",
+    concepts: ["antall", "reisende"],
+    quality: 0.800535,
+    abstraction: "Reisendes vektlegging av forutsigbarhet i kollektivtilbud: Å forstå at reisende verdsetter forutsigbarhet kan hjelpe byrådet til å målrette forbedringer som øker kollektivtrafikkens bruk og tilfredshet.",
+    why_it_matters: "Å forstå at reisende verdsetter forutsigbarhet kan hjelpe byrådet til å målrette forbedringer som øker kollektivtrafikkens bruk og tilfredshet.",
+    confidence: "medium",
+    uncertainty: "interpretive"
+  }),
+  makeInsight({
+    id: "news_generalization_b",
+    insight: "Brukerne legger mer vekt på å ha en forutsigbar og regelmessig rutetabell fremfor et høyt antall avganger på kveldstid.",
+    type: "generalization",
+    concepts: ["antall", "antall avganger"],
+    quality: 0.814706,
+    abstraction: "Reisendes prioritering av rutetilbud på kveldstid: For å effektivisere kollektivtrafikken bør tiltak fokusere på å forbedre rutetabellens regularitet, ikke bare kvantiteten av avganger.",
+    why_it_matters: "For å effektivisere kollektivtrafikken bør tiltak fokusere på å forbedre rutetabellens regularitet, ikke bare kvantiteten av avganger.",
+    confidence: "medium",
+    uncertainty: "interpretive"
+  }),
+  makeInsight({
+    id: "news_consequence",
+    insight: "Det kan være nødvendig å balansere økningen i antall avganger med sikring av en konsekvent og pålitelig rutetabell for å møte reisendes forventninger.",
+    type: "consequence",
+    concepts: ["antall", "antall avganger"],
+    quality: 0.730769,
+    abstraction: "Kveldstidens trafikktilbud krever balansering av antall og regularitet",
+    why_it_matters: "En ubalansert satsing på antall avganger uten tilstrekkelig fokus på regularitet kan svekke kollektivtrafikkens brukertilfredshet.",
+    confidence: "low",
+    uncertainty: "hypothesis"
+  }),
+  makeInsight({
+    id: "news_tension",
+    insight: "Byrådet fokuserer på å øke antallet avganger, mens reisende uttrykker et behov for mer regelmessige avganger, noe som kan indikere en spenning i prioriteringene.",
+    type: "tension",
+    concepts: ["antall", "byrådet"],
+    quality: 0.733333,
+    abstraction: "Motsetning mellom byrådets tiltak og reisendes preferanser",
+    why_it_matters: "Hvis tiltakene ikke samsvarer med brukernes behov, kan det føre til misnøye eller underutnyttelse av tilbudet.",
+    confidence: "medium",
+    uncertainty: "interpretive"
+  })
 ] });
 
 assert.equal(rich.validation.valid, true, JSON.stringify(rich.validation));
@@ -84,27 +118,29 @@ assert.deepEqual(
 const richList = sourceListForPath(rich, richPath);
 assert.ok(richList, "path must retain its source-list provenance");
 const availableRefs = new Set(richList.items.map((item) => item.refId));
-assert.ok(availableRefs.size >= 3, "fixture must expose at least three source-bound insights");
+assert.equal(availableRefs.size, 4, "#894 news_transit regression must expose four source-bound insights");
 const selectedRefs = richPath.steps.map((step) => step.refId);
 selectedRefs.forEach((refId) => assert.ok(availableRefs.has(refId), `path selected ${refId} outside its source list`));
 assert.ok(
-  new Set(selectedRefs).size >= Math.min(3, availableRefs.size),
-  "when at least three source insights are available, the ordered inquiry should use at least three without abandoning semantic stage ranking"
+  new Set(selectedRefs).size >= 3,
+  "when four source insights are available, the ordered inquiry should use at least three without abandoning semantic stage ranking"
 );
 
 const scarce = api.project({ insights: [
-  makeInsight(
-    "scarce_a",
-    "Et hovedprinsipp setter rammen for vurderingen.",
-    "principle",
-    ["knapphet", "ramme"]
-  ),
-  makeInsight(
-    "scarce_b",
-    "Et motperspektiv viser samtidig hvor rammen kan være for snever.",
-    "pattern",
-    ["knapphet", "motperspektiv"]
-  )
+  makeInsight({
+    id: "scarce_a",
+    insight: "Et hovedprinsipp setter rammen for vurderingen.",
+    type: "principle",
+    concepts: ["knapphet", "ramme"],
+    quality: 0.86
+  }),
+  makeInsight({
+    id: "scarce_b",
+    insight: "Et motperspektiv viser samtidig hvor rammen kan være for snever.",
+    type: "pattern",
+    concepts: ["knapphet", "motperspektiv"],
+    quality: 0.86
+  })
 ] });
 assert.equal(scarce.validation.valid, true, JSON.stringify(scarce.validation));
 assert.equal(scarce.projections.paths.length, 1);
