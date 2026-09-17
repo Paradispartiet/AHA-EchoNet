@@ -12,6 +12,10 @@
   const PROJECTION_SCHEMA = "aha_semantic_projections_v2";
   const PROJECTION_VERSION = 2;
   const SURFACES = Object.freeze(["insights", "concepts", "lists", "paths", "mindmap"]);
+  const PRIMARY_CONCEPT_FUNCTION_TOKENS = new Set([
+    "alene", "andre", "bare", "begge", "derfor", "disse", "dette", "flere", "hvilke", "hvilken", "hvilket",
+    "ingen", "likevel", "noen", "samme", "samtidig", "slik", "slike"
+  ]);
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -133,6 +137,42 @@
       if (!existing || label.length > existing.label.length) byKey.set(key, { key, label });
     }));
     return [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key));
+  }
+
+  function conceptTokens(value) {
+    return normalize(value).split(/\s+/).filter(Boolean);
+  }
+
+  function sameConceptSupport(left, right) {
+    const leftIds = arr(left?.insight_ids).map(text).filter(Boolean).sort();
+    const rightIds = arr(right?.insight_ids).map(text).filter(Boolean).sort();
+    return leftIds.length > 0 && leftIds.length === rightIds.length && leftIds.join("|") === rightIds.join("|");
+  }
+
+  function conceptPhraseContains(container, contained) {
+    const outer = conceptTokens(container?.label || container?.key);
+    const inner = conceptTokens(contained?.label || contained?.key);
+    if (!inner.length || inner.length >= outer.length) return false;
+    for (let index = 0; index <= outer.length - inner.length; index += 1) {
+      if (inner.every((token, offset) => token === outer[index + offset])) return true;
+    }
+    return false;
+  }
+
+  function primaryConceptCandidateReason(concept, concepts) {
+    const tokens = conceptTokens(concept?.label || concept?.key);
+    if (tokens.length === 1 && PRIMARY_CONCEPT_FUNCTION_TOKENS.has(tokens[0])) return "standalone_function_token";
+    const moreSpecific = arr(concepts).find((candidate) => (
+      candidate?.id !== concept?.id
+      && sameConceptSupport(candidate, concept)
+      && conceptPhraseContains(candidate, concept)
+    ));
+    if (moreSpecific) return `subsumed_by:${moreSpecific.key}`;
+    return "eligible";
+  }
+
+  function primaryConceptCandidates(concepts) {
+    return arr(concepts).filter((concept) => concept?.meta?.primary_candidate_eligible !== false);
   }
 
   function extractEvidence(item) {
@@ -415,11 +455,22 @@
       node.source_member_ids.push(...unit.member_ids);
       node.occurrence_count += 1;
     }));
-    return [...map.values()].map((node) => ({
+    const nodes = [...map.values()].map((node) => ({
       ...node,
       insight_ids: unique(node.insight_ids).sort(),
       source_member_ids: unique(node.source_member_ids).sort()
     })).sort((a, b) => a.key.localeCompare(b.key));
+    return nodes.map((node) => {
+      const reason = primaryConceptCandidateReason(node, nodes);
+      return {
+        ...node,
+        meta: {
+          ...node.meta,
+          primary_candidate_eligible: reason === "eligible",
+          primary_candidate_reason: reason
+        }
+      };
+    });
   }
 
   function insightProjection(units, conceptNodes) {
@@ -737,7 +788,8 @@
   }
 
   function buildMindmap(units, concepts, resonanceEdges, projectionId) {
-    const rankedConcepts = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
+    const selectableConcepts = primaryConceptCandidates(concepts);
+    const rankedConcepts = selectableConcepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
     const repeatedConcepts = rankedConcepts.filter((concept) => concept.occurrence_count >= 2);
     const branchLimit = Math.min(7, units.length);
     const branchCandidatePool = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts)
