@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate-subculture-review:
@@ -28,29 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Rebind Subculture review inputs to candidate source
-        run: |
-          node - <<'NODE'
-          const fs = require('fs');
-          const candidate = require('./data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json');
-          const previous = 'c16a187453d16a40f9cab4ca694c32e96014f31b';
-          const paths = [
-            'data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json',
-            'data/evaluation/aha-subculture-fagverk-evaluation-matrix.v1.json',
-            'data/evaluation/aha-subculture-fixture-corrections.v1.json'
-          ];
-          for (const path of paths) {
-            const before = fs.readFileSync(path, 'utf8');
-            const after = before.replaceAll(previous, candidate.source_ref);
-            if (after === before && !before.includes(candidate.source_ref)) throw new Error(`Subculture source_ref not found in ${path}`);
-            fs.writeFileSync(path, after);
-          }
-          NODE
       - name: Rebuild Subculture review evidence
         run: |
           node scripts/build-subculture-fagverk-term-policy.mjs
@@ -58,36 +38,27 @@ jobs:
           node scripts/evaluate-subculture-fagverk-policy.mjs
           node scripts/compare-subculture-fixture-corrections.mjs
           node tests/aha-subculture-fagverk-review.test.cjs
-      - name: Materialize reviewed Subculture artifacts
-        if: github.event_name == 'pull_request' && github.head_ref == 'review/subkultur-fagverk-3-16-0-20260917'
+      - name: Verify deterministic parity and runtime isolation
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json \
-            data/evaluation/aha-subculture-fagverk-evaluation-matrix.v1.json \
-            data/evaluation/aha-subculture-fixture-corrections.v1.json \
+          git diff --exit-code -- \
             data/integrations/review/history-go-fagverk-subkultur.term-policy.v1.json \
             data/integrations/review/history-go-fagverk-subkultur.expansion-review.v1.json \
             data/evaluation/aha-subculture-fagverk-evaluation-report.v1.json \
             data/evaluation/aha-subculture-fixture-correction-report.v1.json
-          if git diff --cached --quiet; then
-            echo "Subculture review artifacts already materialized."
-          else
-            git commit -m "Materialize Subkultur 3.16.0 review artifacts"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
-      - name: Verify review package and runtime isolation
-        run: |
-          node tests/aha-subculture-fagverk-review.test.cjs
           node - <<'NODE'
           const candidate = require('./data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json');
+          const config = require('./data/integrations/review/history-go-fagverk-subkultur.policy-config.v1.json');
+          const matrix = require('./data/evaluation/aha-subculture-fagverk-evaluation-matrix.v1.json');
+          const corrections = require('./data/evaluation/aha-subculture-fixture-corrections.v1.json');
           const approval = require('./data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json');
           const runtime = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
+          for (const input of [config, matrix, corrections]) {
+            if (input.source_ref !== candidate.source_ref || input.corpus_sha256 !== candidate.content_sha256) throw new Error('Subculture review input is not bound to the 3.16.0 candidate.');
+          }
           const subculture = runtime.active_subjects?.subkultur;
-          if (!subculture || subculture.chapter_count !== 8 || subculture.activation_status !== 'runtime_subject_active') process.exit(1);
+          if (!subculture || subculture.chapter_count !== 8 || subculture.activation_status !== 'runtime_subject_active') throw new Error('Existing Subculture runtime contract changed unexpectedly.');
           if (approval.source_ref === candidate.source_ref) throw new Error('Review phase must not rewrite Subculture approval.');
           if (subculture.source_commit === candidate.source_ref) throw new Error('Review phase must not move Subculture runtime.');
           const expectedEntries = Object.values(runtime.active_subjects || {}).reduce((sum, item) => sum + Number(item.chapter_count || 0), 0);
-          if (runtime.effective_entry_count !== expectedEntries || runtime.full_release_active !== false) process.exit(1);
+          if (runtime.effective_entry_count !== expectedEntries || runtime.full_release_active !== false) throw new Error('Runtime aggregate changed unexpectedly.');
           NODE
