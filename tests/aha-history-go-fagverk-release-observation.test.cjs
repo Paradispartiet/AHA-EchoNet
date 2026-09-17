@@ -82,8 +82,17 @@ if (!isRuntimeV2) {
     const activeSubject = runtimeActive.active_subjects[subjectId];
     assert.ok(baseline, `${subjectId}: approved subject-content baseline exists`);
     assert.equal(observedSubject.content_sha256, baseline.subject_content_sha256, `${subjectId}: observed content remains approved`);
-    assert.equal(approvedSubject.source_commit, baseline.approved_source_ref, `${subjectId}: runtime approval keeps reviewed source provenance`);
-    assert.equal(activeSubject.source_commit, approvedSubject.source_commit, `${subjectId}: runtime active source matches approval`);
+
+    const subjectApproval = JSON.parse(fs.readFileSync(approvedSubject.subject_approval_path, 'utf8'));
+    assert.equal(subjectApproval.status, 'subject_review_approved_not_runtime_active', `${subjectId}: current subject approval remains review-only`);
+    assert.equal(subjectApproval.source_ref, baseline.approved_source_ref, `${subjectId}: subject review approval matches approved content baseline`);
+    assert.equal(subjectApproval.runtime_approved_pointer_changed, false, `${subjectId}: subject review did not move runtime approval`);
+    assert.equal(subjectApproval.runtime_active_pointer_changed, false, `${subjectId}: subject review did not move runtime active state`);
+
+    assert.equal(activeSubject.source_commit, approvedSubject.source_commit, `${subjectId}: runtime active source matches runtime approval`);
+    if (approvedSubject.source_commit !== baseline.approved_source_ref) {
+      assert.notEqual(activeSubject.source_commit, observed.source_commit, `${subjectId}: review-only subject approval must not silently move partial runtime`);
+    }
     assert.equal(activeSubject.corpus_path, approvedSubject.corpus_path);
     assert.equal(activeSubject.policy_path, approvedSubject.policy_path);
     assert.equal(activeSubject.chapter_count, approvedSubject.chapter_count);
