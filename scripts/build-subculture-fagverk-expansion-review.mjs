@@ -7,6 +7,7 @@ const baseline = read("data/integrations/history-go-fagverk-corpus.v1.json");
 const candidate = read("data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json");
 const observed = read("data/integrations/history-go-fagverk-release.observed.json");
 const approval = read("data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json");
+const subjectApprovalBaseline = read("data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json");
 
 if (candidate.subject_filter !== "subkultur" || candidate.entries.length !== 8) {
   throw new Error("Subculture expansion identity failed");
@@ -16,11 +17,18 @@ if (!observedSubject) throw new Error("Subculture observed subject evidence is m
 if (observed.source_commit !== candidate.source_ref) {
   throw new Error("Observed release does not point at the reviewed Subculture source");
 }
-if (approval.source_ref === candidate.source_ref) {
-  throw new Error("Review-only Subculture re-attestation must not rewrite the previous approval source");
+const subcultureApprovalBaseline = subjectApprovalBaseline.subjects?.subkultur;
+if (!subcultureApprovalBaseline) {
+  throw new Error("Subculture approval baseline is missing");
+}
+if (approval.source_ref !== subcultureApprovalBaseline.approved_source_ref) {
+  throw new Error("Subculture approved-artifact source differs from subject approval baseline");
+}
+if (approval.observed_release_sha256 !== subcultureApprovalBaseline.approved_release_sha256) {
+  throw new Error("Subculture approved-artifact release differs from subject approval baseline");
 }
 if (approval.candidate?.corpus_sha256 !== candidate.content_sha256) {
-  throw new Error("Subculture 3.16.0 candidate differs from the previously reviewed corpus digest");
+  throw new Error("Subculture 3.16.0 candidate differs from the approved review corpus digest");
 }
 if (observedSubject.chapter_count !== 8 || observedSubject.module_file_count !== 24) {
   throw new Error("Observed Subculture inventory differs from the reviewed 8-chapter / 24-module contract");
