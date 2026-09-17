@@ -12,6 +12,7 @@ on:
       - "data/integrations/review/history-go-fagverk-subkultur.*.v1.json"
       - "data/evaluation/aha-subculture-*"
       - "data/integrations/review/history-go-fagverk-subject-approval-registry.v1.json"
+      - "data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json"
       - "data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json"
       - "data/integrations/runtime/history-go-fagverk-subkultur.*.v1.json"
       - "data/integrations/history-go-fagverk-release.runtime-active.json"
@@ -51,14 +52,17 @@ jobs:
           const matrix = require('./data/evaluation/aha-subculture-fagverk-evaluation-matrix.v1.json');
           const corrections = require('./data/evaluation/aha-subculture-fixture-corrections.v1.json');
           const approval = require('./data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json');
+          const approvalBaseline = require('./data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json');
           const runtime = require('./data/integrations/history-go-fagverk-release.runtime-active.json');
           for (const input of [config, matrix, corrections]) {
             if (input.source_ref !== candidate.source_ref || input.corpus_sha256 !== candidate.content_sha256) throw new Error('Subculture review input is not bound to the 3.16.0 candidate.');
           }
           const subculture = runtime.active_subjects?.subkultur;
           if (!subculture || subculture.chapter_count !== 8 || subculture.activation_status !== 'runtime_subject_active') throw new Error('Existing Subculture runtime contract changed unexpectedly.');
-          if (approval.source_ref === candidate.source_ref) throw new Error('Review phase must not rewrite Subculture approval.');
-          if (subculture.source_commit === candidate.source_ref) throw new Error('Review phase must not move Subculture runtime.');
+          const approvedSubject = approvalBaseline.subjects?.subkultur;
+          if (!approvedSubject || approval.source_ref !== approvedSubject.approved_source_ref) throw new Error('Subculture approval source differs from subject approval baseline.');
+          if (approval.observed_release_sha256 !== approvedSubject.approved_release_sha256) throw new Error('Subculture approval release differs from subject approval baseline.');
+          if (subculture.source_commit === candidate.source_ref) throw new Error('Approval phase must not move Subculture runtime.');
           const expectedEntries = Object.values(runtime.active_subjects || {}).reduce((sum, item) => sum + Number(item.chapter_count || 0), 0);
           if (runtime.effective_entry_count !== expectedEntries || runtime.full_release_active !== false) throw new Error('Runtime aggregate changed unexpectedly.');
           NODE

@@ -5,16 +5,16 @@
   "lifecycle_stage": "subject_approval",
   "subject_id": "historie",
   "source_repo": "Paradispartiet/History-Go",
-  "source_ref": "c16a187453d16a40f9cab4ca694c32e96014f31b",
-  "observed_release_sha256": "21cec482d0bde5423cef0bd836dc2b6b8fa4445226bd2ab8df1b44eaefccd627",
+  "source_ref": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "observed_release_sha256": "27f59728ea7099dfaacadb9cdafad4c62103dd563d6bb2e0d0ac6ebf81aed7fb",
   "candidate": {
     "path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
-    "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+    "corpus_sha256": "643838c2dbdc1d9a801a4e2424563e53aeaf53b59e5b014b95c4799efd9aa2b0",
     "chapter_count": 23
   },
   "reviewed_corpus": {
     "path": "data/integrations/candidates/history-go-fagverk-historie.candidate.v1.json",
-    "corpus_sha256": "e5123cb96d9b89c83aad56efc327c1089bfe5f887f29322d39a4a936c9f19444",
+    "corpus_sha256": "643838c2dbdc1d9a801a4e2424563e53aeaf53b59e5b014b95c4799efd9aa2b0",
     "chapter_count": 23
   },
   "gate_summary": {
