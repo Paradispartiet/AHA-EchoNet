@@ -85,4 +85,29 @@ assert.ok(
 );
 assert.ok(!branchConceptKeys(listCompatibility).includes("alene"), "the same function token must remain ineligible as a mindmap branch");
 
+const inflectionDuplicate = api.project({ insights: [
+  makeInsight("patient_a", "Ventetid kan falle når pasientflyten mellom avdelinger blir tydeligere.", ["ventetid", "ventetiden"]),
+  makeInsight("patient_b", "Ventetiden kan samtidig skjule viderehenviste pasienter hvis målegrunnlaget er snevert.", ["ventetid", "ventetiden"]),
+  makeInsight("patient_c", "Pasientflyt bør vurderes separat fra selve ventetidsmålet.", ["pasientflyt"])
+] });
+assert.equal(inflectionDuplicate.validation.valid, true, JSON.stringify(inflectionDuplicate.validation));
+const inflectionConcepts = new Map(inflectionDuplicate.projections.concepts.map((concept) => [concept.key, concept]));
+assert.ok(inflectionConcepts.has("ventetid"), "base concept must remain traceable");
+assert.ok(inflectionConcepts.has("ventetiden"), "inflected source concept must remain traceable");
+assert.equal(inflectionConcepts.get("ventetid").meta?.primary_candidate_eligible, true, "base form must remain primary-eligible");
+assert.equal(inflectionConcepts.get("ventetiden").meta?.primary_candidate_eligible, false, "same-support definite form must not duplicate a primary branch");
+assert.equal(inflectionConcepts.get("ventetiden").meta?.primary_candidate_reason, "inflection_variant_of:ventetid");
+const inflectionBranches = branchConceptKeys(inflectionDuplicate);
+assert.ok(inflectionBranches.includes("ventetid"), "base form must represent the shared concept in the mindmap");
+assert.ok(!inflectionBranches.includes("ventetiden"), "same-support inflection variant must not become a duplicate mindmap branch");
+assert.ok(inflectionBranches.includes("pasientflyt"), "an independent concept must remain available as a separate branch");
+
+const differentSupport = api.project({ insights: [
+  makeInsight("work_a", "Arbeid brukes her som et generelt begrep for aktiviteten.", ["arbeid"]),
+  makeInsight("work_b", "Arbeidet omtales i en annen innsikt med et annet kildegrunnlag.", ["arbeidet"])
+] });
+const differentSupportConcepts = new Map(differentSupport.projections.concepts.map((concept) => [concept.key, concept]));
+assert.equal(differentSupportConcepts.get("arbeid").meta?.primary_candidate_eligible, true, "base form with different support must not suppress another concept");
+assert.equal(differentSupportConcepts.get("arbeidet").meta?.primary_candidate_eligible, true, "inflected form with different support must remain eligible");
+
 console.log("aha-projection-primary-concept-selection-v2.test.cjs: OK");
