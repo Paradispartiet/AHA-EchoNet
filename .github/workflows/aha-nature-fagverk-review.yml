@@ -39,6 +39,7 @@ jobs:
       - name: Rebuild complete Nature review evidence
         run: |
           node scripts/build-nature-fagverk-term-policy.mjs
+          node scripts/build-nature-fagverk-expansion-review.mjs
           node scripts/evaluate-nature-fagverk-policy.mjs
           node scripts/compare-nature-fixture-corrections.mjs
           node tests/aha-nature-fagverk-review.test.cjs
@@ -50,6 +51,7 @@ jobs:
           path: |
             data/evaluation/aha-nature-fagverk-evaluation-report.v1.json
             data/evaluation/aha-nature-fixture-correction-report.v1.json
+            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json
             data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
@@ -59,6 +61,7 @@ jobs:
           git diff --exit-code -- \
             data/evaluation/aha-nature-fagverk-evaluation-report.v1.json \
             data/evaluation/aha-nature-fixture-correction-report.v1.json \
+            data/integrations/review/history-go-fagverk-natur.expansion-review.v1.json \
             data/integrations/review/history-go-fagverk-natur.term-policy.v1.json
           git diff --exit-code -- \
             data/integrations/approvals/history-go-fagverk-natur.approved.v1.json \

@@ -78,10 +78,10 @@ for (const entry of candidate.entries) {
 
 assert.equal(expansion.status, "reviewed_subject_expansion_not_runtime_active");
 assert.equal(expansion.baseline.chapter_count, 1);
-assert.equal(expansion.candidate.chapter_count, 11);
+assert.equal(expansion.candidate.chapter_count, 12);
 assert.equal(expansion.candidate.module_file_count, 0);
 assert.equal(expansion.delta.retained_chapter_count, 1);
-assert.equal(expansion.delta.added_chapter_count, 10);
+assert.equal(expansion.delta.added_chapter_count, 11);
 assert.equal(expansion.delta.removed_chapter_count, 0);
 assert.equal(expansion.materialization_assessment.chapter_contract_sufficient_for_subject_review, true);
 assert.equal(expansion.materialization_assessment.module_absence_is_visible_review_debt, true);

@@ -39,6 +39,7 @@ jobs:
       - name: Rebuild complete History review evidence
         run: |
           node scripts/build-history-fagverk-term-policy.mjs
+          node scripts/build-history-fagverk-expansion-review.mjs
           node scripts/evaluate-history-fagverk-policy.mjs
           node scripts/compare-history-fixture-corrections.mjs
           node tests/aha-history-fagverk-review.test.cjs
@@ -50,6 +51,7 @@ jobs:
           path: |
             data/evaluation/aha-history-fagverk-evaluation-report.v1.json
             data/evaluation/aha-history-fixture-correction-report.v1.json
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json
             data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
           if-no-files-found: error
           retention-days: 14
@@ -59,6 +61,7 @@ jobs:
           git diff --exit-code -- \
             data/evaluation/aha-history-fagverk-evaluation-report.v1.json \
             data/evaluation/aha-history-fixture-correction-report.v1.json \
+            data/integrations/review/history-go-fagverk-historie.expansion-review.v1.json \
             data/integrations/review/history-go-fagverk-historie.term-policy.v1.json
           git diff --exit-code -- \
             data/integrations/approvals/history-go-fagverk-historie.approved.v1.json \
