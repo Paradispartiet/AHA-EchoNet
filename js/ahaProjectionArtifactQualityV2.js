@@ -86,6 +86,15 @@
     if (values.length === 1) return values[0];
     return capTitle(`${values[0]} ↔ ${values[1]}`);
   }
+  function sourceCentralIdeaFromRefs(refIds, context = {}) {
+    const byId = insightMap(context);
+    const ranked = unique(arr(refIds).map(text).filter(Boolean)).map((id) => byId.get(id)).filter(Boolean).sort((left, right) => {
+      const leftScore = Number(left?.quality?.mean_score ?? left?.quality?.representative_score ?? left?.quality_score ?? left?.meta?.quality_score ?? 0) || 0;
+      const rightScore = Number(right?.quality?.mean_score ?? right?.quality?.representative_score ?? right?.quality_score ?? right?.meta?.quality_score ?? 0) || 0;
+      return rightScore - leftScore || text(left?.id).localeCompare(text(right?.id));
+    });
+    return ranked.length ? compact(insightText(ranked[0]), 12, 92) : "";
+  }
   function sourceThemeFromItems(items, context = {}) {
     return sourceThemeFromRefs(refIdsFromItems(items), context);
   }
@@ -203,18 +212,29 @@
     const edges = arr(next.edges);
     const nodeById = new Map(nodes.map((node) => [text(node?.id), node]));
     const insightNodes = nodes.filter((node) => node?.type === "insight");
-    const sourceTheme = sourceThemeFromRefs(insightNodes.map((node) => text(node?.refId || node?.id)).filter(Boolean), context)
+    const insightRefs = insightNodes.map((node) => text(node?.refId || node?.id)).filter(Boolean);
+    const sourceTheme = sourceThemeFromRefs(insightRefs, context)
       || sourceThemeFromRefs(insightNodes.map((node) => text(node?.id)).filter(Boolean), { insights: insightNodes });
+    const sourceCentralIdea = sourceCentralIdeaFromRefs(insightRefs, context)
+      || sourceCentralIdeaFromRefs(insightNodes.map((node) => text(node?.id)).filter(Boolean), { insights: insightNodes });
 
     nodes.forEach((node) => {
       node.meta = { ...(node.meta || {}) };
       const current = text(node.title || node.label);
       if (node.type === "theme" && node.meta.root === true) {
         const rootAnchor = current.replace(/:\s*semantisk oversikt.*$/iu, "");
+        const generatedRoot = /^(?:sammenhengen mellom|perspektiver på|kildebundne perspektiver)\b/iu.test(current) || /:\s*semantisk oversikt(?:\b|$)/iu.test(current);
         node.meta.original_title = node.meta.original_title || current;
         node.meta.display_refinement = DISPLAY_REFINEMENT;
-        if ((!current || isLowInformationLabel(rootAnchor)) && sourceTheme) node.title = capTitle(`Oversikt: ${sourceTheme}`);
-        else node.title = capTitle(current);
+        if (sourceCentralIdea && (!current || generatedRoot || isLowInformationLabel(rootAnchor))) {
+          node.title = capTitle(`Oversikt: ${sourceCentralIdea}`);
+          node.meta.display_theme = sourceCentralIdea;
+          node.meta.display_theme_source = "source_bound_insight_text";
+        } else {
+          node.title = capTitle(current);
+          node.meta.display_theme = current;
+          node.meta.display_theme_source = "semantic_root_title";
+        }
         node.meta.central_idea = text(node.title);
       }
       if (node.type === "concept") {
