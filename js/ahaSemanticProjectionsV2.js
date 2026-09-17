@@ -714,6 +714,38 @@
       const contrast = related.slice().sort((left, right) => stageScore(right, "tension_counterexample") - stageScore(left, "tension_counterexample") || left.id.localeCompare(right.id))[1];
       selected[2] = { stage: "tension_counterexample", unit: contrast };
     }
+
+    const targetDiversity = Math.min(3, related.length);
+    while (unique(selected.map((entry) => entry.unit?.id).filter(Boolean)).length < targetDiversity) {
+      const usage = new Map();
+      selected.forEach((entry) => {
+        const id = entry.unit?.id;
+        if (id) usage.set(id, (usage.get(id) || 0) + 1);
+      });
+      const usedIds = new Set(usage.keys());
+      const unused = related.filter((unit) => unit?.id && !usedIds.has(unit.id));
+      const candidates = [];
+      selected.forEach((entry, stageIndex) => {
+        const current = entry.unit;
+        if (!current?.id || (usage.get(current.id) || 0) <= 1) return;
+        unused.forEach((unit) => candidates.push({
+          stageIndex,
+          unit,
+          loss: stageScore(current, entry.stage) - stageScore(unit, entry.stage)
+        }));
+      });
+      candidates.sort((left, right) => (
+        left.loss - right.loss
+        || left.stageIndex - right.stageIndex
+        || left.unit.id.localeCompare(right.unit.id)
+      ));
+      const best = candidates[0];
+      if (!best) break;
+      selected[best.stageIndex] = {
+        stage: selected[best.stageIndex].stage,
+        unit: best.unit
+      };
+    }
     return selected;
   }
 
