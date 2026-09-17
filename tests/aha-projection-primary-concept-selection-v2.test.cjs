@@ -75,4 +75,14 @@ assert.ok(!functionBranches.includes("flere"), "standalone quantifier must not b
 assert.ok(!functionBranches.includes("hvilke"), "standalone interrogative determiner must not become a primary product branch");
 assert.ok(functionBranches.some((key) => ["startlan", "boligtilgang", "gjeldsrisiko"].includes(key)), "meaningful source concepts must remain eligible");
 
+const listCompatibility = api.project({ insights: [
+  makeInsight("compat_a", "Alene er ikke et godt tankekartanker, men kan fortsatt være et delt listegrunnlag.", ["alene", "første tema"]),
+  makeInsight("compat_b", "Alene kan opptre i to kilder uten at listekontrakten skal omskrives her.", ["alene", "andre tema"])
+] });
+assert.ok(
+  listCompatibility.projections.lists.some((list) => list.meta?.semantic_basis === "shared_concept" && list.meta?.semantic_basis_label === "alene"),
+  "mindmap eligibility must not silently change the established shared-concept list contract"
+);
+assert.ok(!branchConceptKeys(listCompatibility).includes("alene"), "the same function token must remain ineligible as a mindmap branch");
+
 console.log("aha-projection-primary-concept-selection-v2.test.cjs: OK");
