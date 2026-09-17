@@ -36,7 +36,7 @@ assert.equal(canonicalIndex.summary.subject_count, 20);
 assert.equal(canonicalIndex.summary.missing_file_count, 0);
 assert.ok(canonicalIndex.summary.emne_count > 1000);
 assert.ok(canonicalIndex.summary.method_count > 500);
-assert.equal(canonicalIndex.summary.chapter_count, 174);
+assert.equal(canonicalIndex.summary.chapter_count, bridge.expected.chapter_count);
 
 const canonicalIds = canonicalIndex.subjects.map((subject) => subject.subject_id);
 for (const required of ['litteratur', 'media', 'helse', 'utdanning', 'religion', 'scenekunst', 'filosofi', 'film_tv', 'teknologi']) {
