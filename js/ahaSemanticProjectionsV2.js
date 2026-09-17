@@ -149,6 +149,27 @@
     return leftIds.length > 0 && leftIds.length === rightIds.length && leftIds.join("|") === rightIds.join("|");
   }
 
+  function sameConceptSourceSupport(left, right) {
+    if (!sameConceptSupport(left, right)) return false;
+    const leftSourceIds = arr(left?.source_member_ids).map(text).filter(Boolean).sort();
+    const rightSourceIds = arr(right?.source_member_ids).map(text).filter(Boolean).sort();
+    return leftSourceIds.length > 0
+      && leftSourceIds.length === rightSourceIds.length
+      && leftSourceIds.join("|") === rightSourceIds.join("|");
+  }
+
+  function definiteInflectionBaseKey(value) {
+    const tokens = conceptTokens(value);
+    if (tokens.length !== 1) return "";
+    const token = tokens[0];
+    for (const suffix of ["ene", "en", "et"]) {
+      if (!token.endsWith(suffix)) continue;
+      const base = token.slice(0, -suffix.length);
+      if (base.length >= 6) return base;
+    }
+    return "";
+  }
+
   function conceptPhraseContains(container, contained) {
     const outer = conceptTokens(container?.label || container?.key);
     const inner = conceptTokens(contained?.label || contained?.key);
@@ -162,6 +183,13 @@
   function primaryConceptCandidateReason(concept, concepts) {
     const tokens = conceptTokens(concept?.label || concept?.key);
     if (tokens.length === 1 && PRIMARY_CONCEPT_FUNCTION_TOKENS.has(tokens[0])) return "standalone_function_token";
+    const inflectionBaseKey = definiteInflectionBaseKey(concept?.label || concept?.key);
+    const inflectionBase = inflectionBaseKey ? arr(concepts).find((candidate) => (
+      candidate?.id !== concept?.id
+      && candidate?.key === inflectionBaseKey
+      && sameConceptSourceSupport(candidate, concept)
+    )) : null;
+    if (inflectionBase) return `inflection_variant_of:${inflectionBase.key}`;
     const moreSpecific = arr(concepts).find((candidate) => (
       candidate?.id !== concept?.id
       && sameConceptSupport(candidate, concept)
