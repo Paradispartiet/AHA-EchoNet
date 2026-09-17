@@ -28,6 +28,10 @@ assert.equal(corpus.cases.length, 27);
 assert.ok(new Set(corpus.cases.map((entry) => entry.genre)).size >= 8);
 
 const STOPWORDS = new Set("og i på av til er et en det som med for den de å om men at fra har blir ble kan skal eller ikke når etter før ved også dette seg sine sin sitt være var mens mot mellom bare".split(" "));
+const SYNTHETIC_CONCEPT_STOPWORDS = new Set([
+  "alene", "andre", "bare", "begge", "derfor", "disse", "dette", "flere", "hvilke", "hvilken", "hvilket",
+  "ingen", "likevel", "noen", "samme", "samtidig", "slik", "slike"
+]);
 
 function tokens(value) {
   return String(value || "").toLocaleLowerCase("no").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").match(/[a-zæøå0-9-]{4,}/gu)?.filter((token) => !STOPWORDS.has(token)) || [];
@@ -59,7 +63,10 @@ function makeInsightsFromRawText(entry) {
   const commonConcept = [...counts].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0]?.[0] || "kilde";
   const eligible = entry.expected_visible === true && entry.source_text.length >= 80 && sentences.length >= 2;
   return sentences.slice(0, 3).map((sentence, index) => {
-    const uniqueConcept = tokens(sentence.text).find((token) => token !== commonConcept) || `perspektiv_${index + 1}`;
+    const sentenceTokens = tokens(sentence.text);
+    const uniqueConcept = sentenceTokens.find((token) => token !== commonConcept && !SYNTHETIC_CONCEPT_STOPWORDS.has(token))
+      || sentenceTokens.find((token) => token !== commonConcept)
+      || `perspektiv_${index + 1}`;
     const supporting = sentences[(index + 1) % sentences.length]?.text || sentence.text;
     return {
       id: `${entry.id}_insight_${index + 1}`,
@@ -185,6 +192,11 @@ for (const entry of corpus.cases) {
   }
   results.push({ id: entry.id, genre: entry.genre, visible });
 }
+
+const dataEnergy = corpus.cases.find((entry) => entry.id === "data_energy");
+const dataEnergyUniqueConcepts = makeInsightsFromRawText(dataEnergy).map((insight) => insight.semantic_concepts[1]);
+assert.ok(dataEnergyUniqueConcepts.includes("vinter"), "data_energy synthetic concept extraction must preserve the informative weather concept");
+assert.ok(!dataEnergyUniqueConcepts.includes("samme"), "data_energy synthetic concept extraction must not use a determiner as its unique concept");
 
 assert.equal(results.filter((entry) => entry.visible).length, 24);
 assert.equal(results.filter((entry) => !entry.visible).length, 3);
