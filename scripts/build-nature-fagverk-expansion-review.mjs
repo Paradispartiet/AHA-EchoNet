@@ -55,7 +55,7 @@ function validateSubjectCompatibility(candidate, observed, subjectBaseline) {
 function buildReview(baseline, candidate, observed, subjectBaseline) {
   if (candidate.subject_filter !== "natur") throw new Error("Candidate is not Nature-scoped.");
   validateSubjectCompatibility(candidate, observed, subjectBaseline);
-  if (candidate.entries.length !== 11) throw new Error("Nature candidate must contain 11 chapters.");
+  if (candidate.entries.length !== 12) throw new Error("Nature candidate must contain 12 chapters.");
   const baselineEntries = (baseline.entries || []).filter((entry) => entry.subject_id === "natur");
   if (baselineEntries.length !== 1 || baselineEntries[0].chapter_id !== "okosystem_mangfold_habitat") {
     throw new Error("Legacy runtime baseline is not the documented one-chapter Nature seed.");
@@ -67,7 +67,7 @@ function buildReview(baseline, candidate, observed, subjectBaseline) {
   const added = [...after].filter((id) => !before.has(id)).sort();
   const removed = [...before].filter((id) => !after.has(id)).sort();
   const moduleFileCount = candidate.entries.reduce((sum, entry) => sum + (entry.module_source_paths || []).length, 0);
-  if (retained.length !== 1 || added.length !== 10 || removed.length !== 0) {
+  if (retained.length !== 1 || added.length !== 11 || removed.length !== 0) {
     throw new Error(`Unexpected Nature expansion: retained=${retained.length}, added=${added.length}, removed=${removed.length}.`);
   }
   if (moduleFileCount !== 0) throw new Error(`Nature chapter contract unexpectedly contains ${moduleFileCount} module files.`);
@@ -109,7 +109,7 @@ function buildReview(baseline, candidate, observed, subjectBaseline) {
       module_absence_is_visible_review_debt: true,
       runtime_activation_requires_separate_pull_request: true
     },
-    review_finding: "Nature expands from one legacy ecosystem seed to the complete 11-chapter registered subject. The canonical chapter files are sufficient for subject review, while the absence of separate module files remains explicit and runtime activation requires a separate pull request.",
+    review_finding: "Nature expands from one legacy ecosystem seed to the complete 12-chapter registered subject. The canonical chapter files are sufficient for subject review, while the absence of separate module files remains explicit and runtime activation requires a separate pull request.",
     approval_required: true,
     runtime_activation_allowed: false,
     explicit_runtime_activation_pull_request_required: true
