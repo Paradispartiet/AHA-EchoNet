@@ -6,19 +6,24 @@ const read = (path) => JSON.parse(fs.readFileSync(path, "utf8"));
 const baseline = read("data/integrations/history-go-fagverk-corpus.v1.json");
 const candidate = read("data/integrations/candidates/history-go-fagverk-subkultur.candidate.v1.json");
 const observed = read("data/integrations/history-go-fagverk-release.observed.json");
-const subjectBaseline = read("data/integrations/review/history-go-fagverk-subject-content-baseline.v1.json");
+const approval = read("data/integrations/approvals/history-go-fagverk-subkultur.approved.v1.json");
 
 if (candidate.subject_filter !== "subkultur" || candidate.entries.length !== 8) {
   throw new Error("Subculture expansion identity failed");
 }
-const approved = subjectBaseline.subjects?.subkultur;
 const observedSubject = observed.subjects?.subkultur;
-if (!approved || !observedSubject) throw new Error("Subculture subject compatibility evidence is missing");
-if (candidate.source_ref !== approved.approved_source_ref) {
-  throw new Error("Subculture candidate differs from the approved subject-content baseline source");
+if (!observedSubject) throw new Error("Subculture observed subject evidence is missing");
+if (observed.source_commit !== candidate.source_ref) {
+  throw new Error("Observed release does not point at the reviewed Subculture source");
 }
-if (observedSubject.content_sha256 !== approved.subject_content_sha256) {
-  throw new Error("Observed Subculture content changed and requires a new subject review");
+if (approval.source_ref === candidate.source_ref) {
+  throw new Error("Review-only Subculture re-attestation must not rewrite the previous approval source");
+}
+if (approval.candidate?.corpus_sha256 !== candidate.content_sha256) {
+  throw new Error("Subculture 3.16.0 candidate differs from the previously reviewed corpus digest");
+}
+if (observedSubject.chapter_count !== 8 || observedSubject.module_file_count !== 24) {
+  throw new Error("Observed Subculture inventory differs from the reviewed 8-chapter / 24-module contract");
 }
 
 const before = (baseline.entries || []).filter((entry) => entry.subject_id === "subkultur");
