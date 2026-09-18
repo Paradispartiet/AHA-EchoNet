@@ -140,8 +140,28 @@ async function runEvaluation(page, control = null) {
   return page.evaluate(() => window.AHAProjectionProductReviewV2.runAll({ renderEach: false }));
 }
 
+const LIVE_PRODUCT_STATE_KEYS = Object.freeze({ lists: "list", paths: "path", mindmap: "mindmap" });
+
+function hasReadyProductType(result, product) {
+  const stateKey = LIVE_PRODUCT_STATE_KEYS[product];
+  return Boolean(stateKey && result?.model?.product_states?.[stateKey]?.status === "ready");
+}
+
 function hasReadyProduct(result) {
-  return ["list", "path", "mindmap"].some((product) => result?.model?.product_states?.[product]?.status === "ready");
+  return Object.keys(LIVE_PRODUCT_STATE_KEYS).some((product) => hasReadyProductType(result, product));
+}
+
+function qualifiedProductCoverage(cases, retryByCase = new Map()) {
+  return Object.fromEntries(Object.keys(LIVE_PRODUCT_STATE_KEYS).map((product) => {
+    const qualified = cases.filter((result) => (
+      hasReadyProductType(result, product)
+      || hasReadyProductType(retryByCase.get(result.case_id), product)
+    )).length;
+    return [product, {
+      qualified_case_count: qualified,
+      qualified_case_share: cases.length ? qualified / cases.length : 0
+    }];
+  }));
 }
 
 async function readLocalStore(page, key) {
@@ -406,14 +426,22 @@ test("27-case live semantic browser corpus yields qualified product previews", a
   }
   const initialCoverageCases = evaluation.results.filter((result) => result.expected_visible && result.live_disposition !== "calibration_observation");
   const initialUsefulCaseCoverage = initialCoverageCases.filter(hasReadyProduct).length / initialCoverageCases.length;
+  const initialProductCoverage = qualifiedProductCoverage(initialCoverageCases);
+  const deficientProducts = Object.entries(initialProductCoverage)
+    .filter(([, coverage]) => coverage.qualified_case_share < 0.8)
+    .map(([product]) => product);
   let retryResults = [];
-  if (initialUsefulCaseCoverage < 0.8) {
-    const missingCaseIds = initialCoverageCases.filter((result) => !hasReadyProduct(result)).map((result) => result.case_id);
+  if (deficientProducts.length) {
+    const missingCaseIds = initialCoverageCases
+      .filter((result) => deficientProducts.some((product) => !hasReadyProductType(result, product)))
+      .map((result) => result.case_id);
     retryResults = await page.evaluate((caseIds) => window.AHAProjectionProductReviewV2.runCases(caseIds), missingCaseIds);
   }
   evaluation.live_retry = {
     attempted: retryResults.length > 0,
     initial_coverage_share: initialUsefulCaseCoverage,
+    initial_product_coverage: initialProductCoverage,
+    deficient_product_types: deficientProducts,
     case_ids: retryResults.map((result) => result.case_id),
     results: retryResults
   };
@@ -470,10 +498,15 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     expect(result.guarded_store_writes, `retry:${result.case_id}`).toEqual([]);
   }
   const usefulCaseCoverage = expectedUseful.filter((result) => hasReadyProduct(result) || hasReadyProduct(retryByCase.get(result.case_id) || { model: { product_states: {} } })).length / expectedUseful.length;
+  const finalProductCoverage = qualifiedProductCoverage(expectedUseful, retryByCase);
   const suppressionCoverage = expectedSuppressed.filter((result) => ["list", "path", "mindmap"]
     .every((product) => result.model.product_states[product].status !== "ready")).length / expectedSuppressed.length;
+  evaluation.live_product_coverage = finalProductCoverage;
   expect(calibrationCases.map((result) => result.case_id).sort()).toEqual(["conflict_tourism", "data_bus"]);
   expect(initialUsefulCaseCoverage, "The first live pass must retain at least 70% qualified case coverage before a bounded retry is allowed").toBeGreaterThanOrEqual(0.7);
+  for (const [product, coverage] of Object.entries(finalProductCoverage)) {
+    expect(coverage.qualified_case_share, `At least 80% of live coverage cases must yield a qualified product preview for each product type: ${product}`).toBeGreaterThanOrEqual(0.8);
+  }
   expect(usefulCaseCoverage, "At least 80% of live coverage cases must yield one qualified, semantically relevant product preview").toBeGreaterThanOrEqual(0.8);
   expect(suppressionCoverage, "Every deliberately insufficient source must remain fully suppressed").toBe(1);
 
