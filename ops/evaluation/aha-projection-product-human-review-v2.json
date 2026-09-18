@@ -32,7 +32,8 @@
     "critical_provenance_errors_allowed": 0,
     "automatic_persistence_allowed": false,
     "review_surface": "projection-product-review-v2.html",
-    "reviewer_attestation_required": true
+    "reviewer_attestation_required": true,
+    "human_score_denominator": "materialized_product_outputs_only"
   },
   "review_rows": [
     {
@@ -317,8 +318,8 @@
     "final_attestation_must_be_reconfirmed": true,
     "canonical_rubric_rendered_in_review_surface": true,
     "rubric_source": "ops/evaluation/aha-projection-product-human-review-v2.json",
-    "correctly_suppressed_cases_require_product_scores": false,
-    "expected_visible_blocked_cases_require_product_scores": true,
-    "unexpectedly_visible_expected_hidden_cases_require_product_scores": true
+    "score_only_materialized_product_outputs": true,
+    "missing_or_selectively_filtered_products_require_human_scores": false,
+    "unexpectedly_materialized_expected_hidden_products_require_human_scores": true
   }
 }
