@@ -25,6 +25,24 @@ The local controlled-save product journey is now automatically test-locked by PR
 
 PR #892 added a real-browser evidence path at `projection-product-review-v2.html` and a dedicated Chromium/WebKit workflow. Its final live run received 29/29 HTTP 200 responses, reached 81.82% useful-case coverage on the first pass, used no retry and recorded zero critical provenance errors and zero guarded preview writes. #894 reran and preserved that baseline. PR #919 separates the controlled-save proof into two layers: normal PR/push CI now runs the model-free local product journey against a deterministic quality-approved V2 read model, while only explicit release dispatch may spend model budget to prove the raw-Chat live semantic transport path. Automated runs still cannot self-certify the independent human gate: the reviewer must inspect the rendered products, score all three types on the 1–5 rubric and explicitly attest the review.
 
+## Current review-input gate (2026-09-18)
+
+The product-specific release-coverage contract introduced in PR #964 requires at least 80% qualified coverage **for each** product type across the 22 canonical release-coverage cases. The immutable PR #894 live artifact remains the source-bound analysis/provenance evidence input, while review output is rebuilt with current read-only product code.
+
+PR #967 repaired the measured List deficit with a provenance-verified shared-evidence membership basis. PR #969 repaired the remaining sparse Mindmap case with a semantic-role fallback that activates only when normal source-concept selection cannot provide two non-redundant branches.
+
+Closed diagnostic PR #970 reprojected artifact `9491725428` against that current product code and proved:
+
+```text
+18/22 Lists
+18/22 Paths
+18/22 Mindmap
+3/3 deliberately insufficient cases suppressed
+current per-product reprojection gate = passed
+```
+
+PR #971 therefore marks the archived review input ready and admissible for independent human scoring. **Independent human review remains open**: no human product scores or attestation were autofilled, and the paid explicit raw-Chat release journey plus final release gate also remain open. No automatic, remote, sync, Chamber or Meta write authority is widened by this review-input transition.
+
 ## Product distinctions
 
 These surfaces must not be conflated:
