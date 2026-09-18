@@ -18,7 +18,7 @@
   ]);
   const LOW_INFORMATION_DISPLAY_TOKENS = new Set([
     "alene", "antall", "advarer", "beskriver", "dagen", "dager", "bedre", "derfor", "bade", "barnets", "bruker", "brukes", "steg",
-    "byggets", "prosent", "grader", "andre", "begge", "gjor", "gjort", "avslorer", "samme", "noen", "felles", "valgfrie", "hyppig", "enkel",
+    "byggets", "prosent", "grader", "andre", "begge", "gjor", "gjort", "avslorer", "samme", "noen", "felles", "valgfrie", "hyppig", "enkel", "tette", "offentlig", "muntlige", "darlig",
     "effekten", "første", "hvilke", "lengre", "problemet", "tillitsvalgte", "malinger", "gruppene", "oppgaver", "oppgavene", "uventede", "deltakere", "innbyggerne", "reisende"
   ]);
 
