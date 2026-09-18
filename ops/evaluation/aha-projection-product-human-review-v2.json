@@ -328,11 +328,17 @@
         "data_bus",
         "conflict_tourism"
       ],
-      "minimum_qualified_case_share": 0.8,
       "expected_suppressed_case_count": 3,
       "required_suppression_share": 1,
       "evaluated_after_current_code_reprojection": true,
-      "must_pass_before_human_scoring": true
+      "must_pass_before_human_scoring": true,
+      "minimum_qualified_product_share": 0.8,
+      "required_product_types": [
+        "lists",
+        "paths",
+        "mindmap"
+      ],
+      "coverage_must_pass_per_product_type": true
     }
   }
 }
