@@ -39,6 +39,8 @@ const validateDraft = context.AHAProjectionProductReviewV2.validateHumanReviewDr
 const rubricModel = context.AHAProjectionProductReviewV2.rubricModel;
 const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
 const reprojectArchivedResult = context.AHAProjectionProductReviewV2.reprojectArchivedResult;
+const requiresProductScores = context.AHAProjectionProductReviewV2.requiresProductScores;
+assert.equal(typeof requiresProductScores, 'function', 'review must expose product-score applicability');
 assert.equal(typeof reprojectArchivedResult, 'function', 'archived live review must expose current-code reprojection');
 
 function archivedProjectedInsight(id, insight, conceptKeys) {
@@ -151,6 +153,9 @@ const changedRuntime = compare(result('chat_message_first'), {
 assert.deepEqual(JSON.parse(JSON.stringify(changedRuntime)), { comparable: false, reason: 'runtime_version_changed' });
 
 const corpus = JSON.parse(fs.readFileSync('tests/fixtures/aha-projection-product-evaluation-v2.json', 'utf8'));
+assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: false }), false, 'correctly suppressed cases must not require nonexistent product scores');
+assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: true }), true, 'expected-visible misses must remain score-required');
+assert.equal(requiresProductScores({ model: { status: 'ready' } }, { expected_visible: false }), true, 'unexpectedly visible suppression cases must remain score-required');
 const humanReviewContract = JSON.parse(fs.readFileSync('ops/evaluation/aha-projection-product-human-review-v2.json', 'utf8'));
 const canonicalRubric = JSON.parse(JSON.stringify(rubricModel(humanReviewContract)));
 assert.deepEqual(canonicalRubric, {
