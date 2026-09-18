@@ -9,10 +9,18 @@
     "cases": 27,
     "expected_visible": 24,
     "expected_suppressed": 3,
-    "artifact_types": ["lists", "paths", "mindmap"],
+    "artifact_types": [
+      "lists",
+      "paths",
+      "mindmap"
+    ],
     "review_authority": "agent_quality_audit_only",
     "independent_human_review_completed": false,
-    "browser_corpus_extension": ["literature_livsarket", "health_patient_path", "pasted_text_inaccessible_url"]
+    "browser_corpus_extension": [
+      "literature_livsarket",
+      "health_patient_path",
+      "pasted_text_inaccessible_url"
+    ]
   },
   "observation_probe": {
     "pull_request": 882,
@@ -26,7 +34,13 @@
     {
       "id": "low_information_display_anchor",
       "severity": "high",
-      "examples": ["Utforsk antall", "Utforsk alene", "Utforsk derfor", "Utforsk prosent", "Utforsk gjør"],
+      "examples": [
+        "Utforsk antall",
+        "Utforsk alene",
+        "Utforsk derfor",
+        "Utforsk prosent",
+        "Utforsk gjør"
+      ],
       "finding": "Structurally valid shared-concept candidates could expose low-information token anchors as user-facing product titles and Mindmap roots."
     },
     {
@@ -53,7 +67,13 @@
   "evaluation_limitations": {
     "semantic_document_status": "claims_relations_shadow",
     "semantic_document_quality_status": "shadow_claims_relations_pending",
-    "semantic_document_observed_arrays_empty": ["concepts", "claims", "relations", "tensions", "candidate_insights"],
+    "semantic_document_observed_arrays_empty": [
+      "concepts",
+      "claims",
+      "relations",
+      "tensions",
+      "candidate_insights"
+    ],
     "semantic_document_blocking_reasons": [
       "dedicated_semantic_model_not_authoritative",
       "synthesized_insight_quality_gate_not_implemented"
@@ -75,7 +95,9 @@
     "artifact_id": 9490534957,
     "chat_submission_count": 29,
     "chat_2xx_count": 29,
-    "chat_http_status_counts": { "200": 29 },
+    "chat_http_status_counts": {
+      "200": 29
+    },
     "upstream_failure": null,
     "offline_browser_matrix_passed": true,
     "ipad_webkit_gate_passed": true,
@@ -134,5 +156,14 @@
     "projection_store_write_open": false,
     "normal_chat_automatic_persistence_open": false,
     "remote_write_open": false
+  },
+  "current_human_review_projection": {
+    "pull_request": 958,
+    "mode": "current_read_only_projection_from_archived_live_insights",
+    "live_analysis_input": "archived_pr_894_source_bound_insights",
+    "current_product_code_applied": true,
+    "new_model_calls_required": false,
+    "human_scores_autofilled": false,
+    "human_attestation_written": false
   }
 }

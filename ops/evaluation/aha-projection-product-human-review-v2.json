@@ -303,7 +303,10 @@
     "new_model_calls_required": false,
     "reviewer_scores_autofilled": false,
     "pull_request": 894,
-    "semantic_shapes_applied": true
+    "semantic_shapes_applied": true,
+    "review_projection_mode": "current_read_only_projection_from_archived_live_insights",
+    "current_product_code_applied": true,
+    "archived_live_insights_preserved_as_input": true
   },
   "review_workflow": {
     "explicit_draft_export": true,

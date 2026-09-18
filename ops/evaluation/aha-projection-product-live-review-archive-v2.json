@@ -18,15 +18,15 @@
   "critical_transport_failures": 0,
   "critical_provenance_errors_in_archived_results": 0,
   "review_surface": "projection-product-review-v2.html",
-  "import_mode": "local_json_file_only",
+  "import_mode": "local_json_then_current_read_only_reprojection",
   "new_model_calls_required": false,
   "independent_human_review_complete": false,
   "human_review_must_not_be_autofilled": true,
   "notes": [
-    "This archive is the PR #894 live semantic-shapes baseline and supersedes the older PR #892 live artifact for human product review.",
+    "This archive is the PR #894 live semantic-shapes baseline and remains the live analysis/provenance evidence input for independent human review.",
+    "The current review surface preserves the archived source-bound insights as immutable input and rebuilds Lists, Paths and Mindmap locally with the current read-only projection and quality runtime.",
     "The archived live evaluation is evidence input, not a human review result.",
-    "Reviewer scores and attestation remain explicit manual actions.",
-    "The review surface validates the exact archived baseline before rendering it."
+    "No new model calls are required; reviewer scores and human attestation are never auto-filled and remain explicit manual actions."
   ],
   "pull_request": 894,
   "semantic_shapes_applied": true,
@@ -34,5 +34,8 @@
     "lists": "thematic_membership_v2",
     "paths": "ordered_inquiry_v2",
     "mindmap": "ranked_hierarchy_v2"
-  }
+  },
+  "review_projection_mode": "current_read_only_projection_from_archived_live_insights",
+  "current_product_code_applied": true,
+  "archived_live_insights_preserved_as_input": true
 }
