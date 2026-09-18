@@ -192,6 +192,7 @@ const draft = {
   browser_evaluation: {
     source: {
       mode: 'archived_live',
+      projection_mode: 'current_read_only_projection_from_archived_live_insights',
       workflow_run_id: baseline.workflow_run_id,
       artifact_id: baseline.artifact_id
     }
@@ -210,6 +211,7 @@ const normalizedDraft = JSON.parse(JSON.stringify(validateDraft(draft, {
   corpus,
   review_source: {
     mode: 'archived_live',
+    projection_mode: 'current_read_only_projection_from_archived_live_insights',
     workflow_run_id: baseline.workflow_run_id,
     artifact_id: baseline.artifact_id
   }
@@ -228,7 +230,7 @@ assert.throws(
   }, {
     results: archivedLive.results,
     corpus,
-    review_source: { mode: 'archived_live' }
+    review_source: { mode: 'archived_live', projection_mode: 'current_read_only_projection_from_archived_live_insights' }
   }),
   /samme arkiverte live-baselinen/
 );
@@ -239,10 +241,34 @@ assert.throws(
   }, {
     results: archivedLive.results,
     corpus,
-    review_source: { mode: 'archived_live', workflow_run_id: baseline.workflow_run_id, artifact_id: baseline.artifact_id }
+    review_source: { mode: 'archived_live', projection_mode: 'current_read_only_projection_from_archived_live_insights', workflow_run_id: baseline.workflow_run_id, artifact_id: baseline.artifact_id }
   }),
   /ugyldig lists-score/
 );
+
+assert.throws(
+  () => validateDraft({
+    ...draft,
+    browser_evaluation: {
+      source: {
+        mode: 'archived_live',
+        workflow_run_id: baseline.workflow_run_id,
+        artifact_id: baseline.artifact_id
+      }
+    }
+  }, {
+    results: archivedLive.results,
+    corpus,
+    review_source: {
+      mode: 'archived_live',
+      projection_mode: 'current_read_only_projection_from_archived_live_insights',
+      workflow_run_id: baseline.workflow_run_id,
+      artifact_id: baseline.artifact_id
+    }
+  }),
+  /current-code reprojeksjonsmodus/
+);
+
 
 const html = fs.readFileSync('projection-product-review-v2.html', 'utf8');
 assert.match(html, /id="live-import"/);
@@ -252,6 +278,9 @@ assert.match(html, /review-progress/);
 assert.match(html, /Eksporter review \/ utkast/);
 assert.match(html, /run 32633381518 \/ artifact 9491725428/);
 assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
+assert.match(html, /ahaSemanticProjectionsV2\.js/);
+assert.match(html, /ahaProjectionArtifactQualityV2\.js/);
+assert.match(html, /byg(g|ger).*på nytt lokalt|byg(g|ger).*lokalt/i);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);
 assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
