@@ -106,6 +106,22 @@ assert.ok(accepted, "quality filter must accept a provenance-verified shared_evi
 assert.equal(accepted.quality.passed, true, JSON.stringify(accepted.quality));
 assert.deepEqual(Array.from(accepted.quality.reasons), []);
 
+const nestedSourceRefInputs = sameSource.map((entry) => {
+  const next = JSON.parse(JSON.stringify(entry));
+  delete next.source_text_hash;
+  next.provenance = {
+    source_refs: [
+      { field: "source_id", value: next.source_event_id },
+      { field: "source_text_hash", value: sourceHash }
+    ]
+  };
+  return next;
+});
+const nestedSourceProjection = projection.project({ insights: nestedSourceRefInputs });
+const nestedSharedEvidenceList = nestedSourceProjection.projections.lists.find((entry) => entry.meta?.semantic_basis === "shared_evidence");
+assert.ok(nestedSharedEvidenceList, "canonical nested provenance.source_refs must preserve the shared source hash for evidence membership");
+assert.equal(nestedSharedEvidenceList.meta.shared_source_text_hash, sourceHash);
+
 const differentSource = [
   sameSource[0],
   insight({
@@ -118,6 +134,15 @@ const differentSource = [
     uniqueQuote: "Forklaringen må formuleres uten støtte fra teksten."
   })
 ];
+
+const nonExactInputs = sameSource.map((entry) => {
+  const next = JSON.parse(JSON.stringify(entry));
+  next.candidate.evidence[0].exact_source_match = false;
+  return next;
+});
+const nonExactProjection = projection.project({ insights: nonExactInputs });
+assert.ok(nonExactProjection.projections.lists.every((entry) => entry.meta?.semantic_basis !== "shared_evidence"),
+  "matching evidence text without exact_source_match must not qualify as shared_evidence");
 
 const crossSourceProjection = projection.project({ insights: differentSource });
 assert.ok(crossSourceProjection.projections.lists.every((entry) => entry.meta?.semantic_basis !== "shared_evidence"),
