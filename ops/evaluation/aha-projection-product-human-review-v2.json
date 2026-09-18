@@ -320,6 +320,19 @@
     "rubric_source": "ops/evaluation/aha-projection-product-human-review-v2.json",
     "score_only_materialized_product_outputs": true,
     "missing_or_selectively_filtered_products_require_human_scores": false,
-    "unexpectedly_materialized_expected_hidden_products_require_human_scores": true
+    "unexpectedly_materialized_expected_hidden_products_require_human_scores": true,
+    "current_reprojection_coverage_gate": {
+      "population_source": "tests/fixtures/aha-projection-product-evaluation-v2.json",
+      "coverage_case_count": 22,
+      "excluded_calibration_cases": [
+        "data_bus",
+        "conflict_tourism"
+      ],
+      "minimum_qualified_case_share": 0.8,
+      "expected_suppressed_case_count": 3,
+      "required_suppression_share": 1,
+      "evaluated_after_current_code_reprojection": true,
+      "must_pass_before_human_scoring": true
+    }
   }
 }
