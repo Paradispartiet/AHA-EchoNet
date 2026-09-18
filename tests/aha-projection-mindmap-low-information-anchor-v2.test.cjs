@@ -82,7 +82,7 @@ const meaningful = api.evaluateMindmap(mindmapWithAnchor("arbeidsro"));
 assert.equal(meaningful.passed, true, "a meaningful source concept must remain eligible");
 assert.ok(!meaningful.reasons.includes("mindmap_branch_anchor_low_information"));
 
-for (const anchor of ["antall", "samtidig", "hyppig"]) {
+for (const anchor of ["antall", "samtidig", "hyppig", "tette", "offentlig", "muntlige", "dårlig"]) {
   const quality = api.evaluateMindmap(mindmapWithAnchor(anchor));
   assert.equal(quality.passed, false, `${anchor} must fail closed as an unrefined low-information branch anchor`);
   assert.ok(
