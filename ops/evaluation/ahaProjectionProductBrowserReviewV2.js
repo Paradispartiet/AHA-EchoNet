@@ -249,9 +249,17 @@
     if (!Number.isFinite(qualityScore)) throw new Error(`Arkivert innsikt mangler quality score: ${text(insight?.id) || "ukjent"}`);
     if (!concepts.length) throw new Error(`Arkivert innsikt mangler concept keys: ${text(insight?.id) || "ukjent"}`);
 
+    const evidence = clone(arr(insight?.provenance?.evidence));
+    const sourceId = text(arr(insight?.provenance?.source_refs).find((entry) => text(entry?.field) === "source_id")?.value);
+    if (evidence.length < 2 && !sourceId) {
+      throw new Error(`Arkivert innsikt mangler tilstrekkelig provenance: ${text(insight?.id) || "ukjent"}`);
+    }
+
     next.semantic_concepts = concepts;
     next.eligible_for_insight_review = true;
     next.quality_score = qualityScore;
+    next.evidence = evidence;
+    if (sourceId) next.source_event_id = sourceId;
     return next;
   }
 
