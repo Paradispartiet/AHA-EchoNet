@@ -315,6 +315,19 @@
     return clone(next);
   }
 
+  function insightHasSharedEvidence(insight, sourceHash, evidenceQuote) {
+    if (!insight || !sourceHash || !evidenceQuote) return false;
+    const hashReady = arr(insight?.provenance?.source_refs).some((entry) => (
+      text(entry?.field) === "source_text_hash" && text(entry?.value) === sourceHash
+    ));
+    if (!hashReady) return false;
+    return arr(insight?.provenance?.evidence).some((entry) => (
+      entry?.exact_source_match === true
+      && text(entry?.role) === "supports"
+      && text(entry?.quote || entry?.text) === evidenceQuote
+    ));
+  }
+
   function evaluateList(list, context = {}) {
     const items = arr(list?.items);
     const refs = items.map((item) => text(item?.refId)).filter(Boolean);
@@ -332,8 +345,18 @@
       && text(item?.meta?.semantic_basis) === basis
       && normalize(item?.meta?.semantic_basis_label) === basisLabel
     )).length;
+    const sharedEvidenceHash = text(list?.meta?.shared_source_text_hash);
+    const sharedEvidenceQuote = text(list?.meta?.shared_evidence_quote);
     const justified = items.filter((item) => {
       if (basis === "resonance") return list?.meta?.dedupe_eligible === false && items.length === 2;
+      if (basis === "shared_evidence") {
+        return items.length >= 2
+          && /^[a-f0-9]{64}$/iu.test(sharedEvidenceHash)
+          && sharedEvidenceQuote.length >= 40
+          && text(item?.meta?.shared_source_text_hash) === sharedEvidenceHash
+          && text(item?.meta?.shared_evidence_quote) === sharedEvidenceQuote
+          && insightHasSharedEvidence(byId.get(text(item?.refId)), sharedEvidenceHash, sharedEvidenceQuote);
+      }
       return arr(item?.meta?.concept_keys).map(normalize).includes(basisLabel);
     }).length;
     const redundantPairs = [];
@@ -349,6 +372,12 @@
     if (memberRefIds.join("|") !== refs.slice().sort().join("|")) reasons.push("list_member_manifest_mismatch");
     if (!basis) reasons.push("list_semantic_basis_missing");
     if (basis === "fallback_core") reasons.push("list_only_has_fallback_basis");
+    if (basis === "shared_evidence" && (
+      !/^[a-f0-9]{64}$/iu.test(sharedEvidenceHash)
+      || sharedEvidenceQuote.length < 40
+      || items.length < 2
+      || justified !== items.length
+    )) reasons.push("list_shared_evidence_basis_invalid");
     if (items.length && justified !== items.length) reasons.push("list_membership_not_semantically_justified");
     if (items.length && membershipReady !== items.length) reasons.push("list_membership_reason_missing");
     if (redundantPairs.length) reasons.push("list_semantic_redundancy_high");
