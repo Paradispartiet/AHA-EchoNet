@@ -35,6 +35,8 @@ assert.equal(audit.remediation.strategy, "read_only_source_bound_usefulness_refi
 assert.equal(audit.current_human_review_projection.pull_request, 958);
 assert.equal(audit.current_human_review_projection.mode, "current_read_only_projection_from_archived_live_insights");
 assert.equal(audit.current_human_review_projection.current_product_code_applied, true);
+assert.equal(audit.current_human_review_projection.human_score_denominator, "materialized_product_outputs_only");
+assert.equal(audit.current_human_review_projection.missing_product_outputs_receive_human_scores, false);
 assert.equal(audit.current_human_review_projection.new_model_calls_required, false);
 assert.equal(audit.current_human_review_projection.human_scores_autofilled, false);
 assert.ok(audit.observed_defects.some((entry) => entry.id === "generic_path_copy" && entry.severity === "high"));
