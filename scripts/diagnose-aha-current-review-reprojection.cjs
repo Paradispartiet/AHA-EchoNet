@@ -1,3 +1,4 @@
+// Diagnostic branch only; close without merge.
 const fs = require("node:fs");
 const vm = require("node:vm");
 
