@@ -19,6 +19,7 @@
 
   const byId = (id) => global.document.getElementById(id);
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  const arr = (value) => Array.isArray(value) ? value : [];
   const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
   const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
   const wait = (ms) => new Promise((resolve) => global.setTimeout(resolve, ms));
@@ -225,6 +226,103 @@
     return model?.surfaces?.mindmap || { nodes: [], edges: [], read_only: true };
   }
 
+  function currentProjectionApi() {
+    return global.AHASemanticProjectionsV2 || null;
+  }
+
+  function currentQualityApi() {
+    return global.AHAProjectionArtifactQualityV2 || null;
+  }
+
+  function archivedInsightForCurrentProjection(insight) {
+    const next = clone(insight) || {};
+    const qualityScore = Number(
+      insight?.quality?.mean_score
+      ?? insight?.quality?.representative_score
+      ?? insight?.quality_score
+    );
+    const concepts = [...new Set([
+      ...arr(insight?.semantic_concepts),
+      ...arr(insight?.concept_keys)
+    ].map(text).filter(Boolean))];
+
+    if (!Number.isFinite(qualityScore)) throw new Error(`Arkivert innsikt mangler quality score: ${text(insight?.id) || "ukjent"}`);
+    if (!concepts.length) throw new Error(`Arkivert innsikt mangler concept keys: ${text(insight?.id) || "ukjent"}`);
+
+    const evidence = clone(arr(insight?.provenance?.evidence));
+    const sourceId = text(arr(insight?.provenance?.source_refs).find((entry) => text(entry?.field) === "source_id")?.value);
+    if (evidence.length < 2 && !sourceId) {
+      throw new Error(`Arkivert innsikt mangler tilstrekkelig provenance: ${text(insight?.id) || "ukjent"}`);
+    }
+
+    next.semantic_concepts = concepts;
+    next.eligible_for_insight_review = true;
+    next.quality_score = qualityScore;
+    next.evidence = evidence;
+    if (sourceId) next.source_event_id = sourceId;
+    return next;
+  }
+
+  function reprojectArchivedResult(result) {
+    const next = clone(result) || {};
+    const archivedModel = next.model || {};
+    const archivedInsights = arr(archivedModel?.surfaces?.insights);
+    const archivedProjectionId = text(archivedModel?.projection_id);
+
+    if (archivedModel?.status !== "ready" || !archivedInsights.length) {
+      next.review_reprojection = {
+        mode: "archived_suppressed_output_preserved",
+        source_head_sha: ARCHIVED_LIVE_BASELINE.head_sha,
+        archived_projection_id: archivedProjectionId || null,
+        current_projection_id: null,
+        archived_insight_count: archivedInsights.length
+      };
+      return next;
+    }
+
+    const projections = currentProjectionApi();
+    const quality = currentQualityApi();
+    if (!projections?.project || !projections?.adapters || !quality?.filterReadModel) {
+      throw new Error("Dagens projection/quality-runtime mangler; arkivert live-output kan ikke re-projiseres sikkert.");
+    }
+
+    const projection = projections.project({
+      insights: archivedInsights.map(archivedInsightForCurrentProjection)
+    });
+    if (projection?.status === "blocked" || projection?.validation?.valid !== true) {
+      throw new Error(`${text(next.case_id) || "ukjent_case"}: dagens review-reprojeksjon ble blokkert: ${arr(projection?.blocking_reasons).join(",") || arr(projection?.validation?.errors).join(",") || "ukjent årsak"}`);
+    }
+
+    const adapters = projections.adapters(projection);
+    const replayModel = {
+      ...archivedModel,
+      status: "ready",
+      projection_id: projection.projection_id,
+      surfaces: {
+        insights: clone(adapters.insights),
+        concepts: clone(adapters.concepts),
+        lists: clone(adapters.lists),
+        paths: clone(adapters.paths),
+        mindmap: clone(adapters.mindmap)
+      },
+      validation: { valid: true, errors: [] }
+    };
+    const currentModel = quality.filterReadModel(replayModel);
+    if (currentModel?.status !== "ready" || currentModel?.validation?.valid !== true) {
+      throw new Error(`${text(next.case_id) || "ukjent_case"}: dagens review-read-model er ikke ready etter reprojeksjon.`);
+    }
+
+    next.model = currentModel;
+    next.review_reprojection = {
+      mode: "current_read_only_projection_from_archived_live_insights",
+      source_head_sha: ARCHIVED_LIVE_BASELINE.head_sha,
+      archived_projection_id: archivedProjectionId || null,
+      current_projection_id: text(currentModel.projection_id) || null,
+      archived_insight_count: archivedInsights.length
+    };
+    return next;
+  }
+
   function rubricModel(contract) {
     if (!contract || contract.schema !== "aha_projection_product_human_review_v2") {
       throw new Error("Canonical human-review-ledger mangler eller har ugyldig schema.");
@@ -318,9 +416,10 @@
     state.review_contract ||= await global.fetch(HUMAN_REVIEW_URL).then((response) => response.json());
     rubricModel(state.review_contract);
     const validation = validateArchivedLiveEvaluation(archive, state.corpus);
-    state.results = clone(archive.results);
+    state.results = archive.results.map(reprojectArchivedResult);
     state.review_source = {
       mode: "archived_live",
+      projection_mode: "current_read_only_projection_from_archived_live_insights",
       workflow_run_id: ARCHIVED_LIVE_BASELINE.workflow_run_id,
       artifact_id: ARCHIVED_LIVE_BASELINE.artifact_id,
       head_sha: ARCHIVED_LIVE_BASELINE.head_sha,
@@ -328,7 +427,7 @@
       successful_chat_count: validation.successful_chat_count
     };
     if (byId("progress")) byId("progress").value = state.results.length;
-    if (byId("status")) byId("status").textContent = `Arkivert live-evaluering lastet: ${state.results.length}/${state.corpus.cases.length} cases · ingen nye modellkall.`;
+    if (byId("status")) byId("status").textContent = `Arkivert live-evidens lastet og re-projisert med dagens read-only produktkode: ${state.results.length}/${state.corpus.cases.length} cases · ingen nye modellkall.`;
     updateSummary();
     return clone({ validation, review_source: state.review_source });
   }
@@ -364,6 +463,9 @@
       const source = draft?.browser_evaluation?.source;
       if (!source || Number(source.workflow_run_id) !== ARCHIVED_LIVE_BASELINE.workflow_run_id || Number(source.artifact_id) !== ARCHIVED_LIVE_BASELINE.artifact_id) {
         throw new Error("Review-utkastet er ikke knyttet til den samme arkiverte live-baselinen.");
+      }
+      if (text(source.projection_mode) !== text(reviewSource.projection_mode)) {
+        throw new Error("Review-utkastet er ikke knyttet til samme current-code reprojeksjonsmodus.");
       }
     }
     const normalizedCases = draft.case_reviews.map((entry) => {
@@ -614,6 +716,7 @@
     loadArchivedLiveEvaluation,
     importArchivedLiveEvaluationFile,
     validateArchivedLiveEvaluation,
+    reprojectArchivedResult,
     validateHumanReviewDraft,
     applyHumanReviewDraft,
     importHumanReviewDraftFile,
