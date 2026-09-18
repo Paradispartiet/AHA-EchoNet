@@ -70,6 +70,21 @@ const perCase = results
     };
   });
 
+const residualCaseIds = new Set(["personal_learning", "pasted_text_inaccessible_url", "essay_attention", "conflict_standardization", "literature_livsarket"]);
+const residualDiagnostics = results
+  .filter((entry) => residualCaseIds.has(entry.case_id))
+  .map((entry) => ({
+    case_id: entry.case_id,
+    status: entry.model?.status || null,
+    surface_counts: {
+      insights: Array.isArray(entry.model?.surfaces?.insights) ? entry.model.surfaces.insights.length : 0,
+      lists: Array.isArray(entry.model?.surfaces?.lists) ? entry.model.surfaces.lists.length : 0,
+      paths: Array.isArray(entry.model?.surfaces?.paths) ? entry.model.surfaces.paths.length : 0,
+      mindmap_nodes: Array.isArray(entry.model?.surfaces?.mindmap?.nodes) ? entry.model.surfaces.mindmap.nodes.length : 0
+    },
+    artifact_quality: entry.model?.artifact_quality || null
+  }));
+
 const proof = {
   schema: "aha_current_review_reprojection_diagnostic_v1",
   source_workflow_run_id: 32633381518,
@@ -82,7 +97,8 @@ const proof = {
     return acc;
   }, {}),
   current_coverage: coverage,
-  coverage_cases: perCase
+  coverage_cases: perCase,
+  residual_diagnostics: residualDiagnostics
 };
 
 console.log("AHA_CURRENT_REPROJECTION_PROOF_BEGIN");
