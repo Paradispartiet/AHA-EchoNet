@@ -75,9 +75,14 @@ const staleArchivedResult = {
     mode: 'read_only',
     status: 'ready',
     projection_id: 'projection_v2_archived',
+    gate_id: 'v2_active_bundle_gate_projection_v2_archived',
     validation: { valid: true, errors: [] },
     policy: { persistent_write: false, remote_write: false },
-    product_states: { list: {}, path: {}, mindmap: {} },
+    product_states: {
+      list: { status: 'ready', href: 'lists.html?projection_id=projection_v2_archived' },
+      path: { status: 'ready', href: 'paths.html?projection_id=projection_v2_archived' },
+      mindmap: { status: 'ready', href: 'mindmap.html?projection_id=projection_v2_archived' }
+    },
     surfaces: {
       insights: [
         archivedProjectedInsight('old_a', 'Strømbruken falt etter oppgraderingen.', ['grader', 'strømbruk']),
@@ -96,6 +101,8 @@ const reprojected = JSON.parse(JSON.stringify(reprojectArchivedResult(staleArchi
 assert.equal(reprojected.review_reprojection.mode, 'current_read_only_projection_from_archived_live_insights');
 assert.equal(reprojected.review_reprojection.archived_projection_id, 'projection_v2_archived');
 assert.notEqual(reprojected.model.projection_id, 'projection_v2_archived');
+assert.equal(Object.prototype.hasOwnProperty.call(reprojected.model, 'gate_id'), false, 'review-only reprojection must not retain stale archived gate_id');
+assert.equal(Object.prototype.hasOwnProperty.call(reprojected.model, 'product_states'), false, 'review-only reprojection must not retain stale archived product states or preview hrefs');
 assert.ok(reprojected.model.surfaces.lists.every((list) => list.title !== 'Utforsk grader'), 'stale low-information list title must not survive review reprojection');
 assert.ok(reprojected.model.surfaces.lists.some((list) => /strømbruk/i.test(list.title)), 'meaningful current source theme must remain reviewable');
 assert.equal(baseline.workflow_run_id, 32633381518);
