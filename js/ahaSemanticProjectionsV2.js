@@ -251,6 +251,11 @@
         const cleaned = text(value);
         if (cleaned) refs.push({ field: "source_id", value: cleaned });
       });
+      arr(source.source_refs).forEach((entry) => {
+        const field = text(entry?.field);
+        const value = text(entry?.value);
+        if (field && value) refs.push({ field, value });
+      });
     });
     const seen = new Set();
     return refs.filter((entry) => {
