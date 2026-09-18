@@ -19,6 +19,7 @@
 
   const byId = (id) => global.document.getElementById(id);
   const text = (value) => String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+  const arr = (value) => Array.isArray(value) ? value : [];
   const clone = (value) => value == null ? value : JSON.parse(JSON.stringify(value));
   const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
   const wait = (ms) => new Promise((resolve) => global.setTimeout(resolve, ms));
