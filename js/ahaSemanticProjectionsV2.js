@@ -964,6 +964,45 @@
     }).sort((a, b) => a.id.localeCompare(b.id));
   }
 
+  const SEMANTIC_ROLE_BRANCH_LABELS = Object.freeze({
+    tension: "Spenning",
+    consequence: "Konsekvens",
+    contrast: "Kontrast",
+    mechanism: "Mekanisme",
+    principle: "Prinsipp",
+    pattern: "Mønster",
+    observation: "Observasjon",
+    solution: "Løsning",
+    problem: "Problem",
+    generalization: "Hovedidé"
+  });
+
+  function semanticRoleBranchCandidates(units, projectionId) {
+    const groups = new Map();
+    arr(units).forEach((unit) => {
+      const role = normalize(unit?.type);
+      const label = SEMANTIC_ROLE_BRANCH_LABELS[role];
+      if (!label) return;
+      if (!groups.has(role)) groups.set(role, []);
+      groups.get(role).push(unit);
+    });
+    if (groups.size < 2) return [];
+    return [...groups.entries()].map(([role, members]) => ({
+      id: `semantic_role_v2_${hash(`${projectionId}:${role}`)}`,
+      key: `semantic_role:${role}`,
+      label: SEMANTIC_ROLE_BRANCH_LABELS[role],
+      semantic_role: role,
+      branch_basis: "semantic_role",
+      insight_ids: members.map((unit) => unit.id).sort(),
+      occurrence_count: members.length,
+      quality_score: Math.max(...members.map((unit) => Number(unit?.quality?.mean_score) || 0))
+    })).sort((left, right) => (
+      right.occurrence_count - left.occurrence_count
+      || right.quality_score - left.quality_score
+      || left.semantic_role.localeCompare(right.semantic_role)
+    ));
+  }
+
   function buildMindmap(units, concepts, resonanceEdges, projectionId) {
     const selectableConcepts = primaryConceptCandidates(concepts);
     const rankedConcepts = selectableConcepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
@@ -973,37 +1012,54 @@
       .filter((concept) => concept.insight_ids.length > 0);
     const branchCandidatePool = mindmapBranchCandidatePool(rawBranchCandidatePool);
     const unitById = new Map(units.map((unit) => [unit.id, unit]));
-    const assignedUnitIds = new Set();
-    const assignments = new Map();
+    let assignedUnitIds = new Set();
+    let assignments = new Map();
 
-    // Seed every branch with one unique child before distributing the rest.
-    // This keeps the hierarchy meaningful and prevents one insight from
-    // appearing under several normal hierarchy parents.
-    const selectedConcepts = [];
+    // Prefer source concepts. Every normal branch gets a unique seed insight,
+    // preserving the one-parent hierarchy contract.
+    let selectedBranches = [];
     branchCandidatePool.forEach((concept) => {
-      if (selectedConcepts.length >= branchLimit) return;
+      if (selectedBranches.length >= branchLimit) return;
       const available = concept.insight_ids.map((id) => unitById.get(id)).filter((unit) => unit && !assignedUnitIds.has(unit.id))
         .sort((left, right) => (right.quality.mean_score - left.quality.mean_score) || left.id.localeCompare(right.id));
       if (!available.length) return;
-      assignments.set(concept.id, [available[0].id]);
+      const branch = { ...concept, branch_basis: "source_concept", semantic_role: "" };
+      assignments.set(branch.id, [available[0].id]);
       assignedUnitIds.add(available[0].id);
-      selectedConcepts.push(concept);
-    });
-    const selectedConceptIds = new Set(selectedConcepts.map((concept) => concept.id));
-    units.filter((unit) => !assignedUnitIds.has(unit.id)).forEach((unit) => {
-      const supported = selectedConcepts.filter((concept) => concept.insight_ids.includes(unit.id));
-      const target = (supported.length ? supported : selectedConcepts).slice().sort((left, right) => {
-        const load = arr(assignments.get(left.id)).length - arr(assignments.get(right.id)).length;
-        return load || right.occurrence_count - left.occurrence_count || left.key.localeCompare(right.key);
-      })[0];
-      if (!target) return;
-      assignments.get(target.id).push(unit.id);
-      assignedUnitIds.add(unit.id);
+      selectedBranches.push(branch);
     });
 
+    const minimumBranches = Math.min(2, units.length);
+    const roleCandidates = semanticRoleBranchCandidates(units, projectionId);
+    const useSemanticRoleFallback = selectedBranches.length < minimumBranches && roleCandidates.length >= minimumBranches;
+
+    if (useSemanticRoleFallback) {
+      assignedUnitIds = new Set();
+      assignments = new Map();
+      selectedBranches = roleCandidates.slice(0, branchLimit);
+      selectedBranches.forEach((branch) => {
+        const memberIds = branch.insight_ids.filter((id) => unitById.has(id));
+        if (!memberIds.length) return;
+        assignments.set(branch.id, memberIds);
+        memberIds.forEach((id) => assignedUnitIds.add(id));
+      });
+    } else {
+      units.filter((unit) => !assignedUnitIds.has(unit.id)).forEach((unit) => {
+        const supported = selectedBranches.filter((branch) => arr(branch.insight_ids).includes(unit.id));
+        const target = (supported.length ? supported : selectedBranches).slice().sort((left, right) => {
+          const load = arr(assignments.get(left.id)).length - arr(assignments.get(right.id)).length;
+          return load || right.occurrence_count - left.occurrence_count || left.key.localeCompare(right.key);
+        })[0];
+        if (!target) return;
+        assignments.get(target.id).push(unit.id);
+        assignedUnitIds.add(unit.id);
+      });
+    }
+
+    const selectedBranchIds = new Set(selectedBranches.map((branch) => branch.id));
     const selectedInsightIds = new Set([...assignedUnitIds]);
     const selectedUnits = units.filter((unit) => selectedInsightIds.has(unit.id));
-    const rootLabels = selectedConcepts.slice(0, 2).map((concept) => concept.label);
+    const rootLabels = selectedBranches.slice(0, 2).map((branch) => branch.label);
     const rootTitle = rootLabels.length >= 2
       ? `Sammenhengen mellom ${rootLabels[0]} og ${rootLabels[1]}`
       : rootLabels[0] ? `Perspektiver på ${rootLabels[0]}` : "Kildebundne perspektiver";
@@ -1019,7 +1075,8 @@
           projection_id: projectionId,
           semantic_shape: "ranked_hierarchy_v2",
           central_idea: rootTitle,
-          source_concept_ids: selectedConcepts.slice(0, 2).map((concept) => concept.id),
+          source_concept_ids: selectedBranches.filter((branch) => branch.branch_basis === "source_concept").slice(0, 2).map((branch) => branch.id),
+          semantic_role_branches: selectedBranches.filter((branch) => branch.branch_basis === "semantic_role").map((branch) => branch.semantic_role),
           read_only: true,
           candidate_only: true,
           hierarchy_level: 0,
@@ -1039,56 +1096,67 @@
           member_ids: [...unit.member_ids],
           equivalence_collapsed: unit.equivalence_collapsed,
           quality_score: unit.quality.mean_score,
-          primary_branch_id: selectedConcepts.find((concept) => arr(assignments.get(concept.id)).includes(unit.id))?.id || "",
+          semantic_role: normalize(unit.type),
+          primary_branch_id: selectedBranches.find((branch) => arr(assignments.get(branch.id)).includes(unit.id))?.id || "",
           hierarchy_level: 2
         }
       })),
-      ...selectedConcepts.map((concept) => ({
-        id: concept.id,
-        title: concept.label,
+      ...selectedBranches.map((branch) => ({
+        id: branch.id,
+        title: branch.label,
         type: "concept",
         source: "aha_semantic_v2",
-        refId: concept.id,
+        refId: branch.id,
         meta: {
           projection_id: projectionId,
           read_only: true,
           candidate_only: true,
-          concept_key: concept.key,
-          occurrence_count: concept.occurrence_count,
-          branch_reason: `Gren for kildebegrepet «${concept.label}», med ${arr(assignments.get(concept.id)).length} tilordnet innsikt${arr(assignments.get(concept.id)).length === 1 ? "" : "er"}.`,
+          concept_key: branch.branch_basis === "source_concept" ? branch.key : "",
+          semantic_role: branch.branch_basis === "semantic_role" ? branch.semantic_role : "",
+          branch_basis: branch.branch_basis,
+          occurrence_count: branch.occurrence_count,
+          branch_reason: branch.branch_basis === "semantic_role"
+            ? `Gren for den dokumenterte semantiske rollen «${branch.label}», med ${arr(assignments.get(branch.id)).length} tilordnet innsikt${arr(assignments.get(branch.id)).length === 1 ? "" : "er"}.`
+            : `Gren for kildebegrepet «${branch.label}», med ${arr(assignments.get(branch.id)).length} tilordnet innsikt${arr(assignments.get(branch.id)).length === 1 ? "" : "er"}.`,
           hierarchy_level: 1,
-          branch_rank: rankedConcepts.findIndex((entry) => entry.id === concept.id)
+          branch_rank: branch.branch_basis === "source_concept"
+            ? rankedConcepts.findIndex((entry) => entry.id === branch.id)
+            : selectedBranches.findIndex((entry) => entry.id === branch.id)
         }
       }))
     ].sort((a, b) => a.id.localeCompare(b.id));
 
     const edges = [];
-    selectedConcepts.forEach((concept) => edges.push({
-      id: `edge_v2_${hash(`${rootId}:${concept.id}:theme_branch`)}`,
+    selectedBranches.forEach((branch) => edges.push({
+      id: `edge_v2_${hash(`${rootId}:${branch.id}:theme_branch`)}`,
       from: rootId,
-      to: concept.id,
+      to: branch.id,
       type: "theme_branch",
       label: "gren",
       meta: {
         projection_id: projectionId,
-        semantic_basis: "ranked_source_concept",
-        branch_reason: `«${concept.label}» organiserer en egen kildebundet perspektivgren.`,
+        semantic_basis: branch.branch_basis === "semantic_role" ? "ranked_semantic_role" : "ranked_source_concept",
+        semantic_role: branch.branch_basis === "semantic_role" ? branch.semantic_role : "",
+        branch_reason: branch.branch_basis === "semantic_role"
+          ? `«${branch.label}» organiserer en egen kildebundet rollegren fordi concept-hierarkiet ellers har færre enn to ikke-redundante grener.`
+          : `«${branch.label}» organiserer en egen kildebundet perspektivgren.`,
         read_only: true,
         candidate_only: true,
         hierarchy: true
       }
     }));
-    selectedConcepts.forEach((concept) => arr(assignments.get(concept.id)).forEach((unitId) => {
-      if (!selectedInsightIds.has(unitId) || !selectedConceptIds.has(concept.id)) return;
+    selectedBranches.forEach((branch) => arr(assignments.get(branch.id)).forEach((unitId) => {
+      if (!selectedInsightIds.has(unitId) || !selectedBranchIds.has(branch.id)) return;
       edges.push({
-        id: `edge_v2_${hash(`${unitId}:${concept.id}:primary_branch`)}`,
-        from: concept.id,
+        id: `edge_v2_${hash(`${unitId}:${branch.id}:primary_branch`)}`,
+        from: branch.id,
         to: unitId,
         type: "supports_insight",
         label: "belyser innsikt",
         meta: {
           projection_id: projectionId,
-          semantic_basis: "primary_concept_assignment",
+          semantic_basis: branch.branch_basis === "semantic_role" ? "primary_semantic_role_assignment" : "primary_concept_assignment",
+          semantic_role: branch.branch_basis === "semantic_role" ? branch.semantic_role : "",
           read_only: true,
           candidate_only: true,
           hierarchy: true
@@ -1120,12 +1188,13 @@
         projection_id: projectionId,
         semantic_shape: "ranked_hierarchy_v2",
         branch_assignment: "one_primary_hierarchy_parent_per_insight",
+        branch_strategy: useSemanticRoleFallback ? "semantic_role_fallback_under_concept_scarcity" : "ranked_source_concepts",
         candidate_only: true,
         root_id: rootId,
         hierarchy_levels: 3,
-        branch_count: selectedConcepts.length,
+        branch_count: selectedBranches.length,
         branch_limit: 7,
-        omitted_concept_count: Math.max(0, concepts.length - selectedConcepts.length)
+        omitted_concept_count: useSemanticRoleFallback ? concepts.length : Math.max(0, concepts.length - selectedBranches.length)
       }
     };
   }
@@ -1180,11 +1249,32 @@
       if (!mindmapNodes.has(edge.from) || !mindmapNodes.has(edge.to)) errors.push(`mindmap_unresolved_endpoint:${edge.id}`);
     });
     const mindmapBranches = arr(projections.mindmap?.edges).filter((edge) => edge.type === "theme_branch");
+    const mindmapNodeById = new Map(arr(projections.mindmap?.nodes).map((node) => [node.id, node]));
     if (mindmapBranches.length > 7) errors.push("mindmap_branch_limit_exceeded");
+    mindmapBranches.forEach((edge) => {
+      const branchNode = mindmapNodeById.get(edge.to);
+      const basis = text(edge?.meta?.semantic_basis);
+      if (basis === "ranked_semantic_role") {
+        const role = normalize(edge?.meta?.semantic_role);
+        if (!SEMANTIC_ROLE_BRANCH_LABELS[role] || branchNode?.meta?.branch_basis !== "semantic_role" || normalize(branchNode?.meta?.semantic_role) !== role) {
+          errors.push(`mindmap_semantic_role_branch_invalid:${edge.to}`);
+        }
+      } else if (basis !== "ranked_source_concept") {
+        errors.push(`mindmap_branch_basis_invalid:${edge.to}`);
+      }
+    });
     if (projections.mindmap?.meta?.semantic_shape !== "ranked_hierarchy_v2" || projections.mindmap?.meta?.branch_assignment !== "one_primary_hierarchy_parent_per_insight") errors.push("mindmap_semantic_shape_invalid");
     const hierarchyEdges = arr(projections.mindmap?.edges).filter((edge) => edge.type === "supports_insight");
     arr(projections.mindmap?.nodes).filter((node) => node.type === "insight").forEach((node) => {
-      if (hierarchyEdges.filter((edge) => edge.to === node.id).length !== 1) errors.push(`mindmap_insight_hierarchy_parent_invalid:${node.id}`);
+      const parents = hierarchyEdges.filter((edge) => edge.to === node.id);
+      if (parents.length !== 1) errors.push(`mindmap_insight_hierarchy_parent_invalid:${node.id}`);
+      const parent = parents[0];
+      if (parent?.meta?.semantic_basis === "primary_semantic_role_assignment") {
+        const role = normalize(parent?.meta?.semantic_role);
+        if (!SEMANTIC_ROLE_BRANCH_LABELS[role] || normalize(node?.meta?.semantic_role) !== role) {
+          errors.push(`mindmap_semantic_role_assignment_invalid:${node.id}`);
+        }
+      }
     });
 
     return { valid: errors.length === 0, errors: unique(errors).sort() };
