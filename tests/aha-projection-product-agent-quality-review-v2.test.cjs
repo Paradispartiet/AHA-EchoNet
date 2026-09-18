@@ -5,6 +5,8 @@ const audit = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-
 const humanReview = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-human-review-v2.json", "utf8"));
 const browserSpec = fs.readFileSync("tests/browser/aha-projection-product-browser-evaluation-v2.spec.cjs", "utf8");
 const liveArchive = JSON.parse(fs.readFileSync("ops/evaluation/aha-projection-product-live-review-archive-v2.json", "utf8"));
+const qualityReviewDoc = fs.readFileSync("docs/AHA_INSIGHT_ENGINE_V2_PRODUCT_QUALITY_REVIEW_2026-08-21.md", "utf8");
+const integrationPlanDoc = fs.readFileSync("docs/AHA_ANALYSIS_KNOWLEDGE_PRODUCTS_V2_PLAN_2026-08-21.md", "utf8");
 
 assert.equal(audit.schema, "aha_projection_product_agent_quality_review_v2");
 assert.equal(audit.scope.cases, 27);
@@ -156,5 +158,14 @@ assert.match(browserSpec, /successfulChatResponses\.length/);
 assert.match(browserSpec, /backend_http_failures/);
 assert.match(browserSpec, /initialUsefulCaseCoverage/);
 assert.match(browserSpec, /runCases/);
+
+assert.match(qualityReviewDoc, /#970/);
+assert.match(qualityReviewDoc, /18\/22.*Lister.*18\/22.*Stier.*18\/22.*Tankekart/is);
+assert.match(qualityReviewDoc, /#971/);
+assert.match(qualityReviewDoc, /klar for uavhengig menneskelig scoring|ready for independent human scoring/i);
+assert.match(integrationPlanDoc, /#970/);
+assert.match(integrationPlanDoc, /18\/22.*Lists.*18\/22.*Paths.*18\/22.*Mindmap/is);
+assert.match(integrationPlanDoc, /#971/);
+assert.match(integrationPlanDoc, /independent human review remains open/i);
 
 console.log("aha-projection-product-agent-quality-review-v2.test.cjs: OK (agent remediation recorded; independent human gate remains open)");

@@ -121,6 +121,24 @@ raw Chat input
 
 The live audit is therefore a stop condition for declaring the complete analysis-to-products chain production-ready. The source/analysis fixes and real-browser sequential-source regression are specified in the authoritative integration plan.
 
+## Current-code human-review input state (2026-09-18)
+
+PR #964 changed the release coverage rule from historical “at least one qualified product per coverage case” to the stricter requirement that **each product type** must independently reach at least 80% qualified coverage across the 22 canonical coverage cases. The immutable PR #894 live artifact remains the analysis/provenance input; current Lists, Paths and Mindmap are rebuilt locally with current read-only product and quality code before human scoring.
+
+The first current-code reprojection exposed real product-specific deficits. PR #967 added a provenance-verified `shared_evidence` List basis for trusted insights that share the same exact source excerpt under the same source hash, without lowering any quality threshold. PR #969 added a semantic-role Mindmap fallback only under genuine concept-branch scarcity, while keeping redundant source-concept siblings collapsed.
+
+Closed diagnostic PR #970 then reprojected the same immutable artifact `9491725428` against current product code and measured:
+
+```text
+18/22 Lister
+18/22 Stier
+18/22 Tankekart
+3/3 deliberately insufficient cases suppressed
+current per-product reprojection gate = passed
+```
+
+PR #971 records that evidence canonically. The archived live input is now **klar for uavhengig menneskelig scoring**, but this is not a human-review pass: all human product scores remain empty, no human attestation has been written or autofilled, and independent human usefulness review remains open. Automatic persistence and remote/write authority remain closed.
+
 ## Release boundary
 
 The independent human ledger remains unchanged:
