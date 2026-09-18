@@ -80,8 +80,14 @@
   function refSetKey(ids) { return arr(ids).slice().sort().join("||"); }
   function sourceThemeFromRefs(refIds, context = {}) {
     const byId = insightMap(context);
-    const parts = arr(refIds).slice().sort().map((id) => ({ id, value: compact(insightText(byId.get(id)), 6, 50) })).filter((entry) => entry.value);
-    const values = unique(parts.map((entry) => entry.value));
+    const sources = arr(refIds).slice().sort().map((id) => ({ id, source: insightText(byId.get(id)) })).filter((entry) => entry.source);
+    let values = unique(sources.map((entry) => compact(entry.source, 6, 50)));
+    if (sources.length === 2 && values.length === 1 && normalize(sources[0].source) !== normalize(sources[1].source)) {
+      for (const [maxWords, maxChars] of [[10, 72], [14, 92], [20, 110]]) {
+        values = unique(sources.map((entry) => compact(entry.source, maxWords, maxChars)));
+        if (values.length > 1) break;
+      }
+    }
     if (!values.length) return "";
     if (values.length === 1) return values[0];
     return capTitle(`${values[0]} ↔ ${values[1]}`);
