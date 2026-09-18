@@ -60,6 +60,8 @@ assert.equal(audit.current_human_review_projection.current_reprojection_evidence
 assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.mindmap.qualified_case_share, 0.818182);
 assert.equal(audit.current_human_review_projection.current_reprojection_evidence.suppression_share, 1);
 assert.equal(audit.current_human_review_projection.human_scoring_input_ready, true);
+assert.equal(audit.current_human_review_projection.human_review_input_admissible, true);
+assert.equal(audit.current_human_review_projection.next_required_evidence, "independent_human_review_scores_and_attestation");
 assert.equal(audit.current_human_review_projection.new_model_calls_required, false);
 assert.equal(audit.current_human_review_projection.human_scores_autofilled, false);
 assert.ok(audit.observed_defects.some((entry) => entry.id === "generic_path_copy" && entry.severity === "high"));
