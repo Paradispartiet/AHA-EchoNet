@@ -49,6 +49,11 @@ assert.equal(audit.current_human_review_projection.current_reprojection_coverage
 assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.required_suppression_share, 1);
 assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.population_from_canonical_corpus, true);
 assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.must_pass_before_human_scoring, true);
+assert.equal(audit.current_human_review_projection.current_reprojection_evidence.release_gate_passed, false);
+assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.lists.qualified_case_share, 0.727273);
+assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.paths.qualified_case_share, 0.818182);
+assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.mindmap.qualified_case_share, 0.772727);
+assert.equal(audit.current_human_review_projection.human_scoring_input_ready, false);
 assert.equal(audit.current_human_review_projection.new_model_calls_required, false);
 assert.equal(audit.current_human_review_projection.human_scores_autofilled, false);
 assert.ok(audit.observed_defects.some((entry) => entry.id === "generic_path_copy" && entry.severity === "high"));
@@ -74,6 +79,19 @@ assert.equal(humanReview.archived_live_review_input.new_model_calls_required, fa
 assert.equal(humanReview.archived_live_review_input.reviewer_scores_autofilled, false);
 assert.equal(humanReview.archived_live_review_input.review_projection_mode, "current_read_only_projection_from_archived_live_insights");
 assert.equal(humanReview.archived_live_review_input.current_product_code_applied, true);
+assert.equal(humanReview.archived_live_review_input.admissible_for_human_scoring, false);
+assert.equal(humanReview.archived_live_review_input.blocking_reason, "current_reprojection_product_coverage_below_release_threshold");
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.canonical_main_sha, "88e9e9193be8cef717a626db2ecbb697a6ec192e");
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.diagnostic_pull_request, 965);
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.diagnostic_workflow_run, 35375565646);
+assert.deepEqual(humanReview.archived_live_review_input.current_reprojection_evidence.product_coverage, {
+  lists: { qualified_case_count: 16, qualified_case_share: 0.727273, passed: false },
+  paths: { qualified_case_count: 18, qualified_case_share: 0.818182, passed: true },
+  mindmap: { qualified_case_count: 17, qualified_case_share: 0.772727, passed: false }
+});
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.suppressed_case_count, 3);
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.expected_suppressed_case_count, 3);
+assert.equal(humanReview.archived_live_review_input.current_reprojection_evidence.release_gate_passed, false);
 assert.equal(humanReview.review_workflow.explicit_draft_export, true);
 assert.equal(humanReview.review_workflow.explicit_draft_import, true);
 assert.equal(humanReview.review_workflow.automatic_browser_persistence, false);
@@ -94,6 +112,8 @@ assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.expe
 assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.required_suppression_share, 1);
 assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.evaluated_after_current_code_reprojection, true);
 assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.must_pass_before_human_scoring, true);
+assert.equal(humanReview.review_workflow.human_scoring_input_ready, false);
+assert.equal(humanReview.review_workflow.next_required_evidence, "fresh_explicit_release_browser_proof_or_upstream_semantic_remediation");
 assert.equal(humanReview.review_workflow.rubric_source, "ops/evaluation/aha-projection-product-human-review-v2.json");
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 

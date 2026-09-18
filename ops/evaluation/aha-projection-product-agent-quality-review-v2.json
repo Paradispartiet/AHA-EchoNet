@@ -183,6 +183,38 @@
         "mindmap"
       ],
       "coverage_must_pass_per_product_type": true
-    }
+    },
+    "current_reprojection_evidence": {
+      "observed_at": "2026-09-18",
+      "canonical_main_sha": "88e9e9193be8cef717a626db2ecbb697a6ec192e",
+      "diagnostic_pull_request": 965,
+      "diagnostic_disposition": "closed_without_merge",
+      "diagnostic_workflow_run": 35375565646,
+      "diagnostic_node_run_number": 2000,
+      "source_artifact_id": 9491725428,
+      "coverage_case_count": 22,
+      "product_coverage": {
+        "lists": {
+          "qualified_case_count": 16,
+          "qualified_case_share": 0.727273,
+          "passed": false
+        },
+        "paths": {
+          "qualified_case_count": 18,
+          "qualified_case_share": 0.818182,
+          "passed": true
+        },
+        "mindmap": {
+          "qualified_case_count": 17,
+          "qualified_case_share": 0.772727,
+          "passed": false
+        }
+      },
+      "expected_suppressed_case_count": 3,
+      "suppressed_case_count": 3,
+      "suppression_share": 1,
+      "release_gate_passed": false
+    },
+    "human_scoring_input_ready": false
   }
 }
