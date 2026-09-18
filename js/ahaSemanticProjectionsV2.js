@@ -251,6 +251,11 @@
         const cleaned = text(value);
         if (cleaned) refs.push({ field: "source_id", value: cleaned });
       });
+      arr(source.source_refs).forEach((entry) => {
+        const field = text(entry?.field);
+        const value = text(entry?.value);
+        if (field && value) refs.push({ field, value });
+      });
     });
     const seen = new Set();
     return refs.filter((entry) => {
@@ -553,7 +558,51 @@
     }));
   }
 
+  function unitSourceTextHashes(unit) {
+    return unique(arr(unit?.provenance?.source_refs)
+      .filter((entry) => text(entry?.field) === "source_text_hash")
+      .map((entry) => text(entry?.value))
+      .filter((value) => /^[a-f0-9]{64}$/iu.test(value)))
+      .sort();
+  }
+
+  function exactSupportingEvidenceQuotes(unit) {
+    return unique(arr(unit?.provenance?.evidence)
+      .filter((entry) => entry?.exact_source_match === true && text(entry?.role) === "supports")
+      .map((entry) => text(entry?.quote || entry?.text))
+      .filter((quote) => quote.length >= 40))
+      .sort();
+  }
+
+  function strongestSharedEvidenceGroup(units) {
+    const groups = new Map();
+    arr(units).forEach((unit) => {
+      unitSourceTextHashes(unit).forEach((sourceHash) => {
+        exactSupportingEvidenceQuotes(unit).forEach((quote) => {
+          const key = `${sourceHash}\u0000${quote}`;
+          if (!groups.has(key)) groups.set(key, { source_hash: sourceHash, quote, unit_ids: [] });
+          groups.get(key).unit_ids.push(unit.id);
+        });
+      });
+    });
+    return [...groups.values()]
+      .map((group) => ({ ...group, unit_ids: unique(group.unit_ids).sort() }))
+      .filter((group) => group.unit_ids.length >= 2)
+      .sort((left, right) => (
+        right.unit_ids.length - left.unit_ids.length
+        || right.quote.length - left.quote.length
+        || left.source_hash.localeCompare(right.source_hash)
+        || left.quote.localeCompare(right.quote)
+      ))[0] || null;
+  }
+
   function listItem(unit, membership = {}) {
+    const sharedEvidenceMeta = text(membership.basis) === "shared_evidence"
+      ? {
+        shared_source_text_hash: text(membership.shared_source_text_hash),
+        shared_evidence_quote: text(membership.shared_evidence_quote)
+      }
+      : {};
     return {
       id: `list_item_v2_${hash(unit.id)}`,
       title: unit.title,
@@ -568,7 +617,8 @@
         concept_keys: unit.concepts.map((concept) => concept.key),
         semantic_basis: text(membership.basis),
         semantic_basis_label: text(membership.label),
-        membership_reason: text(membership.reason)
+        membership_reason: text(membership.reason),
+        ...sharedEvidenceMeta
       }
     };
   }
@@ -641,6 +691,46 @@
         }
       });
     });
+
+    if (!candidates.length && units.length >= 2) {
+      const sharedEvidence = strongestSharedEvidenceGroup(units);
+      if (sharedEvidence) {
+        const related = sharedEvidence.unit_ids.map((id) => byInsight.get(id)).filter(Boolean)
+          .sort((a, b) => (b.quality.mean_score - a.quality.mean_score) || a.id.localeCompare(b.id));
+        const evidenceLabel = sharedEvidence.quote.length > 96
+          ? `${sharedEvidence.quote.slice(0, 93).replace(/\s+\S*$/u, "").trim()} …`
+          : sharedEvidence.quote;
+        candidates.push({
+          id: `list_v2_${hash(`${projectionId}:shared_evidence:${sharedEvidence.source_hash}:${sharedEvidence.quote}`)}`,
+          title: `Kildebelegg: ${evidenceLabel}`,
+          type: "concepts",
+          description: "Kvalitetsgodkjente innsikter som er eksplisitt bundet sammen av det samme eksakte kildeutdraget.",
+          tags: ["Kildebelegg", "AHA V2"],
+          items: related.map((unit) => listItem(unit, {
+            basis: "shared_evidence",
+            label: sharedEvidence.quote,
+            shared_source_text_hash: sharedEvidence.source_hash,
+            shared_evidence_quote: sharedEvidence.quote,
+            reason: "Innsikten er et begrunnet medlem fordi den eksplisitt deler det samme eksakte kildeutdraget og samme kildehash med de øvrige innsiktene."
+          })),
+          source: "aha_semantic_v2",
+          local_only: true,
+          meta: {
+            createdBy: PROJECTION_SCHEMA,
+            projection_id: projectionId,
+            semantic_basis: "shared_evidence",
+            semantic_basis_label: sharedEvidence.quote,
+            semantic_shape: "thematic_membership_v2",
+            membership_rule: "every_member_explicitly_shares_the_same_exact_source_evidence",
+            member_ref_ids: related.map((unit) => unit.id),
+            shared_source_text_hash: sharedEvidence.source_hash,
+            shared_evidence_quote: sharedEvidence.quote,
+            read_only: true,
+            candidate_only: true
+          }
+        });
+      }
+    }
 
     if (!candidates.length && units.length >= 2) {
       const focus = concepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key))[0];
@@ -1062,9 +1152,19 @@
       const manifest = arr(list?.meta?.member_ref_ids).map(text).sort().join("|");
       const refs = arr(list.items).map((item) => text(item?.refId)).filter(Boolean).sort().join("|");
       if (manifest !== refs) errors.push(`list_member_manifest_mismatch:${list.id}`);
+      const listBasis = text(list?.meta?.semantic_basis);
+      if (listBasis === "shared_evidence") {
+        const sourceHash = text(list?.meta?.shared_source_text_hash);
+        const evidenceQuote = text(list?.meta?.shared_evidence_quote);
+        if (!/^[a-f0-9]{64}$/iu.test(sourceHash) || evidenceQuote.length < 40) errors.push(`list_shared_evidence_metadata_invalid:${list.id}`);
+      }
       arr(list.items).forEach((item) => {
         if (item.type === "insight" && !insightIds.has(item.refId)) errors.push(`list_unresolved_insight:${list.id}:${item.refId}`);
         if (!text(item?.membership_reason) || text(item?.membership_reason) !== text(item?.meta?.membership_reason)) errors.push(`list_membership_reason_invalid:${list.id}:${item.refId}`);
+        if (listBasis === "shared_evidence" && (
+          text(item?.meta?.shared_source_text_hash) !== text(list?.meta?.shared_source_text_hash)
+          || text(item?.meta?.shared_evidence_quote) !== text(list?.meta?.shared_evidence_quote)
+        )) errors.push(`list_shared_evidence_member_metadata_invalid:${list.id}:${item.refId}`);
       });
     });
     arr(projections.paths).forEach((path) => {
