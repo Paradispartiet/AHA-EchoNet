@@ -37,6 +37,12 @@ assert.equal(audit.current_human_review_projection.mode, "current_read_only_proj
 assert.equal(audit.current_human_review_projection.current_product_code_applied, true);
 assert.equal(audit.current_human_review_projection.human_score_denominator, "materialized_product_outputs_only");
 assert.equal(audit.current_human_review_projection.missing_product_outputs_receive_human_scores, false);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.coverage_case_count, 22);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.minimum_qualified_case_share, 0.8);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.expected_suppressed_case_count, 3);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.required_suppression_share, 1);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.population_from_canonical_corpus, true);
+assert.equal(audit.current_human_review_projection.current_reprojection_coverage_gate.must_pass_before_human_scoring, true);
 assert.equal(audit.current_human_review_projection.new_model_calls_required, false);
 assert.equal(audit.current_human_review_projection.human_scores_autofilled, false);
 assert.ok(audit.observed_defects.some((entry) => entry.id === "generic_path_copy" && entry.severity === "high"));
@@ -73,6 +79,13 @@ assert.equal(humanReview.review_workflow.score_only_materialized_product_outputs
 assert.equal(humanReview.review_workflow.missing_or_selectively_filtered_products_require_human_scores, false);
 assert.equal(humanReview.review_workflow.unexpectedly_materialized_expected_hidden_products_require_human_scores, true);
 assert.equal(humanReview.release_rule.human_score_denominator, "materialized_product_outputs_only");
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.coverage_case_count, 22);
+assert.deepEqual(humanReview.review_workflow.current_reprojection_coverage_gate.excluded_calibration_cases, ["data_bus", "conflict_tourism"]);
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.minimum_qualified_case_share, 0.8);
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.expected_suppressed_case_count, 3);
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.required_suppression_share, 1);
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.evaluated_after_current_code_reprojection, true);
+assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.must_pass_before_human_scoring, true);
 assert.equal(humanReview.review_workflow.rubric_source, "ops/evaluation/aha-projection-product-human-review-v2.json");
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 

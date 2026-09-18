@@ -166,6 +166,14 @@
     "human_scores_autofilled": false,
     "human_attestation_written": false,
     "human_score_denominator": "materialized_product_outputs_only",
-    "missing_product_outputs_receive_human_scores": false
+    "missing_product_outputs_receive_human_scores": false,
+    "current_reprojection_coverage_gate": {
+      "coverage_case_count": 22,
+      "minimum_qualified_case_share": 0.8,
+      "expected_suppressed_case_count": 3,
+      "required_suppression_share": 1,
+      "population_from_canonical_corpus": true,
+      "must_pass_before_human_scoring": true
+    }
   }
 }

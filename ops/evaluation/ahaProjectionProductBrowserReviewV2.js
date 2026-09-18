@@ -380,6 +380,38 @@
     return PRODUCTS.some((product) => requiresProductScore(result, source, product));
   }
 
+  function currentReviewCoverage(results, corpus) {
+    const reviewResults = arr(results);
+    const cases = arr(corpus?.cases);
+    const byCase = new Map(reviewResults.map((entry) => [text(entry?.case_id), entry]));
+    const coverageCases = cases.filter((entry) => entry?.expected_visible === true && text(entry?.live_disposition) !== "calibration_observation");
+    const suppressedCases = cases.filter((entry) => entry?.expected_visible === false);
+    const qualifiedCases = coverageCases.filter((entry) => requiresProductScores(byCase.get(text(entry.id)), entry));
+    const preservedSuppression = suppressedCases.filter((entry) => !requiresProductScores(byCase.get(text(entry.id)), entry));
+    const qualifiedCaseShare = coverageCases.length
+      ? Number((qualifiedCases.length / coverageCases.length).toFixed(6))
+      : 0;
+    const suppressionShare = suppressedCases.length
+      ? Number((preservedSuppression.length / suppressedCases.length).toFixed(6))
+      : 0;
+    const minimumQualifiedCaseShare = 0.8;
+    const requiredSuppressionShare = 1;
+    return clone({
+      coverage_case_count: coverageCases.length,
+      qualified_case_count: qualifiedCases.length,
+      qualified_case_share: qualifiedCaseShare,
+      expected_suppressed_case_count: suppressedCases.length,
+      suppressed_case_count: preservedSuppression.length,
+      suppression_share: suppressionShare,
+      minimum_qualified_case_share: minimumQualifiedCaseShare,
+      required_suppression_share: requiredSuppressionShare,
+      passed: coverageCases.length === 22
+        && suppressedCases.length === 3
+        && qualifiedCaseShare >= minimumQualifiedCaseShare
+        && suppressionShare === requiredSuppressionShare
+    });
+  }
+
   function renderReviewRubric() {
     const target = byId("rubric");
     if (!target) return null;
@@ -436,7 +468,12 @@
     state.review_contract ||= await global.fetch(HUMAN_REVIEW_URL).then((response) => response.json());
     rubricModel(state.review_contract);
     const validation = validateArchivedLiveEvaluation(archive, state.corpus);
-    state.results = archive.results.map(reprojectArchivedResult);
+    const reprojectedResults = archive.results.map(reprojectArchivedResult);
+    const currentCoverage = currentReviewCoverage(reprojectedResults, state.corpus);
+    if (!currentCoverage.passed) {
+      throw new Error(`Dagens review-reprojeksjon består ikke coverage-porten: ${currentCoverage.qualified_case_count}/${currentCoverage.coverage_case_count} qualified coverage-cases (${currentCoverage.qualified_case_share}), suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count}.`);
+    }
+    state.results = reprojectedResults;
     state.review_source = {
       mode: "archived_live",
       projection_mode: "current_read_only_projection_from_archived_live_insights",
@@ -444,10 +481,11 @@
       artifact_id: ARCHIVED_LIVE_BASELINE.artifact_id,
       head_sha: ARCHIVED_LIVE_BASELINE.head_sha,
       generated_at: validation.generated_at,
-      successful_chat_count: validation.successful_chat_count
+      successful_chat_count: validation.successful_chat_count,
+      current_reprojection_coverage: currentCoverage
     };
     if (byId("progress")) byId("progress").value = state.results.length;
-    if (byId("status")) byId("status").textContent = `Arkivert live-evidens lastet og re-projisert med dagens read-only produktkode: ${state.results.length}/${state.corpus.cases.length} cases · ingen nye modellkall.`;
+    if (byId("status")) byId("status").textContent = `Arkivert live-evidens lastet og re-projisert med dagens read-only produktkode: ${state.results.length}/${state.corpus.cases.length} cases · coverage ${currentCoverage.qualified_case_count}/${currentCoverage.coverage_case_count} · suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count} · ingen nye modellkall.`;
     updateSummary();
     return clone({ validation, review_source: state.review_source });
   }
@@ -781,6 +819,7 @@
     renderReviewRubric,
     requiresProductScore,
     requiresProductScores,
+    currentReviewCoverage,
     collectHumanReview,
     compareReplay,
     getState: () => clone(state)

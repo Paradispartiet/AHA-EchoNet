@@ -43,6 +43,8 @@ const requiresProductScores = context.AHAProjectionProductReviewV2.requiresProdu
 assert.equal(typeof requiresProductScores, 'function', 'review must expose product-score applicability');
 const requiresProductScore = context.AHAProjectionProductReviewV2.requiresProductScore;
 assert.equal(typeof requiresProductScore, 'function', 'review must expose per-product score applicability');
+const currentReviewCoverage = context.AHAProjectionProductReviewV2.currentReviewCoverage;
+assert.equal(typeof currentReviewCoverage, 'function', 'review must expose current-code reprojection coverage');
 assert.equal(typeof reprojectArchivedResult, 'function', 'archived live review must expose current-code reprojection');
 
 function archivedProjectedInsight(id, insight, conceptKeys) {
@@ -219,6 +221,30 @@ assert.deepEqual(
   JSON.parse(JSON.stringify(validateArchive(archivedLive, corpus))),
   { valid: true, cases: 27, generated_at: baseline.generated_at, successful_chat_count: 29, critical_transport_failures: 0 }
 );
+
+const fullCurrentCoverage = currentReviewCoverage(archivedLive.results, corpus);
+assert.deepEqual(JSON.parse(JSON.stringify(fullCurrentCoverage)), {
+  coverage_case_count: 22,
+  qualified_case_count: 22,
+  qualified_case_share: 1,
+  expected_suppressed_case_count: 3,
+  suppressed_case_count: 3,
+  suppression_share: 1,
+  minimum_qualified_case_share: 0.8,
+  required_suppression_share: 1,
+  passed: true
+});
+const coverageCaseIds = corpus.cases
+  .filter((entry) => entry.expected_visible === true && entry.live_disposition !== 'calibration_observation')
+  .slice(0, 5)
+  .map((entry) => entry.id);
+const degradedCoverageResults = archivedLive.results.map((entry) => coverageCaseIds.includes(entry.case_id)
+  ? archivedResult(entry.case_id, false)
+  : entry);
+const degradedCurrentCoverage = currentReviewCoverage(degradedCoverageResults, corpus);
+assert.equal(degradedCurrentCoverage.qualified_case_count, 17);
+assert.equal(degradedCurrentCoverage.qualified_case_share, 0.772727);
+assert.equal(degradedCurrentCoverage.passed, false, 'current-code review reprojection must fail closed below 80% qualified case coverage');
 assert.throws(
   () => validateArchive({ ...archivedLive, generated_at: '2026-09-01T00:00:00.000Z' }, corpus),
   /godkjente arkiverte baseline-runnen/
@@ -344,8 +370,11 @@ assert.match(html, /ahaProjectionArtifactQualityV2\.js/);
 assert.match(html, /byg(g|ger).*på nytt lokalt|byg(g|ger).*lokalt/i);
 assert.doesNotMatch(html, /0\/81 produktscorer/);
 assert.match(html, /materialiserte review-outputene/);
+assert.match(html, /22 canonicale coverage-casene/);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
 assert.match(reviewRuntime, /human_score_denominator: \"materialized_product_outputs_only\"/);
+assert.match(reviewRuntime, /const currentCoverage = currentReviewCoverage\(reprojectedResults, state\.corpus\)/);
+assert.match(reviewRuntime, /if \(!currentCoverage\.passed\)/);
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);
 assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
 assert.match(reviewRuntime, /HUMAN_REVIEW_URL/);
