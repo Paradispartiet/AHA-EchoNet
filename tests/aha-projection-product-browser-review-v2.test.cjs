@@ -227,10 +227,15 @@ assert.deepEqual(JSON.parse(JSON.stringify(fullCurrentCoverage)), {
   coverage_case_count: 22,
   qualified_case_count: 22,
   qualified_case_share: 1,
+  product_coverage: {
+    lists: { qualified_case_count: 22, qualified_case_share: 1 },
+    paths: { qualified_case_count: 22, qualified_case_share: 1 },
+    mindmap: { qualified_case_count: 22, qualified_case_share: 1 }
+  },
   expected_suppressed_case_count: 3,
   suppressed_case_count: 3,
   suppression_share: 1,
-  minimum_qualified_case_share: 0.8,
+  minimum_qualified_product_share: 0.8,
   required_suppression_share: 1,
   passed: true
 });
@@ -245,6 +250,25 @@ const degradedCurrentCoverage = currentReviewCoverage(degradedCoverageResults, c
 assert.equal(degradedCurrentCoverage.qualified_case_count, 17);
 assert.equal(degradedCurrentCoverage.qualified_case_share, 0.772727);
 assert.equal(degradedCurrentCoverage.passed, false, 'current-code review reprojection must fail closed below 80% qualified case coverage');
+
+const listDeficientIds = corpus.cases
+  .filter((entry) => entry.expected_visible === true && entry.live_disposition !== 'calibration_observation')
+  .slice(0, 6)
+  .map((entry) => entry.id);
+const listDeficientResults = archivedLive.results.map((entry) => {
+  if (!listDeficientIds.includes(entry.case_id)) return entry;
+  const next = JSON.parse(JSON.stringify(entry));
+  next.model.surfaces.lists = [];
+  next.model.product_states.list = { status: 'needs_evidence' };
+  return next;
+});
+const listDeficientCoverage = currentReviewCoverage(listDeficientResults, corpus);
+assert.equal(listDeficientCoverage.qualified_case_share, 1, 'any-product case coverage can remain perfect while one product type is under-covered');
+assert.equal(listDeficientCoverage.product_coverage.lists.qualified_case_count, 16);
+assert.equal(listDeficientCoverage.product_coverage.lists.qualified_case_share, 0.727273);
+assert.equal(listDeficientCoverage.product_coverage.paths.qualified_case_share, 1);
+assert.equal(listDeficientCoverage.product_coverage.mindmap.qualified_case_share, 1);
+assert.equal(listDeficientCoverage.passed, false, 'review reprojection must fail closed when any product type is below 80% qualified coverage');
 assert.throws(
   () => validateArchive({ ...archivedLive, generated_at: '2026-09-01T00:00:00.000Z' }, corpus),
   /godkjente arkiverte baseline-runnen/
@@ -380,5 +404,8 @@ assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
 assert.match(reviewRuntime, /HUMAN_REVIEW_URL/);
 assert.match(reviewRuntime, /data-rubric-product/);
 assert.match(reviewRuntime, /acceptable_score_minimum/);
+const browserSpec = fs.readFileSync('tests/browser/aha-projection-product-browser-evaluation-v2.spec.cjs', 'utf8');
+assert.match(browserSpec, /qualifiedProductCoverage/);
+assert.match(browserSpec, /At least 80% of live coverage cases must yield a qualified .* preview for each product type/i);
 
 console.log('aha-projection-product-browser-review-v2.test.cjs: OK');
