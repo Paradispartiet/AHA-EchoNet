@@ -41,6 +41,8 @@ const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
 const reprojectArchivedResult = context.AHAProjectionProductReviewV2.reprojectArchivedResult;
 const requiresProductScores = context.AHAProjectionProductReviewV2.requiresProductScores;
 assert.equal(typeof requiresProductScores, 'function', 'review must expose product-score applicability');
+const requiresProductScore = context.AHAProjectionProductReviewV2.requiresProductScore;
+assert.equal(typeof requiresProductScore, 'function', 'review must expose per-product score applicability');
 assert.equal(typeof reprojectArchivedResult, 'function', 'archived live review must expose current-code reprojection');
 
 function archivedProjectedInsight(id, insight, conceptKeys) {
@@ -156,6 +158,22 @@ const corpus = JSON.parse(fs.readFileSync('tests/fixtures/aha-projection-product
 assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: false }), false, 'correctly suppressed cases must not require nonexistent product scores');
 assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: true }), true, 'expected-visible misses must remain score-required');
 assert.equal(requiresProductScores({ model: { status: 'ready' } }, { expected_visible: false }), true, 'unexpectedly visible suppression cases must remain score-required');
+
+const selectivelyFilteredResult = {
+  model: {
+    status: 'ready',
+    surfaces: {
+      lists: [],
+      paths: [{ id: 'path_visible', steps: [] }],
+      mindmap: { nodes: [{ id: 'mindmap_visible' }], edges: [], read_only: true }
+    }
+  }
+};
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'lists'), false, 'an empty selectively filtered List surface must not require a fabricated human score');
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'paths'), true, 'a materialized Path surface must require human scoring');
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'mindmap'), true, 'a materialized Mindmap surface must require human scoring');
+assert.equal(requiresProductScore({ model: { status: 'blocked', surfaces: {} } }, { expected_visible: true }, 'lists'), false, 'blocked expected-visible output is an automated availability miss, not a nonexistent human artifact to score');
+assert.equal(requiresProductScore({ model: { status: 'ready', surfaces: { lists: [{ id: 'unexpected_list' }], paths: [], mindmap: { nodes: [], edges: [] } } } }, { expected_visible: false }, 'lists'), true, 'unexpectedly materialized output must remain human-reviewable rather than disappear from the ledger');
 const humanReviewContract = JSON.parse(fs.readFileSync('ops/evaluation/aha-projection-product-human-review-v2.json', 'utf8'));
 const canonicalRubric = JSON.parse(JSON.stringify(rubricModel(humanReviewContract)));
 assert.deepEqual(canonicalRubric, {
