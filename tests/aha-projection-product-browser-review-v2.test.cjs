@@ -25,15 +25,79 @@ const context = {
 context.window = context;
 context.globalThis = context;
 vm.createContext(context);
-vm.runInContext(fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8'), context, {
-  filename: 'ops/evaluation/ahaProjectionProductBrowserReviewV2.js'
-});
+for (const file of [
+  'js/ahaInsightRelationClassifierV2.js',
+  'js/ahaInsightSaturationV2.js',
+  'js/ahaSemanticProjectionsV2.js',
+  'js/ahaProjectionArtifactQualityV2.js',
+  'ops/evaluation/ahaProjectionProductBrowserReviewV2.js'
+]) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
 
 const compare = context.AHAProjectionProductReviewV2.compareReplay;
 const validateArchive = context.AHAProjectionProductReviewV2.validateArchivedLiveEvaluation;
 const validateDraft = context.AHAProjectionProductReviewV2.validateHumanReviewDraft;
 const rubricModel = context.AHAProjectionProductReviewV2.rubricModel;
 const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
+const reprojectArchivedResult = context.AHAProjectionProductReviewV2.reprojectArchivedResult;
+assert.equal(typeof reprojectArchivedResult, 'function', 'archived live review must expose current-code reprojection');
+
+function archivedProjectedInsight(id, insight, conceptKeys) {
+  return {
+    id,
+    insight,
+    summary: insight,
+    title: insight,
+    type: 'generalization',
+    causal_status: 'not_causal',
+    concept_keys: conceptKeys,
+    quality: { representative_score: 0.82, mean_score: 0.82, min_score: 0.82, max_score: 0.82 },
+    provenance: {
+      evidence: [
+        { quote: `${insight} Kildebelegg A.`, role: 'supports' },
+        { quote: `${insight} Kildebelegg B.`, role: 'context' }
+      ],
+      source_refs: [
+        { field: 'source_id', value: 'archived_source' },
+        { field: 'source_text_hash', value: 'c'.repeat(64) }
+      ],
+      source_member_ids: [id]
+    },
+    member_ids: [id],
+    meta: { read_only: true, projection_candidate: true }
+  };
+}
+
+const staleArchivedResult = {
+  case_id: 'data_energy',
+  model: {
+    schema: 'aha_projection_product_read_model_v2',
+    version: 2,
+    mode: 'read_only',
+    status: 'ready',
+    projection_id: 'projection_v2_archived',
+    validation: { valid: true, errors: [] },
+    policy: { persistent_write: false, remote_write: false },
+    product_states: { list: {}, path: {}, mindmap: {} },
+    surfaces: {
+      insights: [
+        archivedProjectedInsight('old_a', 'Strømbruken falt etter oppgraderingen.', ['grader', 'strømbruk']),
+        archivedProjectedInsight('old_b', 'Vinteren var tre grader mildere enn referanseåret.', ['grader', 'vinter']),
+        archivedProjectedInsight('old_c', 'Reduksjonen i strømbruk må vurderes mot været.', ['prosent', 'strømbruk'])
+      ],
+      concepts: [],
+      lists: [{ id: 'old_list', title: 'Utforsk grader', items: [], meta: {} }],
+      paths: [],
+      mindmap: { nodes: [], edges: [], read_only: true }
+    }
+  },
+  critical_provenance_errors: []
+};
+const reprojected = JSON.parse(JSON.stringify(reprojectArchivedResult(staleArchivedResult)));
+assert.equal(reprojected.review_reprojection.mode, 'current_read_only_projection_from_archived_live_insights');
+assert.equal(reprojected.review_reprojection.archived_projection_id, 'projection_v2_archived');
+assert.notEqual(reprojected.model.projection_id, 'projection_v2_archived');
+assert.ok(reprojected.model.surfaces.lists.every((list) => list.title !== 'Utforsk grader'), 'stale low-information list title must not survive review reprojection');
+assert.ok(reprojected.model.surfaces.lists.some((list) => /strømbruk/i.test(list.title)), 'meaningful current source theme must remain reviewable');
 assert.equal(baseline.workflow_run_id, 32633381518);
 assert.equal(baseline.artifact_id, 9491725428);
 assert.equal(baseline.head_sha, '5aab589eed30012c349f4679c201ee87f0a27602');
