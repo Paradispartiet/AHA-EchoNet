@@ -67,6 +67,9 @@ assert.equal(humanReview.review_workflow.imported_scores_and_notes_restored, tru
 assert.equal(humanReview.review_workflow.imported_human_attestation_restored, false);
 assert.equal(humanReview.review_workflow.final_attestation_must_be_reconfirmed, true);
 assert.equal(humanReview.review_workflow.canonical_rubric_rendered_in_review_surface, true);
+assert.equal(humanReview.review_workflow.correctly_suppressed_cases_require_product_scores, false);
+assert.equal(humanReview.review_workflow.expected_visible_blocked_cases_require_product_scores, true);
+assert.equal(humanReview.review_workflow.unexpectedly_visible_expected_hidden_cases_require_product_scores, true);
 assert.equal(humanReview.review_workflow.rubric_source, "ops/evaluation/aha-projection-product-human-review-v2.json");
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 

@@ -316,6 +316,9 @@
     "imported_human_attestation_restored": false,
     "final_attestation_must_be_reconfirmed": true,
     "canonical_rubric_rendered_in_review_surface": true,
-    "rubric_source": "ops/evaluation/aha-projection-product-human-review-v2.json"
+    "rubric_source": "ops/evaluation/aha-projection-product-human-review-v2.json",
+    "correctly_suppressed_cases_require_product_scores": false,
+    "expected_visible_blocked_cases_require_product_scores": true,
+    "unexpectedly_visible_expected_hidden_cases_require_product_scores": true
   }
 }
