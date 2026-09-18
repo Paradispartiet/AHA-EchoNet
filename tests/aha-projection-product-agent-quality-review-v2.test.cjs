@@ -54,6 +54,10 @@ assert.equal(audit.current_human_review_projection.current_reprojection_evidence
 assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.paths.qualified_case_share, 0.818182);
 assert.equal(audit.current_human_review_projection.current_reprojection_evidence.product_coverage.mindmap.qualified_case_share, 0.772727);
 assert.equal(audit.current_human_review_projection.human_scoring_input_ready, false);
+assert.equal(audit.current_human_review_projection.archived_evidence_superseded_by_post_archive_runtime_changes, true);
+assert.equal(audit.current_human_review_projection.fresh_release_proof_required, true);
+assert.equal(audit.current_human_review_projection.post_archive_runtime_change.pull_request, 910);
+assert.equal(audit.current_human_review_projection.post_archive_runtime_change.commit, "13fce97431921d45874bf5dccd245751c3d1a9e4");
 assert.equal(audit.current_human_review_projection.new_model_calls_required, false);
 assert.equal(audit.current_human_review_projection.human_scores_autofilled, false);
 assert.ok(audit.observed_defects.some((entry) => entry.id === "generic_path_copy" && entry.severity === "high"));
@@ -113,7 +117,14 @@ assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.requ
 assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.evaluated_after_current_code_reprojection, true);
 assert.equal(humanReview.review_workflow.current_reprojection_coverage_gate.must_pass_before_human_scoring, true);
 assert.equal(humanReview.review_workflow.human_scoring_input_ready, false);
-assert.equal(humanReview.review_workflow.next_required_evidence, "fresh_explicit_release_browser_proof_or_upstream_semantic_remediation");
+assert.equal(humanReview.review_workflow.next_required_evidence, "fresh_explicit_release_browser_proof_on_current_main");
+assert.equal(humanReview.archived_live_review_input.superseded_by_post_archive_runtime_changes, true);
+assert.equal(humanReview.archived_live_review_input.post_archive_runtime_changes.source_grounded_product_usefulness.pull_request, 910);
+assert.equal(humanReview.archived_live_review_input.post_archive_runtime_changes.source_grounded_product_usefulness.commit, "13fce97431921d45874bf5dccd245751c3d1a9e4");
+assert.equal(humanReview.archived_live_review_input.post_archive_runtime_changes.source_grounded_product_usefulness.archived_runtime_had_source_bound_concept_adapter, false);
+assert.equal(humanReview.archived_live_review_input.post_archive_runtime_changes.source_grounded_product_usefulness.current_runtime_has_source_bound_concept_adapter, true);
+assert.equal(humanReview.review_workflow.fresh_paid_release_proof_requires_explicit_dispatch, true);
+assert.equal(humanReview.review_workflow.automatic_pr_and_push_model_calls_allowed, false);
 assert.equal(humanReview.review_workflow.rubric_source, "ops/evaluation/aha-projection-product-human-review-v2.json");
 assert.ok(humanReview.case_reviews.every((entry) => entry.review_status === "open"));
 
