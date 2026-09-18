@@ -180,6 +180,33 @@
     return false;
   }
 
+  function conceptSupportOverlaps(left, right) {
+    const leftIds = new Set(arr(left?.insight_ids).map(text).filter(Boolean));
+    return arr(right?.insight_ids).map(text).filter(Boolean).some((id) => leftIds.has(id));
+  }
+
+  function branchConceptSubsumedBy(general, specific) {
+    return general?.id !== specific?.id
+      && conceptSupportOverlaps(general, specific)
+      && conceptPhraseContains(specific, general);
+  }
+
+  function mindmapBranchCandidatePool(candidates) {
+    const ordered = arr(candidates);
+    const preferred = ordered.filter((concept) => !ordered.some((candidate) => (
+      branchConceptSubsumedBy(concept, candidate)
+    )));
+    const minimumBranches = Math.min(2, ordered.length);
+    if (preferred.length >= minimumBranches) return preferred;
+
+    const restored = [...preferred];
+    ordered.forEach((concept) => {
+      if (restored.length >= minimumBranches) return;
+      if (!restored.some((entry) => entry.id === concept.id)) restored.push(concept);
+    });
+    return restored;
+  }
+
   function primaryConceptCandidateReason(concept, concepts) {
     const tokens = conceptTokens(concept?.label || concept?.key);
     if (tokens.length === 1 && PRIMARY_CONCEPT_FUNCTION_TOKENS.has(tokens[0])) return "standalone_function_token";
@@ -852,8 +879,9 @@
     const rankedConcepts = selectableConcepts.slice().sort((a, b) => b.occurrence_count - a.occurrence_count || a.key.localeCompare(b.key));
     const repeatedConcepts = rankedConcepts.filter((concept) => concept.occurrence_count >= 2);
     const branchLimit = Math.min(7, units.length);
-    const branchCandidatePool = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts)
+    const rawBranchCandidatePool = (repeatedConcepts.length >= 2 ? repeatedConcepts : rankedConcepts)
       .filter((concept) => concept.insight_ids.length > 0);
+    const branchCandidatePool = mindmapBranchCandidatePool(rawBranchCandidatePool);
     const unitById = new Map(units.map((unit) => [unit.id, unit]));
     const assignedUnitIds = new Set();
     const assignments = new Map();
