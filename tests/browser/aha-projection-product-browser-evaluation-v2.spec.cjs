@@ -445,6 +445,8 @@ test("27-case live semantic browser corpus yields qualified product previews", a
     case_ids: retryResults.map((result) => result.case_id),
     results: retryResults
   };
+  const retryByCase = new Map(retryResults.map((result) => [result.case_id, result]));
+  evaluation.live_product_coverage = qualifiedProductCoverage(initialCoverageCases, retryByCase);
   const chatResponses = proxiedAgentRequests.filter((request) => request.url.endsWith("/chat"));
   const successfulChatResponses = chatResponses.filter((request) => request.status >= 200 && request.status < 300);
   const backendHttpFailures = chatResponses.filter((request) => request.status < 200 || request.status >= 300);
@@ -492,16 +494,14 @@ test("27-case live semantic browser corpus yields qualified product previews", a
       expect(states, `${result.case_id}: deliberately insufficient input must remain suppressed`).not.toContain("ready");
     }
   }
-  const retryByCase = new Map(retryResults.map((result) => [result.case_id, result]));
   for (const result of retryResults) {
     expect(result.critical_provenance_errors, `retry:${result.case_id}`).toEqual([]);
     expect(result.guarded_store_writes, `retry:${result.case_id}`).toEqual([]);
   }
   const usefulCaseCoverage = expectedUseful.filter((result) => hasReadyProduct(result) || hasReadyProduct(retryByCase.get(result.case_id) || { model: { product_states: {} } })).length / expectedUseful.length;
-  const finalProductCoverage = qualifiedProductCoverage(expectedUseful, retryByCase);
+  const finalProductCoverage = evaluation.live_product_coverage;
   const suppressionCoverage = expectedSuppressed.filter((result) => ["list", "path", "mindmap"]
     .every((product) => result.model.product_states[product].status !== "ready")).length / expectedSuppressed.length;
-  evaluation.live_product_coverage = finalProductCoverage;
   expect(calibrationCases.map((result) => result.case_id).sort()).toEqual(["conflict_tourism", "data_bus"]);
   expect(initialUsefulCaseCoverage, "The first live pass must retain at least 70% qualified case coverage before a bounded retry is allowed").toBeGreaterThanOrEqual(0.7);
   for (const [product, coverage] of Object.entries(finalProductCoverage)) {
