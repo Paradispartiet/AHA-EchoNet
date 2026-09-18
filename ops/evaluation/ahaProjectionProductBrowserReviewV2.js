@@ -387,6 +387,15 @@
     const coverageCases = cases.filter((entry) => entry?.expected_visible === true && text(entry?.live_disposition) !== "calibration_observation");
     const suppressedCases = cases.filter((entry) => entry?.expected_visible === false);
     const qualifiedCases = coverageCases.filter((entry) => requiresProductScores(byCase.get(text(entry.id)), entry));
+    const productCoverage = Object.fromEntries(PRODUCTS.map((product) => {
+      const qualified = coverageCases.filter((entry) => requiresProductScore(byCase.get(text(entry.id)), entry, product));
+      return [product, {
+        qualified_case_count: qualified.length,
+        qualified_case_share: coverageCases.length
+          ? Number((qualified.length / coverageCases.length).toFixed(6))
+          : 0
+      }];
+    }));
     const preservedSuppression = suppressedCases.filter((entry) => !requiresProductScores(byCase.get(text(entry.id)), entry));
     const qualifiedCaseShare = coverageCases.length
       ? Number((qualifiedCases.length / coverageCases.length).toFixed(6))
@@ -394,20 +403,22 @@
     const suppressionShare = suppressedCases.length
       ? Number((preservedSuppression.length / suppressedCases.length).toFixed(6))
       : 0;
-    const minimumQualifiedCaseShare = 0.8;
+    const minimumQualifiedProductShare = 0.8;
     const requiredSuppressionShare = 1;
+    const productCoveragePassed = PRODUCTS.every((product) => productCoverage[product].qualified_case_share >= minimumQualifiedProductShare);
     return clone({
       coverage_case_count: coverageCases.length,
       qualified_case_count: qualifiedCases.length,
       qualified_case_share: qualifiedCaseShare,
+      product_coverage: productCoverage,
       expected_suppressed_case_count: suppressedCases.length,
       suppressed_case_count: preservedSuppression.length,
       suppression_share: suppressionShare,
-      minimum_qualified_case_share: minimumQualifiedCaseShare,
+      minimum_qualified_product_share: minimumQualifiedProductShare,
       required_suppression_share: requiredSuppressionShare,
       passed: coverageCases.length === 22
         && suppressedCases.length === 3
-        && qualifiedCaseShare >= minimumQualifiedCaseShare
+        && productCoveragePassed
         && suppressionShare === requiredSuppressionShare
     });
   }
@@ -471,7 +482,8 @@
     const reprojectedResults = archive.results.map(reprojectArchivedResult);
     const currentCoverage = currentReviewCoverage(reprojectedResults, state.corpus);
     if (!currentCoverage.passed) {
-      throw new Error(`Dagens review-reprojeksjon består ikke coverage-porten: ${currentCoverage.qualified_case_count}/${currentCoverage.coverage_case_count} qualified coverage-cases (${currentCoverage.qualified_case_share}), suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count}.`);
+      const productSummary = PRODUCTS.map((product) => `${product} ${currentCoverage.product_coverage[product].qualified_case_count}/${currentCoverage.coverage_case_count}`).join(", ");
+      throw new Error(`Dagens review-reprojeksjon består ikke coverage-porten per produkttype: ${productSummary}; suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count}.`);
     }
     state.results = reprojectedResults;
     state.review_source = {
@@ -485,7 +497,7 @@
       current_reprojection_coverage: currentCoverage
     };
     if (byId("progress")) byId("progress").value = state.results.length;
-    if (byId("status")) byId("status").textContent = `Arkivert live-evidens lastet og re-projisert med dagens read-only produktkode: ${state.results.length}/${state.corpus.cases.length} cases · coverage ${currentCoverage.qualified_case_count}/${currentCoverage.coverage_case_count} · suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count} · ingen nye modellkall.`;
+    if (byId("status")) byId("status").textContent = `Arkivert live-evidens lastet og re-projisert med dagens read-only produktkode: ${state.results.length}/${state.corpus.cases.length} cases · Liste ${currentCoverage.product_coverage.lists.qualified_case_count}/${currentCoverage.coverage_case_count} · Sti ${currentCoverage.product_coverage.paths.qualified_case_count}/${currentCoverage.coverage_case_count} · Tankekart ${currentCoverage.product_coverage.mindmap.qualified_case_count}/${currentCoverage.coverage_case_count} · suppression ${currentCoverage.suppressed_case_count}/${currentCoverage.expected_suppressed_case_count} · ingen nye modellkall.`;
     updateSummary();
     return clone({ validation, review_source: state.review_source });
   }
