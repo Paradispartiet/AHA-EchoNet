@@ -85,7 +85,7 @@
     "surface": "projection-product-review-v2.html",
     "workflow": ".github/workflows/aha-projection-product-browser-evaluation-v2.yml",
     "offline_matrix": "source_identity_reload_replay_version_and_zero_preview_write",
-    "live_matrix": "configured_backend_required_zero_critical_provenance_zero_guarded_writes_minimum_80_percent_case_coverage_and_explicit_calibration_observations",
+    "live_matrix": "configured_backend_required_zero_critical_provenance_zero_guarded_writes_minimum_80_percent_coverage_per_product_type_and_explicit_calibration_observations",
     "ipad_webkit_gate": true,
     "independent_human_review_completed": false
   },
@@ -132,7 +132,10 @@
       "analysis_quality_gate_changed": false,
       "product_builder_changed": false,
       "human_review_attested": false
-    }
+    },
+    "historical_coverage_rule": "at_least_one_qualified_product_per_coverage_case",
+    "current_release_coverage_rule": "at_least_80_percent_qualified_coverage_for_each_product_type",
+    "historical_gate_does_not_replace_current_per_product_release_gate": true
   },
   "remediation": {
     "pull_request": 884,
@@ -169,11 +172,17 @@
     "missing_product_outputs_receive_human_scores": false,
     "current_reprojection_coverage_gate": {
       "coverage_case_count": 22,
-      "minimum_qualified_case_share": 0.8,
       "expected_suppressed_case_count": 3,
       "required_suppression_share": 1,
       "population_from_canonical_corpus": true,
-      "must_pass_before_human_scoring": true
+      "must_pass_before_human_scoring": true,
+      "minimum_qualified_product_share": 0.8,
+      "required_product_types": [
+        "lists",
+        "paths",
+        "mindmap"
+      ],
+      "coverage_must_pass_per_product_type": true
     }
   }
 }
