@@ -123,6 +123,40 @@
     });
     return [...selected.values()].sort((left, right) => text(left?.id).localeCompare(text(right?.id)));
   }
+  function disambiguatePathTitlesBySourceCount(paths) {
+    const next = arr(paths).map((path) => clone(path));
+    const groups = new Map();
+    next.forEach((path) => {
+      const key = normalize(path?.title);
+      if (!key) return;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(path);
+    });
+    groups.forEach((group) => {
+      if (group.length < 2) return;
+      const sourceCounts = unique(group.map((path) => refIdsFromPath(path).length));
+      if (sourceCounts.length < 2) return;
+      group.forEach((path) => {
+        const sourceCount = refIdsFromPath(path).length;
+        const suffix = ` · ${sourceCount} ${sourceCount === 1 ? "kilde" : "kilder"}`;
+        const maxBaseLength = Math.max(1, MAX_PRODUCT_TITLE - suffix.length);
+        const rawTitle = text(path?.title);
+        let baseTitle = rawTitle;
+        if (baseTitle.length > maxBaseLength) {
+          baseTitle = baseTitle.slice(0, maxBaseLength).replace(/\s+\S*$/u, "").trim()
+            || baseTitle.slice(0, maxBaseLength).trim();
+        }
+        path.meta = {
+          ...(path.meta || {}),
+          display_disambiguation: "source_ref_count",
+          display_source_count: sourceCount
+        };
+        path.title = `${baseTitle}${suffix}`;
+      });
+    });
+    return next;
+  }
+
   function containsSourceSignal(narrative, source) {
     const haystack = normalize(narrative);
     const strong = informativeTokens(source);
@@ -270,7 +304,7 @@
     const refinedLists = arr(next?.surfaces?.lists).map((list) => refineList(list, context));
     const refinedPaths = arr(next?.surfaces?.paths).map((path) => refinePath(path, context));
     next.surfaces.lists = dedupeByRefSet(refinedLists, "list");
-    next.surfaces.paths = dedupeByRefSet(refinedPaths, "path");
+    next.surfaces.paths = disambiguatePathTitlesBySourceCount(dedupeByRefSet(refinedPaths, "path"));
     next.surfaces.mindmap = refineMindmap(next?.surfaces?.mindmap || {}, context);
     return clone(next);
   }
