@@ -65,7 +65,7 @@ const meaningful = api.evaluateList(listWithAnchor("arbeidsro"), { insights });
 assert.equal(meaningful.passed, true, "a meaningful noun anchor must remain eligible");
 assert.ok(!meaningful.reasons.includes("list_display_anchor_low_information"));
 
-for (const anchor of ["første", "lengre", "hvilke"]) {
+for (const anchor of ["første", "lengre", "hvilke", "oppgaver"]) {
   const raw = listWithAnchor(anchor);
   const quality = api.evaluateList(raw, { insights });
   assert.equal(
