@@ -19,7 +19,7 @@
   const LOW_INFORMATION_DISPLAY_TOKENS = new Set([
     "alene", "antall", "advarer", "beskriver", "dagen", "dager", "bedre", "derfor", "bade", "barnets", "bruker", "brukes", "steg",
     "byggets", "prosent", "andre", "begge", "gjor", "gjort", "avslorer", "samme", "noen", "felles", "valgfrie", "hyppig", "enkel",
-    "effekten", "første", "hvilke", "lengre", "problemet", "tillitsvalgte", "malinger", "gruppene", "oppgavene", "innbyggerne", "reisende"
+    "effekten", "første", "hvilke", "lengre", "problemet", "tillitsvalgte", "malinger", "gruppene", "oppgaver", "oppgavene", "innbyggerne", "reisende"
   ]);
 
   function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
