@@ -41,6 +41,8 @@ const baseline = context.AHAProjectionProductReviewV2.ARCHIVED_LIVE_BASELINE;
 const reprojectArchivedResult = context.AHAProjectionProductReviewV2.reprojectArchivedResult;
 const requiresProductScores = context.AHAProjectionProductReviewV2.requiresProductScores;
 assert.equal(typeof requiresProductScores, 'function', 'review must expose product-score applicability');
+const requiresProductScore = context.AHAProjectionProductReviewV2.requiresProductScore;
+assert.equal(typeof requiresProductScore, 'function', 'review must expose per-product score applicability');
 assert.equal(typeof reprojectArchivedResult, 'function', 'archived live review must expose current-code reprojection');
 
 function archivedProjectedInsight(id, insight, conceptKeys) {
@@ -154,8 +156,25 @@ assert.deepEqual(JSON.parse(JSON.stringify(changedRuntime)), { comparable: false
 
 const corpus = JSON.parse(fs.readFileSync('tests/fixtures/aha-projection-product-evaluation-v2.json', 'utf8'));
 assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: false }), false, 'correctly suppressed cases must not require nonexistent product scores');
-assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: true }), true, 'expected-visible misses must remain score-required');
-assert.equal(requiresProductScores({ model: { status: 'ready' } }, { expected_visible: false }), true, 'unexpectedly visible suppression cases must remain score-required');
+assert.equal(requiresProductScores({ model: { status: 'blocked' } }, { expected_visible: true }), false, 'expected-visible availability misses must not be converted into fabricated human scores');
+assert.equal(requiresProductScores({ model: { status: 'ready', surfaces: { lists: [], paths: [], mindmap: { nodes: [] } } } }, { expected_visible: false }), false, 'a ready shell with no materialized product must not require a human score');
+
+const selectivelyFilteredResult = {
+  model: {
+    status: 'ready',
+    surfaces: {
+      lists: [],
+      paths: [{ id: 'path_visible', steps: [] }],
+      mindmap: { nodes: [{ id: 'mindmap_visible' }], edges: [], read_only: true }
+    }
+  }
+};
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'lists'), false, 'an empty selectively filtered List surface must not require a fabricated human score');
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'paths'), true, 'a materialized Path surface must require human scoring');
+assert.equal(requiresProductScore(selectivelyFilteredResult, { expected_visible: true }, 'mindmap'), true, 'a materialized Mindmap surface must require human scoring');
+assert.equal(requiresProductScore({ model: { status: 'blocked', surfaces: {} } }, { expected_visible: true }, 'lists'), false, 'blocked expected-visible output is an automated availability miss, not a nonexistent human artifact to score');
+assert.equal(requiresProductScore({ model: { status: 'ready', surfaces: { lists: [{ id: 'unexpected_list' }], paths: [], mindmap: { nodes: [], edges: [] } } } }, { expected_visible: false }, 'lists'), true, 'unexpectedly materialized output must remain human-reviewable rather than disappear from the ledger');
+assert.equal(requiresProductScores(selectivelyFilteredResult, { expected_visible: true }), true, 'a case with at least one materialized product must remain in human scoring');
 const humanReviewContract = JSON.parse(fs.readFileSync('ops/evaluation/aha-projection-product-human-review-v2.json', 'utf8'));
 const canonicalRubric = JSON.parse(JSON.stringify(rubricModel(humanReviewContract)));
 assert.deepEqual(canonicalRubric, {
@@ -171,9 +190,21 @@ assert.throws(
   () => rubricModel({ ...humanReviewContract, rubric: { ...humanReviewContract.rubric, acceptable_score_minimum: 6 } }),
   /ugyldig skala eller terskel/
 );
-const archivedResult = (caseId) => ({
+const archivedResult = (caseId, materialized = true) => ({
   case_id: caseId,
-  model: { surfaces: { lists: [], paths: [], mindmap: { nodes: [], edges: [] } }, product_states: { list: {}, path: {}, mindmap: {} } },
+  model: {
+    status: materialized ? 'ready' : 'blocked',
+    surfaces: {
+      lists: materialized ? [{ id: `list_${caseId}` }] : [],
+      paths: materialized ? [{ id: `path_${caseId}`, steps: [] }] : [],
+      mindmap: materialized ? { nodes: [{ id: `mindmap_${caseId}` }], edges: [] } : { nodes: [], edges: [] }
+    },
+    product_states: {
+      list: { status: materialized ? 'ready' : 'needs_evidence' },
+      path: { status: materialized ? 'ready' : 'needs_evidence' },
+      mindmap: { status: materialized ? 'ready' : 'needs_evidence' }
+    }
+  },
   critical_provenance_errors: []
 });
 const archivedLive = {
@@ -181,7 +212,7 @@ const archivedLive = {
   version: 2,
   generated_at: baseline.generated_at,
   corpus_cases: 27,
-  results: corpus.cases.map((entry) => archivedResult(entry.id)),
+  results: corpus.cases.map((entry) => archivedResult(entry.id, entry.expected_visible !== false)),
   live_transport: { successful_chat_count: 29, backend_http_failures: [], critical_failures: [] }
 };
 assert.deepEqual(
@@ -235,8 +266,9 @@ assert.equal(normalizedDraft.case_reviews[0].lists, 4);
 assert.equal(normalizedDraft.case_reviews[0].paths, 5);
 assert.equal(normalizedDraft.case_reviews[0].mindmap, 4);
 assert.equal(normalizedDraft.case_reviews[0].notes, 'Første case vurdert.');
+assert.deepEqual(normalizedDraft.case_reviews[0].product_scores_required, { lists: true, paths: true, mindmap: true });
 const suppressedDraftEntry = normalizedDraft.case_reviews.find((entry) => entry.case_id === 'weak_slogan');
-assert.equal(suppressedDraftEntry.product_scores_required, false);
+assert.deepEqual(suppressedDraftEntry.product_scores_required, { lists: false, paths: false, mindmap: false });
 assert.equal(suppressedDraftEntry.lists, null);
 assert.equal(suppressedDraftEntry.paths, null);
 assert.equal(suppressedDraftEntry.mindmap, null);
@@ -272,7 +304,7 @@ assert.throws(
     corpus,
     review_source: { mode: 'archived_live', projection_mode: 'current_read_only_projection_from_archived_live_insights', workflow_run_id: baseline.workflow_run_id, artifact_id: baseline.artifact_id }
   }),
-  /score er ikke relevant for korrekt undertrykt output/
+  /score er ikke relevant når produktoutput ikke er materialisert/
 );
 
 assert.throws(
@@ -311,7 +343,9 @@ assert.match(html, /ahaSemanticProjectionsV2\.js/);
 assert.match(html, /ahaProjectionArtifactQualityV2\.js/);
 assert.match(html, /byg(g|ger).*på nytt lokalt|byg(g|ger).*lokalt/i);
 assert.doesNotMatch(html, /0\/81 produktscorer/);
+assert.match(html, /materialiserte review-outputene/);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
+assert.match(reviewRuntime, /human_score_denominator: \"materialized_product_outputs_only\"/);
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);
 assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
 assert.match(reviewRuntime, /HUMAN_REVIEW_URL/);

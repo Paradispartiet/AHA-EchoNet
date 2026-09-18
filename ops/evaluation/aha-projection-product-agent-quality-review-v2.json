@@ -164,6 +164,8 @@
     "current_product_code_applied": true,
     "new_model_calls_required": false,
     "human_scores_autofilled": false,
-    "human_attestation_written": false
+    "human_attestation_written": false,
+    "human_score_denominator": "materialized_product_outputs_only",
+    "missing_product_outputs_receive_human_scores": false
   }
 }

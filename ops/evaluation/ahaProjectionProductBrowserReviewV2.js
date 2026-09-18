@@ -363,8 +363,21 @@
     return known[value] || text(value).replace(/_/g, " ");
   }
 
+  function hasMaterializedProduct(result, product) {
+    const model = result?.model || {};
+    if (model.status !== "ready") return false;
+    if (product === "lists") return arr(model?.surfaces?.lists).length > 0;
+    if (product === "paths") return arr(model?.surfaces?.paths).length > 0;
+    if (product === "mindmap") return arr(model?.surfaces?.mindmap?.nodes).length > 0;
+    return false;
+  }
+
+  function requiresProductScore(result, source, product) {
+    return hasMaterializedProduct(result, product);
+  }
+
   function requiresProductScores(result, source) {
-    return !(source?.expected_visible === false && result?.model?.status !== "ready");
+    return PRODUCTS.some((product) => requiresProductScore(result, source, product));
   }
 
   function renderReviewRubric() {
@@ -479,11 +492,16 @@
     const sourceByCase = new Map(reviewCorpus.cases.map((entry) => [text(entry.id), entry]));
     const normalizedCases = draft.case_reviews.map((entry) => {
       const normalized = { case_id: text(entry.case_id) };
-      const productScoresRequired = requiresProductScores(resultByCase.get(normalized.case_id), sourceByCase.get(normalized.case_id));
+      const result = resultByCase.get(normalized.case_id);
+      const source = sourceByCase.get(normalized.case_id);
+      const productScoresRequired = Object.fromEntries(PRODUCTS.map((product) => [
+        product,
+        requiresProductScore(result, source, product)
+      ]));
       for (const product of PRODUCTS) {
         const value = entry?.[product];
-        if (!productScoresRequired) {
-          if (value != null && value !== "") throw new Error(`${normalized.case_id}: ${product}-score er ikke relevant for korrekt undertrykt output.`);
+        if (!productScoresRequired[product]) {
+          if (value != null && value !== "") throw new Error(`${normalized.case_id}: ${product}-score er ikke relevant når produktoutput ikke er materialisert.`);
           normalized[product] = null;
           continue;
         }
@@ -518,20 +536,19 @@
     let completeCases = 0;
     for (const result of state.results) {
       const source = state.corpus?.cases?.find((entry) => entry.id === result.case_id) || {};
-      if (!requiresProductScores(result, source)) {
-        completeCases += 1;
-        continue;
-      }
-      let caseScored = 0;
-      total += PRODUCTS.length;
+      let requiredForCase = 0;
+      let scoredForCase = 0;
       for (const product of PRODUCTS) {
+        if (!requiresProductScore(result, source, product)) continue;
+        requiredForCase += 1;
+        total += 1;
         const value = Number(global.document.querySelector(`[data-review-score="${result.case_id}:${product}"]`)?.value);
         if (Number.isInteger(value) && value >= 1 && value <= 5) {
           scored += 1;
-          caseScored += 1;
+          scoredForCase += 1;
         }
       }
-      if (caseScored === PRODUCTS.length) completeCases += 1;
+      if (scoredForCase === requiredForCase) completeCases += 1;
     }
     if (byId("review-progress")) byId("review-progress").textContent = `Review-fremdrift: ${scored}/${total} relevante produktscorer · ${completeCases}/${state.results.length} cases komplette.`;
     return { scored, total, complete_cases: completeCases, total_cases: state.results.length };
@@ -569,10 +586,16 @@
     const status = result.critical_provenance_errors.length ? "critical" : (result.model?.status === "ready" ? "ready" : "");
     const source = state.corpus?.cases?.find((entry) => entry.id === result.case_id) || {};
     const claims = Array.isArray(source.claims) ? source.claims : [];
-    const productScoresRequired = requiresProductScores(result, source);
-    const reviewControls = productScoresRequired
-      ? PRODUCTS.map((product) => `<label>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"} (1–5)<select data-review-score="${escapeHtml(result.case_id)}:${product}"><option value="">Ikke vurdert</option>${[1,2,3,4,5].map((score) => `<option value="${score}">${score}</option>`).join("")}</select></label>`).join("")
-      : '<p class="lead">Produktscore er ikke relevant: caset er forventet undertrykt og den arkiverte outputen er blocked.</p>';
+    const productLabel = (product) => product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart";
+    const reviewControls = PRODUCTS.map((product) => {
+      if (requiresProductScore(result, source, product)) {
+        return `<label>${productLabel(product)} (1–5)<select data-review-score="${escapeHtml(result.case_id)}:${product}"><option value="">Ikke vurdert</option>${[1,2,3,4,5].map((score) => `<option value="${score}">${score}</option>`).join("")}</select></label>`;
+      }
+      const reason = source.expected_visible === false
+        ? "korrekt undertrykt"
+        : "ingen kvalifisert output i evidensen";
+      return `<p class="lead" data-review-not-applicable="${escapeHtml(result.case_id)}:${product}">${productLabel(product)}: ingen human score · ${reason}.</p>`;
+    }).join("");
     return `<article class="case" data-case-id="${escapeHtml(result.case_id)}"><div class="case-head"><div><span class="badge">${escapeHtml(result.genre || source.genre)}</span><h3>${escapeHtml(result.focus || source.focus)}</h3><p>${escapeHtml(result.case_id)} · ${escapeHtml(result.identity?.source_sha256 || "")}</p></div><span class="badge ${status}">${result.critical_provenance_errors.length ? `${result.critical_provenance_errors.length} kritiske feil` : escapeHtml(result.model?.status || "ukjent")}</span></div><details class="source-evidence" open><summary>Kildetekst og forventede kildepåstander</summary><p>${escapeHtml(source.source_text || "Kildetekst mangler.")}</p>${claims.length ? `<ul>${claims.map((claim) => `<li>${escapeHtml(claim)}</li>`).join("")}</ul>` : ""}<p>Forventet produktoutput: ${source.expected_visible === false ? "skal undertrykkes ved utilstrekkelig belegg" : "kan være synlig dersom kvalitetsportene består"}.</p></details><div class="products">${PRODUCTS.map((product) => `<section class="product"><h4>${product === "lists" ? "Lister" : product === "paths" ? "Stier" : "Tankekart"}</h4><pre>${escapeHtml(JSON.stringify(productOutput(result.model, product), null, 2))}</pre></section>`).join("")}</div><div class="review">${reviewControls}</div><label class="critical-row"><input type="checkbox" data-critical="${escapeHtml(result.case_id)}" /> Kritisk proveniensfeil funnet av reviewer</label><label>Notat<textarea rows="3" data-review-note="${escapeHtml(result.case_id)}"></textarea></label></article>`;
   }
 
@@ -696,13 +719,17 @@
     const attested = byId("attestation")?.checked === true;
     const caseReviews = state.results.map((result) => {
       const source = state.corpus?.cases?.find((entry) => entry.id === result.case_id) || {};
-      const productScoresRequired = requiresProductScores(result, source);
+      const productScoresRequired = Object.fromEntries(PRODUCTS.map((product) => [
+        product,
+        requiresProductScore(result, source, product)
+      ]));
       const scores = Object.fromEntries(PRODUCTS.map((product) => {
-        if (!productScoresRequired) return [product, null];
+        if (!productScoresRequired[product]) return [product, null];
         const value = Number(global.document.querySelector(`[data-review-score="${result.case_id}:${product}"]`)?.value);
         return [product, Number.isInteger(value) && value >= 1 && value <= 5 ? value : null];
       }));
-      return { case_id: result.case_id, ...scores, product_scores_required: productScoresRequired, critical_provenance_error: global.document.querySelector(`[data-critical="${result.case_id}"]`)?.checked === true, notes: text(global.document.querySelector(`[data-review-note="${result.case_id}"]`)?.value), review_status: !productScoresRequired || PRODUCTS.every((product) => scores[product] != null) ? "complete" : "open" };
+      const reviewStatus = PRODUCTS.every((product) => !productScoresRequired[product] || scores[product] != null) ? "complete" : "open";
+      return { case_id: result.case_id, ...scores, product_scores_required: productScoresRequired, critical_provenance_error: global.document.querySelector(`[data-critical="${result.case_id}"]`)?.checked === true, notes: text(global.document.querySelector(`[data-review-note="${result.case_id}"]`)?.value), review_status: reviewStatus };
     });
     const shares = Object.fromEntries(PRODUCTS.map((product) => {
       const scores = caseReviews.map((entry) => entry[product]).filter(Number.isFinite);
@@ -711,7 +738,7 @@
     const complete = Boolean(reviewer && reviewedAt && attested && caseReviews.every((entry) => entry.review_status === "complete"));
     const critical = caseReviews.filter((entry) => entry.critical_provenance_error).length + state.results.reduce((sum, entry) => sum + entry.critical_provenance_errors.length, 0);
     const passed = complete && critical === 0 && PRODUCTS.every((product) => shares[product] >= 0.8);
-    return { schema: "aha_projection_product_human_review_v2", version: 2, reviewer: { name: reviewer, reviewed_at: reviewedAt, human_attestation: attested }, status: passed ? "independent_human_review_passed" : complete ? "independent_human_review_failed" : "independent_human_review_open", release_rule: { minimum_acceptable_share: 0.8, independent_human_review_required: true, critical_provenance_errors_allowed: 0, automatic_persistence_allowed: false }, acceptable_share: shares, critical_provenance_error_count: critical, browser_evaluation: { cases: state.results.length, runtime_generated: state.review_source?.mode !== "archived_live", source: clone(state.review_source) }, case_reviews: caseReviews };
+    return { schema: "aha_projection_product_human_review_v2", version: 2, reviewer: { name: reviewer, reviewed_at: reviewedAt, human_attestation: attested }, status: passed ? "independent_human_review_passed" : complete ? "independent_human_review_failed" : "independent_human_review_open", release_rule: { minimum_acceptable_share: 0.8, independent_human_review_required: true, critical_provenance_errors_allowed: 0, automatic_persistence_allowed: false, human_score_denominator: "materialized_product_outputs_only" }, acceptable_share: shares, critical_provenance_error_count: critical, browser_evaluation: { cases: state.results.length, runtime_generated: state.review_source?.mode !== "archived_live", source: clone(state.review_source) }, case_reviews: caseReviews };
   }
 
   function downloadReview() {
@@ -752,6 +779,7 @@
     updateReviewProgress,
     rubricModel,
     renderReviewRubric,
+    requiresProductScore,
     requiresProductScores,
     collectHumanReview,
     compareReplay,
