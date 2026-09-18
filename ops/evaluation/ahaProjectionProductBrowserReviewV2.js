@@ -307,6 +307,9 @@
       },
       validation: { valid: true, errors: [] }
     };
+    delete replayModel.gate_id;
+    delete replayModel.product_states;
+
     const currentModel = quality.filterReadModel(replayModel);
     if (currentModel?.status !== "ready" || currentModel?.validation?.valid !== true) {
       throw new Error(`${text(next.case_id) || "ukjent_case"}: dagens review-read-model er ikke ready etter reprojeksjon.`);
