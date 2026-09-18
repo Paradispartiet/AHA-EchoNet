@@ -235,6 +235,11 @@ assert.equal(normalizedDraft.case_reviews[0].lists, 4);
 assert.equal(normalizedDraft.case_reviews[0].paths, 5);
 assert.equal(normalizedDraft.case_reviews[0].mindmap, 4);
 assert.equal(normalizedDraft.case_reviews[0].notes, 'Første case vurdert.');
+const suppressedDraftEntry = normalizedDraft.case_reviews.find((entry) => entry.case_id === 'weak_slogan');
+assert.equal(suppressedDraftEntry.product_scores_required, false);
+assert.equal(suppressedDraftEntry.lists, null);
+assert.equal(suppressedDraftEntry.paths, null);
+assert.equal(suppressedDraftEntry.mindmap, null);
 assert.throws(
   () => validateDraft({
     ...draft,
@@ -256,6 +261,18 @@ assert.throws(
     review_source: { mode: 'archived_live', projection_mode: 'current_read_only_projection_from_archived_live_insights', workflow_run_id: baseline.workflow_run_id, artifact_id: baseline.artifact_id }
   }),
   /ugyldig lists-score/
+);
+
+assert.throws(
+  () => validateDraft({
+    ...draft,
+    case_reviews: draft.case_reviews.map((entry) => entry.case_id === 'weak_slogan' ? { ...entry, lists: 5 } : entry)
+  }, {
+    results: archivedLive.results,
+    corpus,
+    review_source: { mode: 'archived_live', projection_mode: 'current_read_only_projection_from_archived_live_insights', workflow_run_id: baseline.workflow_run_id, artifact_id: baseline.artifact_id }
+  }),
+  /score er ikke relevant for korrekt undertrykt output/
 );
 
 assert.throws(
@@ -293,6 +310,7 @@ assert.match(html, /ingen nye modellkall|arkivert live-evaluering/i);
 assert.match(html, /ahaSemanticProjectionsV2\.js/);
 assert.match(html, /ahaProjectionArtifactQualityV2\.js/);
 assert.match(html, /byg(g|ger).*på nytt lokalt|byg(g|ger).*lokalt/i);
+assert.doesNotMatch(html, /0\/81 produktscorer/);
 const reviewRuntime = fs.readFileSync('ops/evaluation/ahaProjectionProductBrowserReviewV2.js', 'utf8');
 assert.match(reviewRuntime, /attestation"\)\) byId\("attestation"\)\.checked = false/);
 assert.match(reviewRuntime, /Menneskelig attestasjon må bekreftes på nytt/);
