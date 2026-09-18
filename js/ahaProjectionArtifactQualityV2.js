@@ -11,6 +11,11 @@
   const DISPLAY_REFINEMENT = "source_bound_usefulness_v2";
   const MAX_PRODUCT_TITLE = 120;
 
+  const MINDMAP_SEMANTIC_ROLES = new Set([
+    "tension", "consequence", "contrast", "mechanism", "principle",
+    "pattern", "observation", "solution", "problem", "generalization"
+  ]);
+
   const DISPLAY_STOPWORDS = new Set([
     "og", "i", "på", "av", "til", "er", "et", "en", "det", "som", "med", "for", "den", "de", "å", "om", "men", "at", "fra",
     "har", "blir", "ble", "kan", "skal", "eller", "ikke", "når", "etter", "før", "ved", "også", "dette", "seg", "sine", "sin", "sitt",
@@ -443,6 +448,7 @@
     const nodes = arr(mindmap?.nodes);
     const edges = arr(mindmap?.edges);
     const nodeIds = new Set(nodes.map((node) => node.id));
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const roots = nodes.filter((node) => node.type === "theme" && node.meta?.root === true);
     const branches = edges.filter((edge) => edge.type === "theme_branch");
     const branchIds = new Set(branches.map((edge) => edge.to));
@@ -460,15 +466,45 @@
     const branchNodes = nodes.filter((node) => branchIds.has(node.id));
     const weakBranchTitles = branchNodes.filter((node) => text(node?.title || node?.label).length < 4);
     const lowInformationBranchAnchors = branchNodes.filter((node) => {
-      const semanticAnchor = text(node?.meta?.concept_key || node?.meta?.original_title || node?.title || node?.label);
+      const semanticAnchor = text(node?.meta?.concept_key || node?.meta?.semantic_role || node?.meta?.original_title || node?.title || node?.label);
       return Boolean(semanticAnchor)
         && isLowInformationLabel(semanticAnchor)
         && text(node?.meta?.display_theme_source) !== "source_bound_insight_text";
     });
     const hierarchyParentCounts = insightNodes.map((node) => hierarchyEdges.filter((edge) => edge.to === node.id).length);
     const invalidHierarchyParents = hierarchyParentCounts.filter((count) => count !== 1).length;
-    const invalidBranchSemantics = branchNodes.filter((node) => node.type !== "concept" || text(node?.meta?.branch_reason).length < 30).length
-      + branches.filter((edge) => text(edge?.meta?.branch_reason).length < 30 || edge?.meta?.semantic_basis !== "ranked_source_concept").length;
+
+    const invalidBranchSemantics = branches.filter((edge) => {
+      const node = nodeById.get(edge.to);
+      if (!node || node.type !== "concept" || text(node?.meta?.branch_reason).length < 30 || text(edge?.meta?.branch_reason).length < 30) return true;
+      const basis = text(edge?.meta?.semantic_basis);
+      if (basis === "ranked_source_concept") {
+        return node?.meta?.branch_basis === "semantic_role";
+      }
+      if (basis !== "ranked_semantic_role") return true;
+      const role = normalize(edge?.meta?.semantic_role);
+      if (!MINDMAP_SEMANTIC_ROLES.has(role)
+        || node?.meta?.branch_basis !== "semantic_role"
+        || normalize(node?.meta?.semantic_role) !== role) return true;
+      const children = hierarchyEdges.filter((candidate) => candidate.from === edge.to);
+      if (!children.length) return true;
+      return children.some((candidate) => {
+        const child = nodeById.get(candidate.to);
+        return !child
+          || child.type !== "insight"
+          || normalize(candidate?.meta?.semantic_role) !== role
+          || normalize(child?.meta?.semantic_role) !== role
+          || candidate?.meta?.semantic_basis !== "primary_semantic_role_assignment";
+      });
+    }).length;
+
+    const semanticRoleBranches = branches.filter((edge) => edge?.meta?.semantic_basis === "ranked_semantic_role");
+    const semanticRoleFallbackInvalid = semanticRoleBranches.length > 0 && (
+      mindmap?.meta?.branch_strategy !== "semantic_role_fallback_under_concept_scarcity"
+      || semanticRoleBranches.length < 2
+      || new Set(semanticRoleBranches.map((edge) => normalize(edge?.meta?.semantic_role))).size !== semanticRoleBranches.length
+    );
+
     const reasons = [];
     if (nodes.length < 4) reasons.push("mindmap_too_small");
     if (mindmap?.meta?.semantic_shape !== "ranked_hierarchy_v2" || mindmap?.meta?.branch_assignment !== "one_primary_hierarchy_parent_per_insight") reasons.push("mindmap_semantic_shape_invalid");
@@ -486,7 +522,7 @@
     if (weakBranchTitles.length) reasons.push("mindmap_branch_title_missing");
     if (lowInformationBranchAnchors.length) reasons.push("mindmap_branch_anchor_low_information");
     if (invalidHierarchyParents) reasons.push("mindmap_insight_hierarchy_parent_invalid");
-    if (invalidBranchSemantics) reasons.push("mindmap_branch_semantics_missing");
+    if (invalidBranchSemantics || semanticRoleFallbackInvalid) reasons.push("mindmap_branch_semantics_missing");
     const score = round(
       (nodes.length >= 4 ? 0.15 : 0)
       + (roots.length === 1 ? 0.2 : 0)
