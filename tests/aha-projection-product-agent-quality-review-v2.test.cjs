@@ -77,6 +77,33 @@ assert.equal(audit.release_boundary.projection_store_write_open, false);
 assert.equal(audit.release_boundary.normal_chat_automatic_persistence_open, false);
 assert.equal(audit.release_boundary.remote_write_open, false);
 
+assert.deepEqual(audit.paid_live_release_attempt, {
+  observed_at: "2026-09-19",
+  status: "blocked_external_credit_balance",
+  release_workflow_run: 35380836893,
+  release_run_number: 351,
+  release_head_sha: "16b73cb0722050cbdd44914f878617e542719cb4",
+  release_artifact_id: 10562060567,
+  release_backend_exact_sha_passed: true,
+  release_failure: "openai_quota_exhausted",
+  release_reserved_model_calls: 3,
+  release_reported_model_calls: 2,
+  smoke_workflow_run: 35434386690,
+  smoke_run_number: 359,
+  smoke_head_sha: "bbad8ff1357746c5e5c02bb8d81d442bfb1f5897",
+  smoke_artifact_id: 10581632970,
+  smoke_backend_exact_sha_passed: true,
+  smoke_model: "gpt-4.1-mini",
+  smoke_model_calls: 1,
+  smoke_within_budget: true,
+  provider_type: "insufficient_quota",
+  provider_code: "credit_balance_exhausted",
+  classification: "external_billing_block_not_product_quality_failure",
+  product_release_gate_passed: false,
+  rerun_without_credit_change_allowed: false,
+  next_external_action: "add_openai_api_credits_then_rerun_paid_release"
+});
+
 assert.equal(humanReview.status, "agent_pre_review_complete_independent_human_review_open");
 assert.equal(humanReview.release_rule.independent_human_review_required, true);
 assert.equal(humanReview.release_rule.minimum_acceptable_share, 0.8);
@@ -167,5 +194,14 @@ assert.match(integrationPlanDoc, /#970/);
 assert.match(integrationPlanDoc, /18\/22.*Lists.*18\/22.*Paths.*18\/22.*Mindmap/is);
 assert.match(integrationPlanDoc, /#971/);
 assert.match(integrationPlanDoc, /independent human review remains open/i);
+
+assert.match(qualityReviewDoc, /run #351|#351/i);
+assert.match(qualityReviewDoc, /smoke #359|#359/i);
+assert.match(qualityReviewDoc, /credit_balance_exhausted/);
+assert.match(qualityReviewDoc, /paid live.*remain.*open|paid.*release.*remain.*open/is);
+assert.match(integrationPlanDoc, /run #351|#351/i);
+assert.match(integrationPlanDoc, /smoke #359|#359/i);
+assert.match(integrationPlanDoc, /credit_balance_exhausted/);
+assert.match(integrationPlanDoc, /external.*billing|credit.*block/i);
 
 console.log("aha-projection-product-agent-quality-review-v2.test.cjs: OK (agent remediation recorded; independent human gate remains open)");
