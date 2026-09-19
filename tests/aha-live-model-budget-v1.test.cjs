@@ -42,6 +42,8 @@ async function run() {
   assert.match(browserGate, /LIVE_MODE !== "release"/);
   assert.match(browserGate, /live_model_budget_exceeded:model_calls/);
   assert.match(browserGate, /openai_quota_exhausted/);
+  assert.match(browserGate, /type: body\?\.type \|\| null/);
+  assert.match(browserGate, /code: body\?\.code \|\| null/);
 
   console.log("aha-live-model-budget-v1.test.cjs passed");
 }
