@@ -3,16 +3,16 @@
   "version": "2.0.0",
   "lifecycle_stage": "observed_upstream_release",
   "source_repo": "Paradispartiet/History-Go",
-  "source_commit": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "source_commit": "c35fc7497838bdfd5d3fa0b360716179cbac3381",
   "producer_release_schema": "history_go_fagverk_release_v2",
   "producer_release_version": "2.0.0",
-  "release_sha256": "27f59728ea7099dfaacadb9cdafad4c62103dd563d6bb2e0d0ac6ebf81aed7fb",
+  "release_sha256": "e723fdf226cf5fecefdaf513e973cf0ee93343a87bb6fa23b83076cf8ec7c473",
   "registry": {
     "path": "data/fagverk/fagverk_registry.json",
     "schema": "history_go_fagverk_registry_v1",
     "version": "3.16.0",
     "updated_at": "2026-09-16",
-    "content_sha256": "8a749c2fa0bdfc08ad3267613ab74445761df95b55b124613b1931fe621b626f"
+    "content_sha256": "ad3cb62944ebec6607fb59419ffb6e380a1bcd55d8e1301074f204dcd55a3421"
   },
   "subject_inventory": {
     "path": "data/fagverk/subject_inventory.json",
@@ -28,7 +28,7 @@
     "schema": null,
     "version": null,
     "updated_at": null,
-    "content_sha256": "c852e90f6b71c943e12082c6d780a96ff16d5adce9f72b8b5977ce715d3c8b58"
+    "content_sha256": "0570c69515a943ab9934fa8535500dd3e8cf37ca1956023e8960810f6ebcbc37"
   },
   "summary": {
     "subject_count": 20,
@@ -37,9 +37,9 @@
     "chapter_subject_count": 18,
     "chapter_count": 190,
     "module_file_count": 497,
-    "package_file_count": 447,
+    "package_file_count": 450,
     "chapter_referenced_file_count": 934,
-    "referenced_file_count": 1310,
+    "referenced_file_count": 1313,
     "missing_file_count": 0,
     "optional_gap_count": 1
   },
@@ -278,9 +278,9 @@
       "pilot": false,
       "package_status": "complete",
       "chapter_status": "materialized",
-      "package_file_count": 58,
+      "package_file_count": 61,
       "required_package_file_count": 4,
-      "optional_package_file_count": 54,
+      "optional_package_file_count": 57,
       "optional_gap_count": 0,
       "missing_optional_files": [],
       "chapter_count": 12,
@@ -288,11 +288,11 @@
       "brief_file_count": 12,
       "claims_file_count": 12,
       "chapter_referenced_file_count": 72,
-      "referenced_file_count": 130,
-      "package_content_sha256": "cd8cae94d6234b483392893ef152c4391a0a6dab30d9400c5c192bcdcb5f3f07",
+      "referenced_file_count": 133,
+      "package_content_sha256": "9a163349ae110587cce19e63754df1956d5c23e7c05ee002142db4868718dccb",
       "chapter_content_sha256": "06d3f52d2c3e2ff12545cbbc2fc0c1a783071c46a79f1e46ae368e44562143d1",
-      "structure_sha256": "f0d9430a6efa99990821377aab6cf36fbd3963c9fad0b76e59cc3782bc902342",
-      "content_sha256": "99570778b0ca9d92fb28bd1e68a39f88f01c5e4fca263b3648fc3ef5af4f7b4d"
+      "structure_sha256": "67d1d3962328fe80812c45ca7891c8097825c7b9fc5c598eafa771ff3ebe0db9",
+      "content_sha256": "3e19258f501c52ebc481f23dfa5ef15100c41ddd5f8b247c5bf3dd067987df4f"
     },
     "natur": {
       "subject_id": "natur",
