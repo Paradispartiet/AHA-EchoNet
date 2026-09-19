@@ -105,6 +105,7 @@ function createSemanticModelHandler({ openai, model, hasOpenAIKey } = {}) {
       return sendJson(res, providerError.httpStatus, semanticModelErrorBody(providerError.error, {
         status: providerError.status,
         type: providerError.type,
+        code: providerError.code,
         retryable: providerError.retryable
       }));
     }
