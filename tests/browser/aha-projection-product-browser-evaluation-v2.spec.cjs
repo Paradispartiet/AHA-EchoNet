@@ -64,7 +64,7 @@ function createLiveBudget() {
       ? Number(body?.cost_control?.model_call_count ?? body?.synthesis_attempts ?? (status >= 500 || status === 429 ? 1 : 0))
       : 1;
     usage.reported_model_calls += Math.max(0, Number.isFinite(reported) ? reported : 0);
-    events.push({ event: "response", endpoint, status, reported_model_calls: reported, error: body?.error || null });
+    events.push({ event: "response", endpoint, status, reported_model_calls: reported, error: body?.error || null, type: body?.type || null, code: body?.code || null });
     if (quotaExhausted(body)) {
       halted = true;
       haltReason = "openai_quota_exhausted";
