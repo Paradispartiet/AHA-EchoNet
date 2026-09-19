@@ -471,6 +471,7 @@ app.post("/api/aha-agent/chat", async (req, res) => {
       error: providerError.error,
       status: providerError.status,
       type: providerError.type,
+      code: providerError.code,
       retryable: providerError.retryable
     });
   }
@@ -568,6 +569,7 @@ app.post("/api/aha-agent/insight-candidates", async (req, res) => {
       error: providerError.error,
       status: providerError.status,
       type: providerError.type,
+      code: providerError.code,
       retryable: providerError.retryable
     });
   }

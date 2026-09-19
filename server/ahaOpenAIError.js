@@ -7,10 +7,12 @@ function normalizedStatus(error) {
 }
 
 function normalizedProviderType(error) {
-  const value = error?.type
-    ?? error?.code
-    ?? error?.error?.type
-    ?? error?.error?.code;
+  const value = error?.type ?? error?.error?.type;
+  return String(value || "").trim().slice(0, 80) || null;
+}
+
+function normalizedProviderCode(error) {
+  const value = error?.code ?? error?.error?.code;
   return String(value || "").trim().slice(0, 80) || null;
 }
 
@@ -20,7 +22,16 @@ function classifyOpenAIError(error, {
 } = {}) {
   const providerStatus = normalizedStatus(error);
   const providerType = normalizedProviderType(error);
-  const quotaExhausted = providerStatus === 429 && providerType === "insufficient_quota";
+  const providerCode = normalizedProviderCode(error);
+  const quotaCodes = new Set([
+    "insufficient_quota",
+    "credit_balance_exhausted",
+    "organization_usage_limit_exceeded",
+    "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded"
+  ]);
+  const quotaExhausted = providerStatus === 429
+    && (quotaCodes.has(providerType) || quotaCodes.has(providerCode));
 
   if (quotaExhausted) {
     return {
@@ -28,6 +39,7 @@ function classifyOpenAIError(error, {
       error: "openai_quota_exhausted",
       status: providerStatus,
       type: providerType,
+      code: providerCode,
       retryable: false
     };
   }
@@ -38,6 +50,7 @@ function classifyOpenAIError(error, {
       error: "openai_rate_limited",
       status: providerStatus,
       type: providerType,
+      code: providerCode,
       retryable: true
     };
   }
@@ -47,6 +60,7 @@ function classifyOpenAIError(error, {
     error: defaultError,
     status: providerStatus,
     type: providerType,
+    code: providerCode,
     retryable: providerStatus == null || providerStatus >= 500
   };
 }

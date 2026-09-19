@@ -212,6 +212,7 @@ async function run() {
         const error = new Error("SECRET quota message that must not leak");
         error.status = 429;
         error.type = "insufficient_quota";
+        error.code = "project_spend_limit_exceeded";
         throw error;
       } } }
     });
@@ -224,6 +225,7 @@ async function run() {
     assert.equal(res.body.error, "openai_quota_exhausted");
     assert.equal(res.body.status, 429);
     assert.equal(res.body.type, "insufficient_quota");
+    assert.equal(res.body.code, "project_spend_limit_exceeded");
     assert.equal(res.body.retryable, false);
     assert.equal(res.body.policy.synthesis_allowed, false);
     assert.equal(res.body.policy.canonical_write, false);

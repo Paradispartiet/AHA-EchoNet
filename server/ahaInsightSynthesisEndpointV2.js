@@ -125,6 +125,7 @@ function createInsightSynthesisHandlerV2({ openai, model, hasOpenAIKey } = {}) {
         return sendJson(res, providerError.httpStatus, synthesisErrorBody(providerError.error, {
           status: providerError.status,
           type: providerError.type,
+          code: providerError.code,
           retryable: providerError.retryable,
           cost_control: costControlEvidence(costControl, modelCallCount)
         }));

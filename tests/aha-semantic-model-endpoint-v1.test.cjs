@@ -217,6 +217,7 @@ async function run() {
             const error = new Error("SECRET billing details that must not leak");
             error.status = 429;
             error.type = "insufficient_quota";
+            error.code = "credit_balance_exhausted";
             throw error;
           }
         }
@@ -227,6 +228,7 @@ async function run() {
     assert.equal(res.body.error, "openai_quota_exhausted");
     assert.equal(res.body.status, 429);
     assert.equal(res.body.type, "insufficient_quota");
+    assert.equal(res.body.code, "credit_balance_exhausted");
     assert.equal(res.body.retryable, false);
     assert.equal(JSON.stringify(res.body).includes("SECRET billing details"), false);
   }
@@ -255,6 +257,7 @@ async function run() {
   assert.match(serverSource, /import \{ createSemanticModelHandler \} from "\.\/server\/ahaSemanticModelEndpoint\.js";/);
   assert.match(serverSource, /app\.post\("\/api\/aha-agent\/semantic-document", createSemanticModelHandler\(\{/);
   assert.match(serverSource, /hasOpenAIKey: Boolean\(OPENAI_API_KEY\)/);
+  assert.match(serverSource, /code: providerError\.code/);
   assert.doesNotMatch(
     fs.readFileSync("server/ahaSemanticModelEndpoint.js", "utf8"),
     /chat\.completions\.create/,
