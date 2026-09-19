@@ -43,6 +43,14 @@ current per-product reprojection gate = passed
 
 PR #971 therefore marks the archived review input ready and admissible for independent human scoring. **Independent human review remains open**: no human product scores or attestation were autofilled, and the paid explicit raw-Chat release journey plus final release gate also remain open. No automatic, remote, sync, Chamber or Meta write authority is widened by this review-input transition.
 
+## Paid live release attempt (2026-09-19)
+
+The first explicit paid release dispatch, **run #351** (`35380836893`), ran against canonical main `16b73cb0722050cbdd44914f878617e542719cb4`. The exact Render backend SHA check passed before the live phase. The provider then returned non-retryable `openai_quota_exhausted`; the release stopped after 3 reserved / 2 reported model calls rather than completing the 27-case corpus.
+
+A one-attempt diagnostic **smoke #359** (`35434386690`) on exact backend `bbad8ff1357746c5e5c02bb8d81d442bfb1f5897` used one model call and proved the specific upstream condition: `type=insufficient_quota`, `code=credit_balance_exhausted`.
+
+The result is classified as an **external API credit/billing block**, not a semantic or product-quality failure. The paid live journey remains open until OpenAI API credits are added and the explicit release is rerun successfully. Independent human review and the final release gate also remain open. No persistence or write authority changes because of this external block.
+
 ## Product distinctions
 
 These surfaces must not be conflated:
