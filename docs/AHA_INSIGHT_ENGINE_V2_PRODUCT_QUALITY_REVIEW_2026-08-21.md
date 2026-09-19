@@ -139,6 +139,14 @@ current per-product reprojection gate = passed
 
 PR #971 records that evidence canonically. The archived live input is now **klar for uavhengig menneskelig scoring**, but this is not a human-review pass: all human product scores remain empty, no human attestation has been written or autofilled, and independent human usefulness review remains open. Automatic persistence and remote/write authority remain closed.
 
+## Paid live release attempt (2026-09-19)
+
+The explicit paid release was actually run. Workflow **#351** (run `35380836893`) targeted canonical main `16b73cb0722050cbdd44914f878617e542719cb4`, passed the exact deployed-backend SHA gate, and then stopped fail-closed on `openai_quota_exhausted`. The cost guard recorded only 3 reserved / 2 reported model calls before halting, so this was not a full-corpus product-quality result.
+
+A bounded one-attempt paid **smoke #359** (run `35434386690`) then targeted exact backend `bbad8ff1357746c5e5c02bb8d81d442bfb1f5897`. It remained inside its one-model-call budget and identified the provider response as `type=insufficient_quota`, `code=credit_balance_exhausted`.
+
+This is an **external OpenAI API credit/billing block, not a product-quality failure**. The paid live raw-Chat release gate therefore remains open, independent human review remains open, and no automatic, remote, sync, Chamber or Meta write authority is widened. A paid release rerun is not warranted until API credits have changed.
+
 ## Release boundary
 
 The independent human ledger remains unchanged:
