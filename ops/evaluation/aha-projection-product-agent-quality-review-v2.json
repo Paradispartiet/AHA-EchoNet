@@ -222,5 +222,31 @@
     "human_scoring_input_ready": true,
     "human_review_input_admissible": true,
     "next_required_evidence": "independent_human_review_scores_and_attestation"
+  },
+  "paid_live_release_attempt": {
+    "observed_at": "2026-09-19",
+    "status": "blocked_external_credit_balance",
+    "release_workflow_run": 35380836893,
+    "release_run_number": 351,
+    "release_head_sha": "16b73cb0722050cbdd44914f878617e542719cb4",
+    "release_artifact_id": 10562060567,
+    "release_backend_exact_sha_passed": true,
+    "release_failure": "openai_quota_exhausted",
+    "release_reserved_model_calls": 3,
+    "release_reported_model_calls": 2,
+    "smoke_workflow_run": 35434386690,
+    "smoke_run_number": 359,
+    "smoke_head_sha": "bbad8ff1357746c5e5c02bb8d81d442bfb1f5897",
+    "smoke_artifact_id": 10581632970,
+    "smoke_backend_exact_sha_passed": true,
+    "smoke_model": "gpt-4.1-mini",
+    "smoke_model_calls": 1,
+    "smoke_within_budget": true,
+    "provider_type": "insufficient_quota",
+    "provider_code": "credit_balance_exhausted",
+    "classification": "external_billing_block_not_product_quality_failure",
+    "product_release_gate_passed": false,
+    "rerun_without_credit_change_allowed": false,
+    "next_external_action": "add_openai_api_credits_then_rerun_paid_release"
   }
 }
