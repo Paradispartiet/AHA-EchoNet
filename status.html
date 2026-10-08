@@ -6,21 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-system-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
   <a class="aha-skip-link" href="#aha-status-main">Hopp til hovedinnhold</a>
   <div id="aha-global-nav"></div>
 
-  <main id="aha-status-main" class="aha-dashboard aha-status-page" tabindex="-1">
-    <header class="aha-status-page-header">
-      <p class="eyebrow">AHA System</p>
-      <h1>Systemstatus</h1>
-      <p>Teknisk status, produktflyt og integrasjoner.</p>
-      <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA Home</a>
-    </header>
+  <main id="aha-status-main" class="aha-dashboard aha-shell-wide aha-status-page aha-system-surface" tabindex="-1">
+    <section class="aha-panel aha-module-shell aha-system-hero">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA System</p>
+          <h1>Systemstatus</h1>
+          <p class="aha-module-purpose">Teknisk status, produktflyt og integrasjoner.</p>
+        </div>
+      </header>
+    </section>
 
-    <section class="aha-panel aha-status-page-section aha-product-integration-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
+    <section class="aha-panel aha-status-page-section aha-product-integration-panel aha-system-primary-panel" id="aha-product-integration" aria-label="AHA Product Integration V1">
       <p class="eyebrow">AHA Product Integration V1</p>
       <h2>AHA er klar til å arbeide med deg</h2>
       <p id="aha-product-summary" class="aha-panel-subtitle">AHA samler Home, Chat, Personal AI, Training, Sync Hub, AHA Music og History Go i én produktflyt.</p>
@@ -43,7 +47,7 @@
       <div id="aha-product-primary-action" class="aha-status-stack" aria-live="polite">Neste handling lastes …</div>
     </section>
 
-    <section class="aha-panel aha-status-page-section aha-product-flow-panel" id="aha-product-flow-panel" aria-label="Slik henger AHA sammen">
+    <section class="aha-panel aha-status-page-section aha-product-flow-panel aha-system-secondary-panel" id="aha-product-flow-panel" aria-label="Slik henger AHA sammen">
       <p class="eyebrow">Produktflyt</p>
       <h2>Slik henger AHA sammen</h2>
       <div class="aha-profile-status-grid aha-product-flow-grid">
@@ -55,7 +59,7 @@
       </div>
     </section>
 
-    <section class="aha-panel aha-status-page-section aha-status-panel" aria-labelledby="aha-status-title">
+    <section class="aha-panel aha-status-page-section aha-status-panel aha-system-status-panel" aria-labelledby="aha-status-title">
       <div class="aha-panel-head">
         <div>
           <p class="eyebrow">System</p>
@@ -77,7 +81,7 @@
         <ul id="aha-recent-activity" class="aha-activity-list"></ul>
       </section>
 
-      <details class="aha-tech-status" open>
+      <details class="aha-tech-status">
         <summary>Teknisk status</summary>
         <pre id="out" class="aha-dashboard-output"></pre>
       </details>
