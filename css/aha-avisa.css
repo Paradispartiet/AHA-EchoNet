@@ -1,5 +1,5 @@
 .avisa-overview .avisa-badges { display:flex; gap:10px; flex-wrap:wrap; }
-.avisa-badge { background:#eef3ff; color:#1c2b4a; border-radius:999px; padding:4px 10px; font-size:.9rem; }
+.avisa-badge { background:var(--aha-color-blue-soft); color:#d8e8ff; border:1px solid rgba(116,173,255,.22); border-radius:var(--aha-radius-pill); padding:5px 10px; font-size:.86rem; }
 .avisa-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .avisa-article textarea { width:100%; min-height:140px; margin-top:6px; }
 .avisa-ref-list { margin:10px 0; padding-left:18px; }
@@ -9,13 +9,54 @@
 .avisa-tags { margin:8px 0; display:flex; gap:6px; flex-wrap:wrap; }
 .avisa-header-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .avisa-status { text-transform:uppercase; font-size:.75rem; }
-.status-badge.status-draft { background:#eef3ff; }
-.status-badge.status-review { background:#fff5d6; }
-.status-badge.status-ready { background:#e7f8e9; }
-.status-badge.status-published_local { background:#e7f0ff; }
+.status-badge.status-draft { background:var(--aha-color-blue-soft); color:#d8e8ff; border-color:rgba(116,173,255,.24); }
+.status-badge.status-review { background:var(--aha-color-accent-soft); color:#ffe68a; border-color:rgba(244,200,74,.28); }
+.status-badge.status-ready { background:var(--aha-color-green-soft); color:var(--aha-color-green); border-color:rgba(126,226,168,.24); }
+.status-badge.status-published_local { background:var(--aha-color-violet-soft); color:#ddd4ff; border-color:rgba(170,145,247,.24); }
 .status-actions { margin:10px 0; }
 .section-filter { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-.section-filter button.is-active { border:1px solid #4864e8; background:#eef3ff; }
-.local-publish-note { margin:8px 0; font-size:.92rem; color:#27324a; }
-.group-draft-badge { display:inline-block; background:#f2edff; color:#46238a; padding:3px 8px; border-radius:12px; font-size:.82rem; margin:4px 0; }
-.avisa-layer-badge { background:#e8f6ef; color:#185d36; }
+.section-filter button.is-active { border:1px solid rgba(116,173,255,.38); background:var(--aha-color-blue-soft); color:#d8e8ff; }
+.local-publish-note { margin:8px 0; font-size:.92rem; color:var(--aha-muted); }
+.group-draft-badge { display:inline-block; background:var(--aha-color-violet-soft); color:#ddd4ff; border:1px solid rgba(170,145,247,.2); padding:3px 8px; border-radius:var(--aha-radius-pill); font-size:.82rem; margin:4px 0; }
+.avisa-layer-badge { background:var(--aha-color-cyan-soft); color:var(--aha-color-cyan); border-color:rgba(88,217,199,.2); }
+
+
+.aha-avisa-page > .aha-module-shell {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-avisa-page #avisa-create {
+  border-color: rgba(170,145,247,.18);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.065), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-avisa-page .avisa-overview {
+  border-color: rgba(116,173,255,.16);
+  background: rgba(116,173,255,.035);
+}
+
+.aha-avisa-page .section-filter button {
+  min-height: 38px;
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
+  color: var(--aha-muted);
+  padding: 7px 10px;
+}
+
+.aha-avisa-page .section-filter button:hover {
+  color: var(--aha-text);
+  border-color: rgba(116,173,255,.26);
+}
+
+.aha-avisa-page .avisa-article {
+  border-color: var(--aha-line);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
+  box-shadow: var(--aha-shadow-soft);
+}
