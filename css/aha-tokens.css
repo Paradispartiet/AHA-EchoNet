@@ -1,0 +1,93 @@
+/* AHA Design Consolidation V1 — canonical visual tokens.
+   This file owns shared product color, contrast, spacing, radius and elevation.
+   Existing --aha-* and --gnav-* names remain as compatibility aliases while
+   module CSS is migrated in controlled slices. */
+
+:root {
+  /* Core surfaces */
+  --aha-color-bg-deep: #050b14;
+  --aha-color-bg: #071321;
+  --aha-color-surface: #0d1b2d;
+  --aha-color-surface-raised: #132741;
+  --aha-color-surface-soft: #1a304d;
+  --aha-color-panel: rgba(16, 35, 58, .94);
+  --aha-color-panel-soft: rgba(22, 46, 75, .76);
+  --aha-color-glass: rgba(8, 23, 39, .86);
+  --aha-color-input: rgba(18, 39, 65, .88);
+
+  /* Contrast */
+  --aha-color-text: #f8fbff;
+  --aha-color-muted: #aebed2;
+  --aha-color-subtle: #7f93ad;
+  --aha-color-line: rgba(151, 181, 220, .22);
+  --aha-color-line-strong: rgba(176, 203, 237, .34);
+
+  /* Product accents */
+  --aha-color-accent: #f4c84a;
+  --aha-color-accent-soft: rgba(244, 200, 74, .15);
+  --aha-color-blue: #74adff;
+  --aha-color-blue-soft: rgba(116, 173, 255, .15);
+  --aha-color-cyan: #58d9c7;
+  --aha-color-cyan-soft: rgba(88, 217, 199, .14);
+  --aha-color-violet: #aa91f7;
+  --aha-color-violet-soft: rgba(170, 145, 247, .14);
+  --aha-color-green: #7ee2a8;
+  --aha-color-green-soft: rgba(126, 226, 168, .13);
+  --aha-color-coral: #ff987d;
+  --aha-color-coral-soft: rgba(255, 152, 125, .13);
+  --aha-color-danger: #ff7082;
+
+  /* Effects */
+  --aha-shadow: 0 24px 64px rgba(1, 7, 15, .34);
+  --aha-shadow-soft: 0 12px 34px rgba(1, 7, 15, .24);
+  --aha-focus-ring: 0 0 0 3px rgba(116, 173, 255, .28);
+  --aha-grid-line: rgba(116, 173, 255, .035);
+  --aha-app-background:
+    radial-gradient(circle at 12% -8%, rgba(116, 173, 255, .18), transparent 34%),
+    radial-gradient(circle at 94% 5%, rgba(170, 145, 247, .14), transparent 30%),
+    radial-gradient(circle at 50% 112%, rgba(88, 217, 199, .07), transparent 34%),
+    linear-gradient(160deg, #071321 0%, #0a192b 54%, #07111e 100%);
+  --aha-panel-background:
+    linear-gradient(145deg, rgba(18, 40, 66, .96), rgba(10, 25, 43, .94));
+  --aha-panel-background-soft:
+    linear-gradient(155deg, rgba(21, 44, 72, .82), rgba(11, 27, 46, .82));
+
+  /* Geometry */
+  --aha-radius-sm: 10px;
+  --aha-radius-md: 14px;
+  --aha-radius-lg: 18px;
+  --aha-radius-xl: 22px;
+  --aha-radius-pill: 999px;
+  --aha-space-1: 4px;
+  --aha-space-2: 8px;
+  --aha-space-3: 12px;
+  --aha-space-4: 16px;
+  --aha-space-5: 20px;
+  --aha-space-6: 24px;
+
+  /* Compatibility aliases used by existing Dashboard / Chat / modules */
+  --aha-bg: var(--aha-color-bg);
+  --aha-surface: var(--aha-color-surface);
+  --aha-surface-2: var(--aha-color-surface-raised);
+  --aha-card: var(--aha-color-panel);
+  --aha-card-soft: var(--aha-color-panel-soft);
+  --aha-line: var(--aha-color-line);
+  --aha-border: var(--aha-color-line);
+  --aha-line-yellow: rgba(244, 200, 74, .42);
+  --aha-yellow: var(--aha-color-accent);
+  --aha-yellow-soft: var(--aha-color-accent-soft);
+  --aha-text: var(--aha-color-text);
+  --aha-muted: var(--aha-color-muted);
+  --aha-green: var(--aha-color-green);
+  --aha-accent: var(--aha-color-accent);
+
+  /* Global navigation aliases */
+  --gnav-bg: rgba(7, 19, 33, .95);
+  --gnav-surface: var(--aha-color-surface);
+  --gnav-card: var(--aha-color-panel-soft);
+  --gnav-line: var(--aha-color-line);
+  --gnav-text: var(--aha-color-text);
+  --gnav-muted: var(--aha-color-muted);
+  --gnav-accent: var(--aha-color-accent);
+  --gnav-accent-soft: var(--aha-color-blue-soft);
+}
