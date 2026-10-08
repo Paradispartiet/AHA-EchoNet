@@ -6,32 +6,33 @@
   <title>AHA Training Corpus</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-ai-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard aha-shell-workspace training-page">
-    <section class="aha-panel aha-module-shell">
+  <main class="aha-dashboard aha-shell-workspace training-page aha-ai-surface aha-training-page">
+    <section class="aha-panel aha-module-shell aha-ai-hero">
       <header class="aha-module-shell-header">
         <div>
           <p class="eyebrow">AHA Training</p>
           <h1>AHA Training Corpus</h1>
           <p class="aha-module-purpose">Training i AHA betyr lokalt corpus og lokale examples for review, retrieval og eventuell manuell JSONL-eksport. Det trener ikke en modell, laster ikke opp data og starter ikke fine-tuning.</p>
-          <p class="module-meta">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
+          <p class="module-meta aha-ai-boundary">Rått materiale blir først nyttig når det er godkjent. Godkjent materiale kan brukes i chat, retrieval, treningseksempler og senere eksport når samtykke er slått på.</p>
         </div>
       </header>
-      <p class="module-meta">Fine-tuning-samtykke betyr bare at et godkjent example kan bli med i en lokal JSONL-eksport senere. Ingen opplasting eller modelltrening skjer her.</p><p class="module-meta">Training Corpus = rått/godkjent lokalt materiale. Training Examples = lokale eksempler som må godkjennes. Personal AI bruker dette til lokal readiness, retrieval, preview og evaluering.</p>
-      <div class="aha-module-actions">
-        <button id="training-import-btn" type="button">Importer fra AHA</button>
-        <button id="training-intake-import-btn" type="button">Importer godkjent intake</button>
-        <button id="training-curation-import-btn" type="button">Importer godkjent kuratering til Training Corpus</button>
-        <button id="training-generate-btn" type="button">Lag treningseksempler</button>
-        <button id="training-export-btn" type="button">Eksporter godkjente eksempler</button>
-        <button id="training-retrieval-btn" type="button">Bygg personlig søkeindeks</button>
-        <button id="training-semantic-retrieval-btn" type="button">Bygg semantisk søkeindeks</button>
-        <button id="training-ai-loop-audit-btn" type="button">Kjør AI-loop audit</button>
-        <button id="training-answer-composer-btn" type="button">Test Answer Composer</button>
-        <button id="training-answer-evaluation-btn" type="button">Test Answer Evaluation</button>
+      <p class="module-meta aha-ai-boundary">Fine-tuning-samtykke betyr bare at et godkjent example kan bli med i en lokal JSONL-eksport senere. Ingen opplasting eller modelltrening skjer her.</p><p class="module-meta">Training Corpus = rått/godkjent lokalt materiale. Training Examples = lokale eksempler som må godkjennes. Personal AI bruker dette til lokal readiness, retrieval, preview og evaluering.</p>
+      <div class="aha-module-actions aha-training-control-grid">
+        <button id="training-import-btn" class="aha-training-core-action" type="button">Importer fra AHA</button>
+        <button id="training-intake-import-btn" class="aha-training-review-action" type="button">Importer godkjent intake</button>
+        <button id="training-curation-import-btn" class="aha-training-review-action" type="button">Importer godkjent kuratering til Training Corpus</button>
+        <button id="training-generate-btn" class="aha-training-core-action" type="button">Lag treningseksempler</button>
+        <button id="training-export-btn" class="aha-training-export-action" type="button">Eksporter godkjente eksempler</button>
+        <button id="training-retrieval-btn" class="aha-training-core-action" type="button">Bygg personlig søkeindeks</button>
+        <button id="training-semantic-retrieval-btn" class="aha-training-core-action" type="button">Bygg semantisk søkeindeks</button>
+        <button id="training-ai-loop-audit-btn" class="aha-training-eval-action" type="button">Kjør AI-loop audit</button>
+        <button id="training-answer-composer-btn" class="aha-training-eval-action" type="button">Test Answer Composer</button>
+        <button id="training-answer-evaluation-btn" class="aha-training-eval-action" type="button">Test Answer Evaluation</button>
         <a class="aha-tile-btn aha-tile-btn-primary" href="knowledge-workbench.html">Åpne Knowledge Workbench</a><a class="aha-tile-btn aha-tile-btn-primary" href="intake.html">Åpne Data Intake</a>
         <a class="aha-tile-btn" href="curation.html">Åpne Curation</a><a class="aha-tile-btn" href="knowledge-map.html">Åpne Knowledge Map</a>
         <a class="aha-tile-btn" href="personal-ai.html">Åpne Personal AI Control Panel</a>
@@ -41,7 +42,7 @@
       <p id="training-message" class="module-meta" role="status" aria-live="polite"></p>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-ai-status-panel">
       <h2>Status</h2>
       <p class="module-meta">Statusen viser hva som er rått materiale, hva som er godkjent, hva som kan brukes i chat/retrieval, og hva som kan eksporteres senere.</p>
       <div class="aha-training-stats">
@@ -55,7 +56,7 @@
       </div>
     </section>
 
-    <section class="aha-panel" id="training-data-intake-panel">
+    <section class="aha-panel aha-ai-secondary-panel" id="training-data-intake-panel">
       <h2>Data Intake</h2>
       <p class="module-meta">Nytt materiale inn går via Data Intake før lokal godkjenning til Training Corpus. JSONL-eksport er lokal fil/streng, ikke backend/upload.</p>
       <div class="aha-training-stats">
@@ -66,45 +67,45 @@
       </div>
     </section>
 
-    <section class="aha-panel" id="training-curation-panel"><h2>Knowledge Curation</h2><p class="module-meta">Curation gir en ryddigere vei fra Data Intake til Training når materialet vokser.</p><div class="aha-training-stats"><div class="aha-mini-stat"><strong id="training-curation-total">0</strong><span>Curation total</span></div><div class="aha-mini-stat"><strong id="training-curation-review">0</strong><span>Review</span></div><div class="aha-mini-stat"><strong id="training-curation-trainingReady">0</strong><span>Training ready</span></div></div><div class="aha-tile-actions"><a class="aha-tile-btn" href="curation.html">Åpne Curation</a></div></section>
+    <section class="aha-panel aha-ai-secondary-panel" id="training-curation-panel"><h2>Knowledge Curation</h2><p class="module-meta">Curation gir en ryddigere vei fra Data Intake til Training når materialet vokser.</p><div class="aha-training-stats"><div class="aha-mini-stat"><strong id="training-curation-total">0</strong><span>Curation total</span></div><div class="aha-mini-stat"><strong id="training-curation-review">0</strong><span>Review</span></div><div class="aha-mini-stat"><strong id="training-curation-trainingReady">0</strong><span>Training ready</span></div></div><div class="aha-tile-actions"><a class="aha-tile-btn" href="curation.html">Åpne Curation</a></div></section>
 
-    <section class="aha-panel" id="training-readiness-panel">
+    <section class="aha-panel aha-training-readiness-card" id="training-readiness-panel">
       <h2>Personal Model Readiness</h2>
       <div id="training-readiness-report" class="aha-training-readiness"></div>
     </section>
 
-    <section class="aha-panel" id="training-retrieval-panel">
+    <section class="aha-panel aha-training-retrieval-card" id="training-retrieval-panel">
       <h2>Personal Retrieval Index</h2>
       <div id="training-retrieval-report" class="aha-training-readiness"></div>
     </section>
 
-    <section class="aha-panel" id="training-semantic-retrieval-panel">
+    <section class="aha-panel aha-training-retrieval-card" id="training-semantic-retrieval-panel">
       <h2>Semantic Retrieval Index</h2>
       <div id="training-semantic-retrieval-report" class="aha-training-readiness"></div>
     </section>
 
-    <section class="aha-panel" id="training-ai-loop-audit-panel">
+    <section class="aha-panel aha-training-evaluation-card" id="training-ai-loop-audit-panel">
       <h2>Personal AI Loop Audit</h2>
       <div id="training-ai-loop-audit-report" class="aha-training-readiness"></div>
     </section>
 
-    <section class="aha-panel" id="training-answer-composer-panel">
+    <section class="aha-panel aha-training-evaluation-card" id="training-answer-composer-panel">
       <h2>AHA Personal Answer Composer</h2>
       <div id="training-answer-composer-report" class="aha-training-readiness">Bruk «Test Answer Composer» for å se svargrunnlag.</div>
     </section>
 
-    <section class="aha-panel" id="training-answer-evaluation-panel">
+    <section class="aha-panel aha-training-evaluation-card" id="training-answer-evaluation-panel">
       <h2>Answer Evaluation</h2>
       <div id="training-answer-evaluation-report" class="aha-training-readiness">Bruk «Test Answer Evaluation» for å evaluere et lokalt svar.</div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-ai-list-panel">
       <h2>Corpus</h2>
       <p class="module-meta">Godkjenn tekster og slå på relevant bruk per item. Hvert valg er ditt eget samtykke.</p>
       <div id="training-corpus-list" class="aha-training-list"></div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-ai-list-panel">
       <h2>Treningseksempler</h2>
       <p class="module-meta">Godkjenn hvert eksempel separat. Eksport krever godkjent eksempel og finjusterings-samtykke på corpus-laget.</p>
       <div id="training-examples-list" class="aha-training-list"></div>
