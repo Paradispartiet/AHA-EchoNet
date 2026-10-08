@@ -20,6 +20,10 @@ The main conflicts are:
 - page widths and spacing are frequently set ad hoc in HTML.
 - module icons mix symbols and emoji instead of one coherent icon language.
 
+## Visual direction
+
+AHA should be dark without reading as black-and-grey. The canonical palette uses deep navy as the base, high-contrast cool-white text, yellow as the recognizable AHA signature, and controlled blue, cyan, violet, green and coral accents for hierarchy, states and module identity. Color should clarify structure rather than decorate every surface.
+
 ## Design principles
 
 1. One AHA product shell.
