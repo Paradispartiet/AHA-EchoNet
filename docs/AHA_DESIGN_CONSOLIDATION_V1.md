@@ -65,6 +65,8 @@ Acceptance: shared shell and primitives no longer depend on conflicting color/ra
 
 ### Phase 3 — Shared primitives
 
+Canonical geometry: ordinary buttons and fields use a 12px control radius; reusable cards use 16px; larger panels use 20px; status indicators and chips alone use the full pill radius. Main controls target 42–44px height so the app feels consistent and remains comfortable on touch devices.
+
 Consolidate the reusable UI vocabulary:
 
 - page header
