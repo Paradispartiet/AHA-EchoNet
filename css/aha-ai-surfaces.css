@@ -1,0 +1,329 @@
+/* AHA Training + Personal AI — shared presentation layer.
+   Keeps local-only/review/retrieval runtime contracts untouched. */
+
+.aha-ai-surface {
+  --ai-accent: var(--aha-color-blue);
+  --ai-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-training-page {
+  --ai-accent: var(--aha-color-blue);
+  --ai-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-personal-ai-page {
+  --ai-accent: var(--aha-color-violet);
+  --ai-accent-soft: var(--aha-color-violet-soft);
+}
+
+.aha-ai-hero {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-ai-hero .aha-module-shell-header h1 {
+  max-width: 20ch;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.aha-ai-hero .aha-module-purpose {
+  max-width: 72ch;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-ai-boundary {
+  max-width: 82ch;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--ai-accent) 18%, transparent);
+  border-radius: var(--aha-radius-control);
+  background: var(--ai-accent-soft);
+  color: var(--aha-muted);
+  line-height: 1.48;
+}
+
+.aha-ai-surface .aha-module-actions {
+  gap: 8px;
+}
+
+.aha-ai-surface .aha-module-actions > button,
+.aha-ai-surface .aha-module-actions > .aha-tile-btn {
+  min-height: 38px;
+  border-radius: var(--aha-radius-control);
+  padding: 8px 11px;
+  font-size: .82rem;
+}
+
+.aha-ai-surface .aha-module-actions > button {
+  border: 1px solid color-mix(in srgb, var(--ai-accent) 24%, transparent);
+  background: var(--ai-accent-soft);
+  color: var(--aha-text);
+}
+
+.aha-ai-surface .aha-module-actions > button:hover {
+  border-color: color-mix(in srgb, var(--ai-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--ai-accent) 16%, transparent);
+}
+
+.aha-ai-status-panel,
+.aha-ai-primary-panel,
+.aha-ai-secondary-panel,
+.aha-ai-list-panel {
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-ai-status-panel {
+  border-color: color-mix(in srgb, var(--ai-accent) 18%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ai-accent) 6%, transparent), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-ai-primary-panel {
+  border-color: color-mix(in srgb, var(--ai-accent) 24%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ai-accent) 9%, transparent), transparent 44%),
+    var(--aha-panel-background);
+}
+
+.aha-ai-secondary-panel,
+.aha-ai-list-panel {
+  border-color: rgba(255,255,255,.075);
+  background: var(--aha-color-panel);
+}
+
+.aha-ai-surface .aha-training-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(126px, 1fr));
+  gap: 10px;
+}
+
+.aha-ai-surface .aha-mini-stat {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
+}
+
+.aha-ai-surface .aha-mini-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--ai-accent);
+  opacity: .72;
+}
+
+.aha-ai-surface .aha-mini-stat strong {
+  font-size: 1.08rem;
+}
+
+.aha-ai-surface .aha-mini-stat span {
+  color: var(--aha-muted);
+  font-size: .76rem;
+  line-height: 1.3;
+}
+
+.aha-ai-surface .aha-training-list {
+  gap: 10px;
+}
+
+.aha-ai-surface .aha-training-item,
+.aha-ai-surface .aha-training-example {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: rgba(20,22,31,.94);
+  box-shadow: none;
+}
+
+.aha-ai-surface .aha-training-item::before,
+.aha-ai-surface .aha-training-example::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--ai-accent);
+  opacity: .62;
+}
+
+.aha-ai-surface .aha-training-actions {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.aha-ai-surface .aha-training-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(116,173,255,.18);
+  background: rgba(116,173,255,.06);
+  color: var(--aha-text);
+  font-size: .78rem;
+}
+
+.aha-training-control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.aha-training-control-grid > * {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.aha-training-page .aha-training-core-action {
+  border-color: rgba(116,173,255,.28);
+  background: var(--aha-color-blue-soft);
+}
+
+.aha-training-page .aha-training-review-action {
+  border-color: rgba(88,217,199,.26);
+  background: var(--aha-color-cyan-soft);
+}
+
+.aha-training-page .aha-training-eval-action {
+  border-color: rgba(170,145,247,.26);
+  background: var(--aha-color-violet-soft);
+}
+
+.aha-training-page .aha-training-export-action {
+  border-color: rgba(244,200,74,.28);
+  background: var(--aha-color-accent-soft);
+  color: #ffe68a;
+}
+
+.aha-training-readiness-card {
+  border-color: rgba(126,226,168,.16);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.045), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-training-retrieval-card {
+  border-color: rgba(116,173,255,.16);
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.045), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-training-evaluation-card {
+  border-color: rgba(170,145,247,.16);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.045), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-personal-ai-page .module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.aha-personal-ai-page .module-grid > .aha-panel {
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
+  box-shadow: none;
+}
+
+.aha-personal-ai-self-panel {
+  border-color: rgba(88,217,199,.17);
+  background:
+    linear-gradient(145deg, rgba(88,217,199,.05), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-personal-ai-page .aha-personal-ai-memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.aha-personal-ai-page .aha-personal-ai-memory-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(88,217,199,.2);
+  background: var(--aha-color-cyan-soft);
+  color: var(--aha-text);
+  font-size: .78rem;
+}
+
+.aha-personal-ai-page .aha-personal-ai-memory-rewrite {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(88,217,199,.16);
+  border-radius: var(--aha-radius-card);
+  background: rgba(88,217,199,.035);
+}
+
+.aha-ai-advanced {
+  margin-top: 0;
+  border-color: rgba(170,145,247,.14);
+  background: rgba(170,145,247,.03);
+  box-shadow: none;
+}
+
+.aha-ai-advanced > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--aha-color-violet);
+  font-weight: 850;
+}
+
+.aha-ai-advanced[open] > summary {
+  margin-bottom: 12px;
+}
+
+.aha-personal-ai-next-panel {
+  border-color: rgba(170,145,247,.24);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.09), transparent 44%),
+    var(--aha-panel-background);
+}
+
+.aha-personal-ai-recommendations-panel {
+  border-color: rgba(88,217,199,.14);
+  background:
+    linear-gradient(145deg, rgba(88,217,199,.04), transparent 40%),
+    var(--aha-panel-background);
+}
+
+.aha-ai-surface .aha-training-recommendations {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-ai-surface .aha-training-recommendations li {
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
+}
+
+@media (max-width: 720px) {
+  .aha-ai-surface .aha-training-stats,
+  .aha-personal-ai-page .module-grid,
+  .aha-training-control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-ai-hero .aha-module-shell-header h1 {
+    font-size: clamp(1.85rem, 9vw, 2.55rem);
+  }
+}
