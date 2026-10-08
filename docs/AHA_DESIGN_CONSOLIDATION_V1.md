@@ -22,7 +22,7 @@ The main conflicts are:
 
 ## Visual direction
 
-AHA should be dark without reading as black-and-grey. The canonical palette uses deep navy as the base, high-contrast cool-white text, yellow as the recognizable AHA signature, and controlled blue, cyan, violet, green and coral accents for hierarchy, states and module identity. Color should clarify structure rather than decorate every surface.
+AHA keeps black as its visual base. The canonical palette uses near-black backgrounds and surfaces, high-contrast cool-white text, yellow as the recognizable AHA signature, and controlled blue, cyan, violet, green and coral accents for hierarchy, states and module identity. The additional colors should create contrast and character without turning the application into a blue/navy theme.
 
 ## Design principles
 
