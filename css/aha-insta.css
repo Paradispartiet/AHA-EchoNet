@@ -159,16 +159,18 @@
   flex: 1 1 auto;
   background: transparent;
   color: var(--aha-muted);
+  min-height: var(--aha-control-min-height, 42px);
   border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control, 12px);
   padding: 8px 10px;
   font-weight: 800;
   font-size: .86rem;
 }
 
 .insta-feed-controls button.is-active {
-  background: var(--aha-yellow-soft);
-  color: var(--aha-text);
-  border-color: var(--aha-line-yellow);
+  background: var(--aha-color-blue-soft, rgba(116,173,255,.15));
+  color: #d8e8ff;
+  border-color: rgba(116,173,255,.38);
 }
 
 /* Post card */
@@ -248,6 +250,7 @@
   background: transparent;
   color: #ff6b6b;
   border-radius: 0;
+  min-height: 40px;
   font-weight: 700;
   padding: 10px 16px;
 }
