@@ -22,7 +22,7 @@ body {
 
 .app-shell { min-height: 100dvh; padding: 18px; background: var(--aha-app-background, linear-gradient(180deg, #050608 0%, #0a0b10 48%, #050608 100%)); }
 .chat-header, .chat-main, .composer-wrap > .row { width: 100%; max-width: var(--aha-content-max, 1180px); margin: 0 auto; }
-.chat-header { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; background: var(--aha-panel-background, linear-gradient(145deg, rgba(25,27,37,.97), rgba(12,14,20,.97))); border: 1px solid var(--aha-border); border-radius: 16px; padding: 8px 12px; margin-bottom: 12px; box-shadow: 0 12px 28px rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
+.chat-header { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; background:transparent; border:0; border-radius:0; padding:6px 2px 10px; margin-bottom:4px; box-shadow:none; }
 .back-link { flex:0 0 auto; color: var(--aha-color-blue, #74adff); text-decoration:none; font-size:12px; white-space:nowrap; }
 .chat-brand { display:flex; flex:0 0 auto; gap:8px; align-items:center; color: var(--aha-text); text-decoration:none; }
 .chat-brand-mark { width:30px; height:30px; border-radius: 9px; display:grid; place-items:center; font-weight:700; color:#2b1b00; background: linear-gradient(145deg, var(--aha-color-accent, #f4c84a), var(--aha-color-coral, #ff987d)); }
@@ -49,7 +49,7 @@ body {
 .chat-main { display:grid; gap:12px; }
 .aha-module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: start; }
 
-.composer-wrap { background: var(--aha-panel-background, linear-gradient(145deg, rgba(25,27,37,.97), rgba(12,14,20,.97))); border:1px solid var(--aha-border); border-radius: var(--aha-radius-panel, 20px); padding: 10px; }
+.composer-wrap { background:transparent; border:0; border-radius:0; padding:0; }
 .module-card { background: var(--aha-panel-background, linear-gradient(145deg, rgba(25,27,37,.97), rgba(12,14,20,.97))); border:1px solid var(--aha-border); border-radius: var(--aha-radius-card, 16px); padding: 10px; }
 .module-card { transition: all .2s ease; }
 .module-card-toggle { width: 100%; min-height: var(--aha-control-min-height, 42px); display:flex; align-items:center; justify-content:space-between; border-radius: var(--aha-radius-control, 12px); background: rgba(116,173,255,.08); }
@@ -231,8 +231,9 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .concept-link-line { width: 10px; height: 1px; background: rgba(255, 255, 255, 0.28); flex: 0 0 auto; }
 .concept-network-empty { margin-left: 8px; }
 
-.composer-row { background: var(--aha-surface); border: 1px solid var(--aha-border); border-radius: 14px; padding: 10px; }
-#msg { min-height: 96px; max-height: 32dvh; resize: vertical; font-size: 16px; line-height: 1.5; background: #050a19; border-color: rgba(255,211,71,0.35); }
+.composer-row { background:var(--aha-panel-background); border:1px solid var(--aha-line); border-radius:var(--aha-radius-panel); padding:14px; box-shadow:var(--aha-shadow-soft); }
+#msg { min-height:96px; max-height:32dvh; resize:vertical; font-size:16px; line-height:1.5; background:var(--aha-color-input); border-color:var(--aha-line); }
+#msg:focus { border-color:var(--aha-color-blue); box-shadow:var(--aha-focus-ring); }
 .composer-actions { display:flex; justify-content:flex-end; gap:8px; margin-top: 10px; }
 .send-btn { background: var(--aha-accent); color: #1d1400; border-color: transparent; font-weight: 600; }
 .secondary-action { background: transparent; border-color: rgba(255,211,71,0.5); color: var(--aha-accent); }
@@ -395,10 +396,11 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 
 /* Chat-first: samtalen er hovedflaten */
 .chat-conversation {
-  background: linear-gradient(170deg, rgba(10,16,34,0.88), rgba(8,13,29,0.84));
-  border: 1px solid var(--aha-border);
-  border-radius: 18px;
-  padding: 10px;
+  background: var(--aha-panel-background);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-panel);
+  padding: 12px;
+  box-shadow: var(--aha-shadow-soft);
 }
 .chat-conversation .chat-log { min-height: 0; max-height: none; }
 
@@ -501,9 +503,11 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
    Alt AHA ser presenteres i synlige kort med ett kanonisk renderpunkt
    per datagruppe. */
 .aha-explorer {
-  border: 1px solid var(--aha-border);
-  border-radius: 18px;
-  background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9));
+  border: 1px solid rgba(170,145,247,.24);
+  border-radius: var(--aha-radius-panel);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.07), transparent 38%),
+    var(--aha-color-panel);
   padding: 16px;
 }
 .explorer-head { margin-bottom: 14px; }
@@ -712,10 +716,10 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-personal-retrieval-result span, .aha-personal-retrieval-result small { color: var(--aha-muted); }
 
 /* Calm chat IA refresh */
-.chat-hero .composer-row { padding: 18px; border-radius: 20px; }
+.chat-hero .composer-row { padding: 18px; border-radius: var(--aha-radius-panel); }
 .chat-hero-copy { margin-bottom: 14px; }
 .eyebrow { margin: 0 0 6px; color: var(--aha-accent); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
-.chat-hero-copy h2 { margin: 0 0 6px; font-size: clamp(26px, 4vw, 44px); line-height: 1.05; }
+.chat-hero-copy h2 { margin:0 0 6px; font-size:clamp(24px, 3.2vw, 36px); line-height:1.08; letter-spacing:-.025em; }
 .chat-hero-copy p:not(.eyebrow) { margin: 0; max-width: 64ch; color: var(--aha-muted); line-height: 1.55; }
 .compact-status-line { display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
 .compact-status-line .status-pill { background: rgba(127, 255, 184, .09); border-color: rgba(127, 255, 184, .28); color: #bdf8d2; }
@@ -725,11 +729,15 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   max-width: none;
   margin-left: 0;
   margin-right: 0;
-  border: 1px solid var(--aha-border);
-  border-radius: 18px;
-  background: linear-gradient(170deg, rgba(10,16,34,0.92), rgba(8,13,29,0.9));
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
   padding: 16px;
 }
+
+.aha-now-card { border-color: rgba(170,145,247,.24); }
+.memory-card { border-color: rgba(126,226,168,.22); }
+.advanced-panel { border-color: rgba(116,173,255,.18); }
 .aha-analysis-shell, .aha-after-chat-shell, .aha-side-status-shell {
   width: 100%;
   max-width: var(--aha-content-max, 1180px);
@@ -788,3 +796,18 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .aha-quality-status-checks dt { color: var(--aha-muted); font-size: 11px; }
 .aha-quality-status-checks dd { margin: 2px 0 0; font-size: 12px; font-weight: 700; }
 .aha-quality-status-summary { margin: 0; padding-left: 18px; color: var(--aha-muted); font-size: 12px; line-height: 1.45; }
+
+
+/* AHA Home/Chat polish V1: after a conversation starts, the composer behaves
+   like an app composer rather than keeping the full landing-state introduction. */
+body:has(#chat-log .chat-line) .chat-hero-copy {
+  display: none;
+}
+
+body:has(#chat-log .chat-line) .chat-hero .composer-row {
+  padding: 12px;
+}
+
+body:has(#chat-log .chat-line) #msg {
+  min-height: 72px;
+}
