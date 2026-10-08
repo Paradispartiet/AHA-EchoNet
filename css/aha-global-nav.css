@@ -568,3 +568,15 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
 @media (prefers-reduced-motion: reduce) {
   .aha-global-daily-panel { animation: none; }
 }
+
+
+.aha-global-nav-item-icon {
+  display: grid;
+  place-items: center;
+}
+
+.aha-global-nav-item-icon .aha-module-icon-svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
