@@ -1,8 +1,6 @@
-body {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 24px;
-}
+/* Legacy module-local primitives.
+   Outer page width, centering and global padding belong to the shared
+   .aha-dashboard / AHA product shell, not this compatibility layer. */
 
 .module-header {
   margin-bottom: 24px;
