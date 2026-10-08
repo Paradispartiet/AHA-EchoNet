@@ -6,12 +6,13 @@
   <title>AHA Personal AI</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-ai-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
 <div id="aha-global-nav"></div>
-<main class="aha-dashboard aha-shell-workspace personal-ai-page">
-  <section class="aha-panel aha-module-shell">
+<main class="aha-dashboard aha-shell-workspace personal-ai-page aha-ai-surface aha-personal-ai-page">
+  <section class="aha-panel aha-module-shell aha-ai-hero">
     <header class="aha-module-shell-header">
       <div>
         <p class="eyebrow">Min Personal AI</p>
@@ -24,14 +25,14 @@
       <a class="aha-tile-btn" href="knowledge-workbench.html">Åpne Knowledge Workbench</a>
       <a class="aha-tile-btn" href="training.html">Se godkjent materiale</a>
     </div>
-    <p class="module-meta">AHA trener ikke en personlig modell her. Retrieval, svargrunnlag og evaluering er lokale hjelpestrukturer; de deles ikke, synkes ikke og skrives ikke til History Go.</p>
+    <p class="module-meta aha-ai-boundary">AHA trener ikke en personlig modell her. Retrieval, svargrunnlag og evaluering er lokale hjelpestrukturer; de deles ikke, synkes ikke og skrives ikke til History Go.</p>
   </section>
 
   <section id="personal-ai-empty" class="aha-panel">
     <p>AHA trenger godkjent lokalt materiale før Personal AI kan bruke personlig grunnlag i svarene. Start med å godkjenne materiale eller bekrefte selvinnsikter.</p>
   </section>
 
-  <section class="aha-panel" aria-labelledby="personal-ai-experience-title">
+  <section class="aha-panel aha-ai-primary-panel" aria-labelledby="personal-ai-experience-title">
     <h2 id="personal-ai-experience-title">Personal AI akkurat nå</h2>
     <div id="personal-ai-experience" class="module-grid">
       <article class="aha-panel"><p class="module-meta">Leser hva AHA kan bruke …</p></article>
@@ -39,7 +40,7 @@
     <p id="personal-ai-message" class="module-meta" role="status" aria-live="polite"></p>
   </section>
 
-  <section class="aha-panel" aria-labelledby="personal-ai-self-knowledge-title">
+  <section class="aha-panel aha-personal-ai-self-panel" aria-labelledby="personal-ai-self-knowledge-title">
     <p class="eyebrow">Din selvmodell</p>
     <h2 id="personal-ai-self-knowledge-title">Dette vet AHA om deg</h2>
     <p>AHA skal ikke blande det du har bekreftet med det som bare er viktig, delvis riktig eller et aktivt arbeidsmønster. Denne visningen kommer direkte fra eksisterende Meta Insights Memory.</p>
@@ -50,17 +51,17 @@
     </div>
   </section>
 
-  <section class="aha-panel" aria-labelledby="personal-ai-next-title">
+  <section class="aha-panel aha-personal-ai-next-panel" aria-labelledby="personal-ai-next-title">
     <h2 id="personal-ai-next-title">Hva bør du gjøre nå?</h2>
     <div id="personal-ai-overall"></div>
   </section>
 
-  <section class="aha-panel" aria-labelledby="personal-ai-recommendations-title">
+  <section class="aha-panel aha-personal-ai-recommendations-panel" aria-labelledby="personal-ai-recommendations-title">
     <h2 id="personal-ai-recommendations-title">For å gjøre AHA mer personlig</h2>
     <ul id="personal-ai-recommendations" class="aha-training-recommendations"></ul>
   </section>
 
-  <details id="personal-ai-advanced" class="aha-panel">
+  <details id="personal-ai-advanced" class="aha-panel aha-ai-advanced">
     <summary>Avansert kontroll og tester</summary>
     <p class="module-meta">Personal AI er fortsatt en lokal kontroll- og testflate for inspeksjon og vedlikehold. Den trener ikke en modell og kaller ikke backend. Svarbygging her er lokal preview/svargrunnlag, ikke et bevis på at en personlig modell er trent. Retrieval-indekser er lokale hjelpestrukturer.</p>
     <div class="aha-module-actions">
