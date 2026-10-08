@@ -36,6 +36,8 @@ for (const token of [
 ]) {
   assert.match(tokens, new RegExp(token), `${token} should be defined in canonical tokens`);
 }
+assert.match(tokens, /--aha-color-bg:\s*#07080d;/, "AHA should keep its black base");
+assert.match(tokens, /linear-gradient\(160deg, #050608 0%, #0a0b10 52%, #050608 100%\)/, "canonical app background should remain black-first");
 assert.match(dashboardCss, /background:\s*var\(--aha-app-background\)/, "Dashboard should use the canonical app background");
 assert.match(chatCss, /background:\s*var\(--aha-app-background/, "Chat should use the canonical app background");
 assert.match(chatCss, /chat-line-user[^}]*aha-color-blue-soft/s, "Chat user messages should use the blue secondary accent");
