@@ -31,12 +31,12 @@
       <p id="privacy-action-message" class="privacy-action-message"></p>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-system-status-panel">
       <h2>Personvernstatus</h2>
       <div id="privacy-status" class="privacy-status-grid"></div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-system-primary-panel">
       <h2>Samtykke</h2>
       <form id="privacy-settings-form" class="privacy-form">
         <label class="privacy-check"><input type="checkbox" name="localOnly" /> <span><strong>Lokal modus</strong><br />AHA arbeider lokalt først.</span></label>
@@ -50,14 +50,14 @@
       </form>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-system-list-panel">
       <h2>Datarapport</h2>
       <p class="privacy-small">History Go-nøkler vises for transparens, men kan ikke slettes her i første versjon. Meta Insights Memory vises separat og styres fra Personal AI-siden.</p>
       <div id="privacy-storage-summary" class="privacy-storage-summary"></div>
       <div id="privacy-storage-report" class="privacy-storage-list"></div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-system-secondary-panel">
       <h2>Gjenopprett AHA-backup</h2>
       <p class="privacy-small">Gjenoppretting er additiv og local-only. Du må alltid se en forhåndsvisning før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over. Meta Insights Memory følger backupen; avledede Personal AI-søkeindekser ugyldiggjøres etter restore og bygges på nytt fra den gjenopprettede selvmodellen.</p>
       <div class="privacy-form">
@@ -73,7 +73,7 @@
       </div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-system-secondary-panel">
       <h2>Forklaring</h2>
       <div class="privacy-explain-grid">
         <article class="privacy-explain-card"><h3>Lokal data</h3><p>Data som ligger i nettleserens localStorage på denne enheten.</p></article>
