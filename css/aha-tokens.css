@@ -5,15 +5,15 @@
 
 :root {
   /* Core surfaces */
-  --aha-color-bg-deep: #050b14;
-  --aha-color-bg: #071321;
-  --aha-color-surface: #0d1b2d;
-  --aha-color-surface-raised: #132741;
-  --aha-color-surface-soft: #1a304d;
-  --aha-color-panel: rgba(16, 35, 58, .94);
-  --aha-color-panel-soft: rgba(22, 46, 75, .76);
-  --aha-color-glass: rgba(8, 23, 39, .86);
-  --aha-color-input: rgba(18, 39, 65, .88);
+  --aha-color-bg-deep: #030405;
+  --aha-color-bg: #07080d;
+  --aha-color-surface: #11131b;
+  --aha-color-surface-raised: #181b25;
+  --aha-color-surface-soft: #20232f;
+  --aha-color-panel: rgba(18, 20, 29, .96);
+  --aha-color-panel-soft: rgba(29, 32, 43, .82);
+  --aha-color-glass: rgba(7, 8, 13, .90);
+  --aha-color-input: rgba(21, 24, 34, .92);
 
   /* Contrast */
   --aha-color-text: #f8fbff;
@@ -43,14 +43,14 @@
   --aha-focus-ring: 0 0 0 3px rgba(116, 173, 255, .28);
   --aha-grid-line: rgba(116, 173, 255, .035);
   --aha-app-background:
-    radial-gradient(circle at 12% -8%, rgba(116, 173, 255, .18), transparent 34%),
-    radial-gradient(circle at 94% 5%, rgba(170, 145, 247, .14), transparent 30%),
-    radial-gradient(circle at 50% 112%, rgba(88, 217, 199, .07), transparent 34%),
-    linear-gradient(160deg, #071321 0%, #0a192b 54%, #07111e 100%);
+    radial-gradient(circle at 12% -8%, rgba(116, 173, 255, .10), transparent 32%),
+    radial-gradient(circle at 94% 4%, rgba(170, 145, 247, .08), transparent 28%),
+    radial-gradient(circle at 50% 112%, rgba(88, 217, 199, .045), transparent 32%),
+    linear-gradient(160deg, #050608 0%, #0a0b10 52%, #050608 100%);
   --aha-panel-background:
-    linear-gradient(145deg, rgba(18, 40, 66, .96), rgba(10, 25, 43, .94));
+    linear-gradient(145deg, rgba(25, 27, 37, .97), rgba(12, 14, 20, .97));
   --aha-panel-background-soft:
-    linear-gradient(155deg, rgba(21, 44, 72, .82), rgba(11, 27, 46, .82));
+    linear-gradient(155deg, rgba(31, 34, 46, .88), rgba(15, 17, 24, .88));
 
   /* Geometry */
   --aha-radius-sm: 10px;
@@ -82,7 +82,7 @@
   --aha-accent: var(--aha-color-accent);
 
   /* Global navigation aliases */
-  --gnav-bg: rgba(7, 19, 33, .95);
+  --gnav-bg: rgba(5, 6, 9, .96);
   --gnav-surface: var(--aha-color-surface);
   --gnav-card: var(--aha-color-panel-soft);
   --gnav-line: var(--aha-color-line);
