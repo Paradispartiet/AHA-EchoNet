@@ -1,0 +1,294 @@
+/* AHA Knowledge Surfaces — presentation layer for Workbench, Intake,
+   Curation and Knowledge Map. Keeps operator/runtime contracts untouched. */
+
+.aha-knowledge-surface {
+  --knowledge-accent: var(--aha-color-blue);
+  --knowledge-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-workbench-page {
+  --knowledge-accent: var(--aha-color-blue);
+  --knowledge-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-intake-page {
+  --knowledge-accent: var(--aha-color-cyan);
+  --knowledge-accent-soft: var(--aha-color-cyan-soft);
+}
+
+.aha-curation-page {
+  --knowledge-accent: var(--aha-color-violet);
+  --knowledge-accent-soft: var(--aha-color-violet-soft);
+}
+
+.aha-knowledge-map-page {
+  --knowledge-accent: var(--aha-color-green);
+  --knowledge-accent-soft: var(--aha-color-green-soft);
+}
+
+.aha-knowledge-hero {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-knowledge-hero .aha-module-shell-header h1 {
+  max-width: 18ch;
+  font-size: clamp(2rem, 5vw, 3.15rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.aha-knowledge-hero .aha-module-purpose {
+  max-width: 72ch;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-knowledge-hero > .module-meta {
+  max-width: 82ch;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--knowledge-accent) 18%, transparent);
+  border-radius: var(--aha-radius-control);
+  background: var(--knowledge-accent-soft);
+}
+
+.aha-knowledge-surface .aha-module-actions {
+  gap: 8px;
+}
+
+.aha-knowledge-surface .aha-module-actions > button,
+.aha-knowledge-surface .aha-module-actions > .aha-tile-btn {
+  min-height: 38px;
+  padding: 8px 11px;
+  border-radius: var(--aha-radius-control);
+  font-size: .82rem;
+}
+
+.aha-knowledge-surface .aha-module-actions > button {
+  border: 1px solid color-mix(in srgb, var(--knowledge-accent) 24%, transparent);
+  background: var(--knowledge-accent-soft);
+  color: var(--aha-text);
+}
+
+.aha-knowledge-surface .aha-module-actions > button:hover {
+  border-color: color-mix(in srgb, var(--knowledge-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--knowledge-accent) 16%, transparent);
+}
+
+.aha-knowledge-surface .aha-training-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 10px;
+}
+
+.aha-knowledge-surface .aha-mini-stat {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
+}
+
+.aha-knowledge-surface .aha-mini-stat::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--knowledge-accent);
+  opacity: .7;
+}
+
+.aha-knowledge-surface .aha-mini-stat strong {
+  font-size: 1.08rem;
+}
+
+.aha-knowledge-surface .aha-mini-stat span {
+  color: var(--aha-muted);
+  font-size: .76rem;
+  line-height: 1.3;
+}
+
+.aha-knowledge-status-panel {
+  border-color: color-mix(in srgb, var(--knowledge-accent) 16%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--knowledge-accent) 6%, transparent), transparent 42%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-knowledge-secondary-panel,
+.aha-knowledge-list-panel,
+.aha-knowledge-compose-panel,
+.aha-knowledge-queue-panel,
+.aha-knowledge-progress-panel,
+.aha-knowledge-recommendations-panel {
+  border-color: rgba(255,255,255,.075);
+  background: var(--aha-color-panel);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-knowledge-next-panel {
+  border-color: color-mix(in srgb, var(--knowledge-accent) 24%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--knowledge-accent) 9%, transparent), transparent 44%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-knowledge-surface .module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.aha-knowledge-surface .module-grid > .aha-panel,
+.aha-knowledge-surface .aha-training-list > .aha-panel,
+.aha-knowledge-surface .aha-training-item {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: rgba(20,22,31,.94);
+  box-shadow: none;
+}
+
+.aha-knowledge-surface .aha-training-item::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--knowledge-accent);
+  opacity: .62;
+}
+
+.aha-knowledge-surface .aha-training-item-header {
+  gap: 10px;
+}
+
+.aha-knowledge-surface .aha-status-badge {
+  border-color: color-mix(in srgb, var(--knowledge-accent) 22%, transparent);
+  background: var(--knowledge-accent-soft);
+  color: var(--aha-text);
+}
+
+.aha-knowledge-surface .aha-training-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.aha-knowledge-surface .aha-training-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(116,173,255,.18);
+  background: rgba(116,173,255,.06);
+  color: var(--aha-text);
+  font-size: .78rem;
+}
+
+.aha-knowledge-surface .aha-settings-form {
+  display: grid;
+  gap: 12px;
+}
+
+.aha-knowledge-surface .aha-settings-form label,
+.aha-knowledge-surface > .aha-panel > label {
+  display: grid;
+  gap: 6px;
+  color: var(--aha-muted);
+  font-size: .84rem;
+  font-weight: 800;
+}
+
+.aha-knowledge-surface textarea,
+.aha-knowledge-surface select,
+.aha-knowledge-surface input[type="search"] {
+  width: 100%;
+  min-height: var(--aha-field-min-height);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
+  color: var(--aha-text);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.aha-knowledge-surface textarea:focus,
+.aha-knowledge-surface select:focus,
+.aha-knowledge-surface input[type="search"]:focus {
+  border-color: var(--knowledge-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--knowledge-accent) 22%, transparent);
+}
+
+.aha-knowledge-compose-panel {
+  border-color: color-mix(in srgb, var(--knowledge-accent) 18%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--knowledge-accent) 6%, transparent), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-knowledge-advanced {
+  margin-top: 0;
+  border-color: rgba(170,145,247,.14);
+  background: rgba(170,145,247,.03);
+  box-shadow: none;
+}
+
+.aha-knowledge-advanced > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--aha-color-violet);
+  font-weight: 850;
+}
+
+.aha-knowledge-advanced[open] > summary {
+  margin-bottom: 12px;
+}
+
+.aha-knowledge-graph-panel {
+  border-color: rgba(170,145,247,.16);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.055), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-knowledge-map-page .aha-knowledge-graph-panel {
+  border-color: rgba(126,226,168,.16);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.05), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-knowledge-surface .aha-training-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: var(--aha-radius-card);
+  background: rgba(255,255,255,.02);
+}
+
+.aha-knowledge-surface h2 {
+  letter-spacing: -.025em;
+}
+
+@media (max-width: 720px) {
+  .aha-knowledge-surface .module-grid,
+  .aha-knowledge-surface .aha-training-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-knowledge-hero .aha-module-shell-header h1 {
+    font-size: clamp(1.85rem, 9vw, 2.55rem);
+  }
+}
