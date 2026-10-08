@@ -1,5 +1,6 @@
 const assert = require("assert");
 const fs = require("fs");
+const vm = require("vm");
 
 const moduleCss = fs.readFileSync("css/ahaModule.css", "utf8");
 const tokens = fs.readFileSync("css/aha-tokens.css", "utf8");
@@ -7,6 +8,7 @@ const navCss = fs.readFileSync("css/aha-global-nav.css", "utf8");
 const dashboardCss = fs.readFileSync("css/aha-dashboard.css", "utf8");
 const chatCss = fs.readFileSync("css/aha-chat.css", "utf8");
 const plan = fs.readFileSync("docs/AHA_DESIGN_CONSOLIDATION_V1.md", "utf8");
+const modulesJs = fs.readFileSync("js/ahaModules.js", "utf8");
 
 // Legacy module CSS may style module-local primitives, but the shared AHA shell
 // owns page width, centering and outer padding.
@@ -82,6 +84,17 @@ for (const page of shellPages) {
 for (const shellClass of ["aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
   assert.match(dashboardCss, new RegExp(`\\.${shellClass}\\b`), `${shellClass} should be defined centrally`);
 }
+
+const moduleContext = { window: {}, document: { getElementById() { return null; } } };
+vm.runInNewContext(modulesJs, moduleContext, { filename: "js/ahaModules.js" });
+const registeredModules = moduleContext.window.AHA_MODULES || [];
+const moduleIcons = moduleContext.window.AHAModules?.icons || {};
+assert.ok(registeredModules.length > 0, "module registry should be readable");
+for (const module of registeredModules) {
+  assert.match(moduleIcons[module.id] || "", /<svg\b[^>]*aha-module-icon-svg/, `${module.id} should have a canonical SVG icon`);
+}
+assert.match(moduleIcons.default || "", /<svg\b/, "module icon system should provide an SVG fallback");
+assert.doesNotMatch(modulesJs, /🕸|📰|⚙|⚑/, "mixed emoji module icons should not return");
 
 assert.match(plan, /Phase 1 — Shell ownership/, "design plan should record shell consolidation first");
 assert.match(plan, /Existing functionality is preserved/, "design plan should preserve runtime behavior during presentation consolidation");
