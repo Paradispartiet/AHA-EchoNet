@@ -443,7 +443,7 @@
     grid.innerHTML = orderedModules().map((module) => {
       const isPriority = ["chat", "personal-ai", "training"].includes(module.id);
       const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
-      const icon = MODULE_ICONS[module.id] || "◌";
+      const icon = MODULE_ICONS[module.id] || MODULE_ICONS.default;
       const badge = renderHealthBadge(module, healthByModule[module.id]);
       const typeTag = renderModuleTypeTag(module);
       const description = module.description
