@@ -13,10 +13,20 @@
 .aha-search-form input,
 .aha-search-form select {
   width: 100%;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid #d6d8de;
-  border-radius: 0.55rem;
+  min-height: var(--aha-field-min-height);
+  padding: 10px 12px;
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
+  color: var(--aha-text);
   font: inherit;
+  outline: none;
+}
+
+.aha-search-form input:focus,
+.aha-search-form select:focus {
+  border-color: var(--aha-color-blue);
+  box-shadow: var(--aha-focus-ring);
 }
 
 .aha-search-filters {
@@ -42,10 +52,11 @@
 .aha-search-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: #eef2ff;
-  border: 1px solid #d8def8;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--aha-radius-pill);
+  background: var(--aha-color-violet-soft);
+  border: 1px solid rgba(170,145,247,.24);
+  color: #ddd4ff;
   font-size: 0.84rem;
 }
 
@@ -55,10 +66,14 @@
 }
 
 .aha-search-card {
-  border: 1px solid #e2e4ea;
-  border-radius: 0.7rem;
-  padding: 0.8rem;
-  background: #fff;
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-card);
+  padding: 14px 16px;
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.055), transparent 42%),
+    var(--aha-color-panel);
+  color: var(--aha-text);
+  box-shadow: var(--aha-shadow-soft);
 }
 
 .aha-search-card-head {
@@ -73,7 +88,7 @@
 }
 
 .aha-search-meta {
-  color: #61667a;
+  color: var(--aha-muted);
   font-size: 0.85rem;
 }
 
@@ -82,5 +97,34 @@
 }
 
 .aha-search-link {
-  font-weight: 600;
+  color: var(--aha-color-blue);
+  font-weight: 700;
+}
+
+
+.aha-search-page > .aha-module-shell {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-search-page #search-query {
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+.aha-search-page #search-library-groups {
+  gap: 12px;
+}
+
+.aha-search-page #search-library-groups > .aha-panel {
+  border-color: rgba(170,145,247,.14);
+  background: rgba(170,145,247,.045);
+  box-shadow: none;
+}
+
+.aha-search-page #search-advanced {
+  border-color: rgba(116,173,255,.14);
+  background: rgba(116,173,255,.035);
 }
