@@ -1,0 +1,387 @@
+/* AHA personal surfaces — shared presentation for Mitt AHA, Notes, Feed,
+   Gallery and Insta. Runtime/data contracts stay in each module. */
+
+.aha-personal-page {
+  --personal-accent: var(--aha-color-blue);
+  --personal-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-notes-page {
+  --personal-accent: var(--aha-color-violet);
+  --personal-accent-soft: var(--aha-color-violet-soft);
+}
+
+.aha-feed-page {
+  --personal-accent: var(--aha-color-cyan);
+  --personal-accent-soft: var(--aha-color-cyan-soft);
+}
+
+.aha-gallery-page {
+  --personal-accent: var(--aha-color-coral);
+  --personal-accent-soft: var(--aha-color-coral-soft);
+}
+
+.aha-insta-page {
+  --personal-accent: var(--aha-color-blue);
+  --personal-accent-soft: var(--aha-color-blue-soft);
+}
+
+.aha-personal-header {
+  overflow: visible;
+  margin-bottom: 8px;
+  padding: 8px 2px 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.aha-personal-header .aha-module-shell-header h1 {
+  max-width: none;
+  margin-bottom: 8px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.aha-personal-header .aha-module-purpose {
+  max-width: 62ch;
+  margin-bottom: 0;
+  color: var(--aha-muted);
+  font-size: .96rem;
+  line-height: 1.55;
+}
+
+.aha-personal-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 10px 0 0;
+  padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--personal-accent) 24%, transparent);
+  border-radius: var(--aha-radius-pill);
+  background: var(--personal-accent-soft);
+  color: var(--aha-text);
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.aha-personal-trust::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--personal-accent);
+}
+
+.aha-personal-compose {
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--personal-accent) 24%, var(--aha-line));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--personal-accent) 8%, transparent), transparent 44%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-personal-compose-head {
+  margin-bottom: 14px;
+}
+
+.aha-personal-compose-head .eyebrow {
+  margin-bottom: 4px;
+  color: var(--personal-accent);
+  font-size: .68rem;
+}
+
+.aha-personal-compose-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -.02em;
+}
+
+.aha-personal-compose .module-form {
+  margin-bottom: 0;
+}
+
+.aha-personal-compose .module-form textarea {
+  min-height: 132px;
+}
+
+.aha-personal-compose .module-form button[type="submit"] {
+  justify-self: end;
+  min-width: 128px;
+  background: var(--personal-accent);
+  color: #071018;
+}
+
+.aha-personal-collection {
+  border-color: rgba(255,255,255,.075);
+  background: rgba(255,255,255,.025);
+  box-shadow: none;
+}
+
+.aha-personal-collection > h2 {
+  margin-bottom: 14px;
+  font-size: 1.25rem;
+}
+
+.aha-personal-page .module-list {
+  gap: 10px;
+}
+
+.aha-personal-page .module-card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border-color: rgba(255,255,255,.09);
+  background: rgba(20,22,31,.94);
+  box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+
+.aha-personal-page .module-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--personal-accent);
+  opacity: .8;
+}
+
+.aha-personal-page .module-card h3 {
+  margin: 0 0 8px;
+  color: var(--aha-text);
+  font-size: 1rem;
+  letter-spacing: -.01em;
+}
+
+.aha-personal-page .module-card > p {
+  margin: 0 0 12px;
+  color: var(--aha-text);
+  line-height: 1.55;
+}
+
+.aha-personal-page .module-meta {
+  color: var(--aha-subtle, #7f93ad);
+  font-size: .72rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.aha-personal-page .module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.aha-personal-page .module-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(116,173,255,.2);
+  background: rgba(116,173,255,.07);
+  color: var(--aha-text);
+  font-size: .78rem;
+  font-weight: 760;
+}
+
+.aha-personal-page .module-actions button:hover {
+  border-color: rgba(116,173,255,.4);
+  background: var(--aha-color-blue-soft);
+}
+
+.aha-personal-page .module-actions button[data-note-delete],
+.aha-personal-page .module-actions button[data-feed-delete],
+.aha-personal-page .module-actions button[data-gallery-delete] {
+  border-color: rgba(255,112,130,.22);
+  background: rgba(255,112,130,.07);
+  color: #ffb4bd;
+}
+
+.aha-personal-page .module-actions button[data-note-reanalyze],
+.aha-personal-page .module-actions button[data-feed-ingest] {
+  border-color: color-mix(in srgb, var(--personal-accent) 28%, transparent);
+  background: var(--personal-accent-soft);
+  color: var(--aha-text);
+}
+
+/* Notes read as small documents rather than generic dashboard cards. */
+.aha-notes-page #notes-list .module-card {
+  padding: 18px 18px 16px 20px;
+}
+
+.aha-notes-page #notes-list .module-card h3 {
+  font-size: 1.08rem;
+}
+
+.aha-notes-page #notes-list .module-card > p {
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+
+/* Feed is chronological and slightly lighter than a form/list admin surface. */
+.aha-feed-page #feed-list .module-card {
+  padding: 16px 18px 14px 20px;
+}
+
+.aha-feed-page #feed-list .module-card > p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Gallery uses the available width as a real media grid. */
+.aha-gallery-page #gallery-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.aha-gallery-page #gallery-list .module-card {
+  padding: 14px;
+}
+
+.aha-gallery-page #gallery-list .module-card img,
+.aha-gallery-page #gallery-list .module-card video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-top: 10px;
+  border-radius: var(--aha-radius-control);
+  background: #000;
+  object-fit: cover;
+}
+
+/* Mitt AHA becomes an overview instead of a vertical stack of equal boxes. */
+.aha-profile-page {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
+  margin-top: 0;
+}
+
+.aha-profile-page > .aha-panel {
+  min-width: 0;
+  margin: 0;
+  border-radius: var(--aha-radius-panel);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-profile-page .aha-profile-hero-panel,
+.aha-profile-page .aha-profile-activity-panel,
+.aha-profile-page .aha-profile-modules-panel {
+  grid-column: 1 / -1;
+}
+
+.aha-profile-hero-panel {
+  border-color: rgba(116,173,255,.22);
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.1), transparent 38%),
+    var(--aha-panel-background);
+}
+
+.aha-profile-hero-panel > .aha-status-stack {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(116,173,255,.16);
+  border-radius: var(--aha-radius-card);
+  background: rgba(116,173,255,.055);
+}
+
+#aha-profile-overview {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+#aha-profile-overview .aha-profile-status-grid {
+  margin-top: 0;
+}
+
+#aha-profile-overview .aha-status-card {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+
+#aha-profile-overview .aha-status-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(116,173,255,.3);
+  background: var(--aha-color-blue-soft);
+}
+
+.aha-profile-card {
+  padding-top: 22px;
+}
+
+.aha-profile-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+}
+
+.aha-profile-card-historygo::before { background: var(--aha-color-coral); }
+.aha-profile-card-privacy::before { background: var(--aha-color-cyan); }
+.aha-profile-card-meta::before { background: var(--aha-color-violet); }
+.aha-profile-card-archive::before { background: var(--aha-color-blue); }
+
+.aha-profile-card-historygo { border-color: rgba(255,152,125,.16); }
+.aha-profile-card-privacy { border-color: rgba(88,217,199,.16); }
+.aha-profile-card-meta { border-color: rgba(170,145,247,.16); }
+.aha-profile-card-archive { border-color: rgba(116,173,255,.16); }
+
+.aha-profile-activity-panel .aha-activity-list li {
+  border-color: rgba(255,255,255,.07);
+  background: rgba(255,255,255,.025);
+}
+
+/* Insta keeps its dedicated feed UI; only the product shell is flattened. */
+.aha-insta-page > .aha-personal-header {
+  margin-bottom: 0;
+}
+
+.aha-insta-page > .insta-profile-section {
+  border-color: rgba(116,173,255,.16);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-insta-page > .insta-stories-section {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 4px;
+}
+
+.aha-insta-page > .insta-feed-section {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 0;
+}
+
+@media (max-width: 720px) {
+  .aha-profile-page {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-profile-page .aha-profile-hero-panel,
+  .aha-profile-page .aha-profile-activity-panel,
+  .aha-profile-page .aha-profile-modules-panel {
+    grid-column: auto;
+  }
+
+  .aha-gallery-page #gallery-list {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-personal-header .aha-module-shell-header h1 {
+    font-size: clamp(1.8rem, 9vw, 2.45rem);
+  }
+
+  .aha-personal-compose {
+    padding: 14px;
+  }
+}

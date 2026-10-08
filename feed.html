@@ -8,17 +8,19 @@
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/ahaModule.css" />
   <link rel="stylesheet" href="css/aha-feed.css" />
+  <link rel="stylesheet" href="css/aha-personal-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard aha-shell-reading">
-    <section class="aha-panel aha-module-shell">
+  <main class="aha-dashboard aha-shell-reading aha-personal-page aha-feed-page">
+    <section class="aha-panel aha-module-shell aha-personal-header">
       <header class="aha-module-shell-header">
         <div>
           <p class="eyebrow">AHA Modul</p>
           <h1>AHA Feed</h1>
-          <p class="aha-module-purpose">Korte lokale poster for AHA. Lagres lokalt, ikke publisert eksternt og ikke delt til EchoNet.</p>
+          <p class="aha-module-purpose">Korte tanker og oppdateringer i din egen AHA-feed.</p>
+          <p class="aha-personal-trust">Privat og lokal · Ikke publisert eksternt</p>
         </div>
       </header>
       <div class="aha-module-actions">
@@ -26,14 +28,15 @@
       </div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-personal-compose">
+      <div class="aha-personal-compose-head"><p class="eyebrow">Ny</p><h2>Ny post</h2></div>
       <form id="feed-form" class="module-form">
         <textarea id="feed-text" placeholder="Skriv en lokal post …"></textarea>
         <button type="submit">Lagre lokalt og send til AHA</button>
       </form>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-personal-collection">
       <h2>Lokale poster</h2>
       <div id="feed-list" class="module-list"></div>
     </section>
