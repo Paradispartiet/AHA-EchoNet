@@ -41,6 +41,38 @@ assert.match(tokens, /linear-gradient\(160deg, #050608 0%, #0a0b10 52%, #050608 
 assert.match(dashboardCss, /background:\s*var\(--aha-app-background\)/, "Dashboard should use the canonical app background");
 assert.match(chatCss, /background:\s*var\(--aha-app-background/, "Chat should use the canonical app background");
 assert.match(chatCss, /chat-line-user[^}]*aha-color-blue-soft/s, "Chat user messages should use the blue secondary accent");
+
+const shellPages = [
+  "profile.html",
+  "knowledge-workbench.html",
+  "intake.html",
+  "curation.html",
+  "knowledge-map.html",
+  "personal-ai.html",
+  "training.html",
+  "insights.html",
+  "lists.html",
+  "paths.html",
+  "mindmap.html",
+  "historygo.html",
+  "gallery.html",
+  "notes.html",
+  "feed.html",
+  "meet.html"
+];
+
+for (const page of shellPages) {
+  const html = fs.readFileSync(page, "utf8");
+  const main = html.match(/<main\b[^>]*>/i)?.[0] || "";
+  assert.ok(main.includes("aha-dashboard"), `${page} should use the shared AHA dashboard shell`);
+  assert.doesNotMatch(main, /style=["'][^"']*max-width/i, `${page} should not own shell width inline`);
+  assert.match(main, /aha-shell-(reading|content|workspace|wide)/, `${page} should use a named shell width`);
+}
+
+for (const shellClass of ["aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
+  assert.match(dashboardCss, new RegExp(`\\.${shellClass}\\b`), `${shellClass} should be defined centrally`);
+}
+
 assert.match(plan, /Phase 1 — Shell ownership/, "design plan should record shell consolidation first");
 assert.match(plan, /Existing functionality is preserved/, "design plan should preserve runtime behavior during presentation consolidation");
 
