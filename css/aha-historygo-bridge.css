@@ -1,0 +1,206 @@
+/* AHA ↔ History Go bridge presentation.
+   Styles the AHA integration page only; History Go core is outside this layer. */
+
+.aha-historygo-bridge-page {
+  --hg-bridge-accent: var(--aha-color-coral);
+  --hg-bridge-accent-soft: var(--aha-color-coral-soft);
+}
+
+.aha-historygo-hero {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-historygo-hero .aha-module-shell-header h1 {
+  max-width: 19ch;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.aha-historygo-hero .aha-module-purpose {
+  max-width: 78ch;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-historygo-hero .aha-module-actions {
+  gap: 8px;
+}
+
+.aha-historygo-hero .aha-module-actions > * {
+  min-height: 38px;
+  border-radius: var(--aha-radius-control);
+}
+
+.aha-historygo-consent-panel {
+  border-color: rgba(126,226,168,.18);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.055), transparent 42%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-historygo-consent-panel label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(126,226,168,.16);
+  border-radius: var(--aha-radius-control);
+  background: rgba(126,226,168,.035);
+  line-height: 1.5;
+}
+
+.aha-historygo-consent-panel input[type="checkbox"] {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+.aha-historygo-status-panel {
+  border-color: rgba(255,152,125,.18);
+  background:
+    linear-gradient(145deg, rgba(255,152,125,.05), transparent 42%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-historygo-bridge-page .aha-status-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
+}
+
+.aha-historygo-bridge-page .aha-status-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--hg-bridge-accent);
+  opacity: .72;
+}
+
+.aha-historygo-insights-panel {
+  border-color: rgba(116,173,255,.16);
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.045), transparent 42%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-historygo-insights-panel strong {
+  color: var(--aha-color-blue);
+  font-size: 1.45rem;
+}
+
+.aha-historygo-music-panel {
+  border-color: rgba(126,226,168,.16);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.045), transparent 42%),
+    var(--aha-panel-background);
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-historygo-bridge-page .aha-historygo-music-card {
+  border: 1px solid rgba(126,226,168,.14);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
+  box-shadow: none;
+}
+
+.aha-historygo-bridge-page .aha-historygo-music-chip {
+  border-color: rgba(126,226,168,.2);
+  border-radius: var(--aha-radius-pill);
+  background: var(--aha-color-green-soft);
+  color: var(--aha-color-green);
+}
+
+.aha-historygo-bridge-page .aha-historygo-content-summary span,
+.aha-historygo-bridge-page .aha-historygo-nearby-music span {
+  border-radius: var(--aha-radius-pill);
+  background: rgba(116,173,255,.06);
+  color: var(--aha-muted);
+}
+
+.aha-historygo-bridge-page .aha-historygo-nearby-music li {
+  border: 1px solid rgba(116,173,255,.14);
+  border-radius: var(--aha-radius-card);
+  background: rgba(116,173,255,.025);
+}
+
+.aha-historygo-advanced {
+  border-color: rgba(170,145,247,.14);
+  background: rgba(170,145,247,.03);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.aha-historygo-advanced > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: var(--aha-color-violet);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.aha-historygo-advanced[open] > summary {
+  border-bottom: 1px solid rgba(170,145,247,.12);
+}
+
+.aha-historygo-advanced-grid {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.aha-historygo-advanced-section {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
+}
+
+.aha-historygo-advanced-section h2,
+.aha-historygo-advanced-section h3 {
+  margin-top: 0;
+}
+
+.aha-historygo-bridge-page .aha-historygo-payload-list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 7px;
+  color: var(--aha-muted);
+}
+
+.aha-historygo-bridge-page .aha-historygo-payload-list code {
+  color: #ddd4ff;
+}
+
+.aha-historygo-bridge-page .aha-historygo-event-list li {
+  border: 1px solid rgba(170,145,247,.12);
+  border-radius: var(--aha-radius-card);
+  background: rgba(170,145,247,.025);
+}
+
+.aha-historygo-bridge-page #hg-import-status {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--aha-muted);
+}
+
+@media (max-width: 720px) {
+  .aha-historygo-hero .aha-module-shell-header h1 {
+    font-size: clamp(1.85rem, 9vw, 2.55rem);
+  }
+
+  .aha-historygo-advanced-grid {
+    padding: 10px;
+  }
+}
