@@ -1,0 +1,171 @@
+/* AHA social surfaces — Groups and Meet presentation only. */
+
+.aha-social-surface {
+  --social-accent: var(--aha-color-coral);
+  --social-accent-soft: var(--aha-color-coral-soft);
+}
+
+.aha-groups-page {
+  --social-accent: var(--aha-color-violet);
+  --social-accent-soft: var(--aha-color-violet-soft);
+}
+
+.aha-meet-page {
+  --social-accent: var(--aha-color-coral);
+  --social-accent-soft: var(--aha-color-coral-soft);
+}
+
+.aha-social-surface .aha-module-shell {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-social-surface .aha-module-shell-header h1 {
+  max-width: 20ch;
+  font-size: clamp(2rem, 5vw, 3.15rem);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.aha-social-surface .aha-module-purpose {
+  max-width: 72ch;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-social-surface .aha-module-actions {
+  gap: 8px;
+}
+
+.aha-social-surface .aha-module-actions > *,
+.aha-social-surface .aha-tile-actions > * {
+  min-height: 38px;
+  border-radius: var(--aha-radius-control);
+}
+
+.aha-social-primary-panel,
+.aha-social-secondary-panel,
+.aha-social-list-panel,
+.aha-social-boundary-panel {
+  box-shadow: var(--aha-shadow-soft);
+}
+
+.aha-social-primary-panel {
+  border-color: color-mix(in srgb, var(--social-accent) 24%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--social-accent) 8%, transparent), transparent 44%),
+    var(--aha-panel-background);
+}
+
+.aha-social-secondary-panel,
+.aha-social-list-panel {
+  border-color: rgba(255,255,255,.075);
+  background: var(--aha-color-panel);
+}
+
+.aha-social-boundary-panel {
+  border-color: rgba(170,145,247,.14);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.045), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-social-surface input,
+.aha-social-surface select,
+.aha-social-surface textarea {
+  min-height: var(--aha-field-min-height);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
+  color: var(--aha-text);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.aha-social-surface textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.aha-social-surface input:focus,
+.aha-social-surface select:focus,
+.aha-social-surface textarea:focus {
+  border-color: var(--social-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--social-accent) 22%, transparent);
+}
+
+.aha-social-surface button:not(.aha-tile-btn) {
+  min-height: 36px;
+  border: 1px solid color-mix(in srgb, var(--social-accent) 22%, transparent);
+  border-radius: var(--aha-radius-control);
+  background: var(--social-accent-soft);
+  color: var(--aha-text);
+  padding: 7px 10px;
+  font: inherit;
+  font-weight: 760;
+}
+
+.aha-social-surface button:not(.aha-tile-btn):hover {
+  border-color: color-mix(in srgb, var(--social-accent) 40%, transparent);
+}
+
+.aha-social-surface .aha-module-details {
+  margin-top: 4px;
+  border: 1px solid rgba(170,145,247,.12);
+  border-radius: var(--aha-radius-card);
+  background: rgba(170,145,247,.025);
+}
+
+.aha-social-surface .aha-module-details > summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 9px 11px;
+  color: var(--aha-color-violet);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.aha-meet-boundary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aha-meet-boundary-grid li {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(255,152,125,.16);
+  border-radius: var(--aha-radius-card);
+  background: rgba(255,152,125,.035);
+  color: var(--aha-muted);
+}
+
+.aha-meet-page .aha-meet-future-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.aha-meet-page .aha-meet-future-copy p {
+  margin: 0;
+  color: var(--aha-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .aha-social-surface .aha-module-shell-header h1 {
+    font-size: clamp(1.85rem, 9vw, 2.55rem);
+  }
+
+  .aha-meet-boundary-grid {
+    grid-template-columns: 1fr;
+  }
+}
