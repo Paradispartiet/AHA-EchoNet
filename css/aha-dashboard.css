@@ -2814,8 +2814,10 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
 
 .aha-home-panel {
   gap: 12px;
-  background: rgba(255,255,255,.032);
-  border-color: rgba(255,255,255,.07);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .aha-home-subtitle {
@@ -2825,16 +2827,48 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
 }
 
 .aha-home-app-feed {
-  gap: 10px;
+  gap: 14px;
 }
 
 .aha-home-app-card {
-  gap: 10px;
-  border-radius: 18px;
-  padding: 12px;
-  background: rgba(255,255,255,.038);
-  border: 1px solid rgba(255,255,255,.075);
+  position: relative;
+  gap: 12px;
+  overflow: hidden;
+  border-radius: var(--aha-radius-panel);
+  padding: 16px 16px 16px 18px;
+  background: var(--aha-panel-background);
+  border: 1px solid var(--aha-line);
+  box-shadow: var(--aha-shadow-soft);
 }
+
+.aha-home-app-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  opacity: .92;
+}
+
+.aha-home-app-card-insight {
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.11), transparent 42%),
+    var(--aha-panel-background);
+}
+.aha-home-app-card-insight::before { background: var(--aha-color-blue); }
+
+.aha-home-app-card-work {
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.11), transparent 42%),
+    var(--aha-panel-background);
+}
+.aha-home-app-card-work::before { background: var(--aha-color-violet); }
+
+.aha-home-app-card-mine {
+  background:
+    linear-gradient(145deg, rgba(88,217,199,.09), transparent 42%),
+    var(--aha-panel-background);
+}
+.aha-home-app-card-mine::before { background: var(--aha-color-cyan); }
 
 .aha-home-card-head {
   align-items: center;
@@ -2842,19 +2876,26 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
 
 .aha-home-card-head h2,
 .aha-home-card-head h3 {
-  font-size: 1.02rem;
-  letter-spacing: -.015em;
+  font-size: 1.16rem;
+  letter-spacing: -.02em;
 }
 
 .aha-home-card-head .eyebrow {
-  color: rgba(247,243,223,.46);
+  margin-bottom: 5px;
+  color: var(--aha-muted);
+  font-size: .68rem;
+  letter-spacing: .1em;
 }
+
+.aha-home-app-card-insight .aha-home-card-head .eyebrow { color: var(--aha-color-blue); }
+.aha-home-app-card-work .aha-home-card-head .eyebrow { color: var(--aha-color-violet); }
+.aha-home-app-card-mine .aha-home-card-head .eyebrow { color: var(--aha-color-cyan); }
 
 .aha-home-card-head .aha-cta-primary,
 .aha-home-card-head .aha-cta-secondary {
-  min-height: 32px;
-  padding: 7px 11px;
-  border-radius: 11px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--aha-radius-control);
   font-size: .82rem;
 }
 
