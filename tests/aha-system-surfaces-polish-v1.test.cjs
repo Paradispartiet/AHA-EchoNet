@@ -56,7 +56,7 @@ for (const [pageClass, token] of [
 
 assert.match(systemCss, /\.aha-system-primary-panel\s*\{[^}]*system-accent/s, "System primary panels should use the page accent");
 assert.match(systemCss, /\.aha-system-status-panel\s*\{[^}]*system-accent/s, "System status panels should use the page accent");
-assert.match(systemCss, /\.aha-system-surface \.aha-tech-status\s*\{[^}]*aha-color-violet/s, "Technical diagnostics should remain visually secondary");
+assert.match(systemCss, /\.aha-system-surface \.aha-tech-status > summary\s*\{[^}]*aha-color-violet/s, "Technical diagnostics should remain visually secondary");
 assert.match(systemCss, /\.aha-system-surface input:not\(\[type="checkbox"\]\)/, "System forms should use the shared field contract");
 
 for (const id of ["sources-main", "sources-summary", "sources-filters", "sources-events", "sources-insight-links"]) {
