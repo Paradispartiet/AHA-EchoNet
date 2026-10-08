@@ -1,5 +1,8 @@
 .aha-music-shell {
-  max-width: 1180px;
+  --music-accent: var(--aha-color-green);
+  --music-accent-soft: var(--aha-color-green-soft);
+  --music-secondary: var(--aha-color-violet);
+  --music-secondary-soft: var(--aha-color-violet-soft);
 }
 
 .aha-music-notice,
@@ -8,11 +11,25 @@
   margin-bottom: 18px;
 }
 
+.aha-music-hero {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+.aha-music-hero .aha-module-shell-header h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  letter-spacing: -.045em;
+}
+
 .aha-music-notice {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  border-color: rgba(135, 247, 174, .28);
+  border-color: rgba(126,226,168,.22);
+  background: var(--aha-color-green-soft);
+  box-shadow: none;
 }
 
 .aha-music-action-row,
@@ -30,15 +47,15 @@
 }
 
 .aha-music-status[data-state="connected"] {
-  color: #87f7ae;
+  color: var(--aha-color-green);
 }
 
 .aha-music-status[data-state="connecting"] {
-  color: #ffe27a;
+  color: var(--aha-color-accent);
 }
 
 .aha-music-status[data-state="error"] {
-  color: #ff9b9b;
+  color: var(--aha-color-danger);
 }
 
 .aha-music-saved-tracks {
@@ -59,9 +76,9 @@
 .aha-music-track,
 .aha-music-stat {
   border: 1px solid var(--aha-line);
-  border-radius: 18px;
+  border-radius: var(--aha-radius-card);
   padding: 14px;
-  background: rgba(255,255,255,.055);
+  background: var(--aha-color-panel-soft);
 }
 
 .aha-music-playlist {
@@ -91,7 +108,7 @@
 }
 
 .aha-music-links a {
-  color: #ffe27a;
+  color: var(--aha-color-cyan);
   font-weight: 850;
 }
 
@@ -117,8 +134,25 @@
   }
 }
 
+.aha-music-connect {
+  border-color: rgba(126,226,168,.18);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.07), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-music-import {
+  border-color: rgba(170,145,247,.18);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.065), transparent 42%),
+    var(--aha-panel-background);
+}
+
 .aha-music-library {
-  background: linear-gradient(180deg, rgba(12, 18, 28, .96), rgba(7, 10, 16, .96));
+  border-color: rgba(116,173,255,.18);
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.055), transparent 42%),
+    var(--aha-panel-background);
 }
 
 .aha-music-controls {
@@ -138,12 +172,20 @@
 
 .aha-music-controls input,
 .aha-music-controls select {
-  min-height: 42px;
+  min-height: var(--aha-field-min-height);
   border: 1px solid var(--aha-line);
-  border-radius: 14px;
-  background: rgba(255,255,255,.065);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
   color: var(--aha-text);
-  padding: 9px 11px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.aha-music-controls input:focus,
+.aha-music-controls select:focus {
+  border-color: var(--aha-color-blue);
+  box-shadow: var(--aha-focus-ring);
 }
 
 .aha-music-tabs {
@@ -154,18 +196,24 @@
 }
 
 .aha-music-tabs button {
+  min-height: 40px;
   border: 1px solid var(--aha-line);
-  border-radius: 999px;
-  background: rgba(255,255,255,.055);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
+  color: var(--aha-muted);
+  padding: 8px 12px;
+  font-weight: 850;
+}
+
+.aha-music-tabs button:hover {
+  border-color: rgba(126,226,168,.28);
   color: var(--aha-text);
-  padding: 9px 14px;
-  font-weight: 900;
 }
 
 .aha-music-tabs button.is-active {
-  border-color: rgba(255,226,122,.72);
-  background: rgba(255,226,122,.16);
-  color: #ffe27a;
+  border-color: rgba(126,226,168,.34);
+  background: var(--aha-color-green-soft);
+  color: var(--aha-color-green);
 }
 
 .aha-music-section {
@@ -187,10 +235,11 @@
 
 .aha-music-card,
 .aha-music-playlist-card {
-  border: 1px solid var(--aha-line);
-  border-radius: 20px;
+  border: 1px solid rgba(116,173,255,.14);
+  border-radius: var(--aha-radius-card);
   padding: 16px;
-  background: rgba(255,255,255,.052);
+  background: var(--aha-color-panel);
+  box-shadow: var(--aha-shadow-soft);
 }
 
 .aha-music-card h4,
@@ -218,8 +267,8 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 30% 20%, rgba(255,226,122,.34), rgba(84,115,255,.18) 45%, rgba(255,255,255,.06));
-  color: #ffe27a;
+  background: radial-gradient(circle at 30% 20%, rgba(126,226,168,.28), rgba(170,145,247,.14) 48%, rgba(255,255,255,.035));
+  color: var(--aha-color-green);
   font-size: 1.8rem;
   font-weight: 900;
 }
@@ -248,12 +297,12 @@
 }
 
 .aha-music-chips span {
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
+  border: 1px solid rgba(170,145,247,.2);
+  border-radius: var(--aha-radius-pill);
   padding: 4px 8px;
-  color: var(--aha-muted);
+  color: #ddd4ff;
   font-size: .8rem;
-  background: rgba(255,255,255,.045);
+  background: var(--aha-color-violet-soft);
 }
 
 .aha-music-ordered-tracks {
@@ -285,7 +334,10 @@
 
 .aha-music-canon-panel {
   margin-top: 18px;
-  background: linear-gradient(180deg, rgba(18, 23, 35, .96), rgba(9, 11, 18, .96));
+  border-color: rgba(170,145,247,.18);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.06), transparent 42%),
+    var(--aha-panel-background);
 }
 
 .aha-music-canon,
@@ -301,7 +353,7 @@
 
 .aha-music-canon-status {
   border: 1px solid var(--aha-line);
-  border-radius: 999px;
+  border-radius: var(--aha-radius-pill);
   padding: 8px 12px;
   color: var(--aha-muted);
   font-weight: 900;
@@ -310,15 +362,15 @@
 
 .aha-music-canon-status.is-ok {
   border-color: rgba(135, 247, 174, .42);
-  color: #87f7ae;
-  background: rgba(135, 247, 174, .08);
+  color: var(--aha-color-green);
+  background: var(--aha-color-green-soft);
 }
 
 .aha-music-canon-status.is-error,
 .aha-music-canon-errors {
   border-color: rgba(255, 121, 121, .42);
-  color: #ffabab;
-  background: rgba(255, 121, 121, .08);
+  color: #ffb4bd;
+  background: rgba(255,112,130,.08);
 }
 
 .aha-music-canon-errors {
@@ -336,10 +388,10 @@
 
 .aha-music-canon-section,
 .aha-music-canon-detail-card {
-  border: 1px solid var(--aha-line);
-  border-radius: 22px;
+  border: 1px solid rgba(170,145,247,.16);
+  border-radius: var(--aha-radius-panel);
   padding: 16px;
-  background: rgba(255,255,255,.045);
+  background: var(--aha-color-panel);
 }
 
 .aha-music-canon-section h3,
@@ -367,8 +419,8 @@
 .aha-music-canon-related button,
 .aha-music-canon-edge-list button {
   border: 1px solid var(--aha-line);
-  border-radius: 16px;
-  background: rgba(255,255,255,.055);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
   color: var(--aha-text);
   padding: 10px 12px;
   text-align: left;
@@ -379,8 +431,8 @@
 .aha-music-canon-node-grid button.is-selected,
 .aha-music-canon-related button:hover,
 .aha-music-canon-edge-list button:hover {
-  border-color: rgba(255,226,122,.68);
-  background: rgba(255,226,122,.14);
+  border-color: rgba(170,145,247,.34);
+  background: var(--aha-color-violet-soft);
 }
 
 .aha-music-canon-node-grid strong,
@@ -412,7 +464,7 @@
 }
 
 .aha-music-canon-edge-list span {
-  color: #ffe27a;
+  color: var(--aha-color-violet);
   font-weight: 900;
   font-size: .82rem;
   text-transform: uppercase;
@@ -440,10 +492,10 @@
 }
 
 .aha-music-canon-empty-link-state {
-  border: 1px dashed rgba(255,255,255,.22);
-  border-radius: 16px;
+  border: 1px dashed rgba(170,145,247,.24);
+  border-radius: var(--aha-radius-card);
   padding: 12px;
-  background: rgba(255,255,255,.035);
+  background: rgba(170,145,247,.035);
 }
 
 @media (max-width: 900px) {
@@ -475,10 +527,10 @@
 .aha-music-historygo-place,
 .aha-music-historygo-empty,
 .aha-music-historygo-inline {
-  border: 1px solid var(--aha-line);
-  border-radius: 18px;
+  border: 1px solid rgba(255,152,125,.16);
+  border-radius: var(--aha-radius-card);
   padding: 14px;
-  background: rgba(255,255,255,.048);
+  background: rgba(255,152,125,.035);
 }
 
 .aha-music-historygo-summary strong,
@@ -522,11 +574,11 @@
 .aha-music-historygo-status {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(255,226,122,.44);
-  border-radius: 999px;
+  border: 1px solid rgba(255,152,125,.26);
+  border-radius: var(--aha-radius-pill);
   padding: 4px 8px;
-  background: rgba(255,226,122,.12);
-  color: #ffe27a;
+  background: var(--aha-color-coral-soft);
+  color: var(--aha-color-coral);
   font-size: .78rem;
   font-weight: 900;
   white-space: nowrap;
@@ -541,8 +593,8 @@
 .aha-music-historygo-status-auto_matched,
 .aha-music-historygo-status-verified {
   border-color: rgba(135,247,174,.48);
-  color: #87f7ae;
-  background: rgba(135,247,174,.1);
+  color: var(--aha-color-green);
+  background: var(--aha-color-green-soft);
 }
 
 .aha-music-historygo-inline {
@@ -558,7 +610,7 @@
 }
 
 .aha-music-historygo-inline span {
-  color: #ffe27a;
+  color: var(--aha-color-coral);
   font-weight: 900;
 }
 
