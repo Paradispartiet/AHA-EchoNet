@@ -3167,3 +3167,24 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Design Consolidation V1: semantic content widths.
+   Home keeps the compact app-feed default. Product pages opt into a named
+   width instead of carrying one-off max-width declarations in HTML. */
+.aha-dashboard.aha-shell-reading {
+  width: min(900px, 100%);
+  max-width: 900px;
+}
+.aha-dashboard.aha-shell-content {
+  width: min(1000px, 100%);
+  max-width: 1000px;
+}
+.aha-dashboard.aha-shell-workspace {
+  width: min(1100px, 100%);
+  max-width: 1100px;
+}
+.aha-dashboard.aha-shell-wide {
+  width: min(1200px, 100%);
+  max-width: 1200px;
+}
