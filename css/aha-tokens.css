@@ -57,7 +57,14 @@
   --aha-radius-md: 14px;
   --aha-radius-lg: 18px;
   --aha-radius-xl: 22px;
+  --aha-radius-control: 12px;
+  --aha-radius-card: 16px;
+  --aha-radius-panel: 20px;
   --aha-radius-pill: 999px;
+  --aha-control-min-height: 42px;
+  --aha-field-min-height: 44px;
+  --aha-control-padding-y: 10px;
+  --aha-control-padding-x: 14px;
   --aha-space-1: 4px;
   --aha-space-2: 8px;
   --aha-space-3: 12px;
