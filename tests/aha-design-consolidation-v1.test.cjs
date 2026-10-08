@@ -32,7 +32,12 @@ for (const token of [
   "--aha-color-violet",
   "--aha-color-green",
   "--aha-color-coral",
-  "--aha-app-background"
+  "--aha-app-background",
+  "--aha-radius-control",
+  "--aha-radius-card",
+  "--aha-radius-panel",
+  "--aha-control-min-height",
+  "--aha-field-min-height"
 ]) {
   assert.match(tokens, new RegExp(token), `${token} should be defined in canonical tokens`);
 }
@@ -41,6 +46,11 @@ assert.match(tokens, /linear-gradient\(160deg, #050608 0%, #0a0b10 52%, #050608 
 assert.match(dashboardCss, /background:\s*var\(--aha-app-background\)/, "Dashboard should use the canonical app background");
 assert.match(chatCss, /background:\s*var\(--aha-app-background/, "Chat should use the canonical app background");
 assert.match(chatCss, /chat-line-user[^}]*aha-color-blue-soft/s, "Chat user messages should use the blue secondary accent");
+assert.match(dashboardCss, /button\s*\{[^}]*border-radius:\s*var\(--aha-radius-control\)/s, "Dashboard buttons should use canonical control radius");
+assert.match(dashboardCss, /\.aha-status-pill[\s\S]*?border-radius:\s*999px;/, "Status should remain pill-shaped");
+assert.match(chatCss, /button\s*\{[^}]*aha-radius-control/s, "Chat buttons should use canonical control radius");
+assert.match(moduleCss, /\.module-form input,[\s\S]*?aha-field-min-height/s, "Legacy module fields should use canonical field height");
+assert.match(moduleCss, /\.module-card\s*\{[^}]*aha-radius-card/s, "Legacy module cards should use canonical card radius");
 
 const shellPages = [
   "profile.html",
