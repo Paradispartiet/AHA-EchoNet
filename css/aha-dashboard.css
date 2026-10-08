@@ -3190,3 +3190,12 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
   width: min(1200px, 100%);
   max-width: 1200px;
 }
+
+
+/* Unified monoline module icon rendering. */
+.aha-tile-icon .aha-module-icon-svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex: 0 0 auto;
+}
