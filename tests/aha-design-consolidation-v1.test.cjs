@@ -20,7 +20,9 @@ for (const selector of [".module-form", ".module-list", ".module-card", ".module
   assert.match(moduleCss, new RegExp(selector.replace(".", "\\.")), `${selector} should remain available during controlled migration`);
 }
 
-assert.match(navCss, /^@import url\("\.\/aha-tokens\.css"\);/, "global product shell should load canonical AHA tokens");
+for (const [name, css] of [["global nav", navCss], ["dashboard", dashboardCss], ["chat", chatCss]]) {
+  assert.match(css, /^@import url\("\.\/aha-tokens\.css"\);/, `${name} should load canonical AHA tokens`);
+}
 for (const token of [
   "--aha-color-bg",
   "--aha-color-surface",
