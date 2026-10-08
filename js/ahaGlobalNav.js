@@ -365,7 +365,7 @@
     const module = modulesById.get(item.moduleId);
     if (!module) return "";
     const active = moduleFile(module.href) === activeFile;
-    const icon = icons[module.id] || "◌";
+    const icon = icons[module.id] || icons.default || "";
     const label = item.label || module.title;
     return `<a class="aha-global-nav-item${active ? " is-active" : ""}" href="${escapeHtml(module.href)}" data-module="${escapeHtml(module.id)}"${active ? ' aria-current="page"' : ""}>
       <span class="aha-global-nav-item-icon" aria-hidden="true">${icon}</span>

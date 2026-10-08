@@ -241,31 +241,38 @@
     }
   ];
 
+  function moduleIcon(body) {
+    return `<svg class="aha-module-icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  }
+
   const MODULE_ICONS = {
-    profile: "◌",
-    chat: "✦",
-    insights: "◎",
-    sources: "⇥",
-    lists: "☰",
-    paths: "↠",
-    mindmap: "⎔",
-    historygo: "⌁",
-    gallery: "▧",
-    notes: "✎",
-    insta: "◉",
-    feed: "#",
-    meet: "⟡",
-    "data-intake": "⇥",
-    "knowledge-curation": "◇",
-    "knowledge-map": "🕸",
-    "sync-hub": "⇄",
-    music: "♫",
-    avisa: "📰",
-    groups: "◍",
-    search: "⌕",
-    training: "⚙",
-    "personal-ai": "✧",
-    privacy: "⚑"
+    default: moduleIcon('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>'),
+    profile: moduleIcon('<circle cx="12" cy="8" r="3.2"/><path d="M5.5 19c1.2-4 3.6-6 6.5-6s5.3 2 6.5 6"/>'),
+    chat: moduleIcon('<path d="M4 5.5h16v10H9l-5 3v-13Z"/>'),
+    insights: moduleIcon('<circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>'),
+    sources: moduleIcon('<path d="M5 6h10M5 12h14M5 18h10"/><circle cx="18" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="18" cy="18" r="1.5"/>'),
+    lists: moduleIcon('<path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'),
+    paths: moduleIcon('<circle cx="5" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="19" cy="15" r="2"/><path d="m6.5 15.5 4-6.5M13.7 8.4l3.6 5.2"/>'),
+    mindmap: moduleIcon('<circle cx="12" cy="12" r="2.4"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="m10.2 10.4-3.8-3M13.8 10.4l3.8-3M10.2 13.6l-3.8 3M13.8 13.6l3.8 3"/>'),
+    historygo: moduleIcon('<path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z"/><circle cx="12" cy="10" r="2"/>'),
+    gallery: moduleIcon('<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5.5 17 4.2-4 3 2.8 2.3-2 3.5 3.2"/>'),
+    notes: moduleIcon('<path d="M6 4h9l3 3v13H6z"/><path d="M15 4v4h4M9 12h6M9 16h5"/>'),
+    insta: moduleIcon('<rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3.5"/><circle cx="17" cy="7" r=".8"/>'),
+    feed: moduleIcon('<rect x="4" y="5" width="16" height="4" rx="1"/><rect x="4" y="11" width="16" height="4" rx="1"/><rect x="4" y="17" width="11" height="2" rx="1"/>'),
+    meet: moduleIcon('<circle cx="9" cy="9" r="2.5"/><circle cx="16.5" cy="10" r="2"/><path d="M4.5 18c.9-3.2 2.6-4.8 5-4.8s4.1 1.6 5 4.8M14.5 14.2c2.5.1 4 1.4 4.8 3.8"/>'),
+    "knowledge-workbench": moduleIcon('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M16.5 14v5M14 16.5h5"/>'),
+    "data-intake": moduleIcon('<path d="M12 3v10M8 9l4 4 4-4"/><path d="M5 15v4h14v-4"/>'),
+    "knowledge-curation": moduleIcon('<path d="M4 5h16l-6 7v5l-4 2v-7Z"/>'),
+    "knowledge-map": moduleIcon('<circle cx="5" cy="7" r="2"/><circle cx="18.5" cy="6" r="2"/><circle cx="8" cy="18" r="2"/><circle cx="18" cy="17" r="2"/><path d="m6.8 7.7 9.7-1M6 8.8l1.3 7.3M9.8 17.8l6.2-.6M17.8 8l.2 7"/>'),
+    "knowledge-graph-intelligence": moduleIcon('<circle cx="6" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="12" cy="18" r="2"/><path d="m7.5 10.5 3-3M13.5 7.5l3 3M16.5 13.5l-3 3M10.5 16.5l-3-3"/><path d="M12 10v4M10 12h4"/>'),
+    "sync-hub": moduleIcon('<path d="M7 7h10l-2.5-2.5M17 17H7l2.5 2.5"/><path d="M18.5 8.5A7 7 0 0 1 19 12M5.5 15.5A7 7 0 0 1 5 12"/>'),
+    music: moduleIcon('<path d="M9 18V7l9-2v11"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="15.5" cy="16" r="2.5"/>'),
+    avisa: moduleIcon('<rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M7 9h5M7 12h5M7 15h5M15 9h2M15 12h2M15 15h2"/>'),
+    groups: moduleIcon('<circle cx="12" cy="8" r="2.5"/><circle cx="6.5" cy="10" r="2"/><circle cx="17.5" cy="10" r="2"/><path d="M7.5 19c.7-3.5 2.2-5.3 4.5-5.3s3.8 1.8 4.5 5.3M3.5 18c.4-2.5 1.5-3.8 3.2-4M20.5 18c-.4-2.5-1.5-3.8-3.2-4"/>'),
+    search: moduleIcon('<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5"/>'),
+    training: moduleIcon('<path d="M5 6h14M5 12h14M5 18h14"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="18" r="2"/>'),
+    "personal-ai": moduleIcon('<path d="m12 3 1.5 4.2L18 9l-4.5 1.8L12 15l-1.5-4.2L6 9l4.5-1.8Z"/><path d="m18.5 14 .7 2 2 .8-2 .8-.7 2-.7-2-2-.8 2-.8Z"/>'),
+    privacy: moduleIcon('<path d="M12 3 19 6v5c0 4.7-2.8 8-7 10-4.2-2-7-5.3-7-10V6Z"/><path d="m9 12 2 2 4-4"/>')
   };
 
   const MODULE_TYPE_LABELS = {
@@ -436,7 +443,7 @@
     grid.innerHTML = orderedModules().map((module) => {
       const isPriority = ["chat", "personal-ai", "training"].includes(module.id);
       const tileClass = `aha-tile${isPriority ? " aha-tile-priority" : ""}`;
-      const icon = MODULE_ICONS[module.id] || "◌";
+      const icon = MODULE_ICONS[module.id] || MODULE_ICONS.default;
       const badge = renderHealthBadge(module, healthByModule[module.id]);
       const typeTag = renderModuleTypeTag(module);
       const description = module.description

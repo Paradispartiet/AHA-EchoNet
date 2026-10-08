@@ -1,3 +1,5 @@
+@import url("./aha-tokens.css");
+
 /* aha-global-nav.css
    Felles AHA-produktnavigasjon. Hovednivået er bevisst lite; tekniske verktøy
    ligger under Mer. Stilarket er selvstendig slik at nav ser lik ut overalt.
@@ -6,14 +8,6 @@
 :root {
   --aha-global-header-height: 54px;
   --aha-global-footer-height: 50px;
-  --gnav-bg: rgba(7, 8, 13, .96);
-  --gnav-surface: #11131b;
-  --gnav-card: rgba(255, 255, 255, .045);
-  --gnav-line: rgba(255, 255, 255, .12);
-  --gnav-text: #f7f3df;
-  --gnav-muted: rgba(247, 243, 223, .65);
-  --gnav-accent: #f6c800;
-  --gnav-accent-soft: rgba(246, 200, 0, .14);
 }
 
 .aha-global-nav {
@@ -55,7 +49,7 @@
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  background: var(--gnav-accent);
+  background: linear-gradient(145deg, var(--aha-color-accent), var(--aha-color-coral));
   color: #14110a;
   font-size: .82rem;
   font-weight: 950;
@@ -92,8 +86,9 @@
 }
 
 .aha-global-nav-primary-link.is-active {
-  box-shadow: inset 0 0 0 1px rgba(246, 200, 0, .28);
-  background: var(--gnav-accent-soft);
+  color: var(--aha-color-text);
+  box-shadow: inset 0 0 0 1px rgba(116, 173, 255, .34);
+  background: var(--aha-color-blue-soft);
 }
 
 .aha-global-nav-toggle {
@@ -211,7 +206,7 @@
 }
 
 .aha-global-nav-item:hover { background: rgba(255, 255, 255, .065); }
-.aha-global-nav-item.is-active { background: var(--gnav-accent-soft); border-color: rgba(246, 200, 0, .3); }
+.aha-global-nav-item.is-active { background: var(--aha-color-blue-soft); border-color: rgba(116, 173, 255, .34); }
 
 .aha-global-nav-item-icon {
   flex: 0 0 auto;
@@ -255,7 +250,7 @@
   padding: 12px 14px;
   border: 1px solid var(--gnav-line);
   border-radius: 14px;
-  background: rgba(0, 0, 0, .13);
+  background: linear-gradient(145deg, rgba(170, 145, 247, .07), rgba(88, 217, 199, .035));
 }
 
 .aha-global-nav-advanced summary { cursor: pointer; font-size: .84rem; font-weight: 760; }
@@ -346,7 +341,7 @@ body.aha-global-daily-open { overflow: hidden; }
   bottom: 0;
   left: 0;
   padding: 0;
-  background: rgba(9, 10, 16, .94);
+  background: rgba(5, 6, 9, .96);
   color: var(--gnav-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   pointer-events: none;
@@ -366,7 +361,7 @@ body.aha-global-daily-open { overflow: hidden; }
   border-bottom: 0;
   border-left: 0;
   border-radius: 0;
-  background: rgba(9, 10, 16, .94);
+  background: rgba(7, 8, 13, .96);
   box-shadow: 0 -10px 34px rgba(0, 0, 0, .34);
   backdrop-filter: blur(18px);
   pointer-events: auto;
@@ -407,7 +402,7 @@ body.aha-global-daily-open { overflow: hidden; }
   font-weight: 900;
 }
 
-.aha-global-footer-daily-mark { background: var(--gnav-accent-soft); color: var(--gnav-accent); }
+.aha-global-footer-daily-mark { background: var(--aha-color-cyan-soft); color: var(--aha-color-cyan); }
 .aha-global-footer-copy { display: grid; min-width: 0; line-height: 1.05; }
 .aha-global-footer-copy > span { overflow: hidden; font-size: .82rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .aha-global-footer-copy small { margin-top: 3px; color: var(--gnav-muted); font-size: .66rem; }
@@ -435,7 +430,7 @@ body.aha-global-daily-open { overflow: hidden; }
   overflow: auto;
   border: 1px solid rgba(246, 200, 0, .3);
   border-radius: 22px 22px 16px 16px;
-  background: #0d1120;
+  background: var(--aha-color-surface, #11131b);
   box-shadow: 0 -22px 60px rgba(0, 0, 0, .58);
   overscroll-behavior: contain;
   animation: aha-global-daily-rise .2s ease-out;
@@ -456,7 +451,7 @@ body.aha-global-daily-open { overflow: hidden; }
   gap: 18px;
   padding: 17px 18px 14px;
   border-bottom: 1px solid var(--gnav-line);
-  background: rgba(13, 17, 32, .96);
+  background: rgba(9, 10, 15, .97);
   backdrop-filter: blur(12px);
 }
 
@@ -572,4 +567,16 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
 
 @media (prefers-reduced-motion: reduce) {
   .aha-global-daily-panel { animation: none; }
+}
+
+
+.aha-global-nav-item-icon {
+  display: grid;
+  place-items: center;
+}
+
+.aha-global-nav-item-icon .aha-module-icon-svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
