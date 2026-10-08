@@ -15,15 +15,24 @@
 .module-form input,
 .module-form textarea {
   width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
-  color: inherit;
+  min-height: var(--aha-field-min-height, 44px);
+  padding: 10px 12px;
+  border-radius: var(--aha-radius-control, 12px);
+  border: 1px solid var(--aha-line, rgba(151,181,220,.22));
+  background: var(--aha-color-input, rgba(21,24,34,.92));
+  color: var(--aha-text, inherit);
+  font: inherit;
+  outline: none;
 }
 
 .module-form textarea {
   min-height: 140px;
+}
+
+.module-form input:focus,
+.module-form textarea:focus {
+  border-color: var(--aha-color-blue, #74adff);
+  box-shadow: var(--aha-focus-ring, 0 0 0 3px rgba(116,173,255,.28));
 }
 
 .module-list {
@@ -32,10 +41,10 @@
 }
 
 .module-card {
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 16px;
+  border: 1px solid var(--aha-line, rgba(151,181,220,.22));
+  border-radius: var(--aha-radius-card, 16px);
   padding: 16px;
-  background: rgba(255,255,255,0.05);
+  background: var(--aha-color-panel-soft, rgba(29,32,43,.82));
 }
 
 .module-card img,
@@ -46,6 +55,6 @@
 }
 
 .module-meta {
-  opacity: 0.72;
+  color: var(--aha-muted, #aebed2);
   font-size: 0.9rem;
 }
