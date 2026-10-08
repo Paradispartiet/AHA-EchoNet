@@ -8,8 +8,8 @@
 .privacy-storage-card,
 .privacy-explain-card {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
   padding: 12px;
 }
 
@@ -23,7 +23,7 @@
 .privacy-pill {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--aha-radius-pill);
   padding: 3px 9px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 0.82rem;
@@ -31,13 +31,15 @@
 }
 
 .privacy-pill.is-on {
-  background: rgba(86, 196, 135, 0.18);
-  border-color: rgba(86, 196, 135, 0.35);
+  background: var(--aha-color-green-soft);
+  border-color: rgba(126,226,168,.28);
+  color: var(--aha-color-green);
 }
 
 .privacy-pill.is-off {
-  background: rgba(255, 130, 130, 0.14);
-  border-color: rgba(255, 130, 130, 0.28);
+  background: rgba(255,112,130,.08);
+  border-color: rgba(255,112,130,.22);
+  color: #ffb4bd;
 }
 
 .privacy-form {
@@ -111,7 +113,7 @@
 
 .privacy-summary-card {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: var(--aha-radius-card);
   background: rgba(255, 255, 255, 0.03);
   padding: 10px;
   display: grid;
