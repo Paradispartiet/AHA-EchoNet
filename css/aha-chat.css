@@ -525,16 +525,18 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   display: grid;
   gap: 10px;
   scroll-margin-top: 20px;
-  border-radius: 14px;
+  border-radius: var(--aha-radius-card);
   padding: 14px 16px;
-  background: linear-gradient(150deg, rgba(16,26,54,0.9), rgba(10,16,34,0.88));
-  border: 1px solid var(--aha-border);
+  background: var(--aha-color-panel);
+  border: 1px solid var(--aha-line);
 }
 .analysis-card-wide,
 .analysis-card-full { grid-column: 1 / -1; }
 .analysis-card-primary {
-  border-color: rgba(255,211,71,0.55);
-  box-shadow: 0 0 0 1px rgba(255,211,71,0.16) inset;
+  border-color: rgba(244,200,74,.36);
+  background:
+    linear-gradient(145deg, rgba(244,200,74,.07), transparent 42%),
+    var(--aha-color-panel);
 }
 .analysis-card.is-targeted {
   border-color: var(--aha-accent);
@@ -549,15 +551,15 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.analysis-card-head h3 { margin: 0; color: var(--aha-accent); font-size: 14px; }
+.analysis-card-head h3 { margin:0; color:var(--aha-text); font-size:14px; }
 .analysis-card-head [data-analysis-count] {
   min-width: 22px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--aha-radius-pill);
   text-align: center;
-  color: var(--aha-accent);
-  background: rgba(255,211,71,.11);
-  border: 1px solid rgba(255,211,71,.25);
+  color: var(--aha-color-blue);
+  background: var(--aha-color-blue-soft);
+  border: 1px solid rgba(116,173,255,.26);
   font-size: 11px;
 }
 .analysis-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -568,9 +570,9 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .exp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: start; }
 
 .exp-card {
-  background: linear-gradient(150deg, rgba(16,26,54,0.9), rgba(10,16,34,0.88));
-  border: 1px solid var(--aha-border);
-  border-radius: 14px;
+  background: var(--aha-color-panel);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-card);
   padding: 14px 16px;
 }
 .exp-card + .exp-card { margin-top: 10px; }
@@ -630,9 +632,9 @@ pre#out { max-height: 22vh; overflow:auto; white-space: pre-wrap; }
 .exp-insight-card h3 { color: var(--aha-text); font-size: 15px; }
 
 .exp-acc {
-  border: 1px solid var(--aha-border);
-  border-radius: 12px;
-  background: rgba(10,16,34,0.6);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
   padding: 8px 12px;
 }
 .exp-acc > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--aha-muted); padding: 4px 0; }
@@ -811,3 +813,18 @@ body:has(#chat-log .chat-line) .chat-hero .composer-row {
 body:has(#chat-log .chat-line) #msg {
   min-height: 72px;
 }
+
+
+/* Analysis identity: color marks meaning while the surfaces stay black. */
+.analysis-card[data-analysis-card="innsikter"] { border-color: rgba(170,145,247,.22); }
+.analysis-card[data-analysis-card="innsikter"] .analysis-card-head h3 { color: var(--aha-color-violet); }
+.analysis-card[data-analysis-card="begreper"] { border-color: rgba(88,217,199,.22); }
+.analysis-card[data-analysis-card="begreper"] .analysis-card-head h3 { color: var(--aha-color-cyan); }
+.analysis-card[data-analysis-card="kilder"] { border-color: rgba(116,173,255,.22); }
+.analysis-card[data-analysis-card="kilder"] .analysis-card-head h3 { color: var(--aha-color-blue); }
+.analysis-card[data-analysis-card="struktur"] { border-color: rgba(126,226,168,.2); }
+.analysis-card[data-analysis-card="struktur"] .analysis-card-head h3 { color: var(--aha-color-green); }
+.analysis-card[data-analysis-card="etterarbeid"] { border-color: rgba(255,152,125,.2); }
+.analysis-card[data-analysis-card="etterarbeid"] .analysis-card-head h3 { color: var(--aha-color-coral); }
+.analysis-card[data-analysis-card="kart"] { border-color: rgba(116,173,255,.18); }
+.analysis-card[data-analysis-card="kart"] .analysis-card-head h3 { color: var(--aha-color-blue); }
