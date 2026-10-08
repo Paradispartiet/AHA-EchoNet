@@ -49,12 +49,34 @@
   box-shadow: var(--aha-shadow-soft);
 }
 
+.aha-system-primary-panel {
+  border-color: color-mix(in srgb, var(--system-accent) 24%, transparent) !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--system-accent) 8%, transparent), transparent 44%),
+    var(--aha-panel-background) !important;
+}
+
+.aha-system-status-panel {
+  border-color: color-mix(in srgb, var(--system-accent) 18%, transparent) !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--system-accent) 5%, transparent), transparent 42%),
+    var(--aha-panel-background) !important;
+}
+
+.aha-system-secondary-panel,
+.aha-system-list-panel {
+  border-color: rgba(255,255,255,.075) !important;
+  background: var(--aha-color-panel) !important;
+}
+
 .aha-system-surface > .aha-panel + .aha-panel {
   margin-top: 14px;
 }
 
 .aha-system-surface .aha-mini-stat,
-.aha-system-surface .aha-status-card {
+.aha-system-surface .aha-status-card,
+.aha-system-surface .privacy-status-card,
+.aha-system-surface .privacy-summary-card {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.075);
@@ -63,7 +85,9 @@
 }
 
 .aha-system-surface .aha-mini-stat::before,
-.aha-system-surface .aha-status-card::before {
+.aha-system-surface .aha-status-card::before,
+.aha-system-surface .privacy-status-card::before,
+.aha-system-surface .privacy-summary-card::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -158,4 +182,40 @@
   .aha-system-hero h1 {
     font-size: clamp(1.85rem, 9vw, 2.55rem);
   }
+}
+
+
+.aha-system-surface input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.aha-system-surface select,
+.aha-system-surface textarea {
+  min-height: var(--aha-field-min-height);
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
+  color: var(--aha-text);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.aha-system-surface input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.aha-system-surface select:focus,
+.aha-system-surface textarea:focus {
+  border-color: var(--system-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--system-accent) 22%, transparent);
+}
+
+.aha-system-surface .aha-module-actions > *,
+.aha-system-surface .aha-tile-actions > * {
+  min-height: 38px;
+  border-radius: var(--aha-radius-control);
+}
+
+.aha-sources-page .aha-audit-card,
+.aha-sources-page .aha-source-event {
+  background: var(--aha-color-panel);
+}
+
+.aha-status-page .aha-tech-status:not([open]) {
+  opacity: .86;
 }
