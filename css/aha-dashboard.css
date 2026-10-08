@@ -1,16 +1,18 @@
+@import url("./aha-tokens.css");
+
 :root {
-  --aha-bg: #07080d;
-  --aha-surface: #11131b;
-  --aha-card: rgba(255,255,255,.072);
-  --aha-card-soft: rgba(255,255,255,.045);
-  --aha-line: rgba(255,255,255,.13);
-  --aha-line-yellow: rgba(246,200,0,.38);
-  --aha-yellow: #f6c800;
-  --aha-yellow-soft: rgba(246,200,0,.14);
-  --aha-text: #f7f3df;
-  --aha-muted: rgba(247,243,223,.68);
-  --aha-green: #87f7ae;
-  --aha-shadow: 0 26px 80px rgba(0,0,0,.42);
+  --aha-bg: var(--aha-color-bg, #071321);
+  --aha-surface: var(--aha-color-surface, #0d1b2d);
+  --aha-card: var(--aha-color-panel, rgba(16,35,58,.94));
+  --aha-card-soft: var(--aha-color-panel-soft, rgba(22,46,75,.76));
+  --aha-line: var(--aha-color-line, rgba(151,181,220,.22));
+  --aha-line-yellow: rgba(244,200,74,.42);
+  --aha-yellow: var(--aha-color-accent, #f4c84a);
+  --aha-yellow-soft: var(--aha-color-accent-soft, rgba(244,200,74,.15));
+  --aha-text: var(--aha-color-text, #f8fbff);
+  --aha-muted: var(--aha-color-muted, #aebed2);
+  --aha-green: var(--aha-color-green, #7ee2a8);
+  --aha-shadow: 0 24px 64px rgba(1,7,15,.34);
 }
 
 * { box-sizing: border-box; }
