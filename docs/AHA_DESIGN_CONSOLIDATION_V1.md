@@ -110,9 +110,9 @@ Acceptance: a normal user can navigate AHA without needing to interpret implemen
 
 ### Phase 5 — Icon system
 
-Replace the current mixed emoji/symbol icon map with one coherent icon treatment and fixed metrics.
+Use one internal monoline SVG icon system with a shared 24×24 viewBox, currentColor stroke, 1.8 stroke width and fixed rendered metrics in Home/global navigation. Every registered module must have its own icon plus a generic fallback.
 
-Acceptance: no primary module identity depends on platform-rendered emoji.
+Acceptance: no primary module identity depends on platform-rendered emoji, and every registered module has canonical SVG coverage.
 
 ### Phase 6 — Home and Chat polish
 
