@@ -111,21 +111,22 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  border: 1px solid var(--aha-line);
-  border-radius: 999px;
+  min-height: var(--aha-control-min-height);
+  border: 1px solid rgba(116,173,255,.28);
+  border-radius: var(--aha-radius-control);
   background: var(--aha-color-blue-soft);
   color: var(--aha-text);
-  padding: 10px 14px;
+  padding: var(--aha-control-padding-y) var(--aha-control-padding-x);
   font-weight: 850;
 }
 
 button {
+  min-height: var(--aha-control-min-height);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--aha-radius-control);
   background: var(--aha-yellow);
   color: #12100a;
-  padding: 12px 16px;
+  padding: var(--aha-control-padding-y) var(--aha-control-padding-x);
   font: inherit;
   font-weight: 920;
   cursor: pointer;
@@ -330,9 +331,9 @@ button:hover { filter: brightness(1.07); }
 
 input {
   width: 100%;
-  min-height: 46px;
+  min-height: var(--aha-field-min-height);
   border: 1px solid var(--aha-line);
-  border-radius: 16px;
+  border-radius: var(--aha-radius-control);
   background: var(--aha-color-input);
   color: var(--aha-text);
   padding: 12px 14px;
@@ -446,8 +447,9 @@ input:focus { border-color: var(--aha-color-blue); box-shadow: var(--aha-focus-r
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  padding: 9px 14px;
+  min-height: 38px;
+  border-radius: var(--aha-radius-control);
+  padding: 8px 12px;
   font-weight: 800;
   font-size: .88rem;
   text-decoration: none;
@@ -484,9 +486,9 @@ input:focus { border-color: var(--aha-color-blue); box-shadow: var(--aha-focus-r
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 52px;
-  border-radius: 999px;
-  padding: 12px 18px;
+  min-height: 44px;
+  border-radius: var(--aha-radius-control);
+  padding: 10px 14px;
   font-weight: 900;
   text-decoration: none;
 }
@@ -719,7 +721,7 @@ html, body { max-width: 100%; }
   gap: 14px;
   margin-bottom: 14px;
 }
-.aha-profile-main-card { min-height: 0; padding: 16px 18px; border-radius: 22px; }
+.aha-profile-main-card { min-height: 0; padding: 16px 18px; border-radius: var(--aha-radius-panel); }
 .aha-profile-main-card::after { display: none; }
 .aha-profile-topline { margin-bottom: 14px; }
 .aha-profile-body { align-items: flex-start; gap: 14px; }
@@ -731,7 +733,7 @@ html, body { max-width: 100%; }
 .aha-profile-quick-actions .aha-cta-primary,
 .aha-profile-quick-actions .aha-cta-secondary { min-height: 40px; padding: 8px 12px; }
 
-.aha-side-card { border-radius: 22px; padding: 16px; }
+.aha-side-card { border-radius: var(--aha-radius-panel); padding: 16px; }
 .aha-side-card h2 { font-size: 1.25rem; }
 
 .aha-app-shell {
@@ -740,12 +742,12 @@ html, body { max-width: 100%; }
   gap: 16px;
   align-items: start;
 }
-.aha-panel { border-radius: 22px; padding: 16px; }
+.aha-panel { border-radius: var(--aha-radius-panel); padding: 16px; }
 .aha-home-panel, .aha-modules-panel, .aha-status-panel { overflow: visible; }
 
 .aha-modules-panel h2, .aha-home-panel h1, .aha-status-panel h2 { font-size: 1.2rem; }
 .aha-modules-panel .aha-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 0; }
-.aha-tile { min-height: 0; padding: 12px; border-radius: 16px; gap: 6px; }
+.aha-tile { min-height: 0; padding: 12px; border-radius: var(--aha-radius-card); gap: 6px; }
 .aha-tile strong { font-size: .98rem; }
 .aha-tile span:not(.aha-tile-icon) { font-size: .82rem; }
 .aha-tile-icon { width: 30px; height: 30px; font-size: .95rem; border-radius: 10px; }
@@ -2492,7 +2494,7 @@ html, body { max-width: 100%; }
   min-height: 34px;
   padding: 7px 10px;
   white-space: normal;
-  border-radius: 13px;
+  border-radius: var(--aha-radius-control);
   flex: 1 1 142px;
 }
 
