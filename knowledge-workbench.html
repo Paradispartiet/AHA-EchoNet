@@ -6,12 +6,13 @@
   <title>AHA Knowledge Workbench</title>
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-knowledge-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
 <div id="aha-global-nav"></div>
-<main class="aha-dashboard aha-shell-wide training-page">
-  <section class="aha-panel aha-module-shell">
+<main class="aha-dashboard aha-shell-wide training-page aha-knowledge-surface aha-workbench-page">
+  <section class="aha-panel aha-module-shell aha-knowledge-hero">
     <header class="aha-module-shell-header">
       <div>
         <p class="eyebrow">AHA Knowledge Workbench</p>
@@ -34,7 +35,7 @@
     <p>Workbench trenger materiale. Start med å skanne kilder eller legg inn tekst i Data Intake.</p>
   </section>
 
-  <section class="aha-panel" aria-labelledby="workbench-waiting-title">
+  <section class="aha-panel aha-knowledge-queue-panel" aria-labelledby="workbench-waiting-title">
     <p class="eyebrow">Arbeidskø</p>
     <h2 id="workbench-waiting-title">Hva venter på deg?</h2>
     <div id="workbench-queue" class="module-grid">
@@ -42,13 +43,13 @@
     </div>
   </section>
 
-  <section class="aha-panel" aria-labelledby="workbench-next-title">
+  <section class="aha-panel aha-knowledge-next-panel" aria-labelledby="workbench-next-title">
     <p class="eyebrow">Neste handling</p>
     <h2 id="workbench-next-title">Hva bør du gjøre nå?</h2>
     <div id="workbench-overall"></div>
   </section>
 
-  <section class="aha-panel" aria-labelledby="workbench-progress-title">
+  <section class="aha-panel aha-knowledge-progress-panel" aria-labelledby="workbench-progress-title">
     <p class="eyebrow">Kunnskapsløypa</p>
     <h2 id="workbench-progress-title">Hvor i løypa er materialet?</h2>
     <div id="workbench-progress" class="module-grid">
@@ -57,12 +58,12 @@
     <div id="workbench-next-stage" class="module-meta"></div>
   </section>
 
-  <section class="aha-panel" aria-labelledby="workbench-recommendations-title">
+  <section class="aha-panel aha-knowledge-recommendations-panel" aria-labelledby="workbench-recommendations-title">
     <h2 id="workbench-recommendations-title">For å holde kunnskapen ryddig</h2>
     <ul id="workbench-recommendations" class="aha-training-recommendations"></ul>
   </section>
 
-  <details id="workbench-advanced" class="aha-panel">
+  <details id="workbench-advanced" class="aha-panel aha-knowledge-advanced">
     <summary>Avansert kontroll og pipeline</summary>
     <p class="module-meta">Knowledge Workbench er en lokal kontrollflate. Det er ikke automatisk trening: pipelineverktøyene under godkjenner ikke materiale automatisk, starter ikke trening eller fine-tuning, synkroniserer ikke og skriver ikke til History Go. «Kjør trygg pipeline» leser status; den gjør ingen approval, map refresh, graph analysis, consent, training eller import automatisk.</p>
 
