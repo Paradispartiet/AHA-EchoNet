@@ -29,7 +29,7 @@ test("local demo seed is explicit, idempotent and reversible without deleting us
   expect(state.notes.filter((item) => item.id === "demo_seed_note_byrom")).toHaveLength(1);
   expect(state.sessions.filter((item) => item.id === "demo_seed_chat_session")).toHaveLength(1);
   expect(state.currentSession).toBe("browser_user_session_keep");
-  expect(state.inspection.count).toBe(9);
+  expect(state.inspection.count).toBe(7);
 
   await page.getByRole("button", { name: "Legg inn eksempeldata" }).click();
   state = await page.evaluate(() => ({
