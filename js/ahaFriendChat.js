@@ -17,6 +17,8 @@
 
   async function init() {
     const byId = (id) => global.document.getElementById(id);
+    const embedMode = new URLSearchParams(global.location?.search || "").get("embed") === "1";
+    if (embedMode) global.document.body?.classList.add("aha-friend-chat-embedded");
     if (!byId("friend-chat-app")) return;
 
     const client = global.AHADb?.getClient?.() || null;
@@ -29,6 +31,8 @@
     let lastMessageIds = "";
     let accountHandle = "";
     let loading = false;
+    const meetInviteId = new URLSearchParams(global.location?.search || "").get("meetInviteId") || "";
+    let meetLinkOpened = false;
 
     function status(message, target = "friend-status") {
       const el = byId(target);
@@ -83,6 +87,7 @@
       byId("friend-send").disabled = true;
       byId("friend-remove").hidden = true;
       byId("friend-block").hidden = true;
+      byId("friend-report").hidden = true;
       byId("friend-messages").replaceChildren(make("p", "Velg en venn fra listen for å begynne å skrive.", "friend-empty"));
     }
     async function loadMessages(force = false) {
@@ -120,8 +125,9 @@
       byId("friend-thread-title").textContent = displayName(peerId(request));
       byId("friend-message").disabled = false;
       byId("friend-send").disabled = false;
-      byId("friend-remove").hidden = false;
+      byId("friend-remove").hidden = request.source === "social_meet";
       byId("friend-block").hidden = false;
+      byId("friend-report").hidden = false;
       await loadMessages(true);
       if (!chosen || chosen.id !== request.id || typeof client.channel !== "function") return;
       subscription = client.channel("aha-friend-" + request.id)
@@ -155,7 +161,7 @@
     function renderFriends() {
       const mount = byId("friend-list");
       mount.replaceChildren();
-      const friends = currentRequests.filter((item) => item.status === "accepted");
+      const friends = currentRequests.filter((item) => item.status === "accepted" && item.source !== "social_meet");
       if (!friends.length) { mount.append(make("p", "Ingen venner ennå.")); return; }
       friends.forEach((item) => {
         const row = make("div", null, "friend-user-item");
@@ -164,6 +170,36 @@
           item.id === chosen?.id ? "friend-selected" : ""));
         mount.append(row);
       });
+    }
+    function renderMeetContacts() {
+      const mount = byId("friend-meet-list");
+      if (!mount) return;
+      mount.replaceChildren();
+      const contacts = currentRequests.filter((item) => item.status === "accepted" && item.source === "social_meet");
+      if (!contacts.length) { mount.append(make("p", "Ingen kontakter ennå.")); return; }
+      contacts.forEach((item) => {
+        const row = make("div", null, "friend-user-item");
+        row.append(make("strong", displayName(peerId(item)), "friend-user-name"));
+        const actions = make("div", null, "friend-request-actions");
+        actions.append(button("Chat", () => void selectFriend(item),
+          item.id === chosen?.id ? "friend-selected" : ""));
+        actions.append(button("Bli venner", () => void inviteMeetContact(item)));
+        row.append(actions);
+        mount.append(row);
+      });
+    }
+    async function inviteMeetContact(item) {
+      const other = peerId(item);
+      if (!accountHandle) { status("Opprett først et AHA-brukernavn for å legge til venner."); return; }
+      const { error } = await client.from("aha_friend_requests")
+        .insert({ requester_id: user.id, recipient_id: other });
+      if (error) {
+        status(error.code === "23505" ? "Venneforespørsel finnes allerede." :
+          "Venneforespørselen kunne ikke sendes. Begge trenger et AHA-brukernavn.");
+        return;
+      }
+      status("Venneforespørsel sendt. Vennskap opprettes først etter aksept.");
+      await refresh();
     }
     async function loadBlocks() {
       const { data, error } = await client.from("aha_friend_blocks")
@@ -194,7 +230,7 @@
       loading = true;
       try {
         const { data, error } = await client.from("aha_friend_requests")
-          .select("id,requester_id,recipient_id,status,created_at")
+          .select("id,requester_id,recipient_id,status,source,created_at")
           .or("requester_id.eq." + user.id + ",recipient_id.eq." + user.id)
           .order("created_at", { ascending: false }).limit(100);
         if (error) throw error;
@@ -206,6 +242,7 @@
         }
         renderRequests();
         renderFriends();
+        renderMeetContacts();
         renderBlocks();
       } catch (error) {
         showFailure(error, "Oppdatering av venner");
@@ -237,7 +274,28 @@
         const profile = await global.AHAAuth?.ensureProfile?.();
         if (profile && profile.ok === false) throw profile.error || new Error(profile.reason);
         await loadIdentity();
-        await refresh();
+        if (meetInviteId && !meetLinkOpened) {
+          if (!/^[a-f0-9-]{36}$/i.test(meetInviteId) || typeof client.rpc !== "function") {
+            status("Ugyldig eller utilgjengelig møteinvitasjon.");
+          } else {
+            const { data, error } = await client.rpc("aha_open_social_meet_chat", {
+              meet_invite_id: meetInviteId
+            });
+            if (error) {
+              status("Samtalen kan ikke åpnes. Begge må ha AHA-konto, og møtet må være gyldig og ikke blokkert.");
+            } else {
+              meetLinkOpened = true;
+              await refresh();
+              const row = currentRequests.find((entry) =>
+                entry.id === (Array.isArray(data) ? data[0]?.request_id : data?.request_id)
+              );
+              if (row) await selectFriend(row);
+              else status("Møtet er godkjent, men meldingslisten ble ikke lastet.");
+            }
+          }
+        } else {
+          await refresh();
+        }
       } catch (error) { showFailure(error, "Oppstart av vennetjenesten"); }
     }
 
@@ -306,6 +364,15 @@
         await loadMessages(true);
       } catch (error) { showFailure(error, "Sending av melding"); }
       finally { byId("friend-send").disabled = !chosen; }
+    });
+    byId("friend-report").addEventListener("click", async () => {
+      if (!chosen || !user || !global.confirm("Vil du sende en privat rapport om denne samtalen?")) return;
+      const reason = byId("friend-report-reason").value;
+      const { error } = await client.rpc("aha_report_direct_chat", {
+        chat_request_id: chosen.id, report_reason: reason
+      });
+      if (error) { showFailure(error, "Rapportering"); return; }
+      status("Rapporten er registrert privat. Bruk Blokker hvis du vil stanse kontakten.");
     });
     byId("friend-block").addEventListener("click", async () => {
       if (!chosen || !user || !global.confirm("Blokkere brukeren? Dere kan ikke lese eller sende meldinger før blokkeringen oppheves.")) return;
