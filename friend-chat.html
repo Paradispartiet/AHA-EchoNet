@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA Chat – Snakk med en venn</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-friend-chat.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+  <div id="aha-global-nav"></div>
+  <div class="app-shell friend-chat-shell">
+    <header class="chat-header" aria-label="AHA Chat toppfelt">
+      <a class="back-link" href="index.html">← AHA Home</a>
+      <a class="chat-brand" href="index.html"><span class="chat-brand-mark">A</span><span class="chat-brand-copy"><strong>AHA</strong><small>Chat</small></span></a>
+      <div class="chat-title-wrap"><h1>Snakk med en venn</h1><p>Privat mellom AHA-brukere</p></div>
+      <a class="profile-indicator" href="profile.html">Min AHA</a>
+    </header>
+    <main class="friend-chat-main">
+      <nav class="friend-chat-modes" aria-label="Velg samtaletype">
+        <a href="chat.html">Snakk med AHA</a>
+        <a href="friend-chat.html" aria-current="page">Snakk med en venn</a>
+      </nav>
+      <div class="friend-chat-notice">Her snakker du med andre mennesker. Meldingene sendes ikke til AHA-AI, analyseres ikke og brukes ikke automatisk som innsikter eller minne.</div>
+      <section id="friend-auth-panel" class="friend-setup" aria-labelledby="friend-auth-heading">
+        <h2 id="friend-auth-heading">Logg inn for å snakke med venner</h2>
+        <p>Du trenger en AHA-konto. Chat med AHA-AI fungerer separat fra vennemeldinger.</p>
+        <form id="friend-auth-form">
+          <label for="friend-email">E-post</label>
+          <div class="friend-input-row"><input id="friend-email" type="email" autocomplete="email" required placeholder="din@epost.no" /><button type="submit">Send innloggingslenke</button></div>
+        </form>
+        <p id="friend-auth-status" role="status" aria-live="polite"></p>
+      </section>
+      <div id="friend-chat-app" hidden>
+        <section class="friend-identity" aria-labelledby="friend-identity-title">
+          <div><h2 id="friend-identity-title">Min venneprofil</h2><p>Velg et brukernavn du vil dele med venner. Ingen e-postadresser vises til andre.</p></div>
+          <form id="friend-handle-form" class="friend-handle-form">
+            <label for="friend-handle">Mitt brukernavn</label>
+            <div class="friend-input-row"><input id="friend-handle" name="handle" minlength="3" maxlength="24" pattern="[a-z0-9_]{3,24}" required autocomplete="off" placeholder="mitt_navn" /><button type="submit">Lagre</button></div>
+          </form>
+          <p class="friend-profile-hint" id="friend-handle-hint" role="status" aria-live="polite"></p>
+        </section>
+        <div class="friend-chat-columns">
+          <aside class="friend-sidebar" aria-label="Venneliste og invitasjoner">
+            <section class="friend-add" aria-labelledby="friend-add-title">
+              <h2 id="friend-add-title">Finn en venn</h2>
+              <p>Be vennen opprette et AHA-brukernavn, og skriv det her.</p>
+              <form id="friend-invite-form">
+                <label for="friend-invite-handle">Vennens brukernavn</label>
+                <div class="friend-input-row"><input id="friend-invite-handle" maxlength="24" placeholder="brukernavn" autocomplete="off" required /><button id="friend-invite-submit" type="submit">Inviter</button></div>
+              </form>
+            </section>
+            <section class="friend-invitations" aria-labelledby="friend-invitations-title">
+              <h2 id="friend-invitations-title">Invitasjoner</h2>
+              <div id="friend-invite-list" aria-live="polite"><p>Ingen invitasjoner.</p></div>
+            </section>
+            <section class="friend-list-section" aria-labelledby="friend-list-title">
+              <div class="friend-section-heading"><h2 id="friend-list-title">Venner</h2><button type="button" id="friend-refresh">Oppdater</button></div>
+              <div id="friend-list" aria-label="Velg en venn"><p>Ingen venner ennå.</p></div>
+            </section>
+            <section aria-labelledby="friend-blocked-title">
+              <h2 id="friend-blocked-title">Blokkerte brukere</h2>
+              <div id="friend-block-list" aria-live="polite"><p>Ingen blokkeringer.</p></div>
+            </section>
+          </aside>
+          <section class="friend-thread" aria-labelledby="friend-thread-title">
+            <header class="friend-thread-header">
+              <div><p class="friend-overline">Privat samtale</p><h2 id="friend-thread-title">Velg en venn</h2></div>
+              <div class="friend-thread-actions"><button type="button" id="friend-block" hidden>Blokker</button><button type="button" id="friend-remove" hidden>Fjern venn</button></div>
+            </header>
+            <div id="friend-messages" class="friend-messages" role="log" aria-label="Vennemeldinger" aria-live="polite">
+              <p class="friend-empty">Velg en venn fra listen for å begynne å skrive.</p>
+            </div>
+            <form id="friend-message-form" class="friend-message-form">
+              <label for="friend-message">Melding til vennen</label>
+              <textarea id="friend-message" maxlength="2000" placeholder="Skriv en melding …" rows="3" disabled></textarea>
+              <div class="friend-thread-actions"><small>Kun deltakerne kan lese samtalen.</small><button id="friend-send" type="submit" disabled>Send melding</button></div>
+            </form>
+          </section>
+        </div>
+      </div>
+      <p id="friend-status" class="friend-chat-status" role="status" aria-live="polite"></p>
+    </main>
+    <nav class="aha-mobile-nav" aria-label="Mobilnavigasjon">
+      <a href="chat.html" aria-current="page">Chat</a>
+      <a href="insights.html">Innsikter</a>
+      <a href="mindmap.html">Kart</a>
+      <a href="paths.html">Stier</a>
+      <a href="profile.html">Profil</a>
+    </nav>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaFriendChat.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>

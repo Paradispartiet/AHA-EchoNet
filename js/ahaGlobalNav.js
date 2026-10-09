@@ -10,6 +10,7 @@
   const PRIMARY_NAV = Object.freeze([
     { id: "home", label: "Start", href: "index.html", files: ["index.html"] },
     { id: "chat", label: "Chat", href: "chat.html", files: ["chat.html"] },
+    { id: "friends", label: "Venner", href: "friend-chat.html", files: ["friend-chat.html"] },
     { id: "library", label: "Bibliotek", href: "search.html", files: ["search.html"] },
     { id: "personal-ai", label: "Personal AI", href: "personal-ai.html", files: ["personal-ai.html"] },
     { id: "profile", label: "Mitt AHA", href: "profile.html", files: ["profile.html"] }
