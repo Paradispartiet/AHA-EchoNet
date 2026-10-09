@@ -402,3 +402,8 @@
   .insta-profile-header { gap: 14px; }
   .insta-profile-stats { gap: 14px; }
 }
+
+/* First-use and filtered-empty states reuse the local personal surface. */
+.aha-insta-page .insta-feed-empty { --personal-accent: var(--aha-color-coral); gap: 10px; text-align: left; }
+.aha-insta-page .insta-feed-empty h3 { font-size: 1.2rem; }
+.aha-insta-page .insta-feed-empty .aha-tile-actions { justify-content: flex-start; }
