@@ -23,10 +23,24 @@
           <p class="aha-module-purpose">Training- og Personal AI-data i rapporten betyr lokalt corpus, lokale examples, retrieval/status, evalueringer og Meta Insights Memory. Det betyr ikke at modelltrening eller fine-tuning har skjedd.</p>
         </div>
       </header>
+      <fieldset class="privacy-export-categories">
+        <legend>Velg kategorier i AHA-backupen</legend>
+        <div class="privacy-export-category-grid">
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="chat" checked /> Chat-samtaler</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="notes" checked /> Notater og artikler</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="media" checked /> Insta, Feed og galleri</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="collections" checked /> Samlinger og læringsstier</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="music" checked /> AHA Music</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="knowledge" checked /> Kunnskaps- og AI-data</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="memory" checked /> Personal AI-minne</label>
+          <label class="privacy-check"><input type="checkbox" name="privacy-export-category" value="profile" checked /> Profil og personvern</label>
+        </div>
+        <p class="privacy-small">Bare avkryssede kategorier tas med. Eksporten lagres som en lokal JSON-fil, ikke i skyen.</p>
+      </fieldset>
       <div class="aha-module-actions privacy-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
         <button id="privacy-refresh" type="button" class="aha-tile-btn">Oppdater</button>
-        <button id="privacy-export-complete" type="button" class="aha-tile-btn">Eksporter AHA-data</button>
+        <button id="privacy-export-complete" type="button" class="aha-tile-btn">Eksporter valgte AHA-data</button>
       </div>
       <p id="privacy-action-message" class="privacy-action-message"></p>
     </section>
@@ -59,12 +73,15 @@
 
     <section class="aha-panel aha-system-secondary-panel">
       <h2>Gjenopprett AHA-backup</h2>
-      <p class="privacy-small">Gjenoppretting er additiv og local-only. Du må alltid se en forhåndsvisning før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over. Meta Insights Memory følger backupen; avledede Personal AI-søkeindekser ugyldiggjøres etter restore og bygges på nytt fra den gjenopprettede selvmodellen.</p>
+      <p class="privacy-small">Gjenoppretting er lokal og additiv: eksisterende verdier beholdes, og nye listeelementer og manglende felt legges til. Du må se en forhåndsvisning og skrive GJENOPPRETT før noe skrives. History Go-data, ukjente nøkler, tokens, OAuth/PKCE, API-nøkler, credentials og andre hemmeligheter hoppes over. Meta Insights Memory følger backupen; avledede Personal AI-søkeindekser ugyldiggjøres etter restore og bygges på nytt fra den gjenopprettede selvmodellen.</p>
       <div class="privacy-form">
         <label class="privacy-check" for="privacy-restore-file">
           <span><strong>Backupfil</strong><br />Velg en JSON-eksport fra AHA.</span>
         </label>
         <input id="privacy-restore-file" type="file" accept="application/json,.json" />
+        <p class="privacy-small">Maksimal størrelse på backupfil: 20 MB.</p>
+        <label class="privacy-confirm-label" for="privacy-restore-confirmation">Skriv <strong>GJENOPPRETT</strong> etter forhåndsvisning for å godkjenne importen.</label>
+        <input id="privacy-restore-confirmation" type="text" placeholder="GJENOPPRETT" autocomplete="off" spellcheck="false" />
         <div class="aha-module-actions privacy-actions">
           <button id="privacy-restore-preview-complete" type="button" class="aha-tile-btn">Vis forhåndsvisning</button>
           <button id="privacy-restore-apply-complete" type="button" class="aha-tile-btn aha-tile-btn-primary" disabled>Gjenopprett tillatte data</button>
