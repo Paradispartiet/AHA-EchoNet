@@ -122,18 +122,6 @@
     return round(overlap / insightTokens.size);
   }
 
-  // Preserve a cited friction location in the actual insight, not only its evidence.
-  function omitsEvidenceBoundFrictionBoundary(candidate) {
-    const friction = /\b(?:uenighet|konflikt|friksjon|feil|problem|disagreement|conflict|friction|error|bottleneck)\w*\b/i;
-    const boundary = /\b(?:grens|ansvarsgrens|grensesnitt|interface|boundar)\w*\b/i;
-    const insight = String(candidate?.insight || "");
-    return friction.test(insight) && !boundary.test(insight)
-      && (Array.isArray(candidate?.evidence) ? candidate.evidence : []).some((item) => {
-        const quote = String(item?.quote || "");
-        return friction.test(quote) && boundary.test(quote);
-      });
-  }
-
   function evaluateCandidate(candidate, sourceText, index) {
     const source = String(sourceText || "");
     const reasons = [];
@@ -156,7 +144,6 @@
     const insightTokenCount = contentTokens(insight).length;
     if (insightTokenCount < 7) reasons.push("insight_too_thin");
     if (isGeneric(insight)) reasons.push("insight_generic");
-    if (omitsEvidenceBoundFrictionBoundary(candidate)) reasons.push("source_boundary_mechanism_omitted");
     if (isGeneric(why) || contentTokens(why).length < 5) reasons.push("why_it_matters_weak");
     if (contentTokens(abstraction).length < 5) reasons.push("abstraction_too_thin");
     if (source.includes(insight)) reasons.push("insight_literal_source");
