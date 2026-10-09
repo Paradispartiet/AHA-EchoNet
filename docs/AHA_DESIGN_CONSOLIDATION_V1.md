@@ -1,24 +1,31 @@
 # AHA Design Consolidation V1
 
+**Status: COMPLETE on merge of the final QA/cleanup gate.**
+
+The implementation is complete. The final merge gate is the repository's full Node/Engine/syntax/launch suite plus the browser QA in Desktop Chrome and iPad Pro 11 WebKit.
+
 ## Goal
 
 Make AHA feel like one finished application rather than several generations of product UI layered together.
 
 This work is presentation-first. It must preserve existing AHA engines, local data contracts, History Go boundaries, ingestion flows, Personal AI behavior, training/retrieval semantics, and module functionality unless a later PR explicitly scopes a functional change.
 
-## Current design diagnosis
+## Resolved design diagnosis
 
-The repository already contains a strong newer product shell, especially the shared global navigation and the visual hierarchy introduced around PRs #641 and #642. The main design debt is not a missing redesign; it is overlapping generations of layout and component styling.
+V1 consolidated the overlapping design generations rather than replacing AHA with another redesign.
 
-The main conflicts are:
+The original conflicts are now resolved:
 
-- `css/aha-dashboard.css` contains both the original dashboard layer and later app-layout refactors.
-- `css/aha-global-nav.css` provides the newer shared product shell.
-- `css/ahaModule.css` still applies legacy global page layout directly to `body`.
-- Chat has an older dark-blue component vocabulary that only partially matches the dashboard shell.
-- several modules still expose operator/developer concepts as primary user interface.
-- page widths and spacing are frequently set ad hoc in HTML.
-- module icons mix symbols and emoji instead of one coherent icon language.
+- `.aha-dashboard` plus global navigation/footer owns the outer product shell.
+- Chat retains its dedicated full-height `.app-shell` for the conversation layout while sharing canonical tokens and global navigation; it is not a second page-width owner.
+- ad hoc inline main widths were replaced by named shell-width variants.
+- compact account/integration utilities use the centrally owned `.aha-shell-compact` variant instead of page-local widths.
+- the legacy `css/ahaModule.css` compatibility layer has no consumers and is removed in the final cleanup.
+- Dashboard, global navigation and Chat share the canonical token layer.
+- ordinary controls, fields, cards and panels use shared geometry.
+- advanced/operator surfaces remain available but are visually secondary to everyday workflows.
+- module identity uses one internal monoline SVG icon system instead of mixed emoji/symbols.
+- module-specific color is applied as restrained semantic accent on a black AHA base.
 
 ## Visual direction
 
@@ -142,11 +149,13 @@ Each migration should remove obsolete local presentation rules instead of adding
 
 - iPad/mobile viewport review
 - desktop review
-- touch target checks
-- focus/keyboard checks
-- overflow checks
-- empty/loading/error state review
-- remove dead legacy selectors only after all consumers are migrated
+- touch target and canonical control-size contract
+- focus treatment contract
+- horizontal overflow checks across the primary V1 surfaces
+- empty/loading/error state coverage retained by existing module tests
+- remove dead legacy styles only after all consumers are migrated
+
+Final browser QA covers Home, Chat, Mitt AHA, Notes, Feed, Gallery, AHA Insta, AHA Music, Search/Bibliotek, Begrepslister, Kunnskapsstier, Tankekart, Personal AI, Knowledge Workbench and the AHA-side History Go bridge in both Desktop Chrome and iPad Pro 11 WebKit.
 
 ## First implementation slice
 
@@ -154,7 +163,7 @@ The first code change removes the global `body` width/margin/padding rule from `
 
 Reason: pages that load this legacy stylesheet already render inside the newer `.aha-dashboard` product shell. The old `body` rule therefore creates a second outer layout owner and is a direct source of inconsistent width and spacing.
 
-This first slice intentionally changes no module behavior and retains the legacy form/list/card primitives for subsequent migration.
+This first slice intentionally changed no module behavior and retained the legacy form/list/card primitives for subsequent migration. Those primitives were later migrated to scoped product styles, and the unused `css/ahaModule.css` file is removed by the final cleanup.
 
 ## Definition of done for V1
 
@@ -166,3 +175,21 @@ This first slice intentionally changes no module behavior and retains the legacy
 - module-specific visual character remains possible without redefining global primitives
 - responsive behavior is deliberate on iPad/mobile rather than accumulated overrides
 - regression tests protect the shell contract
+
+
+## V1 completion record
+
+V1 is considered complete only when the final QA/cleanup pull request is green on the exact merge head.
+
+Completion evidence:
+
+- no HTML consumer references `css/ahaModule.css`
+- no product `main` owns layout width through inline `max-width`
+- canonical tokens define black-first color, focus and control geometry
+- shared shell widths are centrally owned
+- module icons use the internal SVG system
+- primary, personal, knowledge, AI, system, social and History Go bridge surfaces have completed their controlled migrations
+- the final browser suite checks representative V1 surfaces for canonical shell presence, mobile viewport metadata and horizontal overflow in Desktop Chrome and iPad Pro 11 WebKit
+- existing deterministic Node, Engine, syntax and launch gates must remain green
+
+No History Go core behavior is part of this design consolidation.

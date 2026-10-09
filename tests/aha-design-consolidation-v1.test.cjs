@@ -2,28 +2,31 @@ const assert = require("assert");
 const fs = require("fs");
 const vm = require("vm");
 
-const moduleCss = fs.readFileSync("css/ahaModule.css", "utf8");
 const tokens = fs.readFileSync("css/aha-tokens.css", "utf8");
 const navCss = fs.readFileSync("css/aha-global-nav.css", "utf8");
 const dashboardCss = fs.readFileSync("css/aha-dashboard.css", "utf8");
 const chatCss = fs.readFileSync("css/aha-chat.css", "utf8");
+const personalCss = fs.readFileSync("css/aha-personal-surfaces.css", "utf8");
 const plan = fs.readFileSync("docs/AHA_DESIGN_CONSOLIDATION_V1.md", "utf8");
 const modulesJs = fs.readFileSync("js/ahaModules.js", "utf8");
 
-// Legacy module CSS may style module-local primitives, but the shared AHA shell
-// owns page width, centering and outer padding.
-assert.doesNotMatch(
-  moduleCss,
-  /(^|\n)\s*body\s*\{[\s\S]*?\}/,
-  "ahaModule.css must not own global body layout"
+assert.equal(
+  fs.existsSync("css/ahaModule.css"),
+  false,
+  "legacy ahaModule.css should be removed after controlled migration"
 );
 
 for (const selector of [".module-form", ".module-list", ".module-card", ".module-meta"]) {
-  assert.match(moduleCss, new RegExp(selector.replace(".", "\\.")), `${selector} should remain available during controlled migration`);
+  const scoped = ".aha-personal-page " + selector;
+  assert.match(
+    personalCss,
+    new RegExp(scoped.replace(/[.*+?^$()|[\]\\]/g, "\\$&")),
+    scoped + " should own migrated personal-surface primitives"
+  );
 }
 
 for (const [name, css] of [["global nav", navCss], ["dashboard", dashboardCss], ["chat", chatCss]]) {
-  assert.match(css, /^@import url\("\.\/aha-tokens\.css"\);/, `${name} should load canonical AHA tokens`);
+  assert.match(css, /^@import url\("\.\/aha-tokens\.css"\);/, name + " should load canonical AHA tokens");
 }
 for (const token of [
   "--aha-color-bg",
@@ -41,7 +44,7 @@ for (const token of [
   "--aha-control-min-height",
   "--aha-field-min-height"
 ]) {
-  assert.match(tokens, new RegExp(token), `${token} should be defined in canonical tokens`);
+  assert.match(tokens, new RegExp(token), token + " should be defined in canonical tokens");
 }
 assert.match(tokens, /--aha-color-bg:\s*#07080d;/, "AHA should keep its black base");
 assert.match(tokens, /linear-gradient\(160deg, #050608 0%, #0a0b10 52%, #050608 100%\)/, "canonical app background should remain black-first");
@@ -51,8 +54,8 @@ assert.match(chatCss, /chat-line-user[^}]*aha-color-blue-soft/s, "Chat user mess
 assert.match(dashboardCss, /button\s*\{[^}]*border-radius:\s*var\(--aha-radius-control\)/s, "Dashboard buttons should use canonical control radius");
 assert.match(dashboardCss, /\.aha-status-pill[\s\S]*?border-radius:\s*999px;/, "Status should remain pill-shaped");
 assert.match(chatCss, /button\s*\{[^}]*aha-radius-control/s, "Chat buttons should use canonical control radius");
-assert.match(moduleCss, /\.module-form input,[\s\S]*?aha-field-min-height/s, "Legacy module fields should use canonical field height");
-assert.match(moduleCss, /\.module-card\s*\{[^}]*aha-radius-card/s, "Legacy module cards should use canonical card radius");
+assert.match(personalCss, /\.aha-personal-page \.module-form input,[\s\S]*?aha-field-min-height/s, "migrated personal fields should use canonical field height");
+assert.match(personalCss, /\.aha-personal-page \.module-card\s*\{[^}]*aha-radius-card/s, "migrated personal cards should use canonical card radius");
 
 const shellPages = [
   "profile.html",
@@ -76,13 +79,18 @@ const shellPages = [
 for (const page of shellPages) {
   const html = fs.readFileSync(page, "utf8");
   const main = html.match(/<main\b[^>]*>/i)?.[0] || "";
-  assert.ok(main.includes("aha-dashboard"), `${page} should use the shared AHA dashboard shell`);
-  assert.doesNotMatch(main, /style=["'][^"']*max-width/i, `${page} should not own shell width inline`);
-  assert.match(main, /aha-shell-(reading|content|workspace|wide)/, `${page} should use a named shell width`);
+  assert.ok(main.includes("aha-dashboard"), page + " should use the shared AHA dashboard shell");
+  assert.doesNotMatch(main, /style=["'][^"']*max-width/i, page + " should not own shell width inline");
+  assert.match(main, /aha-shell-(reading|content|workspace|wide)/, page + " should use a named shell width");
 }
 
-for (const shellClass of ["aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
-  assert.match(dashboardCss, new RegExp(`\\.${shellClass}\\b`), `${shellClass} should be defined centrally`);
+const chatHtml = fs.readFileSync("chat.html", "utf8");
+assert.match(chatHtml, /<div class="app-shell">/, "Chat should retain its dedicated full-height conversation shell");
+assert.match(chatHtml, /id="aha-global-nav"/, "Chat should remain inside shared global navigation");
+assert.doesNotMatch(chatHtml, /ahaModule\.css/, "Chat should not depend on the removed legacy module stylesheet");
+
+for (const shellClass of ["aha-shell-compact", "aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
+  assert.match(dashboardCss, new RegExp("\\." + shellClass + "\\b"), shellClass + " should be defined centrally");
 }
 
 const moduleContext = { window: {}, document: { getElementById() { return null; } } };
@@ -91,7 +99,7 @@ const registeredModules = moduleContext.window.AHA_MODULES || [];
 const moduleIcons = moduleContext.window.AHAModules?.icons || {};
 assert.ok(registeredModules.length > 0, "module registry should be readable");
 for (const module of registeredModules) {
-  assert.match(moduleIcons[module.id] || "", /<svg\b[^>]*aha-module-icon-svg/, `${module.id} should have a canonical SVG icon`);
+  assert.match(moduleIcons[module.id] || "", /<svg\b[^>]*aha-module-icon-svg/, module.id + " should have a canonical SVG icon");
 }
 assert.match(moduleIcons.default || "", /<svg\b/, "module icon system should provide an SVG fallback");
 assert.doesNotMatch(modulesJs, /🕸|📰|⚙|⚑/, "mixed emoji module icons should not return");
