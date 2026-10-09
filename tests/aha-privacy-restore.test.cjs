@@ -39,9 +39,10 @@ function load(seed = {}) {
   assert.equal(preview.skipped.unknown, 1);
   assert.equal(preview.skipped.secrets, 1);
   const result = api.applyRestore(backup);
-  assert.equal(result.appliedCount, 2);
+  assert.equal(result.appliedCount, 1);
+  assert.equal(result.unchangedCount, 1);
   assert.equal(localStorage.getItem("untouched"), "keep");
-  assert.equal(localStorage.getItem("aha_profile_name"), "New");
+  assert.equal(localStorage.getItem("aha_profile_name"), "Old");
   assert.equal(localStorage.getItem("visited_places"), null);
   assert.equal(localStorage.getItem("spotify_access_token"), null);
 }
@@ -58,7 +59,7 @@ function load(seed = {}) {
   assert.equal(preview.skipped.secrets, 2);
   api.applyRestore(backup);
   const identity = JSON.parse(localStorage.getItem("aha_identity_v3"));
-  assert.equal(identity.name, "New");
+  assert.equal(identity.name, "Old");
   assert.equal(identity.token, "KEEP-ME");
   assert.equal(identity.nested.credential, "KEEP-CRED");
   assert.equal(identity.nested.x, 1);

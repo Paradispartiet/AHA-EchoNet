@@ -4,13 +4,14 @@
 (function (global) {
   "use strict";
 
-  const MAX_BACKUP_BYTES = 5_000_000;
+  const MAX_BACKUP_BYTES = 20_000_000;
   const SETTINGS_KEY = "aha_privacy_settings_v1";
   const SAFE_PAYMENT_STATE_KEYS = new Set(["ahaPaymentReady", "ahaVerifiedPayment"]);
 
   const ALLOWLIST = Object.freeze({
     "aha_insight_chamber_v1": "object",
     "aha_source_events_v1": "array",
+    "aha_chat_sessions_v1": "array",
     "aha_notes_v1": "array",
     "aha_gallery_v1": "array",
     "aha_feed_posts_v1": "array",
@@ -133,6 +134,8 @@
     return false;
   }
 
+  const UNSAFE_OBJECT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
   function sanitizeNested(value, stats, depth = 0) {
     if (depth > 20) throw new Error("Backupen inneholder for dypt nestede data.");
     if (Array.isArray(value)) return value.map((item) => sanitizeNested(item, stats, depth + 1));
@@ -140,7 +143,7 @@
 
     const out = {};
     Object.entries(value).forEach(([key, child]) => {
-      if (isSecretKey(key)) {
+      if (isSecretKey(key) || UNSAFE_OBJECT_KEYS.has(key)) {
         stats.secretFields += 1;
         return;
       }
@@ -177,7 +180,7 @@
 
   function sourceToObject(source) {
     if (typeof source === "string") {
-      if (new Blob([source]).size > MAX_BACKUP_BYTES) throw new Error("Backupfilen er større enn 5 MB.");
+      if (new Blob([source]).size > MAX_BACKUP_BYTES) throw new Error("Backupfilen er større enn 20 MB.");
       let parsed;
       try {
         parsed = JSON.parse(source);
@@ -189,7 +192,7 @@
     }
     if (!isPlainObject(source)) throw new Error("Backupen må være et JSON-objekt.");
     const serialized = JSON.stringify(source);
-    if (serialized.length > MAX_BACKUP_BYTES) throw new Error("Backupfilen er større enn 5 MB.");
+    if (new Blob([serialized]).size > MAX_BACKUP_BYTES) throw new Error("Backupfilen er større enn 20 MB.");
     return source;
   }
 
@@ -332,28 +335,59 @@
     };
   }
 
-  function deepMerge(existing, incoming, depth = 0) {
-    if (depth > 20 || !isPlainObject(existing) || !isPlainObject(incoming)) return incoming;
-    const out = { ...existing };
-    Object.entries(incoming).forEach(([key, value]) => {
-      if (isSecretKey(key)) return;
-      out[key] = isPlainObject(value) && isPlainObject(out[key])
-        ? deepMerge(out[key], value, depth + 1)
-        : value;
-    });
-    return out;
+  // Never replace existing local records. Merge objects recursively and append only
+  // new array records; matching IDs retain local values but gain missing nested data.
+  function recordIdentity(value) {
+    if (isPlainObject(value) && (typeof value.id === "string" || typeof value.id === "number")) {
+      return "id:" + String(value.id);
+    }
+    return "value:" + JSON.stringify(value);
+  }
+
+  function mergeAdditive(existing, incoming, depth = 0) {
+    if (depth > 20) throw new Error("Dataene er for dypt nestet til å flettes trygt.");
+    if (Array.isArray(existing) && Array.isArray(incoming)) {
+      const merged = existing.slice();
+      const positions = new Map(merged.map((item, index) => [recordIdentity(item), index]));
+      incoming.forEach((item) => {
+        const identity = recordIdentity(item);
+        if (!positions.has(identity)) {
+          positions.set(identity, merged.length);
+          merged.push(item);
+        } else {
+          const index = positions.get(identity);
+          merged[index] = mergeAdditive(merged[index], item, depth + 1);
+        }
+      });
+      return merged;
+    }
+    if (isPlainObject(existing) && isPlainObject(incoming)) {
+      const merged = { ...existing };
+      Object.entries(incoming).forEach(([key, value]) => {
+        if (isSecretKey(key) || UNSAFE_OBJECT_KEYS.has(key)) return;
+        if (!Object.prototype.hasOwnProperty.call(merged, key)) merged[key] = value;
+        else merged[key] = mergeAdditive(merged[key], value, depth + 1);
+      });
+      return merged;
+    }
+    return existing === undefined ? incoming : existing;
   }
 
   function valueForStorage(entry) {
-    if (entry.kind === "string") return entry.value;
-    if (entry.kind === "object" || entry.kind === "privacy_settings") {
-      const existingRaw = global.localStorage.getItem(entry.key);
-      let existing = null;
-      try { existing = existingRaw ? JSON.parse(existingRaw) : null; } catch { existing = null; }
-      const merged = isPlainObject(existing) ? deepMerge(existing, entry.value) : entry.value;
-      return JSON.stringify(merged);
+    const previous = global.localStorage.getItem(entry.key);
+    if (previous !== null) {
+      if (entry.kind === "array" || entry.kind === "object" || entry.kind === "privacy_settings") {
+        let existing = null;
+        try { existing = JSON.parse(previous); } catch { /* keep local data unchanged */ }
+        if (isValidKind(existing, entry.kind)) return JSON.stringify(mergeAdditive(existing, entry.value));
+        // An unreadable or wrongly typed store cannot be merged. A validated
+        // backup may repair it; valid existing records are never overwritten.
+        return JSON.stringify(entry.value);
+      }
+      // Existing scalar profile fields and preferences take priority.
+      return previous;
     }
-    return JSON.stringify(entry.value);
+    return entry.kind === "string" ? entry.value : JSON.stringify(entry.value);
   }
 
   function previewRestore(source) {
@@ -371,11 +405,19 @@
     // Re-parse and re-validate immediately before mutation; never trust the preview plan.
     const plan = buildRestorePlan(source);
     const rollback = [];
+    let appliedCount = 0;
+    let unchangedCount = 0;
     try {
       plan.entries.forEach((entry) => {
         const previous = global.localStorage.getItem(entry.key);
+        const next = valueForStorage(entry);
+        if (previous === next) {
+          unchangedCount += 1;
+          return;
+        }
         rollback.push({ key: entry.key, previous });
-        global.localStorage.setItem(entry.key, valueForStorage(entry));
+        global.localStorage.setItem(entry.key, next);
+        appliedCount += 1;
       });
     } catch (error) {
       for (let i = rollback.length - 1; i >= 0; i -= 1) {
@@ -391,7 +433,7 @@
     }
 
     if (global.AHAPrivacy && typeof global.AHAPrivacy.refresh === "function") global.AHAPrivacy.refresh();
-    return { ...publicSummary(plan), appliedCount: plan.entries.length };
+    return { ...publicSummary(plan), appliedCount, unchangedCount };
   }
 
   function renderPreview(summary) {
@@ -400,6 +442,7 @@
     const skipped = summary.skipped;
     target.textContent = [
       `Kan gjenopprettes: ${summary.restorableCount}`,
+      "Eksisterende AHA-data beholdes. Nye poster og manglende felt legges til.",
       `History Go hoppet over: ${skipped.historyGo}`,
       `Hemmeligheter hoppet over: ${skipped.secrets}`,
       `Ukjente nøkler hoppet over: ${skipped.unknown}`,
@@ -438,7 +481,7 @@
         return;
       }
       if (file.size > MAX_BACKUP_BYTES) {
-        setMessage("Backupfilen er større enn 5 MB.");
+        setMessage("Backupfilen er større enn 20 MB.");
         applyButton.disabled = true;
         return;
       }
@@ -476,7 +519,8 @@
     applyRestore,
     isHistoryGoKey,
     isSecretKey,
-    allowedKind
+    allowedKind,
+    mergeAdditive
   };
 
   global.AHAPrivacyRestore = api;
