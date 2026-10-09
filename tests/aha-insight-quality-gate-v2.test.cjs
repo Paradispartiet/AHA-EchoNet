@@ -219,4 +219,41 @@ const goodCandidate = {
   assert.equal(result.gate.persistent_write, false);
 }
 
+{
+  // The cited evidence locates disagreement at responsibility boundaries.
+  // A broadly worded insight must not pass just because its quotations are exact.
+  const delegationSource = "Et produktteam tok beslutninger i fellesskap. Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte. Etter delegering gikk lokale valg raskere, mens uenighet samlet seg ved grensene mellom ansvarsområdene.";
+  const evidence = [
+    { quote: "Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte.", role: "supports" },
+    { quote: "Etter delegering gikk lokale valg raskere, mens uenighet samlet seg ved grensene mellom ansvarsområdene.", role: "supports" }
+  ];
+  const base = {
+    insight: "Beslutningsmyndighet og samordningseffektivitet samvarierer med uenighet og lokalt tempo i produktteamet.",
+    type: "pattern",
+    abstraction: "Kobler endringen i hvordan beslutninger tas med de observerte forskjellene i framdrift og samarbeidsutfordringer.",
+    evidence,
+    why_it_matters: "Det viser hvor viktig det er å beskrive både lokale fordeler og de konkrete nye organisatoriske utfordringene.",
+    confidence: "high",
+    uncertainty: "",
+    causal_status: "not_causal"
+  };
+  const vague = api.evaluateCandidate(base, delegationSource, 0);
+  assert.ok(vague.metrics.quality_score >= 0.55, "vague candidate otherwise meets numeric quality threshold");
+  assert.ok(vague.blocking_reasons.includes("source_boundary_mechanism_omitted"));
+  assert.equal(vague.eligible_for_insight_review, false);
+
+  const precise = api.evaluateCandidate({
+    ...base,
+    insight: "Delegerte beslutninger er forbundet med større lokal framdrift, men uenigheten konsentreres ved ansvarsgrensene i teamet."
+  }, delegationSource, 0);
+  assert.equal(precise.blocking_reasons.includes("source_boundary_mechanism_omitted"), false);
+  assert.equal(precise.eligible_for_insight_review, true, JSON.stringify(precise));
+
+  const differentTheme = api.evaluateCandidate({
+    ...base,
+    insight: "Beslutningsprosessen viser en avveining mellom felles konsistens og selvstendig lokal framdrift etter delegeringen."
+  }, delegationSource, 0);
+  assert.equal(differentTheme.blocking_reasons.includes("source_boundary_mechanism_omitted"), false);
+}
+
 console.log("aha-insight-quality-gate-v2 passed");
