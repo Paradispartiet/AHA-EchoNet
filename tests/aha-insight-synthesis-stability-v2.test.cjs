@@ -424,6 +424,37 @@ async function run() {
     assert.equal(res.body.policy.canonical_write, false);
   }
 
+  {
+    const source = "Et produktteam tok beslutninger i fellesskap. Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte. Etter delegering gikk lokale valg raskere, mens uenighet samlet seg ved grensene mellom ansvarsområdene.";
+    const evidence = [
+      { quote: "Det ga høy konsistens, men lanseringer stoppet når nøkkelpersoner var borte.", role: "supports" },
+      { quote: "Etter delegering gikk lokale valg raskere, mens uenighet samlet seg ved grensene mellom ansvarsområdene.", role: "supports" }
+    ];
+    const vague = {
+      insight: "Beslutningsmyndighet og framdrift samvarierer med uenighet og lokale valg i produktteamet.",
+      abstraction: "Ulike måter å fordele beslutninger på henger sammen med forskjellige samarbeidsmønstre.",
+      evidence
+    };
+    const rejected = stability.validateStabilitySynthesis({ candidates: [vague] }, source);
+    assert.equal(rejected.ok, false);
+    assert.ok(rejected.errors.includes("candidate:0:source_boundary_mechanism_omitted"));
+    const retry = stability.addRetryInstruction({
+      input: [{ role: "system", content: "base instruction" }]
+    }, rejected.errors);
+    assert.match(retry.input[0].content, /MANDATORY BOUNDARY PRESERVATION/i);
+
+    const precise = {
+      ...vague,
+      insight: "Delegering er forbundet med raskere lokale valg, mens uenighet konsentreres ved ansvarsgrensene."
+    };
+    assert.equal(stability.validateStabilitySynthesis({ candidates: [precise] }, source).ok, true);
+    const unrelated = {
+      ...vague,
+      insight: "Felles beslutninger viser en avveining mellom konsistens og lokal beslutningsfrihet."
+    };
+    assert.equal(stability.validateStabilitySynthesis({ candidates: [unrelated] }, source).ok, true);
+  }
+
   console.log("aha-insight-synthesis-stability-v2 passed");
 }
 
