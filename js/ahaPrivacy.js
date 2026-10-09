@@ -48,6 +48,7 @@
   const STORAGE_DEFINITIONS = [
     { key: "aha_insight_chamber_v1", label: "AHA innsiktskammer", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_source_events_v1", label: "AHA source events", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_chat_sessions_v1", label: "AHA Chat-samtaler (lokal historikk)", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_notes_v1", label: "AHA Notes", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_gallery_v1", label: "AHA Gallery", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_feed_posts_v1", label: "AHA Feed", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
