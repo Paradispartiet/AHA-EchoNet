@@ -25,6 +25,7 @@
     let subscription = null;
     let currentRequests = [];
     let handles = new Map();
+    let blockedIds = [];
     let lastMessageIds = "";
     let accountHandle = "";
     let loading = false;
@@ -81,6 +82,7 @@
       byId("friend-message").disabled = true;
       byId("friend-send").disabled = true;
       byId("friend-remove").hidden = true;
+      byId("friend-block").hidden = true;
       byId("friend-messages").replaceChildren(make("p", "Velg en venn fra listen for å begynne å skrive.", "friend-empty"));
     }
     async function loadMessages(force = false) {
@@ -119,6 +121,7 @@
       byId("friend-message").disabled = false;
       byId("friend-send").disabled = false;
       byId("friend-remove").hidden = false;
+      byId("friend-block").hidden = false;
       await loadMessages(true);
       if (!chosen || chosen.id !== request.id || typeof client.channel !== "function") return;
       subscription = client.channel("aha-friend-" + request.id)
@@ -162,6 +165,30 @@
         mount.append(row);
       });
     }
+    async function loadBlocks() {
+      const { data, error } = await client.from("aha_friend_blocks")
+        .select("blocked_id").eq("blocker_id", user.id);
+      if (error) throw error;
+      blockedIds = (data || []).map((row) => row.blocked_id);
+    }
+    function renderBlocks() {
+      const mount = byId("friend-block-list");
+      mount.replaceChildren();
+      if (!blockedIds.length) { mount.append(make("p", "Ingen blokkeringer.")); return; }
+      blockedIds.forEach((id) => {
+        const row = make("div", null, "friend-user-item");
+        row.append(make("strong", displayName(id), "friend-user-name"));
+        row.append(button("Opphev", () => void unblockFriend(id)));
+        mount.append(row);
+      });
+    }
+    async function unblockFriend(id) {
+      const { error } = await client.from("aha_friend_blocks").delete()
+        .eq("blocker_id", user.id).eq("blocked_id", id);
+      if (error) { showFailure(error, "Oppheving av blokkering"); return; }
+      status("Blokkeringen er opphevet. Vennskapet kan åpnes igjen.");
+      await refresh();
+    }
     async function refresh() {
       if (!user || loading) return;
       loading = true;
@@ -172,12 +199,14 @@
           .order("created_at", { ascending: false }).limit(100);
         if (error) throw error;
         currentRequests = data || [];
-        await lookupHandles(currentRequests.map(peerId));
+        await loadBlocks();
+        await lookupHandles([...currentRequests.map(peerId), ...blockedIds]);
         if (chosen && !currentRequests.some((row) => row.id === chosen.id && row.status === "accepted")) {
           clearThread();
         }
         renderRequests();
         renderFriends();
+        renderBlocks();
       } catch (error) {
         showFailure(error, "Oppdatering av venner");
       } finally { loading = false; }
@@ -253,7 +282,9 @@
       const { error } = await client.from("aha_friend_requests")
         .insert({ requester_id: user.id, recipient_id: data.profile_id });
       if (error) {
-        status(error.code === "23505" ? "Dere har allerede en invitasjon eller vennskap." : "Invitasjonen kunne ikke sendes.");
+        status(error.code === "P0001" ? "Du har nådd grensen på 12 venneinvitasjoner i dag."
+          : error.code === "23505" ? "Dere har allerede en invitasjon eller vennskap."
+          : "Invitasjonen kunne ikke sendes (for eksempel ved blokkering).");
         return;
       }
       byId("friend-invite-handle").value = "";
@@ -275,6 +306,15 @@
         await loadMessages(true);
       } catch (error) { showFailure(error, "Sending av melding"); }
       finally { byId("friend-send").disabled = !chosen; }
+    });
+    byId("friend-block").addEventListener("click", async () => {
+      if (!chosen || !user || !global.confirm("Blokkere brukeren? Dere kan ikke lese eller sende meldinger før blokkeringen oppheves.")) return;
+      const blocked_id = peerId(chosen);
+      const { error } = await client.from("aha_friend_blocks").insert({ blocker_id: user.id, blocked_id });
+      if (error && error.code !== "23505") { showFailure(error, "Blokkering"); return; }
+      clearThread();
+      status("Brukeren er blokkert. Dere kan ikke sende eller lese meldinger.");
+      await refresh();
     });
     byId("friend-remove").addEventListener("click", async () => {
       if (!chosen || !global.confirm("Fjerne vennen? Hele samtalehistorikken slettes for dere begge.")) return;
