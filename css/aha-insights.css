@@ -215,3 +215,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* An archive with no data differs from a filter with no results. */
+.insights-page .aha-insights-empty { grid-column: 1 / -1; border-color: rgba(170,145,247,.27); }
+.insights-page .aha-insights-empty::before { display: none; }
