@@ -27,6 +27,10 @@ const checks = [
   [/create or replace function public\.aha_open_social_meet_chat\(meet_invite_id uuid\)/, "trusted RPC"],
   [/revoke all on function public\.aha_open_social_meet_chat\(uuid\) from public, anon/, "no anonymous RPC"],
   [/grant execute on function public\.aha_open_social_meet_chat\(uuid\) to authenticated/, "authenticated RPC"],
+  [/create table if not exists aha_friend_private\.chat_reports/, "private report queue"],
+  [/create or replace function public\.aha_report_direct_chat/, "report RPC"],
+  [/chat_report_not_authorized/, "report restricted to participant"],
+  [/revoke all on function public\.aha_report_direct_chat\(uuid,text\) from public,anon/, "report RPC not public"],
   [/set search_path = pg_catalog, public, aha_friend_private/, "fixed trusted search path"]
 ];
 for(const [pattern,why] of checks) assert.match(migration,pattern,why);
@@ -34,6 +38,8 @@ assert.match(runtime,/\.rpc\("aha_open_social_meet_chat"/);
 assert.match(runtime,/\.select\("id,requester_id,recipient_id,status,source,created_at"\)/);
 assert.match(runtime,/Kontakter fra Social Meet|friend-meet-list/);
 assert.match(runtime,/Bli venner/);
+assert.match(runtime,/\.rpc\("aha_report_direct_chat"/);
+assert.match(page,/id="friend-report"/);
 assert.match(runtime,/Venneforespørsel sendt\. Vennskap opprettes først etter aksept/);
 assert.match(page,/id="friend-meet-list"/);
 assert.match(css,/aha-friend-chat-embedded/);
