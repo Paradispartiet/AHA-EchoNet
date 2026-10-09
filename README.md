@@ -63,7 +63,7 @@ AHA Meet har ingen invitasjoner, ingen kalenderintegrasjon, ingen EchoNet-deling
 
 ## AHA Local Insight Home V1
 
-AHA Local Insight Home V1 is defined as the next local read-only surface that will combine the frozen Sync Overview, Conversation Snapshot, and Quality Status V1 layers. Runtime is not implemented yet.
+AHA Local Insight Home V1 is implemented as the local read-only Home composition layer over the frozen Sync Overview, Conversation Snapshot, and Quality Status V1 layers. It is wired into `index.html` through `ahaLocalInsightHome.js` and `ahaLocalInsightHomeDashboard.js` and does not activate sync, approval, publishing, backend storage or EchoNet actions.
 
 AHA Conversation Insight Snapshot V1 is frozen as a local read-only understanding layer. It does not perform sync, approval, publishing, backend storage, or EchoNet actions.
 

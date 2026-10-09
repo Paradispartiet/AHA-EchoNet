@@ -107,17 +107,22 @@ The ready surface is:
 - local search
 - local privacy report/export
 
+## Release-readiness runtime surface
+
+The local-only release-readiness status is now exposed read-only on `status.html#aha-release-readiness` through `js/ahaReleaseReadiness.js` and `js/ahaReleaseReadinessDashboard.js`.
+
+The surface derives module release state from the canonical registry, keeps every global network/training/write-back boundary disabled, and surfaces only the intentional non-ready modules: `meet` as shell and `sync-hub` as planned.
+
 ## Safe next product steps
 
 The safest next steps are:
 
-1. Release-readiness UI/status surface
-2. Demo path through the ready modules
-3. Local data seed/examples for testing
-4. Better empty states and onboarding text
-5. Manual backup/export/import for local AHA data
-6. Optional backend contract document, without implementation
-7. Optional EchoNet contract document, without implementation
+1. Demo path through the ready modules
+2. Local data seed/examples for testing
+3. Better empty states and onboarding text
+4. Manual backup/export/import for local AHA data
+5. Optional backend contract document, without implementation
+6. Optional EchoNet contract document, without implementation
 
 ## Not safe yet
 

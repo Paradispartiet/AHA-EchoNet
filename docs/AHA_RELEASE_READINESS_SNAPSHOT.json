@@ -240,9 +240,9 @@
     }
   ],
   "safe_next_steps": [
-    "release-readiness UI/status surface",
     "demo path through ready modules",
     "local data seed/examples",
+    "better empty states and onboarding text",
     "manual backup/export/import"
   ],
   "not_safe_yet": [
@@ -252,5 +252,11 @@
     "external publishing",
     "model training/fine-tuning",
     "History Go write-back"
-  ]
+  ],
+  "runtime_surface": {
+    "page": "status.html#aha-release-readiness",
+    "model": "js/ahaReleaseReadiness.js",
+    "renderer": "js/ahaReleaseReadinessDashboard.js",
+    "read_only": true
+  }
 }
