@@ -380,8 +380,11 @@
         let existing = null;
         try { existing = JSON.parse(previous); } catch { /* keep local data unchanged */ }
         if (isValidKind(existing, entry.kind)) return JSON.stringify(mergeAdditive(existing, entry.value));
+        // An unreadable or wrongly typed store cannot be merged. A validated
+        // backup may repair it; valid existing records are never overwritten.
+        return JSON.stringify(entry.value);
       }
-      // Scalars and incompatible existing formats are never silently replaced.
+      // Existing scalar profile fields and preferences take priority.
       return previous;
     }
     return entry.kind === "string" ? entry.value : JSON.stringify(entry.value);
