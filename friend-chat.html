@@ -59,11 +59,15 @@
               <div class="friend-section-heading"><h2 id="friend-list-title">Venner</h2><button type="button" id="friend-refresh">Oppdater</button></div>
               <div id="friend-list" aria-label="Velg en venn"><p>Ingen venner ennå.</p></div>
             </section>
+            <section aria-labelledby="friend-blocked-title">
+              <h2 id="friend-blocked-title">Blokkerte brukere</h2>
+              <div id="friend-block-list" aria-live="polite"><p>Ingen blokkeringer.</p></div>
+            </section>
           </aside>
           <section class="friend-thread" aria-labelledby="friend-thread-title">
             <header class="friend-thread-header">
               <div><p class="friend-overline">Privat samtale</p><h2 id="friend-thread-title">Velg en venn</h2></div>
-              <button type="button" id="friend-remove" hidden>Fjern venn</button>
+              <div class="friend-thread-actions"><button type="button" id="friend-block" hidden>Blokker</button><button type="button" id="friend-remove" hidden>Fjern venn</button></div>
             </header>
             <div id="friend-messages" class="friend-messages" role="log" aria-label="Vennemeldinger" aria-live="polite">
               <p class="friend-empty">Velg en venn fra listen for å begynne å skrive.</p>
