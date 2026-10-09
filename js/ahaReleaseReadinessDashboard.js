@@ -63,6 +63,10 @@
         <div class="aha-mini-stat"><strong>${status.counts.total}</strong><span>Totalt</span></div>
       </div>
 
+      <div class="aha-tile-actions aha-release-readiness-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="demo.html">Se kom-i-gang-flyten</a>
+      </div>
+
       <div class="aha-release-readiness-grid">
         <section class="aha-release-readiness-block" aria-labelledby="aha-release-non-ready-title">
           <h3 id="aha-release-non-ready-title">Bevisst ikke aktivert</h3>
