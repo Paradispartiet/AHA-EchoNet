@@ -79,7 +79,7 @@ for (const descriptor of pack.stores) {
 assert.equal(api.inspectSeed().installed, false);
 const first = api.applySeed();
 assert.equal(first.ok, true);
-assert.equal(first.installed, 9, "seed pack should install exactly nine owned objects");
+assert.equal(first.installed, 7, "seed pack should install exactly seven top-level owned records");
 assert.equal(storage.getItem("aha_chat_current_session_v1"), "user_chat_session_keep", "existing current Chat session must be preserved");
 
 const notesAfterFirst = JSON.parse(storage.getItem("aha_notes_v1"));
@@ -100,11 +100,11 @@ assert.equal(sessionsAfterSecond.filter((item) => item.id === "demo_seed_chat_se
 
 const inspection = api.inspectSeed();
 assert.equal(inspection.installed, true);
-assert.equal(inspection.count, 9);
+assert.equal(inspection.count, 7);
 
 const removed = api.removeSeed();
 assert.equal(removed.ok, true);
-assert.equal(removed.removed, 9);
+assert.equal(removed.removed, 7);
 assert.equal(api.inspectSeed().installed, false);
 
 const notesAfterRemove = JSON.parse(storage.getItem("aha_notes_v1"));
