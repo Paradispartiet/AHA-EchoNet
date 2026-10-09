@@ -55,3 +55,24 @@
   .friend-thread { min-height:470px; }
   .friend-chat-modes a { flex:1; text-align:center; padding:11px 8px; font-size:13px; }
 }
+
+/* Trusted same-origin History Go Social Meet iframe: compact messenger only. */
+body.aha-friend-chat-embedded #aha-global-nav,
+body.aha-friend-chat-embedded #aha-global-footer,
+body.aha-friend-chat-embedded #aha-global-daily-sheet,
+body.aha-friend-chat-embedded .chat-header,
+body.aha-friend-chat-embedded .aha-mobile-nav,
+body.aha-friend-chat-embedded .friend-chat-modes { display:none!important; }
+body.aha-friend-chat-embedded .app-shell { min-height:100dvh; padding:8px; }
+body.aha-friend-chat-embedded .friend-chat-main { padding:0 0 18px; }
+body.aha-friend-chat-embedded .friend-chat-columns { grid-template-columns:minmax(170px,28%) minmax(0,1fr); }
+body.aha-friend-chat-embedded .friend-chat-notice { font-size:11px; padding:6px 9px; margin:0 0 7px; }
+body.aha-friend-chat-embedded .friend-identity { padding:9px; margin-bottom:7px; }
+body.aha-friend-chat-embedded .friend-identity p { font-size:11px; }
+body.aha-friend-chat-embedded .friend-sidebar { padding:8px; }
+body.aha-friend-chat-embedded .friend-thread { min-height:55dvh; }
+@media(max-width:680px) {
+  body.aha-friend-chat-embedded .friend-chat-columns { grid-template-columns:minmax(0,1fr); }
+  body.aha-friend-chat-embedded .friend-thread { min-height:50dvh; }
+  body.aha-friend-chat-embedded .friend-messages { max-height:42dvh; }
+}
