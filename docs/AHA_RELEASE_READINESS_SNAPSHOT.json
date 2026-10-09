@@ -240,7 +240,6 @@
     }
   ],
   "safe_next_steps": [
-    "local data seed/examples",
     "better empty states and onboarding text",
     "manual backup/export/import"
   ],
@@ -271,5 +270,15 @@
       "personal-ai.html",
       "profile.html"
     ]
+  },
+  "local_demo_seed": {
+    "page": "demo-seed.html",
+    "pack": "data/demo/aha-local-demo-seed-v1.js",
+    "loader": "js/ahaLocalDemoSeed.js",
+    "renderer": "js/ahaLocalDemoSeedDashboard.js",
+    "local_only": true,
+    "synthetic_example": true,
+    "explicit_apply": true,
+    "reversible": true
   }
 }

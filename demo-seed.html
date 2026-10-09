@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA eksempeldata</title>
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-demo.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-demo-seed-main">Hopp til hovedinnhold</a>
+  <div id="aha-global-nav"></div>
+
+  <main id="aha-demo-seed-main" class="aha-dashboard aha-shell-reading aha-demo-page" tabindex="-1">
+    <section class="aha-panel aha-demo-hero">
+      <p class="eyebrow">Testing</p>
+      <h1>Lokale AHA-eksempeldata</h1>
+      <p class="aha-demo-trust">Legg inn et lite, syntetisk eksempelsett for å se Home, Chat, Bibliotek, Personal AI og Mitt AHA med innhold. Ingenting sendes ut av nettleseren.</p>
+      <p id="aha-demo-seed-status" class="aha-demo-status is-neutral" role="status" aria-live="polite">Kontrollerer lokal seed-status …</p>
+    </section>
+
+    <section class="aha-panel aha-demo-seed-panel" aria-labelledby="aha-demo-seed-title">
+      <p class="eyebrow">Local Demo Seed V1</p>
+      <h2 id="aha-demo-seed-title">Eksplisitt og reversibelt</h2>
+      <p>Seedet legger bare inn objekter merket <code>aha_local_demo_seed_v1</code>. Eksisterende lokale AHA-objekter beholdes. Kjøring på nytt lager ikke duplikater, og fjerning sletter bare seedets egne objekter.</p>
+      <div class="aha-demo-seed-controls">
+        <button id="aha-demo-seed-apply" type="button">Legg inn eksempeldata</button>
+        <button id="aha-demo-seed-remove" class="aha-ghost-button" type="button">Fjern eksempeldata</button>
+      </div>
+      <p id="aha-demo-seed-output" class="aha-panel-subtitle" aria-live="polite"></p>
+    </section>
+
+    <section class="aha-panel aha-demo-note">
+      <p class="eyebrow">Innhold</p>
+      <h2>Hva som legges inn</h2>
+      <div class="aha-demo-seed-grid">
+        <div><strong>Home</strong><span>1 syntetisk innsikt + 1 kildespor</span></div>
+        <div><strong>Chat</strong><span>1 samtale med 2 meldinger</span></div>
+        <div><strong>Bibliotek</strong><span>1 notat + godkjent corpus/example</span></div>
+        <div><strong>Personal AI</strong><span>Godkjent lokalt kunnskapsgrunnlag + demo-evaluering</span></div>
+        <div><strong>Mitt AHA</strong><span>Lokale tellinger og aktivitet fra de samme seed-objektene</span></div>
+      </div>
+      <p>Seedet inneholder ingen History Go-data, ingen kontoopplysninger, ingen tokens, ingen backenddata og ingen EchoNet-identitet.</p>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="demo.html">Til kom-i-gang-flyten</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Åpne AHA Home</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="data/demo/aha-local-demo-seed-v1.js"></script>
+  <script src="js/ahaLocalDemoSeed.js"></script>
+  <script src="js/ahaLocalDemoSeedDashboard.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>

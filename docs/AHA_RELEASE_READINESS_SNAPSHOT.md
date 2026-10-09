@@ -127,15 +127,20 @@ It is a read-only five-step guide through the ready product path:
 
 The guide validates its registry-backed steps against active modules and stores no progress. It does not activate Meet, Sync Hub, backend, EchoNet or History Go write-back.
 
+## Local demo seed
+
+A synthetic, reversible local example set is available through `demo-seed.html`.
+
+The seed installs only records owned by `aha_local_demo_seed_v1`, preserves existing user records, is idempotent on repeated application, and removes only its own records. It covers Home, Chat, Bibliotek, Personal AI and Mitt AHA without History Go data, backend, Sync Hub or EchoNet.
+
 ## Safe next product steps
 
 The safest next steps are:
 
-1. Local data seed/examples for testing
-2. Better empty states and onboarding text
-3. Manual backup/export/import for local AHA data
-4. Optional backend contract document, without implementation
-5. Optional EchoNet contract document, without implementation
+1. Better empty states and onboarding text
+2. Manual backup/export/import for local AHA data
+3. Optional backend contract document, without implementation
+4. Optional EchoNet contract document, without implementation
 
 ## Not safe yet
 
