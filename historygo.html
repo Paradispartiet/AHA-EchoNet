@@ -6,15 +6,16 @@
   <title>History Go i AHA</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-historygo-bridge.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard aha-shell-content">
-    <section class="aha-panel aha-module-shell">
+  <main class="aha-dashboard aha-shell-content aha-historygo-bridge-page">
+    <section class="aha-panel aha-module-shell aha-historygo-hero">
       <header class="aha-module-shell-header">
         <div>
-          <p class="eyebrow">AHA Modul</p>
+          <p class="eyebrow">AHA + History Go</p>
           <h1>History Go i AHA</h1>
           <p class="aha-module-purpose">History Go er samlings- og læringsuniverset. AHA importerer bare utvalgte History Go-signaler som personlige AHA source events/insights. AHA lager ikke ny History Go-motor, skriver ikke tilbake til History Go-lagring som standard, og import skjer bare når brukeren trykker import. Sync, backend og EchoNet er ikke aktivert.</p>
         </div>
@@ -28,58 +29,26 @@
       <p id="hg-import-status" class="aha-muted"></p>
     </section>
 
-    <section class="aha-panel" aria-labelledby="hg-consent-title">
+    <section class="aha-panel aha-historygo-consent-panel" aria-labelledby="hg-consent-title">
       <h2 id="hg-consent-title">Bekreft privat import</h2>
       <label>
         <input id="hg-import-consent" type="checkbox" />
-        Jeg vil importere den viste History Go-payloaden som private AHA source events og innsikter.
+        <span>Jeg vil importere den viste History Go-payloaden som private AHA source events og innsikter.</span>
       </label>
       <p class="aha-muted">Importen aktiverer ikke offentlig deling eller modelltrening. Bekreftelsen gjelder bare neste import og nullstilles etterpå.</p>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-historygo-status-panel">
       <h2>Status</h2>
       <div id="hg-status-cards" class="aha-profile-status-grid"></div>
     </section>
 
-    <section class="aha-panel">
-      <h2>Import boundary</h2>
-      <ul id="hg-import-boundary" class="aha-historygo-payload-list">
-        <li>AHA reads <code>aha_import_payload_v1</code>.</li>
-        <li>Manual import only.</li>
-        <li>Writes AHA source events/insights.</li>
-        <li>Does not write back to HG storage by default.</li>
-        <li>Database persist disabled by default.</li>
-        <li>EchoNet/sync disabled.</li>
-      </ul>
-    </section>
-
-    <section class="aha-panel">
-      <h2>Lokal importlogg</h2>
-      <p>Kompakt AHA-logg lagres i <code>aha_historygo_imports_v1</code>; hele History Go-payloaden dupliseres ikke her.</p>
-      <ul id="hg-import-log-summary" class="aha-historygo-payload-list"></ul>
-    </section>
-
-    <section class="aha-panel">
-      <h2>Payload-oppsummering</h2>
-      <ul id="hg-payload-summary" class="aha-historygo-payload-list"></ul>
-    </section>
-
-    <section class="aha-panel">
-      <h2>Importerte AHA-events</h2>
-      <p>Antall importerte source events: <strong id="hg-imported-events-total">0</strong></p>
-      <h3>Counts by source_type</h3>
-      <ul id="hg-imported-source-type-counts" class="aha-historygo-payload-list"></ul>
-      <h3>Siste 10 importerte source events</h3>
-      <ul id="hg-imported-events-list" class="aha-historygo-event-list"></ul>
-    </section>
-
-    <section class="aha-panel">
+    <section class="aha-panel aha-historygo-insights-panel">
       <h2>Importerte innsikter</h2>
       <p>Antall innsikter med History Go-importsignal: <strong id="hg-imported-insights-count">0</strong></p>
     </section>
 
-    <section class="aha-panel" aria-labelledby="hg-music-title">
+    <section class="aha-panel aha-historygo-music-panel" aria-labelledby="hg-music-title">
       <p class="eyebrow">AHA Music Discovery</p>
       <h2 id="hg-music-title">Musikk på History Go-steder</h2>
       <p>Knyttet til dette stedet vises bare når AHA Music-relasjonen har et sikkert <code>historyGoPlaceId</code>.</p>
@@ -90,17 +59,54 @@
       <div id="hg-place-music-preview" class="aha-historygo-place-music-preview"></div>
     </section>
 
-    <section class="aha-panel">
-      <h2>Forklaring</h2>
-      <ul class="aha-historygo-payload-list">
-        <li>History Go er samlings- og læringsuniverset.</li>
-        <li>AHA importerer bare utvalgte History Go-signaler som personlige AHA source events/insights.</li>
-        <li>AHA lager ikke ny History Go-motor.</li>
-        <li>AHA skriver ikke tilbake til History Go-lagring som standard.</li>
-        <li>Import skjer bare når brukeren trykker import.</li>
-        <li>Sync, backend og EchoNet er ikke aktivert.</li>
-      </ul>
-    </section>
+    <details id="hg-technical-details" class="aha-panel aha-historygo-advanced">
+      <summary>Teknisk importkontroll</summary>
+      <div class="aha-historygo-advanced-grid">
+        <section class="aha-historygo-advanced-section">
+          <h2>Import boundary</h2>
+          <ul id="hg-import-boundary" class="aha-historygo-payload-list">
+            <li>AHA reads <code>aha_import_payload_v1</code>.</li>
+            <li>Manual import only.</li>
+            <li>Writes AHA source events/insights.</li>
+            <li>Does not write back to HG storage by default.</li>
+            <li>Database persist disabled by default.</li>
+            <li>EchoNet/sync disabled.</li>
+          </ul>
+        </section>
+
+        <section class="aha-historygo-advanced-section">
+          <h2>Lokal importlogg</h2>
+          <p>Kompakt AHA-logg lagres i <code>aha_historygo_imports_v1</code>; hele History Go-payloaden dupliseres ikke her.</p>
+          <ul id="hg-import-log-summary" class="aha-historygo-payload-list"></ul>
+        </section>
+
+        <section class="aha-historygo-advanced-section">
+          <h2>Payload-oppsummering</h2>
+          <ul id="hg-payload-summary" class="aha-historygo-payload-list"></ul>
+        </section>
+
+        <section class="aha-historygo-advanced-section">
+          <h2>Importerte AHA-events</h2>
+          <p>Antall importerte source events: <strong id="hg-imported-events-total">0</strong></p>
+          <h3>Counts by source_type</h3>
+          <ul id="hg-imported-source-type-counts" class="aha-historygo-payload-list"></ul>
+          <h3>Siste 10 importerte source events</h3>
+          <ul id="hg-imported-events-list" class="aha-historygo-event-list"></ul>
+        </section>
+
+        <section class="aha-historygo-advanced-section">
+          <h2>Forklaring</h2>
+          <ul class="aha-historygo-payload-list">
+            <li>History Go er samlings- og læringsuniverset.</li>
+            <li>AHA importerer bare utvalgte History Go-signaler som personlige AHA source events/insights.</li>
+            <li>AHA lager ikke ny History Go-motor.</li>
+            <li>AHA skriver ikke tilbake til History Go-lagring som standard.</li>
+            <li>Import skjer bare når brukeren trykker import.</li>
+            <li>Sync, backend og EchoNet er ikke aktivert.</li>
+          </ul>
+        </section>
+      </div>
+    </details>
   </main>
 
   <script src="js/ahaModuleApi.js"></script>
