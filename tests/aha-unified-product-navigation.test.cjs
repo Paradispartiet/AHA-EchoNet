@@ -33,7 +33,8 @@ const userFacingPages = [
   'lists.html',
   'paths.html',
   'mindmap.html',
-  'knowledge-workbench.html'
+  'knowledge-workbench.html',
+  'demo.html'
 ];
 for (const file of userFacingPages) {
   const html = read(file);
