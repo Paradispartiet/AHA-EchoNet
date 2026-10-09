@@ -97,7 +97,11 @@ assert.doesNotMatch(modelSource, /aha_notes_v1/, "Notes must remain excluded fro
 assert.doesNotMatch(modelSource, /(?:window|global)\.AHAIngest/, "seeder must not call AHAIngest");
 assert.doesNotMatch(modelSource, /(?:window|global)\.AHARepository/, "seeder must not call AHARepository");
 assert.doesNotMatch(modelSource, /fetch\s*\(|XMLHttpRequest|sendBeacon/, "seeder must not use network APIs");
-assert.doesNotMatch(dashboardSource, /installExamples\?\.\(\).*init|init\(\)[\s\S]{0,120}installExamples/s, "examples must not install automatically");
+assert.match(
+  dashboardSource,
+  /getElementById\("aha-examples-install"\)\?\.addEventListener\("click",[\s\S]*?installExamples\?\.\(\)/,
+  "example installation must remain gated by the explicit install click handler"
+);
 
 const html = fs.readFileSync("examples.html", "utf8");
 assert.match(html, /Notes seedes ikke/, "page should explain why Notes are excluded");
