@@ -4,7 +4,8 @@ test("ready-modules demo renders the five-step local product path", async ({ pag
   await page.goto("/demo.html", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator("#aha-demo-main")).toBeVisible();
-  await expect(page.locator("#aha-global-nav")).toBeVisible();
+  await expect(page.locator("#aha-global-nav")).toHaveCount(1);
+  await expect(page.locator("#aha-global-nav .aha-global-nav")).toBeVisible();
   await expect(page.locator("#aha-demo-status")).toContainText("Alle fem steg er tilgjengelige");
 
   const steps = page.locator(".aha-demo-step");
