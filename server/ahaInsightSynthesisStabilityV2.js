@@ -95,6 +95,19 @@ function primaryLanguage(value) {
   return null;
 }
 
+// Match only insights that discuss friction at a boundary explicitly cited
+// in their own source evidence; unrelated candidate themes are unaffected.
+function omitsEvidenceBoundFrictionBoundary(candidate) {
+  const friction = /\b(?:uenighet|konflikt|friksjon|feil|problem|disagreement|conflict|friction|error|bottleneck)\w*\b/i;
+  const boundary = /\b(?:grens|ansvarsgrens|grensesnitt|interface|boundar)\w*\b/i;
+  const insight = String(candidate?.insight || "");
+  return friction.test(insight) && !boundary.test(insight)
+    && (Array.isArray(candidate?.evidence) ? candidate.evidence : []).some((item) => {
+      const quote = String(item?.quote || "");
+      return friction.test(quote) && boundary.test(quote);
+    });
+}
+
 function validateStabilitySynthesis(synthesis, sourceText) {
   const source = String(sourceText || "");
   const errors = [];
@@ -118,6 +131,12 @@ function validateStabilitySynthesis(synthesis, sourceText) {
         errors.push(`candidate:${index}:source_limitation_wording_not_preserved:${rule.id}`);
       }
     });
+  });
+
+  candidates.forEach((candidate, index) => {
+    if (omitsEvidenceBoundFrictionBoundary(candidate)) {
+      errors.push(`candidate:${index}:source_boundary_mechanism_omitted`);
+    }
   });
 
   EVIDENCE_COVERAGE_RULES.forEach((rule) => {
@@ -177,6 +196,12 @@ function retryInstruction(validationErrors = []) {
       "MANDATORY WORDING CORRECTION: Keep causal_status=not_causal, but remove causal verbs such as 'fører til', 'skaper', 'gir', 'øker', 'reduserer' and 'muliggjør' from insight. State only the grounded association or tension.",
       "The rewritten insight MUST name the source-grounded relation, tension, boundary or difference directly without implying causality.",
       "Use neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med' only where they add precision. Do not reuse the rejected sentence or a boilerplate frame, do not use a causal synonym, and do not change causal_status away from not_causal."
+    );
+  }
+  if (hasValidationCode(errors, "source_boundary_mechanism_omitted")) {
+    instructions.push(
+      "MANDATORY BOUNDARY PRESERVATION: The candidate cites evidence that explicitly locates disagreement, errors or other friction at a responsibility or interface boundary, but omits the boundary from its insight.",
+      "Rewrite the insight to name that exact source-grounded boundary or an equally precise equivalent. Do not hide it in abstraction, evidence or uncertainty alone, and do not invent causality. Keep other separately supported insights eligible."
     );
   }
   if (hasValidationCode(errors, "source_evidence_premise_not_preserved:coordination_delay")) {
