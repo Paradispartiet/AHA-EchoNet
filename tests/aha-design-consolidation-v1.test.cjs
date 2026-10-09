@@ -89,7 +89,7 @@ assert.match(chatHtml, /<div class="app-shell">/, "Chat should retain its dedica
 assert.match(chatHtml, /id="aha-global-nav"/, "Chat should remain inside shared global navigation");
 assert.doesNotMatch(chatHtml, /ahaModule\.css/, "Chat should not depend on the removed legacy module stylesheet");
 
-for (const shellClass of ["aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
+for (const shellClass of ["aha-shell-compact", "aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
   assert.match(dashboardCss, new RegExp("\\." + shellClass + "\\b"), shellClass + " should be defined centrally");
 }
 
