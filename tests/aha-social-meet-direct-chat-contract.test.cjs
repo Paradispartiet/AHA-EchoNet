@@ -6,6 +6,7 @@ const page = fs.readFileSync("friend-chat.html","utf8");
 const css = fs.readFileSync("css/aha-friend-chat.css","utf8");
 const checks = [
   [/add column if not exists source text not null default 'friend'/, "existing friends unchanged"],
+  [/when \(new\.source = 'friend'\)/, "meet contact does not count as AHA friend invitation"],
   [/source in \('friend','social_meet'\)/, "distinct relationship types"],
   [/drop index if exists public.aha_friend_requests_pair_unique/, "migrate pair index"],
   [/aha_friend_requests_pair_source_unique/, "a pending friendship remains pending even after meeting"],
