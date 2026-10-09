@@ -76,3 +76,7 @@ body.aha-friend-chat-embedded .friend-thread { min-height:55dvh; }
   body.aha-friend-chat-embedded .friend-thread { min-height:50dvh; }
   body.aha-friend-chat-embedded .friend-messages { max-height:42dvh; }
 }
+
+.friend-chat-main #friend-report-reason { min-height:36px; padding:6px 9px; border:1px solid #4b5360; border-radius:10px; background:#20242e; color:#fff; font:inherit; font-size:12px; max-width:160px; }
+.friend-thread-header .friend-thread-actions { flex-wrap:wrap; justify-content:flex-end; }
+.friend-thread-header .friend-thread-actions label { flex-basis:100%; margin:0; }
