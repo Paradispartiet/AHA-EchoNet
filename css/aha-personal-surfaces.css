@@ -431,3 +431,14 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
     padding: 14px;
   }
 }
+
+/* First-run collection states for existing local personal modules. */
+.aha-personal-page .aha-personal-empty {
+  --aha-empty-accent: var(--personal-accent);
+  border-color: color-mix(in srgb, var(--aha-empty-accent) 31%, transparent);
+  background: linear-gradient(115deg, color-mix(in srgb, var(--aha-empty-accent) 9%, transparent), transparent 67%), var(--aha-color-panel, #151515);
+  box-shadow: none;
+}
+.aha-personal-page .aha-personal-empty > .eyebrow { color: var(--personal-accent); }
+.aha-personal-page .aha-personal-empty .aha-tile-actions { justify-content: flex-start; }
+.aha-personal-page .aha-personal-empty .aha-tile-btn-primary { min-height: 42px; }
