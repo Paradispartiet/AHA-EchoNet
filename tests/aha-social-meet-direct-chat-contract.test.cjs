@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const migration = fs.readFileSync("supabase/migrations/20261009162000_aha_social_meet_direct_chat_bridge_v1.sql","utf8");
+const migration = fs.readFileSync("supabase/social-meet-direct-chat.sql","utf8");
 const runtime = fs.readFileSync("js/ahaFriendChat.js","utf8");
 const page = fs.readFileSync("friend-chat.html","utf8");
 const css = fs.readFileSync("css/aha-friend-chat.css","utf8");
