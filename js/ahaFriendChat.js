@@ -87,6 +87,7 @@
       byId("friend-send").disabled = true;
       byId("friend-remove").hidden = true;
       byId("friend-block").hidden = true;
+      byId("friend-report").hidden = true;
       byId("friend-messages").replaceChildren(make("p", "Velg en venn fra listen for å begynne å skrive.", "friend-empty"));
     }
     async function loadMessages(force = false) {
@@ -126,6 +127,7 @@
       byId("friend-send").disabled = false;
       byId("friend-remove").hidden = request.source === "social_meet";
       byId("friend-block").hidden = false;
+      byId("friend-report").hidden = false;
       await loadMessages(true);
       if (!chosen || chosen.id !== request.id || typeof client.channel !== "function") return;
       subscription = client.channel("aha-friend-" + request.id)
@@ -362,6 +364,15 @@
         await loadMessages(true);
       } catch (error) { showFailure(error, "Sending av melding"); }
       finally { byId("friend-send").disabled = !chosen; }
+    });
+    byId("friend-report").addEventListener("click", async () => {
+      if (!chosen || !user || !global.confirm("Vil du sende en privat rapport om denne samtalen?")) return;
+      const reason = byId("friend-report-reason").value;
+      const { error } = await client.rpc("aha_report_direct_chat", {
+        chat_request_id: chosen.id, report_reason: reason
+      });
+      if (error) { showFailure(error, "Rapportering"); return; }
+      status("Rapporten er registrert privat. Bruk Blokker hvis du vil stanse kontakten.");
     });
     byId("friend-block").addEventListener("click", async () => {
       if (!chosen || !user || !global.confirm("Blokkere brukeren? Dere kan ikke lese eller sende meldinger før blokkeringen oppheves.")) return;
