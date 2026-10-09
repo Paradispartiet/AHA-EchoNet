@@ -85,6 +85,10 @@
           </ul>
         </section>
       </div>
+
+      <div class="aha-tile-actions aha-release-readiness-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="demo.html">Se kom-i-gang-flyt</a>
+      </div>
     `;
 
     return status;

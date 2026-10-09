@@ -113,16 +113,29 @@ The local-only release-readiness status is now exposed read-only on `status.html
 
 The surface derives module release state from the canonical registry, keeps every global network/training/write-back boundary disabled, and surfaces only the intentional non-ready modules: `meet` as shell and `sync-hub` as planned.
 
+## Ready-modules demo path
+
+The canonical local demo path is now exposed at `demo.html`.
+
+It is a read-only five-step guide through the ready product path:
+
+1. AHA Home
+2. AHA Chat
+3. Bibliotek / Søk
+4. Personal AI
+5. Mitt AHA
+
+The guide validates its registry-backed steps against active modules and stores no progress. It does not activate Meet, Sync Hub, backend, EchoNet or History Go write-back.
+
 ## Safe next product steps
 
 The safest next steps are:
 
-1. Demo path through the ready modules
-2. Local data seed/examples for testing
-3. Better empty states and onboarding text
-4. Manual backup/export/import for local AHA data
-5. Optional backend contract document, without implementation
-6. Optional EchoNet contract document, without implementation
+1. Local data seed/examples for testing
+2. Better empty states and onboarding text
+3. Manual backup/export/import for local AHA data
+4. Optional backend contract document, without implementation
+5. Optional EchoNet contract document, without implementation
 
 ## Not safe yet
 
