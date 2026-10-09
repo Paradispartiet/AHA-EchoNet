@@ -20,6 +20,9 @@ Current intentional non-ready modules:
 - `meet`: shell
 - `sync-hub`: planned/no-op
 
+
+The read-only ready-module walkthrough is available at `demo.html`: Start → Chat → Bibliotek → Personal AI → Mitt AHA. It stores no demo progress and does not activate Meet, Sync Hub, backend, EchoNet or History Go write-back.
+
 This baseline does not activate backend, account login, EchoNet, social sharing, active sync, external publishing, model training, fine-tuning or History Go write-back.
 
 ## Registry and maturity matrix consistency
