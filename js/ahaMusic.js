@@ -812,6 +812,20 @@
     `).join("");
   }
 
+  function buildMusicOnboarding(library, connected) {
+    if (asArray(library.tracks).length || asArray(library.playlists).length) return "";
+    const title = connected ? "Importer musikken du vil samle" : "Begynn med Spotify-tilkoblingen";
+    const message = connected
+      ? "Spotify er tilkoblet, men du har ikke importert spillelister eller sanger til AHA ennå. Du velger selv hvilke metadata som lagres."
+      : "Musikkbiblioteket er tomt. Se tilkoblingsvalgene og koble til Spotify når det er konfigurert. AHA lagrer bare metadata, ikke lyd.";
+    const href = connected ? "#spotify-import-title" : "#spotify-connect-title";
+    const label = connected ? "Gå til import" : "Se Spotify-tilkobling";
+    return `<article class="aha-onboarding-empty aha-music-onboarding" data-empty-state="no_data" role="status">
+      <p class="eyebrow">Ditt musikkbibliotek</p><h3>${title}</h3><p>${message}</p>
+      <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="${href}">${label}</a></div>
+    </article>`;
+  }
+
   function renderLibrary() {
     const library = loadLibrary();
     const state = currentLibraryState();
@@ -825,15 +839,7 @@
     fillFilters(library, state);
 
     const emptyMount = document.getElementById("music-empty-state");
-    if (emptyMount) {
-      if (!library.sources.length && !library.tracks.length && !library.playlists.length) {
-        emptyMount.innerHTML = emptyState("not_connected", "Ingen Spotify-konto koblet til", "Koble til Spotify og importer spillelister for å bygge AHA Music-biblioteket.");
-      } else if (!library.playlists.length && !library.tracks.length) {
-        emptyMount.innerHTML = emptyState("no_data", "Ingen spillelister importert", "Importer Spotify-spillelister for å fylle biblioteket.");
-      } else {
-        emptyMount.innerHTML = "";
-      }
-    }
+    if (emptyMount) emptyMount.innerHTML = buildMusicOnboarding(library, Boolean(getToken()));
 
     const filteredTracks = asArray(library.tracks).filter((track) => trackMatchesFilters(track, state, index));
     renderTracks(library, filteredTracks, index, bridge);
@@ -918,6 +924,7 @@
     normalizeArtist,
     mergeTrack,
     buildLibraryIndex,
+    buildMusicOnboarding,
     formatDuration,
     TOKEN_KEY,
     PKCE_KEY,

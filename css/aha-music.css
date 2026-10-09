@@ -623,3 +623,7 @@
     display: grid;
   }
 }
+
+/* Music onboarding distinguishes a live Spotify connection from imported metadata. */
+.aha-music-page .aha-music-onboarding { max-width: 100%; margin: 12px 0; border-color: rgba(88,217,199,.28); }
+.aha-music-page .aha-music-onboarding .eyebrow { color: var(--aha-color-cyan); }

@@ -1363,6 +1363,23 @@
     `;
   }
 
+  function buildEmptyFeedMarkup(totalActive, filter = currentFeedFilter) {
+    if (totalActive === 0) {
+      return `<article class="aha-onboarding-empty aha-personal-empty insta-feed-empty" data-empty-state="no_data" role="status">
+        <p class="eyebrow">Din lokale bildefeed</p>
+        <h3>Begynn med et øyeblikk</h3>
+        <p>Her vises bilder og videoer du har lagt inn lokalt. Ingenting publiseres eksternt.</p>
+        <div class="aha-tile-actions"><button type="button" class="aha-tile-btn aha-tile-btn-primary" data-insta-open-compose="1">Lag første post</button></div>
+      </article>`;
+    }
+    return `<article class="aha-onboarding-empty aha-personal-empty insta-feed-empty" data-empty-state="filtered_empty" role="status">
+      <p class="eyebrow">Visningen er tom</p>
+      <h3>${filter === "mine" ? "Ingen egne poster i denne visningen" : "Ingen poster i Følger-visningen"}</h3>
+      <p>Du har lokale poster, men ingen vises med dette filteret. Alle poster er fortsatt bevart.</p>
+      <div class="aha-tile-actions"><button type="button" class="aha-tile-btn aha-tile-btn-primary" data-insta-show-all="1">Vis alle poster</button></div>
+    </article>`;
+  }
+
   function render(source) {
     const mount = document.getElementById("insta-list");
     if (!mount) return;
@@ -1370,12 +1387,7 @@
     const activePosts = (Array.isArray(source) ? source : load()).filter((post) => !isUnavailableRecord(post));
     const posts = getFilteredPosts(activePosts);
     if (!posts.length) {
-      const emptyText = currentFeedFilter === "mine"
-        ? "Ingen egne poster ennå."
-        : currentFeedFilter === "following"
-          ? "Ingen poster fra folk du følger ennå."
-          : "Ingen Insta-poster ennå.";
-      mount.innerHTML = `<p>${emptyText}</p>`;
+      mount.innerHTML = buildEmptyFeedMarkup(activePosts.length);
       return;
     }
 
@@ -1498,6 +1510,16 @@
     document.getElementById("insta-list")?.addEventListener("click", (event) => {
       const target = event.target instanceof HTMLElement ? event.target.closest("button") : null;
       if (!target) return;
+      if (target.dataset.instaOpenCompose) {
+        const section = document.getElementById("insta-compose-panel");
+        if (section) section.open = true;
+        document.getElementById("insta-src")?.focus?.();
+        return;
+      }
+      if (target.dataset.instaShowAll) {
+        setFeedFilter("all");
+        return;
+      }
       if (target.dataset.instaDelete) deletePost(target.dataset.instaDelete);
       if (target.dataset.instaLike) toggleLike(target.dataset.instaLike);
       if (target.dataset.instaFollow) toggleFollow(target.dataset.instaFollow);
@@ -1585,6 +1607,7 @@
     renderFeedControls,
     setFeedFilter,
     getFilteredPosts,
+    buildEmptyFeedMarkup,
     load,
     save,
     loadStories,
