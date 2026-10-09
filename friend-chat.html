@@ -72,7 +72,7 @@
           <section class="friend-thread" aria-labelledby="friend-thread-title">
             <header class="friend-thread-header">
               <div><p class="friend-overline">Privat samtale</p><h2 id="friend-thread-title">Velg en venn</h2></div>
-              <div class="friend-thread-actions"><button type="button" id="friend-block" hidden>Blokker</button><button type="button" id="friend-remove" hidden>Fjern venn</button></div>
+              <div class="friend-thread-actions"><label for="friend-report-reason">Rapportér samtale</label><select id="friend-report-reason" aria-label="Årsak til rapport"><option value="harassment">Trakassering</option><option value="spam">Spam</option><option value="threats">Trusler</option><option value="impersonation">Falsk identitet</option><option value="other">Annet</option></select><button type="button" id="friend-report" hidden>Rapporter</button><button type="button" id="friend-block" hidden>Blokker</button><button type="button" id="friend-remove" hidden>Fjern venn</button></div>
             </header>
             <div id="friend-messages" class="friend-messages" role="log" aria-label="Vennemeldinger" aria-live="polite">
               <p class="friend-empty">Velg en venn fra listen for å begynne å skrive.</p>
