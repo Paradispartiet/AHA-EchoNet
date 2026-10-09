@@ -20,7 +20,14 @@ const SURFACES = [
 
 for (const surface of SURFACES) {
   test(`${surface.name} uses its canonical shell without horizontal overflow`, async ({ page }) => {
-    await page.goto(surface.path, { waitUntil: "domcontentloaded" });
+    await page.goto(surface.path, { waitUntil: "commit", timeout: 15000 });
+    await page.waitForSelector(surface.shell, { state: "attached", timeout: 15000 });
+    await page.waitForFunction(
+      () => getComputedStyle(document.documentElement).getPropertyValue("--aha-color-bg").trim().length > 0,
+      null,
+      { timeout: 15000 }
+    );
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())));
 
     const viewport = page.viewportSize();
     expect(viewport, "browser project should provide a viewport").not.toBeNull();
