@@ -17,6 +17,8 @@
 
   async function init() {
     const byId = (id) => global.document.getElementById(id);
+    const embedMode = new URLSearchParams(global.location?.search || "").get("embed") === "1";
+    if (embedMode) global.document.body?.classList.add("aha-friend-chat-embedded");
     if (!byId("friend-chat-app")) return;
 
     const client = global.AHADb?.getClient?.() || null;
