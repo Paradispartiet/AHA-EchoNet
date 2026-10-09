@@ -1,0 +1,132 @@
+/* AHA Local Examples V1 */
+
+.aha-examples-page {
+  --examples-accent: var(--aha-color-cyan);
+}
+
+.aha-examples-hero {
+  border-color: rgba(88,217,199,.17);
+  background:
+    linear-gradient(145deg, rgba(88,217,199,.05), transparent 44%),
+    var(--aha-panel-background);
+}
+
+.aha-examples-hero h1 {
+  max-width: 18ch;
+  margin: 0;
+  font-size: clamp(2.05rem, 6vw, 3.45rem);
+  line-height: .98;
+  letter-spacing: -.05em;
+}
+
+.aha-examples-purpose,
+.aha-examples-boundary p {
+  max-width: 76ch;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-examples-status {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid rgba(244,200,74,.18);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-accent-soft);
+}
+
+.aha-examples-status.is-installed {
+  border-color: rgba(126,226,168,.18);
+  background: var(--aha-color-green-soft);
+}
+
+.aha-examples-status strong {
+  color: var(--aha-text);
+}
+
+.aha-examples-status span {
+  color: var(--aha-muted);
+  font-size: .83rem;
+}
+
+.aha-examples-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+
+.aha-examples-preview-group {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
+}
+
+.aha-examples-preview-group h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.aha-examples-preview-list {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-examples-preview-list article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.025);
+}
+
+.aha-examples-preview-list strong,
+.aha-examples-preview-list span,
+.aha-examples-preview-list small {
+  overflow-wrap: anywhere;
+}
+
+.aha-examples-preview-list span,
+.aha-examples-preview-list small {
+  color: var(--aha-muted);
+}
+
+.aha-examples-actions {
+  border-color: rgba(170,145,247,.14);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.04), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-examples-message {
+  min-height: 1.2em;
+  margin: 12px 0 0;
+  color: var(--aha-muted);
+}
+
+.aha-examples-message[data-tone="success"] {
+  color: var(--aha-color-green);
+}
+
+.aha-examples-message[data-tone="error"] {
+  color: var(--aha-color-coral);
+}
+
+.aha-examples-boundary {
+  border-color: rgba(255,152,125,.13);
+}
+
+.aha-examples-boundary ul {
+  color: var(--aha-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .aha-examples-preview {
+    grid-template-columns: 1fr;
+  }
+}
