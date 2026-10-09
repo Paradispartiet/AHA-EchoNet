@@ -134,7 +134,12 @@
           <div class="module-actions"><button type="button" data-gallery-delete="${escapeHtml(item.id)}">Slett</button></div>
         </article>
       `).join("")
-      : "<p>Ingen galleriobjekter ennå.</p>";
+      : `<article class="aha-onboarding-empty aha-personal-empty" data-empty-state="no_data" role="status">
+          <p class="eyebrow">Ditt galleri</p>
+          <h3>Samle det du vil huske</h3>
+          <p>Legg til en bilde- eller videoreferanse med tittel og beskrivelse. Galleriet lagrer lokale referanser, ikke opplastede mediefiler. Bildeanalyse er ikke aktivert.</p>
+          <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#gallery-title">Legg til første minne</a></div>
+        </article>`;
   }
 
   async function addItem(input) {

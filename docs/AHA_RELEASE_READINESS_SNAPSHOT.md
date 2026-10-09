@@ -137,6 +137,10 @@ The seed installs only records owned by `aha_local_demo_seed_v1`, preserves exis
 
 The first onboarding pass clarifies the local-only starting state in AHA Home, Bibliotek, Personal AI and Mitt AHA. Each surface offers links to real, existing entry points rather than implying that missing local data is a loading error. These are presentation-only changes; empty states never apply demo seeds automatically, approve sources, save progress or activate network capabilities. This is a first pass, not an assertion that every module has received an empty-state review.
 
+## Empty states – personal collection follow-up
+
+Notes, Feed and Gallery now replace generic empty-list text with specific, accessible first-step instructions and links to their existing compose fields. This changes only rendering and shared presentation: no form submits, ingest calls, new storage writes, automatic seed application, network calls or History Go/EchoNet capabilities. Existing filled-list and deleted-record filtering remain intact, and deterministic regression tests cover empty-to-filled transitions. Lists and Paths already retain their established empty-state contracts; other surfaces still require individual review.
+
 ## Safe next product steps
 
 The safest next steps are:

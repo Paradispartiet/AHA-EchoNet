@@ -104,7 +104,12 @@
           </div>
         </article>
       `).join("")
-      : "<p>Ingen notater ennå.</p>";
+      : `<article class="aha-onboarding-empty aha-personal-empty" data-empty-state="no_data" role="status">
+          <p class="eyebrow">Dine notater</p>
+          <h3>Begynn med en tanke</h3>
+          <p>Her samles notater og tekster du velger å lagre. Gi den første teksten en tittel, eller skriv rett i tekstfeltet over.</p>
+          <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#note-text">Skriv første notat</a></div>
+        </article>`;
   }
 
   async function addNote(input) {

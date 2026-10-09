@@ -156,7 +156,12 @@
           <div class="module-actions"><button type="button" data-feed-ingest="${escapeHtml(post.id)}">Send til AHA</button><button type="button" data-feed-delete="${escapeHtml(post.id)}">Slett</button></div>
         </article>
       `).join("")
-      : "<p>Ingen poster ennå.</p>";
+      : `<article class="aha-onboarding-empty aha-personal-empty" data-empty-state="no_data" role="status">
+          <p class="eyebrow">Din lokale feed</p>
+          <h3>Ingen oppdateringer ennå</h3>
+          <p>Feed er for korte tanker og oppdateringer. Skriv den første posten over. Den blir værende lokalt og publiseres ikke eksternt.</p>
+          <div class="aha-tile-actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#feed-text">Skriv første post</a></div>
+        </article>`;
   }
 
   async function ingestPost(postOrId) {
