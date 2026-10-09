@@ -109,17 +109,38 @@
       containsSecret: false
     };
   }
-  function buildExportPayload() {
+  const EXPORT_CATEGORIES = Object.freeze(["chat", "notes", "media", "collections", "music", "knowledge", "memory", "profile"]);
+
+  function exportCategoryForKey(key) {
+    if (key === MEMORY_KEY) return "memory";
+    if (key === "aha_chat_sessions_v1") return "chat";
+    if (/^aha_(?:notes|articles)_/.test(key)) return "notes";
+    if (/^aha_(?:insta_|gallery_|feed_)/.test(key)) return "media";
+    if (/^aha_(?:lists_|concept_lists_|paths_|groups_)/.test(key)) return "collections";
+    if (/^aha_music_/.test(key)) return "music";
+    if (/^aha_(?:profile_|privacy_settings)/.test(key)) return "profile";
+    return "knowledge";
+  }
+
+  function selectedCategories(options) {
+    const requested = Array.isArray(options?.categories) ? options.categories : EXPORT_CATEGORIES;
+    return new Set(requested.filter((category) => EXPORT_CATEGORIES.includes(category)));
+  }
+
+  function buildExportPayload(options = {}) {
     const privacy = global.AHAPrivacy;
     if (!privacy?.collectStorageReport || !privacy?.sanitizeForExport) throw new Error("AHA Privacy er ikke tilgjengelig.");
+    const categories = selectedCategories(options);
     const report = privacy.collectStorageReport();
     const data = {};
-    report.filter((item) => item.isAHA && !item.blocked && item.kind !== "blocked_secret").forEach((item) => {
+    report.filter((item) => item.isAHA && !item.blocked && item.kind !== "blocked_secret" && categories.has(exportCategoryForKey(item.key))).forEach((item) => {
       const raw = global.localStorage?.getItem(item.key);
       data[item.key] = privacy.sanitizeForExport(safeParse(raw, raw));
     });
-    const memoryRaw = global.localStorage?.getItem(MEMORY_KEY);
-    data[MEMORY_KEY] = privacy.sanitizeForExport(safeParse(memoryRaw, memoryRaw));
+    if (categories.has("memory")) {
+      const memoryRaw = global.localStorage?.getItem(MEMORY_KEY);
+      data[MEMORY_KEY] = privacy.sanitizeForExport(safeParse(memoryRaw, memoryRaw));
+    }
     const blockedSecrets = report.filter((item) => item.blocked || item.kind === "blocked_secret").map((item) => ({
       key: item.key,
       blocked: true,
@@ -136,11 +157,11 @@
       },
       blockedSecrets,
       data,
-      privacyReport: report.concat(memoryReport())
+      privacyReport: report.filter((item) => categories.has(exportCategoryForKey(item.key))).concat(categories.has("memory") ? [memoryReport()] : [])
     };
   }
-  function downloadExport() {
-    const payload = buildExportPayload();
+  function downloadExport(options = {}) {
+    const payload = buildExportPayload(options);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = global.URL.createObjectURL(blob);
     const anchor = global.document.createElement("a");
@@ -214,8 +235,20 @@
     let memoryWritten = false;
     try {
       if (cleanMemory) {
-        global.localStorage?.setItem(MEMORY_KEY, JSON.stringify(cleanMemory));
-        memoryWritten = true;
+        let nextMemory = cleanMemory;
+        if (previousMemory !== null) {
+          const existing = safeParse(previousMemory, null);
+          nextMemory = validateMemory(existing).ok
+            ? global.AHAPrivacyRestore.mergeAdditive(existing, cleanMemory)
+            : null;
+        }
+        if (nextMemory) {
+          const serialized = JSON.stringify(nextMemory);
+          if (serialized !== previousMemory) {
+            global.localStorage?.setItem(MEMORY_KEY, serialized);
+            memoryWritten = true;
+          }
+        }
       }
       let baseResult = global.AHAPrivacyRestore.applyRestore(source);
       if (candidate.found) baseResult = removeBaseUnknown(baseResult);
@@ -274,12 +307,21 @@
     const fileInput = global.document?.getElementById("privacy-restore-file");
     const previewButton = global.document?.getElementById("privacy-restore-preview-complete");
     const applyButton = global.document?.getElementById("privacy-restore-apply-complete");
+    const confirmInput = global.document?.getElementById("privacy-restore-confirmation");
     let backupText = "";
+    let previewReady = false;
+    const refreshConfirmation = () => {
+      if (applyButton) applyButton.disabled = !previewReady || confirmInput?.value !== "GJENOPPRETT";
+    };
+    confirmInput?.addEventListener("input", refreshConfirmation);
 
     exportButton?.addEventListener("click", () => {
       try {
-        downloadExport();
-        setMessage("AHA-data er eksportert med Meta Insights Memory. Tokens og andre hemmeligheter er fortsatt blokkert.");
+        const choices = Array.from(global.document?.querySelectorAll?.('input[name="privacy-export-category"]') || []);
+        const categories = choices.filter((item) => item.checked).map((item) => item.value);
+        if (choices.length && !categories.length) throw new Error("Velg minst én datakategori før eksport.");
+        downloadExport(choices.length ? { categories } : {});
+        setMessage("De valgte AHA-kategoriene er eksportert lokalt. Tokens og andre hemmeligheter er fortsatt blokkert.");
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Eksporten mislyktes.");
       }
@@ -290,7 +332,9 @@
       fileInput.addEventListener("change", () => {
         backupText = "";
         lastPreviewFingerprint = "";
-        applyButton.disabled = true;
+        previewReady = false;
+        if (confirmInput) confirmInput.value = "";
+        refreshConfirmation();
         const target = global.document?.getElementById("privacy-restore-preview-result");
         if (target) target.textContent = "";
       });
@@ -302,27 +346,36 @@
           backupText = await file.text();
           const summary = previewRestore(backupText);
           renderRestorePreview(summary);
-          applyButton.disabled = Number(summary.restorableCount || 0) < 1;
-          setMessage("Forhåndsvisningen er klar. Ingen data er skrevet ennå.");
+          previewReady = Number(summary.restorableCount || 0) > 0;
+          if (confirmInput) confirmInput.value = "";
+          refreshConfirmation();
+          setMessage("Forhåndsvisningen er klar. Skriv GJENOPPRETT for å bekrefte. Ingen data er skrevet ennå.");
         } catch (error) {
           backupText = "";
           lastPreviewFingerprint = "";
-          applyButton.disabled = true;
+          previewReady = false;
+          refreshConfirmation();
           setMessage(error instanceof Error ? error.message : "Kunne ikke lese backupen.");
         }
       });
       applyButton.addEventListener("click", () => {
+        if (!previewReady || confirmInput?.value !== "GJENOPPRETT") {
+          setMessage("Skriv GJENOPPRETT etter forhåndsvisningen.");
+          return;
+        }
         try {
           const result = applyRestore(backupText);
           renderRestorePreview(result);
-          applyButton.disabled = true;
-          setMessage(`Gjenopprettet ${result.appliedCount || 0} tillatte AHA-nøkler. History Go, ukjente nøkler og hemmeligheter ble ikke skrevet.`);
+          setMessage(`Oppdatert ${result.appliedCount || 0} AHA-nøkler, uendret ${result.unchangedCount || 0}. Eksisterende data ble beholdt; History Go og hemmeligheter ble ikke skrevet.`);
           renderMemoryPrivacyCard();
           global.AHAPrivacy?.refresh?.();
           setTimeout(renderMemoryPrivacyCard, 0);
         } catch (error) {
-          applyButton.disabled = true;
           setMessage(error instanceof Error ? error.message : "Gjenopprettingen mislyktes.");
+        } finally {
+          previewReady = false;
+          if (confirmInput) confirmInput.value = "";
+          refreshConfirmation();
         }
       });
     }
@@ -334,6 +387,8 @@
   const api = {
     MEMORY_KEY,
     DERIVED_CACHE_KEYS: [...DERIVED_CACHE_KEYS],
+    EXPORT_CATEGORIES,
+    exportCategoryForKey,
     buildExportPayload,
     extractMemoryCandidate,
     validateMemory,
