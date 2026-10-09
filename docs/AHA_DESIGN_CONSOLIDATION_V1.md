@@ -17,6 +17,7 @@ V1 consolidated the overlapping design generations rather than replacing AHA wit
 The original conflicts are now resolved:
 
 - `.aha-dashboard` plus global navigation/footer owns the outer product shell.
+- Chat retains its dedicated full-height `.app-shell` for the conversation layout while sharing canonical tokens and global navigation; it is not a second page-width owner.
 - ad hoc inline main widths were replaced by named shell-width variants.
 - the legacy `css/ahaModule.css` compatibility layer has no consumers and is removed in the final cleanup.
 - Dashboard, global navigation and Chat share the canonical token layer.
