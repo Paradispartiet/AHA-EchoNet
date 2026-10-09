@@ -26,4 +26,4 @@ Denne funksjonen er en separat menneske-til-menneske-kanal, tilgjengelig fra **A
 
 ## Videre funksjoner
 
-Blokkering og invitasjonskvote er implementert. Varslinger, rapporterings-/modereringflyt og videre tiltak mot automatisert misbruk krever egen produksjon før bred sosial utrulling. V1 begrenser invitasjoner til brukere som kjenner et frivillig delt brukernavn. Det finnes ingen automatisk brukerimport, History Go Social Meet-integrasjon eller global e-postsøk.
+Blokkering og invitasjonskvote er implementert. Varslinger, rapporterings-/modereringflyt og videre tiltak mot automatisert misbruk krever egen produksjon før bred sosial utrulling. V1 begrenser invitasjoner til brukere som kjenner et frivillig delt brukernavn. Det finnes ingen automatisk brukerimport eller global e-postsøk. Fra 9. oktober 2026 finnes en separat og serververifisert Social Meet-kobling **etter akseptert møte**, uten automatisk vennskap. Se `AHA_SOCIAL_MEET_DIRECT_CHAT_BRIDGE_V1.md`.
