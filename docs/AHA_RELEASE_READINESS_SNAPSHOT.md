@@ -141,6 +141,12 @@ The first onboarding pass clarifies the local-only starting state in AHA Home, B
 
 Notes, Feed and Gallery now replace generic empty-list text with specific, accessible first-step instructions and links to their existing compose fields. This changes only rendering and shared presentation: no form submits, ingest calls, new storage writes, automatic seed application, network calls or History Go/EchoNet capabilities. Existing filled-list and deleted-record filtering remain intact, and deterministic regression tests cover empty-to-filled transitions. Lists and Paths already retain their established empty-state contracts; other surfaces still require individual review.
 
+## Empty states – Insta, Music and Insights
+
+This pass distinguishes no-data from filtered-empty states in Insta and Insights. Insta can open its existing local composer or reset the local feed filter. Insights opens Chat when the archive is empty, optionally links to existing source events, and resets search/filter for an existing archive without creating an insight. AHA Music bases its onboarding on the valid current Spotify token rather than on an empty metadata collection. It links to existing connection and import sections without initiating OAuth or import.
+
+The changes are confined to rendering, navigation, styling and regression tests. No new persistence, backend access, automatic import, sharing, model call, EchoNet activation or History Go write-back is added.
+
 ## Safe next product steps
 
 The safest next steps are:
