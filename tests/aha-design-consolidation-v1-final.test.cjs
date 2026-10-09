@@ -25,6 +25,15 @@ assert.equal(
   "the unused legacy ahaModule.css compatibility layer should be deleted"
 );
 
+const rootHtmlPages = fs.readdirSync(".").filter((name) => name.endsWith(".html"));
+
+for (const path of rootHtmlPages) {
+  const html = fs.readFileSync(path, "utf8");
+  assert.doesNotMatch(html, /ahaModule\.css/i, path + " should not reference the removed legacy module stylesheet");
+  const main = html.match(/<main\b[^>]*>/i)?.[0] || "";
+  assert.doesNotMatch(main, /style=["'][^"']*max-width/i, path + " should not own main width through inline max-width");
+}
+
 for (const [path, shell] of productPages) {
   const html = fs.readFileSync(path, "utf8");
   assert.match(html, /<meta\s+name="viewport"[^>]*>/i, path + " should declare a mobile viewport");
@@ -56,8 +65,13 @@ for (const contract of [
 }
 
 const dashboard = fs.readFileSync("css/aha-dashboard.css", "utf8");
-for (const shell of ["aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
+for (const shell of ["aha-shell-compact", "aha-shell-reading", "aha-shell-content", "aha-shell-workspace", "aha-shell-wide"]) {
   assert.match(dashboard, new RegExp("\\." + shell + "\\b"), "dashboard should centrally define ." + shell);
+}
+
+for (const path of ["auth-callback.html", "authorize-fysen.html", "fysen.html"]) {
+  const html = fs.readFileSync(path, "utf8");
+  assert.match(html, /<main class="aha-dashboard aha-shell-compact">/, path + " should use the canonical compact shell");
 }
 
 const chatCss = fs.readFileSync("css/aha-chat.css", "utf8");
