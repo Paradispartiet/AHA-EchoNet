@@ -24,7 +24,8 @@ assert.equal(w.AHAFriendChat.shortId("1234567890"), "12345678");
 
 assert.match(page, /Snakk med en venn/);
 assert.match(page, /href="chat.html"/);
-assert.match(aiPage, /href="friend-chat.html"/);
+assert.match(fs.readFileSync("js/ahaGlobalNav.js", "utf8"), /label: "Venner", href: "friend-chat.html"/);
+assert.match(aiPage, /js\/ahaGlobalNav\.js/);
 assert.match(page, /id="friend-auth-form"/);
 assert.match(page, /id="friend-invite-form"/);
 assert.match(page, /id="friend-message-form"/);
