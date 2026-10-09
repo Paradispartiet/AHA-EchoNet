@@ -1,0 +1,145 @@
+/* AHA Ready Modules Demo V1 */
+
+.aha-demo-page {
+  --demo-accent: var(--aha-color-blue);
+}
+
+.aha-demo-hero {
+  border-color: rgba(116,173,255,.16);
+  background:
+    linear-gradient(145deg, rgba(116,173,255,.055), transparent 44%),
+    var(--aha-panel-background);
+}
+
+.aha-demo-hero h1 {
+  max-width: 18ch;
+  margin-bottom: 10px;
+  font-size: clamp(2.1rem, 6vw, 3.5rem);
+  line-height: .98;
+  letter-spacing: -.05em;
+}
+
+.aha-demo-trust {
+  max-width: 74ch;
+  margin: 12px 0 0;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+.aha-demo-status {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(126,226,168,.16);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-green-soft);
+  color: var(--aha-color-green);
+  font-size: .88rem;
+  font-weight: 760;
+}
+
+.aha-demo-status.is-warning {
+  border-color: rgba(255,152,125,.2);
+  background: var(--aha-color-coral-soft);
+  color: var(--aha-color-coral);
+}
+
+.aha-demo-path {
+  display: grid;
+  gap: 12px;
+}
+
+.aha-demo-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel);
+}
+
+.aha-demo-step.is-ready::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--demo-accent);
+  opacity: .72;
+}
+
+.aha-demo-step.is-blocked {
+  opacity: .72;
+}
+
+.aha-demo-step-number {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(116,173,255,.2);
+  border-radius: 50%;
+  background: var(--aha-color-blue-soft);
+  color: var(--aha-color-blue);
+  font-weight: 900;
+}
+
+.aha-demo-step-copy {
+  min-width: 0;
+}
+
+.aha-demo-step-copy .eyebrow,
+.aha-demo-step-copy h2,
+.aha-demo-step-copy p {
+  margin-top: 0;
+}
+
+.aha-demo-step-copy h2 {
+  margin-bottom: 6px;
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  letter-spacing: -.025em;
+}
+
+.aha-demo-step-copy p {
+  max-width: 68ch;
+  margin-bottom: 7px;
+  color: var(--aha-muted);
+  line-height: 1.5;
+}
+
+.aha-demo-step-copy small {
+  color: var(--aha-color-cyan);
+  font-weight: 700;
+}
+
+.aha-demo-note {
+  border-color: rgba(170,145,247,.13);
+  background:
+    linear-gradient(145deg, rgba(170,145,247,.035), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-demo-note p {
+  margin-bottom: 0;
+  color: var(--aha-muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .aha-demo-step {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .aha-demo-step-number {
+    width: 38px;
+    height: 38px;
+  }
+
+  .aha-demo-step > .aha-tile-btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
