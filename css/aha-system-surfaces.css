@@ -219,3 +219,141 @@
 .aha-status-page .aha-tech-status:not([open]) {
   opacity: .86;
 }
+
+
+.aha-status-page .aha-release-readiness-panel {
+  border-color: rgba(126,226,168,.18);
+  background:
+    linear-gradient(145deg, rgba(126,226,168,.05), transparent 42%),
+    var(--aha-panel-background);
+}
+
+.aha-release-badge,
+.aha-release-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  border-radius: var(--aha-radius-pill);
+  padding: 4px 9px;
+  font-size: .76rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.aha-release-badge.is-ready,
+.aha-release-state.is-ready {
+  border: 1px solid rgba(126,226,168,.22);
+  background: var(--aha-color-green-soft);
+  color: var(--aha-color-green);
+}
+
+.aha-release-badge.is-warning,
+.aha-release-state.is-shell {
+  border: 1px solid rgba(244,200,74,.22);
+  background: var(--aha-color-accent-soft);
+  color: var(--aha-color-accent);
+}
+
+.aha-release-state.is-planned {
+  border: 1px solid rgba(170,145,247,.2);
+  background: var(--aha-color-violet-soft);
+  color: var(--aha-color-violet);
+}
+
+.aha-release-readiness-stats {
+  margin-top: 14px;
+}
+
+.aha-release-readiness-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.aha-release-readiness-block {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: var(--aha-radius-card);
+  background: var(--aha-color-panel-soft);
+}
+
+.aha-release-readiness-block h3 {
+  margin: 0 0 10px;
+}
+
+.aha-release-module-list {
+  display: grid;
+  gap: 8px;
+}
+
+.aha-release-module-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--aha-radius-control);
+  background: rgba(255,255,255,.02);
+  color: var(--aha-text);
+  text-decoration: none;
+}
+
+.aha-release-module-row:hover {
+  border-color: rgba(170,145,247,.2);
+}
+
+.aha-release-module-row > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.aha-release-module-row small {
+  color: var(--aha-muted);
+  overflow-wrap: anywhere;
+}
+
+.aha-release-boundary-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aha-release-boundary-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+.aha-release-boundary-list li:last-child {
+  border-bottom: 0;
+}
+
+.aha-release-boundary-list .is-off {
+  color: var(--aha-color-green);
+}
+
+.aha-release-boundary-list .is-warning {
+  color: var(--aha-color-coral);
+}
+
+@media (max-width: 720px) {
+  .aha-release-readiness-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .aha-release-module-row {
+    align-items: flex-start;
+  }
+}
