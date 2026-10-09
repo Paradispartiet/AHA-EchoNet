@@ -12,6 +12,20 @@ alter table public.aha_friend_requests
   add constraint aha_friend_requests_source_check
   check (source in ('friend','social_meet'));
 
+-- Social Meet contact activation is not a new unsolicited AHA friend invite.
+-- Keep the existing 12/day quota for source='friend' only.
+do $bridge_trigger$
+begin
+  if to_regprocedure('aha_friend_private.limit_daily_invites()') is not null then
+    drop trigger if exists aha_friend_invites_daily_limit on public.aha_friend_requests;
+    create trigger aha_friend_invites_daily_limit
+      before insert on public.aha_friend_requests
+      for each row when (new.source = 'friend')
+      execute function aha_friend_private.limit_daily_invites();
+  end if;
+end;
+$bridge_trigger$;
+
 -- The canonical pair is unique PER kind, so a meet cannot automatically
 -- accept an independently pending AHA friendship invitation.
 drop index if exists public.aha_friend_requests_pair_unique;
