@@ -224,6 +224,53 @@ $function$;
 revoke all on function public.aha_open_social_meet_chat(uuid) from public, anon;
 grant execute on function public.aha_open_social_meet_chat(uuid) to authenticated;
 
+-- Private structured abuse reports for friend/meet conversations.
+-- No message content or public reporter identity is exposed.
+create table if not exists aha_friend_private.chat_reports (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null,
+  reporter_id uuid not null references public.aha_profiles(id) on delete cascade,
+  reported_id uuid not null references public.aha_profiles(id) on delete cascade,
+  reason_code text not null check (reason_code in ('harassment','spam','threats','impersonation','other')),
+  status text not null default 'pending' check (status in ('pending','reviewed','dismissed')),
+  created_at timestamptz not null default now(),
+  unique (request_id,reporter_id,reason_code)
+);
+alter table aha_friend_private.chat_reports enable row level security;
+revoke all on aha_friend_private.chat_reports from public, anon, authenticated;
+
+create or replace function public.aha_report_direct_chat(
+  chat_request_id uuid, report_reason text
+) returns boolean
+language plpgsql security definer
+set search_path=pg_catalog,public,aha_friend_private
+as $function$
+declare
+  reporter uuid := auth.uid();
+  other_user uuid;
+begin
+  if reporter is null or report_reason not in
+    ('harassment','spam','threats','impersonation','other') then
+    raise exception using errcode='42501', message='invalid_chat_report';
+  end if;
+  select case when r.requester_id=reporter then r.recipient_id else r.requester_id end
+    into other_user
+    from public.aha_friend_requests r
+    where r.id=chat_request_id
+      and reporter in (r.requester_id,r.recipient_id)
+      and (r.source='friend' or aha_friend_private.meet_thread_allowed(r.id));
+  if other_user is null then
+    raise exception using errcode='42501', message='chat_report_not_authorized';
+  end if;
+  insert into aha_friend_private.chat_reports(request_id,reporter_id,reported_id,reason_code)
+    values(chat_request_id,reporter,other_user,report_reason)
+    on conflict(request_id,reporter_id,reason_code) do nothing;
+  return true;
+end;
+$function$;
+revoke all on function public.aha_report_direct_chat(uuid,text) from public,anon;
+grant execute on function public.aha_report_direct_chat(uuid,text) to authenticated;
+
 -- Frontend cannot alter the source of a server-owned meet contact.
 revoke update(source) on public.aha_friend_requests from authenticated;
 -- On deletion, linked access is removed with the contact; HG canonical invites
