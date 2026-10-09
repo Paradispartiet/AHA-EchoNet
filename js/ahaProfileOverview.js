@@ -105,6 +105,16 @@
         ${historyMarkup}
         ${model.lastActivityAt ? `<small>Siste lokale aktivitet: ${escapeHtml(model.lastActivityAt)}</small>` : ""}
       </div>
+      ${model.total === 0 ? `<section class="aha-onboarding-empty" aria-labelledby="aha-profile-empty-title">
+        <p class="eyebrow">Kom i gang med Mitt AHA</p>
+        <h3 id="aha-profile-empty-title">Din oversikt fylles med det du velger å lagre</h3>
+        <p>Ingen lokale AHA-arbeidsobjekter er registrert i denne oversikten ennå. Start med et spørsmål eller et notat, eller se hvordan de ferdige modulene henger sammen.</p>
+        <div class="aha-tile-actions">
+          <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne Chat</a>
+          <a class="aha-tile-btn" href="notes.html">Skriv et notat</a>
+          <a class="aha-tile-btn" href="demo.html">Se kom-i-gang-guiden</a>
+        </div>
+      </section>` : ""}
       <div class="aha-profile-status-grid">${footprintMarkup}</div>
       <div class="aha-meta-profile-section">
         <h3>Det AHA ser nå</h3>
