@@ -69,3 +69,48 @@ test("AHA friend chat: authenticated user selects friend and sends without AI", 
   await expect(page.locator(".friend-bubble.is-mine")).toHaveCount(1);
   await expect(page.locator("script[src='js/ahaChat.js']")).toHaveCount(0);
 });
+
+test("AHA Social Meet contact opens separate from friendship on verified invite", async ({ page }) => {
+  const me = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
+  const peer = "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
+  const request = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const meeting = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  await page.route(/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js/, route =>
+    route.fulfill({ status:200, contentType:"text/javascript", body:"" }));
+  await page.route(/\/js\/ahaConfig\.js$/, route =>
+    route.fulfill({ status:200, contentType:"text/javascript", body:"" }));
+  await page.route(/\/js\/ahaAuth\.js$/, route =>
+    route.fulfill({ status:200, contentType:"text/javascript",
+      body:"window.AHAAuth={getUser:async()=>({id:"+JSON.stringify(me)+"}),ensureProfile:async()=>({ok:true})};" }));
+  await page.route(/\/js\/ahaDb\.js$/, route => {
+    const mock = [
+      "window.__rpcArgs=[];",
+      "const me="+JSON.stringify(me)+";",
+      "const peer="+JSON.stringify(peer)+";",
+      "const thread="+JSON.stringify(request)+";",
+      "const row={id:thread,requester_id:me,recipient_id:peer,status:'accepted',source:'social_meet',created_at:new Date().toISOString()};",
+      "window.AHADb={getClient:()=>({",
+      " rpc:async(name,args)=>{window.__rpcArgs.push({name,args});return {data:[{request_id:thread,peer_id:peer}],error:null}},",
+      " from:(table)=>{",
+      "  const q={select(){return q},eq(){return q},or(){return q},order(){return q},",
+      "   in(){return Promise.resolve({data:[{profile_id:peer,handle:'mottepartner'}],error:null})},",
+      "   maybeSingle(){return Promise.resolve({data:{handle:'testbruker'},error:null})},",
+      "   limit(){return Promise.resolve({data:table==='aha_friend_requests'?[row]:[],error:null})},",
+      "  };return q;",
+      " },",
+      "channel(){return {on(){return this},subscribe(){return this}}},",
+      "removeChannel(){},auth:{onAuthStateChange(){}}",
+      "})};"
+    ].join("\n");
+    return route.fulfill({status:200,contentType:"text/javascript",body:mock});
+  });
+  await page.goto("/friend-chat.html?embed=1&meetInviteId="+meeting);
+  await expect(page.locator("body")).toHaveClass(/aha-friend-chat-embedded/);
+  await expect(page.locator("#friend-meet-list")).toContainText("mottepartner");
+  await expect(page.locator("#friend-thread-title")).toHaveText("@mottepartner");
+  await expect(page.locator("#friend-list")).toContainText("Ingen venner ennå");
+  const rpc = await page.evaluate(() => window.__rpcArgs);
+  expect(rpc).toEqual([{name:"aha_open_social_meet_chat",args:{meet_invite_id:meeting}}]);
+  await expect(page.locator("#friend-meet-list")).toContainText("Bli venner");
+  await expect(page.locator("#friend-remove")).toBeHidden();
+});
