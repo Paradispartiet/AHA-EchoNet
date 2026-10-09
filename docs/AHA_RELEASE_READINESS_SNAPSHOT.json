@@ -240,7 +240,6 @@
     }
   ],
   "safe_next_steps": [
-    "demo path through ready modules",
     "local data seed/examples",
     "better empty states and onboarding text",
     "manual backup/export/import"
@@ -258,5 +257,19 @@
     "model": "js/ahaReleaseReadiness.js",
     "renderer": "js/ahaReleaseReadinessDashboard.js",
     "read_only": true
+  },
+  "demo_path": {
+    "page": "demo.html",
+    "model": "js/ahaReadyModulesDemo.js",
+    "renderer": "js/ahaReadyModulesDemoDashboard.js",
+    "read_only": true,
+    "stores_progress": false,
+    "steps": [
+      "index.html",
+      "chat.html",
+      "search.html",
+      "personal-ai.html",
+      "profile.html"
+    ]
   }
 }
