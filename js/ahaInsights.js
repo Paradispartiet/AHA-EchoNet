@@ -546,6 +546,26 @@
     `;
   }
 
+  function buildInsightsEmptyMarkup(insightCount, sourceCount) {
+    if (insightCount === 0) {
+      return `<article class="insight-card aha-onboarding-empty aha-insights-empty" data-empty-state="no_data" role="status">
+        <p class="eyebrow">Ditt innsiktsarkiv</p>
+        <h3>Ingen innsikter i arkivet ennå</h3>
+        <p>Innsikter vises her når AHA har dannet dem fra analysert materiale. Du kan starte en samtale, men samtaler gir ikke alltid nye innsikter.</p>
+        <div class="aha-tile-actions">
+          <a class="aha-tile-btn aha-tile-btn-primary" href="chat.html">Åpne Chat</a>
+          ${sourceCount ? '<a class="aha-tile-btn" href="sources.html">Se kildespor</a>' : ""}
+        </div>
+      </article>`;
+    }
+    return `<article class="insight-card aha-onboarding-empty aha-insights-empty" data-empty-state="filtered_empty" role="status">
+      <p class="eyebrow">Ingen treff</p>
+      <h3>Ingen innsikter matcher utvalget</h3>
+      <p>Arkivet har innsikter, men ingen passer søket eller filteret. Prøv hele arkivet igjen.</p>
+      <div class="aha-tile-actions"><button type="button" class="aha-tile-btn aha-tile-btn-primary" data-insights-reset-filters="1">Nullstill søk og filter</button></div>
+    </article>`;
+  }
+
   function render() {
     const chamber = loadChamber();
     const sourceEvents = loadSourceEvents();
@@ -571,7 +591,7 @@
     if (listEl) {
       listEl.innerHTML = "";
       if (!indexedInsights.length) {
-        listEl.innerHTML = '<article class="insight-card"><p class="insight-card-summary">Ingen innsikter matcher søk/filter ennå.</p></article>';
+        listEl.innerHTML = buildInsightsEmptyMarkup(insights.length, sourceEvents.length);
       } else {
         indexedInsights.forEach(({ insight, originalIndex }) => {
           const safeIndex = originalIndex >= 0 ? originalIndex : 0;
@@ -602,6 +622,12 @@
     document.getElementById("insights-list")?.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+      if (target.dataset.insightsResetFilters) {
+        if (search) search.value = "";
+        if (filter) filter.value = "all";
+        render();
+        return;
+      }
       const index = target.dataset.insightAddToList;
       if (index) {
         const card = target.closest(".insight-card");
@@ -641,6 +667,7 @@
     loadChamber,
     loadSourceEvents,
     getInsights,
+    buildInsightsEmptyMarkup,
     render,
     refresh,
     sendInsightToList,
