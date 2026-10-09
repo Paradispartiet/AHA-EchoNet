@@ -198,6 +198,12 @@ function retryInstruction(validationErrors = []) {
       "Use neutral relation verbs such as 'er', 'har', 'består av', 'opptrer sammen med' or 'er forbundet med' only where they add precision. Do not reuse the rejected sentence or a boilerplate frame, do not use a causal synonym, and do not change causal_status away from not_causal."
     );
   }
+  if (hasValidationCode(errors, "source_boundary_mechanism_omitted")) {
+    instructions.push(
+      "MANDATORY BOUNDARY PRESERVATION: The candidate cites evidence that explicitly locates disagreement, errors or other friction at a responsibility or interface boundary, but omits the boundary from its insight.",
+      "Rewrite the insight to name that exact source-grounded boundary or an equally precise equivalent. Do not hide it in abstraction, evidence or uncertainty alone, and do not invent causality. Keep other separately supported insights eligible."
+    );
+  }
   if (hasValidationCode(errors, "source_evidence_premise_not_preserved:coordination_delay")) {
     instructions.push(
       "MANDATORY EVIDENCE CORRECTION: The synthesis omitted the source premise about deliveries being 'forsinket av koordinering'.",
