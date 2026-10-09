@@ -54,6 +54,6 @@ assert.match(html, /Meet er fortsatt shell/, "demo should preserve Meet boundary
 assert.match(html, /Sync Hub er fortsatt planned\/no-op/, "demo should preserve Sync Hub boundary");
 
 const readinessDashboard = fs.readFileSync("js/ahaReleaseReadinessDashboard.js", "utf8");
-assert.match(readinessDashboard, /href="demo\.html"[^>]*>Se kom-i-gang-flyt</, "release readiness should link to the demo");
+assert.match(readinessDashboard, /href="demo\.html"[^>]*>Se kom-i-gang-flyten</, "release readiness should link to the demo");
 
 console.log("AHA ready-modules demo V1 contract passed.");
