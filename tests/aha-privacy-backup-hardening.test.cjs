@@ -14,8 +14,9 @@ function storage(seed = {}) {
 }
 function load(files, seed = {}, doc = undefined) {
   const localStorage = storage(seed);
-  const window = { localStorage, document: doc };
-  const context = vm.createContext({ window, localStorage, document: doc, Blob, console, setTimeout() {} });
+  const document = doc || { readyState: "loading", addEventListener() {}, getElementById() { return null; } };
+  const window = { localStorage, document };
+  const context = vm.createContext({ window, localStorage, document, Blob, console, setTimeout() {} });
   for (const file of files) {
     vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context, { filename: file });
   }
