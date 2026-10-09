@@ -85,7 +85,7 @@ assert.doesNotMatch(modulesJs, /🕸|📰|⚙|⚑/, "mixed emoji module identity
 const plan = fs.readFileSync("docs/AHA_DESIGN_CONSOLIDATION_V1.md", "utf8");
 assert.match(plan, /Status: COMPLETE on merge of the final QA\/cleanup gate/, "design plan should record the final completion gate");
 assert.match(plan, /Desktop Chrome and iPad Pro 11 WebKit/, "design plan should record the final browser QA targets");
-assert.match(plan, /dedicated full-height \.app-shell/, "design plan should document the Chat shell exception");
+assert.ok(plan.includes("dedicated full-height `.app-shell`"), "design plan should document the Chat shell exception");
 assert.match(plan, /No History Go core behavior is part of this design consolidation/, "design plan should preserve the History Go core boundary");
 
 console.log("AHA Design Consolidation V1 final cleanup contract passed.");
