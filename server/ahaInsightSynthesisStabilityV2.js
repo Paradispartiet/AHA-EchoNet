@@ -95,6 +95,19 @@ function primaryLanguage(value) {
   return null;
 }
 
+// Match only insights that discuss friction at a boundary explicitly cited
+// in their own source evidence; unrelated candidate themes are unaffected.
+function omitsEvidenceBoundFrictionBoundary(candidate) {
+  const friction = /\b(?:uenighet|konflikt|friksjon|feil|problem|disagreement|conflict|friction|error|bottleneck)\w*\b/i;
+  const boundary = /\b(?:grens|ansvarsgrens|grensesnitt|interface|boundar)\w*\b/i;
+  const insight = String(candidate?.insight || "");
+  return friction.test(insight) && !boundary.test(insight)
+    && (Array.isArray(candidate?.evidence) ? candidate.evidence : []).some((item) => {
+      const quote = String(item?.quote || "");
+      return friction.test(quote) && boundary.test(quote);
+    });
+}
+
 function validateStabilitySynthesis(synthesis, sourceText) {
   const source = String(sourceText || "");
   const errors = [];
@@ -118,6 +131,12 @@ function validateStabilitySynthesis(synthesis, sourceText) {
         errors.push(`candidate:${index}:source_limitation_wording_not_preserved:${rule.id}`);
       }
     });
+  });
+
+  candidates.forEach((candidate, index) => {
+    if (omitsEvidenceBoundFrictionBoundary(candidate)) {
+      errors.push(`candidate:${index}:source_boundary_mechanism_omitted`);
+    }
   });
 
   EVIDENCE_COVERAGE_RULES.forEach((rule) => {
