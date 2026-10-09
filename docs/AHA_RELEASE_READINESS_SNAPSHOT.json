@@ -240,7 +240,6 @@
     }
   ],
   "safe_next_steps": [
-    "local data seed/examples",
     "better empty states and onboarding text",
     "manual backup/export/import"
   ],
@@ -271,5 +270,20 @@
       "personal-ai.html",
       "profile.html"
     ]
+  },
+  "local_examples": {
+    "page": "examples.html",
+    "model": "js/ahaLocalExamples.js",
+    "renderer": "js/ahaLocalExamplesDashboard.js",
+    "explicit_install_required": true,
+    "reversible": true,
+    "seeded_stores": [
+      "aha_feed_posts_v1",
+      "aha_gallery_v1"
+    ],
+    "excluded_stores": [
+      "aha_notes_v1"
+    ],
+    "seed_id": "aha_local_examples_v1"
   }
 }

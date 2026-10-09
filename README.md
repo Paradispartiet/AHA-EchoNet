@@ -23,6 +23,9 @@ Current intentional non-ready modules:
 
 The read-only ready-module walkthrough is available at `demo.html`: Start → Chat → Bibliotek → Personal AI → Mitt AHA. It stores no demo progress and does not activate Meet, Sync Hub, backend, EchoNet or History Go write-back.
 
+
+For explicit local UI testing, `examples.html` can install and remove a small reversible Feed/Gallery example set. It never seeds Notes, calls no ingest/repository API, and removes only records carrying the example seed marker.
+
 This baseline does not activate backend, account login, EchoNet, social sharing, active sync, external publishing, model training, fine-tuning or History Go write-back.
 
 ## Registry and maturity matrix consistency

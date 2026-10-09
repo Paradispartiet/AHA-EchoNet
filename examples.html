@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lokale eksempeldata · AHA</title>
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-examples.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-examples-main">Hopp til hovedinnhold</a>
+  <div id="aha-global-nav"></div>
+
+  <main id="aha-examples-main" class="aha-dashboard aha-shell-content aha-examples-page" tabindex="-1">
+    <section class="aha-panel aha-examples-hero">
+      <p class="eyebrow">Test lokalt</p>
+      <h1>Legg inn trygge eksempeldata</h1>
+      <p class="aha-examples-purpose">Dette er et eksplisitt og reverserbart lokalt testsett for Feed, Galleri og Bibliotek. Ingenting installeres før du trykker knappen.</p>
+      <div id="aha-examples-status" class="aha-examples-status" role="status" aria-live="polite">
+        <strong>Kontrollerer lokal status …</strong>
+      </div>
+    </section>
+
+    <section class="aha-panel" aria-labelledby="aha-examples-preview-title">
+      <p class="eyebrow">Forhåndsvisning</p>
+      <h2 id="aha-examples-preview-title">Dette blir lagt inn</h2>
+      <div id="aha-examples-preview" class="aha-examples-preview"></div>
+    </section>
+
+    <section class="aha-panel aha-examples-actions">
+      <p class="eyebrow">Eksplisitt handling</p>
+      <h2>Installer eller fjern eksempelsettet</h2>
+      <p class="aha-examples-purpose">Installasjon slår sammen eksemplene med eksisterende lokale arrays og overskriver aldri en eksisterende ID. Fjerning tar bare records merket med dette eksempelsettets seed-ID.</p>
+      <div class="aha-tile-actions">
+        <button id="aha-examples-install" class="aha-tile-btn aha-tile-btn-primary" type="button">Installer eksempeldata</button>
+        <button id="aha-examples-remove" class="aha-tile-btn aha-tile-btn-secondary" type="button">Fjern bare eksempeldata</button>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="feed.html">Åpne Feed</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="gallery.html">Åpne Galleri</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="search.html">Åpne Bibliotek</a>
+      </div>
+      <p id="aha-examples-message" class="aha-examples-message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="aha-panel aha-examples-boundary">
+      <p class="eyebrow">Sikkerhetsgrense</p>
+      <h2>Hva eksempelseederen ikke gjør</h2>
+      <ul>
+        <li>Notes seedes ikke, fordi Notes har en repository-sync-adapter ved sideåpning.</li>
+        <li>Eksemplene kaller ikke AHAIngest eller AHARepository.</li>
+        <li>Ingen backend, Sync Hub, EchoNet eller ekstern deling aktiveres.</li>
+        <li>Ingen ekte bilder eller filer lastes opp; Galleri-eksemplene er metadatareferanser.</li>
+        <li>Dine eksisterende Feed- og Galleri-records beholdes ved både installasjon og fjerning.</li>
+      </ul>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="demo.html">Tilbake til kom-i-gang-flyten</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaLocalExamples.js"></script>
+  <script src="js/ahaLocalExamplesDashboard.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
