@@ -6,6 +6,61 @@
   --personal-accent-soft: var(--aha-color-blue-soft);
 }
 
+/* Personal pages own their former module compatibility primitives here.
+   This keeps forms/lists/cards scoped to the personal product surfaces. */
+.aha-personal-page .module-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.aha-personal-page .module-form input,
+.aha-personal-page .module-form textarea {
+  width: 100%;
+  min-height: var(--aha-field-min-height);
+  padding: 10px 12px;
+  border: 1px solid var(--aha-line);
+  border-radius: var(--aha-radius-control);
+  background: var(--aha-color-input);
+  color: var(--aha-text);
+  font: inherit;
+  outline: none;
+}
+
+.aha-personal-page .module-form textarea {
+  min-height: 140px;
+}
+
+.aha-personal-page .module-form input:focus,
+.aha-personal-page .module-form textarea:focus {
+  border-color: var(--personal-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--personal-accent) 22%, transparent);
+}
+
+.aha-personal-page .module-list {
+  display: grid;
+  gap: 10px;
+}
+
+.aha-personal-page .module-card {
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: var(--aha-radius-card);
+  padding: 16px;
+  background: rgba(20,22,31,.94);
+}
+
+.aha-personal-page .module-card img,
+.aha-personal-page .module-card video {
+  max-width: 100%;
+  border-radius: var(--aha-radius-control);
+  margin-top: 10px;
+}
+
+.aha-personal-page .module-meta {
+  color: var(--aha-subtle, #7f93ad);
+  font-size: .72rem;
+}
+
 .aha-notes-page {
   --personal-accent: var(--aha-color-violet);
   --personal-accent-soft: var(--aha-color-violet-soft);
@@ -125,16 +180,9 @@
   font-size: 1.25rem;
 }
 
-.aha-personal-page .module-list {
-  gap: 10px;
-}
-
 .aha-personal-page .module-card {
   position: relative;
   overflow: hidden;
-  padding: 16px;
-  border-color: rgba(255,255,255,.09);
-  background: rgba(20,22,31,.94);
   box-shadow: 0 8px 24px rgba(0,0,0,.14);
 }
 
@@ -161,8 +209,6 @@
 }
 
 .aha-personal-page .module-meta {
-  color: var(--aha-subtle, #7f93ad);
-  font-size: .72rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
