@@ -69,9 +69,9 @@
       version: VERSION,
       mode: "start_chat",
       eyebrow: "Fortsett her",
-      title: "Start med det du vil tenke videre på",
-      description: "Chat er den enkleste inngangen. AHA bruker det lokale grunnlaget ditt og bygger videre derfra.",
-      reason: "Ingen viktigere brukeroppgave venter akkurat nå.",
+      title: "Begynn med et spørsmål eller en idé",
+      description: "Du trenger ikke fylle ut en profil først. Åpne Chat og skriv det du vil utforske; du velger selv hva du lagrer.",
+      reason: "Hvis AHA er nytt for deg, kan du se den korte omvisningen før du starter.",
       primaryAction: { label: "Åpne Chat", href: "chat.html" },
       secondaryAction: { label: "Se Bibliotek", href: "search.html" },
       context: [],
@@ -151,6 +151,7 @@
     const loopAction = safeObject(loop.nextBestAction);
     const technical = /audit|workflow|graph intelligence|training corpus|index/i.test(`${text(loopAction.id)} ${text(loopAction.label)}`);
     model.technicalPrimarySuppressed = technical;
+    model.onboardingAction = { label: "Se kom-i-gang-guiden", href: "demo.html" };
     return model;
   }
 
@@ -199,6 +200,7 @@
       <div class="aha-home-continue-actions">
         <a class="aha-tile-btn aha-tile-btn-primary" href="${esc(model.primaryAction?.href || "chat.html")}">${esc(model.primaryAction?.label || "Åpne Chat")}</a>
         <a class="aha-tile-btn" href="${esc(model.secondaryAction?.href || "search.html")}">${esc(model.secondaryAction?.label || "Se Bibliotek")}</a>
+        ${model.mode === "start_chat" && model.onboardingAction ? `<a class="aha-tile-btn" href="${esc(model.onboardingAction.href)}">${esc(model.onboardingAction.label)}</a>` : ""}
       </div>
     </div>`;
     return true;

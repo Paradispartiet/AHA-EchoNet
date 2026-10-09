@@ -3244,3 +3244,27 @@ body:has(#aha-home-main) .aha-header-actions #btn-import-hg-primary {
   display: block;
   flex: 0 0 auto;
 }
+
+/* Onboarding empty states use the canonical black app surface and shared actions. */
+.aha-onboarding-empty {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(18px, 2.8vw, 28px);
+  border: 1px solid rgba(116, 173, 255, .24);
+  border-radius: var(--aha-radius-card, 16px);
+  background: linear-gradient(115deg, rgba(116, 173, 255, .075), transparent 64%), var(--aha-color-panel, #151515);
+  box-shadow: var(--aha-shadow-soft);
+}
+.aha-onboarding-empty > .eyebrow,
+.aha-onboarding-empty > h2,
+.aha-onboarding-empty > h3,
+.aha-onboarding-empty > p { margin: 0; }
+.aha-onboarding-empty > h2,
+.aha-onboarding-empty > h3 { line-height: 1.2; }
+.aha-onboarding-empty > p:not(.eyebrow) { max-width: 65ch; color: var(--aha-muted); line-height: 1.55; }
+.aha-onboarding-empty .aha-tile-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 6px; }
+@media (max-width: 600px) {
+  .aha-onboarding-empty .aha-tile-actions > .aha-tile-btn { flex: 1 1 155px; text-align: center; }
+}

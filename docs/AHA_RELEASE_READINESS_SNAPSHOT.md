@@ -133,6 +133,10 @@ A synthetic, reversible local example set is available through `demo-seed.html`.
 
 The seed installs only records owned by `aha_local_demo_seed_v1`, preserves existing user records, is idempotent on repeated application, and removes only its own records. It covers Home, Chat, Bibliotek, Personal AI and Mitt AHA without History Go data, backend, Sync Hub or EchoNet.
 
+## Empty states and onboarding – first product pass
+
+The first onboarding pass clarifies the local-only starting state in AHA Home, Bibliotek, Personal AI and Mitt AHA. Each surface offers links to real, existing entry points rather than implying that missing local data is a loading error. These are presentation-only changes; empty states never apply demo seeds automatically, approve sources, save progress or activate network capabilities. This is a first pass, not an assertion that every module has received an empty-state review.
+
 ## Safe next product steps
 
 The safest next steps are:

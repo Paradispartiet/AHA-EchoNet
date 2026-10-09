@@ -186,7 +186,9 @@
 
   function renderEmpty(status) {
     const host = $("personal-ai-empty");
-    if (host) host.hidden = Boolean(status.overall.score > 0);
+    if (!host) return;
+    const model = buildExperienceModel(status);
+    host.hidden = Boolean(model.knowledge.selfInsights || model.knowledge.approvedCorpus || model.knowledge.approvedExamples);
   }
 
   function refresh() {

@@ -225,6 +225,19 @@
   function renderGroups(model) {
     const host = doc?.getElementById?.("search-library-groups");
     if (!host) return;
+    if (model.total === 0) {
+      host.innerHTML = `<article class="aha-onboarding-empty" role="status">
+        <p class="eyebrow">Ditt lokale bibliotek</p>
+        <h3>Her samles det du velger å lagre</h3>
+        <p>Biblioteket er tomt fordi ingen søkbare AHA-objekter finnes lokalt ennå. Du kan starte med et notat eller en samtale.</p>
+        <div class="aha-tile-actions">
+          <a class="aha-tile-btn aha-tile-btn-primary" href="notes.html">Skriv et notat</a>
+          <a class="aha-tile-btn" href="chat.html">Åpne Chat</a>
+          <a class="aha-tile-btn" href="demo.html">Se kom-i-gang-guiden</a>
+        </div>
+      </article>`;
+      return;
+    }
     const allActive = activeGroup === "all";
     host.innerHTML = `<article class="aha-panel">
       <h3>Hele biblioteket</h3>
@@ -249,7 +262,9 @@
       : model.groups.find((group) => group.id === activeGroup)?.label || "Bibliotek";
     host.innerHTML = selected.length
       ? selected.map((item) => itemCard(item)).join("")
-      : '<article class="aha-search-card"><p>Ingen objekter i denne delen av biblioteket ennå.</p></article>';
+      : model.total === 0
+        ? '<p class="aha-search-meta">Nylig lagrede objekter vises her når du har innhold i biblioteket.</p>'
+        : '<article class="aha-search-card"><p>Ingen objekter i denne delen av biblioteket ennå. <button type="button" class="aha-search-link" data-library-group="all">Vis hele biblioteket</button></p></article>';
   }
 
   function renderRelated(seedId = relatedToId) {
@@ -300,7 +315,9 @@
     updateSearchResultsVisibility();
     enhanceSearchResultLabels();
     const status = doc?.getElementById?.("search-library-status");
-    if (status) status.textContent = `${model.total} lokale objekter er tilgjengelige. «Finn relatert» rangerer bare eksisterende lokale søkeobjekter; det er ikke en ny database eller modell.`;
+    if (status) status.textContent = model.total === 0
+      ? "Ingen lokale søkbare objekter ennå. Biblioteket leser bare eksisterende AHA-data og oppretter ingenting ved åpning."
+      : `${model.total} lokale objekter er tilgjengelige. «Finn relatert» rangerer bare eksisterende lokale søkeobjekter; det er ikke en ny database eller modell.`;
     return model;
   }
 
