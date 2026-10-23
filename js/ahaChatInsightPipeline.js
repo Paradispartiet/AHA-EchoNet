@@ -517,16 +517,23 @@
   function enrichInsightCandidate(candidate, sourceText) {
     const evaluator = global.AHAAnalysisQualityEvaluator;
     const summary = candidateSummary(candidate);
+    // A quote proposed by the synthesis model must occur in the actual source.
+    // An excerpt found by word overlap is only context, not claim verification.
+    const explicitEvidenceQuotes = normalizeSimpleStringList(candidate?.evidence_quotes, 3)
+      .filter((quote) => evaluator?.exactSourceMatch?.(sourceText, quote)
+        || String(sourceText || "").replace(/\\s+/g, " ").includes(String(quote || "").replace(/\\s+/g, " ")));
     const evidenceQuotes = evidenceQuotesForCandidate(candidate, sourceText);
+    const evidenceOrigin = explicitEvidenceQuotes.length ? "source_quoted" : evidenceQuotes.length ? "context_match" : "none";
     const exact = evaluator?.exactSourceMatch?.(sourceText, summary) || false;
     let uncertainty = normalizeUncertainty(candidate?.uncertainty);
     let claimKind = normalizeClaimKind(candidate?.claim_kind);
-    if (!evidenceQuotes.length) {
-      uncertainty = "hypothesis";
-      claimKind = "hypothesis";
-    } else if (exact) {
+    if (exact) {
       uncertainty = "supported";
       claimKind = "source_observation";
+    } else if (!explicitEvidenceQuotes.length) {
+      // Word overlap alone cannot promote an interpretation to a supported fact.
+      uncertainty = "hypothesis";
+      if (claimKind === "source_observation") claimKind = "interpretation";
     } else if (uncertainty === "supported") {
       uncertainty = "interpretive";
     }
@@ -539,17 +546,21 @@
       evidence: evidenceQuotes.map((quote, index) => ({
         id: `source_sentence_${splitIntoSentences(sourceText).indexOf(quote) + 1 || index + 1}`,
         quote,
-        role: evidenceRoleForQuote(candidate, quote),
-        relation: claimKind === "source_observation" ? "direct_source_observation" : "supports_interpretation"
+        role: evidenceOrigin === "context_match" ? "context" : evidenceRoleForQuote(candidate, quote),
+        relation: evidenceOrigin === "context_match"
+          ? "related_source_context"
+          : claimKind === "source_observation" ? "direct_source_observation" : "supports_interpretation"
       })),
+      evidence_origin: evidenceOrigin,
       claim_kind: claimKind,
       uncertainty,
       quality_score: qualityScore,
       candidate_quality: {
         version: "aha_insight_candidate_quality_v2",
-        status: qualityScore >= 0.5 ? "accepted" : "needs_review",
+        status: qualityScore >= 0.5 && (evidenceOrigin === "source_quoted" || exact) ? "accepted" : "needs_review",
         score: qualityScore,
         evidence_count: evidenceQuotes.length,
+        evidence_origin: evidenceOrigin,
         claim_kind: claimKind,
         uncertainty
       }
