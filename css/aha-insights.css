@@ -219,3 +219,14 @@
 /* An archive with no data differs from a filter with no results. */
 .insights-page .aha-insights-empty { grid-column: 1 / -1; border-color: rgba(170,145,247,.27); }
 .insights-page .aha-insights-empty::before { display: none; }
+
+/* Evidence stays readable without turning every insight into a long web page. */
+.insight-evidence-review { margin-top: 12px; border: 1px solid var(--aha-line); border-radius: 12px; }
+.insight-evidence-review summary { cursor: pointer; padding: 11px 12px; font-weight: 700; color: var(--aha-text); }
+.insight-evidence-review summary:focus-visible { outline: 2px solid var(--aha-color-violet); outline-offset: 2px; }
+.insight-evidence-content { padding: 0 12px 12px; font-size: .91rem; line-height: 1.55; }
+.insight-evidence-content p { margin: 8px 0; overflow-wrap: anywhere; }
+.insight-evidence-quotes { padding-left: 19px; margin: 10px 0; }
+.insight-evidence-quotes li + li { margin-top: 11px; }
+.insight-evidence-quotes blockquote { border-left: 2px solid var(--aha-color-cyan, #65d9c6); margin: 4px 0; padding-left: 10px; overflow-wrap: anywhere; }
+.insight-evidence-quotes small { color: var(--aha-muted); }
