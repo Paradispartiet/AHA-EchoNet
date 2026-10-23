@@ -400,6 +400,22 @@
     return `${count} ${count === 1 ? "steg" : "steg"}`;
   }
 
+  function pathProgress(path) {
+    const steps = asArray(path?.steps);
+    const done = steps.filter((step) => step.status === "done").length;
+    const skipped = steps.filter((step) => step.status === "skipped").length;
+    return { done, skipped, total: steps.length, percent: steps.length ? Math.round(100 * done / steps.length) : 0 };
+  }
+
+  function stepStatusLabel(status) {
+    return { planned: "Ikke startet", active: "Pågår", done: "Fullført", skipped: "Hoppet over" }[status] || "Ikke startet";
+  }
+
+  function pathProgressMarkup(path) {
+    const progress = pathProgress(path);
+    return `<div class="aha-path-progress"><label>Fremdrift: ${progress.done} av ${progress.total} steg fullført${progress.skipped ? ` · ${progress.skipped} hoppet over` : ""}</label><progress value="${progress.done}" max="${Math.max(1, progress.total)}" aria-label="Fullførte steg i ${escapeHtml(path.title)}"></progress></div>`;
+  }
+
   function renderOverviewCard(path, isSelected) {
     const category = path.category || path.type;
     return `
@@ -495,19 +511,22 @@
       `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
     )).join("");
     const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order);
+    const availableStepIndex = buildAvailableStepIndex(availableItems);
     const stepsHtml = visibleSteps.length
       ? visibleSteps.map((step) => `
-        <li class="aha-path-step-row">
+        <li class="aha-path-step-row${step.status === "done" ? " is-done" : ""}">
           <span class="aha-path-step-number" aria-hidden="true">${step.order + 1}</span>
           <div class="aha-path-step-content">
             <strong>${escapeHtml(step.title)}</strong>
-            <div class="module-meta">${escapeHtml(step.type)} · ${escapeHtml(step.status)}${buildAvailableStepIndex(availableItems).has(`${step.source}::${step.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
+            <div class="module-meta">${escapeHtml(step.type)} · ${escapeHtml(stepStatusLabel(step.status))}${availableStepIndex.has(`${step.source}::${step.refId}`) || step.meta?.inline === true ? "" : " · ikke lenger tilgjengelig"}</div>
             ${step.narrative ? `<p class="aha-path-step-narrative">${escapeHtml(step.narrative)}</p>` : `<p class="aha-path-step-narrative module-meta">Legg til hvorfor dette steget kommer her.</p>`}
             ${step.learningOutcome ? `<p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p>` : ""}
-            <details class="aha-path-step-fields"><summary>Rediger forklaring</summary>
+            <button type="button" class="aha-tile-btn aha-path-step-complete" data-step-complete="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-pressed="${step.status === "done"}">${step.status === "done" ? "Angre fullføring" : "Marker som fullført"}</button>
+            <details class="aha-path-step-fields"><summary>Rediger steg og status</summary>
               <label>Fortelling eller overgang<textarea data-step-narrative="${escapeHtml(path.id)}::${escapeHtml(step.id)}" rows="2">${escapeHtml(step.narrative)}</textarea></label>
               <label>Læringspunkt<input data-step-outcome="${escapeHtml(path.id)}::${escapeHtml(step.id)}" value="${escapeHtml(step.learningOutcome)}" /></label>
-              <button type="button" data-step-save="${escapeHtml(path.id)}::${escapeHtml(step.id)}">Lagre stegtekst</button>
+              <label>Status<select data-step-status="${escapeHtml(path.id)}::${escapeHtml(step.id)}">${ALLOWED_STEP_STATUS.map((status) => `<option value="${status}"${step.status === status ? " selected" : ""}>${stepStatusLabel(status)}</option>`).join("")}</select></label>
+              <button type="button" data-step-save="${escapeHtml(path.id)}::${escapeHtml(step.id)}">Lagre steg</button>
             </details>
             <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Fjern ${escapeHtml(step.title)} fra ${escapeHtml(path.title)}">Fjern steg</button>
           </div>
@@ -532,6 +551,7 @@
         <span>Created ${escapeHtml(formatDate(path.createdAt))}</span>
         <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
       </div>
+      ${pathProgressMarkup(path)}
       <section aria-labelledby="path-preview-steps-title">
         <h3 id="path-preview-steps-title">Fortelling og læringstrinn</h3>
         <ol class="aha-path-steps aha-path-story">${stepsHtml}</ol>
@@ -866,13 +886,24 @@
         return;
       }
 
+      const completed = target.dataset.stepComplete;
+      if (completed) {
+        const [pathId, stepId] = completed.split("::");
+        const path = loadPaths().find((item) => item.id === pathId && !isUnavailableRecord(item));
+        const step = path?.steps.find((item) => item.id === stepId);
+        if (step) updatePathStep(pathId, stepId, { status: step.status === "done" ? "planned" : "done" });
+        refresh();
+        return;
+      }
+
       const stepSave = target.dataset.stepSave;
       if (stepSave) {
         const [pathId, stepId] = stepSave.split("::");
         const selectorId = global.CSS?.escape ? global.CSS.escape(stepSave) : stepSave.replace(/"/g, '\\"');
         const narrative = document.querySelector(`[data-step-narrative="${selectorId}"]`)?.value || "";
         const learningOutcome = document.querySelector(`[data-step-outcome="${selectorId}"]`)?.value || "";
-        updatePathStep(pathId, stepId, { narrative, learningOutcome });
+        const status = document.querySelector(`[data-step-status="${selectorId}"]`)?.value || "planned";
+        updatePathStep(pathId, stepId, { narrative, learningOutcome, status });
         refresh();
         return;
       }
@@ -912,6 +943,7 @@
     deletePath,
     addStepToPath,
     updatePathStep,
+    pathProgress,
     removeStepFromPath,
     syncFromDatabase,
     collectAvailablePathItems,
