@@ -814,7 +814,7 @@
             <button type="submit">Legg til relasjon</button>
           </form>` : ""}
         </details>
-        <div class="aha-concept-list-actions"><span class="module-meta">Oppdatert ${escapeHtml(formatDate(list.updatedAt))}</span><button type="button" class="aha-list-delete" data-concept-list-delete="${escapeHtml(list.id)}">Slett liste</button></div>
+        <div class="aha-concept-list-actions"><span class="module-meta">Oppdatert ${escapeHtml(formatDate(list.updatedAt))}</span><button type="button" data-org-concept-to-path="${escapeHtml(list.id)}">Lag kunnskapssti</button><span class="aha-org-flow-status" role="status" aria-live="polite"></span><button type="button" class="aha-list-delete" data-concept-list-delete="${escapeHtml(list.id)}">Slett liste</button></div>
       </article>`;
     }).join("");
   }
