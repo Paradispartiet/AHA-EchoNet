@@ -60,7 +60,11 @@
     <section class="aha-panel meet-archive" aria-labelledby="meet-archive-title">
       <div class="meet-archive-header">
         <div><h2 id="meet-archive-title">Mine notater</h2><p id="meet-count" aria-live="polite">Laster lokalt arkiv …</p></div>
-        <button id="meet-export" type="button" class="aha-tile-btn">Eksporter JSON</button>
+        <div class="meet-archive-tools">
+          <button id="meet-import" type="button" class="aha-tile-btn">Importer sikkerhetskopi</button>
+          <input id="meet-import-file" type="file" accept=".json,application/json" aria-label="Velg AHA Meet-sikkerhetskopi" hidden />
+          <button id="meet-export" type="button" class="aha-tile-btn">Eksporter JSON</button>
+        </div>
       </div>
       <label class="meet-search-label">Søk i notatene
         <input id="meet-search" type="search" placeholder="Søk etter møte, sted eller læringspunkt" autocomplete="off" />
