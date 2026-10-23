@@ -26,7 +26,7 @@ test("ready-modules demo renders the five-step local product path", async ({ pag
     await expect(step.locator("a.aha-tile-btn")).toHaveAttribute("href", href);
   }
 
-  await expect(page.getByText("Meet er fortsatt shell", { exact: false })).toBeVisible();
+  await expect(page.getByText("Meet fungerer nå som privat lokal møtejournal", { exact: false })).toBeVisible();
   await expect(page.getByText("Sync Hub er fortsatt planned/no-op", { exact: false })).toBeVisible();
 
   const overflow = await page.evaluate(() => ({
