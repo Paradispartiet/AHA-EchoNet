@@ -109,13 +109,26 @@
   function el(id) { return global.document?.getElementById(id); }
   function renderSummary(report) { const m = el("sources-summary"); if (!m) return; const s = report.summary; m.innerHTML = `<div class="aha-audit-cards">${[["Source events",s.totalSourceEvents],["Local-only",s.localOnlyCount],["Imported",s.importedCount],["Empty text",s.emptyTextCandidateCount],["Med insight",s.sourceEventsWithInsight],["Uten insight",s.sourceEventsWithoutInsight],["Insights",s.insightCount],["Insights m/source id",s.insightsWithSourceEventId]].map(([k,v])=>`<article class="aha-audit-card"><strong>${escapeHtml(v)}</strong><span>${escapeHtml(k)}</span></article>`).join("")}</div><p><strong>Per app:</strong> ${escapeHtml(JSON.stringify(s.perSourceApp))}</p><p><strong>Per type:</strong> ${escapeHtml(JSON.stringify(s.perSourceType))}</p><p><strong>Siste source:</strong> ${escapeHtml(s.latestSourceEventAt || "ukjent")} · <strong>Siste insight:</strong> ${escapeHtml(s.latestInsightAt || "ukjent")}</p>`; }
   function renderFilters(report) { const m = el("sources-filters"); if (!m) return; const active = report.activeFilter || "all"; m.innerHTML = FILTERS.map((f) => `<button type="button" class="aha-filter-chip ${f === active ? "is-active" : ""}" data-filter="${escapeHtml(f)}">${escapeHtml(f.replace("-", " "))}</button>`).join(""); m.querySelectorAll?.("[data-filter]").forEach((btn) => btn.addEventListener("click", () => render(btn.getAttribute("data-filter")))); }
-  function renderSourceEvents(report) { const m = el("sources-events"); if (!m) return; m.innerHTML = report.events.map((e) => `<article class="aha-source-event"><header><div><p class="eyebrow">${escapeHtml(e.source_app)} · ${escapeHtml(e.source_type)}</p><h3>${escapeHtml(e.preview)}</h3><p>${escapeHtml(e.created_at || "ukjent tid")}</p></div><span class="aha-status-pill ${e.has_insight ? "" : "is-muted"}">${e.has_insight ? "Har insight" : "Ingen insight funnet"}</span></header><p>${e.imported ? '<span class="aha-pill">imported</span>' : ''}${e.local_only ? '<span class="aha-pill">local-only</span>' : ''}${e.user_created ? '<span class="aha-pill">user-created</span>' : ''}<span class="aha-pill">${escapeHtml(e.text_length)} tegn</span></p><p class="aha-meta-summary">${escapeHtml(metaSummary(e.meta))}</p><details><summary>Detaljer</summary><pre>${escapeHtml(JSON.stringify({ id: e.id, tags: e.tags, meta: e.meta, linked_insights: e.linked_insights.map((i) => ({ id: i.id, summary: i.summary })) }, null, 2))}</pre></details></article>`).join("") || '<p class="aha-empty-state">Ingen source events matcher filteret.</p>'; }
+  function renderSourceEvents(report) { const m = el("sources-events"); if (!m) return; m.innerHTML = report.events.map((e) => `<article class="aha-source-event" id="source-${encodeURIComponent(String(e.id || ""))}"><header><div><p class="eyebrow">${escapeHtml(e.source_app)} · ${escapeHtml(e.source_type)}</p><h3>${escapeHtml(e.preview)}</h3><p>${escapeHtml(e.created_at || "ukjent tid")}</p></div><span class="aha-status-pill ${e.has_insight ? "" : "is-muted"}">${e.has_insight ? "Har insight" : "Ingen insight funnet"}</span></header><p>${e.imported ? '<span class="aha-pill">imported</span>' : ''}${e.local_only ? '<span class="aha-pill">local-only</span>' : ''}${e.user_created ? '<span class="aha-pill">user-created</span>' : ''}<span class="aha-pill">${escapeHtml(e.text_length)} tegn</span></p><p class="aha-meta-summary">${escapeHtml(metaSummary(e.meta))}</p><details><summary>Detaljer</summary><pre>${escapeHtml(JSON.stringify({ id: e.id, tags: e.tags, meta: e.meta, linked_insights: e.linked_insights.map((i) => ({ id: i.id, summary: i.summary })) }, null, 2))}</pre></details></article>`).join("") || '<p class="aha-empty-state">Ingen source events matcher filteret.</p>'; }
   function renderInsightLinks(report) { const m = el("sources-insight-links"); if (!m) return; const linked = report.events.filter((e) => e.has_insight); const without = report.events.filter((e) => !e.has_insight); m.innerHTML = `<h2>Koblede source events</h2><p>${linked.length} source events har minst én insight-kobling.</p><h2>Uten insight</h2><p>${without.length} source events har ingen funnet kobling.</p><h2>Insights uten source_event_id</h2><p>${report.insightsWithoutSourceEventId.length} insights mangler eksplisitt source_event_id.</p>`; }
   function render(filter) { const report = filterAuditReport(collectAuditReport(), filter || global.__ahaSourcesAuditFilter || "all"); global.__ahaSourcesAuditFilter = report.activeFilter; renderSummary(report); renderFilters(report); renderSourceEvents(report); renderInsightLinks(report); return report; }
 
-  global.AHASourcesAudit = { loadSourceEvents, loadInsightChamber, collectAuditReport, filterAuditReport, render };
+  function revealLinkedSource() {
+    const fragment = String(global.location?.hash || "").slice(1);
+    if (!fragment.startsWith("source-")) return;
+    // A deep link must not be blocked by a previously selected source filter.
+    render("all");
+    const target = global.document.getElementById(fragment);
+    if (target) {
+      target.scrollIntoView?.({ block: "start" });
+      target.querySelector("details")?.setAttribute("open", "");
+    }
+  }
+
+  global.AHASourcesAudit = { loadSourceEvents, loadInsightChamber, collectAuditReport, filterAuditReport, render, revealLinkedSource };
   if (global.document?.addEventListener) {
-    global.document.addEventListener("DOMContentLoaded", () => render());
+    global.document.addEventListener("DOMContentLoaded", () => { render(); revealLinkedSource(); });
+    global.addEventListener?.("hashchange", revealLinkedSource);
     ["aha:source-event-added", "aha:ingested", "aha:source-only", "aha:emne-suggested", "aha:embedding-stored", "aha:merge-suggested"].forEach((name) => global.addEventListener?.(name, () => render()));
   }
 })(window);

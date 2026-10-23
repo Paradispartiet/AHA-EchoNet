@@ -166,7 +166,18 @@
         .filter((x) => x.name && x.relation)
         .slice(0, 5),
       topic: asText(insight?.topic || insight?.emne || insight?.category, ""),
-      confidence: insight?.confidence ?? insight?.score ?? null
+      confidence: insight?.confidence ?? insight?.score ?? null,
+      whyItMatters: sanitizeInsightText(asText(insight?.why_it_matters, "")),
+      nextTest: sanitizeInsightText(asText(insight?.next_test, "")),
+      uncertainty: asText(insight?.uncertainty, ""),
+      claimKind: asText(insight?.claim_kind, ""),
+      evidenceOrigin: asText(insight?.evidence_origin || insight?.candidate_quality?.evidence_origin, ""),
+      qualityStatus: asText(insight?.insight_quality_gate_v2?.status || insight?.candidate_quality?.status, ""),
+      evidence: asArray(insight?.evidence).map((item) => ({
+        quote: asText(item?.quote, ""),
+        role: asText(item?.role, ""),
+        relation: asText(item?.relation, "")
+      })).filter((item) => item.quote).slice(0, 3)
     };
   }
 
@@ -363,6 +374,36 @@
     return `<section class="insight-section"><span class="insight-section-label">Teori</span>${linksHtml}${chipsHtml}</section>`;
   }
 
+  function insightEvidenceMarkup(view, sourceEvent) {
+    const sourceText = String(sourceEvent?.text || "").replace(/\s+/g, " ").trim();
+    const matches = view.evidence.filter((item) =>
+      sourceText && sourceText.toLowerCase().includes(item.quote.replace(/\s+/g, " ").trim().toLowerCase())
+    ).slice(0, 2);
+    const evidenceRows = matches.map((item) => {
+      const contextual = view.evidenceOrigin === "context_match" || item.role === "context" || item.relation === "related_source_context";
+      return `<li><blockquote>${escapeHtml(item.quote)}</blockquote><small>${contextual
+        ? "Beslektet kildeutdrag – ikke bekreftelse av påstanden"
+        : "Ordrett kildeutdrag – tolkningen må fortsatt vurderes"}</small></li>`;
+    }).join("");
+    const evidenceState = !sourceEvent
+      ? "Ingen lokal kilde er koblet til denne innsikten. Belegget kan ikke kontrolleres her."
+      : matches.length
+        ? ""
+        : "Ingen lagrede utdrag kunne verifiseres mot den lokale kildeteksten.";
+    const uncertaintyLabels = { supported: "Direkte kildeobservasjon", interpretive: "Tolkning", hypothesis: "Hypotese" };
+    const qualityLabels = { accepted: "Maskinell forhåndskontroll", needs_review: "Trenger faglig kontroll", blocked: "Ikke kvalitetssikret", passed: "Maskinell kvalitetskontroll" };
+    return `<details class="insight-evidence-review">
+      <summary>Kildebelegg og vurdering</summary>
+      <div class="insight-evidence-content">
+        <p><strong>Påstandstype:</strong> ${escapeHtml(uncertaintyLabels[view.uncertainty] || "Ikke angitt")}</p>
+        <p><strong>Kvalitet:</strong> ${escapeHtml(qualityLabels[view.qualityStatus] || "Ikke dokumentert")}. Dette er ikke en faktasjekk.</p>
+        ${evidenceRows ? `<ol class="insight-evidence-quotes">${evidenceRows}</ol>` : `<p class="insight-source-missing">${escapeHtml(evidenceState)}</p>`}
+        <p><strong>Hvorfor viktig:</strong> ${escapeHtml(view.whyItMatters || "Ingen særskilt begrunnelse lagret.")}</p>
+        <p><strong>Hva bør undersøkes:</strong> ${escapeHtml(view.nextTest || "Ingen etterprøvbar oppgave er lagret.")}</p>
+      </div>
+    </details>`;
+  }
+
   function createInsightCard(view, sourceEvent, insight, index) {
     if (!view?.title && !view?.summary) return null;
     if (isMostlyNoise(`${view.title} ${view.summary}`)) return null;
@@ -377,7 +418,7 @@
       ? `<div class="insight-source"><strong>Kilde:</strong> ${escapeHtml(asText(sourceEvent.source_type, "ukjent"))} · ${escapeHtml(asText(sourceEvent.source_app, "ukjent"))}</div>
          <div class="insight-source-preview">${escapeHtml(eventPreview(sourceEvent))}</div>
          <div class="insight-source-time">${escapeHtml(asText(sourceEvent.created_at, "Ukjent tidspunkt"))}</div>
-         <a class="aha-tile-btn" href="#source-${escapeHtml(asText(sourceEvent.id, ""))}">Åpne kilde</a>`
+         <a class="aha-tile-btn" href="sources.html#source-${encodeURIComponent(asText(sourceEvent.id || sourceEvent.event_id || sourceEvent.source_event_id, ""))}">Åpne kildesporet</a>`
       : `<div class="insight-source-missing">Ingen kilde koblet ennå</div>`;
 
     const listSection = lists.length
@@ -427,13 +468,14 @@
       <p class="insight-card-summary">${escapeHtml(view.summary)}</p>
       <div class="insight-meta-row">
         ${view.topic ? `<span class="insight-chip">Emne: ${escapeHtml(view.topic)}</span>` : ""}
-        ${view.confidence !== null ? `<span class="insight-chip">Score: ${escapeHtml(Number(view.confidence).toFixed(2))}</span>` : ""}
+        ${view.confidence !== null && Number.isFinite(Number(view.confidence)) ? `<span class="insight-chip">Score: ${escapeHtml(Number(view.confidence).toFixed(2))}</span>` : ""}
         ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
       </div>
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
       ${theorySection}
       <div class="insight-subject-links-host"></div>
       <section class="insight-source-block">${sourceHtml}</section>
+      ${insightEvidenceMarkup(view, sourceEvent)}
       ${listSection}
       ${groupSection}
     `;
