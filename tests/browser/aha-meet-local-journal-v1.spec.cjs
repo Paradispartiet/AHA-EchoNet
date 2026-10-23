@@ -25,11 +25,22 @@ test("Meet records survive reload, can be edited, found and deleted locally", as
   await page.locator("#meet-save").click();
   await expect(page.locator(".meet-card")).toHaveCount(1);
   await expect(page.locator(".meet-card h3")).toHaveText("Oppdatert møte");
+  const backup = await page.evaluate(() => JSON.stringify({
+    version: 1,
+    localOnly: true,
+    entries: JSON.parse(localStorage.getItem("aha_meet_journal_v1") || "[]")
+  }));
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Slett" }).click();
   await expect(page.locator(".meet-card")).toHaveCount(0);
   await page.reload();
   await expect(page.locator(".meet-card")).toHaveCount(0);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#meet-import-file").setInputFiles({
+    name: "aha-meet-notater.json", mimeType: "application/json", buffer: Buffer.from(backup)
+  });
+  await expect(page.locator(".meet-card")).toHaveCount(1);
+  await expect(page.locator(".meet-card h3")).toHaveText("Oppdatert møte");
 });
 
 test("Meet works on a 320px screen and treats user text as text", async ({ page }) => {
