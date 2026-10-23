@@ -19,7 +19,7 @@ test("Meet records survive reload, can be edited, found and deleted locally", as
   await page.locator("#meet-search").fill("ikke-her");
   await expect(page.locator(".meet-card")).toHaveCount(0);
   await page.locator("#meet-search").fill("");
-  await page.getByRole("button", { name: "Rediger" }).click();
+  await page.getByRole("button", { name: "Rediger", exact: true }).click();
   await expect(page.locator("#meet-form-title")).toHaveText("Rediger møtenotat");
   await page.locator("#meet-title").fill("Oppdatert møte");
   await page.locator("#meet-save").click();
