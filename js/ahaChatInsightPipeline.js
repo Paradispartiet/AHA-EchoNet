@@ -533,7 +533,7 @@
     } else if (!explicitEvidenceQuotes.length) {
       // Word overlap alone cannot promote an interpretation to a supported fact.
       uncertainty = "hypothesis";
-      if (claimKind === "source_observation") claimKind = "interpretation";
+      claimKind = "hypothesis";
     } else if (uncertainty === "supported") {
       uncertainty = "interpretive";
     }
