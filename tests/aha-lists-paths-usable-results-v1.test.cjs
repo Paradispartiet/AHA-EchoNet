@@ -27,7 +27,7 @@ function start(moduleFile, seed = {}) {
   world.window = world;
   vm.createContext(world);
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", moduleFile), "utf8"), world);
-  return { api: moduleFile.includes("Lists") ? world.AHALists : world.AHAPaths, read };
+  return { api: moduleFile.includes("Lists") ? world.AHALists : world.AHAPaths, read, world };
 }
 
 // Concepts: editorial corrections update definition + rename both ends of every
@@ -101,4 +101,22 @@ function start(moduleFile, seed = {}) {
   assert.equal(progress.skipped, 1);
   assert.equal(read(pathsKey)[0].local_only, true);
 }
+
+// A concept list should become a real, editable learning path only on request.
+{
+  const { api: Lists, read, world } = start("ahaLists.js");
+  const concepts = Lists.createConceptList({ title: "Folkestyre", terms: ["valg", "mandat"] });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "ahaPaths.js"), "utf8"), world);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "ahaOrganizationFlow.js"), "utf8"), world);
+  const result = world.AHAOrganizationFlow.createPathFromConceptList(concepts.id);
+  assert.equal(result.ok, true, "Explicit concept-to-path action must work");
+  assert.equal(result.path.steps.length, 1, "Path should contain a canonical concept-list reference");
+  assert.equal(result.step.source, "aha_concept_lists");
+  assert.equal(result.step.refId, concepts.id);
+  assert.ok(result.step.narrative.length > 0, "Generated transition must explain why the list is included");
+  assert.equal(read("aha_paths_v1").length, 1);
+  assert.equal(read("aha_concept_lists_v1")[0].id, concepts.id, "Original concepts stay untouched");
+  assert.equal(world.AHAOrganizationFlow.createPathFromConceptList("missing").reason, "concept_list_not_found");
+}
+
 console.log("AHA lists and paths usable-results regression: passed");
