@@ -375,9 +375,9 @@
   }
 
   function insightEvidenceMarkup(view, sourceEvent) {
-    const sourceText = String(sourceEvent?.text || "").replace(/\\s+/g, " ").trim();
+    const sourceText = String(sourceEvent?.text || "").replace(/\s+/g, " ").trim();
     const matches = view.evidence.filter((item) =>
-      sourceText && sourceText.toLowerCase().includes(item.quote.replace(/\\s+/g, " ").trim().toLowerCase())
+      sourceText && sourceText.toLowerCase().includes(item.quote.replace(/\s+/g, " ").trim().toLowerCase())
     ).slice(0, 2);
     const evidenceRows = matches.map((item) => {
       const contextual = view.evidenceOrigin === "context_match" || item.role === "context" || item.relation === "related_source_context";
