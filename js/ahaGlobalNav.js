@@ -22,6 +22,7 @@
       label: "Arbeid med AHA",
       description: "Forstå, bearbeid og bygg videre på det AHA finner.",
       items: [
+        { moduleId: "personal-ai", label: "Personal AI", hint: "Se hva AHA vet og kan bruke når den svarer" },
         { moduleId: "insights", hint: "Se innsiktene AHA har bygget" },
         { moduleId: "knowledge-workbench", hint: "Arbeid videre med kunnskapsmaterialet" }
       ]
@@ -31,6 +32,7 @@
       label: "Organiser",
       description: "Samle tanker og kunnskap i strukturer du kan finne igjen.",
       items: [
+        { moduleId: "search", label: "Bibliotek", hint: "Finn igjen lokal kunnskap og lagret materiale" },
         { moduleId: "lists", label: "Begrepslister", hint: "Samle relaterte ord og begreper" },
         { moduleId: "paths", label: "Kunnskapsstier", hint: "Følg fortellinger og læringstrinn" },
         { moduleId: "mindmap", label: "Tankekart", hint: "Utforsk ideer som grener og undergrener" }

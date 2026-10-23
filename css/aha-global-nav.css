@@ -565,6 +565,16 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   .aha-global-daily-primary { justify-self: start; }
 }
 
+/* Preserve Chat, Venner, Bibliotek and Mitt AHA as primary links even on
+   320px phones. Personal AI and Start remain reachable via Mer/brand. */
+@media (max-width: 400px) {
+  .aha-global-nav-bar { gap: 2px; padding-inline: 4px; }
+  .aha-global-nav-brand-mark { width: 26px; height: 26px; }
+  .aha-global-nav-primary { gap: 0; }
+  .aha-global-nav-primary-link { min-width: 44px; padding-inline: 3px; font-size: .71rem; }
+  .aha-global-nav-toggle { gap: 3px; padding-inline: 6px; font-size: .73rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aha-global-daily-panel { animation: none; }
 }
