@@ -48,7 +48,8 @@ test("AHA narrow-phone More menu reaches Personal AI and Library without clipped
     await page.goto("/friend-chat.html", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".aha-global-nav-primary [data-primary='friends']")).toHaveAttribute("aria-current", "page");
     await expect(page.locator(".aha-global-nav-primary [data-primary='personal-ai']")).toBeHidden();
-    await expect(page.locator(".aha-global-nav-primary [data-primary='library']")).toBeHidden();
+    await expect(page.locator(".aha-global-nav-primary [data-primary='library']")).toBeVisible();
+    await expect(page.locator(".aha-global-nav-primary [data-primary='profile']")).toBeVisible();
 
     const fits = await page.locator(".aha-global-nav-bar").evaluate((el) =>
       el.scrollWidth <= el.clientWidth + 1
