@@ -188,10 +188,10 @@
     {
       id: "meet",
       title: "Meet",
-      type: "social",
-      status: "shell",
+      type: "personal",
+      status: "active",
       href: "meet.html",
-      description: "Shell for local-only personlig møtearkiv/refleksjon. Ingen runtime-lagring, invitasjoner, kalender, backend, sync, EchoNet eller History Go write-back.",
+      description: "Fungerende local-only møtejournal med oppretting, redigering, søk, sletting og eksport. Ingen invitasjoner, kalender, backend, sync, EchoNet, sosial deling eller History Go write-back.",
       phase: 2
     },
     {
