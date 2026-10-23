@@ -32,6 +32,7 @@
       label: "Organiser",
       description: "Samle tanker og kunnskap i strukturer du kan finne igjen.",
       items: [
+        { moduleId: "search", label: "Bibliotek", hint: "Finn igjen lokal kunnskap og lagret materiale" },
         { moduleId: "lists", label: "Begrepslister", hint: "Samle relaterte ord og begreper" },
         { moduleId: "paths", label: "Kunnskapsstier", hint: "Følg fortellinger og læringstrinn" },
         { moduleId: "mindmap", label: "Tankekart", hint: "Utforsk ideer som grener og undergrener" }
