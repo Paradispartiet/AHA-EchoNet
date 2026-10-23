@@ -15,8 +15,8 @@
 
 ## Intentional non-ready modules
 
-- `meet` is a shell.
 - `sync-hub` is planned/no-op.
+- `meet` is an active **local-only journal**, not an active social meeting service.
 
 ## Forbidden registry implications
 
