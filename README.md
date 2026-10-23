@@ -15,13 +15,14 @@ The release snapshot is documented in:
 
 Physical iPhone/iPad Safari release evidence is recorded locally through `safari-release-check.html`. The page requires four real-device profiles and cannot be approved by Node, Chromium or another iOS browser.
 
+AHA Meet now provides a functioning local-only private meeting journal at `meet.html` with create/edit/delete/search and JSON export; invitations, shared meetings, calendar, backend, EchoNet and History Go write-back remain disabled.
+
 Current intentional non-ready modules:
 
-- `meet`: shell
 - `sync-hub`: planned/no-op
 
 
-The read-only ready-module walkthrough is available at `demo.html`: Start → Chat → Bibliotek → Personal AI → Mitt AHA. It stores no demo progress and does not activate Meet, Sync Hub, backend, EchoNet or History Go write-back.
+The read-only ready-module walkthrough is available at `demo.html`: Start → Chat → Bibliotek → Personal AI → Mitt AHA. It stores no demo progress and does not activate social Meet coordination, Sync Hub, backend, EchoNet or History Go write-back.
 
 Optional synthetic example data for that walkthrough can be applied and removed explicitly at `demo-seed.html`. The seed preserves existing local user records and owns only records marked `aha_local_demo_seed_v1`.
 
