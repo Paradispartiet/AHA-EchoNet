@@ -181,10 +181,10 @@
     {
       "id": "meet",
       "title": "Meet",
-      "registry_status": "shell",
-      "maturity": "shell",
-      "release_state": "shell",
-      "boundary": "Shell-kontrakt dokumentert: AHA Meet er foreløpig local-only møtearkiv/refleksjonskonsept uten runtime, lagring, invitasjoner, kalender, backend, sync, EchoNet eller History Go write-back. Kan senere lese History Go-signaler som personlig refleksjonsmateriale."
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Fungerende local-only Meet-journal for personlige notater/refleksjoner, med oppretting, redigering, søk, sletting og privat JSON-eksport i samme nettleser. Ingen invitasjoner, kalender, backend, sync, EchoNet, sosial deling eller History Go write-back."
     },
     {
       "id": "music",
@@ -228,11 +228,6 @@
     }
   ],
   "intentional_non_ready": [
-    {
-      "id": "meet",
-      "release_state": "shell",
-      "reason": "concept shell only"
-    },
     {
       "id": "sync-hub",
       "release_state": "planned",
