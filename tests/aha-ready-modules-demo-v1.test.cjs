@@ -50,7 +50,7 @@ assert.match(html, /aha-dashboard aha-shell-content aha-demo-page/, "demo should
 assert.match(html, /id="aha-global-nav"/, "demo should use shared global navigation");
 assert.match(html, /id="aha-demo-path"/, "demo should expose the path mount");
 assert.match(html, /lagrer ikke progresjon/i, "demo should explain that progress is not stored");
-assert.match(html, /Meet er fortsatt shell/, "demo should preserve Meet boundary");
+assert.match(html, /Meet fungerer nå som privat lokal møtejournal/, "demo should mention the local Meet journal without claiming social sharing");
 assert.match(html, /Sync Hub er fortsatt planned\/no-op/, "demo should preserve Sync Hub boundary");
 
 const readinessDashboard = fs.readFileSync("js/ahaReleaseReadinessDashboard.js", "utf8");
