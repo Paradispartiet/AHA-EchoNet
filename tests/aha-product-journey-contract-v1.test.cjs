@@ -11,6 +11,8 @@ const modules = read("js/ahaModules.js");
 
 const workMenu = nav.slice(nav.indexOf('id: "work"'), nav.indexOf('id: "organize"'));
 assert.match(workMenu, /moduleId:\s*"personal-ai"/, "Compact Mer menu must expose Personal AI");
+const organizeMenu = nav.slice(nav.indexOf('id: "organize"'), nav.indexOf('id: "create"'));
+assert.match(organizeMenu, /moduleId:\s*"search"/, "Compact Mer menu must expose Library");
 assert.match(modules, /id:\s*"personal-ai"/, "Personal AI must remain a real module");
 assert.match(navCss, /\[data-primary="personal-ai"\][^{]*\{\s*display:\s*none;/, "Personal AI is deliberately hidden from narrow top nav; menu fallback is required");
 
