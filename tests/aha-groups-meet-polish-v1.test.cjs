@@ -30,21 +30,21 @@ assert.match(socialCss, /\.aha-social-surface input,[\s\S]*?background:\s*var\(-
 assert.match(socialCss, /\.aha-meet-boundary-grid\s*\{[^}]*display:\s*grid;/s, "Meet boundary should use a readable responsive grid");
 
 assert.match(meetHtml, /aha-shell-reading aha-social-surface aha-meet-page/, "Meet should keep the reading shell");
-assert.match(meetHtml, /AHA Meet er foreløpig en shell/i, "Meet should continue to identify itself as a shell");
+assert.match(meetHtml, /Mitt møtearkiv/i, "Meet should offer a functional meeting archive");
 assert.match(meetHtml, /Local-only|lokalt/i, "Meet should retain local-only language");
 assert.match(meetHtml, /Ingen invitasjoner|sender ikke invitasjoner/i, "Meet should retain the no-invitations boundary");
 assert.match(meetHtml, /Ingen kalender|kalender.*ikke aktivert|Ingen kalenderintegrasjon/i, "Meet should retain the no-calendar boundary");
 assert.match(meetHtml, /Ingen EchoNet|EchoNet.*ikke aktivert/i, "Meet should retain the no-EchoNet boundary");
 assert.match(meetHtml, /Ingen backend|backend.*ikke aktivert/i, "Meet should retain the no-backend boundary");
 assert.match(meetHtml, /Ingen History Go write-back|skal ikke skrive tilbake til History Go/i, "Meet should retain the no-History-Go-writeback boundary");
-assert.match(meetHtml, /class="aha-meet-boundary-grid"/, "Meet should present its inactive capabilities as a structured boundary grid");
+assert.match(meetHtml, /class="meet-privacy"/, "Meet should explain privacy and inactive collaboration boundaries");
 
 assert.match(groupsHtml, /id="groups-root"/, "Groups should preserve its runtime root");
 assert.match(groupsHtml, /js\/ahaGroups\.js/, "Groups should preserve the existing Groups runtime");
 assert.match(groupsHtml, /js\/ahaAvisa\.js/, "Groups should preserve its existing AHAavisa bridge");
 assert.doesNotMatch(groupsJs, /aha-social-surfaces/, "Groups runtime should remain presentation-agnostic");
 
-assert.doesNotMatch(meetHtml, /js\/ahaMeet\.js/, "Meet must not introduce a dedicated runtime");
+assert.match(meetHtml, /js\/ahaMeet\.js/, "Meet must load the private journal runtime");
 for (const forbidden of ["fetch(", "AHARepository", "AHASyncHub", "sendInvite"]) {
   assert.equal(meetHtml.includes(forbidden), false, `Meet must not introduce runtime/API token ${forbidden}`);
 }
