@@ -25,7 +25,7 @@ const auto = insight.enrichInsightCandidate({
 }, source);
 assert.equal(auto.evidence_origin, "context_match", "semantic overlap must be labelled as context");
 assert.equal(auto.uncertainty, "hypothesis", "unsourced inference is not supported fact");
-assert.equal(auto.claim_kind, "interpretation");
+assert.equal(auto.claim_kind, "hypothesis");
 assert.equal(auto.candidate_quality.status, "needs_review");
 assert.ok(auto.evidence.every((row) => row.role === "context" && row.relation === "related_source_context"));
 
