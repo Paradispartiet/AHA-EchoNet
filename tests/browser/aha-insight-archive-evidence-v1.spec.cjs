@@ -36,7 +36,7 @@ test("AHA insight archive shows evidence honestly and opens the exact local sour
   await expect(page).toHaveURL(/\/sources\.html#source-source-archive-1$/);
   const source = page.locator("#source-source-archive-1");
   await expect(source).toBeVisible();
-  await expect(source.locator("details")).toHaveAttribute("open", "");
+  await expect(source.locator("details").first()).toHaveAttribute("open", "");
 });
 
 test("An unlinked insight never claims verified source evidence", async ({ page }) => {
