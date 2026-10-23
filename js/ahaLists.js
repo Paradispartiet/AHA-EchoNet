@@ -236,6 +236,39 @@
     return { ok: true, term, list: lists[index] };
   }
 
+  // Editing a concept must preserve its identity and all explicitly authored links.
+  function updateConceptTerm(listId, termId, changes) {
+    const lists = loadConceptLists();
+    const list = lists.find((item) => item.id === listId && !isUnavailableRecord(item));
+    if (!list) return { ok: false, reason: "list_not_found" };
+    const index = list.terms.findIndex((item) => item.id === termId);
+    if (index < 0) return { ok: false, reason: "term_not_found" };
+    const name = asText(changes?.term, "");
+    if (!name) return { ok: false, reason: "missing_term" };
+    const key = name.toLocaleLowerCase("no");
+    if (list.terms.some((item, i) => i !== index && item.term.toLocaleLowerCase("no") === key)) {
+      return { ok: false, reason: "duplicate" };
+    }
+    const previous = list.terms[index];
+    list.terms[index] = {
+      ...previous,
+      term: name,
+      definition: changes?.definition !== undefined ? String(changes.definition ?? "").trim() : previous.definition
+    };
+    list.relations = list.relations.map((relation) => ({
+      ...relation,
+      from: relation.from === previous.term ? name : relation.from,
+      to: relation.to === previous.term ? name : relation.to
+    }));
+    list.updatedAt = new Date().toISOString();
+    saveConceptLists(lists);
+    return { ok: true, term: list.terms[index], list };
+  }
+
+  function conceptRelationLabel(type) {
+    return { related_to: "relatert til", supports: "støtter", contrasts: "står i motsetning til",
+      depends_on: "forutsetter", example_of: "er eksempel på" }[type] || "relatert til";
+  }
   function removeConceptTerm(listId, termId) {
     const lists = loadConceptLists();
     const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
@@ -256,9 +289,14 @@
     const lists = loadConceptLists();
     const index = lists.findIndex((list) => list.id === listId && !isUnavailableRecord(list));
     if (index < 0) return { ok: false, reason: "list_not_found" };
-    const termNames = new Set(lists[index].terms.map((term) => term.term));
-    if (!termNames.has(relation.from) || !termNames.has(relation.to)) return { ok: false, reason: "term_not_found" };
-    const duplicate = lists[index].relations.some((item) => item.from === relation.from && item.to === relation.to && item.type === relation.type);
+    const termNames = new Map(lists[index].terms.map((term) => [term.term.toLocaleLowerCase("no"), term.term]));
+    const from = termNames.get(relation.from.toLocaleLowerCase("no"));
+    const to = termNames.get(relation.to.toLocaleLowerCase("no"));
+    if (!from || !to) return { ok: false, reason: "term_not_found" };
+    if (from === to) return { ok: false, reason: "invalid_relation" };
+    relation.from = from;
+    relation.to = to;
+    const duplicate = lists[index].relations.some((item) => item.from === from && item.to === to && item.type === relation.type);
     if (duplicate) return { ok: false, reason: "duplicate" };
     lists[index].relations.push(relation);
     lists[index].updatedAt = new Date().toISOString();
@@ -753,10 +791,10 @@
 
     mount.innerHTML = lists.map((list) => {
       const terms = list.terms.length
-        ? `<ul class="aha-concept-terms">${list.terms.map((term) => `<li class="aha-concept-term"><div class="aha-concept-term-main"><span><strong>${escapeHtml(term.term)}</strong>${term.definition ? `<span class="aha-concept-term-definition">${escapeHtml(term.definition)}</span>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-term-remove="${escapeHtml(list.id)}::${escapeHtml(term.id)}" aria-label="Fjern ${escapeHtml(term.term)}">×</button></div></li>`).join("")}</ul>`
+        ? `<ul class="aha-concept-terms">${list.terms.map((term) => `<li class="aha-concept-term"><div class="aha-concept-term-main"><span><strong>${escapeHtml(term.term)}</strong>${term.definition ? `<span class="aha-concept-term-definition">${escapeHtml(term.definition)}</span>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-term-remove="${escapeHtml(list.id)}::${escapeHtml(term.id)}" aria-label="Fjern ${escapeHtml(term.term)}">×</button></div><details class="aha-concept-edit"><summary>Rediger begrep og forklaring</summary><form class="aha-concept-add-form" data-concept-term-edit="${escapeHtml(list.id)}::${escapeHtml(term.id)}"><label>Begrep<input name="term" required value="${escapeHtml(term.term)}" /></label><label>Forklaring<input name="definition" value="${escapeHtml(term.definition)}" /></label><button type="submit">Lagre begrep</button></form><p class="module-meta" role="status" data-concept-edit-status></p></details></li>`).join("")}</ul>`
         : `<p class="module-meta">Listen er tom. Legg til det første begrepet nedenfor.</p>`;
       const relations = list.relations.length
-        ? `<ul class="aha-concept-relations">${list.relations.map((relation) => `<li><span><strong>${escapeHtml(relation.from)}</strong> ${escapeHtml(relation.label)} <strong>${escapeHtml(relation.to)}</strong></span><button type="button" class="aha-concept-term-remove" data-concept-relation-remove="${escapeHtml(list.id)}::${escapeHtml(relation.id)}" aria-label="Fjern relasjon">×</button></li>`).join("")}</ul>`
+        ? `<ul class="aha-concept-relations">${list.relations.map((relation) => `<li><span><strong>${escapeHtml(relation.from)}</strong> ${escapeHtml(relation.label)} <strong>${escapeHtml(relation.to)}</strong>${relation.explanation ? `<small class="aha-concept-relation-explanation">${escapeHtml(relation.explanation)}</small>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-relation-remove="${escapeHtml(list.id)}::${escapeHtml(relation.id)}" aria-label="Fjern relasjon">×</button></li>`).join("")}</ul>`
         : `<p class="module-meta">Ingen relasjoner ennå.</p>`;
       const termOptions = list.terms.map((term) => `<option value="${escapeHtml(term.term)}">${escapeHtml(term.term)}</option>`).join("");
       return `<article class="aha-panel aha-concept-list-card" data-concept-list-card="${escapeHtml(list.id)}">
@@ -771,7 +809,7 @@
         <details><summary>Relasjoner (${list.relations.length})</summary>${relations}
           ${list.terms.length >= 2 ? `<form class="aha-concept-add-form" data-concept-relation-form="${escapeHtml(list.id)}">
             <label>Fra<select name="from" required>${termOptions}</select></label>
-            <label>Relasjon<input name="label" required value="relatert til" /></label>
+            <label>Sammenheng<select name="type" required><option value="related_to">Relatert til</option><option value="supports">Støtter</option><option value="contrasts">Står i motsetning til</option><option value="depends_on">Forutsetter</option><option value="example_of">Er eksempel på</option></select></label><label>Hvorfor?<input name="explanation" placeholder="Forklar sammenhengen (valgfritt)" /></label>
             <label>Til<select name="to" required>${termOptions}</select></label>
             <button type="submit">Legg til relasjon</button>
           </form>` : ""}
@@ -907,7 +945,8 @@
       if (!form) return;
       event.preventDefault();
       const data = new FormData(form);
-      const result = addConceptRelation(form.dataset.conceptRelationForm, { from: data.get("from"), to: data.get("to"), label: data.get("label"), type: "related_to" });
+      const type = asText(data.get("type"), "related_to");
+      const result = addConceptRelation(form.dataset.conceptRelationForm, { from: data.get("from"), to: data.get("to"), type, label: conceptRelationLabel(type), explanation: data.get("explanation") });
       if (result?.ok) render();
     });
 
@@ -925,6 +964,18 @@
       render();
     });
 
+    document.getElementById("concept-lists-list")?.addEventListener("submit", (event) => {
+      const form = event.target?.closest?.("[data-concept-term-edit]");
+      if (!form) return;
+      event.preventDefault();
+      const [listId, termId] = form.dataset.conceptTermEdit.split("::");
+      const data = new FormData(form);
+      const result = updateConceptTerm(listId, termId, { term: data.get("term"), definition: data.get("definition") });
+      if (result?.ok) { render(); return; }
+      const status = form.parentElement?.querySelector("[data-concept-edit-status]");
+      if (status) status.textContent = result?.reason === "duplicate"
+        ? "Begrepet finnes allerede i listen." : "Kunne ikke lagre begrepet. Kontroller innholdet.";
+    });
     document.getElementById("concept-lists-list")?.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
@@ -1035,6 +1086,7 @@
     saveConceptLists,
     createConceptList,
     addConceptTerm,
+    updateConceptTerm,
     removeConceptTerm,
     addConceptRelation,
     removeConceptRelation,
