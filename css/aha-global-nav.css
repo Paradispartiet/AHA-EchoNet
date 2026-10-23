@@ -565,6 +565,13 @@ body.aha-route-chat .aha-chat-header-simplified { grid-template-columns: minmax(
   .aha-global-daily-primary { justify-self: start; }
 }
 
+/* On narrow phones, keep the primary rail compact. Library and profile remain
+   accessible through Mer, alongside Personal AI, without horizontal crowding. */
+@media (max-width: 400px) {
+  .aha-global-nav-primary-link[data-primary="library"],
+  .aha-global-nav-primary-link[data-primary="profile"] { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aha-global-daily-panel { animation: none; }
 }
