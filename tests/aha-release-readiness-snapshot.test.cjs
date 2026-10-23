@@ -104,9 +104,9 @@ for (const [id, module] of snapshotById) {
 }
 
 const nonReadyById = new Map(snapshot.intentional_non_ready.map((module) => [module.id, module]));
-assert.equal(nonReadyById.get('meet')?.release_state, 'shell', 'meet must be intentional shell.');
+assert.equal(snapshotById.get('meet')?.release_state, 'ready', 'local Meet journal is now active and ready.');
 assert.equal(nonReadyById.get('sync-hub')?.release_state, 'planned', 'sync-hub must be intentional planned.');
-assert.deepEqual([...nonReadyById.keys()].sort(), ['meet', 'sync-hub'], 'Only meet and sync-hub may be intentional non-ready.');
+assert.deepEqual([...nonReadyById.keys()].sort(), ['sync-hub'], 'Only Sync Hub remains intentionally non-ready.');
 
 const unsafePatterns = [
   /backend\s+(?:is\s+)?active/i,
@@ -134,14 +134,14 @@ for (const pattern of [
   /Release readiness snapshot/,
   /docs\/AHA_RELEASE_READINESS_SNAPSHOT\.md/,
   /docs\/AHA_RELEASE_READINESS_SNAPSHOT\.json/,
-  /`meet`: shell/,
+  /functioning local-only private meeting journal/,
   /`sync-hub`: planned\/no-op/,
   /does not activate backend, account login, EchoNet, social sharing, active sync, external publishing, model training, fine-tuning or History Go write-back/
 ]) {
   assert.match(readme, pattern, `README must mention ${pattern}.`);
 }
 
-assert.equal(matrixById.get('meet')?.maturity, 'shell', 'meet matrix maturity must remain shell.');
+assert.equal(matrixById.get('meet')?.maturity, 'ready', 'meet local journal maturity must be ready.');
 assert.equal(matrixById.get('sync-hub')?.maturity, 'planned', 'sync-hub matrix maturity must remain planned.');
 for (const module of registry) {
   const maturity = matrixById.get(module.id)?.maturity;
