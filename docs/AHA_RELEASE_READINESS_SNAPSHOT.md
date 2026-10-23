@@ -41,17 +41,11 @@ All modules whose matrix maturity is `ready` are listed below.
 | `search` | Søk | system | Eksplisitt local-only søkeindeks for modne AHA-lag inkludert Music metadata, Training review corpus/examples, Knowledge Pipeline, Knowledge Map, Graph Intelligence og Personal AI-evalueringer, med secret redaction, ingen auto-discovery, ingen writes, backend, EchoNet, Sync Hub eller History Go runtime-indexering. | Utvid søk bare eksplisitt når nye lag modnes; aldri blind localStorage-indeksering eller tokenindeksering. |
 | `privacy` | Personvern | system | Privacy dekker eksplisitt modne AHA-lag inkludert Music, Training, Knowledge Pipeline, Personal AI og Profile, med token/PKCE/OAuth/API-key blokkering, local-only flagg, safe export og tester for ingen hemmeligheter eller sync/backend/EchoNet-implikasjon. | Utvid datarapporten eksplisitt når nye keys legges til; aldri skjult auto-discovery eller eksport av hemmeligheter. |
 
+| `meet` | Meet | personal | Private local-only meeting journal with create/edit/delete/search, notes and JSON export, no calendar, invitations, sync, EchoNet, backend or History Go write-back. | Keep the social Meet service separate; real invitations, accounts and shared access require an explicit privacy/security contract. |
+
 Expected ready modules include all active modules except intentional non-ready modules.
 
 ## Intentional non-ready modules
-
-### Meet
-
-Status: `shell`
-
-AHA Meet is only a shell for a later local personal meeting archive/reflection layer.
-
-It has no runtime storage, invitations, calendar integration, backend, sync, EchoNet or History Go write-back.
 
 ### Sync Hub
 
