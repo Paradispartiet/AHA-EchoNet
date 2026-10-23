@@ -112,8 +112,8 @@ for (const id of registryIds) {
   assert.equal(modulesById.get(id).status, matrixById.get(id).registry_status, `${id} registry status must match matrix registry_status.`);
 }
 
-assert.equal(modulesById.get('meet')?.status, 'shell', 'meet registry status must be shell.');
-assert.equal(matrixById.get('meet')?.maturity, 'shell', 'meet matrix maturity must be shell.');
+assert.equal(modulesById.get('meet')?.status, 'active', 'meet local journal must be active.');
+assert.equal(matrixById.get('meet')?.maturity, 'ready', 'meet local journal must be ready.');
 assert.equal(modulesById.get('sync-hub')?.status, 'planned', 'sync-hub registry status must be planned.');
 assert.equal(matrixById.get('sync-hub')?.maturity, 'planned', 'sync-hub matrix maturity must be planned.');
 const activeNonReadyAllowlist = new Set();
@@ -162,8 +162,8 @@ assert.match(modulesById.get('training').description, /laster ikke opp data/i);
 assert.match(modulesById.get('personal-ai').description, /Ingen modelltrening, API-kall, backend/i);
 assert.match(modulesById.get('sync-hub').description, /Planlagt.*no-op/i);
 assert.match(modulesById.get('sync-hub').description, /Ingen auto-sync/i);
-assert.match(modulesById.get('meet').description, /Shell/i);
-assert.match(modulesById.get('meet').description, /Ingen runtime-lagring, invitasjoner, kalender, backend, sync, EchoNet/i);
+assert.match(modulesById.get('meet').description, /Fungerende local-only møtejournal/i);
+assert.match(modulesById.get('meet').description, /Ingen invitasjoner, kalender, backend, sync, EchoNet/i);
 assert.match(modulesById.get('music').description, /Metadata-only/i);
 assert.match(modulesById.get('music').description, /Ingen lydlagring/i);
 assert.match(modulesById.get('search').description, /Read-only eksplisitt local-only/i);
@@ -175,12 +175,12 @@ assert.ok(emptyStateMatch, 'MODULE_EMPTY_STATE_COPY must be present.');
 assertNoUnsafePhrase(emptyStateMatch[0], [/sync groups/i, /sync notes/i, /connect backend/i, /publish externally/i, /invite/i, /calendar/i, /EchoNet/i], 'MODULE_EMPTY_STATE_COPY');
 
 const consistencyDoc = read('docs/AHA_REGISTRY_MATRIX_CONSISTENCY.md');
-for (const pattern of [/registry/i, /matrix/i, /one matrix row|matching row/i, /PREFERRED_ORDER/, /boundary-safe/i, /meet`? is a shell/i, /sync-hub`? is planned\/no-op/i, /backend/i, /EchoNet/i, /model training/i, /History Go write-back/i]) {
+for (const pattern of [/registry/i, /matrix/i, /one matrix row|matching row/i, /PREFERRED_ORDER/, /boundary-safe/i, /meet`? is an active/i, /sync-hub`? is planned\/no-op/i, /backend/i, /EchoNet/i, /model training/i, /History Go write-back/i]) {
   assert.match(consistencyDoc, pattern, `Consistency doc must mention ${pattern}.`);
 }
 
 const readme = read('README.md');
-for (const pattern of [/Registry and maturity matrix consistency/, /js\/ahaModules\.js/, /docs\/AHA_MODULE_MATURITY_MATRIX\.md/, /`meet`: shell/, /`sync-hub`: planned\/no-op/]) {
+for (const pattern of [/Registry and maturity matrix consistency/, /js\/ahaModules\.js/, /docs\/AHA_MODULE_MATURITY_MATRIX\.md/, /functioning local-only private meeting journal/, /`sync-hub`: planned\/no-op/]) {
   assert.match(readme, pattern, `README must mention ${pattern}.`);
 }
 
