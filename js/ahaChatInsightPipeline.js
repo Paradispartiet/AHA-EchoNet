@@ -521,7 +521,7 @@
     // An excerpt found by word overlap is only context, not claim verification.
     const explicitEvidenceQuotes = normalizeSimpleStringList(candidate?.evidence_quotes, 3)
       .filter((quote) => evaluator?.exactSourceMatch?.(sourceText, quote)
-        || String(sourceText || "").replace(/\\s+/g, " ").includes(String(quote || "").replace(/\\s+/g, " ")));
+        || String(sourceText || "").replace(/\s+/g, " ").includes(String(quote || "").replace(/\s+/g, " ")));
     const evidenceQuotes = evidenceQuotesForCandidate(candidate, sourceText);
     const evidenceOrigin = explicitEvidenceQuotes.length ? "source_quoted" : evidenceQuotes.length ? "context_match" : "none";
     const exact = evaluator?.exactSourceMatch?.(sourceText, summary) || false;
