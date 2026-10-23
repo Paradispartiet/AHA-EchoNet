@@ -390,3 +390,11 @@
   .aha-concept-add-form { grid-template-columns: 1fr; }
   .aha-concept-add-form button { width: 100%; }
 }
+
+
+/* A concept can be corrected in place without losing its linked relations. */
+.aha-concept-edit { margin: 8px 0 4px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,.10); }
+.aha-concept-edit summary { cursor: pointer; font-size: .86rem; font-weight: 650; padding: 8px 0; }
+.aha-concept-edit .aha-concept-add-form { margin-top: 8px; }
+.aha-concept-edit [role="status"] { min-height: 1.2em; }
+.aha-concept-relation-explanation { display: block; margin-top: 4px; color: var(--muted, #aab4c3); line-height: 1.4; }

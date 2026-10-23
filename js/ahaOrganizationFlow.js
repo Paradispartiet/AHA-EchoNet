@@ -70,6 +70,38 @@
     return { ok: true, path: added.path || path, step: added.step };
   }
 
+  // Explicitly turn a curated concept list into the first step of a real
+  // local knowledge path. No automatic sharing or new storage model.
+  function createPathFromConceptList(listId, titleArg) {
+    if (!global.AHALists?.loadConceptLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath) {
+      return { ok: false, reason: "organization_api_unavailable" };
+    }
+    const list = arr(global.AHALists.loadConceptLists()).find((item) =>
+      text(item?.id) === text(listId) && !item.deletedAt && !item.deleted_at && !item.archived);
+    if (!list) return { ok: false, reason: "concept_list_not_found" };
+    const path = global.AHAPaths.createPath({
+      title: text(titleArg) || `${list.title} – kunnskapssti`,
+      type: "learning", mode: "learning",
+      description: list.description || `Utforsk begrepene og koblingene i «${list.title}».`,
+      goal: `Forstå begrepene og sammenhengene i «${list.title}».`,
+      learningOutcome: "Kunne forklare sentrale begreper og hvordan de henger sammen."
+    });
+    if (!path) return { ok: false, reason: "path_create_failed" };
+    const added = global.AHAPaths.addStepToPath(path.id, {
+      source: "aha_concept_lists", refId: list.id,
+      type: "concept_list", title: list.title,
+      narrative: `Start med begrepslisten «${list.title}». Undersøk forklaringene og relasjonene.`,
+      learningOutcome: "Kunne forklare hvorfor begrepene hører sammen.",
+      meta: { organization_flow: "concept_list_to_path" }
+    });
+    if (!added?.ok) {
+      global.AHAPaths.deletePath?.(path.id);
+      return { ok: false, reason: added?.reason || "concept_step_failed" };
+    }
+    global.AHAPaths.refresh?.();
+    return { ok: true, path: added.path || path, step: added.step };
+  }
+
   function movePathStep(pathId, stepId, delta) {
     if (!global.AHAPaths?.loadPaths || !global.AHAPaths?.updatePath) return { ok: false, reason: "paths_unavailable" };
     const path = arr(global.AHAPaths.loadPaths()).find((item) => text(item.id) === text(pathId) && !item.deletedAt && !item.deleted_at);
@@ -221,6 +253,15 @@
         return;
       }
 
+      const conceptId = target.getAttribute("data-org-concept-to-path");
+      if (conceptId) {
+        const host = target.closest(".aha-concept-list-actions");
+        const status = host?.querySelector(".aha-org-flow-status");
+        const result = createPathFromConceptList(conceptId);
+        if (status) status.innerHTML = result.ok ? `Kunnskapsstien er opprettet. <a href="paths.html">Åpne stien</a>.` : "Kunne ikke opprette stien.";
+        return;
+      }
+
       const move = target.getAttribute("data-org-move-step");
       if (move) {
         const [pathId, stepId, delta] = move.split("::");
@@ -246,6 +287,7 @@
     searchItemById,
     addLibraryItemToList,
     createPathFromList,
+    createPathFromConceptList,
     movePathStep,
     decorateLibrary,
     decorateLists,
