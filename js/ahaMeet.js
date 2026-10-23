@@ -189,6 +189,37 @@
     notify("Arkivet er eksportert som JSON. Oppbevar filen privat.");
   }
 
+  function importJson(raw) {
+    const body = text(raw);
+    if (!body || body.length > 1024 * 1024) return { ok: false, reason: "Importfilen er for stor eller tom (maksimalt 1 MB)." };
+    let parsed;
+    try { parsed = JSON.parse(body); }
+    catch { return { ok: false, reason: "Importfilen er ikke gyldig JSON." }; }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)
+        || parsed.version !== 1 || !Array.isArray(parsed.entries) || parsed.entries.length > MAX_ITEMS) {
+      return { ok: false, reason: "Filen må være en AHA Meet-eksport (versjon 1, maks 250 notater)." };
+    }
+    const current = load();
+    const seen = new Set(current.map((item) => item.id));
+    let imported = 0;
+    let skipped = 0;
+    for (const rawEntry of parsed.entries) {
+      const entry = normalizeEntry(rawEntry);
+      if (!entry?.id || entry.title.length < 2 || !entry.createdAt || !entry.local_only) {
+        return { ok: false, reason: "Importfilen inneholder et ugyldig møtenotat. Ingenting ble importert." };
+      }
+      if (seen.has(entry.id)) { skipped += 1; continue; }
+      if (current.length >= MAX_ITEMS) {
+        return { ok: false, reason: "For mange notater til å importere. Eksporter og rydd først." };
+      }
+      seen.add(entry.id);
+      current.push(entry);
+      imported += 1;
+    }
+    const result = store(current);
+    return result.ok ? { ok: true, imported, skipped } : result;
+  }
+
   function init() {
     if (!byId("meet-form")) return;
     clearForm();
@@ -212,6 +243,21 @@
       try { exportJson(); }
       catch { notify("Kunne ikke eksportere notatene."); }
     });
+    byId("meet-import").addEventListener("click", () => byId("meet-import-file").click());
+    byId("meet-import-file").addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+      if (file.size > 1024 * 1024) { notify("Importfilen er for stor (maksimalt 1 MB)."); return; }
+      if (!global.confirm("Importere møtenotater fra «" + file.name + "»? Eksisterende notater blir ikke overskrevet.")) return;
+      try {
+        const result = importJson(await file.text());
+        notify(result.ok
+          ? result.imported + " notater importert. " + result.skipped + " eksisterende notater hoppet over."
+          : result.reason);
+        if (result.ok) render();
+      } catch { notify("Kunne ikke lese importfilen."); }
+    });
     byId("meet-list").addEventListener("click", (event) => {
       const button = event.target.closest?.("button");
       if (!button) return;
@@ -229,7 +275,7 @@
     });
   }
 
-  global.AHAMeet = Object.freeze({ KEY, normalizeEntry, load, save, remove, getFiltered, render, init });
+  global.AHAMeet = Object.freeze({ KEY, normalizeEntry, load, save, remove, getFiltered, importJson, render, init });
   if (global.document?.readyState === "loading") global.document.addEventListener("DOMContentLoaded", init);
   else if (global.document) init();
 })(typeof window !== "undefined" ? window : globalThis);
