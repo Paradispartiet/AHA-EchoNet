@@ -4,10 +4,13 @@ const { test, expect } = require("@playwright/test");
 // Semantic knowledge still stays local until users explicitly approve it.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.clear();
-    localStorage.setItem("aha_notes_v1", JSON.stringify([
-      { id: "note-fixture-a", title: "Første kilde", text: "En verifiserbar observasjon" }
-    ]));
+    if (!sessionStorage.getItem("aha-test-seeded")) {
+      localStorage.clear();
+      localStorage.setItem("aha_notes_v1", JSON.stringify([
+        { id: "note-fixture-a", title: "Første kilde", text: "En verifiserbar observasjon" }
+      ]));
+      sessionStorage.setItem("aha-test-seeded", "1");
+    }
   });
 });
 
@@ -19,6 +22,7 @@ test("Concept lists support editorial corrections and meaningful relations", asy
   await expect(page.locator("#concept-lists-count")).toHaveText("1");
   await expect(page.locator("#concept-terms-count")).toHaveText("2");
 
+  await page.locator(".aha-concept-list-card > details > summary").click();
   const relationForm = page.locator("[data-concept-relation-form]");
   await relationForm.locator('[name="from"]').selectOption("demokrati");
   await relationForm.locator('[name="to"]').selectOption("valg");
@@ -27,6 +31,7 @@ test("Concept lists support editorial corrections and meaningful relations", asy
   await relationForm.locator('button[type="submit"]').click();
   await expect(page.locator(".aha-concept-relations")).toContainText("støtter");
 
+  await page.locator(".aha-concept-edit > summary").first().click();
   const editor = page.locator("[data-concept-term-edit]").first();
   await editor.locator('[name="term"]').fill("folkestyre");
   await editor.locator('[name="definition"]').fill("Politisk makt forankret i folket.");
@@ -53,6 +58,7 @@ test("Path completion follows actual saved steps and can be undone", async ({ pa
   await page.locator("#path-create-form button[type='submit']").click();
   await expect(page.locator("#paths-count")).toHaveText("1");
   await page.locator("[data-path-select-preview]").first().click();
+  await page.locator(".aha-path-manage > summary").click();
   const select = page.locator("[data-path-select]");
   await expect(select.locator("option")).toHaveCount(2);
   await select.selectOption({ index: 1 });
