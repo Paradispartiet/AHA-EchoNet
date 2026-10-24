@@ -186,8 +186,12 @@
         const contrast = /(derimot|mens|samtidig|i motsetning|på den andre siden)/i.test(quote);
         const uncertainty = /(kan ikke|ikke alene|ikke det samme|ikke dokumentert|ikke grunnlag|ikke målt|ikke sammenlign|for lite|svakt kontroll|ikke fastslå|ikke bevise|ikke skille|ikke en generell|registreringen omfatter ikke)/i.test(quote);
         const caveat = /(selv valgt|selvvalgt|uten kontroll|forskjellige benker|ikke tilfeldig|usikkert|begrenset utvalg|mangler|ukjent|usikkerhet)/i.test(quote);
-        const evidenceScore = (observation ? 8 : 0) + (contrast ? 4 : 0)
-          + (/\d/.test(quote) ? 2 : 0) - (uncertainty ? 5 : 0) - (caveat ? 2 : 0);
+        // Directly reported observations outrank generic report descriptions.
+        const directObservation = /(registrerte|observerte|fant|husket|økte|avdekket|målte|forteller|rapporterte)/i.test(quote);
+        const methodOnly = /^(?:rapporten beskriver|studien beskriver)/i.test(quote);
+        const evidenceScore = (observation ? 8 : 0) + (directObservation ? 6 : 0)
+          + (contrast ? 2 : 0) + (/\d/.test(quote) ? 2 : 0)
+          - (methodOnly ? 6 : 0) - (uncertainty ? 5 : 0) - (caveat ? 2 : 0);
         const limitationScore = (uncertainty ? 9 : 0) + (caveat ? 6 : 0)
           + (/(?:men|fordi|likevel)/i.test(quote) ? 2 : 0);
         return { quote, index, evidenceScore, limitationScore, contrast };
