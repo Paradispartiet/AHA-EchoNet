@@ -40,6 +40,7 @@ load("js/ahaLists.js");
 load("js/ahaPaths.js");
 load("js/ahaInsights.js");
 load("js/ahaOrganizationFlow.js");
+load("js/ahaSearch.js");
 const { AHAInsights: insights, AHALists: lists, AHAPaths: paths, AHAOrganizationFlow: flow } = c;
 const sorted = Array.from(insights.getInsights());
 assert.equal(sorted[0].id, "ins-2");
@@ -80,4 +81,22 @@ assert.equal(storedPath.meta.automation_enabled, false);
 assert.equal(paths.pathProgress(storedPath).done, 0);
 const reloaded = paths.loadPaths().find(x => x.id === storedPath.id);
 assert.equal(reloaded.steps.length, 3, "path must survive storage reload");
+
+// Search must find and open the exact saved list/path, never just their module.
+let searchable = Array.from(c.AHASearch.collectSearchItems());
+assert.equal(searchable.find(item => item.source === "aha_lists" && item.refId === list.id)?.href,
+  "lists.html#list-" + encodeURIComponent(list.id));
+assert.equal(searchable.find(item => item.source === "aha_paths" && item.refId === storedPath.id)?.href,
+  "paths.html#path-" + encodeURIComponent(storedPath.id));
+
+// A rejected insight before an ID-less insight cannot shift its canonical
+// archive-position link (the search index filters, the archive does not).
+storage.seed("aha_insight_chamber_v1", { insights: [
+  { id: "rejected", title: "Avvist", status: "rejected" },
+  ...seedInsights
+] });
+searchable = Array.from(c.AHASearch.collectSearchItems());
+assert.equal(searchable.some(item => item.refId === "rejected"), false);
+assert.equal(searchable.find(item => item.source === "aha_insights" && item.title === "Gammel innsikt uten ID")?.href,
+  "insights.html#insight-insight_idx_1");
 console.log("AHA insight → real collection → validated path: passed");
