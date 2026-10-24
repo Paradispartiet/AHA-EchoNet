@@ -60,20 +60,55 @@
     return matches;
   }
 
+  function summarizeActiveReadiness(model, bundle) {
+  const source = bundle && typeof bundle === "object" ? bundle : {};
+  const gate = source.semantic_document?.synthesis_gate || {};
+  const gateStatus = asText(gate.status) || "not_run";
+  const approvedCount = Number(gate.approved_count || 0);
+  const incomplete = Boolean(source.status && source.status !== "ready") || gateStatus === "not_run" || gateStatus === "blocked" || approvedCount === 0;
+  const status = incomplete ? "incomplete" : asText(model?.status || "unknown");
+  return {
+    status,
+    label: status === "ready" ? "klar" : status === "incomplete" ? "ufullstendig" : status,
+    gateStatus,
+    approvedCount,
+    sourceVerified: source.validation?.valid === true,
+    incomplete,
+    reason: gateStatus === "not_run" ? "Innsiktsmotoren ble ikke kjørt. Kildeutdrag er ikke en faglig syntese."
+      : approvedCount === 0 ? "Ingen kvalitetssikrede innsikter er tilgjengelige for denne analysen."
+      : incomplete ? "Kjerneanalysen er ufullstendig. Noen analysefelt er holdt tilbake." : ""
+  };
+}
+
+  function productDisplayState(rawState, bundle) {
+  const state = rawState && typeof rawState === "object" ? rawState : {};
+  const gate = bundle?.semantic_document?.synthesis_gate || {};
+  if (state.status === "not_relevant" && asText(gate.status) === "not_run") {
+    return { ...state, status: "needs_evidence", label: "Ikke vurdert ennå", reason: "Innsiktsmotoren ble ikke kjørt. Produktets relevans er derfor ikke vurdert.", href: null };
+  }
+  return state;
+}
+
   function renderQualityStatus(model) {
-    const quality = model?.quality || {};
-    return `<aside class="aha-quality-status-preview" aria-label="Kvalitetsstatus"><div class="aha-quality-status-head"><h3>Kvalitetsstatus</h3><span>Status: ${esc(model?.status || "unknown")}</span></div>
-      <dl class="aha-quality-status-checks"><div><dt>Kildebinding</dt><dd>verified</dd></div><div><dt>Temakonsistens</dt><dd>kontrollert per felt</dd></div><div><dt>Stale-data guard</dt><dd>passed</dd></div><div><dt>Analyse-isolering</dt><dd>verified</dd></div><div><dt>Synlige kildebundne felt</dt><dd>${esc(String(quality.visible_field_count || 0))}</dd></div><div><dt>Holdt tilbake</dt><dd>${esc(String(quality.blocked_field_count || 0))}</dd></div><div><dt>Innsiktsport</dt><dd>${esc(quality.synthesis_gate?.status || "not_run")}</dd></div></dl>
-      <p class="aha-quality-status-safety">Kildekontroll per felt · read-only · ingen sync, rå brukerdata eller produktskriving.</p></aside>`;
-  }
+  const quality = model?.quality || {};
+  const readiness = summarizeActiveReadiness(model, current?.run?.analysisBundleV2);
+  return `<aside class="aha-quality-status-preview" aria-label="Kvalitetsstatus"><div class="aha-quality-status-head"><h3>Kvalitetsstatus</h3><span>Status: ${esc(readiness.label)}</span></div>
+    ${readiness.incomplete ? `<p class="exp-empty" role="status">${esc(readiness.reason)}</p>` : ""}
+    <dl class="aha-quality-status-checks"><div><dt>Kildebinding</dt><dd>${readiness.sourceVerified ? "teknisk verifisert" : "ikke bekreftet"}</dd></div><div><dt>Temakonsistens</dt><dd>kontrollert per felt</dd></div><div><dt>Synlige kildebundne felt</dt><dd>${esc(String(quality.visible_field_count || 0))}</dd></div><div><dt>Holdt tilbake</dt><dd>${esc(String(quality.blocked_field_count || 0))}</dd></div><div><dt>Stale-data guard</dt><dd>${readiness.sourceVerified ? 'passed' : 'unknown'}</dd></div><div><dt>Analyse-isolering</dt><dd>${readiness.sourceVerified ? 'verified' : 'unknown'}</dd></div><div><dt>Innsiktsport</dt><dd>${esc(readiness.gateStatus)}</dd></div><div><dt>Kvalitetssikrede innsikter</dt><dd>${esc(readiness.approvedCount)}</dd></div></dl>
+    <p class="aha-quality-status-safety">Teknisk kildebinding er ikke faglig godkjenning. read-only · ingen sync eller rå brukerdata i statusflaten.</p></aside>`;
+}
+
   function renderOversikt(model) {
-    const host = getContainer("oversikt"); if (!host) return;
-    const section = model.sections.overview || {};
-    const theme = itemText(section.theme), tension = itemText(section.central_tension), insight = itemText(section.strongest_insight), next = itemText(section.next_inquiry);
-    if (![theme, tension, insight, next].some(Boolean)) { host.innerHTML = emptyNote("AHA har ikke nok kildebelegg til et trygt hovedbilde ennå.") + renderQualityStatus(model); return; }
-    host.innerHTML = `<div class="analysis-summary"><h4>${esc(theme || "Kildebundet analyse")}</h4><dl class="exp-dl analysis-summary-fields">${dlRow("Hovedspenning", tension)}${dlRow("Sterkeste innsikt", insight)}${dlRow("Neste undersøkelse", next)}</dl>
-      ${[section.theme, section.central_tension, section.strongest_insight, section.next_inquiry].filter(Boolean).map(evidenceBlock).join("")}${renderQualityStatus(model)}</div>`;
-  }
+  const host = getContainer("oversikt"); if (!host) return;
+  const section = model.sections.overview || {};
+  const theme = itemText(section.theme), tension = itemText(section.central_tension), insight = itemText(section.strongest_insight), next = itemText(section.next_inquiry);
+  const readiness = summarizeActiveReadiness(model, current?.run?.analysisBundleV2);
+  if (![theme, tension, insight, next].some(Boolean)) { host.innerHTML = emptyNote("AHA har ikke nok kildebelegg til et trygt hovedbilde ennå.") + renderQualityStatus(model); return; }
+  host.innerHTML = `<div class="analysis-summary"><h4>${esc(theme || "Kildebundet analyse")}</h4>
+      ${readiness.incomplete ? `<p class="exp-empty" role="status">Kildestruktur, ikke fullført faglig analyse. ${esc(readiness.reason)}</p>` : ""}
+      <dl class="exp-dl analysis-summary-fields">${dlRow(readiness.incomplete ? "Kildens spenning – ikke verifisert syntese" : "Hovedspenning", tension)}${!readiness.incomplete ? dlRow("Sterkeste innsikt", insight) : ""}${!readiness.incomplete ? dlRow("Neste undersøkelse", next) : ""}</dl>
+      ${[section.theme, section.central_tension, section.strongest_insight, section.next_inquiry].filter(Boolean).map(evidenceBlock).join("")}${renderQualityStatus(model, bundle)}</div>`;
+}
   function renderInnsikter(model) {
     const host = getContainer("innsikter"); if (!host) return;
     const items = asList(model.sections.insights);
@@ -163,7 +198,7 @@
     const labels = { list: "Listeforslag", path: "Stiforslag", mindmap: "Tankekartforslag" };
     const states = model?.product_states || {};
     host.innerHTML = `<div class="exp-product-grid">${Object.entries(labels).map(([key, title]) => {
-      const state = states[key] || { status: "needs_evidence", label: "Trenger mer belegg", reason: "Produktbroen kunne ikke bekrefte et kildeforankret forslag.", href: null };
+      const state = productDisplayState(states[key] || { status: "needs_evidence", label: "Trenger mer belegg", reason: "Produktbroen kunne ikke bekrefte et kildeforankret forslag.", href: null }, current?.run?.analysisBundleV2);
       const action = state.href ? `<a class="exp-action-btn" href="${esc(state.href)}">${state.status === "ready" ? "Åpne forhåndsvisning" : "Se blokkeringsgrunn"}</a>` : "";
       return `<article class="exp-card exp-product-card"><h4>${esc(title)}</h4><span class="exp-product-status" data-status="${esc(state.status)}">${esc(state.label)}</span><p>${esc(state.reason)}</p>${action}</article>`;
     }).join("")}</div><p class="exp-kicker">Skrivebeskyttet produktbro · samme analyse- og projeksjonsidentitet · ingen automatisk lagring.</p>`;
@@ -237,5 +272,5 @@
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  global.AHAExplorer = { render, open: focusCard, focus: focusCard, init, clear, bundleMatchesActiveRun };
+  global.AHAExplorer = { render, open: focusCard, focus: focusCard, init, clear, bundleMatchesActiveRun, summarizeActiveReadiness, productDisplayState };
 })(window);

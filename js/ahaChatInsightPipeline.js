@@ -67,7 +67,9 @@
       const frontendSha = String(global.AHA_FRONTEND_BUILD_SHA || "").trim().toLowerCase();
       return /^[a-f0-9]{40}$/.test(frontendSha) ? ["runtime_manifest_missing:backend"] : [];
     }
-    return [...runtimeMismatchReasons(runtime), ...deploymentMismatchReasons(runtime)];
+    // Pages and the agent deploy independently. Contract drift still blocks;
+    // differing commit SHAs are diagnostics, not API incompatibility.
+    return runtimeMismatchReasons(runtime);
   }
 
   function waitForRetry(ms) {
@@ -335,6 +337,7 @@
           status: "blocked_incompatible_synthesis_envelope",
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
           backend: data?.runtime || runtime.runtime,
+          deployment_warnings: deploymentMismatchReasons(data?.runtime),
           blocking_reasons: envelopeReasons,
           authoritative_retry_attempt: requestAttempt
         });
@@ -355,6 +358,7 @@
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
         expected: expectedRuntimeManifest(),
         backend: data.runtime,
+        deployment_warnings: deploymentMismatchReasons(data.runtime),
         provider_model: data.model || null,
         provider_response_id: data.response_id || null,
         provider_validation_attempts: Number(data.synthesis_attempts || 0),
