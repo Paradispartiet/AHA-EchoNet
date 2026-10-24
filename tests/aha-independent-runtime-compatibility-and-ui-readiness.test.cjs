@@ -50,7 +50,7 @@ assert.equal(explorer.productDisplayState({status:"not_relevant",label:"Irreleva
 assert.equal(explorer.summarizeActiveReadiness(model,{...ready,status:"incomplete"}).status,"incomplete");
 
 const explorerJs=fs.readFileSync(path.join(root,"js/ahaExplorer.js"),"utf8");
-assert.match(explorerJs,/renderOversikt\(analysis, run\.analysisBundleV2\)/);
+assert.match(explorerJs,/renderOversikt\(analysis\)/);
 assert.match(explorerJs,/Kildens spenning – ikke verifisert syntese/);
 assert.match(explorerJs,/Teknisk kildebinding er ikke faglig godkjenning/);
 assert.match(fs.readFileSync(path.join(root,"js/ahaChatInsightPipeline.js"),"utf8"),/deployment_warnings: deploymentMismatchReasons\(data\.runtime\)/);
