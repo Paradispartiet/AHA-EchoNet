@@ -190,7 +190,7 @@
         const directObservation = /(?<![\p{L}\p{N}])(?:registrerte|observerte|fant|husket|økte|avdekket|målte|forteller|rapporterte)(?![\p{L}\p{N}])/iu.test(quote);
         const methodOnly = /^(?:rapporten beskriver|studien beskriver)/i.test(quote);
         const evidenceScore = (observation ? 8 : 0) + (directObservation ? 6 : 0)
-          + (contrast ? 2 : 0) + (/\d/.test(quote) ? 2 : 0)
+          + (contrast ? 5 : 0) + (/\d/.test(quote) ? 2 : 0)
           - (methodOnly ? 6 : 0) - (uncertainty ? 5 : 0) - (caveat ? 2 : 0);
         const limitationScore = (uncertainty ? 9 : 0) + (caveat ? 6 : 0)
           + (/(?:fastslå|ikke bevise|ikke alene|ikke skille|ikke grunnlag|ikke dokumentert)/i.test(quote) ? 4 : 0)
