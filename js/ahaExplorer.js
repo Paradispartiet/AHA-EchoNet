@@ -107,7 +107,7 @@
   host.innerHTML = `<div class="analysis-summary"><h4>${esc(theme || "Kildebundet analyse")}</h4>
       ${readiness.incomplete ? `<p class="exp-empty" role="status">Kildestruktur, ikke fullført faglig analyse. ${esc(readiness.reason)}</p>` : ""}
       <dl class="exp-dl analysis-summary-fields">${dlRow(readiness.incomplete ? "Kildens spenning – ikke verifisert syntese" : "Hovedspenning", tension)}${!readiness.incomplete ? dlRow("Sterkeste innsikt", insight) : ""}${!readiness.incomplete ? dlRow("Neste undersøkelse", next) : ""}</dl>
-      ${[section.theme, section.central_tension, section.strongest_insight, section.next_inquiry].filter(Boolean).map(evidenceBlock).join("")}${renderQualityStatus(model, bundle)}</div>`;
+      ${[section.theme, section.central_tension, section.strongest_insight, section.next_inquiry].filter(Boolean).map(evidenceBlock).join("")}${renderQualityStatus(model)}</div>`;
 }
   function renderInnsikter(model) {
     const host = getContainer("innsikter"); if (!host) return;
