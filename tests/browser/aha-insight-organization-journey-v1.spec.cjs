@@ -13,7 +13,7 @@ test("Search opens the exact insight, saves a collection and creates a real know
   });
   await page.goto("/search.html");
   await page.locator("#search-query").fill("Bibliotek for nærmiljøet");
-  const result = page.locator(".aha-search-card").filter({ hasText: "Bibliotek for nærmiljøet" });
+  const result = page.locator(".aha-search-card").filter({ has: page.locator("a[href=\'insights.html#insight-ins-journey\']") });
   await expect(result).toHaveCount(1);
   await expect(result.getByRole("link", { name: "Åpne modul" })).toHaveAttribute("href", "insights.html#insight-ins-journey");
   await result.getByRole("link", { name: "Åpne modul" }).click();
