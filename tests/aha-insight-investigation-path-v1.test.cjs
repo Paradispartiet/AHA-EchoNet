@@ -35,6 +35,9 @@ c.window = c; vm.createContext(c);
 function load(file) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", file), "utf8"), c, { filename: file });
 }
+const html = fs.readFileSync(path.join(__dirname, "..", "insights.html"), "utf8");
+assert.match(html, /<script src="js\/ahaPaths\.js"><\/script>/);
+assert.ok(html.indexOf('src="js/ahaPaths.js"') < html.indexOf('src="js/ahaInsights.js"'), "Insights must load AHAPaths before wiring actions");
 load("js/ahaContracts.js");
 load("js/ahaPaths.js");
 load("js/ahaInsights.js");
