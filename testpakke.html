@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA – Vurder testpakke</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-test-package-review.css" />
+</head>
+<body>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard aha-shell-workspace aha-testpakke-page">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">AHA 1.0 · Kvalitetsarbeid</p>
+          <h1>Vurder testpakke</h1>
+          <p class="aha-module-purpose">Åpne en JSON-testpakke eksportert fra Chat. Kontroller hva AI-motoren faktisk foreslo, kildesitater, usikkerhet og behovet for videre undersøkelser.</p>
+          <p class="aha-module-purpose"><strong>Kun på denne enheten:</strong> Filene leses i nettleseren og sendes ikke til AHA eller noen server. Ingenting lagres automatisk. Ikke del vurderingsfilen før du har kontrollert mulige personopplysninger.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn" href="chat.html">Tilbake til Chat</a>
+        <button type="button" id="testpakke-clear" class="aha-tile-btn">Tøm valgte data</button>
+      </div>
+    </section>
+    <section class="aha-panel testpakke-controls">
+      <h2>Velg data for vurdering</h2>
+      <div class="testpakke-input-grid">
+        <label>1. Testpakke
+          <input id="testpakke-input-a" type="file" accept=".json,application/json" />
+          <small>Eksporter testpakke fra en fullført analyse i Chat.</small>
+        </label>
+        <label>2. Sammenlign med en ny kjøring (valgfritt)
+          <input id="testpakke-input-b" type="file" accept=".json,application/json" />
+          <small>Den andre filen må ha samme originaltekst, men en annen run-ID.</small>
+        </label>
+      </div>
+      <p id="testpakke-status" role="status" aria-live="polite">Velg en eksportert AHA-testpakke for å begynne.</p>
+      <div class="aha-module-actions">
+        <button id="testpakke-download-review" type="button" class="aha-tile-btn aha-tile-btn-primary" disabled>Last ned min faglige vurdering</button>
+      </div>
+      <p class="testpakke-muted">Vurderingene er dine egne, lagres ikke i AHA og godkjenner ikke automatisk modellens innsikter. Eksporten har begrensninger dersom tidligere modellforsøk ikke er bevart.</p>
+    </section>
+    <div id="testpakke-results" aria-live="off"></div>
+  </main>
+  <script src="js/ahaTestPackageReview.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
