@@ -199,7 +199,7 @@
   }
 
   function getInsightRefId(insight, index) {
-    return asText(insight?.id || insight?.base?.id, `insight_idx_${Number.isInteger(insight?.__ahaArchiveIndex) ? insight.__ahaArchiveIndex : index}`);
+    return asText(insight?.id, `insight_idx_${Number.isInteger(insight?.__ahaArchiveIndex) ? insight.__ahaArchiveIndex : index}`);
   }
 
   function getInsightTitle(insight) {
