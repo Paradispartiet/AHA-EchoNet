@@ -106,3 +106,5 @@ assert.equal(results.length, 5);
 assert.equal(totals.blocked, 5, "no unfamiliar article may be marked as a valid local scientific interpretation");
 assert.equal(totals.passed, 0);
 console.log("AHA five synthetic test articles: diagnostic run completed.");
+
+module.exports = { articles };
