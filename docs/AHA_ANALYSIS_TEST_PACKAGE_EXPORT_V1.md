@@ -18,3 +18,8 @@ Dette er en eksport av **aktiv analysekjøring**, ikke en fullkopi av brukerprof
 Kjør `node tests/aha-analysis-test-package-export.test.cjs`. Testen verifiserer hentbar fil, hash- og run-lås, avviste kandidater, slettede/stale objekter, kilde- og run-isolasjon samt synlig knapp i Chat.
 
 Senere steg: eksplisitt, personvernkontrollert lokal arkivering av *alle* faktiske modellforsøk per analyse, hvis fullstendig replay er påkrevd. Ikke bruk den eksisterende auto-cachen som historisk fasit.
+
+## Kildesitat-kontroll
+`candidate_audit.literal_source_quote_checks` dokumenterer om hvert bevart sitat finnes **ordrett** i originalteksten, inkludert start- og sluttposisjoner. Dette er ikke en kontroll av hvorvidt påstanden støttes av sitatet. Manglende eller ikke-gjenfunnet sitat blir tydelig markert.
+
+`candidate_audit.prefilter_rejections` tar med avvisningsgrunnene som finnes i runtime-tracen. Denne tracen lagrer kun tittel og grunn, ikke hele avviste kandidatteksten; `coverage.missing` rapporterer dette eksplisitt. Ingen historiske modellforsøk oppfinnes i eksporten.
