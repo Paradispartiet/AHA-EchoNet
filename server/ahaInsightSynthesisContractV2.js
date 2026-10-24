@@ -25,6 +25,19 @@ const FORBIDDEN_KEYS = Object.freeze(new Set([
 const CAUSAL_LANGUAGE = /(?:\b(?:fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|drivkraft|omformer|reduserer behovet|introduserer kompleksitet|bidrar til|causes?|caused|leads? to|led to|results? in|because)\b|\bfør(?:er|te)[^.!?]{0,100}\btil\b|(?:^|[^\p{L}\p{N}_])(?:skaper|skapes|skapte|skapt|gir|ga|øker|økte|reduserer|reduserte|muliggjør|muliggjorde|kanaliserer|kanaliserte)(?![\p{L}\p{N}_]))/iu;
 const EXPLICIT_CAUSAL_SOURCE = /\b(fordi|forårsaker|forårsaket|fører til|førte til|gjør at|gjorde at|resulterer i|resulterte i|på grunn av|som følge av|derfor|kan\s+flytte|causes?|caused|leads? to|led to|results? in|because)\b/i;
 const ANTI_CAUSAL_SOURCE = /(?:peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|identifiserer\s+ikke|kan\s+ikke\s+fastslå|uten\s+å\s+fastslå)[^.!?]{0,160}(?:årsak|årsaken|kausal|kausalitet|forårsaker)/i;
+/* Causal disclaimers in unfamiliar academic texts. Failure to match a phrase
+   is never positive evidence for causality. */
+const ADDITIONAL_CAUSAL_LIMITATIONS = Object.freeze([
+  /(?:kan\s+ikke|kunne\s+ikke|ikke\s+mulig\s+å)[^.!?]{0,80}(?:alene\s+)?(?:bevise|fastslå|skille|avgjøre)[^.!?]{0,160}(?:forårsak|årsaks?|kausal|effekt|virkning|forklar)/i,
+  /(?:ikke\s+(?:dokumentert|påvist)|ingen\s+(?:dokumentert|påvist))\s+(?:årsaks?|kausal|effekt|virkning)/i,
+  /(?:for\s+lite|for\s+svakt|svakt\s+kontrollert)[^.!?]{0,140}(?:fastslå|bevise|forklare)/i,
+  /(?:samvariasjon|sammenheng)[^.!?]{0,110}(?:ikke\s+(?:det\s+samme\s+som|bevis|dokumentasjon)|uten\s+(?:bevis|kausalitet))/i,
+  /(?:not\s+(?:evidence|proof)\s+of\s+(?:causality|a\s+causal|an?\s+effect)|cannot\s+(?:establish|separate|prove|attribute)[^.!?]{0,110}(?:caus|effect|impact))/i
+]);
+function sourceLimitsCausalClaim(text) {
+  const value = String(text || "");
+  return ANTI_CAUSAL_SOURCE.test(value) || ADDITIONAL_CAUSAL_LIMITATIONS.some((pattern) => pattern.test(value));
+}
 
 const SYNTHESIS_JSON_SCHEMA = Object.freeze({
   type: "object",
@@ -259,6 +272,7 @@ function buildSynthesisInstruction() {
     "Når causal_status=interpretive må confidence være medium eller low og uncertainty må være ikke-tom og konkret beskrive hva source ikke beviser.",
     "Når causal_status=not_causal må selve insight-formuleringen også være ikke-kausal. Unngå uttrykk som 'fører ... til', 'skaper/skapes', 'gir', 'øker', 'reduserer', 'muliggjør', 'gjør at' og tilsvarende. Navngi i stedet den konkrete relasjonen, spenningen, grensen eller forskjellen som SOURCE_TEXT faktisk viser. 'Samtidig som', 'opptrer sammen med' og 'er forbundet med' kan brukes, men er ikke i seg selv en innsikt og skal ikke gjentas som samme setningsramme på tvers av kandidatene.",
     "Hvis SOURCE_TEXT uttrykkelig sier at materialet ikke fastslår, peker ut eller identifiserer en årsak, skal kandidaten ikke bruke en kausal mekanisme. Velg pattern, tension eller generalization, sett causal_status=not_causal og gjør selve årsaksbegrensningen synlig i insight eller uncertainty.",
+    "Det gjelder også når en effekt ikke er dokumentert, et forsøk ikke alene kan bevise et resultat, eller ulike samtidige forklaringer ikke kan skilles. Et sitat som avviser årsak kan aldri brukes som positivt årsaksbelegg.",
     "Ved observasjonelle før/etter-mønstre uten eksplisitt komplett kausalitet: foretrekk pattern eller tension. Hvis den mest nyttige forståelsen likevel er en mulig mekanisme, merk den interpretive med medium/low confidence og konkret uncertainty.",
     "Bruk uncertainty aktivt når evidensen begrenser generalisering, kausalitet eller rekkevidde. Tom streng er tillatt bare når ingen materiell usikkerhet må synliggjøres.",
     "Returner heller null kandidater enn svake, generiske, source-nære eller kausalt overtolkede kandidater.",
@@ -378,8 +392,12 @@ function validateSynthesisPayload(payloadInput, sourceText, requirementsInput = 
     const confidence = String(candidate?.confidence || "");
     const uncertainty = String(candidate?.uncertainty || "").trim();
     const usesCausalLanguage = CAUSAL_LANGUAGE.test(insight);
-    const evidenceHasExplicitCausality = evidence.some((item) => EXPLICIT_CAUSAL_SOURCE.test(String(item?.quote || "")));
-    const sourceRejectsSimpleCausality = ANTI_CAUSAL_SOURCE.test(source);
+    const evidenceHasExplicitCausality = evidence.some((item) => {
+      const quote = String(item?.quote || "");
+      // Negated causal evidence cannot license source_explicit causality.
+      return EXPLICIT_CAUSAL_SOURCE.test(quote) && !sourceLimitsCausalClaim(quote);
+    });
+    const sourceRejectsSimpleCausality = sourceLimitsCausalClaim(source);
 
     if (causalStatus === "interpretive") {
       if (confidence === "high") errors.push(`${label}:interpretive_causality_confidence_must_not_be_high`);
