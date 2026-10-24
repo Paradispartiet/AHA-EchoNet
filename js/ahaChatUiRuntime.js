@@ -244,6 +244,10 @@
         ["btn-export", deps.exportAnalysisJson],
         ["btn-export-analysis-json", deps.exportAnalysisJson],
         ["btn-export-analysis-json-main", deps.exportAnalysisJson],
+        ["btn-export-test-package", () => {
+          try { deps.exportTestPackage?.(); }
+          catch (error) { deps.setStatusNote("Testpakken kunne ikke eksporteres: " + String(error?.message || error)); }
+        }],
         ["btn-reset", reset]
       ].forEach(([id, handler]) => documentRef.getElementById(id)?.addEventListener("click", handler));
       ["btn-export-analysis", "btn-export-analysis-main"].forEach((id) => {
