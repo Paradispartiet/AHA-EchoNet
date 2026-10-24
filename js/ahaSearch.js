@@ -220,7 +220,7 @@
         tags: insight?.tags || base?.tags || insight?.terms || insight?.keywords,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
-        href: "insights.html",
+        href: "insights.html#insight-" + encodeURIComponent(refId),
         meta: { index }
       }));
     });
