@@ -236,16 +236,16 @@
         {
           label: english ? "Examine the observation" : "Undersøk observasjonen",
           question: english
-            ? "How was ’" + findingCue + "’ documented or measured?"
+            ? "How was “" + findingCue + "” documented or measured?"
             : "Hvordan er «" + findingCue + "» dokumentert eller målt?",
           sourceQuote: observation.quote
         },
         {
           label: english ? "Test the limitation" : "Prøv begrensningen",
           question: english
-            ? (limitationMethod ? "Which study design could address ’" + limitCue + "’?" : limitationCause
-              ? "Which alternative explanations matter for ’" + limitCue + "’?"
-              : "Where does the evidence stop for ’" + limitCue + "’?")
+            ? (limitationMethod ? "Which study design could address “" + limitCue + "”?" : limitationCause
+              ? "Which alternative explanations matter for “" + limitCue + "”?"
+              : "Where does the evidence stop for “" + limitCue + "”?")
             : (limitationMethod ? "Hvilken undersøkelse kan avklare «" + limitCue + "»?" : limitationCause
               ? "Hvilke alternative forklaringer må prøves for «" + limitCue + "»?"
               : "Hvor langt rekker dokumentasjonen for «" + limitCue + "»?"),
@@ -254,8 +254,8 @@
         {
           label: comparison ? (english ? "Compare source evidence" : "Sammenlign kildespor") : (english ? "Plan the next source check" : "Planlegg neste kildekontroll"),
           question: comparison
-            ? (english ? "How does ’" + cue(comparison.quote) + "’ change the interpretation?" : "Hvordan endrer «" + cue(comparison.quote) + "» vurderingen?")
-            : (english ? "What new evidence could resolve ’" + limitCue + "’?" : "Hvilken ny kilde kan avklare «" + limitCue + "»?"),
+            ? (english ? "How does “" + cue(comparison.quote) + "” change the interpretation?" : "Hvordan endrer «" + cue(comparison.quote) + "» vurderingen?")
+            : (english ? "What new evidence could resolve “" + limitCue + "”?" : "Hvilken ny kilde kan avklare «" + limitCue + "»?"),
           sourceQuote: comparison ? comparison.quote : limitation.quote
         }
       ];
