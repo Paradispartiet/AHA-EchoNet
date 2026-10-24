@@ -217,7 +217,9 @@
         sourceOverlap: round(bestSourceOverlap(sourceText, value)),
         evidenceIds: bestEvidence && bestEvidence.score >= 0.12 ? [bestEvidence.claim.id] : [],
         evidenceText: bestEvidence && bestEvidence.score >= 0.12 ? bestEvidence.claim.text : "",
-        evidenceStatus: bestEvidence && bestEvidence.score >= 0.12 ? "source_quote" : "missing_direct_evidence",
+        evidenceStatus: canonical.analysisEvidenceStatus === "extractive_only"
+          ? "extractive_only_no_verified_interpretation"
+          : bestEvidence && bestEvidence.score >= 0.12 ? "source_quote" : "missing_direct_evidence",
         confidence: bestEvidence?.score >= 0.45 ? "medium" : "low",
         uncertainty: bestEvidence && bestEvidence.score >= 0.12
           ? "Belegget støtter tolkningen, men avgjør den ikke alene."
@@ -299,6 +301,9 @@
       ? evidence.reduce((sum, claim) => sum + (claim.sourceMatch === "verbatim" ? 1 : claim.sourceOverlap), 0) / evidence.length
       : 0;
     const canonical = payload?.canonicalAnalysis || payload || {};
+    // An exact quotation proves only that words occur in the source.
+    // It must not earn a source-grounding score for an unverified interpretation.
+    if (canonical.analysisEvidenceStatus === "extractive_only") return 0;
     const interpretationValues = [canonical.theme, canonical.mainTension, canonical.keyInsight].filter(Boolean);
     const interpretationScore = interpretationValues.length
       ? interpretationValues.reduce((sum, value) => sum + Math.min(1, bestSourceOverlap(sourceText, value) + 0.2), 0) / interpretationValues.length
@@ -327,6 +332,7 @@
       .filter(([name, minimum]) => Number(dimensions[name] || 0) < Number(minimum))
       .map(([name, minimum]) => ({ dimension: name, score: dimensions[name], minimum }));
     const critical = [];
+    if (canonical.analysisEvidenceStatus === "extractive_only") critical.push("no_verified_main_insight");
     if (!insight) critical.push("missing_key_insight");
     if (!actions.length) critical.push("missing_suggested_action");
     if (!claims.some((claim) => claim.kind === "source_evidence" && claim.sourceMatch === "verbatim")) critical.push("missing_verbatim_source_evidence");
