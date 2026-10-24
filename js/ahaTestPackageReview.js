@@ -30,7 +30,7 @@
     if (p.schema !== SCHEMA) throw new Error("Filen er ikke en AHA-testpakke.");
     const identity = object(p.identity);
     const source = object(p.source);
-    if (!/^[a-f0-9]{64}$/i.test(text(identity.source_sha256)) || !text(identity.analysis_run_id) || !text(source.text)) {
+    if (!/^[a-f0-9]{64}$/i.test(text(identity.source_sha256)) || !text(identity.analysis_run_id) || typeof source.text !== "string" || !text(source.text)) {
       throw new Error("Testpakken mangler kilde, gyldig SHA-256 eller run-ID.");
     }
     const digest = await sha256(source.text, options.subtle);
@@ -57,7 +57,7 @@
   }
 
   function quoteAudit(p) {
-    const src = text(p?.source?.text);
+    const src = typeof p?.source?.text === "string" ? p.source.text : "";
     return array(p?.candidate_audit?.candidates).map((candidate, index) => {
       const quotes = claimedQuotes(candidate).map(quote => ({
         quote,
