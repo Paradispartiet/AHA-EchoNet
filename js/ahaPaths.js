@@ -863,6 +863,14 @@
       }
 
       if (target.hasAttribute("data-path-preview-close")) {
+        // Deep-linked paths must stay closed when the user presses Lukk.
+        if (global.location?.hash?.startsWith("#path-")) {
+          if (global.history?.replaceState && global.location?.pathname) {
+            global.history.replaceState(null, "", global.location.pathname + (global.location.search || ""));
+          } else {
+            global.location.hash = "";
+          }
+        }
         selectedPathId = "";
         render();
         return;
