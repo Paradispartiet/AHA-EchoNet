@@ -7,6 +7,7 @@ const { createChatContext } = require("../scripts/compare-aha-engine-fixtures.cj
 const articles = [
   {
     id: "municipal-digital-access",
+    expectedFinding: "42 fullførte digitale søknader",
     topic: "Kommunal digitalisering",
     text: "En kommune innførte i et prøveprosjekt digital søknad om boligtilpasning. Saksbehandlerne registrerte 42 fullførte digitale søknader på seks uker, men 11 innbyggere oppsøkte biblioteket fordi de ikke kom gjennom identitetskontrollen. Frivillige veiledere hjalp ni av de elleve med å finne en alternativ søknadsvei. Kommunen vurderer å stenge papirskjemaet fordi den digitale behandlingen ser raskere ut. Rapporten sammenligner ikke saksbehandlingstid for ellers like saker, og registreringen omfatter ikke dem som aldri forsøkte å søke. Tallene beskriver bruk i et lite prøveprosjekt, ikke dokumentert effekt for alle innbyggere. Spørsmålet er om digital effektivitet og reell tilgjengelighet blir vurdert med samme målestokk.",
     concepts: ["søknad", "kommune", "digital"],
@@ -14,6 +15,7 @@ const articles = [
   },
   {
     id: "historical-archive-silence",
+    expectedFinding: "protester fra beboere",
     topic: "Historie og kildekritikk",
     text: "Et lokalhistorisk arkiv har møteprotokoller fra en havneutbygging i 1978. Protokollene beskriver bred enighet i kommunestyret. Tre private brev fra samme periode forteller derimot om protester fra beboere som mistet tilgang til brygga. Brevene ble samlet inn førti år senere, og arkivet kan ikke fastslå om avsenderne representerte et flertall av nabolaget. Forskerne sammenligner dokumentenes proveniens, tidspunkt og formål før de beskriver hva materialet kan si om offentlig deltakelse. De finner en spenning mellom den formelle beslutningshistorien og uformelle erfaringer, men har ikke grunnlag for å beregne hvor omfattende motstanden var. Fravær av protest i en møteprotokoll er derfor ikke det samme som bevis for fravær av protest.",
     concepts: ["arkiv", "protokoll", "brev"],
@@ -21,6 +23,7 @@ const articles = [
   },
   {
     id: "botany-drought-experiment",
+    expectedFinding: "lavere bladspenning",
     topic: "Biologi og metode",
     text: "I et veksthus undersøkte en botaniker vanntransport hos atten tomatplanter. Ni planter fikk mindre vann i to uker, mens ni fikk vanlig vanning. I den første gruppen registrerte forskeren lavere bladspenning og mindre vannstrøm gjennom xylem ved målingene. Plantene stod på forskjellige benker, og temperaturforskjeller mellom benkene ble ikke målt. Rapporten beskriver samtidig variasjon i røttenes størrelse. Materialet støtter en sammenheng mellom behandlingsgruppe og registrert vanntransport, men forsøket er for lite og for svakt kontrollert til å fastslå at vanning alene forklarte alle forskjellene. Funnene begrunner mer kontrollerte undersøkelser av tørkestress, ikke en generell lov om avlingssvikt.",
     concepts: ["xylem", "vanntransport", "planter"],
@@ -28,6 +31,7 @@ const articles = [
   },
   {
     id: "education-retrieval-practice",
+    expectedFinding: "flere nøkkelbegreper",
     topic: "Læring og forskningsdesign",
     text: "Ved en skole sammenlignet lærere to måter å arbeide med samme historiekapittel på. Av 48 elever valgte 23 å lese teksten flere ganger, mens 25 foretrakk korte egenprøver mellom lesingene. Begge gruppene brukte omtrent like lang tid. Etter én uke husket gruppen med egenprøver i gjennomsnitt flere nøkkelbegreper, selv om flere av dem beskrev øktene som mer krevende. Elevene hadde selv valgt metode, og lærerne målte ikke forkunnskaper eller motivasjon før forsøket. Resultatet viser en observert forskjell i dette utvalget, men kan ikke alene bevise at egenprøving forårsaket forskjellen. Rapporten foreslår en ny studie med tilfeldig gruppefordeling.",
     concepts: ["læring", "elever", "egenprøver"],
@@ -35,6 +39,7 @@ const articles = [
   },
   {
     id: "politics-platform-conflict",
+    expectedFinding: "Antall kommentarer økte",
     topic: "Demokrati og digitale plattformer",
     text: "Et forskerteam undersøkte politiske diskusjoner på en lokal nettplattform i seks uker. De registrerte 120 innlegg og kodet om innleggene inneholdt dokumentasjon, uenighet eller personangrep. Antall kommentarer økte etter at plattformen begynte å prioritere innlegg med mange reaksjoner, samtidig som færre av innleggene viste til kontrollerbare kilder. Endringen skjedde midt under en omstridt lokal planprosess, og forskerne kan ikke skille algoritmens virkning fra økt politisk engasjement. Intervjuer med seks brukere avdekket både opplevd synlighet og uro for hardere debatt. Materialet viser en tidsmessig samvariasjon, ikke at plattformens prioritering alene skapte polarisering.",
     concepts: ["politisk", "plattform", "kilder"],
@@ -54,6 +59,19 @@ for (const article of articles) {
   const payload = hooks.buildAutoOutputs(article.text, "");
   const canonical = hooks.buildCanonicalAnalysis(payload, article.text);
   assert.ok(canonical && typeof canonical === "object", article.id + " missing canonical result");
+  const brief = canonical.sourceResearchBrief;
+  assert.equal(brief?.status, "source_bound_review", article.id + ": missing article-specific research brief");
+  assert.equal(brief?.verifiedInterpretation, false, article.id + ": quote must not count as verified synthesis");
+  assert.ok(article.text.includes(brief.observation?.quote), article.id + ": observation must occur verbatim in the source");
+  assert.ok(article.text.includes(brief.limitation?.quote), article.id + ": limitation must occur verbatim in the source");
+  assert.notEqual(brief.observation.quote, brief.limitation.quote, article.id + ": do not duplicate evidence and limitations");
+  assert.ok(brief.observation.quote.includes(article.expectedFinding),
+    article.id + ": extracted observation must prioritize the substantive finding, not context or method");
+  assert.ok(brief.nextChecks?.length >= 2, article.id + ": source review needs a useful short path");
+  assert.ok(article.concepts.some((term) =>
+    (brief.observation.quote + " " + brief.limitation.quote).toLowerCase().includes(term.toLowerCase())
+  ), article.id + ": research brief lacks its own topic");
+  if (brief.contrastingEvidence) assert.ok(article.text.includes(brief.contrastingEvidence.quote));
   payload.canonicalAnalysis = canonical;
   const quality = evaluator.evaluateAnalysis(payload, article.text);
   // A source quotation must not be promoted to a verified scientific insight.
@@ -76,6 +94,8 @@ for (const article of articles) {
     theme: canonical.theme || null,
     tension: canonical.mainTension || null,
     insight: canonical.keyInsight || null,
+    source_brief_observation: brief?.observation?.quote || null,
+    source_brief_limitation: brief?.limitation?.quote || null,
     next_steps: (canonical.suggestedActions || []).slice(0, 3),
     warnings: (canonical.warnings || []).slice(0, 3),
     confidence: canonical.confidence || null,

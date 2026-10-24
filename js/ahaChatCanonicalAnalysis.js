@@ -173,6 +173,55 @@
       return text.length < 160 && containsAny(text, ["vet ikke", "klarer ikke forklare"]);
     }
 
+    // A cautious source-navigation layer for unfamiliar documents. It does not
+    // infer causality, verify claims, or claim to be an LLM interpretation.
+    // Every displayed finding or limitation is a verbatim span of this source.
+    function buildSourceResearchBrief(sourceText) {
+      const source = String(sourceText || "");
+      const sentences = source.replace(/\s+/g, " ").trim()
+        .split(/(?<=[.!?])\s+/u).map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length >= 35 && sentence.length <= 650 && source.includes(sentence));
+      const scored = sentences.map((quote, index) => {
+        const observation = /(?<![\p{L}\p{N}])(?:registrerte|registrert|fant|observerte|funnene (?:viser|støtter)|resultatet viser|materialet viser|husket|økte|avdekket|forteller|beskriver|viste|synliggjorde|målte|målingene)(?![\p{L}\p{N}])/iu.test(quote);
+        const contrast = /(derimot|mens|samtidig|i motsetning|på den andre siden)/i.test(quote);
+        const uncertainty = /(kan ikke|ikke alene|ikke det samme|ikke dokumentert|ikke grunnlag|ikke målt|ikke sammenlign|for lite|svakt kontroll|ikke fastslå|ikke bevise|ikke skille|ikke en generell|registreringen omfatter ikke)/i.test(quote);
+        const caveat = /(selv valgt|selvvalgt|uten kontroll|forskjellige benker|ikke tilfeldig|usikkert|begrenset utvalg|mangler|ukjent|usikkerhet)/i.test(quote);
+        // Directly reported observations outrank generic report descriptions.
+        const directObservation = /(?<![\p{L}\p{N}])(?:registrerte|observerte|fant|husket|økte|avdekket|målte|forteller|rapporterte)(?![\p{L}\p{N}])/iu.test(quote);
+        const methodOnly = /^(?:rapporten beskriver|studien beskriver)/i.test(quote);
+        const evidenceScore = (observation ? 8 : 0) + (directObservation ? 6 : 0)
+          + (contrast ? 5 : 0) + (/\d/.test(quote) ? 2 : 0)
+          - (methodOnly ? 6 : 0) - (uncertainty ? 5 : 0) - (caveat ? 2 : 0);
+        const limitationScore = (uncertainty ? 9 : 0) + (caveat ? 6 : 0)
+          + (/(?:fastslå|ikke bevise|ikke alene|ikke skille|ikke grunnlag|ikke dokumentert)/i.test(quote) ? 4 : 0)
+          + (/(?:men|fordi|likevel)/i.test(quote) ? 2 : 0);
+        return { quote, index, evidenceScore, limitationScore, contrast };
+      });
+      const by = (key, excluded = new Set()) => scored
+        .filter((item) => !excluded.has(item.index) && item[key] > 0)
+        .sort((a, b) => b[key] - a[key] || a.index - b.index)[0] || null;
+      const observation = by("evidenceScore");
+      const limitation = by("limitationScore", new Set(observation ? [observation.index] : []));
+      const comparison = scored
+        .filter((item) => item.contrast && item.index !== observation?.index && item.index !== limitation?.index)
+        .sort((a, b) => b.evidenceScore - a.evidenceScore || a.index - b.index)[0] || null;
+      // Do not fill empty fields with generic or cross-domain content.
+      if (!observation || !limitation || observation.quote === limitation.quote) return null;
+      return {
+        status: "source_bound_review",
+        observation: { label: "Det kilden rapporterer", quote: observation.quote, sourceSentence: observation.index },
+        limitation: { label: "Det kilden ikke avklarer", quote: limitation.quote, sourceSentence: limitation.index },
+        ...(comparison ? { contrastingEvidence: { label: "Et annet spor i materialet", quote: comparison.quote, sourceSentence: comparison.index } } : {}),
+        nextChecks: [
+          "Kontroller hvordan observasjonen er dokumentert i kilden.",
+          "Undersøk om metodebegrensningen kan endre tolkningen av funnet.",
+          "Skill mellom registrert sammenheng og en eventuell årsaksforklaring."
+        ],
+        warnings: ["Dette er et kildebundet arbeidsutdrag, ikke en selvstendig faglig konklusjon."],
+        verifiedInterpretation: false
+      };
+    }
+
     // Unknown subjects must never inherit a canned interpretation from a different article.
     // This is an explicitly marked source quote, not a generated scientific insight.
     function buildSourceBoundAbstention(sourceText) {
@@ -299,6 +348,7 @@
       const recommendations = buildDeterministicRecommendations(contentType, domain, sourceText);
       const confidenceAndWarnings = buildDeterministicConfidence(contentType, domain, sourceText);
       const extractiveOnly = semanticSummary.analysisEvidenceStatus === "extractive_only";
+      const sourceResearchBrief = extractiveOnly ? buildSourceResearchBrief(sourceText) : null;
       const warnings = extractiveOnly
         ? ["Kun et ordrett utdrag er hentet fra teksten. Ingen faglig hovedinnsikt er verifisert av lokal analyse."]
         : confidenceAndWarnings.warnings;
@@ -319,6 +369,7 @@
         confidence,
         warnings,
         ...(extractiveOnly ? { analysisEvidenceStatus: "extractive_only" } : {}),
+        ...(sourceResearchBrief ? { sourceResearchBrief } : {}),
         ahaSer: canonicalSer,
         reflection: String(safePayload?.reflection || canonicalSer?.viktigsteInnsikt || "").trim(),
         summary: String(safePayload?.day || "").trim(),

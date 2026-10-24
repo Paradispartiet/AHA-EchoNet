@@ -357,6 +357,34 @@
       }));
     }
 
+    function buildSourceResearchBriefMarkup(payload, sourceText) {
+      const brief = payload?.canonicalAnalysis?.sourceResearchBrief;
+      const source = String(sourceText || "");
+      if (
+        payload?.canonicalAnalysis?.analysisEvidenceStatus !== "extractive_only"
+        || brief?.status !== "source_bound_review"
+        || brief?.verifiedInterpretation !== false
+      ) return "";
+      const observation = String(brief.observation?.quote || "").trim();
+      const limitation = String(brief.limitation?.quote || "").trim();
+      if (!source || !observation || !limitation || observation === limitation
+        || !source.includes(observation) || !source.includes(limitation)) return "";
+      const contrast = String(brief.contrastingEvidence?.quote || "").trim();
+      const otherSource = contrast && source.includes(contrast) ? contrast : "";
+      const steps = (Array.isArray(brief.nextChecks) ? brief.nextChecks : []).slice(0, 3);
+      return `<section class="auto-output-group" data-group="source-research-brief">
+        <h3>Kildebasert forskningsutdrag</h3>
+        <article class="auto-card" data-auto-card="source-research-brief">
+          <p><strong>Arbeidsutdrag – ikke godkjent faglig innsikt.</strong> Utdragene under er hentet ordrett fra den aktive teksten.</p>
+          <p><strong>Rapportert observasjon:</strong> «${safeMarkupText(observation)}»</p>
+          <p><strong>Metode eller begrensning:</strong> «${safeMarkupText(limitation)}»</p>
+          ${otherSource ? `<p><strong>Et annet spor i materialet:</strong> «${safeMarkupText(otherSource)}»</p>` : ""}
+          ${steps.length ? `<h4>Kontroller videre</h4><ol>${steps.map((step) => `<li>${safeMarkupText(step)}</li>`).join("")}</ol>` : ""}
+          <p><strong>Usikkerhet:</strong> Dette er kildeutdrag og kontrollspørsmål, ikke en selvstendig eller verifisert tolkning.</p>
+        </article>
+      </section>`;
+    }
+
     function buildClaimEvidenceMarkup(payload) {
       const claims = (Array.isArray(payload?.analysisQuality?.claims) ? payload.analysisQuality.claims : [])
         .filter((claim) => claim?.kind === "interpretation");
@@ -506,6 +534,7 @@
         deps.setExportButtonsEnabled(false);
         return;
       }
+      const researchBriefMarkup = buildSourceResearchBriefMarkup(payload, host.dataset.sourceText || "");
       const bundleStatus = String(payload?.analysisBundleV2?.status || "");
       const bundleReasons = Array.isArray(payload?.analysisBundleV2?.quality?.reasons)
         ? payload.analysisBundleV2.quality.reasons.filter(Boolean)
@@ -524,7 +553,7 @@
           <section class="auto-output-group auto-output-primary" data-group="quality-gate">
             <h3>AHA-analysen er blokkert</h3>
             <article class="auto-card auto-card-primary"><p>${safeMarkupText(reasons)}</p><p><strong>Ingen analysepåstander vises som kvalitetssikret før kjernen er klar.</strong></p></article>
-          </section>${deps.renderAnalysisDebugPanel(payload)}`;
+          </section>${researchBriefMarkup}${deps.renderAnalysisDebugPanel(payload)}`;
         deps.setExportButtonsEnabled(true);
         deps.refreshAhaExplorer();
         return;
@@ -547,6 +576,7 @@
             <article class="auto-card auto-card-primary"><p>${safeMarkupText(withheldCount ? `${withheldCount} felt er holdt tilbake av kvalitetssperren.` : "Ufullstendige felt er holdt tilbake av kvalitetssperren.")}</p></article>
           </section>
           ${verifiedClaims.length ? `<section class="auto-output-group" data-group="verified-claims"><h3>Kildeverifiserte funn</h3><div class="auto-output-grid">${verifiedClaims.map(([label, value]) => `<article class="auto-card"><h4>${safeMarkupText(label)}</h4><p>${safeMarkupText(value)}</p></article>`).join("")}</div></section>` : `<section class="auto-output-group"><article class="auto-card"><p><strong>Ingen analysepåstander er kvalitetssikret ennå.</strong></p></article></section>`}
+          ${researchBriefMarkup}
           ${deps.renderAnalysisDebugPanel(payload)}`;
         deps.setExportButtonsEnabled(true);
         deps.refreshAhaExplorer();
@@ -557,11 +587,12 @@
           <section class="auto-output-group auto-output-primary" data-group="quality-gate">
             <h3>AHA trenger mer grunnlag</h3>
             <article class="auto-card auto-card-primary"><p>${safeMarkupText(payload.qualityGate.message)}</p><p><strong>Ingen analysepåstander er lagret eller vist som kvalitetssikret.</strong></p></article>
-          </section>${deps.renderAnalysisDebugPanel(payload)}`;
+          </section>${researchBriefMarkup}${deps.renderAnalysisDebugPanel(payload)}`;
         deps.setExportButtonsEnabled(false);
         deps.refreshAhaExplorer();
         return;
       }
+      const supplementalResearchBrief = researchBriefMarkup;
       const safeSortItems = safeMarkupSortItems(payload.sortItems);
       const safeList = safeMarkupList(payload.list);
       const safeInsightCards = safeMarkupList(payload.insightCards);
@@ -597,6 +628,7 @@
             ${buildClaimEvidenceMarkup(payload)}
           </article>
         </section>
+        ${supplementalResearchBrief}
         <section class="auto-output-group" data-group="samtale">
           <h3>Samtale</h3>
           <div class="auto-output-grid">
