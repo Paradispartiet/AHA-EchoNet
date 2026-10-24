@@ -42,6 +42,25 @@ async function evaluateResearchSynthesis(item, synthesis) {
       error.includes("not_causal_contains_causal_language"));
     candidateResults.push({
       insight: String(candidate?.insight || "").slice(0, 600),
+      abstraction: String(candidate?.abstraction || "").slice(0, 1500),
+      why_it_matters: String(candidate?.why_it_matters || "").slice(0, 1500),
+      uncertainty_text: String(candidate?.uncertainty || "").slice(0, 1500),
+      type: String(candidate?.type || "").slice(0, 80),
+      confidence: String(candidate?.confidence || "").slice(0, 80),
+      evidence_review_material: evidence.map((entry) => ({
+        quote: String(entry?.quote || "").slice(0, 1000),
+        role: String(entry?.role || "").slice(0, 80),
+        exact_in_supplied_excerpt: typeof entry?.quote === "string" &&
+          entry.quote.length > 0 && source.includes(entry.quote)
+      })),
+      human_quality_review: {
+        status: "pending",
+        scientific_accuracy: null,
+        nontrivial_knowledge_gain: null,
+        non_paraphrase: null,
+        useful_followup_question: null,
+        reviewer_notes: null
+      },
       causal_status: String(candidate?.causal_status || ""),
       contract_valid: validation.ok,
       validation_errors: validation.errors,
@@ -70,6 +89,8 @@ async function evaluateResearchSynthesis(item, synthesis) {
     source_doi: item.doi,
     source_scope: "short_noncontiguous_verbatim_excerpts_not_full_paper",
     source_sha256: fingerprint(source),
+    provided_observation: item.observation,
+    provided_limitation: item.limitation,
     candidate_count: candidateResults.length,
     contract_valid_count: contractValid,
     grounded_candidate_count: grounded,
