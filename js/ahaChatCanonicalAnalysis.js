@@ -182,7 +182,8 @@
         .map((sentence, index) => ({
           sentence,
           index,
-          score: (/(?:kan ikke|ikke alene|ikke det samme|ikke dokumentert|for lite|ikke grunnlag|men forsøket|materialet viser|resultatet viser|rapporten)/i.test(sentence) ? 3 : 0)
+          score: (/(?:kan ikke|ikke alene|ikke det samme|ikke dokumentert|for lite|ikke grunnlag|men forsøket|sammenligner ikke|ikke målt|ikke bevis|ikke påvist)/i.test(sentence) ? 5 : 0)
+            + (/(?:materialet (?:viser|støtter)|resultatet viser|funnene viser|registrerte|registrert|forskerne fant)/i.test(sentence) ? 2 : 0)
             + (/(?:forsker|kild|rapport|forsøk|måling|registr|samvariasjon|sammenlign)/i.test(sentence) ? 1 : 0)
             + Math.min(1, sentence.length / 180)
         }))
