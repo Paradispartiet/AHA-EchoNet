@@ -296,8 +296,18 @@
   }
 
   function updateSearchResultsVisibility() {
+    const searching = hasActiveSearch();
     const panel = doc?.getElementById?.("search-results-panel");
-    if (panel) panel.hidden = !hasActiveSearch();
+    if (panel) panel.hidden = !searching;
+    // Browse and search are two views of the same local material.
+    // Avoid showing one insight in both the recent panel and search results.
+    const recentPanel = doc?.getElementById?.("search-library-recent")?.closest?.("section");
+    if (recentPanel) recentPanel.hidden = searching;
+    const relatedPanel = doc?.getElementById?.("search-library-related-panel");
+    if (relatedPanel) {
+      const hasSeed = Boolean(currentModel?.items?.some((item) => item.id === relatedToId));
+      relatedPanel.hidden = searching || !hasSeed;
+    }
   }
 
   function handleSearchUiChange() {
