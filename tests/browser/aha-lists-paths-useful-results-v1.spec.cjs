@@ -46,9 +46,9 @@ test("Concept lists support editorial corrections and meaningful relations", asy
   await expect(page.locator(".aha-concept-terms")).toContainText("Politisk makt forankret i folket.");
   await page.locator("[data-org-concept-to-path]").click();
   await expect(page.locator(".aha-org-flow-status")).toContainText("Kunnskapsstien er opprettet");
-  await page.locator(".aha-org-flow-status a[href='paths.html']").click();
+  await page.locator(".aha-org-flow-status a[href^='paths.html#path-']").click();
   await expect(page.locator("#paths-count")).toHaveText("1");
-  await page.locator("[data-path-select-preview]").first().click();
+  await expect(page.locator("#path-preview-title")).toContainText("Demokrati");
   await expect(page.locator(".aha-path-step-row")).toContainText("Demokrati");
 });
 
