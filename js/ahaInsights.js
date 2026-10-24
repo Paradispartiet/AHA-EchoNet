@@ -116,7 +116,10 @@
 
   function getInsights() {
     const chamber = loadChamber();
-    const items = asArray(chamber?.insights).slice();
+    const items = asArray(chamber?.insights).map((insight, archiveIndex) => ({
+      ...insight,
+      __ahaArchiveIndex: archiveIndex
+    }));
     items.sort((a, b) => ts(b) - ts(a));
     return items;
   }
@@ -196,7 +199,7 @@
   }
 
   function getInsightRefId(insight, index) {
-    return asText(insight?.id || insight?.base?.id || insight?.source_event_id || insight?.sourceEventId || insight?.source_id || insight?.sourceId || insight?.event_id || insight?.eventId, `insight_idx_${index}`);
+    return asText(insight?.id || insight?.base?.id, `insight_idx_${Number.isInteger(insight?.__ahaArchiveIndex) ? insight.__ahaArchiveIndex : index}`);
   }
 
   function getInsightTitle(insight) {
