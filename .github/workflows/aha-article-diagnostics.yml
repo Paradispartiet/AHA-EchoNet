@@ -1,0 +1,24 @@
+name: AHA article diagnostic samples
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - tests/aha-five-synthetic-articles-diagnostic.test.cjs
+      - .github/workflows/aha-article-diagnostics.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-articles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Run five local AHA article examples
+        run: node tests/aha-five-synthetic-articles-diagnostic.test.cjs
