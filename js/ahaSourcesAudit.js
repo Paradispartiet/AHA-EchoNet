@@ -24,7 +24,10 @@
   }
 
   function getInsightSourceEventId(insight) {
-    return textOf(insight?.source_event_id || insight?.meta?.source_event_id || insight?.sourceEventId || insight?.source_event?.id);
+    return textOf(insight?.source_event_id || insight?.meta?.source_event_id || insight?.sourceEventId || insight?.meta?.sourceEventId || insight?.source_event?.id);
+  }
+  function getEventId(event) {
+    return textOf(event?.id || event?.event_id || event?.source_event_id);
   }
   function getInsightTime(insight) {
     return textOf(insight?.created_at || insight?.createdAt || insight?.timestamp || insight?.updated_at || insight?.meta?.created_at);
@@ -68,16 +71,12 @@
     const events = rawEvents.map((event) => {
       const text = textOf(event?.text);
       const title = textOf(event?.title);
-      const explicitLinks = insightBySource.get(textOf(event?.id)) || [];
-      const fallbackLinks = insightsWithoutSourceEventId.filter((insight) => {
-        const sameType = insight.source_type && insight.source_type === textOf(event?.source_type || "unknown");
-        const sameApp = insight.source_app && insight.source_app === textOf(event?.source_app || "unknown");
-        const sameImportSource = insight.import_source && insight.import_source === textOf(event?.source_app || "unknown");
-        return sameType && (sameApp || sameImportSource);
-      });
-      const linkedInsights = explicitLinks.concat(fallbackLinks);
+      // App/type equality is not evidence of provenance: two unrelated events
+      // may share both fields. Only an explicit exact source-event ID counts.
+      const eventId = getEventId(event);
+      const linkedInsights = eventId ? (insightBySource.get(eventId) || []) : [];
       return {
-        id: textOf(event?.id), source_type: textOf(event?.source_type || "unknown"), source_app: textOf(event?.source_app || "unknown"), content_type: textOf(event?.content_type || "text"), title,
+        id: eventId, source_type: textOf(event?.source_type || "unknown"), source_app: textOf(event?.source_app || "unknown"), content_type: textOf(event?.content_type || "text"), title,
         text_length: text.length, user_created: event?.user_created !== false, imported: event?.imported === true, local_only: event?.local_only === true || event?.meta?.local_only === true,
         created_at: textOf(event?.created_at), tags: safeArray(event?.tags), meta: safeObject(event?.meta), has_text: Boolean(text), has_title: Boolean(title), is_empty_text_candidate: !text,
         linked_insights: linkedInsights, has_insight: linkedInsights.length > 0, preview: title || text.slice(0, 120) || "(tom tekst)"
