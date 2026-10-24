@@ -1028,6 +1028,15 @@
       }
 
       if (target.hasAttribute("data-list-preview-close")) {
+        // Clear a deep link before rendering, or the selected collection
+        // is reopened immediately and the Close button appears broken.
+        if (global.location?.hash?.startsWith("#list-")) {
+          if (global.history?.replaceState && global.location?.pathname) {
+            global.history.replaceState(null, "", global.location.pathname + (global.location.search || ""));
+          } else {
+            global.location.hash = "";
+          }
+        }
         selectedListId = "";
         render();
         return;
