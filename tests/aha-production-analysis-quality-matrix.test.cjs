@@ -253,7 +253,17 @@ vm.runInNewContext(read('js/ahaSubjectEngine.js'), subjectContext, { filename: '
     assert.ok(payload.ahaSer?.viktigsteInnsikt, `${item.id}: AHA Ser insight missing`);
     assert.ok(payload.canonicalAnalysis?.keyInsight, `${item.id}: canonical key insight missing`);
     assert.ok(payload.analysisQuality, `${item.id}: analysis quality report missing`);
-    assert.notEqual(payload.analysisQuality.status, 'blocked', `${item.id}: production analysis hit a critical quality block`);
+    if (payload.canonicalAnalysis.analysisEvidenceStatus === 'extractive_only') {
+      // The local deterministic engine may provide only a source excerpt.
+      // That is useful for source navigation but never a validated interpretation.
+      assert.equal(payload.analysisQuality.status, 'blocked', `${item.id}: unverified local interpretation must fail closed`);
+      assert.ok(payload.analysisQuality.critical.includes('no_verified_main_insight'), `${item.id}: missing explicit abstention reason`);
+      assert.equal(payload.analysisQuality.dimensions.sourceGrounding, 0, `${item.id}: verbatim citations cannot prove the interpretation`);
+      const match = /^Kildesitat \(ikke selvstendig innsikt\): «([\s\S]+)»$/u.exec(payload.canonicalAnalysis.keyInsight);
+      assert.ok(match && sourceContains(item.sourceText, match[1]), `${item.id}: abstention must contain a verbatim source excerpt`);
+    } else {
+      assert.notEqual(payload.analysisQuality.status, 'blocked', `${item.id}: supported analysis hit a critical quality block`);
+    }
     assert.ok(Array.isArray(payload.sortItems) && payload.sortItems.length >= 3, `${item.id}: structured source analysis missing`);
     payload.sortItems.forEach((field) => {
       assert.equal(sourceContains(item.sourceText, field.text), true, `${item.id}: structured field is not a verbatim source sentence: ${field.label}`);
