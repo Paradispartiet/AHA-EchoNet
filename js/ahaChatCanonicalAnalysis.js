@@ -325,7 +325,13 @@
       if (isLegalText(text)) return { theme: "forholdsmessighet som rettslig avveiningsnorm", mainTension: "offentlig myndighetsutøvelse kontra individvern", keyInsight: "Teksten framhever at forholdsmessighet avhenger av om mindre inngripende alternativer er reelt tilgjengelige." };
       if (isPinseText(text)) return { theme: "pinse som teologisk og kulturell markør", mainTension: "balansen mellom religiøs betydning og samfunnsmessig tradisjon", keyInsight: "Teksten viser hvordan pinse fungerer både som trosfortelling og som sosialt tidsanker." };
       if (isUnclearFragment(text)) return { theme: "uklar problemforståelse uten tydelig kontekst", mainTension: "opplevd sammenheng kontra manglende konkretisering", keyInsight: "Teksten uttrykker en mulig frustrasjon, men gir for få holdepunkter til sikker tematisk eller faglig analyse." };
-      if (String(sourceText || "").trim().length >= 320) return buildSourceBoundAbstention(sourceText);
+      // Short unfamiliar research excerpts also need extractive-only abstention:
+      // do not replace a real source observation with a generic canned claim.
+      const articleBrief = buildSourceResearchBrief(sourceText);
+      const researchSignal = /\b(?:researchers?|study|survey|participants?|authors?|forskerne|studien|materialet|undersøkelsen)\b/i.test(String(sourceText || ""));
+      if (String(sourceText || "").trim().length >= 320 || (articleBrief && researchSignal)) {
+        return buildSourceBoundAbstention(sourceText);
+      }
       return { theme: "usikker årsaksforståelse", mainTension: "behov for forklaring kontra manglende spesifisitet", keyInsight: "Teksten uttrykker frustrasjon, men gir for få konkrete holdepunkter til sikker klassifisering." };
     }
 
