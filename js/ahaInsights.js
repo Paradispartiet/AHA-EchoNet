@@ -635,6 +635,7 @@
     </article>`;
   }
 
+  let pendingDeepLink = true;
   function render() {
     const chamber = loadChamber();
     const sourceEvents = loadSourceEvents();
@@ -675,7 +676,8 @@
 
     renderMeta(chamber);
     // Follow exact local references without replacing or silently changing data.
-    if (global.location?.hash?.startsWith("#insight-")) {
+    if (pendingDeepLink && global.location?.hash?.startsWith("#insight-")) {
+      pendingDeepLink = false;
       let ref = "";
       try { ref = decodeURIComponent(global.location.hash.slice("#insight-".length)); } catch {}
       const id = "insight-" + encodeURIComponent(ref);
@@ -703,6 +705,7 @@
     if (refreshBtn) refreshBtn.addEventListener("click", refresh);
     if (search) search.addEventListener("input", render);
     if (filter) filter.addEventListener("change", render);
+    global.addEventListener?.("hashchange", () => { pendingDeepLink = true; render(); });
     document.getElementById("insights-list")?.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
