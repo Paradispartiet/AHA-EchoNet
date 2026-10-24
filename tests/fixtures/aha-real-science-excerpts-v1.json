@@ -1,0 +1,41 @@
+[
+  {
+    "id": "norway-green-space-2024",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11007904/",
+    "doi": "10.1186/s12877-024-04738-3",
+    "subject": "public health / association",
+    "observation": "Access to green space was associated with both higher odds of low mental distress",
+    "limitation": "though the causal pathways are not completely clear",
+    "topic_terms": [
+      "green space",
+      "mental distress"
+    ],
+    "source_scope": "short_noncontiguous_verbatim_excerpts"
+  },
+  {
+    "id": "cross-sectional-methods-2026",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/41487096/",
+    "doi": "10.1111/jre.70063",
+    "subject": "epidemiology / study design",
+    "observation": "These studies serve multiple epidemiological purposes",
+    "limitation": "they have limited utility for causal inference",
+    "topic_terms": [
+      "studies",
+      "causal inference"
+    ],
+    "source_scope": "short_noncontiguous_verbatim_excerpts"
+  },
+  {
+    "id": "carabid-restoration-2023",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9905558/",
+    "doi": "10.1038/s41598-023-28628-7",
+    "subject": "ecology / restoration",
+    "observation": "positively related to insect abundance and diversity",
+    "limitation": "it remains open if increased plant diversity can help to recover decreased populations",
+    "topic_terms": [
+      "plant diversity",
+      "insect"
+    ],
+    "source_scope": "short_noncontiguous_verbatim_excerpts"
+  }
+]
