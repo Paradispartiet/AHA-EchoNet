@@ -121,7 +121,9 @@ assert.throws(()=>api.buildAhaTestPackage(deps,()=>({...bundle,analysisRunId:""}
 const html=fs.readFileSync(path.join(root,"chat.html"),"utf8");
 const ui=fs.readFileSync(path.join(root,"js/ahaChatUiRuntime.js"),"utf8");
 const composition=fs.readFileSync(path.join(root,"js/ahaChatRuntimeComposition.js"),"utf8");
-assert.match(html,/id="btn-export-test-package"/);
+assert.doesNotMatch(html,/id="btn-export-test-package"/, "Protected Chat HTML must remain unchanged");
+assert.match(ui,/button\.id = "btn-export-test-package"/);
+assert.match(ui,/ensureTestPackageButton\(\)/);
 assert.match(ui,/btn-export-test-package/);
 assert.match(composition,/exportTestPackage: exportRuntime.exportAhaTestPackage/);
 console.log("AHA one-run test package: source hash, run identity, rejected candidates, local records, privacy and download passed.");
