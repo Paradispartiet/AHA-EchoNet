@@ -534,6 +534,7 @@
         deps.setExportButtonsEnabled(false);
         return;
       }
+      const researchBriefMarkup = buildSourceResearchBriefMarkup(payload, host.dataset.sourceText || "");
       const bundleStatus = String(payload?.analysisBundleV2?.status || "");
       const bundleReasons = Array.isArray(payload?.analysisBundleV2?.quality?.reasons)
         ? payload.analysisBundleV2.quality.reasons.filter(Boolean)
@@ -581,7 +582,6 @@
         deps.refreshAhaExplorer();
         return;
       }
-      const researchBriefMarkup = buildSourceResearchBriefMarkup(payload, host.dataset.sourceText || "");
       if (payload?.qualityGate?.suppressClaims === true) {
         host.innerHTML = `<div class="auto-output-head"><h2>AHA etterarbeid</h2><p>Automatisk analyse av siste melding og svar.</p></div>
           <section class="auto-output-group auto-output-primary" data-group="quality-gate">
