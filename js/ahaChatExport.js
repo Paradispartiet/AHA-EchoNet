@@ -930,6 +930,174 @@ ${"```"}
 `;
   }
 
+
+  // Explicit, read-only export for ONE active analysis run. Stored records
+  // without both a matching SHA-256 and run id are never silently attached.
+  function buildAhaTestPackage(deps = {}, bundleBuilder) {
+    const bundle = typeof bundleBuilder === "function" ? bundleBuilder() : buildCurrentExportBundle(deps);
+    const sourceText = String(bundle?.sourceText || "");
+    const sha = String(bundle?.source_sha256 || bundle?.sourceSha256 || bundle?.sourceTextHash || "");
+    const runId = String(bundle?.analysisRunId || bundle?.runId || "");
+    const actual = sourceText && typeof deps.sourceHash === "function" ? String(deps.sourceHash(sourceText)) : "";
+    if (!sourceText.trim() || !/^[a-f0-9]{64}$/i.test(sha) || sha !== actual || !runId) {
+      throw new Error("Testpakken krever en kildebundet, aktiv analyse med gyldig SHA-256 og run-ID.");
+    }
+    const identity = {
+      analysis_id: String(bundle.analysisId || bundle.activeRun?.analysisId || ""),
+      analysis_run_id: runId,
+      source_id: String(bundle.sourceId || bundle.activeRun?.sourceId || ""),
+      source_sha256: sha,
+      created_at: String(bundle.createdAt || bundle.activeRun?.createdAt || "")
+    };
+    const store = deps.storage || global.localStorage;
+    function read(key, fallback) {
+      try {
+        const raw = store?.getItem?.(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    const obj = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const arr = (value) => Array.isArray(value) ? value : [];
+    const str = (value) => String(value == null ? "" : value).trim();
+    const sourceOf = (value) => str(value?.source_sha256 || value?.sourceSha256 || value?.sourceTextHash || value?.sourceHash || value?.sourceFingerprint);
+    const runOf = (value) => str(value?.analysis_run_id || value?.analysisRunId || value?.runId);
+    const matches = (value) => runOf(value) === runId && sourceOf(value) === sha;
+    const candidateFields = [
+      "id", "title", "summary", "text", "type", "claim_kind", "uncertainty",
+      "uncertainty_text", "confidence", "why_it_matters", "next_test",
+      "evidence_quotes", "evidence", "evidence_origin", "concepts",
+      "quality_score", "candidate_quality", "rejection_reason"
+    ];
+    function candidateSnapshot(value) {
+      const entry = obj(value);
+      return Object.fromEntries(candidateFields.filter((key) => Object.prototype.hasOwnProperty.call(entry, key))
+        .map((key) => [key, safeSerializeForExport(entry[key])]));
+    }
+    // The auto cache retains only the latest analysis, not every past model call.
+    const auto = obj(deps.loadAutoOutputs?.());
+    const payload = obj(auto.payload);
+    const cacheMatches = matches(auto) && matches(payload)
+      && String(auto.sourceText || "") === sourceText;
+    const candidates = cacheMatches && Array.isArray(payload.insightCandidatesV2)
+      ? payload.insightCandidatesV2.map(candidateSnapshot) : [];
+    const runtimeTrace = cacheMatches && payload.analysisRuntime
+      ? safeSerializeForExport(payload.analysisRuntime) : null;
+    // Historical afterwork with the same article but a different run is excluded.
+    const afterwork = arr(deps.loadAfterworkEntries?.()).filter((entry) =>
+      matches(entry) && (!entry.sourceText || String(entry.sourceText) === sourceText));
+    const sourceEvents = arr(read("aha_source_events_v1", [])).filter((entry) =>
+      identity.source_id && str(entry?.id) === identity.source_id && str(entry?.text) === sourceText)
+      .map((entry) => ({
+        id: str(entry.id),
+        title: str(entry.title),
+        text: str(entry.text),
+        source_type: str(entry.source_type),
+        content_type: str(entry.content_type),
+        source_app: str(entry.source_app),
+        created_at: str(entry.created_at),
+        tags: arr(entry.tags)
+      }));
+    const chamber = obj(read("aha_insight_chamber_v1", {}));
+    const storedInsights = arr(chamber.insights).filter(matches).map((entry) => safeSerializeForExport(entry));
+    const paths = arr(read("aha_paths_v1", [])).filter((entry) =>
+      !entry.deletedAt && !entry.deleted_at && matches(entry?.meta)).map((entry) => safeSerializeForExport(entry));
+    const missing = [];
+    if (!cacheMatches) missing.push("candidate_cache_not_bound_to_active_run");
+    if (cacheMatches && !Array.isArray(payload.insightCandidatesV2)) missing.push("candidate_list_not_recorded");
+    if (!runtimeTrace) missing.push("model_runtime_trace_not_recorded");
+    if (!afterwork.length) missing.push("saved_afterwork_for_run_not_found");
+    if (!sourceEvents.length) missing.push("exact_source_event_not_found");
+    if (!storedInsights.length) missing.push("run_bound_archived_insights_not_found");
+    if (!paths.length) missing.push("run_bound_saved_paths_not_found");
+    missing.push("historical_model_attempts_not_archived");
+    const authoritative = obj(bundle.analysisBundleV2);
+    return {
+      schema: "aha_analysis_test_package_v1",
+      exported_at: new Date().toISOString(),
+      scope: "single_analysis_run",
+      local_export_only: true,
+      automatic_training: false,
+      scientifically_approved: false,
+      privacy_notice: "Originaltekst og kandidater kan inneholde personopplysninger. Del kun etter gjennomgang.",
+      identity,
+      source: {
+        text: sourceText,
+        sha256: sha,
+        origin: str(bundle.activeRun?.sourceKind || bundle.activeRun?.sourceType),
+        exact_local_source_events: sourceEvents
+      },
+      analysis: {
+        version: str(bundle.version),
+        authoritative_bundle_v2: Object.keys(authoritative).length ? safeSerializeForExport(authoritative) : null,
+        canonical_analysis: safeSerializeForExport(bundle.canonicalAnalysis || null),
+        answer: str(bundle.ahaReply),
+        insights: safeSerializeForExport(bundle.insights || []),
+        concepts: safeSerializeForExport(bundle.concepts || []),
+        subject_matches: safeSerializeForExport(bundle.subjectMatches || []),
+        afterwork: safeSerializeForExport(bundle.afterwork || {}),
+        projection_products: safeSerializeForExport(bundle.projectionProducts || null)
+      },
+      candidate_audit: {
+        status: !cacheMatches ? "not_available_for_this_run"
+          : Array.isArray(payload.insightCandidatesV2) ? "recorded_current_run" : "not_recorded",
+        candidates,
+        runtime_trace: runtimeTrace,
+        model_attempt_history_complete: false
+      },
+      linked_local_records: {
+        saved_afterwork: safeSerializeForExport(afterwork),
+        stored_insights: storedInsights,
+        saved_paths: paths
+      },
+      evaluation: {
+        machine_quality: safeSerializeForExport(bundle.quality || {}),
+        source_binding: safeSerializeForExport(bundle.sourceBinding || {}),
+        human_review: {
+          status: "not_reviewed",
+          source_accuracy: null,
+          novel_understanding: null,
+          causal_discipline: null,
+          usefulness: null,
+          reviewer_notes: ""
+        }
+      },
+      coverage: {
+        status: missing.length ? "partial" : "available",
+        missing,
+        historical_model_attempts_complete: false,
+        database_records_exported: false,
+        unrelated_chat_or_library_data_included: false
+      }
+    };
+  }
+
+  function exportAhaTestPackage(deps = {}, bundleBuilder) {
+    const packageData = buildAhaTestPackage(deps, bundleBuilder);
+    const json = JSON.stringify(packageData, null, 2);
+    const name = "aha-testpakke-" + packageData.identity.analysis_run_id.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 72) + ".json";
+    const doc = deps.document || global.document;
+    const urlApi = deps.URL || global.URL;
+    const BlobCtor = deps.Blob || global.Blob;
+    if (!doc?.createElement || !urlApi?.createObjectURL || typeof BlobCtor !== "function") {
+      throw new Error("Nedlasting er ikke tilgjengelig i denne nettleseren.");
+    }
+    const url = urlApi.createObjectURL(new BlobCtor([json], { type: "application/json" }));
+    try {
+      const link = doc.createElement("a");
+      link.href = url;
+      link.download = name;
+      doc.body.appendChild(link);
+      link.click();
+      link.remove();
+      deps.setStatusNote?.("Testpakke eksportert. Kontroller personopplysninger før deling.");
+    } finally {
+      urlApi.revokeObjectURL(url);
+    }
+    return packageData;
+  }
+
   function resolveCurrentExportBuilder() {
     const current = global.AHAChatExport?.buildAhaAnalysisExportBundle;
     return typeof current === "function" ? current : buildAhaAnalysisExportBundle;
@@ -1029,7 +1197,8 @@ ${"```"}
       buildAhaAnalysisExportBundle: buildBoundBundle,
       formatAhaAnalysisExportMarkdown,
       copyAhaAnalysisExportMarkdown: () => copyAhaAnalysisExportMarkdown(runtimeDeps, buildBoundBundle),
-      exportAhaAnalysisJson: () => exportAhaAnalysisJson(runtimeDeps, buildBoundBundle)
+      exportAhaAnalysisJson: () => exportAhaAnalysisJson(runtimeDeps, buildBoundBundle),
+      exportAhaTestPackage: () => exportAhaTestPackage(runtimeDeps, buildBoundBundle)
     });
   }
 
@@ -1041,6 +1210,8 @@ ${"```"}
     formatAhaAnalysisExportMarkdown,
     copyAhaAnalysisExportMarkdown,
     exportAhaAnalysisJson,
+    buildAhaTestPackage,
+    exportAhaTestPackage,
     createRuntime
   };
   global.AHAChatExport = publicApi;

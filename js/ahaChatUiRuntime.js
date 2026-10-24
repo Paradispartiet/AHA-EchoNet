@@ -224,7 +224,26 @@
       });
     }
 
+    function ensureTestPackageButton() {
+      // The published Chat shell is hash-locked by the V2 live-pilot proof.
+      // Extend its existing tool row without editing that protected HTML.
+      const parent = documentRef?.querySelector?.("#analysis-card-verktoy .utility-buttons");
+      if (!parent || typeof documentRef.createElement !== "function") return;
+      if (documentRef.getElementById("btn-export-test-package")) return;
+      const button = documentRef.createElement("button");
+      button.id = "btn-export-test-package";
+      button.type = "button";
+      button.textContent = "Eksporter testpakke";
+      button.title = "Kildebundet JSON-testpakke for aktiv analysekjøring";
+      parent.appendChild(button);
+      const hint = documentRef.createElement("p");
+      hint.className = "module-meta";
+      hint.textContent = "Testpakken kan inneholde personopplysninger. Tidligere modellforsøk som ikke ble lagret, er ikke med.";
+      parent.parentElement?.appendChild(hint);
+    }
+
     function bind() {
+      ensureTestPackageButton();
       const button = documentRef.getElementById("btn-send");
       const textarea = documentRef.getElementById("msg");
       if (button && textarea) {
@@ -244,6 +263,10 @@
         ["btn-export", deps.exportAnalysisJson],
         ["btn-export-analysis-json", deps.exportAnalysisJson],
         ["btn-export-analysis-json-main", deps.exportAnalysisJson],
+        ["btn-export-test-package", () => {
+          try { deps.exportTestPackage?.(); }
+          catch (error) { deps.setStatusNote("Testpakken kunne ikke eksporteres: " + String(error?.message || error)); }
+        }],
         ["btn-reset", reset]
       ].forEach(([id, handler]) => documentRef.getElementById(id)?.addEventListener("click", handler));
       ["btn-export-analysis", "btn-export-analysis-main"].forEach((id) => {
