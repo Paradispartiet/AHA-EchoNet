@@ -1,132 +1,42 @@
-# AHA Meet shell contract
+# AHA Meet – lokal journal og grense mot sosiale tjenester
 
-AHA Meet is currently a shell, not an active social or scheduling module.
+Dette dokumentet erstatter den gamle shell-spesifikasjonen: AHA Meet har nå en **fungerende local-only journal**, men det er fortsatt **ikke** en sosial møte-, kalender- eller invitasjonstjeneste.
 
-## Current status
+## I drift som lokal personlig funksjon
 
-AHA Meet is local-only and inactive beyond the shell page. It has no dedicated runtime, no backend, no sync, no EchoNet sharing, no calendar integration and no invitation system.
+- Opprett et notat for møte, besøk eller aktivitet med dato, tittel, notater og læringspunkt.
+- Finn notater igjen, rediger, slett og søk uten nettverk.
+- Eksporter JSON og importer en slik sikkerhetskopi additivt; eksisterende ID-er overskrives ikke.
+- Lokal lagringsnøkkel: `aha_meet_journal_v1`.
+- `local_only: true` på hver post, med streng datovalidering og maksimalt 250 notater.
+- DOM viser brukertekst via `textContent`, aldri ved å tolke notatene som HTML.
+- Dette er personlig møteminne og *personal reflection*, ikke en automatisk kilde for innsiktsmotoren eller modelltrening.
 
-## Boundary
+## Inaktive grenser
 
-AHA Meet is for personal meeting memory and reflection:
+Det finnes **no backend**, **no EchoNet**, **no Sync Hub**, **no invitation system**, **no calendar integration**, **no social coordination** og **no write-back** til History Go i AHA Meet.
 
-- meeting notes
-- personal follow-up
-- people mentioned
-- places mentioned
-- themes and insights
-- links to local AHA objects
-- later reflection after a History Go route, place visit or group activity
-
-AHA Meet is not currently:
-
-- social coordination
-- live meeting rooms
-- chat
-- shared calendar
-- invitations
-- RSVP
-- external sharing
-- EchoNet
-- Sync Hub
-- backend persistence
-- History Go write-back
+Det finnes heller ingen delte møter, chat, RSVP, offentlig profil, sosial publisering eller automatisk import fra History Go. Disse krever egne backend-, samtykke- og sikkerhetskontrakter. Ikke kall den lokale journalen for et ferdig sosialt møteprodukt.
 
 ## Relation to History Go
 
-History Go is the place-based arena.
-
-History Go may later create or expose signals such as:
-
-- visited place
-- route completed
-- group activity
-- local event
-- observation
-- quiz/session
-- people encountered
-- place-based note
-
-AHA Meet may later import or reference those signals as personal reflection material.
-
-AHA Meet must not write back to History Go storage by default.
-
-AHA Meet must not modify:
+History Go is the separate place-based arena. AHA Meet **must not write back** to History Go storage or modify:
 
 - `visited_places`
 - `hg_learning_log_v1`
 - `knowledge_universe`
 - `trivia_universe`
 - `aha_import_payload_v1`
-- History Go repo data
-- History Go runtime objects
 
-## Relation to Groups
+AHA Meet reads none of these keys automatically. Ingen eksterne kilde- eller møtedata importeres uten eksplisitt fremtidig kontrakt.
 
-Groups are local AHA workspaces.
+## Relation to Groups and AHAavisa
 
-AHA Meet may later reference local groups, but must not turn groups into real shared collaboration.
+AHA Meet is separate from Groups, and does not publish to AHAavisa. Shared workspace permissions are not implied by a private meeting note.
 
-## Relation to AHAavisa
+## Release criteria
 
-AHA Meet may later become a source for local AHAavisa drafts, but must not publish externally.
-
-## Future data model draft
-
-A future local-only Meet object may look like:
-
-```json
-{
-  "id": "meet_...",
-  "title": "Møte ved St. Hanshaugen",
-  "date": "2026-07-08",
-  "source_app": "aha",
-  "origin_app": "aha_meet",
-  "local_only": true,
-  "personal_reflection_only": true,
-  "shared_external": false,
-  "echonet_shared": false,
-  "sync_enabled": false,
-  "calendar_sync_enabled": false,
-  "invitation_enabled": false,
-  "historygo_writeback_enabled": false,
-  "references": [
-    {
-      "source": "historygo_place",
-      "refId": "st_hanshaugen",
-      "title": "St. Hanshaugen"
-    }
-  ],
-  "notes": [],
-  "insight_refs": [],
-  "meta": {
-    "local_only": true,
-    "personal_reflection_only": true,
-    "shared_external": false,
-    "echonet_shared": false,
-    "sync_enabled": false,
-    "historygo_writeback_enabled": false
-  }
-}
-```
-
-This is a draft only. Do not implement storage until explicitly requested.
-
-## Activation requirements
-
-Before Meet can become active, it needs:
-
-1. local-only data model
-2. reference validation against local AHA objects
-3. History Go import/read boundary
-4. no write-back tests
-5. privacy report coverage
-6. explicit no EchoNet/sync/backend tests
-7. explicit user consent model for any future sharing
-8. separate backend contract if collaboration is later introduced
-
-## Current rule
-
-Keep Meet as a shell.
-Document the boundary.
-Do not activate social behavior.
+- Node: CRUD, validering, dublettsikker import/eksport, ugyldige data, local-only og ingen nettverkskall.
+- Chromium og iPad WebKit: opprett, gjenåpne, rediger, søk, slett, gjenopprett JSON, liten mobilskjerm og trygg visning av HTML-lignende tekst.
+- Registry, modenhetsmatrise og release-snapshot må samsvare.
+- Ekstern deling, invitasjoner, kalender, backend, EchoNet, sync og History Go write-back forblir utilgjengelige.

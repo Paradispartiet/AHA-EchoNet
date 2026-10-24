@@ -22,8 +22,8 @@ assert.equal(status.counts.unknown, 0, "registry release states should all be kn
 assert.equal(status.local_only_ready, true, "local-only baseline should be internally consistent");
 
 const nonReadyIds = status.intentional_non_ready.map((item) => item.id).sort();
-assert.deepEqual(nonReadyIds, ["meet", "sync-hub"], "only Meet and Sync Hub should remain intentionally non-ready");
-assert.equal(status.intentional_non_ready.find((item) => item.id === "meet")?.release_state, "shell");
+assert.deepEqual(nonReadyIds, ["sync-hub"], "only Sync Hub is intentionally non-ready");
+assert.equal(status.modules.find((item) => item.id === "meet")?.release_state, "ready", "local Meet journal should now be ready");
 assert.equal(status.intentional_non_ready.find((item) => item.id === "sync-hub")?.release_state, "planned");
 
 for (const [key, enabled] of Object.entries(status.global_boundaries)) {

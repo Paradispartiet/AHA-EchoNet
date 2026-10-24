@@ -10,7 +10,7 @@ const contract = read(contractPath);
 const matrix = read('docs/AHA_MODULE_MATURITY_MATRIX.md');
 
 assert.ok(exists('meet.html'), 'meet.html should exist');
-assert.ok(/shell/i.test(meetHtml), 'meet.html should identify Meet as a shell');
+assert.ok(/Mitt møtearkiv/i.test(meetHtml), 'meet.html should identify the working private journal');
 assert.ok(/local-only|lokalt/i.test(meetHtml), 'meet.html should state local-only/local shell status');
 assert.ok(/ingen invitasjoner|sender ikke invitasjoner/i.test(meetHtml), 'meet.html should explicitly say no invitations');
 assert.ok(/ingen kalender|kalender.*ikke aktivert|ingen kalenderintegrasjon/i.test(meetHtml), 'meet.html should explicitly say no calendar integration');
@@ -33,7 +33,7 @@ for (const required of [
   assert.ok(required.test(contract), `contract should mention ${required}`);
 }
 
-assert.equal(exists('js/ahaMeet.js'), false, 'Meet must not introduce a dedicated runtime file yet');
+assert.equal(exists('js/ahaMeet.js'), true, 'Meet must have its private, local-only journal runtime');
 
 const forbiddenRuntimeKeys = [
   'aha_' + 'meet_v1',
@@ -67,7 +67,7 @@ for (const key of [
 }
 
 const meetRow = matrix.split('\n').find((line) => line.startsWith('| meet |')) || '';
-assert.ok(meetRow.includes('| shell |'), 'maturity matrix should keep Meet as shell');
-assert.ok(/uten runtime, lagring, invitasjoner, kalender, backend, sync, EchoNet eller History Go write-back/.test(meetRow), 'maturity matrix should document the Meet shell boundary');
+assert.ok(meetRow.includes('| ready |'), 'maturity matrix should mark the local journal ready');
+assert.ok(/Ingen kalender, invitasjoner, ekte sosial møtekoordinering, backend, sync, EchoNet eller History Go write-back/.test(meetRow), 'matrix must still document unavailable social capabilities');
 
 console.log('aha-meet-shell-contract.test.cjs passed');

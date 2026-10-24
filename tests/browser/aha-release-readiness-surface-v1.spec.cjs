@@ -9,13 +9,11 @@ test("System Status renders local-only release readiness on desktop and iPad", a
   await expect(panel.getByText("Klar lokalt", { exact: true })).toBeVisible();
 
   const nonReady = panel.locator(".aha-release-module-row");
-  await expect(nonReady).toHaveCount(2);
-  const meetRow = panel.locator(".aha-release-module-row").filter({ hasText: "Meet" });
-  const syncHubRow = panel.locator(".aha-release-module-row").filter({ hasText: "Sync Hub" });
-  await expect(meetRow).toHaveCount(1);
+  await expect(nonReady).toHaveCount(1);
+  const syncHubRow = nonReady.filter({ hasText: "Sync Hub" });
   await expect(syncHubRow).toHaveCount(1);
-  await expect(meetRow.locator(".aha-release-state")).toHaveText("Shell");
   await expect(syncHubRow.locator(".aha-release-state")).toHaveText("Planned");
+  await expect(nonReady.filter({ hasText: "Meet" })).toHaveCount(0);
 
   const boundaryList = panel.locator(".aha-release-boundary-list");
   for (const label of ["Backend", "Sync", "EchoNet", "Ekstern deling", "Modelltrening", "History Go write-back"]) {

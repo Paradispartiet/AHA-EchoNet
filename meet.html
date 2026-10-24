@@ -3,64 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Meet</title>
+  <title>AHA Meet – Mitt møtearkiv</title>
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-social-surfaces.css" />
+  <link rel="stylesheet" href="css/aha-meet.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
 </head>
 <body>
+  <a class="aha-skip-link" href="#meet-main">Hopp til innholdet</a>
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard aha-shell-reading aha-social-surface aha-meet-page">
+  <main id="meet-main" class="aha-dashboard aha-shell-reading aha-social-surface aha-meet-page" tabindex="-1">
     <section class="aha-panel aha-module-shell">
       <header class="aha-module-shell-header">
         <div>
           <p class="eyebrow">AHA Meet</p>
-          <h1>Meet</h1>
-          <p class="aha-module-purpose">
-            AHA Meet er foreløpig en shell for personlige møtenotater og refleksjoner. Den koordinerer ikke møter, sender ikke invitasjoner og deler ikke data eksternt.
-          </p>
+          <h1>Mitt møtearkiv</h1>
+          <p class="aha-module-purpose">Ta vare på egne møtenotater, besøk og aktiviteter – og hva du lærte. Dette er et privat arkiv i denne nettleseren, ikke møtebooking eller delte samtaler.</p>
         </div>
       </header>
-
     </section>
 
-    <section class="aha-panel aha-social-primary-panel aha-meet-future-copy" aria-labelledby="meet-boundary-title">
-        <h2 id="meet-boundary-title">Local-only møtearkiv senere</h2>
-        <p>
-          AHA Meet er foreløpig et lokalt møtearkiv-konsept. Det kan senere samle personlige notater, refleksjoner og AHA-innsikter fra møter, ruter eller aktiviteter, men det koordinerer ikke møter, sender ikke invitasjoner og deler ikke data eksternt.
-        </p>
-        <p>
-          History Go kan senere være arenaen for steder, ruter og felles aktiviteter. AHA Meet er det personlige etterarbeidet: hva skjedde, hva lærte jeg, hvilke temaer/personer/steder henger sammen.
-        </p>
-        <p>
-          Forholdet til History Go: History Go er arenaen for steder, ruter og aktiviteter. AHA Meet kan senere lese slike signaler som personlig refleksjonsmateriale, men skal ikke skrive tilbake til History Go.
-        </p>
-        <p>
-          EchoNet, delte møter, invitasjoner, kalender og synk er ikke aktivert. AHA Meet har ingen backend og ingen History Go write-back.
-        </p>
-
+    <section class="aha-panel meet-editor" aria-labelledby="meet-form-title">
+      <h2 id="meet-form-title">Nytt møtenotat</h2>
+      <form id="meet-form" autocomplete="off">
+        <input id="meet-id" type="hidden" />
+        <div class="meet-fields">
+          <label>Hva vil du huske?
+            <input id="meet-title" type="text" maxlength="120" minlength="2" placeholder="For eksempel: Møte om byutvikling" required />
+          </label>
+          <label>Dato
+            <input id="meet-date" type="date" required />
+          </label>
+          <label>Type
+            <select id="meet-kind">
+              <option value="meeting">Møte</option>
+              <option value="visit">Besøk</option>
+              <option value="activity">Aktivitet</option>
+            </select>
+          </label>
+        </div>
+        <label>Notater
+          <textarea id="meet-notes" rows="4" maxlength="3000" placeholder="Hva skjedde? Hva ble sagt?"></textarea>
+        </label>
+        <label>Hva tar du med deg?
+          <textarea id="meet-takeaway" rows="3" maxlength="1000" placeholder="En innsikt, et spørsmål eller noe du vil følge opp"></textarea>
+        </label>
+        <div class="meet-form-actions">
+          <button type="submit" id="meet-save" class="aha-tile-btn aha-tile-btn-primary">Lagre notat</button>
+          <button type="button" id="meet-cancel" class="aha-tile-btn" hidden>Avbryt redigering</button>
+        </div>
+      </form>
+      <p id="meet-status" role="status" aria-live="polite"></p>
     </section>
 
-    <section class="aha-panel aha-social-boundary-panel">
-        <h2>Boundary nå</h2>
-        <ul class="aha-meet-boundary-grid">
-          <li>Local-only shell</li>
-          <li>Personlig møtearkiv/refleksjon senere</li>
-          <li>Ingen møtebooking</li>
-          <li>Ingen invitasjoner</li>
-          <li>Ingen kalenderintegrasjon</li>
-          <li>Ingen EchoNet</li>
-          <li>Ingen Sync Hub</li>
-          <li>Ingen backend</li>
-          <li>Ingen History Go write-back</li>
-        </ul>
-      <div class="aha-module-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
+    <section class="aha-panel meet-archive" aria-labelledby="meet-archive-title">
+      <div class="meet-archive-header">
+        <div><h2 id="meet-archive-title">Mine notater</h2><p id="meet-count" aria-live="polite">Laster lokalt arkiv …</p></div>
+        <div class="meet-archive-tools">
+          <button id="meet-import" type="button" class="aha-tile-btn">Importer sikkerhetskopi</button>
+          <input id="meet-import-file" type="file" accept=".json,application/json" aria-label="Velg AHA Meet-sikkerhetskopi" hidden />
+          <button id="meet-export" type="button" class="aha-tile-btn">Eksporter JSON</button>
+        </div>
       </div>
+      <label class="meet-search-label">Søk i notatene
+        <input id="meet-search" type="search" placeholder="Søk etter møte, sted eller læringspunkt" autocomplete="off" />
+      </label>
+      <div id="meet-list" class="meet-card-list" aria-live="polite"></div>
     </section>
+    <aside class="meet-privacy">
+      <strong>Privat i denne nettleseren.</strong> Notatene deles ikke med andre AHA-brukere, AHA-AI, EchoNet eller History Go. Ingen invitasjoner, ingen kalenderintegrasjon, ingen EchoNet, ingen backend og ingen History Go write-back. Ekstern lagring og synkronisering er ikke aktivert. Eksporter en sikkerhetskopi før du tømmer nettleserdata.
+    </aside>
   </main>
-<script src="js/ahaModules.js"></script>
-<script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaMeet.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
 </body>
 </html>
