@@ -14,10 +14,10 @@ const storage = {
   setItem(key, value) { memory.set(key, String(value)); },
   seed(key, value) { memory.set(key, JSON.stringify(value)); }
 };
-const trace = { status: "completed", provider: "test", model: "example", attempts: 1 };
+const trace = { status: "completed", provider: "test", model: "example", attempts: 1, prefilter_rejections: [{ title: "Removed duplicate", reason: "semantic_duplicate" }] };
 const candidates = [
   { title: "Observed association", summary: "Green coverage and visits were associated.", evidence_quotes: ["Research observed more visits in green areas."], candidate_quality: { status: "needs_review" } },
-  { title: "Causal claim", summary: "Green causes visits", rejection_reason: "causality_unsupported", evidence_quotes: [] }
+  { title: "Causal claim", summary: "Green causes visits", rejection_reason: "causality_unsupported", evidence_quotes: ["This causal statement is not in the original research."] }
 ];
 let clickCount=0, downloadName="", downloadJson="";
 const doc = {
@@ -91,6 +91,15 @@ assert.equal(result.candidate_audit.status,"recorded_current_run");
 assert.equal(result.candidate_audit.candidates.length,2);
 assert.equal(result.candidate_audit.candidates[1].rejection_reason,"causality_unsupported");
 assert.equal(result.candidate_audit.runtime_trace.model,"example");
+assert.equal(result.candidate_audit.literal_source_quote_checks[0].status,"all_quotes_present_not_claim_validated");
+assert.equal(result.candidate_audit.literal_source_quote_checks[0].quotes[0].literal_match,true);
+assert.equal(result.candidate_audit.literal_source_quote_checks[0].quotes[0].start,0);
+assert.equal(result.candidate_audit.literal_source_quote_checks[1].status,"one_or_more_quotes_not_found");
+assert.equal(result.candidate_audit.literal_source_quote_checks[1].quotes[0].literal_match,false);
+assert.equal(result.candidate_audit.literal_source_quote_checks[1].quotes[0].start,null);
+assert.equal(result.candidate_audit.prefilter_rejections[0].reason,"semantic_duplicate");
+assert.equal(result.candidate_audit.prefilter_rejections[0].full_candidate_available,false);
+assert.ok(result.coverage.missing.includes("prefilter_rejected_candidate_full_payloads_not_recorded"));
 assert.equal(result.linked_local_records.saved_afterwork.length,1);
 assert.equal(result.linked_local_records.saved_afterwork[0].id,"work-1");
 assert.equal(result.source.exact_local_source_events.length,1);
@@ -113,6 +122,8 @@ const missing=api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>otherCache,lo
 assert.equal(missing.candidate_audit.status,"not_available_for_this_run");
 assert.equal(missing.candidate_audit.candidates.length,0);
 assert.equal(missing.candidate_audit.runtime_trace,null);
+assert.equal(missing.candidate_audit.literal_source_quote_checks.length,0);
+assert.equal(missing.candidate_audit.prefilter_rejections.length,0);
 assert.ok(missing.coverage.missing.includes("candidate_cache_not_bound_to_active_run"));
 const corrupt={...bundle,source_sha256:"b".repeat(64)};
 assert.throws(()=>api.buildAhaTestPackage(deps,()=>corrupt),/SHA-256/);

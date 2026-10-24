@@ -984,6 +984,45 @@ ${"```"}
       ? payload.insightCandidatesV2.map(candidateSnapshot) : [];
     const runtimeTrace = cacheMatches && payload.analysisRuntime
       ? safeSerializeForExport(payload.analysisRuntime) : null;
+
+    // Quote presence is a purely literal check, not scientific verification.
+    // Keep every declared quote and its outcome for independent review.
+    function evidenceCheck(candidate, index) {
+      const item = obj(candidate);
+      const reported = arr(item.evidence_quotes).concat(arr(item.evidence));
+      const quotes = reported.map((entry) => typeof entry === "string" ? entry
+        : str(entry?.quote || entry?.source_quote || entry?.excerpt || entry?.text))
+        .map((quote) => String(quote || "").trim()).filter(Boolean);
+      const seen = new Set();
+      const checks = quotes.filter((quote) => {
+        if (seen.has(quote)) return false;
+        seen.add(quote);
+        return true;
+      }).map((quote) => {
+        const position = sourceText.indexOf(quote);
+        return {
+          quote,
+          literal_match: position >= 0,
+          start: position >= 0 ? position : null,
+          end: position >= 0 ? position + quote.length : null,
+          note: position >= 0 ? "quote_present_not_claim_approval" : "quote_not_present_in_original_source"
+        };
+      });
+      return {
+        candidate_index: index,
+        candidate_title: str(item.title),
+        status: !checks.length ? "no_quoted_evidence"
+          : checks.every((check) => check.literal_match) ? "all_quotes_present_not_claim_validated"
+          : "one_or_more_quotes_not_found",
+        quotes: checks
+      };
+    }
+    const candidateEvidenceChecks = candidates.map(evidenceCheck);
+    // Trace stores only titles and reasons for prefilter rejects, not their
+    // full original candidate payloads; never present these as full candidates.
+    const prefilterRejects = arr(runtimeTrace?.prefilter_rejections).map((item) => ({
+      title: str(item?.title), reason: str(item?.reason), full_candidate_available: false
+    }));
     // Historical afterwork with the same article but a different run is excluded.
     const afterwork = arr(deps.loadAfterworkEntries?.()).filter((entry) =>
       matches(entry) && (!entry.sourceText || String(entry.sourceText) === sourceText));
@@ -1007,6 +1046,7 @@ ${"```"}
     if (!cacheMatches) missing.push("candidate_cache_not_bound_to_active_run");
     if (cacheMatches && !Array.isArray(payload.insightCandidatesV2)) missing.push("candidate_list_not_recorded");
     if (!runtimeTrace) missing.push("model_runtime_trace_not_recorded");
+    if (prefilterRejects.length) missing.push("prefilter_rejected_candidate_full_payloads_not_recorded");
     if (!afterwork.length) missing.push("saved_afterwork_for_run_not_found");
     if (!sourceEvents.length) missing.push("exact_source_event_not_found");
     if (!storedInsights.length) missing.push("run_bound_archived_insights_not_found");
@@ -1043,6 +1083,8 @@ ${"```"}
         status: !cacheMatches ? "not_available_for_this_run"
           : Array.isArray(payload.insightCandidatesV2) ? "recorded_current_run" : "not_recorded",
         candidates,
+        literal_source_quote_checks: candidateEvidenceChecks,
+        prefilter_rejections: prefilterRejects,
         runtime_trace: runtimeTrace,
         model_attempt_history_complete: false
       },
