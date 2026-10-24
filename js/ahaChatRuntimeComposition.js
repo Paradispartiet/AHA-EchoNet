@@ -312,6 +312,7 @@
       showKnowledgeMap: knowledgeView.showKnowledgeMap,
       showSavedAfterwork: b.showSavedAfterwork,
       exportAnalysisJson: exportRuntime.exportAhaAnalysisJson,
+      exportTestPackage: exportRuntime.exportAhaTestPackage,
       copyAnalysisMarkdown: exportRuntime.copyAhaAnalysisExportMarkdown,
       clearChamber: b.clearChamberStorage,
       clearAutoOutputs: b.clearAutoOutputs,
