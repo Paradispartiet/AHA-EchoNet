@@ -101,15 +101,17 @@ result = context.AHAOrganizationFlow.createPathFromList(list.id, 'By og makt –
 assert.equal(result.ok, true);
 let paths = context.AHAPaths.loadPaths();
 assert.equal(paths.length, 1, 'journey: canonical Paths store should contain the created path');
-assert.equal(paths[0].steps.length, 1, 'journey: created path should contain the source List step');
+assert.equal(paths[0].steps.length, 2, 'journey: path contains the source List and its real insight');
 assert.equal(paths[0].steps[0].source, 'aha_lists');
 assert.equal(paths[0].steps[0].refId, list.id);
+assert.equal(paths[0].steps[1].source, 'aha_insights');
+assert.equal(paths[0].steps[1].refId, 'ins_keep');
 
 result = context.AHAPaths.addStepToPath(paths[0].id, { source: 'aha_notes', refId: 'note_1', type: 'note', title: 'Notat om byrom' });
 assert.equal(result.ok, true);
 paths = context.AHAPaths.loadPaths();
 const noteStep = paths[0].steps.find((step) => step.refId === 'note_1');
-result = context.AHAOrganizationFlow.movePathStep(paths[0].id, noteStep.id, -1);
+result = context.AHAOrganizationFlow.movePathStep(paths[0].id, noteStep.id, -2);
 assert.equal(result.ok, true);
 paths = context.AHAPaths.loadPaths();
 assert.equal(paths[0].steps[0].refId, 'note_1');
