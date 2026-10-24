@@ -54,7 +54,7 @@ assert.equal(explorer.summarizeActiveReadiness(model,{...ready,status:"incomplet
 const overviewHost={innerHTML:""};
 const overviewSandbox={
   window:null,console,document:{
-    readyState:"loading",addEventListener(){},
+    readyState:"loading",addEventListener(){},querySelectorAll(){return [];},
     getElementById(id){return id==="exp-oversikt"?overviewHost:null;}
   },
   AHAAnalysisReadModelV2:{
