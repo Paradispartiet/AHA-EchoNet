@@ -173,6 +173,29 @@
       return text.length < 160 && containsAny(text, ["vet ikke", "klarer ikke forklare"]);
     }
 
+    // Unknown subjects must never inherit a canned interpretation from a different article.
+    // This is an explicitly marked source quote, not a generated scientific insight.
+    function buildSourceBoundAbstention(sourceText) {
+      const sentences = String(sourceText || "").replace(/\s+/g, " ").trim()
+        .split(/(?<=[.!?])\s+/u).filter((sentence) => sentence.length >= 45);
+      const candidate = sentences
+        .map((sentence, index) => ({
+          sentence,
+          index,
+          score: (/(?:kan ikke|ikke alene|ikke det samme|ikke dokumentert|for lite|ikke grunnlag|men forsøket|materialet viser|resultatet viser|rapporten)/i.test(sentence) ? 3 : 0)
+            + (/(?:forsker|kild|rapport|forsøk|måling|registr|samvariasjon|sammenlign)/i.test(sentence) ? 1 : 0)
+            + Math.min(1, sentence.length / 180)
+        }))
+        .sort((a, b) => b.score - a.score || a.index - b.index)[0];
+      const quote = candidate ? candidate.sentence : "";
+      return {
+        theme: "Fagområde ikke verifisert av lokal analyse",
+        mainTension: "Ingen faglig tolkning kan bekreftes av den deterministiske motoren.",
+        keyInsight: quote ? `Kildesitat (ikke selvstendig innsikt): «${quote}»` : "",
+        analysisEvidenceStatus: "extractive_only"
+      };
+    }
+
     function buildDeterministicSemanticSummary(contentType, domain, sourceText) {
       const text = normalizeSemanticText(sourceText);
       if (domain === "institutional_media_history") {
@@ -195,10 +218,11 @@
       };
       if (byDomain[domain]) return byDomain[domain];
       if (contentType === "day_log") return { theme: "indre konflikt mellom produktivitet og nærvær", mainTension: "mestringsfølelse kontra emosjonell distanse", keyInsight: "Teksten peker mot at unngåelse av vanskelige valg kan forklare opplevelsen av uro mer enn ytre tidsmangel." };
-      if (contentType === "project_note") return { theme: "kontrollert innfasing av analysemodul", mainTension: "leveransehastighet kontra kvalitetssikring", keyInsight: "Notatet identifiserer testdata-kvalitet som kritisk avhengighet for trygg migrering." };
+      if (contentType === "project_note") return containsAny(text, ["modul for analyseklassifisering", "testdata", "migrering", "grensesnitt"]) ? { theme: "kontrollert innfasing av analysemodul", mainTension: "leveransehastighet kontra kvalitetssikring", keyInsight: "Notatet identifiserer testdata-kvalitet som kritisk avhengighet for trygg migrering." } : buildSourceBoundAbstention(sourceText);
       if (isLegalText(text)) return { theme: "forholdsmessighet som rettslig avveiningsnorm", mainTension: "offentlig myndighetsutøvelse kontra individvern", keyInsight: "Teksten framhever at forholdsmessighet avhenger av om mindre inngripende alternativer er reelt tilgjengelige." };
       if (isPinseText(text)) return { theme: "pinse som teologisk og kulturell markør", mainTension: "balansen mellom religiøs betydning og samfunnsmessig tradisjon", keyInsight: "Teksten viser hvordan pinse fungerer både som trosfortelling og som sosialt tidsanker." };
       if (isUnclearFragment(text)) return { theme: "uklar problemforståelse uten tydelig kontekst", mainTension: "opplevd sammenheng kontra manglende konkretisering", keyInsight: "Teksten uttrykker en mulig frustrasjon, men gir for få holdepunkter til sikker tematisk eller faglig analyse." };
+      if (String(sourceText || "").trim().length >= 320) return buildSourceBoundAbstention(sourceText);
       return { theme: "usikker årsaksforståelse", mainTension: "behov for forklaring kontra manglende spesifisitet", keyInsight: "Teksten uttrykker frustrasjon, men gir for få konkrete holdepunkter til sikker klassifisering." };
     }
 
@@ -273,17 +297,27 @@
       const semanticSummary = buildDeterministicSemanticSummary(contentType, domain, sourceText);
       const recommendations = buildDeterministicRecommendations(contentType, domain, sourceText);
       const confidenceAndWarnings = buildDeterministicConfidence(contentType, domain, sourceText);
+      const extractiveOnly = semanticSummary.analysisEvidenceStatus === "extractive_only";
+      const warnings = extractiveOnly
+        ? ["Kun et ordrett utdrag er hentet fra teksten. Ingen faglig hovedinnsikt er verifisert av lokal analyse."]
+        : confidenceAndWarnings.warnings;
+      const confidence = extractiveOnly
+        ? { contentType: 0.3, domain: 0.15, theme: 0.1, mainTension: 0.05, historyGoLinks: 0, keyInsight: 0.05 }
+        : confidenceAndWarnings.confidence;
       return {
         contentType,
         domain,
         theme: semanticSummary.theme,
         mainTension: semanticSummary.mainTension,
         keyInsight: semanticSummary.keyInsight,
-        fieldConnections: recommendations.fieldConnections,
-        historyGoLinks: normalizeHistoryGoLinks(existingHistoryLinks.length ? existingHistoryLinks : derivedHistoryLinks),
-        suggestedActions: recommendations.suggestedActions,
-        confidence: confidenceAndWarnings.confidence,
-        warnings: confidenceAndWarnings.warnings,
+        fieldConnections: extractiveOnly ? [] : recommendations.fieldConnections,
+        historyGoLinks: extractiveOnly ? [] : normalizeHistoryGoLinks(existingHistoryLinks.length ? existingHistoryLinks : derivedHistoryLinks),
+        suggestedActions: extractiveOnly
+          ? ["Kontroller kildene og vurder om utdraget faktisk underbygger en faglig konklusjon.", "Bruk faglig analyse før en selvstendig hovedinnsikt blir publisert."]
+          : recommendations.suggestedActions,
+        confidence,
+        warnings,
+        ...(extractiveOnly ? { analysisEvidenceStatus: "extractive_only" } : {}),
         ahaSer: canonicalSer,
         reflection: String(safePayload?.reflection || canonicalSer?.viktigsteInnsikt || "").trim(),
         summary: String(safePayload?.day || "").trim(),
