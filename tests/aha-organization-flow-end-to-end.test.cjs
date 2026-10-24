@@ -35,6 +35,7 @@ const context = {
   },
   AHAPaths: {
     loadPaths: () => paths,
+    validatePathStepReference(item) { return { ok: true, item }; },
     createPath(input) {
       const path = { id: 'path_1', title: input.title, description: input.description, steps: [] };
       paths = [path]; calls.pathCreates.push(input); return path;

@@ -42,17 +42,36 @@
   }
 
   function createPathFromList(listId, titleArg) {
-    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath) {
+    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath || !global.AHAPaths?.validatePathStepReference) {
       return { ok: false, reason: "organization_api_unavailable" };
     }
     const list = activeLists().find((item) => text(item.id) === text(listId));
     if (!list) return { ok: false, reason: "list_not_found" };
-    const pathTitle = text(titleArg) || `${list.title} – sti`;
+
+    // Promote only existing AHA objects that Paths actually supports. Never
+    // invent steps from summaries or silently import deleted source objects.
+    const eligible = [];
+    const seen = new Set();
+    let skipped = 0;
+    arr(list.items).forEach((item) => {
+      const key = text(item?.source) + "::" + text(item?.refId || item?.ref_id);
+      if (!["aha_insights", "aha_notes"].includes(item?.source) || !text(item?.refId || item?.ref_id)) {
+        skipped += 1;
+        return;
+      }
+      if (seen.has(key)) return;
+      seen.add(key);
+      const checked = global.AHAPaths.validatePathStepReference(item);
+      if (!checked?.ok) { skipped += 1; return; }
+      eligible.push({ ...checked.item, narrative: text(item?.membership_reason) });
+    });
+
     const path = global.AHAPaths.createPath({
-      title: pathTitle,
+      title: text(titleArg) || `${list.title} – kunnskapssti`,
       type: "learning",
-      description: list.description ? `Ordnet videre fra listen «${list.title}». ${list.description}` : `Ordnet videre fra listen «${list.title}».`,
-      tags: list.tags || []
+      mode: "learning",
+      description: list.description ? `Videre arbeid fra samlingen «${list.title}». ${list.description}` : `Videre arbeid fra samlingen «${list.title}».`,
+      goal: "Undersøk det lagrede materialet og hva som kan konkluderes."
     });
     if (!path) return { ok: false, reason: "path_create_failed" };
     const added = global.AHAPaths.addStepToPath(path.id, {
@@ -66,8 +85,18 @@
       global.AHAPaths.deletePath?.(path.id);
       return { ok: false, reason: added?.reason || "list_step_failed" };
     }
+    let lastPath = added.path;
+    let promoted = 0;
+    for (const item of eligible) {
+      const result = global.AHAPaths.addStepToPath(path.id, {
+        source: item.source, refId: item.refId, type: item.type, title: item.title,
+        narrative: item.narrative
+      });
+      if (result?.ok) { promoted += 1; lastPath = result.path; }
+      else skipped += 1;
+    }
     global.AHAPaths.refresh?.();
-    return { ok: true, path: added.path || path, step: added.step };
+    return { ok: true, path: lastPath, step: added.step, promoted, skipped };
   }
 
   // Explicitly turn a curated concept list into the first step of a real
@@ -249,7 +278,7 @@
         const host = target.closest(".aha-org-flow-actions");
         const status = host?.querySelector(".aha-org-flow-status");
         const result = createPathFromList(listId);
-        if (status) status.innerHTML = result.ok ? `Stien er opprettet. <a href="paths.html">Åpne stien</a>.` : "Kunne ikke opprette stien.";
+        if (status) status.innerHTML = result.ok ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.` : "Kunne ikke opprette stien.";
         return;
       }
 
@@ -258,7 +287,7 @@
         const host = target.closest(".aha-concept-list-actions");
         const status = host?.querySelector(".aha-org-flow-status");
         const result = createPathFromConceptList(conceptId);
-        if (status) status.innerHTML = result.ok ? `Kunnskapsstien er opprettet. <a href="paths.html">Åpne stien</a>.` : "Kunne ikke opprette stien.";
+        if (status) status.innerHTML = result.ok ? `Kunnskapsstien er opprettet. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.` : "Kunne ikke opprette stien.";
         return;
       }
 

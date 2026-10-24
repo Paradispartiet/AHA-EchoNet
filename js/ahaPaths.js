@@ -518,6 +518,9 @@
           <span class="aha-path-step-number" aria-hidden="true">${step.order + 1}</span>
           <div class="aha-path-step-content">
             <strong>${escapeHtml(step.title)}</strong>
+            ${availableStepIndex.has(`${step.source}::${step.refId}`) && ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes"].includes(step.source)
+              ? `<a class="aha-tile-btn" href="${escapeHtml(step.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(step.refId) : step.source === "aha_lists" ? "lists.html#list-" + encodeURIComponent(step.refId) : step.source === "aha_concept_lists" ? "lists.html#concept-list-" + encodeURIComponent(step.refId) : "notes.html")}">Åpne grunnlaget</a>`
+              : ""}
             <div class="module-meta">${escapeHtml(step.type)} · ${escapeHtml(stepStatusLabel(step.status))}${availableStepIndex.has(`${step.source}::${step.refId}`) || step.meta?.inline === true ? "" : " · ikke lenger tilgjengelig"}</div>
             ${step.narrative ? `<p class="aha-path-step-narrative">${escapeHtml(step.narrative)}</p>` : `<p class="aha-path-step-narrative module-meta">Legg til hvorfor dette steget kommer her.</p>`}
             ${step.learningOutcome ? `<p class="aha-path-step-outcome"><strong>Læringspunkt:</strong> ${escapeHtml(step.learningOutcome)}</p>` : ""}
@@ -754,6 +757,10 @@
       return;
     }
 
+    if (!selectedPathId && global.location?.hash?.startsWith("#path-")) {
+      const linked = paths.find((path) => "#path-" + encodeURIComponent(path.id) === global.location.hash);
+      if (linked) selectedPathId = linked.id;
+    }
     const selected = paths.find((path) => path.id === selectedPathId) || null;
     mount.innerHTML = `<div class="aha-paths-workspace">
       <section class="aha-path-overview" aria-labelledby="paths-overview-title">
@@ -856,6 +863,14 @@
       }
 
       if (target.hasAttribute("data-path-preview-close")) {
+        // Deep-linked paths must stay closed when the user presses Lukk.
+        if (global.location?.hash?.startsWith("#path-")) {
+          if (global.history?.replaceState && global.location?.pathname) {
+            global.history.replaceState(null, "", global.location.pathname + (global.location.search || ""));
+          } else {
+            global.location.hash = "";
+          }
+        }
         selectedPathId = "";
         render();
         return;

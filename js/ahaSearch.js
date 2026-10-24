@@ -207,9 +207,12 @@
     const out = [];
 
     const chamber = loadByKey(STORAGE_KEYS.insights, { insights: [] });
-    asArray(chamber?.insights).filter(isSearchableInsight).forEach((insight, index) => {
+    asArray(chamber?.insights).forEach((insight, archiveIndex) => {
+      // Keep the original archive position: filtering rejected/deleted insights
+      // must never change the identity of an older insight without an ID.
+      if (!isSearchableInsight(insight)) return;
       const base = withBase(insight, { type: "insight", source: "aha_insights" });
-      const refId = asText(insight?.id || base?.id, `insight_idx_${index}`);
+      const refId = asText(insight?.id, `insight_idx_${archiveIndex}`);
       out.push(createSearchItem({
         id: `insight_${refId}`,
         title: asText(insight?.title || insight?.heading || insight?.label || insight?.summary, "Innsikt"),
@@ -220,8 +223,8 @@
         tags: insight?.tags || base?.tags || insight?.terms || insight?.keywords,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
-        href: "insights.html",
-        meta: { index }
+        href: "insights.html#insight-" + encodeURIComponent(refId),
+        meta: { index: archiveIndex }
       }));
     });
 
@@ -338,7 +341,7 @@
         tags: list?.tags || base?.tags,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
-        href: "lists.html",
+        href: "lists.html#list-" + encodeURIComponent(refId),
         meta: { itemCount: asArray(list?.items).length }
       }));
     });
@@ -379,7 +382,7 @@
         tags: path?.tags || base?.tags,
         createdAt: base?.createdAt,
         updatedAt: base?.updatedAt,
-        href: "paths.html",
+        href: "paths.html#path-" + encodeURIComponent(refId),
         meta: { stepCount: asArray(path?.steps).length }
       }));
     });
