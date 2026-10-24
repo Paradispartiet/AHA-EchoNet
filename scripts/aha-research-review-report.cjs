@@ -19,7 +19,7 @@ function markdown(value, limit = 800) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll(String.fromCharCode(96), "'")
-    .replace(/[\\*_\[\]{}|#]/g, "\\.replace(/([\\*_[\]{}|#])/g, "\\$1");");
+    .replace(/[\\*_\[\]{}|#]/g, "\\$&");
 }
 function sourceLink(value) {
   try {
