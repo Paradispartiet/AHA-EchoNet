@@ -312,7 +312,7 @@
         mainTension: semanticSummary.mainTension,
         keyInsight: semanticSummary.keyInsight,
         fieldConnections: extractiveOnly ? [] : recommendations.fieldConnections,
-        historyGoLinks: extractiveOnly ? [] : normalizeHistoryGoLinks(existingHistoryLinks.length ? existingHistoryLinks : derivedHistoryLinks),
+        historyGoLinks: extractiveOnly ? normalizeHistoryGoLinks(subjectHistoryLinks) : normalizeHistoryGoLinks(existingHistoryLinks.length ? existingHistoryLinks : derivedHistoryLinks),
         suggestedActions: extractiveOnly
           ? ["Kontroller kildene og vurder om utdraget faktisk underbygger en faglig konklusjon.", "Bruk faglig analyse før en selvstendig hovedinnsikt blir publisert."]
           : recommendations.suggestedActions,
