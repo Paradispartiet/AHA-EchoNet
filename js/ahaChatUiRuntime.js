@@ -236,6 +236,11 @@
       button.textContent = "Eksporter testpakke";
       button.title = "Kildebundet JSON-testpakke for aktiv analysekjøring";
       parent.appendChild(button);
+      const reviewLink = documentRef.createElement("a");
+      reviewLink.href = "testpakke.html";
+      reviewLink.textContent = "Vurder testpakke";
+      reviewLink.className = "aha-tile-btn";
+      parent.appendChild(reviewLink);
       const hint = documentRef.createElement("p");
       hint.className = "module-meta";
       hint.textContent = "Testpakken kan inneholde personopplysninger. Tidligere modellforsøk som ikke ble lagret, er ikke med.";
