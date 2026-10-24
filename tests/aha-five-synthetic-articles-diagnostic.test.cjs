@@ -68,6 +68,13 @@ for (const article of articles) {
   assert.ok(brief.observation.quote.includes(article.expectedFinding),
     article.id + ": extracted observation must prioritize the substantive finding, not context or method");
   assert.ok(brief.nextChecks?.length >= 2, article.id + ": source review needs a useful short path");
+  assert.equal(brief.researchPath?.length, 3, article.id + ": every source-bound review needs three investigation steps");
+  assert.equal(brief.researchPath[0].sourceQuote, brief.observation.quote, article.id + ": finding step must link to its observation");
+  assert.equal(brief.researchPath[1].sourceQuote, brief.limitation.quote, article.id + ": method step must link to its limitation");
+  assert.ok(brief.researchPath.every((step) => step.label && step.question && article.text.includes(step.sourceQuote)),
+    article.id + ": investigation path must never cite text that is absent");
+  assert.notEqual(brief.researchPath[0].question, brief.researchPath[1].question,
+    article.id + ": distinct investigation stages must not repeat the same instruction");
   assert.ok(article.concepts.some((term) =>
     (brief.observation.quote + " " + brief.limitation.quote).toLowerCase().includes(term.toLowerCase())
   ), article.id + ": research brief lacks its own topic");
