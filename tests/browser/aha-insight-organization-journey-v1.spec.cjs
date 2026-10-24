@@ -66,3 +66,29 @@ test("A saved collection exposes all six members, not just the first five", asyn
   await expect(page.locator(".aha-list-item-row").last()).toContainText("Notat 5");
   await expect(page.locator(".aha-list-item-row").last().getByRole("button", { name: /Remove/ })).toBeVisible();
 });
+
+
+test("A deep-linked collection and knowledge path can be closed without reopening", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("aha_lists_v1", JSON.stringify([{
+      id: "linked-collection", title: "Direkte samling", type: "favorites",
+      createdAt: "2026-10-24T12:00:00Z", items: []
+    }]));
+    localStorage.setItem("aha_paths_v1", JSON.stringify([{
+      id: "linked-path", title: "Direkte kunnskapssti", type: "learning",
+      createdAt: "2026-10-24T12:00:00Z", steps: []
+    }]));
+  });
+
+  await page.goto("/lists.html#list-linked-collection");
+  await expect(page.locator("#list-preview-title")).toHaveText("Direkte samling");
+  await page.locator("[data-list-preview-close]").click();
+  await expect(page.locator("#list-preview-title")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/#list-linked-collection$/);
+
+  await page.goto("/paths.html#path-linked-path");
+  await expect(page.locator("#path-preview-title")).toHaveText("Direkte kunnskapssti");
+  await page.locator("[data-path-preview-close]").click();
+  await expect(page.locator("#path-preview-title")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/#path-linked-path$/);
+});
