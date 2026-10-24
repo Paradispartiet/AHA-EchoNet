@@ -323,6 +323,81 @@
   }
 
 
+  // A user-triggered source review in existing AHAPaths, not an approved insight.
+  function createInvestigationPathFromInsight(insight) {
+    const paths = global.AHAPaths;
+    if (!paths?.createPath || !paths?.addStepToPath || !paths?.validatePathStepReference || !paths?.loadPaths) {
+      return { ok: false, reason: "paths_unavailable", message: "Stier er ikke tilgjengelige." };
+    }
+    const refId = asText(insight?.id, "");
+    if (!refId) return { ok: false, reason: "missing_stable_id", message: "Innsikten mangler stabil ID." };
+    // Require the current, actual chamber record; caller data must not forge a path.
+    const stored = asArray(loadChamber().insights).find((item) => asText(item?.id, "") === refId);
+    if (!stored || stored.deletedAt || stored.deleted_at || stored.archived === true
+      || ["rejected", "outdated", "deleted"].includes(asText(stored.status, "").toLowerCase())) {
+      return { ok: false, reason: "insight_unavailable", message: "Innsikten er ikke tilgjengelig." };
+    }
+    if (!paths.validatePathStepReference({ source: "aha_insights", refId })?.ok) {
+      return { ok: false, reason: "unavailable_reference", message: "Innsikten kan ikke kobles til en sti." };
+    }
+    const previous = asArray(paths.loadPaths()).find((item) =>
+      !item.deletedAt && !item.deleted_at && item.meta?.createdBy === "insight_review_path_v1"
+      && asText(item.meta?.source_insight_ref, "") === refId);
+    if (previous) return { ok: true, reused: true, pathId: previous.id, message: "Stien finnes allerede." };
+
+    const sourceEventId = readSourceEventId(stored);
+    const event = findSourceById(loadSourceEvents(), sourceEventId);
+    const sourceText = asText(event?.text, "");
+    const evidence = asArray(stored.evidence).map((e) => asText(e?.quote, ""))
+      .concat(asArray(stored.evidence_quotes).map((e) => asText(e, "")));
+    const quote = evidence.find((e) => e && sourceText.includes(e)) || "";
+    const claim = sanitizeInsightText(asText(stored.summary || stored.text || stored.claim, "")) || getInsightTitle(stored);
+    const uncertainty = sanitizeInsightText(asText(stored.uncertainty_detail || stored.uncertainty, ""));
+    const nextTest = sanitizeInsightText(asText(stored.next_test, ""));
+    const why = sanitizeInsightText(asText(stored.why_it_matters, ""));
+    const title = getInsightTitle(stored).slice(0, 95);
+    const path = paths.createPath({
+      title: "Undersøk: " + title,
+      type: "learning", mode: "learning",
+      description: "Kildeorientert undersøkelse. Stegene er spørsmål, ikke godkjente konklusjoner.",
+      goal: "Kontroller kildegrunnlag, usikkerhet og neste etterprøving.",
+      learningOutcome: "Skille dokumenterte observasjoner fra tolkning og ubesvarte spørsmål.",
+      meta: { createdBy: "insight_review_path_v1", source_insight_ref: refId,
+        source_event_id: event ? sourceEventId : "", review_only: true }
+    });
+    if (!path?.id) return { ok: false, reason: "create_failed", message: "Stien kunne ikke opprettes." };
+    const steps = [
+      { source: "aha_insights", refId, title, type: "insight",
+        narrative: "Les påstanden: " + claim.slice(0, 300) + ".",
+        learningOutcome: "Skill tolkningen fra den opprinnelige observasjonen.",
+        meta: { review_stage: "claim" } },
+      { source: "aha_analysis", refId: "review_" + path.id + "_evidence", type: "analysis_step",
+        title: "Kontroller kilde og begrensninger",
+        narrative: (quote
+          ? "Ordrett sitat funnet i tilknyttet lokal kilde: «" + quote.slice(0, 350) + "». Les hele kilden før konklusjon."
+          : "Ingen ordrett kildebelegg ble funnet i et tilknyttet lokalt kildespor. Finn originalkilden før bruk.")
+          + (uncertainty ? " Oppgitt usikkerhet: " + uncertainty.slice(0, 200) : ""),
+        learningOutcome: "Vurder metode, usikkerhet og alternative forklaringer.",
+        meta: { inline: true, review_only: true, review_stage: "evidence", source_insight_ref: refId } },
+      { source: "aha_analysis", refId: "review_" + path.id + "_next", type: "analysis_step",
+        title: "Planlegg neste undersøkelse",
+        narrative: nextTest
+          ? "Foreslått etterprøving (ikke utført): " + nextTest.slice(0, 300)
+          : "Hvilken ny kilde, sammenligning eller måling kunne avklare påstanden?"
+            + (why ? " Begrunnelse: " + why.slice(0, 210) : ""),
+        learningOutcome: "Formuler et konkret neste spørsmål uten å anta utfallet.",
+        meta: { inline: true, review_only: true, review_stage: "next_inquiry", source_insight_ref: refId } }
+    ];
+    for (const step of steps) {
+      if (!paths.addStepToPath(path.id, step)?.ok) {
+        paths.deletePath?.(path.id);
+        return { ok: false, reason: "step_failed", message: "Stien kunne ikke kobles til kildematerialet." };
+      }
+    }
+    paths.refresh?.();
+    return { ok: true, pathId: path.id, message: "Undersøkelsessti opprettet." };
+  }
+
   function dedupeSubjectMatches(matches) {
     const list = Array.isArray(matches) ? matches : [];
     const seenLabels = new Set();
@@ -503,6 +578,11 @@
         <button type="button" class="aha-tile-btn" data-insight-new-list="${escapeHtml(String(index))}">Opprett samling fra innsikten</button>
         <div class="insight-list-status" data-insight-new-list-status="${escapeHtml(String(index))}" role="status" aria-live="polite"></div>
       </div>
+      ${asText(insight?.id, "") && !["rejected", "outdated", "deleted"].includes(asText(insight?.status, "").toLowerCase())
+        ? `<div class="insight-list-linker">
+             <button type="button" class="aha-tile-btn" data-insight-review-path="${escapeHtml(String(index))}">Lag undersøkelsessti</button>
+             <div class="insight-list-status" data-insight-review-path-status="${escapeHtml(String(index))}" role="status" aria-live="polite"></div>
+           </div>` : ""}
       ${groupSection}
     `;
     card.id = "insight-" + encodeURIComponent(getInsightRefId(insight, index));
@@ -715,6 +795,24 @@
         render();
         return;
       }
+      const reviewIndex = target.dataset.insightReviewPath;
+      if (reviewIndex !== undefined) {
+        const card = target.closest(".insight-card");
+        if (!card?._insightRaw) return;
+        const status = card.querySelector(`[data-insight-review-path-status="${reviewIndex}"]`);
+        const result = createInvestigationPathFromInsight(card._insightRaw);
+        if (status) {
+          status.replaceChildren();
+          status.append(document.createTextNode(result.message + " "));
+          if (result.ok) {
+            const link = document.createElement("a");
+            link.href = "paths.html#path-" + encodeURIComponent(result.pathId);
+            link.textContent = "Åpne stien";
+            status.append(link);
+          }
+        }
+        return;
+      }
       const createIndex = target.dataset.insightNewList;
       if (createIndex !== undefined) {
         const card = target.closest(".insight-card");
@@ -777,6 +875,7 @@
     refresh,
     sendInsightToList,
     createListFromInsight,
+    createInvestigationPathFromInsight,
     sendInsightToGroup
   };
 
