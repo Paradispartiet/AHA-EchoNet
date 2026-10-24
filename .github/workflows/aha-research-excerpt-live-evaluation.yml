@@ -1,0 +1,35 @@
+name: AHA research excerpt live evaluation
+
+on:
+  workflow_dispatch:
+    inputs:
+      acknowledgement:
+        description: "Type RUN_AHA_THREE_RESEARCH_ARTICLES (up to 3 model attempts)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  research-live-evaluation:
+    if: ${{ inputs.acknowledgement == 'RUN_AHA_THREE_RESEARCH_ARTICLES' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Evaluate three real-paper excerpts (opt-in model calls)
+        env:
+          AHA_RESEARCH_ARTICLES_COST_ACK: ${{ inputs.acknowledgement }}
+        run: node scripts/aha-research-excerpt-live-comparison.cjs
+      - name: Upload read-only audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-research-excerpt-evaluation
+          path: test-results/aha-research-excerpt-live-evaluation.json
+          if-no-files-found: warn
+          retention-days: 30
