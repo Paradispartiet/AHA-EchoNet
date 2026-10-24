@@ -182,12 +182,12 @@
         .split(/(?<=[.!?])\s+/u).map((sentence) => sentence.trim())
         .filter((sentence) => sentence.length >= 35 && sentence.length <= 650 && source.includes(sentence));
       const scored = sentences.map((quote, index) => {
-        const observation = /(?<![\\p{L}\\p{N}])(?:registrerte|registrert|fant|observerte|funnene (?:viser|støtter)|resultatet viser|materialet viser|husket|økte|avdekket|forteller|beskriver|viste|synliggjorde|målte|målingene)(?![\\p{L}\\p{N}])/iu.test(quote);
+        const observation = /(?<![\p{L}\p{N}])(?:registrerte|registrert|fant|observerte|funnene (?:viser|støtter)|resultatet viser|materialet viser|husket|økte|avdekket|forteller|beskriver|viste|synliggjorde|målte|målingene)(?![\p{L}\p{N}])/iu.test(quote);
         const contrast = /(derimot|mens|samtidig|i motsetning|på den andre siden)/i.test(quote);
         const uncertainty = /(kan ikke|ikke alene|ikke det samme|ikke dokumentert|ikke grunnlag|ikke målt|ikke sammenlign|for lite|svakt kontroll|ikke fastslå|ikke bevise|ikke skille|ikke en generell|registreringen omfatter ikke)/i.test(quote);
         const caveat = /(selv valgt|selvvalgt|uten kontroll|forskjellige benker|ikke tilfeldig|usikkert|begrenset utvalg|mangler|ukjent|usikkerhet)/i.test(quote);
         // Directly reported observations outrank generic report descriptions.
-        const directObservation = /(?<![\\p{L}\\p{N}])(?:registrerte|observerte|fant|husket|økte|avdekket|målte|forteller|rapporterte)(?![\\p{L}\\p{N}])/iu.test(quote);
+        const directObservation = /(?<![\p{L}\p{N}])(?:registrerte|observerte|fant|husket|økte|avdekket|målte|forteller|rapporterte)(?![\p{L}\p{N}])/iu.test(quote);
         const methodOnly = /^(?:rapporten beskriver|studien beskriver)/i.test(quote);
         const evidenceScore = (observation ? 8 : 0) + (directObservation ? 6 : 0)
           + (contrast ? 2 : 0) + (/\d/.test(quote) ? 2 : 0)
