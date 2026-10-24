@@ -56,6 +56,15 @@ for (const article of articles) {
   assert.ok(canonical && typeof canonical === "object", article.id + " missing canonical result");
   payload.canonicalAnalysis = canonical;
   const quality = evaluator.evaluateAnalysis(payload, article.text);
+  // A source quotation must not be promoted to a verified scientific insight.
+  assert.equal(canonical.analysisEvidenceStatus, "extractive_only", article.id + ": unsupported field must abstain");
+  const match = /^Kildesitat \(ikke selvstendig innsikt\): «([\s\S]+)»$/u.exec(canonical.keyInsight || "");
+  assert.ok(match, article.id + ": canonical result must be explicitly labelled a source quote");
+  assert.ok(article.text.includes(match[1]), article.id + ": quote must come verbatim from the input");
+  assert.equal(quality.status, "blocked", article.id + ": an extractive-only result cannot pass quality review");
+  assert.ok(quality.critical.includes("no_verified_main_insight"), article.id + ": critical reason is missing");
+  assert.equal(quality.dimensions.sourceGrounding, 0, article.id + ": quotes cannot earn interpretation credit");
+  assert.doesNotMatch(canonical.keyInsight, /frustrasjon|testdata-kvalitet|trygg migrering/i);
   const evidence = quality.claims.filter((claim) => claim.kind === "source_evidence");
   const invalidEvidence = evidence.filter((claim) => claim.sourceMatch !== "verbatim");
   const summary = {
@@ -94,4 +103,6 @@ const totals = {
 };
 console.log("AHA_ARTICLE_SUMMARY " + JSON.stringify(totals));
 assert.equal(results.length, 5);
+assert.equal(totals.blocked, 5, "no unfamiliar article may be marked as a valid local scientific interpretation");
+assert.equal(totals.passed, 0);
 console.log("AHA five synthetic test articles: diagnostic run completed.");
