@@ -2,7 +2,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { webcrypto, createHash } = require("node:crypto");
-const api = require("../js/ahaTestPackageReview.js");
+const vm = require("node:vm");
+const sandbox = { TextEncoder, Uint8Array, Date, JSON, console, crypto: webcrypto, module: { exports: {} } };
+sandbox.globalThis = sandbox;
+vm.runInNewContext(require("node:fs").readFileSync(require("node:path").join(__dirname, "../js/ahaTestPackageReview.js"), "utf8"), sandbox, { filename: "ahaTestPackageReview.js" });
+const api = sandbox.module.exports;
 
 const root = path.join(__dirname, "..");
 const source = "The cohort showed an association between green space and improved wellbeing. The authors warn that the observational design cannot establish causality.";
