@@ -9,10 +9,10 @@ const ENDPOINT = "https://aha-agent-7a3y.onrender.com/api/aha-agent/semantic-doc
 const MAX_REQUESTS = 5;
 const EXPECTED_ATTEMPTS = 1;
 const output = path.resolve("test-results/aha-five-article-live-comparison.json");
-const articles = require("../tests/aha-five-synthetic-articles-diagnostic.test.cjs").articles;
-
 if (process.env.AHA_FIVE_ARTICLES_COST_ACK !== ACK)
   throw new Error("Explicit acknowledgement RUN_AHA_FIVE_ARTICLES is required before any model request");
+
+const articles = require("../tests/aha-five-synthetic-articles-diagnostic.test.cjs").articles;
 if (!Array.isArray(articles) || articles.length !== MAX_REQUESTS)
   throw new Error("The five-article corpus has changed; refuse unexpected model calls");
 
