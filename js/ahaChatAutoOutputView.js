@@ -553,7 +553,7 @@
           <section class="auto-output-group auto-output-primary" data-group="quality-gate">
             <h3>AHA-analysen er blokkert</h3>
             <article class="auto-card auto-card-primary"><p>${safeMarkupText(reasons)}</p><p><strong>Ingen analysepåstander vises som kvalitetssikret før kjernen er klar.</strong></p></article>
-          </section>${deps.renderAnalysisDebugPanel(payload)}`;
+          </section>${researchBriefMarkup}${deps.renderAnalysisDebugPanel(payload)}`;
         deps.setExportButtonsEnabled(true);
         deps.refreshAhaExplorer();
         return;
