@@ -54,6 +54,17 @@ for (const article of articles) {
   const payload = hooks.buildAutoOutputs(article.text, "");
   const canonical = hooks.buildCanonicalAnalysis(payload, article.text);
   assert.ok(canonical && typeof canonical === "object", article.id + " missing canonical result");
+  const brief = canonical.sourceResearchBrief;
+  assert.equal(brief?.status, "source_bound_review", article.id + ": missing article-specific research brief");
+  assert.equal(brief?.verifiedInterpretation, false, article.id + ": quote must not count as verified synthesis");
+  assert.ok(article.text.includes(brief.observation?.quote), article.id + ": observation must occur verbatim in the source");
+  assert.ok(article.text.includes(brief.limitation?.quote), article.id + ": limitation must occur verbatim in the source");
+  assert.notEqual(brief.observation.quote, brief.limitation.quote, article.id + ": do not duplicate evidence and limitations");
+  assert.ok(brief.nextChecks?.length >= 2, article.id + ": source review needs a useful short path");
+  assert.ok(article.concepts.some((term) =>
+    (brief.observation.quote + " " + brief.limitation.quote).toLowerCase().includes(term.toLowerCase())
+  ), article.id + ": research brief lacks its own topic");
+  if (brief.contrastingEvidence) assert.ok(article.text.includes(brief.contrastingEvidence.quote));
   payload.canonicalAnalysis = canonical;
   const quality = evaluator.evaluateAnalysis(payload, article.text);
   // A source quotation must not be promoted to a verified scientific insight.
@@ -76,6 +87,8 @@ for (const article of articles) {
     theme: canonical.theme || null,
     tension: canonical.mainTension || null,
     insight: canonical.keyInsight || null,
+    source_brief_observation: brief?.observation?.quote || null,
+    source_brief_limitation: brief?.limitation?.quote || null,
     next_steps: (canonical.suggestedActions || []).slice(0, 3),
     warnings: (canonical.warnings || []).slice(0, 3),
     confidence: canonical.confidence || null,
