@@ -44,6 +44,25 @@ async function run() {
     assert.equal(good.source_scope, "short_noncontiguous_verbatim_excerpts_not_full_paper");
     assert.equal(good.candidate_count, 1);
     assert.equal(good.contract_valid_count, 1, item.id + ": valid noncausal insight must pass");
+    assert.equal(good.provided_observation, item.observation);
+    assert.equal(good.provided_limitation, item.limitation);
+    assert.equal(good.candidates[0].insight, insights[index]);
+    assert.match(good.candidates[0].abstraction, /Combines a study-reported association/);
+    assert.match(good.candidates[0].why_it_matters, /Avoids mistaking reported observations/);
+    assert.match(good.candidates[0].uncertainty_text, /cannot validate the mechanism/);
+    assert.equal(good.candidates[0].confidence, "medium");
+    assert.deepEqual(good.candidates[0].evidence_review_material, [
+      { quote: item.observation, role: "supports", exact_in_supplied_excerpt: true },
+      { quote: item.limitation, role: "limits", exact_in_supplied_excerpt: true }
+    ]);
+    assert.deepEqual(good.candidates[0].human_quality_review, {
+      status: "pending",
+      scientific_accuracy: null,
+      nontrivial_knowledge_gain: null,
+      non_paraphrase: null,
+      useful_followup_question: null,
+      reviewer_notes: null
+    });
     assert.equal(good.grounded_candidate_count, 1);
     assert.equal(good.source_limitation_cited_count, 1);
     assert.equal(good.topic_specific_candidate_count, 1);
@@ -59,6 +78,8 @@ async function run() {
     assert.equal(falseQuote.contract_valid_count, 0);
     assert.equal(falseQuote.grounded_candidate_count, 0);
     assert.equal(falseQuote.exact_evidence_quotes, 1);
+    assert.equal(falseQuote.candidates[0].evidence_review_material[0].exact_in_supplied_excerpt, false);
+    assert.equal(falseQuote.candidates[0].human_quality_review.status, "pending");
     assert.equal(falseQuote.candidates[0].validation_errors.includes("candidate:0:evidence:0:quote_not_in_source"), true);
 
     const overreach = candidate(item, "The intervention caused the reported research outcome.");
@@ -71,6 +92,7 @@ async function run() {
     assert.equal(empty.candidate_count, 0);
     assert.equal(empty.quote_integrity_ratio, null);
     assert.equal(empty.zero_candidates_is_not_a_failure, true);
+    assert.deepEqual(empty.candidates, []);
   }
 
   const script = path.resolve(__dirname, "../scripts/aha-research-excerpt-live-comparison.cjs");

@@ -41,6 +41,19 @@ Each model response is revalidated by AHA's own synthesis contract, then measure
 
 All results are tagged `human_review_required: true` and `scientific_validity_verified: false`.
 
+### Reviewer-visible evidence (before any paid run)
+
+The JSON artifact preserves, for **each** generated candidate, the insight, abstraction, why-it-matters rationale, uncertainty wording, confidence, claim type, evidence quotes and their roles, plus the two supplied source fragments. A quote-integrity marker states only whether a quotation occurs **in those fragments**, not whether the wider paper supports the claim. These review fields are capped in length and are not automatically promoted to knowledge.
+
+Every candidate has a `human_quality_review` record with `status: "pending"` and null judgments. This is deliberately **not** a model-generated or lexical novelty score. A reviewer should judge:
+- `scientific_accuracy`: supported / unsupported / indeterminate, using the full publication where accessible.
+- `nontrivial_knowledge_gain`: yes / no / indeterminate, comparing the interpretation to what the supplied excerpts explicitly say.
+- `non_paraphrase`: yes / no / indeterminate; a correct restatement alone does not qualify as a new insight.
+- `useful_followup_question`: yes / no / indeterminate, examining whether a proposed next research question follows from the actual finding and limitation.
+- `reviewer_notes`: source-specific explanation and missing context.
+
+These fields are unfilled review placeholders in the read-only artifact, **not** scientific approvals. Do not turn any pending value into a passing score. Because each case supplies only two short, noncontiguous fragments, indeterminate is expected for some judgments and should not be converted into failure or success.
+
 A specialist reviewing a case should evaluate factual accuracy, whether the relation adds substantive understanding beyond the source wording, whether important method/context is missing, and whether the proposed interpretation overstates a causal link. The automatic metrics cannot resolve these questions.
 
 ## What comes next
