@@ -1053,6 +1053,35 @@ ${"```"}
     if (!paths.length) missing.push("run_bound_saved_paths_not_found");
     missing.push("historical_model_attempts_not_archived");
     const authoritative = obj(bundle.analysisBundleV2);
+    // This is a *distinct* diagnostic from the ephemeral candidate cache.
+    // Authoritative bundle runtime may still explain why synthesis was blocked
+    // even when no model response/candidate was ever produced.
+    const bundleIdentity = obj(authoritative.identity);
+    const diagnosticBound = str(bundleIdentity.analysis_run_id) === runId
+      && str(bundleIdentity.source_sha256) === sha
+      && (!identity.analysis_id || str(bundleIdentity.analysis_id) === identity.analysis_id)
+      && (!identity.source_id || str(bundleIdentity.source_id) === identity.source_id);
+    const recordedRuntime = diagnosticBound ? obj(authoritative.runtime) : {};
+    const runtimeReasons = arr(recordedRuntime.blocking_reasons).map(str).filter(Boolean);
+    const incompatibleRuntime = runtimeReasons.some((reason) =>
+      reason.startsWith("runtime_build_mismatch:") || reason.startsWith("runtime_contract_mismatch:")
+      || reason.startsWith("runtime_manifest_missing:") || reason.startsWith("runtime_build_sha_missing:"));
+    const generationDiagnostic = {
+      status: !diagnosticBound ? "authoritative_runtime_not_bound"
+        : incompatibleRuntime ? "blocked_runtime_incompatible"
+        : str(recordedRuntime.status).startsWith("blocked") ? "blocked_other"
+        : candidates.length ? "candidate_data_available"
+        : "no_candidate_result_recorded",
+      source: diagnosticBound ? "authoritative_analysis_bundle_v2" : "not_available",
+      runtime_status: diagnosticBound ? str(recordedRuntime.status) || null : null,
+      blocking_reasons: diagnosticBound ? runtimeReasons : [],
+      frontend_build_sha: diagnosticBound ? str(recordedRuntime.frontend_build_sha) || null : null,
+      backend_build_sha: diagnosticBound ? str(recordedRuntime.backend?.backend_build_sha) || null : null,
+      model_attempts_verified: false,
+      // Build mismatch is a concrete preflight block, not a judgement that
+      // this scholarly article could not produce relevant insights.
+      semantic_relevance_assessed: !incompatibleRuntime && candidates.length > 0
+    };
     return {
       schema: "aha_analysis_test_package_v1",
       exported_at: new Date().toISOString(),
@@ -1085,6 +1114,7 @@ ${"```"}
         candidates,
         literal_source_quote_checks: candidateEvidenceChecks,
         prefilter_rejections: prefilterRejects,
+        generation_diagnostic: generationDiagnostic,
         runtime_trace: runtimeTrace,
         model_attempt_history_complete: false
       },
