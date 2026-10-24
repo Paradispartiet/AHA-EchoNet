@@ -372,6 +372,12 @@
       const contrast = String(brief.contrastingEvidence?.quote || "").trim();
       const otherSource = contrast && source.includes(contrast) ? contrast : "";
       const steps = (Array.isArray(brief.nextChecks) ? brief.nextChecks : []).slice(0, 3);
+      const researchPath = (Array.isArray(brief.researchPath) ? brief.researchPath : [])
+        .slice(0, 3)
+        .filter((step) => step && typeof step.label === "string"
+          && typeof step.question === "string"
+          && typeof step.sourceQuote === "string"
+          && source.includes(step.sourceQuote));
       return `<section class="auto-output-group" data-group="source-research-brief">
         <h3>Kildebasert forskningsutdrag</h3>
         <article class="auto-card" data-auto-card="source-research-brief">
@@ -379,7 +385,7 @@
           <p><strong>Rapportert observasjon:</strong> «${safeMarkupText(observation)}»</p>
           <p><strong>Metode eller begrensning:</strong> «${safeMarkupText(limitation)}»</p>
           ${otherSource ? `<p><strong>Et annet spor i materialet:</strong> «${safeMarkupText(otherSource)}»</p>` : ""}
-          ${steps.length ? `<h4>Kontroller videre</h4><ol>${steps.map((step) => `<li>${safeMarkupText(step)}</li>`).join("")}</ol>` : ""}
+          ${researchPath.length === 3 ? `<h4>Foreslått undersøkelsessti</h4><ol>${researchPath.map((step) => `<li><strong>${safeMarkupText(step.label)}:</strong> ${safeMarkupText(step.question)}</li>`).join("")}</ol>` : steps.length ? `<h4>Kontroller videre</h4><ol>${steps.map((step) => `<li>${safeMarkupText(step)}</li>`).join("")}</ol>` : ""}
           <p><strong>Usikkerhet:</strong> Dette er kildeutdrag og kontrollspørsmål, ikke en selvstendig eller verifisert tolkning.</p>
         </article>
       </section>`;

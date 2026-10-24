@@ -207,11 +207,41 @@
         .sort((a, b) => b.evidenceScore - a.evidenceScore || a.index - b.index)[0] || null;
       // Do not fill empty fields with generic or cross-domain content.
       if (!observation || !limitation || observation.quote === limitation.quote) return null;
+      // Three candidate investigation steps, each tied to a source sentence.
+      // A path is a review proposal, never an approved insight or saved route.
+      const limitationMethod = /(?:uten kontroll|svakt kontroll|ikke tilfeldig|ikke sammenlign|selv valgt|selvvalgt|ikke målt|mangler)/i.test(limitation.quote);
+      const limitationCause = /(?:årsak|kausal|effekt|forårsak|virkning|ikke alene|ikke fastslå|ikke skille|ikke bevise)/i.test(limitation.quote);
+      const researchPath = [
+        {
+          label: "Undersøk observasjonen",
+          question: /\d/.test(observation.quote)
+            ? "Hvordan ble tallene eller målingene registrert, og hva mangler i datagrunnlaget?"
+            : "Hvilket primærmateriale eller hvilke registreringer dokumenterer dette funnet?",
+          sourceQuote: observation.quote
+        },
+        {
+          label: "Prøv begrensningen",
+          question: limitationMethod
+            ? "Hvilken kontroll, sammenligning eller utvalgsinformasjon kreves for å prøve funnet?"
+            : limitationCause
+              ? "Hvilke alternative forklaringer må undersøkes før en årsak kan hevdes?"
+              : "Hvor langt rekker dokumentasjonen, og hvem eller hva gjelder den ikke for?",
+          sourceQuote: limitation.quote
+        },
+        {
+          label: comparison ? "Sammenlign kildespor" : "Planlegg neste kildekontroll",
+          question: comparison
+            ? "Hvordan forholder dette andre kildesporet seg til observasjonen, og hva er fortsatt uavklart?"
+            : "Hvilken ny kilde eller undersøkelse ville best redusere denne usikkerheten?",
+          sourceQuote: comparison ? comparison.quote : limitation.quote
+        }
+      ];
       return {
         status: "source_bound_review",
         observation: { label: "Det kilden rapporterer", quote: observation.quote, sourceSentence: observation.index },
         limitation: { label: "Det kilden ikke avklarer", quote: limitation.quote, sourceSentence: limitation.index },
         ...(comparison ? { contrastingEvidence: { label: "Et annet spor i materialet", quote: comparison.quote, sourceSentence: comparison.index } } : {}),
+        researchPath,
         nextChecks: [
           "Kontroller hvordan observasjonen er dokumentert i kilden.",
           "Undersøk om metodebegrensningen kan endre tolkningen av funnet.",
