@@ -29,7 +29,7 @@ const ANTI_CAUSAL_SOURCE = /(?:peker\s+ikke\s+ut|fastslår\s+ikke|viser\s+ikke|i
    is never positive evidence for causality. */
 const ADDITIONAL_CAUSAL_LIMITATIONS = Object.freeze([
   /(?:kan\s+ikke|kunne\s+ikke|ikke\s+mulig\s+å)[^.!?]{0,80}(?:alene\s+)?(?:bevise|fastslå|skille|avgjøre)[^.!?]{0,160}(?:forårsak|årsaks?|kausal|effekt|virkning|forklar)/i,
-  /(?:ikke\s+(?:dokumentert|påvist)|ingen\s+(?:dokumentert|påvist))\s+(?:årsaks?|kausal|effekt|virkning)/i,
+  /(?:ikke\s+(?:er\s+)?(?:dokumentert|påvist)|ingen\s+(?:dokumentert|påvist))\s+(?:årsaks?|kausal|effekt|virkning)/i,
   /(?:for\s+lite|for\s+svakt|svakt\s+kontrollert)[^.!?]{0,140}(?:fastslå|bevise|forklare)/i,
   /(?:samvariasjon|sammenheng)[^.!?]{0,110}(?:ikke\s+(?:det\s+samme\s+som|bevis|dokumentasjon)|uten\s+(?:bevis|kausalitet))/i,
   /(?:not\s+(?:evidence|proof)\s+of\s+(?:causality|a\s+causal|an?\s+effect)|cannot\s+(?:establish|separate|prove|attribute)[^.!?]{0,110}(?:caus|effect|impact))/i
