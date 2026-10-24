@@ -1,0 +1,42 @@
+name: AHA five article live model comparison
+
+on:
+  workflow_dispatch:
+    inputs:
+      cost_ack:
+        description: "Explicitly authorize at most five paid shadow synthesis requests: enter RUN_AHA_FIVE_ARTICLES"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-five-articles:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Require explicit paid model acknowledgement
+        env:
+          AHA_FIVE_ARTICLES_COST_ACK: ${{ inputs.cost_ack }}
+        run: |
+          if [[ "$AHA_FIVE_ARTICLES_COST_ACK" != "RUN_AHA_FIVE_ARTICLES" ]]; then
+            echo "Five paid model calls must be explicitly acknowledged." >&2
+            exit 1
+          fi
+      - name: Run five article comparison, max five model calls and no retries
+        env:
+          AHA_FIVE_ARTICLES_COST_ACK: ${{ inputs.cost_ack }}
+        run: node scripts/aha-five-article-live-comparison.cjs
+      - name: Upload source-bound model outputs and budget evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-five-article-live-comparison
+          path: test-results/aha-five-article-live-comparison.json
+          if-no-files-found: warn
