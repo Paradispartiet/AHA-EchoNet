@@ -136,5 +136,6 @@ assert.doesNotMatch(html,/id="btn-export-test-package"/, "Protected Chat HTML mu
 assert.match(ui,/button\.id = "btn-export-test-package"/);
 assert.match(ui,/ensureTestPackageButton\(\)/);
 assert.match(ui,/btn-export-test-package/);
+assert.match(ui,/reviewLink\.href = "testpakke\.html"/);
 assert.match(composition,/exportTestPackage: exportRuntime.exportAhaTestPackage/);
 console.log("AHA one-run test package: source hash, run identity, rejected candidates, local records, privacy and download passed.");
