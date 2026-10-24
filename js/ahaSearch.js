@@ -209,7 +209,7 @@
     const chamber = loadByKey(STORAGE_KEYS.insights, { insights: [] });
     asArray(chamber?.insights).filter(isSearchableInsight).forEach((insight, index) => {
       const base = withBase(insight, { type: "insight", source: "aha_insights" });
-      const refId = asText(insight?.id || base?.id, `insight_idx_${index}`);
+      const refId = asText(insight?.id, `insight_idx_${index}`);
       out.push(createSearchItem({
         id: `insight_${refId}`,
         title: asText(insight?.title || insight?.heading || insight?.label || insight?.summary, "Innsikt"),
