@@ -74,15 +74,39 @@
   function selectSourcesForAnswer(results, options = {}) {
     const intent = asText(options.intent) || "unknown";
     const max = Math.min(6, Math.max(3, Number(options.limit) || 6));
-    const seen = new Set();
-    return asArray(results)
-      .map(normalizeSource)
-      .filter((source) => source.source || source.title || source.excerpt)
-      .filter((source) => { const key = source.id || `${source.source}:${source.sourceId}:${source.title}`; if (seen.has(key)) return false; seen.add(key); return true; })
-      .map((source) => ({ ...source, _rank: (Number(source.hybridScore) || Number(source.score) || 0) + sourceBonus(source, intent) }))
+    const ranked = asArray(results)
+      .map((entry, index) => {
+        const source = normalizeSource(entry, index);
+        const originalId = asText(asObject(entry).id);
+        // One approved source can be returned by lexical, semantic and hybrid
+        // retrieval. Count the canonical source reference once, regardless of
+        // each retriever's result id.
+        const key = source.source && source.sourceId
+          ? `record:${source.source}::${source.sourceId}`
+          : originalId
+            ? `id:${source.source || source.sourceType}::${originalId}`
+            : `content:${source.sourceType}::${source.title}::${source.excerpt}`;
+        return {
+          ...source,
+          _dedupeKey: key,
+          _rank: (Number(source.hybridScore) || Number(source.score) || 0) + sourceBonus(source, intent)
+        };
+      })
+      // Normalization creates a display title even for empty input; this is
+      // never evidence and must not appear as an answer source.
+      .filter((source) => Boolean(source.excerpt) && Boolean(source.source || source.sourceType || source.sourceId));
+    const bySource = new Map();
+    ranked.forEach((source) => {
+      const previous = bySource.get(source._dedupeKey);
+      if (!previous || source._rank > previous._rank ||
+          (source._rank === previous._rank && source.excerpt.length > previous.excerpt.length)) {
+        bySource.set(source._dedupeKey, source);
+      }
+    });
+    return [...bySource.values()]
       .sort((a, b) => b._rank - a._rank || a.title.localeCompare(b.title))
       .slice(0, max)
-      .map(({ _rank, ...source }) => source);
+      .map(({ _rank, _dedupeKey, ...source }) => source);
   }
 
   function buildAnswerPlan(userMessage, answerContext = {}) {
