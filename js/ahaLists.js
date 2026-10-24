@@ -708,19 +708,22 @@
     const options = allItems.map((item) => {
       return `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`;
     }).join("");
-    const visibleItems = list.items.slice(0, 5);
+    // A collection must never hide members beyond the first five: every saved
+    // item remains accessible and removable from the same workspace.
+    const visibleItems = list.items;
     const itemsHtml = visibleItems.length
       ? visibleItems.map((item) => `
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
+            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
             ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
             <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
         </li>`).join("")
       : `<li class="aha-list-preview-empty-item">No items in this list yet.</li>`;
-    const remainingCount = Math.max(0, list.items.length - visibleItems.length);
+    const remainingCount = 0;
 
     return `<aside class="aha-panel aha-list-preview" aria-labelledby="list-preview-title">
       <div class="aha-list-header">
@@ -740,7 +743,7 @@
       <section aria-labelledby="list-preview-items-title">
         <h3 id="list-preview-items-title">Objekter</h3>
         <ul class="aha-list-items">${itemsHtml}</ul>
-        ${remainingCount ? `<p class="module-meta">${remainingCount} more ${remainingCount === 1 ? "item" : "items"} not shown in this preview.</p>` : ""}
+
       </section>
       <details class="aha-list-manage">
         <summary>Administrer samling</summary>
@@ -797,7 +800,7 @@
         ? `<ul class="aha-concept-relations">${list.relations.map((relation) => `<li><span><strong>${escapeHtml(relation.from)}</strong> ${escapeHtml(relation.label)} <strong>${escapeHtml(relation.to)}</strong>${relation.explanation ? `<small class="aha-concept-relation-explanation">${escapeHtml(relation.explanation)}</small>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-relation-remove="${escapeHtml(list.id)}::${escapeHtml(relation.id)}" aria-label="Fjern relasjon">×</button></li>`).join("")}</ul>`
         : `<p class="module-meta">Ingen relasjoner ennå.</p>`;
       const termOptions = list.terms.map((term) => `<option value="${escapeHtml(term.term)}">${escapeHtml(term.term)}</option>`).join("");
-      return `<article class="aha-panel aha-concept-list-card" data-concept-list-card="${escapeHtml(list.id)}">
+      return `<article id="concept-list-${encodeURIComponent(list.id)}" class="aha-panel aha-concept-list-card" data-concept-list-card="${escapeHtml(list.id)}">
         <div class="aha-list-header"><div><p class="eyebrow">Begrepsliste</p><h3>${escapeHtml(list.title)}</h3></div><span class="aha-list-badge">${list.terms.length} ${list.terms.length === 1 ? "begrep" : "begreper"}</span></div>
         ${list.description ? `<p>${escapeHtml(list.description)}</p>` : ""}
         ${terms}
@@ -855,6 +858,10 @@
       return;
     }
 
+    if (!selectedListId && global.location?.hash?.startsWith("#list-")) {
+      const linked = lists.find((list) => "#list-" + encodeURIComponent(list.id) === global.location.hash);
+      if (linked) selectedListId = linked.id;
+    }
     const selected = lists.find((list) => list.id === selectedListId) || null;
     mount.innerHTML = `<div class="aha-lists-workspace">
       <section class="aha-list-overview" aria-labelledby="lists-overview-title">
