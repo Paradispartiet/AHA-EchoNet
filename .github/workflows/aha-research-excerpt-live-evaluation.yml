@@ -25,11 +25,16 @@ jobs:
         env:
           AHA_RESEARCH_ARTICLES_COST_ACK: ${{ inputs.acknowledgement }}
         run: node scripts/aha-research-excerpt-live-comparison.cjs
+      - name: Prepare human scientific review worksheet
+        if: always()
+        run: node scripts/aha-research-review-report.cjs
       - name: Upload read-only audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aha-research-excerpt-evaluation
-          path: test-results/aha-research-excerpt-live-evaluation.json
+          path: |
+            test-results/aha-research-excerpt-live-evaluation.json
+            test-results/aha-research-excerpt-review.md
           if-no-files-found: warn
           retention-days: 30

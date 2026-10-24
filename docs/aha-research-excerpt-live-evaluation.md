@@ -26,7 +26,7 @@ This is an intentional authorization to invoke the existing AHA production synth
 
 A local operator may use `AHA_RESEARCH_ARTICLES_COST_ACK=RUN_AHA_THREE_RESEARCH_ARTICLES node scripts/aha-research-excerpt-live-comparison.cjs` under the same explicit conditions.
 
-The manual workflow does not approve any AI output, write to canonical knowledge, write user memory, or promote a candidate to an AHA insight. It simply saves a review report.
+The manual workflow does not approve any AI output, write to canonical knowledge, write user memory, or promote a candidate to an AHA insight. It saves a JSON audit report and a **human review worksheet** (`test-results/aha-research-excerpt-review.md`). The worksheet is also printed into the GitHub Actions run summary for mobile review, using the actual candidate explanations, evidence roles, uncertainty, and cited source excerpts. Even when the evaluation fails before producing results, the summary explicitly says that no evaluable model report exists. The worksheet cannot certify scientific quality: checkboxes are empty and no acceptance verdict is generated.
 
 ## Scorecard dimensions
 
@@ -57,5 +57,7 @@ These fields are unfilled review placeholders in the read-only artifact, **not**
 A specialist reviewing a case should evaluate factual accuracy, whether the relation adds substantive understanding beyond the source wording, whether important method/context is missing, and whether the proposed interpretation overstates a causal link. The automatic metrics cannot resolve these questions.
 
 ## What comes next
+
+The offline worksheet renderer can be tested without model calls: `node tests/aha-research-review-report.test.cjs`. It never changes the model output, the candidate gate, any knowledge store, the number of model attempts or the dispatch acknowledgement.
 
 Only after this bounded comparison produces actual model results should we tune prompts or source-selection algorithms. A future **whole-article** benchmark must separately collect permissibly licensed, full-context texts; source provenance; expert-reviewed gold judgments; correct access/attribution; and a source-length strategy that preserves methods, results, discussion and limitations. Do not label this three-excerpt comparison a full-paper benchmark.
