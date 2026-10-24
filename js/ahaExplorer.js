@@ -89,21 +89,21 @@
   return state;
 }
 
-  function renderQualityStatus(model, bundle) {
+  function renderQualityStatus(model) {
   const quality = model?.quality || {};
-  const readiness = summarizeActiveReadiness(model, bundle);
+  const readiness = summarizeActiveReadiness(model, current?.run?.analysisBundleV2);
   return `<aside class="aha-quality-status-preview" aria-label="Kvalitetsstatus"><div class="aha-quality-status-head"><h3>Kvalitetsstatus</h3><span>Status: ${esc(readiness.label)}</span></div>
     ${readiness.incomplete ? `<p class="exp-empty" role="status">${esc(readiness.reason)}</p>` : ""}
-    <dl class="aha-quality-status-checks"><div><dt>Kildebinding</dt><dd>${readiness.sourceVerified ? "teknisk verifisert" : "ikke bekreftet"}</dd></div><div><dt>Temakonsistens</dt><dd>kontrollert per felt</dd></div><div><dt>Synlige kildebundne felt</dt><dd>${esc(String(quality.visible_field_count || 0))}</dd></div><div><dt>Holdt tilbake</dt><dd>${esc(String(quality.blocked_field_count || 0))}</dd></div><div><dt>Innsiktsport</dt><dd>${esc(readiness.gateStatus)}</dd></div><div><dt>Kvalitetssikrede innsikter</dt><dd>${esc(readiness.approvedCount)}</dd></div></dl>
-    <p class="aha-quality-status-safety">Teknisk kildebinding er ikke faglig godkjenning. Read-only · ingen automatisk lagring.</p></aside>`;
+    <dl class="aha-quality-status-checks"><div><dt>Kildebinding</dt><dd>${readiness.sourceVerified ? "teknisk verifisert" : "ikke bekreftet"}</dd></div><div><dt>Temakonsistens</dt><dd>kontrollert per felt</dd></div><div><dt>Synlige kildebundne felt</dt><dd>${esc(String(quality.visible_field_count || 0))}</dd></div><div><dt>Holdt tilbake</dt><dd>${esc(String(quality.blocked_field_count || 0))}</dd></div><div><dt>Stale-data guard</dt><dd>${readiness.sourceVerified ? 'passed' : 'unknown'}</dd></div><div><dt>Analyse-isolering</dt><dd>${readiness.sourceVerified ? 'verified' : 'unknown'}</dd></div><div><dt>Innsiktsport</dt><dd>${esc(readiness.gateStatus)}</dd></div><div><dt>Kvalitetssikrede innsikter</dt><dd>${esc(readiness.approvedCount)}</dd></div></dl>
+    <p class="aha-quality-status-safety">Teknisk kildebinding er ikke faglig godkjenning. read-only · ingen sync eller rå brukerdata i statusflaten.</p></aside>`;
 }
 
-  function renderOversikt(model, bundle) {
+  function renderOversikt(model) {
   const host = getContainer("oversikt"); if (!host) return;
   const section = model.sections.overview || {};
   const theme = itemText(section.theme), tension = itemText(section.central_tension), insight = itemText(section.strongest_insight), next = itemText(section.next_inquiry);
-  const readiness = summarizeActiveReadiness(model, bundle);
-  if (![theme, tension, insight, next].some(Boolean)) { host.innerHTML = emptyNote("AHA har ikke nok kildebelegg til et trygt hovedbilde ennå.") + renderQualityStatus(model, bundle); return; }
+  const readiness = summarizeActiveReadiness(model, current?.run?.analysisBundleV2);
+  if (![theme, tension, insight, next].some(Boolean)) { host.innerHTML = emptyNote("AHA har ikke nok kildebelegg til et trygt hovedbilde ennå.") + renderQualityStatus(model); return; }
   host.innerHTML = `<div class="analysis-summary"><h4>${esc(theme || "Kildebundet analyse")}</h4>
       ${readiness.incomplete ? `<p class="exp-empty" role="status">Kildestruktur, ikke fullført faglig analyse. ${esc(readiness.reason)}</p>` : ""}
       <dl class="exp-dl analysis-summary-fields">${dlRow(readiness.incomplete ? "Kildens spenning – ikke verifisert syntese" : "Hovedspenning", tension)}${!readiness.incomplete ? dlRow("Sterkeste innsikt", insight) : ""}${!readiness.incomplete ? dlRow("Neste undersøkelse", next) : ""}</dl>
@@ -266,7 +266,7 @@
     const knowledge = global.AHAKnowledgeMapReadModelV2?.build?.({ analysisReadModel: analysis, historicalRelations: run.relevantAfterworks });
     if (!knowledge) { clear(); return; }
     current = { run, analysis, knowledge, product: null };
-    renderOversikt(analysis, run.analysisBundleV2); renderInnsikter(analysis); renderBegreper(analysis); renderSamtalespor(analysis); renderFag(analysis); renderKilder(analysis); renderStruktur(analysis); renderEtterarbeid(analysis); renderKart(knowledge); renderData();
+    renderOversikt(analysis); renderInnsikter(analysis); renderBegreper(analysis); renderSamtalespor(analysis); renderFag(analysis); renderKilder(analysis); renderStruktur(analysis); renderEtterarbeid(analysis); renderKart(knowledge); renderData();
     renderProducts(run.analysisBundleV2);
     setCardCount("innsikter", analysis.sections.insights.length); setCardCount("begreper", analysis.sections.concepts.length); setCardCount("fag", analysis.sections.subjects.length); setCardCount("kilder", analysis.sections.sources.length); setCardCount("kart", knowledge.scopes.current_analysis.nodes.length);
   }
