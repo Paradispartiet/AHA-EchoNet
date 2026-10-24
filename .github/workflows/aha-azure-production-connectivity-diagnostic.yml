@@ -1,0 +1,172 @@
+name: AHA Azure production connectivity diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/aha-azure-production-connectivity-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  diagnose:
+    name: Read live Container App connectivity state
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: aha-canonical-production-infra
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AHA_PRODUCTION_RESOURCE_GROUP: ${{ vars.AHA_PRODUCTION_RESOURCE_GROUP || 'rg-aha-canonical-prod' }}
+      AHA_PRODUCTION_CONTAINER_APP: aha-canonical-api-production
+
+    steps:
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Container Apps tooling
+        run: az extension add --name containerapp --upgrade --only-show-errors
+
+      - name: Inspect live app, environment, revisions and public connectivity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_json="$RUNNER_TEMP/aha-live-app.json"
+          env_json="$RUNNER_TEMP/aha-live-environment.json"
+          revisions_json="$RUNNER_TEMP/aha-live-revisions.json"
+          replicas_json="$RUNNER_TEMP/aha-live-replicas.json"
+          health_body="$RUNNER_TEMP/aha-live-health.json"
+          curl_error="$RUNNER_TEMP/aha-live-curl.err"
+
+          az containerapp show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$app_json"
+
+          fqdn="$(jq -r '.properties.configuration.ingress.fqdn // empty' "$app_json")"
+          environment_id="$(jq -r '.properties.environmentId // empty' "$app_json")"
+          environment_name="${environment_id##*/}"
+          latest_ready="$(jq -r '.properties.latestReadyRevisionName // empty' "$app_json")"
+
+          [[ -n "$fqdn" && -n "$environment_name" ]] || {
+            echo "Could not resolve the live Container App FQDN/environment." >&2
+            exit 1
+          }
+
+          az containerapp env show \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$environment_name" \
+            -o json --only-show-errors > "$env_json"
+
+          az containerapp revision list \
+            --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+            --name "$AHA_PRODUCTION_CONTAINER_APP" \
+            -o json --only-show-errors > "$revisions_json"
+
+          if [[ -n "$latest_ready" ]]; then
+            az containerapp replica list \
+              --resource-group "$AHA_PRODUCTION_RESOURCE_GROUP" \
+              --name "$AHA_PRODUCTION_CONTAINER_APP" \
+              --revision "$latest_ready" \
+              -o json --only-show-errors > "$replicas_json" 2>/dev/null || echo '[]' > "$replicas_json"
+          else
+            echo '[]' > "$replicas_json"
+          fi
+
+          echo '=== LIVE APP ==='
+          jq -c '{
+            location,
+            provisioningState: .properties.provisioningState,
+            runningStatus: .properties.runningStatus,
+            latestRevisionName: .properties.latestRevisionName,
+            latestReadyRevisionName: .properties.latestReadyRevisionName,
+            fqdn: .properties.configuration.ingress.fqdn,
+            external: .properties.configuration.ingress.external,
+            targetPort: .properties.configuration.ingress.targetPort,
+            transport: .properties.configuration.ingress.transport,
+            minReplicas: .properties.template.scale.minReplicas,
+            maxReplicas: .properties.template.scale.maxReplicas,
+            image: .properties.template.containers[0].image,
+            apiVersion: ([.properties.template.containers[0].env[]? | select(.name=="AHA_API_VERSION") | .value][0] // null),
+            fysenIntegrationEnabled: ([.properties.template.containers[0].env[]? | select(.name=="AHA_FYSEN_INTEGRATION_ENABLED") | .value][0] // null)
+          }' "$app_json"
+
+          echo '=== LIVE MANAGED ENVIRONMENT ==='
+          jq -c '{
+            location,
+            provisioningState: .properties.provisioningState,
+            defaultDomain: .properties.defaultDomain,
+            staticIp: .properties.staticIp,
+            internal: .properties.vnetConfiguration.internal
+          }' "$env_json"
+
+          echo '=== LIVE REVISIONS ==='
+          jq -c '[.[] | {
+            name,
+            active: .properties.active,
+            provisioningState: .properties.provisioningState,
+            healthState: .properties.healthState,
+            runningState: .properties.runningState,
+            createdTime: .properties.createdTime
+          }]' "$revisions_json"
+
+          echo '=== LIVE REPLICAS ==='
+          jq -c '[.[] | {
+            name,
+            runningState: .properties.runningState,
+            runningStateDetails: .properties.runningStateDetails
+          }]' "$replicas_json"
+
+          echo '=== DNS ==='
+          getent ahostsv4 "$fqdn" | sort -u || true
+
+          set +e
+          curl_metrics="$(curl \
+            --silent --show-error \
+            --output "$health_body" \
+            --write-out '{"httpCode":"%{http_code}","remoteIp":"%{remote_ip}","remotePort":"%{remote_port}","timeConnect":%{time_connect},"timeAppConnect":%{time_appconnect},"timeStartTransfer":%{time_starttransfer},"timeTotal":%{time_total}}' \
+            --connect-timeout 10 \
+            --max-time 20 \
+            "https://$fqdn/v1/health" \
+            2>"$curl_error")"
+          curl_status=$?
+          set -e
+
+          echo '=== PUBLIC HEALTH CONNECTIVITY ==='
+          echo "curlExit=$curl_status"
+          echo "$curl_metrics"
+          if [[ -s "$curl_error" ]]; then
+            sed -E 's/(authorization:|bearer )[[:graph:]]+/[redacted]/Ig' "$curl_error"
+          fi
+          if [[ "$curl_status" == '0' && -s "$health_body" ]]; then
+            jq -c '{
+              status,
+              service,
+              version,
+              runtimeActivated,
+              canonicalSync,
+              database,
+              auth
+            }' "$health_body" 2>/dev/null || true
+          fi
+
+          {
+            echo '## AHA Azure production connectivity diagnostic'
+            echo
+            echo "- FQDN: \`$fqdn\`"
+            echo "- Managed environment static IP: \`$(jq -r '.properties.staticIp // "unknown"' "$env_json")\`"
+            echo "- Ingress external: \`$(jq -r '.properties.configuration.ingress.external // "unknown"' "$app_json")\`"
+            echo "- Latest ready revision: \`$latest_ready\`"
+            echo "- Public health curl exit: \`$curl_status\`"
+            echo "- Public health metrics: \`$curl_metrics\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit "$curl_status"
