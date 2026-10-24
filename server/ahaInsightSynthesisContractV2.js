@@ -32,7 +32,11 @@ const ADDITIONAL_CAUSAL_LIMITATIONS = Object.freeze([
   /(?:ikke\s+(?:er\s+)?(?:dokumentert|påvist)|ingen\s+(?:dokumentert|påvist))\s+(?:årsaks?|kausal|effekt|virkning)/i,
   /(?:for\s+lite|for\s+svakt|svakt\s+kontrollert)[^.!?]{0,140}(?:fastslå|bevise|forklare)/i,
   /(?:samvariasjon|sammenheng)[^.!?]{0,110}(?:ikke\s+(?:det\s+samme\s+som|bevis|dokumentasjon)|uten\s+(?:bevis|kausalitet))/i,
-  /(?:not\s+(?:evidence|proof)\s+of\s+(?:causality|a\s+causal|an?\s+effect)|cannot\s+(?:establish|separate|prove|attribute)[^.!?]{0,110}(?:caus|effect|impact))/i
+  /(?:not\s+(?:evidence|proof)\s+of\s+(?:causality|a\s+causal|an?\s+effect)|cannot\s+(?:establish|separate|prove|attribute)[^.!?]{0,110}(?:caus|effect|impact))/i,
+  // Hedges observed in open research articles: association and unresolved mechanism.
+  /(?:causal\s+pathways?)[^.!?]{0,100}(?:not\s+(?:completely\s+)?clear|unclear|unknown)/i,
+  /(?:limited\s+utility\s+for\s+causal\s+inference)/i,
+  /\bremains?\s+open\s+if\b/i
 ]);
 function sourceLimitsCausalClaim(text) {
   const value = String(text || "");
