@@ -6,29 +6,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { createChatContext } = require("../scripts/compare-aha-engine-fixtures.cjs");
 
-const sourceExcerpts = [
-  {
-    id: "norway-green-space-2024",
-    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11007904/",
-    subject: "public health / association",
-    observation: "Access to green space was associated with both higher odds of low mental distress",
-    limitation: "though the causal pathways are not completely clear"
-  },
-  {
-    id: "cross-sectional-methods-2026",
-    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC13665586/",
-    subject: "study design / causal inference",
-    observation: "These studies serve multiple epidemiological purposes",
-    limitation: "they have limited utility for causal inference"
-  },
-  {
-    id: "carabid-restoration-2023",
-    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9905558/",
-    subject: "ecology / recovery",
-    observation: "positively related to insect abundance and diversity",
-    limitation: "it remains open if increased plant diversity can help to recover decreased populations"
-  }
-];
+const sourceExcerpts = require("./fixtures/aha-real-science-excerpts-v1.json");
 
 function proposal(item, insight, causalStatus) {
   return {
