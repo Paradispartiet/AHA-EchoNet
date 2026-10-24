@@ -205,7 +205,7 @@
 
   function getActiveLists() {
     if (!global.AHALists?.loadLists) return [];
-    return asArray(global.AHALists.loadLists()).filter((list) => !list?.deletedAt);
+    return asArray(global.AHALists.loadLists()).filter((list) => !list?.deletedAt && !list?.deleted_at && !list?.archived);
   }
   function getActiveGroups() {
     if (!global.AHAGroups?.getActiveGroups) return [];
@@ -295,9 +295,28 @@
       meta: { index, sourceEventId: readSourceEventId(insight) }
     };
     const result = global.AHALists.addItemToList(listId, item);
-    if (!result) return { ok: false, reason: "add_failed", message: "Kunne ikke legge til i listen." };
-    if (result?.items) return { ok: true, reason: "duplicate", message: "Finnes allerede i listen" };
-    return { ok: true, reason: "added", message: "Lagt til i liste" };
+    if (result?.ok === true) return { ok: true, reason: "added", message: "Lagt til i liste", listId };
+    if (result?.reason === "duplicate") return { ok: false, reason: "duplicate", message: "Finnes allerede i listen" };
+    return { ok: false, reason: result?.reason || "add_failed", message: "Kunne ikke legge til. Innsikten kan ha blitt slettet eller utilgjengelig." };
+  }
+
+  // Only an explicit user click saves a new local collection. Revert failed saves.
+  function createListFromInsight(insight, index) {
+    if (!global.AHALists?.createList || !global.AHALists?.addItemToList) {
+      return { ok: false, message: "Samlinger er ikke tilgjengelige." };
+    }
+    const list = global.AHALists.createList({
+      title: "Innsikt: " + getInsightTitle(insight).slice(0, 110),
+      type: "favorites",
+      description: "Samling fra innsikt. Kontroller kilden før konklusjoner trekkes."
+    });
+    if (!list?.id) return { ok: false, message: "Kunne ikke opprette samlingen." };
+    const added = sendInsightToList(list.id, insight, index);
+    if (!added.ok) {
+      global.AHALists.deleteList?.(list.id);
+      return { ok: false, message: added.message };
+    }
+    return { ok: true, listId: list.id, message: "Ny samling lagret." };
   }
 
 
@@ -437,7 +456,7 @@
     `
       : `
       <section class="insight-list-linker">
-        <p class="insight-list-empty">Ingen lister ennå. <a href="lists.html">Lag en liste først.</a></p>
+        <p class="insight-list-empty">Ingen samlinger ennå. Du kan opprette en direkte fra denne innsikten.</p>
       </section>
     `;
     const groupSection = groups.length
@@ -477,8 +496,13 @@
       <section class="insight-source-block">${sourceHtml}</section>
       ${insightEvidenceMarkup(view, sourceEvent)}
       ${listSection}
+      <div class="insight-list-linker">
+        <button type="button" class="aha-tile-btn" data-insight-new-list="${escapeHtml(String(index))}">Opprett samling fra innsikten</button>
+        <div class="insight-list-status" data-insight-new-list-status="${escapeHtml(String(index))}" role="status" aria-live="polite"></div>
+      </div>
       ${groupSection}
     `;
+    card.id = "insight-" + encodeURIComponent(getInsightRefId(insight, index));
     card.dataset.insightIndex = String(index);
     card._insightRaw = insight;
 
@@ -647,6 +671,21 @@
     }
 
     renderMeta(chamber);
+    // Follow exact local references without replacing or silently changing data.
+    if (global.location?.hash?.startsWith("#insight-")) {
+      let ref = "";
+      try { ref = decodeURIComponent(global.location.hash.slice("#insight-".length)); } catch {}
+      const id = "insight-" + encodeURIComponent(ref);
+      const selected = Array.from(listEl?.children || []).find((card) => card.id === id);
+      if (!selected && ref && (search || filter !== "all")) {
+        const q = document.getElementById("insights-search");
+        const f = document.getElementById("insights-filter");
+        if (q) q.value = "";
+        if (f) f.value = "all";
+        return render();
+      }
+      selected?.scrollIntoView?.({ block: "center" });
+    }
   }
 
   function refresh() {
@@ -670,8 +709,26 @@
         render();
         return;
       }
+      const createIndex = target.dataset.insightNewList;
+      if (createIndex !== undefined) {
+        const card = target.closest(".insight-card");
+        if (!card?._insightRaw) return;
+        const status = card.querySelector(`[data-insight-new-list-status="${createIndex}"]`);
+        const result = createListFromInsight(card._insightRaw, Number(createIndex));
+        if (status) {
+          status.replaceChildren();
+          status.append(document.createTextNode(result.message + " "));
+          if (result.ok) {
+            const link = document.createElement("a");
+            link.href = "lists.html#list-" + encodeURIComponent(result.listId);
+            link.textContent = "Åpne samlingen";
+            status.append(link);
+          }
+        }
+        return;
+      }
       const index = target.dataset.insightAddToList;
-      if (index) {
+      if (index !== undefined) {
         const card = target.closest(".insight-card");
         if (!card) return;
         const select = card.querySelector(`[data-insight-list-select="${index}"]`);
@@ -713,6 +770,7 @@
     render,
     refresh,
     sendInsightToList,
+    createListFromInsight,
     sendInsightToGroup
   };
 
