@@ -54,8 +54,8 @@ assert.equal(explorer.summarizeActiveReadiness(model,{...ready,status:"incomplet
 const overviewHost={innerHTML:""};
 const overviewSandbox={
   window:null,console,document:{
-    readyState:"loading",addEventListener(){},querySelectorAll(){return [];},
-    getElementById(id){return id==="exp-oversikt"?overviewHost:null;}
+    readyState:"loading",addEventListener(){},querySelectorAll(){return [];},querySelector(){return null;},
+    getElementById(id){return id==="exp-oversikt"?overviewHost:id==="aha-analysis-product-state-styles"?{}:null;}
   },
   AHAAnalysisReadModelV2:{
     build(){return {
