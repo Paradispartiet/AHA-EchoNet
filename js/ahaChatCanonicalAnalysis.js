@@ -214,7 +214,7 @@
       const researchPath = [
         {
           label: "Undersøk observasjonen",
-          question: /\\d/.test(observation.quote)
+          question: /\d/.test(observation.quote)
             ? "Hvordan ble tallene eller målingene registrert, og hva mangler i datagrunnlaget?"
             : "Hvilket primærmateriale eller hvilke registreringer dokumenterer dette funnet?",
           sourceQuote: observation.quote
