@@ -66,7 +66,7 @@ const originalBriefs = [
     id: "norwegian-city",
     text: "En kommune innførte i et prøveprosjekt digital søknad om boligtilpasning. Saksbehandlerne registrerte 42 fullførte digitale søknader på seks uker, men 11 innbyggere oppsøkte biblioteket fordi de ikke kom gjennom identitetskontrollen. Frivillige veiledere hjalp ni av de elleve med å finne en alternativ søknadsvei. Kommunen vurderer å stenge papirskjemaet fordi den digitale behandlingen ser raskere ut. Rapporten sammenligner ikke saksbehandlingstid for ellers like saker, og registreringen omfatter ikke dem som aldri forsøkte å søke. Tallene beskriver bruk i et lite prøveprosjekt, ikke dokumentert effekt for alle innbyggere. Spørsmålet er om digital effektivitet og reell tilgjengelighet blir vurdert med samme målestokk.",
     observationTerm: "42 fullførte digitale søknader",
-    limitationTerm: "sammenligner ikke"
+    limitationTerm: "ikke dokumentert effekt"
   }
 ];
 
