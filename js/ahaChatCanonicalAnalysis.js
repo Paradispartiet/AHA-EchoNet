@@ -181,6 +181,10 @@
       const sentences = source.replace(/\s+/g, " ").trim()
         .split(/(?<=[.!?])\s+/u).map((sentence) => sentence.trim())
         .filter((sentence) => sentence.length >= 35 && sentence.length <= 650 && source.includes(sentence));
+      // Keep evidence selection bilingual: academic abstracts are frequently English.
+      // Source quotes remain exact; this does not create or approve an interpretation.
+      const english = /\b(?:the|this|study|results|authors|participants|researchers|observed|reported)\b/i.test(source)
+        && !/\b(?:ikke|forskerne|materialet|rapporten|undersøkelsen)\b/i.test(source);
       const scored = sentences.map((quote, index) => {
         const observation = /(?<![\p{L}\p{N}])(?:registrerte|registrert|fant|observerte|funnene (?:viser|støtter)|resultatet viser|materialet viser|husket|økte|avdekket|forteller|beskriver|viste|synliggjorde|målte|målingene)(?![\p{L}\p{N}])/iu.test(quote);
         const contrast = /(derimot|mens|samtidig|i motsetning|på den andre siden)/i.test(quote);
@@ -197,6 +201,17 @@
           + (/(?:men|fordi|likevel)/i.test(quote) ? 2 : 0);
         return { quote, index, evidenceScore, limitationScore, contrast };
       });
+      if (english) scored.forEach((item) => {
+        const quote = item.quote;
+        const observed = /\b(?:recorded|reported|observed|found|showed|increased|decreased|measured|counted|estimated|associated|demonstrated)\b/i.test(quote);
+        const limitation = /\b(?:cannot|could not|not clear|unclear|uncertain|not established|not measured|no evidence|limited|limitations?|self.reported|cross.sectional|unmeasured|selection bias|remains open)\b/i.test(quote);
+        const cautious = /\b(?:however|although|whereas|in contrast|while|but|not necessarily)\b/i.test(quote);
+        item.contrast = cautious;
+        item.evidenceScore = (observed ? 14 : 0) + (cautious ? 3 : 0)
+          + (/\d/.test(quote) ? 2 : 0) - (limitation ? 7 : 0);
+        item.limitationScore = (limitation ? 15 : 0) + (cautious ? 3 : 0)
+          + (/\b(?:confound|bias|cross.sectional|causal|sample|unmeasured)\b/i.test(quote) ? 3 : 0);
+      });
       const by = (key, excluded = new Set()) => scored
         .filter((item) => !excluded.has(item.index) && item[key] > 0)
         .sort((a, b) => b[key] - a[key] || a.index - b.index)[0] || null;
@@ -209,30 +224,38 @@
       if (!observation || !limitation || observation.quote === limitation.quote) return null;
       // Three candidate investigation steps, each tied to a source sentence.
       // A path is a review proposal, never an approved insight or saved route.
-      const limitationMethod = /(?:uten kontroll|svakt kontroll|ikke tilfeldig|ikke sammenlign|selv valgt|selvvalgt|ikke målt|mangler)/i.test(limitation.quote);
-      const limitationCause = /(?:årsak|kausal|effekt|forårsak|virkning|ikke alene|ikke fastslå|ikke skille|ikke bevise)/i.test(limitation.quote);
+      const limitationMethod = /(?:uten kontroll|svakt kontroll|ikke tilfeldig|ikke sammenlign|selv valgt|selvvalgt|ikke målt|mangler|self.reported|cross.sectional|non.random|without control|no comparison|sample|selection bias|unmeasured)/i.test(limitation.quote);
+      const limitationCause = /(?:årsak|kausal|effekt|forårsak|virkning|ikke alene|ikke fastslå|ikke skille|ikke bevise|causal|causality|cause|effect|cannot|unclear|remains open)/i.test(limitation.quote);
+      const cue = (value) => {
+        const words = String(value || "").replace(/\\s+/g, " ").trim().split(" ");
+        return words.slice(0, 11).join(" ").replace(/[.,;:!?]+$/g, "");
+      };
+      const findingCue = cue(observation.quote);
+      const limitCue = cue(limitation.quote);
       const researchPath = [
         {
-          label: "Undersøk observasjonen",
-          question: /\d/.test(observation.quote)
-            ? "Hvordan ble tallene eller målingene registrert, og hva mangler i datagrunnlaget?"
-            : "Hvilket primærmateriale eller hvilke registreringer dokumenterer dette funnet?",
+          label: english ? "Examine the observation" : "Undersøk observasjonen",
+          question: english
+            ? "How was \\"" + findingCue + "\\" documented or measured?"
+            : "Hvordan er «" + findingCue + "» dokumentert eller målt?",
           sourceQuote: observation.quote
         },
         {
-          label: "Prøv begrensningen",
-          question: limitationMethod
-            ? "Hvilken kontroll, sammenligning eller utvalgsinformasjon kreves for å prøve funnet?"
-            : limitationCause
-              ? "Hvilke alternative forklaringer må undersøkes før en årsak kan hevdes?"
-              : "Hvor langt rekker dokumentasjonen, og hvem eller hva gjelder den ikke for?",
+          label: english ? "Test the limitation" : "Prøv begrensningen",
+          question: english
+            ? (limitationMethod ? "Which study design could address \\"" + limitCue + "\\"?" : limitationCause
+              ? "Which alternative explanations matter for \\"" + limitCue + "\\"?"
+              : "Where does the evidence stop for \\"" + limitCue + "\\"?")
+            : (limitationMethod ? "Hvilken undersøkelse kan avklare «" + limitCue + "»?" : limitationCause
+              ? "Hvilke alternative forklaringer må prøves for «" + limitCue + "»?"
+              : "Hvor langt rekker dokumentasjonen for «" + limitCue + "»?"),
           sourceQuote: limitation.quote
         },
         {
-          label: comparison ? "Sammenlign kildespor" : "Planlegg neste kildekontroll",
+          label: comparison ? (english ? "Compare source evidence" : "Sammenlign kildespor") : (english ? "Plan the next source check" : "Planlegg neste kildekontroll"),
           question: comparison
-            ? "Hvordan forholder dette andre kildesporet seg til observasjonen, og hva er fortsatt uavklart?"
-            : "Hvilken ny kilde eller undersøkelse ville best redusere denne usikkerheten?",
+            ? (english ? "How does \\"" + cue(comparison.quote) + "\\" change the interpretation?" : "Hvordan endrer «" + cue(comparison.quote) + "» vurderingen?")
+            : (english ? "What new evidence could resolve \\"" + limitCue + "\\"?" : "Hvilken ny kilde kan avklare «" + limitCue + "»?"),
           sourceQuote: comparison ? comparison.quote : limitation.quote
         }
       ];
