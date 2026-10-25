@@ -288,7 +288,22 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildAgentRequestBody(message, requestOptions))
       });
-      if (!response.ok) throw new Error(`chat_http_${response.status}`);
+      if (!response.ok) {
+        // Only recognized, sanitized backend categories reach the UI. Never
+        // forward raw provider messages, tokens or the response body.
+        let failure = null;
+        try { failure = await response.json(); } catch { /* non-JSON response */ }
+        const knownErrors = new Set([
+          "openai_quota_exhausted", "openai_rate_limited", "missing_openai_api_key"
+        ]);
+        const providerError = knownErrors.has(String(failure?.error || ""))
+          ? failure.error : `chat_http_${response.status}`;
+        const error = new Error(providerError);
+        error.code = providerError;
+        error.httpStatus = Number(response.status || 0);
+        error.retryable = failure?.retryable === true;
+        throw error;
+      }
       return response.json();
     }
 
