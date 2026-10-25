@@ -976,7 +976,9 @@ ${"```"}
       && String(auto.sourceText || "") === sourceText;
     const candidates = cacheMatches && Array.isArray(payload.insightCandidatesV2)
       ? payload.insightCandidatesV2.map(candidateSnapshot) : [];
-    const runtimeTrace = cacheMatches && payload.analysisRuntime
+    const reportedRuntime = obj(payload.analysisRuntime);
+    const runtimeMatches = !reportedRuntime.analysis_run_id || str(reportedRuntime.analysis_run_id) === runId;
+    const runtimeTrace = cacheMatches && runtimeMatches && payload.analysisRuntime
       ? safeSerializeForExport(payload.analysisRuntime) : null;
 
     // Quote presence is a purely literal check, not scientific verification.
