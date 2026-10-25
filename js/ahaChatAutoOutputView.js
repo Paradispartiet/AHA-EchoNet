@@ -810,9 +810,14 @@
       payload.insightCandidatesV2 = Array.isArray(options.insightCandidatesV2)
         ? cloneSemanticGate(options.insightCandidatesV2) || []
         : [];
-      const recordedRuntimeTrace = cloneSemanticGate(global.AHAChatInsightPipeline?.getLastRuntimeTrace?.());
+      const activeRunId = String(activeRun?.analysisRunId || activeRun?.runId || "");
+      const latestRuntimeTrace = cloneSemanticGate(global.AHAChatInsightPipeline?.getLastRuntimeTrace?.());
+      const recordedRuntimeTrace = latestRuntimeTrace?.analysis_run_id
+        && latestRuntimeTrace.analysis_run_id !== activeRunId
+        ? cloneSemanticGate(global.AHAChatInsightPipeline?.getRuntimeTraceForRun?.(activeRunId))
+        : latestRuntimeTrace;
       const runtimeTraceMatches = !recordedRuntimeTrace?.analysis_run_id
-        || String(recordedRuntimeTrace.analysis_run_id) === String(activeRun?.analysisRunId || activeRun?.runId || "");
+        || String(recordedRuntimeTrace.analysis_run_id) === activeRunId;
       payload.analysisRuntime = recordedRuntimeTrace && runtimeTraceMatches ? recordedRuntimeTrace : {
         schema: "aha_analysis_runtime_trace_v1",
         status: "unavailable",
