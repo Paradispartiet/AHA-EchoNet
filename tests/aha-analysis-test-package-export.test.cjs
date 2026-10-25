@@ -138,4 +138,59 @@ assert.match(ui,/ensureTestPackageButton\(\)/);
 assert.match(ui,/btn-export-test-package/);
 assert.match(ui,/reviewLink\.href = "testpakke\.html"/);
 assert.match(composition,/exportTestPackage: exportRuntime.exportAhaTestPackage/);
+
+// New full-fidelity export: newly recorded raw model output and fields unknown to
+// older UI versions remain present, with STRICT cross-run isolation.
+const richTrace = {
+  ...trace,
+  raw_model_synthesis: { schema: "aha_insight_synthesis_output_v2", candidates: [
+    { title: "Original model text", novel_model_field: { score: 0.62, evidence: ["verbatim"] } }
+  ] },
+  raw_model_candidates: [{ title: "Original model text", model_extra: ["all", "fields"] }],
+  normalized_candidates_before_prefilter: [{ title: "Original model text", normalized: true }],
+  client_prefilter_candidates: [{ title: "Original model text", accepted: true }],
+  prefilter_rejected_full_candidates: [{
+    title: "Removed duplicate", summary: "Full rejected text", rejection_reason: "semantic_duplicate", rejected_extra: 17
+  }],
+  selected_candidates_after_prefilter: [candidates[0]],
+  deterministic_evidence_plan: { selected_source_claim_count: 2, packets: [{ role: "finding", quotes: ["evidence"] }] }
+};
+const richAuto = {...auto, payload: {
+  ...auto.payload,
+  insightCandidatesV2: [{ ...candidates[0], future_model_field: { value: "preserved" } }],
+  analysisRuntime: richTrace,
+  private_run_diagnostic: { success: true },
+  semanticDocumentV2: { synthesis_gate: { status: "ready" } }
+}};
+const richBundle = {
+  ...bundle,
+  activeRun: { ...bundle.activeRun, diagnostic_note: "active run only" },
+  analysisBundleV2: {
+    schema: "aha_analysis_bundle_v2",
+    identity: { analysis_run_id: "run-1", source_sha256: sha, analysis_id: "analysis-1", source_id: "source-1" },
+    semantic_document: { synthesis_gate: { status: "ready", authoritative: true, approved_count: 1 } },
+    validation: { valid: true }, quality: { reasons: [] }
+  }
+};
+const rich = api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>richAuto},()=>richBundle);
+assert.equal(rich.candidate_audit.candidates[0].future_model_field.value,"preserved");
+assert.equal(rich.candidate_audit.raw_model_candidates[0].model_extra[1],"fields");
+assert.equal(rich.candidate_audit.raw_model_synthesis.candidates[0].novel_model_field.score,0.62);
+assert.equal(rich.candidate_audit.prefilter_rejected_full_candidates[0].summary,"Full rejected text");
+assert.equal(rich.full_run_data.raw_auto_payload.private_run_diagnostic.success,true);
+assert.equal(rich.full_run_data.active_run.diagnostic_note,"active run only");
+assert.equal(rich.diagnostics.synthesis_gate.approved_count,1);
+assert.equal(rich.candidate_audit.deterministic_evidence_plan.packets[0].role,"finding");
+assert.equal(rich.coverage.available.raw_model_synthesis,true);
+assert.ok(!rich.coverage.missing.includes("prefilter_rejected_candidate_full_payloads_not_recorded"));
+assert.doesNotMatch(JSON.stringify(rich),/Old same source|Wrong source|Other article|Old run|Stale|Forged/);
+const badBundle = {...richBundle,analysisBundleV2:{
+  ...richBundle.analysisBundleV2,identity:{...richBundle.analysisBundleV2.identity,analysis_run_id:"old-run"}
+}};
+assert.throws(()=>api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>richAuto},()=>badBundle),/AnalysisBundleV2/);
+const staleRich=api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>({...richAuto,analysisRunId:"old-run"})},()=>richBundle);
+assert.equal(staleRich.full_run_data.raw_auto_cache,null);
+assert.equal(staleRich.candidate_audit.raw_model_synthesis,null);
+assert.equal(staleRich.coverage.available.raw_auto_cache,false);
+
 console.log("AHA one-run test package: source hash, run identity, rejected candidates, local records, privacy and download passed.");
