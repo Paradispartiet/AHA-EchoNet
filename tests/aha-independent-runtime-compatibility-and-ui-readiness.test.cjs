@@ -49,6 +49,33 @@ assert.equal(explorer.summarizeActiveReadiness(model,ready).status,"ready");
 assert.equal(explorer.productDisplayState({status:"not_relevant",label:"Irrelevant"},ready).status,"not_relevant");
 assert.equal(explorer.summarizeActiveReadiness(model,{...ready,status:"incomplete"}).status,"incomplete");
 
+// Reproduce an actual incomplete long-source run: render a non-empty overview
+// without an undefined bundle variable hiding the fail-closed status.
+const overviewHost={innerHTML:""};
+const overviewSandbox={
+  window:null,console,document:{
+    readyState:"loading",addEventListener(){},querySelectorAll(){return [];},querySelector(){return null;},
+    getElementById(id){return id==="exp-oversikt"?overviewHost:id==="aha-analysis-product-state-styles"?{}:null;}
+  },
+  AHAAnalysisReadModelV2:{
+    build(){return {
+      ...model,identity:{analysis_id:"test-analysis",analysis_run_id:"run-test",source_id:"source-test",source_sha256:"a".repeat(64)},
+      sections:{overview:{theme:{display:"Livsarket",provenance:{evidence:[]}},
+        central_tension:{display:"Kildebasert spenning",provenance:{evidence:[]}}},insights:[],concepts:[],subjects:[],sources:[],conversation_tracks:[],source_structure:{},afterwork:{}}
+    };}
+  },
+  AHAKnowledgeMapReadModelV2:{
+    build(){return {schema:"aha_knowledge_map_read_model_v2",scopes:{current_analysis:{nodes:[],edges:[]},whole_map:{nodes:[],edges:[]}}};}
+  }
+};
+overviewSandbox.window=overviewSandbox;
+vm.runInNewContext(fs.readFileSync(path.join(root,"js/ahaExplorer.js"),"utf8"),overviewSandbox);
+const failingRun={contractVersion:"aha_analysis_run_v1",analysisBundleV2:incomplete};
+assert.doesNotThrow(()=>overviewSandbox.AHAExplorer.render(failingRun),"incomplete overview must render without undefined variables");
+assert.match(overviewHost.innerHTML,/ufullstendig/);
+assert.match(overviewHost.innerHTML,/Kildens spenning – ikke verifisert syntese/);
+assert.doesNotMatch(overviewHost.innerHTML,/Sterkeste innsikt/);
+
 const explorerJs=fs.readFileSync(path.join(root,"js/ahaExplorer.js"),"utf8");
 assert.match(explorerJs,/renderOversikt\(analysis\)/);
 assert.match(explorerJs,/Kildens spenning – ikke verifisert syntese/);
