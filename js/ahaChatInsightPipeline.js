@@ -339,15 +339,18 @@
           backend: data?.runtime || runtime.runtime,
           deployment_warnings: deploymentMismatchReasons(data?.runtime),
           blocking_reasons: envelopeReasons,
-          authoritative_retry_attempt: requestAttempt
+          authoritative_retry_attempt: requestAttempt,
+          rejected_model_envelope: clone(data)
         });
         return [];
       }
       const candidates = Array.isArray(data?.synthesis?.candidates) ? data.synthesis.candidates : [];
-      const normalized = candidates
-        .map((candidate) => normalizeInsightCandidate(candidate))
-        .filter(Boolean)
+      const normalizedAll = candidates.map((candidate) => normalizeInsightCandidate(candidate));
+      const normalized = normalizedAll.filter(Boolean)
         .filter((candidate) => !isWeakInsightCandidate(candidate, raw));
+      // Capture genuine source-bound model evidence BEFORE lossy client filtering.
+      // The active run's existing auto payload will persist this trace locally.
+      // Never turn rejected candidates into approved knowledge.
       const projectionDiversityExpansion = context?.authoritative_quality_retry?.mode === "projection_diversity_expansion";
       const reviewed = projectionDiversityExpansion
         ? reviewProjectionDiversityCandidates(normalized, raw, { limit: 5 })
@@ -373,6 +376,13 @@
           title: String(item?.title || ""),
           reason: String(item?.rejection_reason || "")
         })),
+        raw_model_synthesis: clone(data.synthesis || null),
+        raw_model_candidates: clone(candidates),
+        normalized_candidates_before_prefilter: clone(normalizedAll),
+        client_prefilter_candidates: clone(normalized),
+        prefilter_rejected_full_candidates: clone(reviewed.rejected),
+        selected_candidates_after_prefilter: clone(reviewed.selected),
+        deterministic_evidence_plan: clone(evidencePlan),
         evidence_plan: {
           schema: evidencePlan.schema,
           source_sentence_count: evidencePlan.source_sentence_count,
