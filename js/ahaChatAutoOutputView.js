@@ -810,11 +810,15 @@
       payload.insightCandidatesV2 = Array.isArray(options.insightCandidatesV2)
         ? cloneSemanticGate(options.insightCandidatesV2) || []
         : [];
-      payload.analysisRuntime = cloneSemanticGate(global.AHAChatInsightPipeline?.getLastRuntimeTrace?.()) || {
+      const recordedRuntimeTrace = cloneSemanticGate(global.AHAChatInsightPipeline?.getLastRuntimeTrace?.());
+      const runtimeTraceMatches = !recordedRuntimeTrace?.analysis_run_id
+        || String(recordedRuntimeTrace.analysis_run_id) === String(activeRun?.analysisRunId || activeRun?.runId || "");
+      payload.analysisRuntime = recordedRuntimeTrace && runtimeTraceMatches ? recordedRuntimeTrace : {
         schema: "aha_analysis_runtime_trace_v1",
         status: "unavailable",
+        analysis_run_id: String(activeRun?.analysisRunId || activeRun?.runId || "") || null,
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
-        blocking_reasons: ["runtime_trace_unavailable"]
+        blocking_reasons: [runtimeTraceMatches ? "runtime_trace_unavailable" : "runtime_trace_belongs_to_other_run"]
       };
       deps.bindAnalysisArtifact(payload, activeRun, "rawAutoPayload");
       if (payload.canonicalAnalysis && typeof payload.canonicalAnalysis === "object") deps.bindAnalysisArtifact(payload.canonicalAnalysis, activeRun, "canonicalAnalysis");
