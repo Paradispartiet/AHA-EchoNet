@@ -1057,6 +1057,13 @@ ${"```"}
     if (!activeRun) missing.push("active_run_snapshot_not_bound");
     const rawCache = cacheMatches ? safeSerializeForExport(auto) : null;
     const rawPayload = cacheMatches ? safeSerializeForExport(payload) : null;
+    if (!runtimeMatches && cacheMatches) {
+      // Never leak a trace from another run through the otherwise valid raw
+      // cache snapshots; preserve remaining data and name the omission.
+      if (rawCache?.payload) delete rawCache.payload.analysisRuntime;
+      if (rawPayload) delete rawPayload.analysisRuntime;
+      missing.push("runtime_trace_from_other_run_removed");
+    }
     const runOnlyAfterwork = arr(bundle.relevantAfterworks).filter(matches).map(safeSerializeForExport);
     return {
       schema: "aha_analysis_test_package_v1",
