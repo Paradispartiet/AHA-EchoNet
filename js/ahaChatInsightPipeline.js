@@ -25,6 +25,9 @@
   ]);
   let runtimeManifestPromise = null;
   let lastRuntimeTrace = null;
+  // A run-local, in-memory audit of all synthesis calls observed this session.
+  // Each entry is a real result/blocked state; it never invents missing calls.
+  const runSynthesisTraces = new Map();
 
   const FUNCTIONAL_TYPES = Object.freeze([
     "observation", "question", "task", "problem", "solution",
@@ -141,6 +144,16 @@
 
   function getLastRuntimeTrace() {
     return clone(lastRuntimeTrace);
+  }
+
+  function getRuntimeTraceForRun(analysisRunId) {
+    const items = runSynthesisTraces.get(String(analysisRunId || ""));
+    return items?.length ? clone({
+      ...items[items.length - 1],
+      run_synthesis_attempt_history: items,
+      run_synthesis_attempt_count: items.length,
+      attempt_history_scope: "current_browser_session"
+    }) : null;
   }
 
   function recordRuntimeTrace(update = {}) {
@@ -264,11 +277,29 @@
 
     const sentenceCount = splitIntoSentences(raw).length;
     const callerContext = context && typeof context === "object" && !Array.isArray(context) ? context : {};
+    const activeAnalysisRunId = String(callerContext.analysis_run_id || "").trim();
+    const writeRunTrace = (trace) => {
+      const event = { ...trace, analysis_run_id: activeAnalysisRunId || null };
+      if (!activeAnalysisRunId) return setRuntimeTrace(event);
+      const history = runSynthesisTraces.get(activeAnalysisRunId) || [];
+      history.push(clone(event));
+      // Avoid retaining the unbounded history of unrelated past runs in memory.
+      if (!runSynthesisTraces.has(activeAnalysisRunId) && runSynthesisTraces.size >= 4) {
+        runSynthesisTraces.delete(runSynthesisTraces.keys().next().value);
+      }
+      runSynthesisTraces.set(activeAnalysisRunId, history);
+      return setRuntimeTrace({
+        ...event,
+        run_synthesis_attempt_history: clone(history),
+        run_synthesis_attempt_count: history.length,
+        attempt_history_scope: "current_browser_session"
+      });
+    };
 
     const runtime = await fetchCompatibleRuntime();
     const requestAttempt = Number(context?.authoritative_quality_retry?.attempt || 0);
     if (runtime.compatible !== true) {
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: "blocked_incompatible_runtime",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -311,7 +342,7 @@
       });
       const res = transport.response;
       if (!res.ok) {
-        setRuntimeTrace({
+        writeRunTrace({
           schema: "aha_analysis_runtime_trace_v1",
           status: "blocked_synthesis_http",
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -332,27 +363,30 @@
         ...runtimeCompatibilityReasons(data?.runtime)
       ];
       if (envelopeReasons.length) {
-        setRuntimeTrace({
+        writeRunTrace({
           schema: "aha_analysis_runtime_trace_v1",
           status: "blocked_incompatible_synthesis_envelope",
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
           backend: data?.runtime || runtime.runtime,
           deployment_warnings: deploymentMismatchReasons(data?.runtime),
           blocking_reasons: envelopeReasons,
-          authoritative_retry_attempt: requestAttempt
+          authoritative_retry_attempt: requestAttempt,
+          rejected_model_envelope: clone(data)
         });
         return [];
       }
       const candidates = Array.isArray(data?.synthesis?.candidates) ? data.synthesis.candidates : [];
-      const normalized = candidates
-        .map((candidate) => normalizeInsightCandidate(candidate))
-        .filter(Boolean)
+      const normalizedAll = candidates.map((candidate) => normalizeInsightCandidate(candidate));
+      const normalized = normalizedAll.filter(Boolean)
         .filter((candidate) => !isWeakInsightCandidate(candidate, raw));
+      // Capture genuine source-bound model evidence BEFORE lossy client filtering.
+      // The active run's existing auto payload will persist this trace locally.
+      // Never turn rejected candidates into approved knowledge.
       const projectionDiversityExpansion = context?.authoritative_quality_retry?.mode === "projection_diversity_expansion";
       const reviewed = projectionDiversityExpansion
         ? reviewProjectionDiversityCandidates(normalized, raw, { limit: 5 })
         : reviewInsightCandidates(normalized, raw, { limit: 5 });
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: reviewed.selected.length ? "synthesis_received" : "blocked_client_prefilter",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -373,6 +407,13 @@
           title: String(item?.title || ""),
           reason: String(item?.rejection_reason || "")
         })),
+        raw_model_synthesis: clone(data.synthesis || null),
+        raw_model_candidates: clone(candidates),
+        normalized_candidates_before_prefilter: clone(normalizedAll),
+        client_prefilter_candidates: clone(normalized),
+        prefilter_rejected_full_candidates: clone(reviewed.rejected),
+        selected_candidates_after_prefilter: clone(reviewed.selected),
+        deterministic_evidence_plan: clone(evidencePlan),
         evidence_plan: {
           schema: evidencePlan.schema,
           source_sentence_count: evidencePlan.source_sentence_count,
@@ -383,7 +424,7 @@
       });
       return reviewed.selected;
     } catch (err) {
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: "blocked_synthesis_unavailable",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -831,6 +872,7 @@
     deploymentMismatchReasons,
     runtimeCompatibilityReasons,
     getLastRuntimeTrace,
+    getRuntimeTraceForRun,
     recordRuntimeTrace,
     create
   });

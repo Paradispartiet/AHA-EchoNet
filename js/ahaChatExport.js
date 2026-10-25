@@ -964,16 +964,10 @@ ${"```"}
     const sourceOf = (value) => str(value?.source_sha256 || value?.sourceSha256 || value?.sourceTextHash || value?.sourceHash || value?.sourceFingerprint);
     const runOf = (value) => str(value?.analysis_run_id || value?.analysisRunId || value?.runId);
     const matches = (value) => runOf(value) === runId && sourceOf(value) === sha;
-    const candidateFields = [
-      "id", "title", "summary", "text", "type", "claim_kind", "uncertainty",
-      "uncertainty_text", "confidence", "why_it_matters", "next_test",
-      "evidence_quotes", "evidence", "evidence_origin", "concepts",
-      "quality_score", "candidate_quality", "rejection_reason"
-    ];
+    // The review UI reads familiar fields, but test exports must not discard
+    // unknown/new model fields: retain each complete recorded candidate.
     function candidateSnapshot(value) {
-      const entry = obj(value);
-      return Object.fromEntries(candidateFields.filter((key) => Object.prototype.hasOwnProperty.call(entry, key))
-        .map((key) => [key, safeSerializeForExport(entry[key])]));
+      return safeSerializeForExport(obj(value));
     }
     // The auto cache retains only the latest analysis, not every past model call.
     const auto = obj(deps.loadAutoOutputs?.());
@@ -982,7 +976,9 @@ ${"```"}
       && String(auto.sourceText || "") === sourceText;
     const candidates = cacheMatches && Array.isArray(payload.insightCandidatesV2)
       ? payload.insightCandidatesV2.map(candidateSnapshot) : [];
-    const runtimeTrace = cacheMatches && payload.analysisRuntime
+    const reportedRuntime = obj(payload.analysisRuntime);
+    const runtimeMatches = !reportedRuntime.analysis_run_id || str(reportedRuntime.analysis_run_id) === runId;
+    const runtimeTrace = cacheMatches && runtimeMatches && payload.analysisRuntime
       ? safeSerializeForExport(payload.analysisRuntime) : null;
 
     // Quote presence is a purely literal check, not scientific verification.
@@ -1028,16 +1024,7 @@ ${"```"}
       matches(entry) && (!entry.sourceText || String(entry.sourceText) === sourceText));
     const sourceEvents = arr(read("aha_source_events_v1", [])).filter((entry) =>
       identity.source_id && str(entry?.id) === identity.source_id && str(entry?.text) === sourceText)
-      .map((entry) => ({
-        id: str(entry.id),
-        title: str(entry.title),
-        text: str(entry.text),
-        source_type: str(entry.source_type),
-        content_type: str(entry.content_type),
-        source_app: str(entry.source_app),
-        created_at: str(entry.created_at),
-        tags: arr(entry.tags)
-      }));
+      .map((entry) => safeSerializeForExport(entry));
     const chamber = obj(read("aha_insight_chamber_v1", {}));
     const storedInsights = arr(chamber.insights).filter(matches).map((entry) => safeSerializeForExport(entry));
     const paths = arr(read("aha_paths_v1", [])).filter((entry) =>
@@ -1046,13 +1033,38 @@ ${"```"}
     if (!cacheMatches) missing.push("candidate_cache_not_bound_to_active_run");
     if (cacheMatches && !Array.isArray(payload.insightCandidatesV2)) missing.push("candidate_list_not_recorded");
     if (!runtimeTrace) missing.push("model_runtime_trace_not_recorded");
-    if (prefilterRejects.length) missing.push("prefilter_rejected_candidate_full_payloads_not_recorded");
+    if (prefilterRejects.length && !arr(runtimeTrace?.prefilter_rejected_full_candidates).length) {
+      missing.push("prefilter_rejected_candidate_full_payloads_not_recorded");
+    }
+    if (cacheMatches && !runtimeTrace?.raw_model_synthesis) missing.push("raw_model_synthesis_not_recorded");
+    if (cacheMatches && !runtimeTrace?.raw_model_candidates) missing.push("raw_model_candidates_not_recorded");
     if (!afterwork.length) missing.push("saved_afterwork_for_run_not_found");
     if (!sourceEvents.length) missing.push("exact_source_event_not_found");
     if (!storedInsights.length) missing.push("run_bound_archived_insights_not_found");
     if (!paths.length) missing.push("run_bound_saved_paths_not_found");
+    // Earlier model calls can be permanently overwritten by the existing
+    // last-run cache. Never infer or synthesize an attempt-history.
     missing.push("historical_model_attempts_not_archived");
     const authoritative = obj(bundle.analysisBundleV2);
+    const authoritativeId = obj(authoritative.identity);
+    if (Object.keys(authoritativeId).length && (
+      str(authoritativeId.analysis_run_id) !== runId ||
+      str(authoritativeId.source_sha256) !== sha ||
+      (identity.analysis_id && str(authoritativeId.analysis_id) !== identity.analysis_id) ||
+      (identity.source_id && str(authoritativeId.source_id) !== identity.source_id)
+    )) throw new Error("AnalysisBundleV2 matcher ikke aktiv kilde og run-ID.");
+    const activeRun = matches(bundle.activeRun) ? safeSerializeForExport(bundle.activeRun) : null;
+    if (!activeRun) missing.push("active_run_snapshot_not_bound");
+    const rawCache = cacheMatches ? safeSerializeForExport(auto) : null;
+    const rawPayload = cacheMatches ? safeSerializeForExport(payload) : null;
+    if (!runtimeMatches && cacheMatches) {
+      // Never leak a trace from another run through the otherwise valid raw
+      // cache snapshots; preserve remaining data and name the omission.
+      if (rawCache?.payload) delete rawCache.payload.analysisRuntime;
+      if (rawPayload) delete rawPayload.analysisRuntime;
+      missing.push("runtime_trace_from_other_run_removed");
+    }
+    const runOnlyAfterwork = arr(bundle.relevantAfterworks).filter(matches).map(safeSerializeForExport);
     return {
       schema: "aha_analysis_test_package_v1",
       exported_at: new Date().toISOString(),
@@ -1077,7 +1089,34 @@ ${"```"}
         concepts: safeSerializeForExport(bundle.concepts || []),
         subject_matches: safeSerializeForExport(bundle.subjectMatches || []),
         afterwork: safeSerializeForExport(bundle.afterwork || {}),
-        projection_products: safeSerializeForExport(bundle.projectionProducts || null)
+        projection_products: safeSerializeForExport(bundle.projectionProducts || null),
+        full_aha_ser: safeSerializeForExport(bundle.ahaSer || null),
+        reply_source_binding: safeSerializeForExport(bundle.ahaReplySourceBinding || null),
+        calibration_status: safeSerializeForExport(bundle.calibrationStatus || null),
+        run_bound_source_afterwork: runOnlyAfterwork
+      },
+      // Lossless snapshots of existing run-bound data. The auto cache is only
+      // included when BOTH cache and payload match run, SHA-256 and full text.
+      // Deliberately exclude whole-user chamber and cross-run chat history.
+      full_run_data: {
+        active_run: activeRun,
+        raw_auto_cache: rawCache,
+        raw_auto_payload: rawPayload,
+        authoritative_bundle_v2: Object.keys(authoritative).length ? safeSerializeForExport(authoritative) : null,
+        run_source_afterwork: runOnlyAfterwork,
+        source_events: sourceEvents
+      },
+      diagnostics: {
+        synthesis_gate: safeSerializeForExport(authoritative.semantic_document?.synthesis_gate
+          || payload.semanticDocumentV2?.synthesis_gate || null),
+        authoritative_bundle_validation: safeSerializeForExport(authoritative.validation || null),
+        authoritative_bundle_quality: safeSerializeForExport(authoritative.quality || null),
+        raw_quality_gate: cacheMatches ? safeSerializeForExport(payload.qualityGate || null) : null,
+        semantic_document: safeSerializeForExport(authoritative.semantic_document
+          || (cacheMatches ? payload.semanticDocumentV2 : null) || null),
+        runtime_trace: runtimeTrace,
+        deployment_warnings: safeSerializeForExport(runtimeTrace?.deployment_warnings || []),
+        blocking_reasons: safeSerializeForExport(runtimeTrace?.blocking_reasons || [])
       },
       candidate_audit: {
         status: !cacheMatches ? "not_available_for_this_run"
@@ -1085,6 +1124,16 @@ ${"```"}
         candidates,
         literal_source_quote_checks: candidateEvidenceChecks,
         prefilter_rejections: prefilterRejects,
+        prefilter_rejected_full_candidates: safeSerializeForExport(runtimeTrace?.prefilter_rejected_full_candidates || []),
+        raw_model_candidates: safeSerializeForExport(runtimeTrace?.raw_model_candidates || null),
+        raw_model_synthesis: safeSerializeForExport(runtimeTrace?.raw_model_synthesis || null),
+        normalized_candidates_before_prefilter: safeSerializeForExport(runtimeTrace?.normalized_candidates_before_prefilter || null),
+        candidates_after_client_prefilter: safeSerializeForExport(runtimeTrace?.client_prefilter_candidates || null),
+        selected_candidates_after_prefilter: safeSerializeForExport(runtimeTrace?.selected_candidates_after_prefilter || null),
+        deterministic_evidence_plan: safeSerializeForExport(runtimeTrace?.deterministic_evidence_plan || null),
+        rejected_model_envelope: safeSerializeForExport(runtimeTrace?.rejected_model_envelope || null),
+        run_synthesis_attempt_history: safeSerializeForExport(runtimeTrace?.run_synthesis_attempt_history || []),
+        run_synthesis_attempt_count: Number(runtimeTrace?.run_synthesis_attempt_count || 0),
         runtime_trace: runtimeTrace,
         model_attempt_history_complete: false
       },
@@ -1108,6 +1157,22 @@ ${"```"}
       coverage: {
         status: missing.length ? "partial" : "available",
         missing,
+        available: {
+          original_source: true,
+          active_run_snapshot: Boolean(activeRun),
+          raw_auto_cache: Boolean(rawCache),
+          raw_auto_payload: Boolean(rawPayload),
+          authoritative_bundle_v2: Object.keys(authoritative).length > 0,
+          raw_model_synthesis: Boolean(runtimeTrace?.raw_model_synthesis),
+          raw_model_candidates: Array.isArray(runtimeTrace?.raw_model_candidates),
+          full_prefilter_rejections: prefilterRejects.length === 0 || arr(runtimeTrace?.prefilter_rejected_full_candidates).length > 0,
+          runtime_trace: Boolean(runtimeTrace),
+          observed_synthesis_attempts: Number(runtimeTrace?.run_synthesis_attempt_count || 0),
+          stored_afterwork: afterwork.length > 0,
+          stored_insights: storedInsights.length > 0,
+          stored_paths: paths.length > 0,
+          exact_source_events: sourceEvents.length > 0
+        },
         historical_model_attempts_complete: false,
         database_records_exported: false,
         unrelated_chat_or_library_data_included: false
@@ -1133,7 +1198,7 @@ ${"```"}
       doc.body.appendChild(link);
       link.click();
       link.remove();
-      deps.setStatusNote?.("Testpakke eksportert. Kontroller personopplysninger før deling.");
+      deps.setStatusNote?.("Full tilgjengelig testpakke eksportert. Manglende historikk er merket under coverage. Kontroller personopplysninger før deling.");
     } finally {
       urlApi.revokeObjectURL(url);
     }

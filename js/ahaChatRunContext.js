@@ -356,7 +356,7 @@
       retrieval.renderPersonalContextStatus();
       retrieval.renderPersonalAiLoopStatus();
       const analysisInsightCandidatesPromise = Promise.resolve(
-        input.generateAnalysisInsightCandidates(analysisInputText)
+        input.generateAnalysisInsightCandidates(analysisInputText, { analysisRunId: analysisRun.analysisRunId })
       ).catch((err) => {
         global.console.warn("AI insight-candidates for aktiv analyse feilet", err);
         return [];

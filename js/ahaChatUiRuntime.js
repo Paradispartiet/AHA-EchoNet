@@ -234,7 +234,7 @@
       button.id = "btn-export-test-package";
       button.type = "button";
       button.textContent = "Eksporter testpakke";
-      button.title = "Kildebundet JSON-testpakke for aktiv analysekjøring";
+      button.title = "Full eksport av alle tilgjengelige data fra denne analysekjøringen";
       parent.appendChild(button);
       const reviewLink = documentRef.createElement("a");
       reviewLink.href = "testpakke.html";
@@ -243,7 +243,7 @@
       parent.appendChild(reviewLink);
       const hint = documentRef.createElement("p");
       hint.className = "module-meta";
-      hint.textContent = "Testpakken kan inneholde personopplysninger. Tidligere modellforsøk som ikke ble lagret, er ikke med.";
+      hint.textContent = "Inkluderer hele kilden, rå AI-kandidater, avvisninger, kvalitet, runtime og run-bundne forslag som finnes. Manglende historikk merkes; kontroller personopplysninger før deling.";
       parent.parentElement?.appendChild(hint);
     }
 

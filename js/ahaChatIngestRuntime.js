@@ -1138,7 +1138,7 @@
       return ingestUserMessageWithCandidates(messageText);
     }
 
-    async function generateAnalysisInsightCandidates(messageText) {
+    async function generateAnalysisInsightCandidates(messageText, runContext = {}) {
       const text = String(messageText || "").trim();
       if (!text) return [];
       const themeId = getThemeId();
@@ -1149,6 +1149,10 @@
         field_id: fieldId,
         ai_state: buildAIState({ includeMemory: isMemoryUseEnabled() })
       };
+      // Each explicit article re-run must call the synthesis provider again;
+      // do not return an older run's session-cached candidate list.
+      const analysisRunId = String(runContext?.analysisRunId || runContext?.runId || "").trim();
+      if (analysisRunId) inputContext.analysis_run_id = analysisRunId;
       const requestKey = sha256Hex(JSON.stringify({ text, inputContext }));
       let request = analysisCandidateRequests.get(requestKey);
       if (!request) {

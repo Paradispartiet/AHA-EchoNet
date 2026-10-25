@@ -11,8 +11,20 @@
 - Maskinelle evalueringsdata og en tom menneskelig review-mal; ingen automatisk faglig godkjenning.
 - En **coverage**-oversikt over hva som mangler, inkludert historiske modellforsøk som ikke er arkivert.
 
+## Komplett tilgjengelig testgrunnlag (utvidet eksport, kompatibel v1)
+**Eksporter testpakke** inkluderer nå alle tilgjengelige, kilde- og run-bundne data, også felt den vanlige UI-visningen ikke bruker:
+
+- Hele originalteksten, SHA-256, source-ID, analysis-ID, run-ID og full lokal SourceEvent-metadata (kun eksakt kildeidentitet).
+- Fullt aktivt kjøringsobjekt, rå auto-cache, rå auto-payload, full autoritativ AnalysisBundleV2 og semantisk dokument fra **samme** kjøring under `full_run_data` og `diagnostics`.
+- Fullt bevarte AI-kandidater **uten felt-whitelist**; på nye kjøringer også rå modellkandidater, full modellsyntese, normaliserte kandidater før filter, hele avviste kandidater og kandidater etter filter i `candidate_audit`. Tidligere analyse-cache kan ikke gi disse feltene tilbakevirkende.
+- AHA-svar, faglig analyse, begreper, sitater, kildesitatkontroller, kvalitetsgate, feil/blokkeringer, runtime-informasjon, modellidentitet, deploy-advarsler, lister/stier og kildebundet etterarbeid når dette eksisterer.
+- Run-bundne arkiverte innsikter og stier; ingen eldre analyser blir importert bare fordi de har samme artikkeltekst.
+- `coverage.available` og `coverage.missing` dokumenterer eksplisitt alle relevante mangler. Tekniske data er **ikke** en faglig godkjenning.
+
 ## Begrensninger
-Dette er en eksport av **aktiv analysekjøring**, ikke en fullkopi av brukerprofilen eller databasen. Siste auto-cache overskrives, og det finnes ennå ikke et fullstendig, varig per-forsøk-arkiv for hver modellinteraksjon. Reelle tidligere modellforsøk, tapte mellomresultater, ikke-lagrede kilder eller historiske vurderinger blir aldri fylt inn med gjetninger. En JSON-fil med `coverage.status=partial` er fortsatt nyttig til testing, men ikke et bevis for at AHA har beholdt alt. Innsikter i pakken er ikke vitenskapelig godkjent.
+Dette er en eksport av **den aktive analysekjøringen**, ikke en fullkopi av brukerprofilen eller databasen. Den eksporterer ikke API-nøkler, andre personers materiale, hele chat-/chamber-historikken eller gamle run-objekter uten identitetsmatch. Den oppretter ingen serveropplasting og ingen automatisk AI- eller kunnskapsgodkjenning.
+
+Siste auto-cache overskrives, og det finnes ennå ikke et fullstendig, varig per-forsøk-arkiv for hver modellinteraksjon. Nye kjøringer beholder mer rå modellinformasjon i den eksisterende cachen, men det er fortsatt **ikke** en garantert historisk logg over alle tidligere modellkall. Tapte mellomresultater, ikke-lagrede kilder og historiske vurderinger kan ikke gjenskapes. `coverage.status=partial` betyr at alt tilgjengelig er eksportert, **ikke** at alle data noensinne produsert er bevart.
 
 ## Test
 Kjør `node tests/aha-analysis-test-package-export.test.cjs`. Testen verifiserer hentbar fil, hash- og run-lås, avviste kandidater, slettede/stale objekter, kilde- og run-isolasjon samt synlig knapp i Chat.
@@ -22,7 +34,7 @@ Senere steg: eksplisitt, personvernkontrollert lokal arkivering av *alle* faktis
 ## Kildesitat-kontroll
 `candidate_audit.literal_source_quote_checks` dokumenterer om hvert bevart sitat finnes **ordrett** i originalteksten, inkludert start- og sluttposisjoner. Dette er ikke en kontroll av hvorvidt påstanden støttes av sitatet. Manglende eller ikke-gjenfunnet sitat blir tydelig markert.
 
-`candidate_audit.prefilter_rejections` tar med avvisningsgrunnene som finnes i runtime-tracen. Denne tracen lagrer kun tittel og grunn, ikke hele avviste kandidatteksten; `coverage.missing` rapporterer dette eksplisitt. Ingen historiske modellforsøk oppfinnes i eksporten.
+`candidate_audit.prefilter_rejections` tar med avvisningsgrunner som finnes i runtime-tracen. For nye vellykkede syntesekjøringer bevares også fullstendige avviste kandidatobjekter under `candidate_audit.prefilter_rejected_full_candidates`. Eldre trace med kun tittel og grunn markeres som mangelfull gjennom `coverage.missing`. Ingen historiske modellforsøk oppfinnes i eksporten.
 
 ## Vurder testpakker i nettleseren (AHA 1.0)
 
