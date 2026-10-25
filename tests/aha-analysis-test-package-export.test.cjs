@@ -153,7 +153,10 @@ const richTrace = {
     title: "Removed duplicate", summary: "Full rejected text", rejection_reason: "semantic_duplicate", rejected_extra: 17
   }],
   selected_candidates_after_prefilter: [candidates[0]],
-  deterministic_evidence_plan: { selected_source_claim_count: 2, packets: [{ role: "finding", quotes: ["evidence"] }] }
+  deterministic_evidence_plan: { selected_source_claim_count: 2, packets: [{ role: "finding", quotes: ["evidence"] }] },
+  run_synthesis_attempt_history: [{ status: "blocked_synthesis_http", analysis_run_id: "run-1" },
+    { status: "synthesis_received", analysis_run_id: "run-1" }],
+  run_synthesis_attempt_count: 2
 };
 const richAuto = {...auto, payload: {
   ...auto.payload,
@@ -181,6 +184,9 @@ assert.equal(rich.full_run_data.raw_auto_payload.private_run_diagnostic.success,
 assert.equal(rich.full_run_data.active_run.diagnostic_note,"active run only");
 assert.equal(rich.diagnostics.synthesis_gate.approved_count,1);
 assert.equal(rich.candidate_audit.deterministic_evidence_plan.packets[0].role,"finding");
+assert.equal(rich.candidate_audit.run_synthesis_attempt_history.length,2);
+assert.equal(rich.candidate_audit.run_synthesis_attempt_history[0].status,"blocked_synthesis_http");
+assert.equal(rich.coverage.available.observed_synthesis_attempts,2);
 assert.equal(rich.coverage.available.raw_model_synthesis,true);
 assert.ok(!rich.coverage.missing.includes("prefilter_rejected_candidate_full_payloads_not_recorded"));
 assert.doesNotMatch(JSON.stringify(rich),/Old same source|Wrong source|Other article|Old run|Stale|Forged/);
