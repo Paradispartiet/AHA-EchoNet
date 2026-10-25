@@ -264,11 +264,13 @@
 
     const sentenceCount = splitIntoSentences(raw).length;
     const callerContext = context && typeof context === "object" && !Array.isArray(context) ? context : {};
+    const activeAnalysisRunId = String(callerContext.analysis_run_id || "").trim();
+    const writeRunTrace = (trace) => setRuntimeTrace({ ...trace, analysis_run_id: activeAnalysisRunId || null });
 
     const runtime = await fetchCompatibleRuntime();
     const requestAttempt = Number(context?.authoritative_quality_retry?.attempt || 0);
     if (runtime.compatible !== true) {
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: "blocked_incompatible_runtime",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -311,7 +313,7 @@
       });
       const res = transport.response;
       if (!res.ok) {
-        setRuntimeTrace({
+        writeRunTrace({
           schema: "aha_analysis_runtime_trace_v1",
           status: "blocked_synthesis_http",
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -332,7 +334,7 @@
         ...runtimeCompatibilityReasons(data?.runtime)
       ];
       if (envelopeReasons.length) {
-        setRuntimeTrace({
+        writeRunTrace({
           schema: "aha_analysis_runtime_trace_v1",
           status: "blocked_incompatible_synthesis_envelope",
           frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -355,7 +357,7 @@
       const reviewed = projectionDiversityExpansion
         ? reviewProjectionDiversityCandidates(normalized, raw, { limit: 5 })
         : reviewInsightCandidates(normalized, raw, { limit: 5 });
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: reviewed.selected.length ? "synthesis_received" : "blocked_client_prefilter",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
@@ -393,7 +395,7 @@
       });
       return reviewed.selected;
     } catch (err) {
-      setRuntimeTrace({
+      writeRunTrace({
         schema: "aha_analysis_runtime_trace_v1",
         status: "blocked_synthesis_unavailable",
         frontend_build_sha: String(global.AHA_FRONTEND_BUILD_SHA || "unknown"),
