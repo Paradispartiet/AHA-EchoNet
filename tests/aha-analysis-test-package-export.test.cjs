@@ -192,5 +192,12 @@ const staleRich=api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>({...richAu
 assert.equal(staleRich.full_run_data.raw_auto_cache,null);
 assert.equal(staleRich.candidate_audit.raw_model_synthesis,null);
 assert.equal(staleRich.coverage.available.raw_auto_cache,false);
+const wrongTraceAuto={...richAuto,payload:{...richAuto.payload,analysisRuntime:{...richTrace,analysis_run_id:"another-run"}}};
+const wrongTracePackage=api.buildAhaTestPackage({...deps,loadAutoOutputs:()=>wrongTraceAuto},()=>richBundle);
+assert.equal(wrongTracePackage.candidate_audit.runtime_trace,null);
+assert.equal(wrongTracePackage.full_run_data.raw_auto_payload.analysisRuntime,undefined);
+assert.equal(wrongTracePackage.full_run_data.raw_auto_cache.payload.analysisRuntime,undefined);
+assert.ok(wrongTracePackage.coverage.missing.includes("runtime_trace_from_other_run_removed"));
+assert.ok(wrongTracePackage.coverage.missing.includes("model_runtime_trace_not_recorded"));
 
 console.log("AHA one-run test package: source hash, run identity, rejected candidates, local records, privacy and download passed.");
