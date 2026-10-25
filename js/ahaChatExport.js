@@ -1132,6 +1132,8 @@ ${"```"}
         selected_candidates_after_prefilter: safeSerializeForExport(runtimeTrace?.selected_candidates_after_prefilter || null),
         deterministic_evidence_plan: safeSerializeForExport(runtimeTrace?.deterministic_evidence_plan || null),
         rejected_model_envelope: safeSerializeForExport(runtimeTrace?.rejected_model_envelope || null),
+        run_synthesis_attempt_history: safeSerializeForExport(runtimeTrace?.run_synthesis_attempt_history || []),
+        run_synthesis_attempt_count: Number(runtimeTrace?.run_synthesis_attempt_count || 0),
         runtime_trace: runtimeTrace,
         model_attempt_history_complete: false
       },
@@ -1165,6 +1167,7 @@ ${"```"}
           raw_model_candidates: Array.isArray(runtimeTrace?.raw_model_candidates),
           full_prefilter_rejections: prefilterRejects.length === 0 || arr(runtimeTrace?.prefilter_rejected_full_candidates).length > 0,
           runtime_trace: Boolean(runtimeTrace),
+          observed_synthesis_attempts: Number(runtimeTrace?.run_synthesis_attempt_count || 0),
           stored_afterwork: afterwork.length > 0,
           stored_insights: storedInsights.length > 0,
           stored_paths: paths.length > 0,
