@@ -503,15 +503,23 @@
       } catch (err) {
         global.console.warn("AHA-agent utilgjengelig", err);
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
+        const safeCode = String(err?.code || err?.message || "");
+        const userError = safeCode === "openai_quota_exhausted"
+          ? "AHA kan ikke bruke AI akkurat nå: OpenAI API-kvote eller kreditt er oppbrukt. Kontroller fakturering og forbruksgrenser for API-prosjektet."
+          : safeCode === "openai_rate_limited"
+            ? "AHA sin AI-tjeneste har nådd en midlertidig bruksgrense. Prøv igjen senere."
+            : safeCode === "missing_openai_api_key"
+              ? "AHA mangler OpenAI API-nøkkel på serveren. Kontroller serverkonfigurasjonen."
+              : "AHA-agenten er ikke tilgjengelig akkurat nå.";
         if (savingEnabled) {
-          global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå.", {
+          global.AHAChatPersistence?.appendAssistantMessage?.(userError, {
             source: "aha_chat",
             threadId: config.threadId,
             tags: ["status"]
           });
         }
         ui.renderChatMemoryStatus();
-        ui.appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
+        ui.appendChat("aha", userError);
         try {
           await analysis.renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled, analysisRun });
         } catch (autoErr) {
