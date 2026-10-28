@@ -132,7 +132,8 @@ assert.match(html, /<h1>Mitt AHA<\/h1>/);
 assert.match(html, /id="aha-profile-overview"/);
 assert.doesNotMatch(html, /id="aha-profile-status-grid"/, 'the raw counter grid should not duplicate the curated Mitt AHA footprint');
 assert.ok(html.indexOf('js/ahaProfile.js') < html.indexOf('js/ahaProfileOverview.js'), 'overview adapter must load after canonical AHAProfile');
-assert.match(html, /Det AHA ser i materialet ditt/);
+assert.ok(html.includes("<h2>Tankekraft</h2>"));
+assert.match(html, /Dette måler ikke intelligensen din/);
 
 assert.equal(/localStorage\s*\.\s*(setItem|removeItem|clear)\s*\(/.test(code), false, 'Profile overview must remain read-only');
 assert.equal(/\bfetch\s*\(/.test(code), false, 'Profile overview must not fetch');
