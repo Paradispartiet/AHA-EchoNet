@@ -173,6 +173,7 @@
       whyItMatters: sanitizeInsightText(asText(insight?.why_it_matters, "")),
       nextTest: sanitizeInsightText(asText(insight?.next_test, "")),
       uncertainty: asText(insight?.uncertainty, ""),
+      uncertaintyDetail: sanitizeInsightText(asText(insight?.uncertainty_detail, "")),
       claimKind: asText(insight?.claim_kind, ""),
       evidenceOrigin: asText(insight?.evidence_origin || insight?.candidate_quality?.evidence_origin, ""),
       qualityStatus: asText(insight?.insight_quality_gate_v2?.status || insight?.candidate_quality?.status, ""),
@@ -471,6 +472,56 @@
     return `<section class="insight-section"><span class="insight-section-label">Teori</span>${linksHtml}${chipsHtml}</section>`;
   }
 
+
+  // Presentation only: no new inference, quality upgrade or network calls.
+  function buildInsightJourneyModel(view, sourceEvent) {
+    const sourceText = asText(sourceEvent?.text, "");
+    const claim = asText(view?.summary, "Ingen forklaring er lagret for dette forslaget.");
+    const sourceNorm = sourceText.replace(/\s+/g, " ").toLowerCase();
+    const quoteMatched = Boolean(sourceText && sourceNorm.includes(claim.replace(/\s+/g, " ").toLowerCase()));
+    const directlyObserved = quoteMatched && view?.claimKind === "source_observation" && view?.uncertainty === "supported";
+    let uncertainty = "Dette er et mulig funn. Kilden og alternative forklaringer bør vurderes før du trekker en konklusjon.";
+    if (!sourceText) uncertainty = "Vi har ikke nok lokalt kildegrunnlag til å kontrollere dette forslaget.";
+    else if (view?.qualityStatus === "blocked") uncertainty = "Dette forslaget er ikke kvalitetssikret. Kontroller kildegrunnlaget før bruk.";
+    else if (view?.uncertainty === "hypothesis" || view?.claimKind === "hypothesis") uncertainty = "Dette er en hypotese, ikke et bekreftet resultat.";
+    else if (view?.uncertainty === "interpretive") uncertainty = "Dette er en tolkning. Kilden alene bekrefter ikke sammenhengen.";
+    else if (directlyObserved) uncertainty = "Utsagnet finnes i kilden, men videre slutninger må vurderes for seg.";
+    const limitation = asText(view?.uncertaintyDetail, "");
+    if (limitation) uncertainty += " Registrert begrensning: " + limitation;
+    return {
+      source: sourceText ? eventPreview({ text: sourceText }) : sourceEvent
+        ? "Et kildespor er koblet til, men ingen kildetekst kan kontrolleres her."
+        : "Ingen lokal kilde er koblet til denne innsikten.",
+      claimLabel: directlyObserved ? "Dette står i kilden" : "Dette foreslår Aha",
+      claim,
+      relevance: asText(view?.whyItMatters, ""),
+      uncertainty,
+      next: asText(view?.nextTest, "Se etter en relevant kilde, en sammenligning eller et moteksempel som kan belyse dette."),
+      hasRecordedNextTest: Boolean(asText(view?.nextTest, ""))
+    };
+  }
+
+  function renderInsightJourneyMarkup(view, sourceEvent) {
+    const item = buildInsightJourneyModel(view, sourceEvent);
+    return `<section class="insight-journey" aria-label="Fra kilde til neste undersøkelse">
+      <div class="insight-journey-part">
+        <h4>Dette bygger på</h4><p>${escapeHtml(item.source)}</p>
+      </div>
+      <div class="insight-journey-part">
+        <h4>${escapeHtml(item.claimLabel)}</h4>
+        <p class="insight-card-summary">${escapeHtml(item.claim)}</p>
+        ${item.relevance ? `<p class="insight-journey-relevance"><strong>Hvorfor undersøke?</strong> ${escapeHtml(item.relevance)}</p>` : ""}
+      </div>
+      <div class="insight-journey-part">
+        <h4>Dette er fortsatt usikkert</h4><p>${escapeHtml(item.uncertainty)}</p>
+      </div>
+      <div class="insight-journey-part">
+        <h4>Et mulig neste steg</h4><p>${escapeHtml(item.next)}</p>
+        ${item.hasRecordedNextTest ? "" : '<small>Generelt undersøkelsesforslag – ikke et lagret analyseresultat.</small>'}
+      </div>
+    </section>`;
+  }
+
   function insightEvidenceMarkup(view, sourceEvent) {
     const sourceText = String(sourceEvent?.text || "").replace(/\s+/g, " ").trim();
     const matches = view.evidence.filter((item) =>
@@ -513,7 +564,6 @@
     const theorySection = renderTheorySection(view);
     const sourceHtml = sourceEvent
       ? `<div class="insight-source"><strong>Kilde:</strong> ${escapeHtml(asText(sourceEvent.source_type, "ukjent"))} · ${escapeHtml(asText(sourceEvent.source_app, "ukjent"))}</div>
-         <div class="insight-source-preview">${escapeHtml(eventPreview(sourceEvent))}</div>
          <div class="insight-source-time">${escapeHtml(asText(sourceEvent.created_at, "Ukjent tidspunkt"))}</div>
          <a class="aha-tile-btn" href="sources.html#source-${encodeURIComponent(asText(sourceEvent.id || sourceEvent.event_id || sourceEvent.source_event_id, ""))}">Åpne kildesporet</a>`
       : `<div class="insight-source-missing">Ingen kilde koblet ennå</div>`;
@@ -562,12 +612,14 @@
         <h3>${escapeHtml(view.title)}</h3>
         <span class="insight-chip">${escapeHtml(view.date)}</span>
       </header>
-      <p class="insight-card-summary">${escapeHtml(view.summary)}</p>
-      <div class="insight-meta-row">
-        ${view.topic ? `<span class="insight-chip">Emne: ${escapeHtml(view.topic)}</span>` : ""}
-        ${view.confidence !== null && Number.isFinite(Number(view.confidence)) ? `<span class="insight-chip">Score: ${escapeHtml(Number(view.confidence).toFixed(2))}</span>` : ""}
-        ${view.sourceEventId ? `<span class="insight-chip">Kilde-ID: ${escapeHtml(view.sourceEventId)}</span>` : ""}
-      </div>
+      ${renderInsightJourneyMarkup(view, sourceEvent)}
+      ${view.topic ? `<p class="insight-journey-topic">Emne: ${escapeHtml(view.topic)}</p>` : ""}
+      ${(view.confidence !== null && Number.isFinite(Number(view.confidence))) || view.sourceEventId ? `
+        <details class="insight-technical-details">
+          <summary>Tekniske opplysninger</summary>
+          ${view.confidence !== null && Number.isFinite(Number(view.confidence)) ? `<p>Intern vurderingsverdi: ${escapeHtml(Number(view.confidence).toFixed(2))}. Dette er ikke en sannsynlighet for at påstanden er sann.</p>` : ""}
+          ${view.sourceEventId ? `<p>Kildereferanse: ${escapeHtml(view.sourceEventId)}</p>` : ""}
+        </details>` : ""}
       ${terms ? `<div class="insight-layer-chips">${terms}</div>` : ""}
       ${theorySection}
       <div class="insight-subject-links-host"></div>
@@ -580,7 +632,7 @@
       </div>
       ${asText(insight?.id, "") && !["rejected", "outdated", "deleted"].includes(asText(insight?.status, "").toLowerCase())
         ? `<div class="insight-list-linker">
-             <button type="button" class="aha-tile-btn" data-insight-review-path="${escapeHtml(String(index))}">Lag undersøkelsessti</button>
+             <button type="button" class="aha-tile-btn" data-insight-review-path="${escapeHtml(String(index))}">Undersøk videre</button>
              <div class="insight-list-status" data-insight-review-path-status="${escapeHtml(String(index))}" role="status" aria-live="polite"></div>
            </div>` : ""}
       ${groupSection}
@@ -654,18 +706,18 @@
     const topTheoryPeople = collectTheoryPeople(chamber, recurringThemes?.["30d"]?.top_theories, 4);
 
     target.innerHTML = `
-      <h2>Meta / forslag</h2>
+      <h2>Mønstre og forslag</h2>
       <div class="insight-meta-row">
         <span class="insight-chip">Emneforslag: ${emne.length}</span>
-        <span class="insight-chip">Merge suggestions: ${merge.length}</span>
-        <span class="insight-chip">Merge dismissals: ${dismiss.length}</span>
-        <span class="insight-chip">Patterns: ${patterns.length}</span>
-        <span class="insight-chip">Meta insights: ${metaInsights.length}</span>
+        <span class="insight-chip">Forslag til sammenslåing: ${merge.length}</span>
+        <span class="insight-chip">Avviste sammenslåinger: ${dismiss.length}</span>
+        <span class="insight-chip">Mønstre: ${patterns.length}</span>
+        <span class="insight-chip">Overordnede innsikter: ${metaInsights.length}</span>
       </div>
       <div class="meta-columns">
         <div><h4>Emneforslag</h4><ul>${list(emne, (x) => `<li>${escapeHtml(asText(x?.label || x?.title || x?.emne_id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
-        <div><h4>Merge suggestions</h4><ul>${list(merge, (x) => `<li>${escapeHtml(asText(x?.reason || x?.description || x?.id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
-        <div><h4>Patterns / Meta</h4><ul>${list(patterns.concat(metaInsights), (x) => `<li>${escapeHtml(asText(x?.description || x?.title || x?.id, "Meta"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
+        <div><h4>Mulige sammenslåinger</h4><ul>${list(merge, (x) => `<li>${escapeHtml(asText(x?.reason || x?.description || x?.id, "Forslag"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
+        <div><h4>Mønstre og overordnede funn</h4><ul>${list(patterns.concat(metaInsights), (x) => `<li>${escapeHtml(asText(x?.description || x?.title || x?.id, "Meta"))}</li>`) || "<li>Ingen ennå</li>"}</ul></div>
       </div>
       <section class="knowledge-map-block">
         <h3>Kunnskapskart</h3>
@@ -732,9 +784,9 @@
     if (stats) {
       stats.innerHTML = `
         <span class="insight-chip">Innsikter: ${insights.length}</span>
-        <span class="insight-chip">Source events: ${sourceEvents.length}</span>
+        <span class="insight-chip">Lokale kildespor: ${sourceEvents.length}</span>
         <span class="insight-chip">Emneforslag: ${countArray(chamber?.emne_suggestions)}</span>
-        <span class="insight-chip">Merge suggestions: ${countArray(chamber?.merge_suggestions)}</span>
+        <span class="insight-chip">Mulige sammenslåinger: ${countArray(chamber?.merge_suggestions)}</span>
       `;
     }
 
@@ -871,6 +923,8 @@
     loadSourceEvents,
     getInsights,
     buildInsightsEmptyMarkup,
+    buildInsightJourneyModel,
+    renderInsightJourneyMarkup,
     render,
     refresh,
     sendInsightToList,
