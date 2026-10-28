@@ -56,7 +56,7 @@ function makeContext(seed = {}) {
 
 const pathsHtml = fs.readFileSync(path.join(__dirname, '..', 'paths.html'), 'utf8');
 assert.match(pathsHtml, /<h1 id="paths-module-title">Kunnskapsstier<\/h1>/, 'Paths page should render the product title');
-assert.match(pathsHtml, /narrative forløp og læringsreiser/, 'Paths page should render its narrative and learning purpose');
+assert.match(pathsHtml, /Samle en undersøkelse eller læringsreise i konkrete steg/, 'Paths page should render its narrative and learning purpose');
 assert.match(pathsHtml, /id="aha-module-health"/, 'Paths page should include a textual health badge');
 assert.match(pathsHtml, /href="#paths-create">Lag sti<\/a>/, 'localized create flow should remain the primary action');
 assert.match(pathsHtml, />Lag sti<\/button>/, 'create form submit should use Lag sti label');
