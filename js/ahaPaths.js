@@ -387,12 +387,13 @@
 
   function formatDate(value) {
     const time = Date.parse(value);
-    if (!Number.isFinite(time)) return "Date unavailable";
-    return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(time));
+    if (!Number.isFinite(time)) return "Ukjent dato";
+    return new Intl.DateTimeFormat("nb-NO", { dateStyle: "medium" }).format(new Date(time));
   }
 
   function pathStatusLabel(path) {
-    return asText(path?.status, "Local");
+    const status = asText(path?.status, "Local");
+    return { Local: "Lagret lokalt", local: "Lagret lokalt", planned: "Planlagt", draft: "Utkast", active: "Pågår", done: "Fullført", completed: "Fullført" }[status] || status;
   }
 
 
@@ -428,9 +429,9 @@
           <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
         </div>
         <p class="aha-path-summary">${escapeHtml(path.description || path.goal || "Ingen innledning ennå.")}</p>
-        <div class="aha-path-meta" aria-label="Path metadata">
+        <div class="aha-path-meta" aria-label="Opplysninger om stien">
           <span>${escapeHtml(category)}</span>
-          <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
+          <span>Oppdatert ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
         </div>
         <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
           ${isSelected ? "Valgt" : "Følg stien"}
@@ -498,9 +499,16 @@
     }).join("");
   }
 
+  function nextPathStep(path) {
+    const steps = asArray(path?.steps).slice().sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+    return steps.find((step) => step.status === "active")
+      || steps.find((step) => step.status === "planned")
+      || null;
+  }
+
   function renderSelectedPreview(path, availableItems, groups) {
     if (!path) {
-      return `<aside class="aha-panel aha-path-preview aha-path-preview-empty" aria-label="Path preview">
+      return `<aside class="aha-panel aha-path-preview aha-path-preview-empty" aria-label="Stivisning">
         <p class="eyebrow">Kunnskapssti</p>
         <h2>Velg en sti</h2>
         <p>Velg en sti for å følge fortellingen eller læringsforløpet steg for steg.</p>
@@ -511,10 +519,14 @@
       `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
     )).join("");
     const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order);
+    const nextStep = nextPathStep(path);
+    const nextStepMarkup = nextStep
+      ? `<section class="aha-path-next-step" aria-label="Neste steg i stien"><strong>Neste steg</strong><p>${escapeHtml(nextStep.title)}</p><small>Undersøk dette steget og marker det som fullført når du er ferdig.</small></section>`
+      : `<section class="aha-path-next-step" aria-label="Neste steg i stien"><strong>Neste steg</strong><p>${visibleSteps.length ? "Ingen åpne steg. Alle er fullført eller hoppet over." : "Legg til det første steget for å begynne."}</p></section>`;
     const availableStepIndex = buildAvailableStepIndex(availableItems);
     const stepsHtml = visibleSteps.length
       ? visibleSteps.map((step) => `
-        <li class="aha-path-step-row${step.status === "done" ? " is-done" : ""}">
+        <li class="aha-path-step-row${step.status === "done" ? " is-done" : ""}${nextStep && step.id === nextStep.id ? " is-next" : ""}">
           <span class="aha-path-step-number" aria-hidden="true">${step.order + 1}</span>
           <div class="aha-path-step-content">
             <strong>${escapeHtml(step.title)}</strong>
@@ -547,14 +559,15 @@
       <p>${escapeHtml(path.description || "Ingen innledning ennå.")}</p>
       ${path.goal ? `<p class="aha-path-goal"><strong>Mål:</strong> ${escapeHtml(path.goal)}</p>` : ""}
       ${path.learningOutcome ? `<p class="aha-path-goal aha-path-outcome"><strong>Etter stien:</strong> ${escapeHtml(path.learningOutcome)}</p>` : ""}
-      <div class="aha-path-meta" aria-label="Selected path metadata">
+      <div class="aha-path-meta" aria-label="Opplysninger om stien">
         <span class="aha-path-badge">${escapeHtml(pathStatusLabel(path))}</span>
         <span class="aha-path-badge">${renderStepCount(path.steps.length)}</span>
         <span>${escapeHtml(path.category || path.type)}</span>
-        <span>Created ${escapeHtml(formatDate(path.createdAt))}</span>
-        <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
+        <span>Opprettet ${escapeHtml(formatDate(path.createdAt))}</span>
+        <span>Oppdatert ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
       </div>
       ${pathProgressMarkup(path)}
+      ${nextStepMarkup}
       <section aria-labelledby="path-preview-steps-title">
         <h3 id="path-preview-steps-title">Fortelling og læringstrinn</h3>
         <ol class="aha-path-steps aha-path-story">${stepsHtml}</ol>
@@ -563,7 +576,7 @@
         <summary>Legg til neste steg</summary>
         <div class="aha-path-manage-content">
           <div class="aha-path-add-row">
-            <select data-path-select="${escapeHtml(path.id)}" aria-label="Choose an AHA item to add to ${escapeHtml(path.title)}">
+            <select data-path-select="${escapeHtml(path.id)}" aria-label="Velg et element som skal legges til i ${escapeHtml(path.title)}">
               <option value="">Velg innsikt, begrepsliste, samling eller notat</option>
               ${options}
             </select>
@@ -577,12 +590,12 @@
           <div class="aha-path-add-row">
             ${groups.length ? `
             <select class="gruppe-select" data-path-group-select="${escapeHtml(path.id)}" aria-label="Choose a group for ${escapeHtml(path.title)}">
-              <option value="">Choose a group</option>
+              <option value="">Velg en gruppe</option>
               ${groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.title)}</option>`).join("")}
             </select>
-            <button type="button" class="gruppe-knapp" data-path-add-group="${escapeHtml(path.id)}">Add path to group</button>
+            <button type="button" class="gruppe-knapp" data-path-add-group="${escapeHtml(path.id)}">Legg stien i gruppen</button>
             <div class="statuslinje" data-path-group-status="${escapeHtml(path.id)}" aria-live="polite"></div>
-            ` : `<p class="statuslinje">No groups yet. <a href="groups.html">Create a group first.</a></p>`}
+            ` : `<p class="statuslinje">Ingen grupper ennå. <a href="groups.html">Opprett en gruppe først.</a></p>`}
           </div>
           <button type="button" class="aha-path-delete" data-path-delete="${escapeHtml(path.id)}">Slett sti</button>
         </div>
@@ -959,6 +972,7 @@
     addStepToPath,
     updatePathStep,
     pathProgress,
+    nextPathStep,
     removeStepFromPath,
     syncFromDatabase,
     collectAvailablePathItems,
