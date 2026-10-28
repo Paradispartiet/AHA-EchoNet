@@ -442,3 +442,13 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
 .aha-personal-page .aha-personal-empty > .eyebrow { color: var(--personal-accent); }
 .aha-personal-page .aha-personal-empty .aha-tile-actions { justify-content: flex-start; }
 .aha-personal-page .aha-personal-empty .aha-tile-btn-primary { min-height: 42px; }
+
+/* Tankekraft uses existing Meta insights as provisional reflection, never an ability score. */
+.aha-profile-card-meta .aha-module-purpose { margin: 0 0 14px; color: var(--aha-muted); line-height: 1.55; }
+.aha-reflection-principles { padding: 13px 15px; border: 1px solid rgba(170,145,247,.2); border-radius: var(--aha-radius-card); background: rgba(170,145,247,.055); }
+.aha-reflection-principles h3 { margin: 0 0 8px; font-size: 1rem; }
+.aha-reflection-principles ol { margin: 0; padding-left: 1.25rem; display: grid; gap: 7px; color: var(--aha-text); }
+.aha-reflection-disclaimer { color: var(--aha-muted); line-height: 1.55; font-size: .9rem; }
+.aha-reflection-tech { margin: 12px 0; font-size: .87rem; color: var(--aha-muted); }
+.aha-reflection-tech summary { cursor: pointer; padding: 5px 0; }
+.aha-reflection-tech p { margin: 6px 0 0; line-height: 1.55; overflow-wrap: anywhere; }
