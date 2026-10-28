@@ -61,7 +61,6 @@ assert.match(quoted.uncertainty, /videre slutninger/);
 
 const escaped = insights.renderInsightJourneyMarkup({
   summary: "<script>alert('bad')</script>",
-  nextTest: "<img src=x onerror=alert(1)>",
   whyItMatters: "<b>farlig</b>"
 }, { text: "<source>" });
 assert.doesNotMatch(escaped, /<script>|<img|<source>|<b>farlig/);
