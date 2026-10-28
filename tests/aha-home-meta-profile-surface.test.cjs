@@ -115,7 +115,7 @@ for (const text of [
   'Nytt i materialet',
   'Eldre tanker som er relevante nå',
   'Mulige koblinger',
-  'Underutforskede begreper',
+  'Begreper å se nærmere på',
   'Spørsmål å tenke videre på',
   'Neste gode steg',
   'makt',
