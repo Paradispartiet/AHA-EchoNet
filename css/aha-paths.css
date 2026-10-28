@@ -370,3 +370,10 @@
 .aha-path-step-complete { margin: 8px 0; }
 .aha-path-step-complete[aria-pressed="true"] { border-color: rgba(82, 192, 136, .6); color: #b7f0d2; }
 .aha-path-step-fields select { width: 100%; min-height: 44px; }
+
+/* A next action is taken from the saved path step statuses, not invented progress. */
+.aha-path-next-step { border: 1px solid rgba(122, 198, 255, .38); border-radius: 12px; padding: 12px 14px; background: rgba(122, 198, 255, .07); }
+.aha-path-next-step strong { display: block; margin-bottom: 4px; }
+.aha-path-next-step p { margin: 0 0 5px; color: var(--aha-text); }
+.aha-path-next-step small { color: var(--aha-muted, #aab4c3); }
+.aha-path-step-row.is-next .aha-path-step-content { border-color: rgba(122, 198, 255, .65); }
