@@ -192,8 +192,13 @@
       merged.set(path.id, path);
     });
 
-    asArray(remotePaths).map((path) => normalizePath(path)).forEach((incoming) => {
+    asArray(remotePaths).forEach((remote) => {
+      // Generated knowledge Paths have local-only source snapshots. Ignore
+      // server copies from older clients and protect local IDs from clashes.
+      if (generatedPathMustRemainLocal(remote)) return;
+      const incoming = normalizePath(remote);
       const existing = merged.get(incoming.id);
+      if (generatedPathMustRemainLocal(existing)) return;
       if (!existing || pathActionTime(incoming) >= pathActionTime(existing)) {
         merged.set(incoming.id, incoming);
       }
