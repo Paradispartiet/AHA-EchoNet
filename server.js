@@ -145,10 +145,17 @@ function metadataCandidate() {
   return [{ title: "Kilde registrert", summary: "AHA fant metadata for lenken, men kunne ikke lese full artikkeltekst. Brukeren kan lime inn tekst manuelt for full analyse.", text: "Kilde registrert fra metadata. Full artikkeltekst ikke tilgjengelig.", functional_type: "observation", concepts: ["kilde", "metadata", "lenke"], candidate_type: "web_article_metadata" }];
 }
 
-function safeArticleAnalysisFallback(source, text) {
-  const concepts = [...new Set(String(text || "").toLowerCase().match(/[a-zæøåA-ZÆØÅ][\wæøåÆØÅ-]{4,}/g) || [])].slice(0, 8);
-  const summary = source.description || `AHA leste tilgjengelig tekst fra ${source.publisher || source.domain || "kilden"} transient og laget en kort avledet analyse.`;
-  return { short_summary: summary, main_points: [summary], actors: [], claims: [], concepts, conflict_lines: [], possible_ahaavisa_angles: [], candidates: [{ title: source.title || "Analyse av webkilde", summary, text: `Avledet analyse av webkilden: ${summary}`, functional_type: "observation", concepts: concepts.slice(0, 5), candidate_type: "web_article_analysis" }] };
+function safeArticleAnalysisFallback(source, _text, aiAnalysisStatus = "model_unavailable") {
+  // Source extraction may succeed while AI is down. Never fabricate a
+  // model-derived candidate from source description or word matching.
+  const summary = source.description
+    ? `Kildens beskrivelse (ikke AI-analyse): ${source.description}`
+    : "Artikkelteksten ble lest, men AI-analysen er ikke tilgjengelig.";
+  return {
+    short_summary: summary, main_points: [], actors: [], claims: [], concepts: [],
+    conflict_lines: [], possible_ahaavisa_angles: [], candidates: [],
+    ai_analysis_status: aiAnalysisStatus
+  };
 }
 
 async function analyzeArticleTextForAha({ source, text }) {
@@ -161,10 +168,18 @@ async function analyzeArticleTextForAha({ source, text }) {
       : null;
     const raw = response?.output_text || "{}";
     const parsed = JSON.parse(raw);
-    return Object.assign(safeArticleAnalysisFallback(source, text), parsed, { candidates: safeParseJsonCandidatePayload({ candidates: parsed.candidates }).map((c) => sanitizeInsightCandidate(Object.assign({}, c, { candidate_type: "web_article_analysis" }), parsed.short_summary)).filter(Boolean).slice(0, 5) });
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || typeof parsed.short_summary !== "string" || !parsed.short_summary.trim()) {
+      throw new Error("invalid_article_model_output");
+    }
+    return Object.assign(safeArticleAnalysisFallback(source, text), parsed, {
+      candidates: safeParseJsonCandidatePayload({ candidates: parsed.candidates })
+        .map((c) => sanitizeInsightCandidate(Object.assign({}, c, { candidate_type: "web_article_analysis" }), parsed.short_summary))
+        .filter(Boolean).slice(0, 5),
+      ai_analysis_status: "completed"
+    });
   } catch (err) {
     console.warn("[aha-agent] analyze-url OpenAI analyse feilet", err?.message || err);
-    return safeArticleAnalysisFallback(source, text);
+    return safeArticleAnalysisFallback(source, text, "model_failed");
   }
 }
 
@@ -604,8 +619,17 @@ app.post("/api/aha-agent/analyze-url", async (req, res) => {
       return res.json({ ok: true, access_status: status, source: Object.assign(source, { extraction_method: extracted.method }), analysis: { short_summary: status === "paywall" ? "Kilden ser ut til å kreve innlogging eller abonnement." : "Full artikkeltekst var ikke tilgjengelig for AHA.", main_points: [], actors: [], claims: [], concepts: ["kilde", "metadata", "lenke"], conflict_lines: [], possible_ahaavisa_angles: [] }, candidates: metadataCandidate(), policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
     }
     const analysisWithCandidates = await analyzeArticleTextForAha({ source, text: articleText });
-    const { candidates, ...analysis } = analysisWithCandidates;
-    return res.json({ ok: true, access_status: "full", source: Object.assign(source, { extraction_method: extracted.method }), analysis, candidates: Array.isArray(candidates) && candidates.length ? candidates : safeArticleAnalysisFallback(source, articleText).candidates, policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: true } });
+    const { candidates, ai_analysis_status: aiAnalysisStatus, ...analysis } = analysisWithCandidates;
+    const modelCompleted = aiAnalysisStatus === "completed";
+    return res.json({
+      ok: true,
+      access_status: "full",
+      ai_analysis_status: modelCompleted ? "completed" : aiAnalysisStatus || "model_unavailable",
+      source: Object.assign(source, { extraction_method: extracted.method }),
+      analysis,
+      candidates: modelCompleted && Array.isArray(candidates) ? candidates : [],
+      policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: true }
+    });
   } catch (err) {
     console.error("[aha-agent] analyze-url crashed", err);
     return res.status(500).json({ ok: false, access_status: "error", error: "internal_error", policy: { raw_article_stored: false, raw_article_returned: false, transient_fulltext_read: false } });
