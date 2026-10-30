@@ -470,6 +470,14 @@
           global.console.warn("Auto-output feilet", autoErr);
         }
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
+        // A successful Chat answer does not prove that the separate semantic
+        // AI synthesis succeeded. Expose a safe per-run warning, never reuse
+        // details from another analysis or forward provider diagnostics.
+        const synthesisTrace = global.AHAChatInsightPipeline?.getRuntimeTraceForRun?.(analysisRun.analysisRunId);
+        if (String(synthesisTrace?.analysis_run_id || "") === String(analysisRun.analysisRunId)
+          && String(synthesisTrace?.status || "").startsWith("blocked_")) {
+          ui.setStatusNote("Chat svarte, men AI-innsiktsanalysen ble blokkert. Nye liste- og stiforslag krever godkjente AI-innsikter.");
+        }
         if (savingEnabled) {
           try {
             const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, {
