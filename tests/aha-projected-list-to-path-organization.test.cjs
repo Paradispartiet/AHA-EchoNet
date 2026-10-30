@@ -205,6 +205,38 @@ const conceptSeed = new Map([["aha_concept_lists_v1", JSON.stringify([{
   const deleted = app.context.AHALists.deleteConceptList("concept_list_durable");
   assert.ok(deleted.deletedAt);
 }
+for (const field of ["steps", "sequence", "items", "nodes"]) {
+  const saved = savedAiList();
+  const app = setup([saved]);
+  const existingPath = {
+    id: "legacy_path_" + field,
+    [field]: [{ source: "aha_lists", refId: saved.id, title: saved.title }]
+  };
+  app.backing.set("aha_paths_v1", JSON.stringify([existingPath]));
+  const result = app.context.AHALists.deleteList(saved.id);
+  assert.equal(result.reason, "list_referenced_by_active_path", "Legacy " + field + " Path must protect its List");
+  assert.deepEqual(app.writes, [], "Legacy reference detection must be read-only");
+
+  const legacyConcept = setup([], new Map(conceptSeed));
+  legacyConcept.backing.set("aha_paths_v1", JSON.stringify([{
+    id: "legacy_concept_" + field,
+    [field]: [{ source: "aha_concept_lists", refId: "concept_list_durable" }]
+  }]));
+  assert.equal(legacyConcept.context.AHALists.deleteConceptList("concept_list_durable").reason,
+    "list_referenced_by_active_path", "Legacy " + field + " Path must protect its Concept List");
+  assert.deepEqual(legacyConcept.writes, []);
+}
+{
+  const app = setup([savedAiList()]);
+  app.backing.set("aha_paths_v1", "[]");
+  app.context.localStorage.getItem = (key) => {
+    if (key === "aha_paths_v1") throw new Error("SecurityError");
+    return app.backing.get(key) || null;
+  };
+  assert.equal(app.context.AHALists.deleteList("list_projection_saved").reason, "path_store_unavailable");
+  assert.deepEqual(app.writes, []);
+}
+
 for (const malformed of ["{bad", "{}", "false"]) {
   const app = setup([savedAiList()]);
   app.backing.set("aha_paths_v1", malformed);
