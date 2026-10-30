@@ -128,7 +128,7 @@
         goal: "Undersøk det lagrede materialet og hva som kan konkluderes.",
         ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
           meta: {
-            createdBy: "aha_organization_flow_v2",
+            createdBy: "aha_projection_materializer_v2",
             derived_from: "materialized_ai_list",
             source_list_id: list.id,
             source_projection_id: text(list.meta.projection_id),
@@ -173,7 +173,7 @@
         learningOutcome: "Kunne forklare sentrale begreper og hvordan de henger sammen.",
         ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
           meta: {
-            createdBy: "aha_organization_flow_v2",
+            createdBy: "aha_projection_materializer_v2",
             derived_from: "materialized_ai_concept_list",
             source_list_id: list.id,
             source_projection_id: text(list.meta.projection_id),
