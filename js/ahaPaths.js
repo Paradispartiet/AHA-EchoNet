@@ -131,7 +131,7 @@
   }
 
   function generatedPathMustRemainLocal(path) {
-    return ["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1", "aha_organization_flow_v2"]
+    return ["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"]
       .includes(path?.meta?.createdBy);
   }
 
