@@ -41,6 +41,19 @@
     });
   }
 
+  function projectionMemberMatchesSavedList(item, list) {
+    if (item?.source !== "aha_projection_v2") return false;
+    const parent = list?.meta || {};
+    const member = item?.meta || {};
+    const sourceHash = text(parent.source_sha256).toLowerCase();
+    if (parent.createdBy !== "aha_projection_materializer_v2" || !/^[a-f0-9]{64}$/.test(sourceHash)) return false;
+    if (member.inline !== true || member.immutable !== true || member?.snapshot?.source !== "aha_semantic_v2") return false;
+    if (text(member?.snapshot?.id) !== text(item.refId || item.ref_id) || !text(member?.snapshot?.title)) return false;
+    if (!arr(parent.member_ref_ids).map(text).includes(text(item.refId || item.ref_id))) return false;
+    return ["projection_id", "projection_artifact_id", "analysis_id", "analysis_run_id", "source_id", "source_sha256"]
+      .every((key) => text(parent[key]) && text(parent[key]) === text(member[key]));
+  }
+
   function createPathFromList(listId, titleArg) {
     if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath || !global.AHAPaths?.validatePathStepReference) {
       return { ok: false, reason: "organization_api_unavailable" };
@@ -53,18 +66,34 @@
     const eligible = [];
     const seen = new Set();
     let skipped = 0;
+    let invalidProjectionMembers = 0;
     arr(list.items).forEach((item) => {
       const key = text(item?.source) + "::" + text(item?.refId || item?.ref_id);
-      if (!["aha_insights", "aha_notes"].includes(item?.source) || !text(item?.refId || item?.ref_id)) {
+      if (!["aha_insights", "aha_notes", "aha_projection_v2"].includes(item?.source) || !text(item?.refId || item?.ref_id)) {
         skipped += 1;
         return;
       }
       if (seen.has(key)) return;
       seen.add(key);
+      if (item.source === "aha_projection_v2" && !projectionMemberMatchesSavedList(item, list)) {
+        skipped += 1;
+        invalidProjectionMembers += 1;
+        return;
+      }
       const checked = global.AHAPaths.validatePathStepReference(item);
-      if (!checked?.ok) { skipped += 1; return; }
+      if (!checked?.ok) {
+        skipped += 1;
+        if (item.source === "aha_projection_v2") invalidProjectionMembers += 1;
+        return;
+      }
       eligible.push({ ...checked.item, narrative: text(item?.membership_reason) });
     });
+    // A materialized AI List must not silently lose its source-bound members.
+    // Validate the full promotion BEFORE creating any local Path record.
+    if (invalidProjectionMembers > 0) return { ok: false, reason: "projection_member_invalid", skipped };
+    if (list?.meta?.createdBy === "aha_projection_materializer_v2" && !eligible.length) {
+      return { ok: false, reason: "projection_members_unavailable", skipped };
+    }
 
     const path = global.AHAPaths.createPath({
       title: text(titleArg) || `${list.title} – kunnskapssti`,
@@ -90,7 +119,10 @@
     for (const item of eligible) {
       const result = global.AHAPaths.addStepToPath(path.id, {
         source: item.source, refId: item.refId, type: item.type, title: item.title,
-        narrative: item.narrative
+        narrative: item.narrative,
+        // Projection steps require the validated immutable inline snapshot on
+        // both the first validation and the final AHAPaths.addStepToPath call.
+        ...(item.source === "aha_projection_v2" ? { meta: item.meta } : {})
       });
       if (result?.ok) { promoted += 1; lastPath = result.path; }
       else skipped += 1;
@@ -278,7 +310,11 @@
         const host = target.closest(".aha-org-flow-actions");
         const status = host?.querySelector(".aha-org-flow-status");
         const result = createPathFromList(listId);
-        if (status) status.innerHTML = result.ok ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.` : "Kunne ikke opprette stien.";
+        if (status) status.innerHTML = result.ok
+          ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.`
+          : ["projection_member_invalid", "projection_members_unavailable"].includes(result.reason)
+            ? "AI-listens kildebundne innsikter kunne ikke bekreftes. Ingen sti ble opprettet; listen er bevart."
+            : "Kunne ikke opprette stien.";
         return;
       }
 
