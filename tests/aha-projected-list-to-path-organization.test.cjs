@@ -172,4 +172,47 @@ const conceptSeed = new Map([["aha_concept_lists_v1", JSON.stringify([{
   assert.equal(app.writes.length, 0);
   assert.equal(app.backing.has("aha_paths_v1"), false);
 }
+// Both public deletion APIs must protect active Path references, including
+// direct updateList tombstones that bypass the UI's Delete button.
+{
+  const app = setup([savedAiList()]);
+  const result = app.context.AHAOrganizationFlow.createPathFromList("list_projection_saved");
+  assert.equal(result.ok, true);
+  const listBefore = app.backing.get("aha_lists_v1");
+  const beforeWrites = app.writes.length;
+  const denied = app.context.AHALists.deleteList("list_projection_saved");
+  assert.equal(denied.ok, false);
+  assert.equal(denied.reason, "list_referenced_by_active_path");
+  assert.equal(app.context.AHALists.updateList("list_projection_saved", {
+    deletedAt: "2026-10-30T20:00:00Z"
+  }).reason, "list_referenced_by_active_path");
+  assert.equal(app.writes.length, beforeWrites, "Denied List deletion must not touch storage");
+  assert.equal(app.backing.get("aha_lists_v1"), listBefore);
+  app.context.AHAPaths.deletePath(result.path.id);
+  const deleted = app.context.AHALists.deleteList("list_projection_saved");
+  assert.ok(deleted.deletedAt, "Delete is allowed once no active Path references the List");
+}
+{
+  const app = setup([], new Map(conceptSeed));
+  const result = app.context.AHAOrganizationFlow.createPathFromConceptList("concept_list_durable");
+  assert.equal(result.ok, true);
+  const conceptBefore = app.backing.get("aha_concept_lists_v1");
+  const writesBefore = app.writes.length;
+  assert.equal(app.context.AHALists.deleteConceptList("concept_list_durable").reason, "list_referenced_by_active_path");
+  assert.equal(app.backing.get("aha_concept_lists_v1"), conceptBefore);
+  assert.equal(app.writes.length, writesBefore, "Denied Concept List deletion must not touch storage");
+  app.context.AHAPaths.deletePath(result.path.id);
+  const deleted = app.context.AHALists.deleteConceptList("concept_list_durable");
+  assert.ok(deleted.deletedAt);
+}
+for (const malformed of ["{bad", "{}", "false"]) {
+  const app = setup([savedAiList()]);
+  app.backing.set("aha_paths_v1", malformed);
+  const before = app.backing.get("aha_lists_v1");
+  const result = app.context.AHALists.deleteList("list_projection_saved");
+  assert.equal(result.reason, "path_store_unavailable", "Malformed Path store must block destructive List deletion");
+  assert.equal(app.backing.get("aha_lists_v1"), before);
+  assert.deepEqual(app.writes, [], "Failed safety checks are read-only");
+}
+
 console.log("Approved AI List members survive promotion to editable Path steps with exact source identity.");
