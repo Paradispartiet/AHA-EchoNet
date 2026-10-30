@@ -55,7 +55,7 @@
   }
 
   function createPathFromList(listId, titleArg) {
-    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath || !global.AHAPaths?.validatePathStepReference) {
+    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.validatePathStepReference) {
       return { ok: false, reason: "organization_api_unavailable" };
     }
     const list = activeLists().find((item) => text(item.id) === text(listId));
@@ -95,40 +95,45 @@
       return { ok: false, reason: "projection_members_unavailable", skipped };
     }
 
-    const path = global.AHAPaths.createPath({
-      title: text(titleArg) || `${list.title} – kunnskapssti`,
-      type: "learning",
-      mode: "learning",
-      description: list.description ? `Videre arbeid fra samlingen «${list.title}». ${list.description}` : `Videre arbeid fra samlingen «${list.title}».`,
-      goal: "Undersøk det lagrede materialet og hva som kan konkluderes."
-    });
-    if (!path) return { ok: false, reason: "path_create_failed" };
-    const added = global.AHAPaths.addStepToPath(path.id, {
+    const listStep = {
       source: "aha_lists",
       refId: list.id,
       type: "list",
       title: list.title,
       meta: { organization_flow: "list_to_path" }
-    });
-    if (!added?.ok) {
-      global.AHAPaths.deletePath?.(path.id);
-      return { ok: false, reason: added?.reason || "list_step_failed" };
-    }
-    let lastPath = added.path;
-    let promoted = 0;
-    for (const item of eligible) {
-      const result = global.AHAPaths.addStepToPath(path.id, {
+    };
+    const checkedList = global.AHAPaths.validatePathStepReference(listStep);
+    if (!checkedList?.ok) return { ok: false, reason: "list_step_invalid" };
+
+    // Build the complete, validated Path in one local storage transaction.
+    // The old three-phase create + add-list + add-each-insight flow could
+    // leave a half-populated Path when browser storage failed mid-journey.
+    const plannedSteps = [
+      { ...checkedList.item, meta: listStep.meta },
+      ...eligible.map((item) => ({
         source: item.source, refId: item.refId, type: item.type, title: item.title,
         narrative: item.narrative,
-        // Projection steps require the validated immutable inline snapshot on
-        // both the first validation and the final AHAPaths.addStepToPath call.
         ...(item.source === "aha_projection_v2" ? { meta: item.meta } : {})
+      }))
+    ];
+    let path;
+    try {
+      path = global.AHAPaths.createPath({
+        title: text(titleArg) || `${list.title} – kunnskapssti`,
+        type: "learning",
+        mode: "learning",
+        description: list.description
+          ? `Videre arbeid fra samlingen «${list.title}». ${list.description}`
+          : `Videre arbeid fra samlingen «${list.title}».`,
+        goal: "Undersøk det lagrede materialet og hva som kan konkluderes.",
+        steps: plannedSteps
       });
-      if (result?.ok) { promoted += 1; lastPath = result.path; }
-      else skipped += 1;
+    } catch {
+      return { ok: false, reason: "path_storage_failed" };
     }
+    if (!path) return { ok: false, reason: "path_create_failed" };
     global.AHAPaths.refresh?.();
-    return { ok: true, path: lastPath, step: added.step, promoted, skipped };
+    return { ok: true, path, step: path.steps?.[0] || null, promoted: eligible.length, skipped };
   }
 
   // Explicitly turn a curated concept list into the first step of a real
@@ -314,7 +319,9 @@
           ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.`
           : ["projection_member_invalid", "projection_members_unavailable"].includes(result.reason)
             ? "AI-listens kildebundne innsikter kunne ikke bekreftes. Ingen sti ble opprettet; listen er bevart."
-            : "Kunne ikke opprette stien.";
+            : result.reason === "path_storage_failed"
+              ? "Kunne ikke lagre stien på denne enheten. Ingen ufullstendig sti ble opprettet."
+              : "Kunne ikke opprette stien.";
         return;
       }
 
