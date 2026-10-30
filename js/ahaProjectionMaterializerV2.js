@@ -337,10 +337,14 @@
   function activePathReferencesList(storage, listId) {
     const paths = readStore(storage, STORES.path);
     if (!paths.ok) return { linked: true, reason: "linked_path_store_unreadable" };
-    const linked = paths.records.some((path) => !path?.deletedAt && !path?.deleted_at
-      && path?.archived !== true
-      && arr(path?.steps).some((step) => step?.source === "aha_lists"
-        && text(step?.refId || step?.ref_id) === text(listId)));
+    const linked = paths.records.some((path) => {
+      if (path?.deletedAt || path?.deleted_at || path?.archived === true) return false;
+      const steps = arr(path?.steps).length ? path.steps
+        : arr(path?.sequence).length ? path.sequence
+          : arr(path?.items).length ? path.items : arr(path?.nodes);
+      return steps.some((step) => step?.source === "aha_lists"
+        && text(step?.refId || step?.ref_id) === text(listId));
+    });
     return { linked, reason: linked ? "list_referenced_by_active_path" : null };
   }
 
