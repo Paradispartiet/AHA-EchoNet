@@ -41,8 +41,21 @@
     });
   }
 
+  function projectionMemberMatchesSavedList(item, list) {
+    if (item?.source !== "aha_projection_v2") return false;
+    const parent = list?.meta || {};
+    const member = item?.meta || {};
+    const sourceHash = text(parent.source_sha256).toLowerCase();
+    if (parent.createdBy !== "aha_projection_materializer_v2" || !/^[a-f0-9]{64}$/.test(sourceHash)) return false;
+    if (member.inline !== true || member.immutable !== true || member?.snapshot?.source !== "aha_semantic_v2") return false;
+    if (text(member?.snapshot?.id) !== text(item.refId || item.ref_id) || !text(member?.snapshot?.title)) return false;
+    if (!arr(parent.member_ref_ids).map(text).includes(text(item.refId || item.ref_id))) return false;
+    return ["projection_id", "projection_artifact_id", "analysis_id", "analysis_run_id", "source_id", "source_sha256"]
+      .every((key) => text(parent[key]) && text(parent[key]) === text(member[key]));
+  }
+
   function createPathFromList(listId, titleArg) {
-    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath || !global.AHAPaths?.validatePathStepReference) {
+    if (!global.AHALists?.loadLists || !global.AHAPaths?.createPath || !global.AHAPaths?.validatePathStepReference) {
       return { ok: false, reason: "organization_api_unavailable" };
     }
     const list = activeLists().find((item) => text(item.id) === text(listId));
@@ -53,82 +66,129 @@
     const eligible = [];
     const seen = new Set();
     let skipped = 0;
+    let invalidProjectionMembers = 0;
     arr(list.items).forEach((item) => {
       const key = text(item?.source) + "::" + text(item?.refId || item?.ref_id);
-      if (!["aha_insights", "aha_notes"].includes(item?.source) || !text(item?.refId || item?.ref_id)) {
+      if (!["aha_insights", "aha_notes", "aha_projection_v2"].includes(item?.source) || !text(item?.refId || item?.ref_id)) {
         skipped += 1;
         return;
       }
       if (seen.has(key)) return;
       seen.add(key);
+      if (item.source === "aha_projection_v2" && !projectionMemberMatchesSavedList(item, list)) {
+        skipped += 1;
+        invalidProjectionMembers += 1;
+        return;
+      }
       const checked = global.AHAPaths.validatePathStepReference(item);
-      if (!checked?.ok) { skipped += 1; return; }
+      if (!checked?.ok) {
+        skipped += 1;
+        if (item.source === "aha_projection_v2") invalidProjectionMembers += 1;
+        return;
+      }
       eligible.push({ ...checked.item, narrative: text(item?.membership_reason) });
     });
+    // A materialized AI List must not silently lose its source-bound members.
+    // Validate the full promotion BEFORE creating any local Path record.
+    if (invalidProjectionMembers > 0) return { ok: false, reason: "projection_member_invalid", skipped };
+    if (list?.meta?.createdBy === "aha_projection_materializer_v2" && !eligible.length) {
+      return { ok: false, reason: "projection_members_unavailable", skipped };
+    }
 
-    const path = global.AHAPaths.createPath({
-      title: text(titleArg) || `${list.title} – kunnskapssti`,
-      type: "learning",
-      mode: "learning",
-      description: list.description ? `Videre arbeid fra samlingen «${list.title}». ${list.description}` : `Videre arbeid fra samlingen «${list.title}».`,
-      goal: "Undersøk det lagrede materialet og hva som kan konkluderes."
-    });
-    if (!path) return { ok: false, reason: "path_create_failed" };
-    const added = global.AHAPaths.addStepToPath(path.id, {
+    const listStep = {
       source: "aha_lists",
       refId: list.id,
       type: "list",
       title: list.title,
       meta: { organization_flow: "list_to_path" }
-    });
-    if (!added?.ok) {
-      global.AHAPaths.deletePath?.(path.id);
-      return { ok: false, reason: added?.reason || "list_step_failed" };
-    }
-    let lastPath = added.path;
-    let promoted = 0;
-    for (const item of eligible) {
-      const result = global.AHAPaths.addStepToPath(path.id, {
+    };
+    const checkedList = global.AHAPaths.validatePathStepReference(listStep);
+    if (!checkedList?.ok) return { ok: false, reason: "list_step_invalid" };
+
+    // Build the complete, validated Path in one local storage transaction.
+    // The old three-phase create + add-list + add-each-insight flow could
+    // leave a half-populated Path when browser storage failed mid-journey.
+    const plannedSteps = [
+      { ...checkedList.item, meta: listStep.meta },
+      ...eligible.map((item) => ({
         source: item.source, refId: item.refId, type: item.type, title: item.title,
-        narrative: item.narrative
+        narrative: item.narrative,
+        ...(item.source === "aha_projection_v2" ? { meta: item.meta } : {})
+      }))
+    ];
+    let path;
+    try {
+      path = global.AHAPaths.createPath({
+        title: text(titleArg) || `${list.title} – kunnskapssti`,
+        type: "learning",
+        mode: "learning",
+        description: list.description
+          ? `Videre arbeid fra samlingen «${list.title}». ${list.description}`
+          : `Videre arbeid fra samlingen «${list.title}».`,
+        goal: "Undersøk det lagrede materialet og hva som kan konkluderes.",
+        ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
+          meta: {
+            createdBy: "aha_projection_materializer_v2",
+            derived_from: "materialized_ai_list",
+            source_list_id: list.id,
+            source_projection_id: text(list.meta.projection_id),
+            source_sha256: text(list.meta.source_sha256)
+          }
+        } : {}),
+        steps: plannedSteps
       });
-      if (result?.ok) { promoted += 1; lastPath = result.path; }
-      else skipped += 1;
+    } catch {
+      return { ok: false, reason: "path_storage_failed" };
     }
+    if (!path) return { ok: false, reason: "path_create_failed" };
     global.AHAPaths.refresh?.();
-    return { ok: true, path: lastPath, step: added.step, promoted, skipped };
+    return { ok: true, path, step: path.steps?.[0] || null, promoted: eligible.length, skipped };
   }
 
   // Explicitly turn a curated concept list into the first step of a real
   // local knowledge path. No automatic sharing or new storage model.
   function createPathFromConceptList(listId, titleArg) {
-    if (!global.AHALists?.loadConceptLists || !global.AHAPaths?.createPath || !global.AHAPaths?.addStepToPath) {
+    if (!global.AHALists?.loadConceptLists || !global.AHAPaths?.createPath || !global.AHAPaths?.validatePathStepReference) {
       return { ok: false, reason: "organization_api_unavailable" };
     }
     const list = arr(global.AHALists.loadConceptLists()).find((item) =>
       text(item?.id) === text(listId) && !item.deletedAt && !item.deleted_at && !item.archived);
     if (!list) return { ok: false, reason: "concept_list_not_found" };
-    const path = global.AHAPaths.createPath({
-      title: text(titleArg) || `${list.title} – kunnskapssti`,
-      type: "learning", mode: "learning",
-      description: list.description || `Utforsk begrepene og koblingene i «${list.title}».`,
-      goal: `Forstå begrepene og sammenhengene i «${list.title}».`,
-      learningOutcome: "Kunne forklare sentrale begreper og hvordan de henger sammen."
-    });
-    if (!path) return { ok: false, reason: "path_create_failed" };
-    const added = global.AHAPaths.addStepToPath(path.id, {
+    const requestedStep = {
       source: "aha_concept_lists", refId: list.id,
       type: "concept_list", title: list.title,
       narrative: `Start med begrepslisten «${list.title}». Undersøk forklaringene og relasjonene.`,
       learningOutcome: "Kunne forklare hvorfor begrepene hører sammen.",
       meta: { organization_flow: "concept_list_to_path" }
-    });
-    if (!added?.ok) {
-      global.AHAPaths.deletePath?.(path.id);
-      return { ok: false, reason: added?.reason || "concept_step_failed" };
+    };
+    const checked = global.AHAPaths.validatePathStepReference(requestedStep);
+    if (!checked?.ok) return { ok: false, reason: "concept_step_invalid" };
+    let path;
+    try {
+      path = global.AHAPaths.createPath({
+        title: text(titleArg) || `${list.title} – kunnskapssti`,
+        type: "learning", mode: "learning",
+        description: list.description || `Utforsk begrepene og koblingene i «${list.title}».`,
+        goal: `Forstå begrepene og sammenhengene i «${list.title}».`,
+        learningOutcome: "Kunne forklare sentrale begreper og hvordan de henger sammen.",
+        ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
+          meta: {
+            createdBy: "aha_projection_materializer_v2",
+            derived_from: "materialized_ai_concept_list",
+            source_list_id: list.id,
+            source_projection_id: text(list.meta.projection_id),
+            source_sha256: text(list.meta.source_sha256)
+          }
+        } : {}),
+        // A knowledge Path and its first Concept List step are saved together.
+        steps: [{ ...checked.item, ...requestedStep }]
+      });
+    } catch {
+      return { ok: false, reason: "path_storage_failed" };
     }
+    if (!path) return { ok: false, reason: "path_create_failed" };
     global.AHAPaths.refresh?.();
-    return { ok: true, path: added.path || path, step: added.step };
+    return { ok: true, path, step: path.steps?.[0] || null };
   }
 
   function movePathStep(pathId, stepId, delta) {
@@ -278,7 +338,13 @@
         const host = target.closest(".aha-org-flow-actions");
         const status = host?.querySelector(".aha-org-flow-status");
         const result = createPathFromList(listId);
-        if (status) status.innerHTML = result.ok ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.` : "Kunne ikke opprette stien.";
+        if (status) status.innerHTML = result.ok
+          ? `Sti med ${result.promoted + 1} steg opprettet${result.skipped ? `; ${result.skipped} utilgjengelige/ikke-støttede objekter ble ikke tatt med` : ""}. <a href="paths.html#path-${encodeURIComponent(result.path.id)}">Åpne stien</a>.`
+          : ["projection_member_invalid", "projection_members_unavailable"].includes(result.reason)
+            ? "AI-listens kildebundne innsikter kunne ikke bekreftes. Ingen sti ble opprettet; listen er bevart."
+            : result.reason === "path_storage_failed"
+              ? "Kunne ikke lagre stien på denne enheten. Ingen ufullstendig sti ble opprettet."
+              : "Kunne ikke opprette stien.";
         return;
       }
 

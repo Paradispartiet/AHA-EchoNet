@@ -93,3 +93,78 @@ test("A deep-linked collection and knowledge path can be closed without reopenin
   await expect(page.locator("#path-preview-title")).toHaveCount(0);
   await expect(page).not.toHaveURL(/#path-linked-path$/);
 });
+
+
+test("A saved AI-projection list becomes a real editable Path with source-bound steps", async ({ page }) => {
+  await page.addInitScript(() => {
+    const identity = {
+      projection_id: "projection_browser", projection_artifact_id: "list_browser",
+      analysis_id: "analysis_browser", analysis_run_id: "run_browser",
+      source_id: "source_browser", source_sha256: "c".repeat(64)
+    };
+    const members = ["approved_one", "approved_two"];
+    const items = members.map((id, index) => ({
+      id: "item_" + id,
+      title: "Godkjent AI-innsikt " + (index + 1),
+      type: "insight", source: "aha_projection_v2", refId: id,
+      membership_reason: "Kildebundet medlemskap for denne innsikten, med kontrollert relevans.",
+      meta: {
+        ...identity, inline: true, immutable: true,
+        snapshot: { id, title: "Godkjent AI-innsikt " + (index + 1), type: "insight", source: "aha_semantic_v2" }
+      }
+    }));
+    localStorage.setItem("aha_lists_v1", JSON.stringify([{
+      id: "list_projection_browser", title: "Godkjente innsikter",
+      source: "aha_lists", status: "materialized_v2", local_only: true,
+      meta: { ...identity, createdBy: "aha_projection_materializer_v2", member_ref_ids: members },
+      items
+    }]));
+  });
+  await page.goto("/lists.html#list-list_projection_browser");
+  await expect(page.locator("#list-preview-title")).toHaveText("Godkjente innsikter");
+  await expect(page.locator(".aha-list-item-row")).toHaveCount(2);
+  await expect(page.locator(".aha-list-item-row").first()).toContainText("kildebundet snapshot");
+  await expect(page.locator(".aha-list-item-row").getByRole("link", { name: "Åpne kilden" })).toHaveCount(0);
+  await page.locator("[data-org-list-to-path='list_projection_browser']").click();
+  const status = page.locator(".aha-org-flow-actions").filter({
+    has: page.locator("[data-org-list-to-path='list_projection_browser']")
+  }).locator(".aha-org-flow-status");
+  await expect(status).toContainText("Sti med 3 steg opprettet");
+  await status.getByRole("link", { name: "Åpne stien" }).click();
+  await expect(page.locator(".aha-path-step-row")).toHaveCount(3);
+  await expect(page.locator(".aha-path-step-row").nth(1)).toContainText("Godkjent AI-innsikt 1");
+  await expect(page.locator(".aha-path-step-row").nth(2)).toContainText("Godkjent AI-innsikt 2");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_paths_v1") || "[]"));
+  expect(saved).toHaveLength(1);
+  const steps = saved[0].steps;
+  expect(steps).toHaveLength(3);
+  expect(steps.slice(1).map((step) => step.source)).toEqual(["aha_projection_v2", "aha_projection_v2"]);
+  for (const step of steps.slice(1)) {
+    expect(step.meta.source_sha256).toBe("c".repeat(64));
+    expect(step.meta.snapshot.id).toBe(step.refId);
+    expect(step.meta.snapshot.source).toBe("aha_semantic_v2");
+  }
+  await page.locator(".aha-path-step-row").nth(1).getByRole("button", { name: "Marker som fullført" }).click();
+  await page.reload();
+  await expect(page.locator(".aha-path-step-row")).toHaveCount(3);
+  await expect(page.locator(".aha-path-step-row.is-done")).toHaveCount(1);
+
+  await page.goto("/lists.html#list-list_projection_browser");
+  await expect(page.locator("#list-preview-title")).toHaveText("Godkjente innsikter");
+  await page.locator(".aha-list-manage > summary").click();
+  await page.locator("[data-list-delete='list_projection_browser']").click();
+  await expect(page.locator("[data-list-action-status='list_projection_browser']"))
+    .toContainText("Samlingen brukes av en aktiv sti");
+  const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"));
+  expect(kept.find((item) => item.id === "list_projection_browser").deletedAt).toBeFalsy();
+
+  // The dependent knowledge Path is explicitly removed before the List.
+  await page.goto("/paths.html#path-" + encodeURIComponent(saved[0].id));
+  await page.locator(".aha-path-manage > summary").click();
+  await page.locator("[data-path-delete]").click();
+  await page.goto("/lists.html#list-list_projection_browser");
+  await page.locator(".aha-list-manage > summary").click();
+  await page.locator("[data-list-delete='list_projection_browser']").click();
+  const retired = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"));
+  expect(retired.find((item) => item.id === "list_projection_browser").deletedAt).toBeTruthy();
+});

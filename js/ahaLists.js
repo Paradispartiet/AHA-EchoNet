@@ -70,6 +70,35 @@
     return isDeletedRecord(record) || record?.archived === true;
   }
 
+  function activePathDependency(listId, sourceType) {
+    // This module loads before AHAPaths on lists.html. Inspect the existing
+    // local Path store, never invoke a remote API or create a new data store.
+    // A malformed/unreadable store must not silently allow destructive edits.
+    let raw;
+    try {
+      raw = localStorage.getItem("aha_paths_v1");
+    } catch {
+      return { linked: true, reason: "path_store_unavailable" };
+    }
+    if (!raw) return { linked: false, reason: null };
+    let paths;
+    try {
+      paths = JSON.parse(raw);
+    } catch {
+      return { linked: true, reason: "path_store_unavailable" };
+    }
+    if (!Array.isArray(paths)) return { linked: true, reason: "path_store_unavailable" };
+    const linked = paths.some((path) => {
+      if (isUnavailableRecord(path)) return false;
+      const steps = asArray(path?.steps).length ? path.steps
+        : asArray(path?.sequence).length ? path.sequence
+          : asArray(path?.items).length ? path.items : asArray(path?.nodes);
+      return steps.some((step) => step?.source === sourceType
+        && asText(step?.refId || step?.ref_id, "") === asText(listId, ""));
+    });
+    return { linked, reason: linked ? "list_referenced_by_active_path" : null };
+  }
+
   function normalizeListItem(item, listId) {
     const now = new Date().toISOString();
     return {
@@ -320,6 +349,8 @@
     const lists = loadConceptLists();
     const index = lists.findIndex((list) => list.id === id);
     if (index < 0) return null;
+    const dependency = activePathDependency(id, "aha_concept_lists");
+    if (dependency.linked) return { ok: false, reason: dependency.reason };
     lists[index].deletedAt = new Date().toISOString();
     lists[index].updatedAt = lists[index].deletedAt;
     saveConceptLists(lists);
@@ -336,8 +367,16 @@
     return asArray(lists);
   }
 
+  function materializedListMustRemainLocal(list) {
+    // User-managed collections may also contain approved inline AI members.
+    // Preserve their local boundary even when the parent itself was manual.
+    return list?.meta?.createdBy === "aha_projection_materializer_v2"
+      || asArray(list?.items).some((item) => item?.source === "aha_projection_v2"
+        || (item?.meta?.inline === true && item?.meta?.snapshot?.source === "aha_semantic_v2"));
+  }
+
   async function persistList(list) {
-    if (list?.meta?.createdBy === "aha_projection_materializer_v2") {
+    if (materializedListMustRemainLocal(list)) {
       return { ok: false, fallback: "localOnly", projection_artifact_local_only: true };
     }
     if (!isDatabaseSyncEnabled()) {
@@ -378,9 +417,19 @@
 
   function mergeLists(localLists, remoteLists) {
     const merged = new Map();
-    [...asArray(localLists), ...asArray(remoteLists)].forEach((incoming) => {
+    // The server is not an authority for local AI projections. Even a server
+    // copy with a newer timestamp must not replace the source-bound artifact.
+    asArray(localLists).forEach((incoming) => {
+      const list = normalizeList(incoming);
+      merged.set(list.id, list);
+    });
+    asArray(remoteLists).forEach((incoming) => {
+      // Older versions could have accidentally uploaded V2 artifacts.
+      // Never re-import those copies to a device where they were not saved.
+      if (materializedListMustRemainLocal(incoming)) return;
       const list = normalizeList(incoming);
       const existing = merged.get(list.id);
+      if (materializedListMustRemainLocal(existing)) return;
       if (!existing || listActionTime(list) >= listActionTime(existing)) {
         merged.set(list.id, list);
       }
@@ -393,9 +442,9 @@
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     }
     if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
-    return Promise.allSettled(asArray(lists).map((list) => {
-      return Promise.resolve().then(() => global.AHARepository.saveList(list));
-    }));
+    return Promise.allSettled(asArray(lists)
+      .filter((list) => !materializedListMustRemainLocal(list))
+      .map((list) => Promise.resolve().then(() => global.AHARepository.saveList(list))));
   }
 
   async function syncFromDatabase() {
@@ -464,6 +513,10 @@
     const index = lists.findIndex((list) => list.id === id);
     if (index < 0) return null;
     const current = lists[index];
+    if ((changes?.deletedAt || changes?.deleted_at || changes?.archived === true) && !isUnavailableRecord(current)) {
+      const dependency = activePathDependency(id, "aha_lists");
+      if (dependency.linked) return { ok: false, reason: dependency.reason };
+    }
     const next = normalizeList({
       ...current,
       ...changes,
@@ -676,6 +729,8 @@
       const saveLabel = materialization.materialized ? "Lagret som min liste" : "Lagre som min liste";
       const saveStatus = materialization.state === "unchanged"
         ? "Lagret lokalt. Kan angres så lenge listen er uendret."
+        : materialization.state === "linked"
+          ? "Listen brukes av en aktiv kunnskapssti. Angre er låst for å bevare stiens kilde."
         : materialization.state === "modified"
           ? "Lagret lokalt og senere endret. Angre er låst for å beskytte endringene."
           : "Krever et eksplisitt klikk og lagres bare lokalt.";
@@ -716,8 +771,9 @@
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
-            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
+            ${item.source !== "aha_projection_v2" && buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
             ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
+            ${item.source === "aha_projection_v2" && item.meta?.inline === true ? `<p class="module-meta">AI-innsikt lagret som kildebundet snapshot i denne samlingen. Full kildetekst er ikke lagret her.</p>` : ""}
             <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
@@ -917,7 +973,9 @@
           projectionReceipts.delete(id);
           renderProjectionListPreviews();
           renderContent();
-        } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; listen kan ha blitt endret etter lagring.";
+        } else if (status instanceof HTMLElement) status.textContent = result?.reason === "list_referenced_by_active_path"
+          ? "Listen brukes i en aktiv kunnskapssti og kan ikke angres før stien er fjernet."
+          : "Kunne ikke angre; listen kan ha blitt endret eller er ikke tilgjengelig.";
         return;
       }
       const model = global.AHAProjectionRuntimeSourceV2?.build?.();
@@ -932,8 +990,13 @@
         return;
       }
       if (result.receipt) projectionReceipts.set(id, result.receipt);
+      // Saving an approved AI list should reveal the exact saved, editable
+      // collection immediately, including its "Ordne som sti" next action.
+      // This does not materialize any Path or change the preview's write policy.
+      if (result.artifact?.id) selectedListId = String(result.artifact.id);
       renderProjectionListPreviews();
       renderContent();
+      document.getElementById("list-preview-title")?.focus?.();
     });
 
     document.getElementById("concept-list-create-form")?.addEventListener("submit", (event) => {
@@ -987,7 +1050,14 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target.dataset.conceptListDelete) {
-        deleteConceptList(target.dataset.conceptListDelete);
+        const result = deleteConceptList(target.dataset.conceptListDelete);
+        if (result?.ok === false) {
+          const status = target.closest(".aha-concept-list-actions")?.querySelector(".aha-org-flow-status");
+          if (status) status.textContent = result.reason === "list_referenced_by_active_path"
+            ? "Begrepslisten brukes av en aktiv sti. Fjern stien først."
+            : "Kan ikke slette trygt: stienes lokale data kunne ikke kontrolleres.";
+          return;
+        }
         render();
         return;
       }
@@ -1044,7 +1114,14 @@
 
       const deletePayload = target.dataset.listDelete;
       if (deletePayload) {
-        deleteList(deletePayload);
+        const result = deleteList(deletePayload);
+        if (result?.ok === false) {
+          const status = document.querySelector(`[data-list-action-status="${deletePayload}"]`);
+          if (status) status.textContent = result.reason === "list_referenced_by_active_path"
+            ? "Samlingen brukes av en aktiv sti. Fjern stien før du sletter samlingen."
+            : "Kan ikke slette trygt: stienes lokale data kunne ikke kontrolleres.";
+          return;
+        }
         if (selectedListId === deletePayload) selectedListId = "";
         render();
         return;

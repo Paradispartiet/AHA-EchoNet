@@ -130,8 +130,45 @@
     return asArray(paths);
   }
 
+  function localReferenceContainsAi(source, refId) {
+    const key = source === "aha_lists" ? LISTS_KEY
+      : source === "aha_concept_lists" ? CONCEPT_LISTS_KEY : "";
+    if (!key || !asText(refId, "")) return false;
+    let raw;
+    try {
+      raw = global.localStorage?.getItem?.(key);
+    } catch {
+      return true; // Cannot prove an embedded local reference is safe to upload.
+    }
+    if (!raw) return false;
+    let rows;
+    try {
+      rows = JSON.parse(raw);
+    } catch {
+      return true;
+    }
+    if (!Array.isArray(rows)) return true;
+    return rows.some((record) => asText(record?.id, "") === asText(refId, "")
+      && (record?.meta?.createdBy === "aha_projection_materializer_v2"
+        || (source === "aha_lists" && asArray(record?.items).some((member) =>
+          member?.source === "aha_projection_v2"
+          || (member?.meta?.inline === true && member?.meta?.snapshot?.source === "aha_semantic_v2")))));
+  }
+
+  function generatedPathMustRemainLocal(path) {
+    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"]
+      .includes(path?.meta?.createdBy)) return true;
+    const steps = asArray(path?.steps).length ? path.steps
+      : asArray(path?.sequence).length ? path.sequence
+        : asArray(path?.items).length ? path.items : asArray(path?.nodes);
+    return asArray(steps).some((step) => step?.source === "aha_projection_v2"
+      || (step?.meta?.inline === true && (step?.meta?.snapshot?.source === "aha_semantic_v2"
+        || step?.source === "aha_analysis"))
+      || localReferenceContainsAi(step?.source, step?.refId || step?.ref_id));
+  }
+
   async function persistPath(path) {
-    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"].includes(path?.meta?.createdBy)) {
+    if (generatedPathMustRemainLocal(path)) {
       return { ok: false, fallback: "localOnly", generated_artifact_local_only: true };
     }
     if (!isDatabaseSyncEnabled()) {
@@ -187,8 +224,13 @@
       merged.set(path.id, path);
     });
 
-    asArray(remotePaths).map((path) => normalizePath(path)).forEach((incoming) => {
+    asArray(remotePaths).forEach((remote) => {
+      // Generated knowledge Paths have local-only source snapshots. Ignore
+      // server copies from older clients and protect local IDs from clashes.
+      if (generatedPathMustRemainLocal(remote)) return;
+      const incoming = normalizePath(remote);
       const existing = merged.get(incoming.id);
+      if (generatedPathMustRemainLocal(existing)) return;
       if (!existing || pathActionTime(incoming) >= pathActionTime(existing)) {
         merged.set(incoming.id, incoming);
       }
@@ -204,7 +246,9 @@
     try {
       const savePath = global.AHARepository?.savePath;
       if (!savePath) return null;
-      return await Promise.allSettled(asArray(paths).map((path) => savePath.call(global.AHARepository, path)));
+      return await Promise.allSettled(asArray(paths)
+        .filter((path) => !generatedPathMustRemainLocal(path))
+        .map((path) => savePath.call(global.AHARepository, path)));
     } catch (error) {
       return { ok: false, error };
     }
