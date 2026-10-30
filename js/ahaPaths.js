@@ -130,9 +130,41 @@
     return asArray(paths);
   }
 
+  function localReferenceContainsAi(source, refId) {
+    const key = source === "aha_lists" ? LISTS_KEY
+      : source === "aha_concept_lists" ? CONCEPT_LISTS_KEY : "";
+    if (!key || !asText(refId, "")) return false;
+    let raw;
+    try {
+      raw = global.localStorage?.getItem?.(key);
+    } catch {
+      return true; // Cannot prove an embedded local reference is safe to upload.
+    }
+    if (!raw) return false;
+    let rows;
+    try {
+      rows = JSON.parse(raw);
+    } catch {
+      return true;
+    }
+    if (!Array.isArray(rows)) return true;
+    return rows.some((record) => asText(record?.id, "") === asText(refId, "")
+      && (record?.meta?.createdBy === "aha_projection_materializer_v2"
+        || (source === "aha_lists" && asArray(record?.items).some((member) =>
+          member?.source === "aha_projection_v2"
+          || (member?.meta?.inline === true && member?.meta?.snapshot?.source === "aha_semantic_v2")))));
+  }
+
   function generatedPathMustRemainLocal(path) {
-    return ["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"]
-      .includes(path?.meta?.createdBy);
+    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"]
+      .includes(path?.meta?.createdBy)) return true;
+    const steps = asArray(path?.steps).length ? path.steps
+      : asArray(path?.sequence).length ? path.sequence
+        : asArray(path?.items).length ? path.items : asArray(path?.nodes);
+    return asArray(steps).some((step) => step?.source === "aha_projection_v2"
+      || (step?.meta?.inline === true && (step?.meta?.snapshot?.source === "aha_semantic_v2"
+        || step?.source === "aha_analysis"))
+      || localReferenceContainsAi(step?.source, step?.refId || step?.ref_id));
   }
 
   async function persistPath(path) {
