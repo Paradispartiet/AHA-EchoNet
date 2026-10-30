@@ -256,7 +256,7 @@ for (const malformed of ["{bad", "{}", "false"]) {
   app.context.AHARepository = { savePath() { remoteWrites += 1; return { ok: true }; } };
   const result = app.context.AHAOrganizationFlow.createPathFromList("list_projection_saved");
   assert.equal(result.ok, true);
-  assert.equal(result.path.meta.createdBy, "aha_organization_flow_v2");
+  assert.equal(result.path.meta.createdBy, "aha_projection_materializer_v2");
   assert.equal(result.path.meta.derived_from, "materialized_ai_list");
   assert.equal(result.path.meta.source_list_id, "list_projection_saved");
   assert.equal(result.path.meta.source_sha256, parentMeta.source_sha256);
@@ -277,7 +277,7 @@ for (const malformed of ["{bad", "{}", "false"]) {
   app.context.AHARepository = { savePath() { remoteWrites += 1; return { ok: true }; } };
   const result = app.context.AHAOrganizationFlow.createPathFromConceptList(aiConcept.id);
   assert.equal(result.ok, true);
-  assert.equal(result.path.meta.createdBy, "aha_organization_flow_v2");
+  assert.equal(result.path.meta.createdBy, "aha_projection_materializer_v2");
   assert.equal(result.path.meta.derived_from, "materialized_ai_concept_list");
   assert.equal(remoteWrites, 0, "V2 Concept List → Path must stay local");
 }
