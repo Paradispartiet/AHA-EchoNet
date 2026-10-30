@@ -115,6 +115,71 @@ for (const file of ["js/ahaLists.js", "js/ahaPaths.js"]) {
   assert.equal(database.lists.length, remoteListsBefore, "Single-list update must not leak AI data");
   assert.equal(database.paths.length, remotePathsBefore, "Single-path update must not leak AI data");
 
+  // AI provenance can appear inside a manually created collection or Path,
+  // even when its top-level createdBy still says "lists_ui" or "paths_ui".
+  const inline = {
+    id: "inline_ai_member", source: "aha_projection_v2", refId: "i-1",
+    meta: { inline: true, snapshot: { source: "aha_semantic_v2" } }
+  };
+  const mixedList = {
+    id: "manual_list_with_ai_member", title: "Personlig AI-samling",
+    meta: { createdBy: "lists_ui" }, items: [inline]
+  };
+  const mixedPath = {
+    id: "manual_path_with_ai_step", title: "Personlig AI-sti",
+    meta: { createdBy: "paths_ui" }, steps: [inline]
+  };
+  const linkedPath = {
+    id: "manual_path_with_ai_list_ref", title: "Sti til godkjent AI-samling",
+    meta: { createdBy: "paths_ui" },
+    steps: [{ source: "aha_lists", refId: aiList.id, title: aiList.title }]
+  };
+  const nestedPath = {
+    id: "manual_path_with_mixed_list_ref", title: "Sti til egen AI-samling",
+    meta: { createdBy: "paths_ui" },
+    steps: [{ source: "aha_lists", refId: mixedList.id, title: mixedList.title }]
+  };
+  const concept = {
+    id: "ai_materialized_concept", title: "AI-begreper",
+    meta: { createdBy: "aha_projection_materializer_v2" }, terms: []
+  };
+  const conceptPath = {
+    id: "manual_path_with_ai_concept_ref", title: "Sti til AI-begreper",
+    meta: { createdBy: "paths_ui" },
+    steps: [{ source: "aha_concept_lists", refId: concept.id, title: concept.title }]
+  };
+  seed.set("aha_concept_lists_v1", JSON.stringify([concept]));
+  ctx.AHALists.saveLists([...ctx.AHALists.loadLists(), mixedList]);
+  ctx.AHAPaths.savePaths([...ctx.AHAPaths.loadPaths(), mixedPath, linkedPath, nestedPath, conceptPath]);
+  database.remoteLists.push({ ...mixedList, title: "Replace sensitive mixed list", updatedAt: future, items: [] });
+  database.remoteLists.push({ id: "remote_mixed_ai_list", title: "Old uploaded AI member",
+    updatedAt: future, meta: { createdBy: "lists_ui" }, items: [inline] });
+  database.remotePaths.push({ ...mixedPath, title: "Replace sensitive mixed path", updatedAt: future, steps: [] });
+  database.remotePaths.push({ id: "remote_mixed_ai_path", title: "Old uploaded AI step",
+    updatedAt: future, meta: { createdBy: "paths_ui" }, steps: [inline] });
+  const listsUploadedBefore = database.lists.length;
+  const pathsUploadedBefore = database.paths.length;
+  await ctx.AHALists.syncFromDatabase();
+  await ctx.AHAPaths.syncFromDatabase();
+  assert.ok(database.lists.slice(listsUploadedBefore).every((item) =>
+    ![mixedList.id, aiList.id, "remote_mixed_ai_list"].includes(item.id)),
+    "AI members inside manual Lists must not be uploaded");
+  assert.ok(database.paths.slice(pathsUploadedBefore).every((item) =>
+    ![mixedPath.id, linkedPath.id, nestedPath.id, conceptPath.id, "remote_mixed_ai_path"].includes(item.id)),
+    "Manual Paths containing or referencing AI content must not be uploaded");
+  assert.equal(ctx.AHALists.loadLists().find((item) => item.id === mixedList.id).title, mixedList.title);
+  assert.equal(ctx.AHAPaths.loadPaths().find((item) => item.id === mixedPath.id).title, mixedPath.title);
+  assert.equal(ctx.AHALists.loadLists().some((item) => item.id === "remote_mixed_ai_list"), false,
+    "Old remote copies containing inline AI members must not be re-imported");
+  assert.equal(ctx.AHAPaths.loadPaths().some((item) => item.id === "remote_mixed_ai_path"), false,
+    "Old remote copies containing inline AI steps must not be re-imported");
+  const pathsSentBeforeEdits = database.paths.length;
+  const listsSentBeforeEdits = database.lists.length;
+  assert.ok(ctx.AHALists.updateList(mixedList.id, { title: "Oppdatert egen AI-samling" }));
+  assert.ok(ctx.AHAPaths.updatePath(linkedPath.id, { title: "Oppdatert sti til AI-samling" }));
+  assert.equal(database.lists.length, listsSentBeforeEdits, "Editing manually created AI List stays local");
+  assert.equal(database.paths.length, pathsSentBeforeEdits, "Editing a Path referencing a local AI List stays local");
+
   assert.ok(writes.every((key) => ["aha_lists_v1", "aha_paths_v1"].includes(key)),
     "No new stores or unrelated user data must be written");
   console.log("Generated AI Lists and Paths stay local during manual and per-item database sync.");
