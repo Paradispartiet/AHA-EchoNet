@@ -309,7 +309,12 @@
   }
 
   function readStore(storage, key) {
-    const raw = storage?.getItem?.(key);
+    let raw;
+    try {
+      raw = storage?.getItem?.(key);
+    } catch {
+      return blocked("local_storage_read_failed", key);
+    }
     if (raw === null || raw === undefined || raw === "") return { ok: true, records: [] };
     try {
       const parsed = JSON.parse(raw);
@@ -317,6 +322,26 @@
     } catch {
       return blocked("store_json_invalid", key);
     }
+  }
+
+  function writeStore(storage, key, records) {
+    try {
+      storage.setItem(key, JSON.stringify(records));
+      return { ok: true };
+    } catch {
+      // Quota/security errors must not be mistaken for successful materialization.
+      return blocked("local_storage_write_failed", key);
+    }
+  }
+
+  function activePathReferencesList(storage, listId) {
+    const paths = readStore(storage, STORES.path);
+    if (!paths.ok) return { linked: true, reason: "linked_path_store_unreadable" };
+    const linked = paths.records.some((path) => !path?.deletedAt && !path?.deleted_at
+      && path?.archived !== true
+      && arr(path?.steps).some((step) => step?.source === "aha_lists"
+        && text(step?.refId || step?.ref_id) === text(listId)));
+    return { linked, reason: linked ? "list_referenced_by_active_path" : null };
   }
 
   function materialize(options = {}) {
@@ -361,7 +386,8 @@
     const next = store.records.slice();
     if (priorIndex >= 0) next[priorIndex] = record;
     else next.unshift(record);
-    storage.setItem(storeKey, JSON.stringify(next));
+    const written = writeStore(storage, storeKey, next);
+    if (!written.ok) return written;
     const receipt = {
       schema: "aha_projection_materialization_receipt_v2",
       artifact_type: artifactType,
@@ -392,10 +418,15 @@
       || recordFingerprint(current) !== receipt.record_fingerprint) {
       return blocked("artifact_modified_since_materialization");
     }
+    if (receipt.artifact_type === "list") {
+      const dependency = activePathReferencesList(storage, receipt.record_id);
+      if (dependency.linked) return blocked(dependency.reason);
+    }
     const next = store.records.slice();
     if (receipt.prior_record) next[index] = clone(receipt.prior_record);
     else next.splice(index, 1);
-    storage.setItem(receipt.store_key, JSON.stringify(next));
+    const written = writeStore(storage, receipt.store_key, next);
+    if (!written.ok) return written;
     return { ok: true, undone: true, record_id: receipt.record_id, policy: POLICY };
   }
 
@@ -415,17 +446,21 @@
     const record = store.records.find((item) => materializedMatch(item, options));
     if (!record) return { state: "absent", materialized: false, undo_available: false, record_id: null };
     const rollback = record?.meta?.materialization_rollback;
-    const undoAvailable = rollback?.schema === "aha_projection_materialization_rollback_v2"
+    const unchanged = rollback?.schema === "aha_projection_materialization_rollback_v2"
       && rollback.store_key === storeKey
       && rollback.artifact_type === artifactType
       && rollback.artifact_id === text(options.artifact_id)
       && rollback.projection_id === text(options.projection_id)
       && rollback.original_fingerprint === recordFingerprint(record);
+    const dependency = artifactType === "list"
+      ? activePathReferencesList(options.storage || global.localStorage, record.id)
+      : { linked: false, reason: null };
     return {
-      state: undoAvailable ? "unchanged" : "modified",
+      state: unchanged && dependency.linked ? "linked" : unchanged ? "unchanged" : "modified",
       materialized: true,
-      undo_available: undoAvailable,
-      record_id: text(record.id) || null
+      undo_available: unchanged && !dependency.linked,
+      record_id: text(record.id) || null,
+      ...(dependency.linked ? { reason: dependency.reason } : {})
     };
   }
 
@@ -453,10 +488,15 @@
       || rollback.original_fingerprint !== recordFingerprint(current)) {
       return blocked("artifact_modified_since_materialization");
     }
+    if (artifactType === "list") {
+      const dependency = activePathReferencesList(storage, current.id);
+      if (dependency.linked) return blocked(dependency.reason);
+    }
     const next = store.records.slice();
     if (rollback.prior_record) next[index] = clone(rollback.prior_record);
     else next.splice(index, 1);
-    storage.setItem(storeKey, JSON.stringify(next));
+    const written = writeStore(storage, storeKey, next);
+    if (!written.ok) return written;
     return { ok: true, undone: true, record_id: current.id, policy: POLICY };
   }
 
