@@ -131,7 +131,7 @@
   }
 
   async function persistPath(path) {
-    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"].includes(path?.meta?.createdBy)) {
+    if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1", "aha_organization_flow_v2"].includes(path?.meta?.createdBy)) {
       return { ok: false, fallback: "localOnly", generated_artifact_local_only: true };
     }
     if (!isDatabaseSyncEnabled()) {
