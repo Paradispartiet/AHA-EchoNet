@@ -171,6 +171,15 @@
         description: list.description || `Utforsk begrepene og koblingene i «${list.title}».`,
         goal: `Forstå begrepene og sammenhengene i «${list.title}».`,
         learningOutcome: "Kunne forklare sentrale begreper og hvordan de henger sammen.",
+        ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
+          meta: {
+            createdBy: "aha_organization_flow_v2",
+            derived_from: "materialized_ai_concept_list",
+            source_list_id: list.id,
+            source_projection_id: text(list.meta.projection_id),
+            source_sha256: text(list.meta.source_sha256)
+          }
+        } : {}),
         // A knowledge Path and its first Concept List step are saved together.
         steps: [{ ...checked.item, ...requestedStep }]
       });
