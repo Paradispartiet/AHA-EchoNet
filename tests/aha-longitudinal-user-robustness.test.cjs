@@ -256,8 +256,17 @@ function makeHistoricalSessions() {
   assert.ok(memoryPack.rejected_claims.every((claim) => /ukritisk/.test(claim)), 'rejected claims must stay separated');
 
   const firstPhaseCount = MATRIX.cases.length;
-  createdConceptListIds.slice(0, firstPhaseCount).forEach((id) => context.AHALists.deleteConceptList(id));
-  createdPathIds.slice(0, firstPhaseCount).forEach((id) => context.AHAPaths.deletePath(id));
+  // A linked Concept List must remain available while an active Path uses it.
+  // Delete the dependent Path first, then retire the Concept List.
+  createdConceptListIds.slice(0, firstPhaseCount).forEach((id, index) => {
+    const refused = context.AHALists.deleteConceptList(id);
+    assert.equal(refused?.reason, "list_referenced_by_active_path",
+      "Concept List deletion must not orphan an active knowledge Path");
+    const deletedPath = context.AHAPaths.deletePath(createdPathIds[index]);
+    assert.ok(deletedPath?.deletedAt, "Dependent Path should be archived first");
+    const deletedList = context.AHALists.deleteConceptList(id);
+    assert.ok(deletedList?.deletedAt, "Concept List can be deleted after dependent Path");
+  });
   const searchItems = context.AHASearch.collectSearchItems();
   const searchRefs = new Set(searchItems.map((item) => `${item.source}::${item.refId}`));
   createdConceptListIds.slice(0, firstPhaseCount).forEach((id) => assert.equal(searchRefs.has(`aha_concept_lists::${id}`), false, 'deleted concept list remained searchable'));
