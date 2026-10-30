@@ -247,4 +247,39 @@ for (const malformed of ["{bad", "{}", "false"]) {
   assert.deepEqual(app.writes, [], "Failed safety checks are read-only");
 }
 
+// Even when optional database sync is enabled for ordinary Paths,
+// derived V2 AI artifacts must remain local-only across creation and edits.
+{
+  const app = setup([savedAiList()]);
+  let remoteWrites = 0;
+  app.context.AHA_CONFIG = { paths: { enableDatabaseSync: true } };
+  app.context.AHARepository = { savePath() { remoteWrites += 1; return { ok: true }; } };
+  const result = app.context.AHAOrganizationFlow.createPathFromList("list_projection_saved");
+  assert.equal(result.ok, true);
+  assert.equal(result.path.meta.createdBy, "aha_organization_flow_v2");
+  assert.equal(result.path.meta.derived_from, "materialized_ai_list");
+  assert.equal(result.path.meta.source_list_id, "list_projection_saved");
+  assert.equal(result.path.meta.source_sha256, parentMeta.source_sha256);
+  assert.equal(remoteWrites, 0, "AI List → Path cannot invoke remote persistence");
+  const edited = app.context.AHAPaths.updatePath(result.path.id, { title: "Min videreførte AI-sti" });
+  assert.ok(edited);
+  assert.equal(remoteWrites, 0, "Editing AI-derived Path must not enable sync");
+}
+{
+  const aiConcept = {
+    id: "derived_concept_list", title: "AI-kildebegreper",
+    terms: [{ term: "sammenheng" }, { term: "belegg" }],
+    meta: { createdBy: "aha_projection_materializer_v2", projection_id: "projection_ai_concept", source_sha256: "a".repeat(64) }
+  };
+  const app = setup([], new Map([["aha_concept_lists_v1", JSON.stringify([aiConcept])]]));
+  let remoteWrites = 0;
+  app.context.AHA_CONFIG = { paths: { enableDatabaseSync: true } };
+  app.context.AHARepository = { savePath() { remoteWrites += 1; return { ok: true }; } };
+  const result = app.context.AHAOrganizationFlow.createPathFromConceptList(aiConcept.id);
+  assert.equal(result.ok, true);
+  assert.equal(result.path.meta.createdBy, "aha_organization_flow_v2");
+  assert.equal(result.path.meta.derived_from, "materialized_ai_concept_list");
+  assert.equal(remoteWrites, 0, "V2 Concept List → Path must stay local");
+}
+
 console.log("Approved AI List members survive promotion to editable Path steps with exact source identity.");
