@@ -70,6 +70,30 @@
     return isDeletedRecord(record) || record?.archived === true;
   }
 
+  function activePathDependency(listId, sourceType) {
+    // This module loads before AHAPaths on lists.html. Inspect the existing
+    // local Path store, never invoke a remote API or create a new data store.
+    // A malformed/unreadable store must not silently allow destructive edits.
+    let raw;
+    try {
+      raw = localStorage.getItem("aha_paths_v1");
+    } catch {
+      return { linked: true, reason: "path_store_unavailable" };
+    }
+    if (!raw) return { linked: false, reason: null };
+    let paths;
+    try {
+      paths = JSON.parse(raw);
+    } catch {
+      return { linked: true, reason: "path_store_unavailable" };
+    }
+    if (!Array.isArray(paths)) return { linked: true, reason: "path_store_unavailable" };
+    const linked = paths.some((path) => !isUnavailableRecord(path)
+      && asArray(path?.steps).some((step) => step?.source === sourceType
+        && asText(step?.refId || step?.ref_id, "") === asText(listId, "")));
+    return { linked, reason: linked ? "list_referenced_by_active_path" : null };
+  }
+
   function normalizeListItem(item, listId) {
     const now = new Date().toISOString();
     return {
@@ -320,6 +344,8 @@
     const lists = loadConceptLists();
     const index = lists.findIndex((list) => list.id === id);
     if (index < 0) return null;
+    const dependency = activePathDependency(id, "aha_concept_lists");
+    if (dependency.linked) return { ok: false, reason: dependency.reason };
     lists[index].deletedAt = new Date().toISOString();
     lists[index].updatedAt = lists[index].deletedAt;
     saveConceptLists(lists);
@@ -464,6 +490,10 @@
     const index = lists.findIndex((list) => list.id === id);
     if (index < 0) return null;
     const current = lists[index];
+    if ((changes?.deletedAt || changes?.deleted_at || changes?.archived === true) && !isUnavailableRecord(current)) {
+      const dependency = activePathDependency(id, "aha_lists");
+      if (dependency.linked) return { ok: false, reason: dependency.reason };
+    }
     const next = normalizeList({
       ...current,
       ...changes,
@@ -997,7 +1027,14 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
       if (target.dataset.conceptListDelete) {
-        deleteConceptList(target.dataset.conceptListDelete);
+        const result = deleteConceptList(target.dataset.conceptListDelete);
+        if (result?.ok === false) {
+          const status = target.closest(".aha-concept-list-actions")?.querySelector(".aha-org-flow-status");
+          if (status) status.textContent = result.reason === "list_referenced_by_active_path"
+            ? "Begrepslisten brukes av en aktiv sti. Fjern stien først."
+            : "Kan ikke slette trygt: stienes lokale data kunne ikke kontrolleres.";
+          return;
+        }
         render();
         return;
       }
@@ -1054,7 +1091,14 @@
 
       const deletePayload = target.dataset.listDelete;
       if (deletePayload) {
-        deleteList(deletePayload);
+        const result = deleteList(deletePayload);
+        if (result?.ok === false) {
+          const status = document.querySelector(`[data-list-action-status="${deletePayload}"]`);
+          if (status) status.textContent = result.reason === "list_referenced_by_active_path"
+            ? "Samlingen brukes av en aktiv sti. Fjern stien før du sletter samlingen."
+            : "Kan ikke slette trygt: stienes lokale data kunne ikke kontrolleres.";
+          return;
+        }
         if (selectedListId === deletePayload) selectedListId = "";
         render();
         return;
