@@ -73,12 +73,12 @@ for (const file of ["js/ahaLists.js", "js/ahaPaths.js"]) {
   assert.ok(!database.paths.some((item) => generatedPathMarkers.includes(item.meta?.createdBy)));
 
   assert.equal(ctx.AHALists.loadLists().length, 2, "AI list must remain local after sync");
-  assert.equal(ctx.AHAPaths.loadPaths().length, 5, "AI paths must remain local after sync");
+  assert.equal(ctx.AHAPaths.loadPaths().length, generatedPaths.length + 1, "AI paths must remain local after sync");
 
   const remoteListsBefore = database.lists.length;
   const remotePathsBefore = database.paths.length;
   const modifiedList = ctx.AHALists.updateList("list_generated_ai", { title: "Redigert AI-samling" });
-  const modifiedPath = ctx.AHAPaths.updatePath("path_generated_3", { title: "Redigert AI-sti" });
+  const modifiedPath = ctx.AHAPaths.updatePath("path_generated_1", { title: "Redigert AI-sti" });
   assert.ok(modifiedList);
   assert.ok(modifiedPath);
   assert.equal(database.lists.length, remoteListsBefore, "Single-list update must not leak AI data");
