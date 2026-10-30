@@ -91,7 +91,7 @@ function identityMatches(step) {
   assert.match(paths[0].steps[1].narrative, /kobler kildeutsagn/);
   assert.match(paths[0].steps[2].narrative, /grensene/);
   assert.equal(paths[0].steps[1].status, "planned");
-  assert.equal(app.writes.every((key) => key === "aha_paths_v1"), true, "Never write Chamber or remote stores");
+  assert.deepEqual(app.writes, ["aha_paths_v1"], "A complete List-to-Path promotion must make one atomic local write");
   const pathId = paths[0].id;
   const firstStepId = paths[0].steps[1].id;
 
@@ -124,6 +124,18 @@ for (const invalid of [
   assert.equal(app.writes.length, 0, invalid.name + ": must fail before any Path write");
   assert.equal(app.backing.get("aha_paths_v1"), undefined, invalid.name);
   assert.equal(app.backing.get("aha_lists_v1"), before, invalid.name);
+}
+
+{
+  const app = setup([savedAiList()]);
+  const originalList = app.backing.get("aha_lists_v1");
+  app.context.localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+  const result = app.context.AHAOrganizationFlow.createPathFromList("list_projection_saved");
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "path_storage_failed");
+  assert.equal(app.backing.has("aha_paths_v1"), false, "No partial Path may survive storage failure");
+  assert.equal(app.backing.get("aha_lists_v1"), originalList, "Original AI List remains safe");
+  assert.equal(app.writes.length, 0);
 }
 
 {
