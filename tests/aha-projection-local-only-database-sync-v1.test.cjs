@@ -15,8 +15,7 @@ const ordinaryList = { id: "list_manual", title: "Min lokale samling", type: "fa
 const generatedPathMarkers = [
   "aha_analysis_artifacts_v1",
   "aha_projection_materializer_v2",
-  "insight_review_path_v1",
-  "aha_organization_flow_v2"
+  "insight_review_path_v1"
 ];
 const generatedPaths = generatedPathMarkers.map((createdBy, i) => ({
   id: "path_generated_" + i,
