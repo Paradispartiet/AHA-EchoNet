@@ -148,4 +148,23 @@ test("A saved AI-projection list becomes a real editable Path with source-bound 
   await page.reload();
   await expect(page.locator(".aha-path-step-row")).toHaveCount(3);
   await expect(page.locator(".aha-path-step-row.is-done")).toHaveCount(1);
+
+  await page.goto("/lists.html#list-list_projection_browser");
+  await expect(page.locator("#list-preview-title")).toHaveText("Godkjente innsikter");
+  await page.locator(".aha-list-manage > summary").click();
+  await page.locator("[data-list-delete='list_projection_browser']").click();
+  await expect(page.locator("[data-list-action-status='list_projection_browser']"))
+    .toContainText("Samlingen brukes av en aktiv sti");
+  const kept = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"));
+  expect(kept.find((item) => item.id === "list_projection_browser").deletedAt).toBeFalsy();
+
+  // The dependent knowledge Path is explicitly removed before the List.
+  await page.goto("/paths.html#path-" + encodeURIComponent(saved[0].id));
+  await page.locator(".aha-path-manage > summary").click();
+  await page.locator("[data-path-delete]").click();
+  await page.goto("/lists.html#list-list_projection_browser");
+  await page.locator(".aha-list-manage > summary").click();
+  await page.locator("[data-list-delete='list_projection_browser']").click();
+  const retired = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"));
+  expect(retired.find((item) => item.id === "list_projection_browser").deletedAt).toBeTruthy();
 });
