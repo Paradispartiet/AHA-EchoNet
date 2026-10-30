@@ -676,6 +676,8 @@
       const saveLabel = materialization.materialized ? "Lagret som min liste" : "Lagre som min liste";
       const saveStatus = materialization.state === "unchanged"
         ? "Lagret lokalt. Kan angres så lenge listen er uendret."
+        : materialization.state === "linked"
+          ? "Listen brukes av en aktiv kunnskapssti. Angre er låst for å bevare stiens kilde."
         : materialization.state === "modified"
           ? "Lagret lokalt og senere endret. Angre er låst for å beskytte endringene."
           : "Krever et eksplisitt klikk og lagres bare lokalt.";
@@ -918,7 +920,9 @@
           projectionReceipts.delete(id);
           renderProjectionListPreviews();
           renderContent();
-        } else if (status instanceof HTMLElement) status.textContent = "Kunne ikke angre; listen kan ha blitt endret etter lagring.";
+        } else if (status instanceof HTMLElement) status.textContent = result?.reason === "list_referenced_by_active_path"
+          ? "Listen brukes i en aktiv kunnskapssti og kan ikke angres før stien er fjernet."
+          : "Kunne ikke angre; listen kan ha blitt endret eller er ikke tilgjengelig.";
         return;
       }
       const model = global.AHAProjectionRuntimeSourceV2?.build?.();
