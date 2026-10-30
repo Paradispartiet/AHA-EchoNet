@@ -126,6 +126,15 @@
           ? `Videre arbeid fra samlingen «${list.title}». ${list.description}`
           : `Videre arbeid fra samlingen «${list.title}».`,
         goal: "Undersøk det lagrede materialet og hva som kan konkluderes.",
+        ...(list?.meta?.createdBy === "aha_projection_materializer_v2" ? {
+          meta: {
+            createdBy: "aha_organization_flow_v2",
+            derived_from: "materialized_ai_list",
+            source_list_id: list.id,
+            source_projection_id: text(list.meta.projection_id),
+            source_sha256: text(list.meta.source_sha256)
+          }
+        } : {}),
         steps: plannedSteps
       });
     } catch {
