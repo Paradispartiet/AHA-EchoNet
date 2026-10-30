@@ -518,21 +518,16 @@
             tags: ["status"]
           });
         }
+        // A failed Chat model call must not generate or persist synthetic
+        // "AI afterwork" from an empty assistant reply. Keep the user message
+        // and the classified failure, but clear the active product preview.
+        // Independent source-bound synthesis has its own quality gate.
+        analysis.clearActiveAnalysisState(
+          analysisRun,
+          "AI-svaret mislyktes. Ingen nytt etterarbeid ble opprettet fra dette forsøket."
+        );
         ui.renderChatMemoryStatus();
         ui.appendChat("aha", userError);
-        try {
-          await analysis.renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled, analysisRun });
-        } catch (autoErr) {
-          global.console.warn("Auto-output feilet", autoErr);
-        }
-        if (savingEnabled && analysis.isActiveAnalysisRun(analysisRun)) {
-          try {
-            const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun });
-            if (afterworkResult?.entry) analysis.updateAnalysisRun?.({ afterwork: afterworkResult.entry }, analysisRun);
-          } catch (afterErr) {
-            global.console.warn("Auto-etterarbeid feilet", afterErr);
-          }
-        }
         return { type: "agent_error", error: err, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
       } finally {
         if (analysis.isActiveAnalysisRun(analysisRun)) {
