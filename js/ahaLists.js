@@ -716,8 +716,9 @@
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
-            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
+            ${item.source !== "aha_projection_v2" && buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
             ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
+            ${item.source === "aha_projection_v2" && item.meta?.inline === true ? `<p class="module-meta">AI-innsikt lagret som kildebundet snapshot i denne samlingen. Full kildetekst er ikke lagret her.</p>` : ""}
             <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
           <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
