@@ -123,6 +123,8 @@ test("A saved AI-projection list becomes a real editable Path with source-bound 
   await page.goto("/lists.html#list-list_projection_browser");
   await expect(page.locator("#list-preview-title")).toHaveText("Godkjente innsikter");
   await expect(page.locator(".aha-list-item-row")).toHaveCount(2);
+  await expect(page.locator(".aha-list-item-row").first()).toContainText("kildebundet snapshot");
+  await expect(page.locator(".aha-list-item-row").getByRole("link", { name: "Åpne kilden" })).toHaveCount(0);
   await page.locator("[data-org-list-to-path='list_projection_browser']").click();
   const status = page.locator(".aha-org-flow-actions").filter({
     has: page.locator("[data-org-list-to-path='list_projection_browser']")
