@@ -391,7 +391,12 @@
         ui.setProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
         const agent = await analysis.askAgent(analysisInputText, { memoryContext, personalContext });
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
-        const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
+        const reply = String(agent?.reply || "").trim();
+        if (agent?.ok === false || !reply) {
+          const error = new Error("empty_agent_reply");
+          error.code = "empty_agent_reply";
+          throw error;
+        }
         const analysisText = analysis.cleanArticleText(analysisInputText);
         // Preserve headings and section boundaries for long-source focus. The
         // cleaned prose remains the canonical analysis input below, but it can
@@ -510,7 +515,9 @@
             ? "AHA sin AI-tjeneste har nådd en midlertidig bruksgrense. Prøv igjen senere."
             : safeCode === "missing_openai_api_key"
               ? "AHA mangler OpenAI API-nøkkel på serveren. Kontroller serverkonfigurasjonen."
-              : "AHA-agenten er ikke tilgjengelig akkurat nå.";
+              : safeCode === "empty_agent_reply"
+                ? "AHA sin AI-tjeneste returnerte ikke et gyldig svar. Ingen ny AI-analyse ble opprettet."
+                : "AHA-agenten er ikke tilgjengelig akkurat nå.";
         if (savingEnabled) {
           global.AHAChatPersistence?.appendAssistantMessage?.(userError, {
             source: "aha_chat",
