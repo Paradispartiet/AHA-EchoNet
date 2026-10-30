@@ -368,7 +368,11 @@
   }
 
   function materializedListMustRemainLocal(list) {
-    return list?.meta?.createdBy === "aha_projection_materializer_v2";
+    // User-managed collections may also contain approved inline AI members.
+    // Preserve their local boundary even when the parent itself was manual.
+    return list?.meta?.createdBy === "aha_projection_materializer_v2"
+      || asArray(list?.items).some((item) => item?.source === "aha_projection_v2"
+        || (item?.meta?.inline === true && item?.meta?.snapshot?.source === "aha_semantic_v2"));
   }
 
   async function persistList(list) {
