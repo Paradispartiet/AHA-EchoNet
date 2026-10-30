@@ -413,9 +413,19 @@
 
   function mergeLists(localLists, remoteLists) {
     const merged = new Map();
-    [...asArray(localLists), ...asArray(remoteLists)].forEach((incoming) => {
+    // The server is not an authority for local AI projections. Even a server
+    // copy with a newer timestamp must not replace the source-bound artifact.
+    asArray(localLists).forEach((incoming) => {
+      const list = normalizeList(incoming);
+      merged.set(list.id, list);
+    });
+    asArray(remoteLists).forEach((incoming) => {
+      // Older versions could have accidentally uploaded V2 artifacts.
+      // Never re-import those copies to a device where they were not saved.
+      if (materializedListMustRemainLocal(incoming)) return;
       const list = normalizeList(incoming);
       const existing = merged.get(list.id);
+      if (materializedListMustRemainLocal(existing)) return;
       if (!existing || listActionTime(list) >= listActionTime(existing)) {
         merged.set(list.id, list);
       }
