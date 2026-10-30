@@ -342,6 +342,15 @@
       });
       const res = transport.response;
       if (!res.ok) {
+        // The agent sends a safe, classified provider error. Preserve the
+        // category for diagnostics, never the raw provider message or request.
+        let failure = null;
+        try { failure = await res.clone().json(); } catch { /* non-JSON server response */ }
+        const safeCode = (value) => {
+          const code = String(value || "");
+          return /^[a-z][a-z0-9_]{0,79}$/.test(code) ? code : null;
+        };
+        const providerError = safeCode(failure?.error);
         writeRunTrace({
           schema: "aha_analysis_runtime_trace_v1",
           status: "blocked_synthesis_http",
@@ -349,7 +358,14 @@
           backend: runtime.runtime,
           http_status: Number(res.status || 0),
           transport_attempts: transport.transport_attempts,
-          blocking_reasons: [`synthesis_http_${Number(res.status || 0)}`],
+          provider_error: providerError,
+          provider_type: safeCode(failure?.type),
+          provider_code: safeCode(failure?.code),
+          retryable: typeof failure?.retryable === "boolean" ? failure.retryable : null,
+          blocking_reasons: [
+            `synthesis_http_${Number(res.status || 0)}`,
+            ...(providerError ? [`synthesis_provider_${providerError}`] : [])
+          ],
           authoritative_retry_attempt: requestAttempt,
           evidence_plan: { schema: evidencePlan.schema, selected_source_claim_count: evidencePlan.selected_source_claim_count, packet_count: evidencePlan.packets.length }
         });

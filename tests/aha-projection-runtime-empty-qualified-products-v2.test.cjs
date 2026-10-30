@@ -21,6 +21,9 @@ const bundle = {
   bundle_id: 'analysis_bundle_conflict_tourism',
   identity,
   semantic_document: {
+    // This fixture tests product shape/quality, not the AI-not-run state.
+    // The latter is covered by aha-projection-ai-readiness-products-v1.
+    synthesis_gate: { authoritative: true, status: 'passed', candidate_count: 1, approved_count: 1, blocked_count: 0 },
     candidate_insight_ids: ['ins_conflict_tourism'],
     approved_insight_ids: ['ins_conflict_tourism'],
     approved_insight_records: [{
