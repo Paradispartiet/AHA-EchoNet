@@ -147,4 +147,29 @@ for (const invalid of [
   assert.equal(result.reason, "projection_members_unavailable");
   assert.equal(app.writes.length, 0);
 }
+// The older Concept List → Path bridge must obey the same atomic creation rule.
+const conceptSeed = new Map([["aha_concept_lists_v1", JSON.stringify([{
+  id: "concept_list_durable", title: "Sentrale begreper",
+  terms: [{ term: "sammenheng" }, { term: "belegg" }]
+}])]]);
+{
+  const app = setup([], new Map(conceptSeed));
+  const result = app.context.AHAOrganizationFlow.createPathFromConceptList("concept_list_durable");
+  assert.equal(result.ok, true);
+  assert.equal(result.path.steps.length, 1);
+  assert.equal(result.path.steps[0].source, "aha_concept_lists");
+  assert.equal(result.path.steps[0].refId, "concept_list_durable");
+  assert.equal(result.path.steps[0].meta.organization_flow, "concept_list_to_path");
+  assert.deepEqual(app.writes, ["aha_paths_v1"], "Concept List → Path must write once");
+  assert.equal(setup(undefined, app.backing).context.AHAPaths.loadPaths()[0].steps.length, 1);
+}
+{
+  const app = setup([], new Map(conceptSeed));
+  app.context.localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+  const result = app.context.AHAOrganizationFlow.createPathFromConceptList("concept_list_durable");
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "path_storage_failed");
+  assert.equal(app.writes.length, 0);
+  assert.equal(app.backing.has("aha_paths_v1"), false);
+}
 console.log("Approved AI List members survive promotion to editable Path steps with exact source identity.");
