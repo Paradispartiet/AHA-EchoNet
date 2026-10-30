@@ -932,8 +932,13 @@
         return;
       }
       if (result.receipt) projectionReceipts.set(id, result.receipt);
+      // Saving an approved AI list should reveal the exact saved, editable
+      // collection immediately, including its "Ordne som sti" next action.
+      // This does not materialize any Path or change the preview's write policy.
+      if (result.artifact?.id) selectedListId = String(result.artifact.id);
       renderProjectionListPreviews();
       renderContent();
+      document.getElementById("list-preview-title")?.focus?.();
     });
 
     document.getElementById("concept-list-create-form")?.addEventListener("submit", (event) => {
