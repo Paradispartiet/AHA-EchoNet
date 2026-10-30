@@ -5,7 +5,7 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "js/ahaChatRunContext.js"), "utf8");
 
-async function verifyFailure({ code, expectedText, savingEnabled, stale = false }) {
+async function verifyFailure({ code, expectedText, savingEnabled, stale = false, agentResult }) {
   const events = [];
   const run = { analysisRunId: "run_failed", runId: "run_failed", sourceId: "source_failed" };
   const error = new Error(code);
@@ -25,7 +25,7 @@ async function verifyFailure({ code, expectedText, savingEnabled, stale = false 
   const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     config: { threadId: "thread_failed" },
     analysis: {
-      askAgent: async () => { throw error; },
+      askAgent: async () => { if (agentResult !== undefined) return agentResult; throw error; },
       isActiveAnalysisRun: (candidate) => !stale && candidate === run,
       clearActiveAnalysisState(candidate, message) {
         assert.equal(candidate, run);
@@ -65,7 +65,8 @@ async function verifyFailure({ code, expectedText, savingEnabled, stale = false 
   }
 
   assert.equal(result.type, "agent_error");
-  assert.equal(result.error, error);
+  if (agentResult === undefined) assert.equal(result.error, error);
+  else assert.equal(result.error.code, "empty_agent_reply");
   const cleared = events.findIndex(([name]) => name === "clear_failed_analysis");
   const shown = events.findIndex(([name]) => name === "show_status");
   assert.ok(cleared >= 0 && cleared < shown, "Clear failed previews before reporting the AI failure");
@@ -87,6 +88,8 @@ async function verifyFailure({ code, expectedText, savingEnabled, stale = false 
   await verifyFailure({ code: "openai_rate_limited", expectedText: /midlertidig bruksgrense/, savingEnabled: false });
   await verifyFailure({ code: "missing_openai_api_key", expectedText: /API-nøkkel/, savingEnabled: true });
   await verifyFailure({ code: "chat_http_503", expectedText: /ikke tilgjengelig/, savingEnabled: true });
+  await verifyFailure({ code: "empty_agent_reply", expectedText: /ikke et gyldig svar/, savingEnabled: true, agentResult: { ok: true, reply: "" } });
+  await verifyFailure({ code: "empty_agent_reply", expectedText: /ikke et gyldig svar/, savingEnabled: true, agentResult: { ok: false, reply: "påstått svar" } });
   await verifyFailure({ code: "openai_quota_exhausted", expectedText: /kvote/, savingEnabled: true, stale: true });
   console.log("Chat AI failure preserves status and never materializes synthetic afterwork.");
 })().catch((error) => {
