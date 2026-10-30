@@ -152,8 +152,58 @@ const writesAfterList = storage.writes;
 const duplicateList = api.materialize({ model, artifact_type: "list", artifact_id: "list_candidate", user_confirmed: true });
 assert.equal(duplicateList.existing, true);
 assert.equal(storage.writes, writesAfterList, "idempotent materialization must not rewrite the store");
+
+// A list used as an active path source cannot be undone without orphaning the Path.
+const linkedPath = { id: "path_uses_ai_list", steps: [{
+  id: "step_ai_list", source: "aha_lists", refId: listRecords[0].id
+}] };
+const originalListStore = storage.getItem("aha_lists_v1");
+storage.setItem("aha_paths_v1", JSON.stringify([linkedPath]));
+const linkedState = api.getMaterializationState({
+  artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id
+});
+assert.equal(linkedState.state, "linked");
+assert.equal(linkedState.materialized, true);
+assert.equal(linkedState.undo_available, false);
+assert.equal(linkedState.reason, "list_referenced_by_active_path");
+assert.equal(api.undo(listResult.receipt, { user_confirmed: true }).reason, "list_referenced_by_active_path");
+assert.equal(api.undoMaterialized({
+  artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id,
+  user_confirmed: true
+}).reason, "list_referenced_by_active_path");
+assert.equal(storage.getItem("aha_lists_v1"), originalListStore, "Dependent AI list must be preserved exactly");
+storage.setItem("aha_paths_v1", JSON.stringify([{ ...linkedPath, deletedAt: "2026-10-30T12:00:00Z" }]));
+assert.equal(api.getMaterializationState({
+  artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id
+}).undo_available, true, "Deleted paths do not block a user's explicit undo");
+storage.setItem("aha_paths_v1", "[]");
+
 assert.equal(api.undo(listResult.receipt, { user_confirmed: true }).ok, true);
 assert.equal(storage.getItem("aha_lists_v1"), listBefore, "undo must restore the prior list store exactly");
+
+// Browser storage may throw SecurityError or QuotaExceededError. These must
+// return stable no-write errors without pretending the artifact was saved.
+const quotaStorage = {
+  getItem: (key) => storage.getItem(key),
+  setItem() { throw new Error("QuotaExceededError"); }
+};
+const unreadableStorage = {
+  getItem() { throw new Error("SecurityError"); },
+  setItem() { throw new Error("SecurityError"); }
+};
+assert.equal(api.materialize({
+  model, artifact_type: "list", artifact_id: "list_candidate", user_confirmed: true,
+  storage: quotaStorage
+}).reason, "local_storage_write_failed");
+assert.equal(storage.getItem("aha_lists_v1"), listBefore, "Quota error must not change existing lists");
+assert.equal(api.materialize({
+  model, artifact_type: "list", artifact_id: "list_candidate", user_confirmed: true,
+  storage: unreadableStorage
+}).reason, "local_storage_read_failed");
+assert.equal(api.getMaterializationState({
+  artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id,
+  storage: unreadableStorage
+}).reason, "local_storage_read_failed");
 
 const pathResult = api.materialize({ model, artifact_type: "path", artifact_id: "path_candidate", user_confirmed: true });
 assert.equal(pathResult.ok, true);
@@ -167,6 +217,12 @@ assert.equal(api.getMaterializationState({ artifact_type: "path", artifact_id: "
 assert.equal(context.AHAPaths.validatePathStepReference(pathRecords[0].steps[0], []).ok, true);
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "aha_projection_v2", refId: "broken", meta: { inline: true } }, []).reason, "incomplete_projection_snapshot");
 assert.equal(context.AHAPaths.validatePathStepReference({ source: "unknown", refId: "x" }, []).reason, "unknown_source");
+assert.equal(api.undo(pathResult.receipt, { user_confirmed: true, storage: quotaStorage }).reason, "local_storage_write_failed");
+assert.equal(api.undoMaterialized({
+  artifact_type: "path", artifact_id: "path_candidate", projection_id: model.projection_id,
+  user_confirmed: true, storage: quotaStorage
+}).reason, "local_storage_write_failed");
+assert.equal(JSON.parse(storage.getItem("aha_paths_v1")).length, 1, "Failed undo must not remove original path");
 assert.equal(api.undo(pathResult.receipt, { user_confirmed: true }).ok, true);
 assert.equal(storage.getItem("aha_paths_v1"), "[]");
 
