@@ -82,6 +82,6 @@ checkStates(
   projectionState({ candidate_insight_ids: [], synthesis_gate: { authoritative: true, status: "ready" } }),
   "not_relevant", "Ikke relevant for denne teksten", /ingen semantisk kandidat/
 );
-assert.match(fs.readFileSync(path.join(__dirname, "..", "js/ahaLists.js"), "utf8"), /model\\?\\.product_states\\?\\.list/);
-assert.match(fs.readFileSync(path.join(__dirname, "..", "js/ahaPaths.js"), "utf8"), /model\\?\\.product_states\\?\\.path/);
+assert.ok(fs.readFileSync(path.join(__dirname, "..", "js/ahaLists.js"), "utf8").includes("model?.product_states?.list"));
+assert.ok(fs.readFileSync(path.join(__dirname, "..", "js/ahaPaths.js"), "utf8").includes("model?.product_states?.path"));
 console.log("V2 Lists and Paths never confuse unrun AI with irrelevant products.");
