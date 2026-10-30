@@ -88,9 +88,14 @@
       return { linked: true, reason: "path_store_unavailable" };
     }
     if (!Array.isArray(paths)) return { linked: true, reason: "path_store_unavailable" };
-    const linked = paths.some((path) => !isUnavailableRecord(path)
-      && asArray(path?.steps).some((step) => step?.source === sourceType
-        && asText(step?.refId || step?.ref_id, "") === asText(listId, "")));
+    const linked = paths.some((path) => {
+      if (isUnavailableRecord(path)) return false;
+      const steps = asArray(path?.steps).length ? path.steps
+        : asArray(path?.sequence).length ? path.sequence
+          : asArray(path?.items).length ? path.items : asArray(path?.nodes);
+      return steps.some((step) => step?.source === sourceType
+        && asText(step?.refId || step?.ref_id, "") === asText(listId, ""));
+    });
     return { linked, reason: linked ? "list_referenced_by_active_path" : null };
   }
 
