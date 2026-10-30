@@ -367,8 +367,12 @@
     return asArray(lists);
   }
 
+  function materializedListMustRemainLocal(list) {
+    return list?.meta?.createdBy === "aha_projection_materializer_v2";
+  }
+
   async function persistList(list) {
-    if (list?.meta?.createdBy === "aha_projection_materializer_v2") {
+    if (materializedListMustRemainLocal(list)) {
       return { ok: false, fallback: "localOnly", projection_artifact_local_only: true };
     }
     if (!isDatabaseSyncEnabled()) {
@@ -424,9 +428,9 @@
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     }
     if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
-    return Promise.allSettled(asArray(lists).map((list) => {
-      return Promise.resolve().then(() => global.AHARepository.saveList(list));
-    }));
+    return Promise.allSettled(asArray(lists)
+      .filter((list) => !materializedListMustRemainLocal(list))
+      .map((list) => Promise.resolve().then(() => global.AHARepository.saveList(list))));
   }
 
   async function syncFromDatabase() {
