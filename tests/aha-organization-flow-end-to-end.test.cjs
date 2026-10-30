@@ -37,7 +37,8 @@ const context = {
     loadPaths: () => paths,
     validatePathStepReference(item) { return { ok: true, item }; },
     createPath(input) {
-      const path = { id: 'path_1', title: input.title, description: input.description, steps: [] };
+      const steps = (input.steps || []).map((item, index) => ({ ...item, id: 'step_' + index, order: index }));
+      const path = { id: 'path_1', title: input.title, description: input.description, steps };
       paths = [path]; calls.pathCreates.push(input); return path;
     },
     addStepToPath(pathId, step) {
@@ -80,9 +81,10 @@ result = flow.createPathFromList('list_1');
 assert.equal(result.ok, true);
 assert.equal(calls.pathCreates.length, 1);
 assert.match(calls.pathCreates[0].title, /Makt og by/);
-assert.equal(calls.pathAdds[0].step.source, 'aha_lists');
-assert.equal(calls.pathAdds[0].step.refId, 'list_1');
-assert.equal(calls.pathAdds[0].step.meta.organization_flow, 'list_to_path');
+assert.equal(calls.pathCreates[0].steps[0].source, 'aha_lists');
+assert.equal(calls.pathCreates[0].steps[0].refId, 'list_1');
+assert.equal(calls.pathCreates[0].steps[0].meta.organization_flow, 'list_to_path');
+assert.equal(calls.pathAdds.length, 0, 'List → Path creates all steps in one atomic write');
 
 paths[0].steps.push({ id: 'step_note', title: 'Notat', source: 'aha_notes', refId: 'note_1', order: 1 });
 result = flow.movePathStep('path_1', 'step_note', -1);
