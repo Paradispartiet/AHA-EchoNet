@@ -149,13 +149,17 @@ function assertLinkPrimarySourcePolicy() {
   context.window = context;
   vm.runInNewContext(fs.readFileSync('js/ahaLinkReader.js', 'utf8'), context, { filename: 'js/ahaLinkReader.js' });
   const source = { title: 'Artikkel', url: 'https://example.invalid/a', publisher: 'Eksempel' };
-  const fullPrimary = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'full' }, { reference_only: false });
-  const fullReference = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'full' }, { reference_only: true });
+  const fullPrimary = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'full', ai_analysis_status: 'completed' }, { reference_only: false });
+  const fullReference = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'full', ai_analysis_status: 'completed' }, { reference_only: true });
+  const fullWithoutAi = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'full' }, { reference_only: false });
   const metadata = context.AHALinkReader.buildSafeSourcePayload({ source, access_status: 'metadata_only' }, { reference_only: false });
   assert.equal(fullPrimary.content_type, 'transient_article_analysis');
   assert.equal(fullPrimary.meta.semantic_insight_eligible, true);
   assert.equal(fullReference.content_type, 'article_reference');
   assert.equal(fullReference.meta.semantic_insight_eligible, false);
+  assert.equal(fullWithoutAi.content_type, 'article_reference', 'Source extraction is not a successful AI analysis');
+  assert.equal(fullWithoutAi.meta.semantic_insight_eligible, false);
+  assert.equal(fullWithoutAi.meta.source_event_only, true);
   assert.equal(metadata.content_type, 'article_metadata');
   assert.equal(metadata.meta.source_event_only, true);
 }
