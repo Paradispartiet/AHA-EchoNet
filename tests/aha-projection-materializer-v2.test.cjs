@@ -172,6 +172,20 @@ assert.equal(api.undoMaterialized({
   user_confirmed: true
 }).reason, "list_referenced_by_active_path");
 assert.equal(storage.getItem("aha_lists_v1"), originalListStore, "Dependent AI list must be preserved exactly");
+for (const legacyKey of ["sequence", "items", "nodes"]) {
+  storage.setItem("aha_paths_v1", JSON.stringify([{
+    id: "legacy_path", [legacyKey]: linkedPath.steps, steps: []
+  }]));
+  const legacyState = api.getMaterializationState({
+    artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id
+  });
+  assert.equal(legacyState.undo_available, false, "Legacy " + legacyKey + " links must still prevent undo");
+  assert.equal(api.undoMaterialized({
+    artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id,
+    user_confirmed: true
+  }).reason, "list_referenced_by_active_path");
+  assert.equal(storage.getItem("aha_lists_v1"), originalListStore);
+}
 storage.setItem("aha_paths_v1", JSON.stringify([{ ...linkedPath, deletedAt: "2026-10-30T12:00:00Z" }]));
 assert.equal(api.getMaterializationState({
   artifact_type: "list", artifact_id: "list_candidate", projection_id: model.projection_id
