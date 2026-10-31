@@ -3,16 +3,16 @@
   "version": "2.0.0",
   "lifecycle_stage": "observed_upstream_release",
   "source_repo": "Paradispartiet/History-Go",
-  "source_commit": "0e693a0c489580288446c00deb6a076b12c14eb5",
+  "source_commit": "63e73df5e8bf1df4fcdcb23a790a6372333689aa",
   "producer_release_schema": "history_go_fagverk_release_v2",
   "producer_release_version": "2.0.0",
-  "release_sha256": "27f59728ea7099dfaacadb9cdafad4c62103dd563d6bb2e0d0ac6ebf81aed7fb",
+  "release_sha256": "a3df048988d904a84e0bfca7eccd3f108f39fb1b94974e71bbc2beee1915557e",
   "registry": {
     "path": "data/fagverk/fagverk_registry.json",
     "schema": "history_go_fagverk_registry_v1",
-    "version": "3.16.0",
-    "updated_at": "2026-09-16",
-    "content_sha256": "8a749c2fa0bdfc08ad3267613ab74445761df95b55b124613b1931fe621b626f"
+    "version": "3.17.15",
+    "updated_at": "2026-10-28",
+    "content_sha256": "7d89e42a816460fcc1c83e802e1bf53901ff8db37a048ab7a0f9a87449508579"
   },
   "subject_inventory": {
     "path": "data/fagverk/subject_inventory.json",
@@ -28,18 +28,18 @@
     "schema": null,
     "version": null,
     "updated_at": null,
-    "content_sha256": "c852e90f6b71c943e12082c6d780a96ff16d5adce9f72b8b5977ce715d3c8b58"
+    "content_sha256": "91dc3d70c3a9e89d6ef23512a544156d9c3c9b3f0f38af8fb9832bbdbcfd9490"
   },
   "summary": {
     "subject_count": 20,
     "root_subject_count": 19,
     "specialization_count": 1,
     "chapter_subject_count": 18,
-    "chapter_count": 190,
+    "chapter_count": 191,
     "module_file_count": 497,
-    "package_file_count": 447,
-    "chapter_referenced_file_count": 934,
-    "referenced_file_count": 1310,
+    "package_file_count": 537,
+    "chapter_referenced_file_count": 935,
+    "referenced_file_count": 1401,
     "missing_file_count": 0,
     "optional_gap_count": 1
   },
@@ -53,9 +53,9 @@
       "pilot": true,
       "package_status": "complete",
       "chapter_status": "materialized",
-      "package_file_count": 99,
+      "package_file_count": 117,
       "required_package_file_count": 4,
-      "optional_package_file_count": 95,
+      "optional_package_file_count": 113,
       "optional_gap_count": 0,
       "missing_optional_files": [],
       "chapter_count": 17,
@@ -63,11 +63,11 @@
       "brief_file_count": 17,
       "claims_file_count": 17,
       "chapter_referenced_file_count": 102,
-      "referenced_file_count": 201,
-      "package_content_sha256": "1043050c8b2120a92657d02f9be69c0e47aed8803aabd1cebb36409ff789fe34",
+      "referenced_file_count": 219,
+      "package_content_sha256": "617b58f0f0b463a8dfeac54a53c1ebba6ed4c2074d0f07a62be1149695a864d4",
       "chapter_content_sha256": "38e5be5259e0aa3d733f4ddeeb46df87769c935ad9dd76cd175f8bb645ee79fa",
-      "structure_sha256": "bfd684b6573b59bac1cbdac5a8ffdccd04616db578068bc60c70da42fbed7e27",
-      "content_sha256": "6edd1b12741d8d1971d967b55886048fec13f73a3f1fe3ceade5a280291d740a"
+      "structure_sha256": "e982ecbc66641a36963551bb563a64e89980aafedcae98dabda4c588de69ef4c",
+      "content_sha256": "5cff167af9ed121029726f300c3a601a463822da1a370baedd97dfa50d21d0e4"
     },
     "film_tv": {
       "subject_id": "film_tv",
@@ -153,9 +153,9 @@
       "pilot": false,
       "package_status": "complete",
       "chapter_status": "materialized",
-      "package_file_count": 89,
+      "package_file_count": 146,
       "required_package_file_count": 4,
-      "optional_package_file_count": 85,
+      "optional_package_file_count": 142,
       "optional_gap_count": 0,
       "missing_optional_files": [],
       "chapter_count": 23,
@@ -163,11 +163,11 @@
       "brief_file_count": 0,
       "claims_file_count": 0,
       "chapter_referenced_file_count": 92,
-      "referenced_file_count": 181,
-      "package_content_sha256": "dd8616a5b9359b16a14ea5eaaf86f421fbe0ecd535c863e6ac4f654787ffcc59",
+      "referenced_file_count": 238,
+      "package_content_sha256": "07d149c2611bae25d2b546aea5627764cb8e181d36938ac9a3745b2c110a1903",
       "chapter_content_sha256": "bedfd019dc2fa60ba92a540bf6b9f2504e0f6b1680350762a5fe074e82153148",
-      "structure_sha256": "ca64d0e5926b537e2ea52fd362e3575621cccc4a9c4fe0d72bf8067c0c42c388",
-      "content_sha256": "85316e3aa55f22d72617262520be6c23c214b4da9881bab06b787394b6bf1148"
+      "structure_sha256": "4b39fa318a567c9b9dd5542df53461be09ef649ec69a3317f757e49c1cce2827",
+      "content_sha256": "97997e02cb14a4f449a508b1eead951d8616eca45b6c3a9b22317baf80a42a5b"
     },
     "kunst": {
       "subject_id": "kunst",
@@ -208,16 +208,16 @@
       "optional_package_file_count": 9,
       "optional_gap_count": 0,
       "missing_optional_files": [],
-      "chapter_count": 1,
+      "chapter_count": 2,
       "module_file_count": 0,
       "brief_file_count": 0,
       "claims_file_count": 0,
-      "chapter_referenced_file_count": 1,
-      "referenced_file_count": 14,
+      "chapter_referenced_file_count": 2,
+      "referenced_file_count": 15,
       "package_content_sha256": "90eddb50f2fc511ffd43d588e7aa75c9f53f7c4cbf56df443774836b18c28284",
-      "chapter_content_sha256": "b07aa9c9f2974f2851eb04d8c81d25ceb6eeb27cbcf27530b0731cc7e535ebf2",
-      "structure_sha256": "ec24aaf3be5c1dc7c7d48c397759450338513624c105a3e1779c53c545d445e7",
-      "content_sha256": "6c9ef1b60848138fff08efc9fdc129aef54fa6dd7fb1d94c23ee7c3fd36e53c2"
+      "chapter_content_sha256": "39489b0a0fb90b9d9406030fe14a378ae7140a3273cbd80ee9d08d2c4fe4924e",
+      "structure_sha256": "a0a5be2d0e7ce6be8ae5110275cfd0d6d92112673f3d00a39d9ddd716694a506",
+      "content_sha256": "f12220675b9197fc720cb1fbfa849825ed8c8323b993eddbdcf6aaefdb1ace90"
     },
     "media": {
       "subject_id": "media",
@@ -239,10 +239,10 @@
       "claims_file_count": 6,
       "chapter_referenced_file_count": 36,
       "referenced_file_count": 44,
-      "package_content_sha256": "3827279c3c3d5d96869b01e6d7c934e36fdf40659c06635dc2ec6c3da795f785",
+      "package_content_sha256": "5fa15f4ad9afea79c5dd535d5a3406fd607cb739ce47c94a9752be94c684581c",
       "chapter_content_sha256": "7b8db693674dacf7b8e95d6987fc43ee86e516385b73aec789b35c37d395c082",
       "structure_sha256": "cf32792bd8f85884b7f8cf0306f15b62922f9a51ce3657a8f9651cf98d033d70",
-      "content_sha256": "cb20ce07a72f399729456bbff05262ef6ea2fc64e5335099b51976933b2176b3"
+      "content_sha256": "ef3d9e91420eb818f80fc547b2a8aea3f3ff8f6f7f46fb797ebbc8225a190873"
     },
     "musikk": {
       "subject_id": "musikk",
@@ -278,9 +278,9 @@
       "pilot": false,
       "package_status": "complete",
       "chapter_status": "materialized",
-      "package_file_count": 58,
+      "package_file_count": 73,
       "required_package_file_count": 4,
-      "optional_package_file_count": 54,
+      "optional_package_file_count": 69,
       "optional_gap_count": 0,
       "missing_optional_files": [],
       "chapter_count": 12,
@@ -288,11 +288,11 @@
       "brief_file_count": 12,
       "claims_file_count": 12,
       "chapter_referenced_file_count": 72,
-      "referenced_file_count": 130,
-      "package_content_sha256": "cd8cae94d6234b483392893ef152c4391a0a6dab30d9400c5c192bcdcb5f3f07",
+      "referenced_file_count": 145,
+      "package_content_sha256": "174b96198d54c56ca2c2ae97bf7d4ff5f9d3d9470e333619c8b86f6298907963",
       "chapter_content_sha256": "06d3f52d2c3e2ff12545cbbc2fc0c1a783071c46a79f1e46ae368e44562143d1",
-      "structure_sha256": "f0d9430a6efa99990821377aab6cf36fbd3963c9fad0b76e59cc3782bc902342",
-      "content_sha256": "99570778b0ca9d92fb28bd1e68a39f88f01c5e4fca263b3648fc3ef5af4f7b4d"
+      "structure_sha256": "2662de2738b9e36407f419685d62c4b9b28db9b503ffaedbf21da8b83983ca1e",
+      "content_sha256": "b115341253d5d8124e2c4c580f412860a379ca03c52f8a9ad8d8b38af26f62b0"
     },
     "natur": {
       "subject_id": "natur",
@@ -339,10 +339,10 @@
       "claims_file_count": 13,
       "chapter_referenced_file_count": 78,
       "referenced_file_count": 88,
-      "package_content_sha256": "9dc5cd872d02f04a7b822fd3af5a2649b8dd501282260a729ef37fea66c5cdb1",
-      "chapter_content_sha256": "49a9ecd379041fe7827b0fd0386c66cf5f91e4fa547b8fbef04a07ae12ad582d",
+      "package_content_sha256": "c912f4e819618c4c1c906cf3785e8c577934facd0b790f129bbc3cb525aa632f",
+      "chapter_content_sha256": "ffb59e6f42a97d9171fef2dc9d95a3a0d6ac8767a8a8d4935d44752f21e7f6a4",
       "structure_sha256": "d3e22b0239edea8db974c6f4bac304fbd47a9e63ba5c76a7bbfc5a63441f09c6",
-      "content_sha256": "beeed0ac57d2ecab595c747148dfe5d2bc860e20f91b8274134c9bf4421c8767"
+      "content_sha256": "6880875004c5fcd6ff2e6374dbd18fad9e96c7ce5c5f79e30468f994be038ccb"
     },
     "psykologi": {
       "subject_id": "psykologi",
@@ -365,9 +365,9 @@
       "chapter_referenced_file_count": 36,
       "referenced_file_count": 44,
       "package_content_sha256": "1daa8178eccdc9d84eca1a94ff446ee8cbb586a99e3c01faa64b7e55e1b6f514",
-      "chapter_content_sha256": "c71c3758146f1f44551542663b723f4d0e50e621ad50b2f36a13dd6b04ca62cb",
+      "chapter_content_sha256": "afe25da2db648715d03e93e679f25e20aceae82cc8c8891319a1debdd0224622",
       "structure_sha256": "6ccae84d32a80d89d270408bb8ad10dd612ba7d9216d2651ed2a462a619288f7",
-      "content_sha256": "a8def4108450bd220c5cdfe852f7495af538fddb8d4da7a7230057f0f197eedc"
+      "content_sha256": "862a01349fb21a50b0c11a9354f8d183bcde5f84726f82cf55310ae9d69062e8"
     },
     "religion": {
       "subject_id": "religion",
@@ -466,10 +466,10 @@
       "claims_file_count": 0,
       "chapter_referenced_file_count": 32,
       "referenced_file_count": 43,
-      "package_content_sha256": "b607b61b08dd29ff306d847bcb0e4d3809f8b21864da608d8fbeb738bd928c11",
+      "package_content_sha256": "120cc8b99d1b1be62c9afb84fe99c25551515e23fb8edb99b924d5aae6e0bee4",
       "chapter_content_sha256": "925a02abdc902dcfb15de23298518faea5036ccb450f07e18528d4aeef372bc4",
       "structure_sha256": "2ff5c4da930a4c39886d57a63cc6430e291978e5679f7f97811f5231f426e564",
-      "content_sha256": "ac4ea55c8f1a924d73355f4b246a7e0e1b59830559a77181a98e718da5cfc487"
+      "content_sha256": "61bd96c0c0d057e596c4a3b2f934c76737d5c5b09ab433cb7ec8d11db70c6c3b"
     },
     "teknologi": {
       "subject_id": "teknologi",
