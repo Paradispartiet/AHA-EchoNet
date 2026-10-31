@@ -58,6 +58,7 @@ test("Explicit copy and move preserve the underlying sources and block duplicate
   });
   await page.goto("/lists.html");
   const before = await page.evaluate(() => localStorage.getItem("aha_lists_v1"));
+  const originalInsights = await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"));
   await page.locator('[data-list-select-preview="from"]').click();
   const first = page.locator(".aha-list-item-row").filter({ hasText: "Viktig kilde" });
   await first.locator("[data-list-item-action='copy']").click();
@@ -80,5 +81,5 @@ test("Explicit copy and move preserve the underlying sources and block duplicate
   expect(data.find((x) => x.id === "from").items.map((x) => x.refId)).toEqual(["note-1"]);
   expect(data.find((x) => x.id === "to").items.map((x) => x.refId)).toEqual(["note-1", "note-2"]);
   expect(await page.evaluate(() => localStorage.getItem("aha_notes_v1"))).toContain("note-2");
-  expect(await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"))).toBe(originalInsights);
 });
