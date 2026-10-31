@@ -147,6 +147,48 @@ t.trigger('lists-type-filter', 'change');
 assert.match(t.elements['lists-list'].innerHTML, /id="list-preview-title"[^>]*>Zebra samling/);
 assert.match(t.elements['lists-list'].innerHTML, /valgte samlingen er skjult/);
 
+assert.match(t.elements['lists-list'].innerHTML, /id="list-member-search"/);
+assert.match(t.elements['lists-list'].innerHTML, /Viser 3 av 3 objekter/);
+const memberRows = [
+  { dataset: { listMemberSearchText: 'Kildedokument note Viktig kilde' }, hidden: false },
+  { dataset: { listMemberSearchText: 'Neste dokument note' }, hidden: false },
+  { dataset: { listMemberSearchText: 'Tidligere dokument note' }, hidden: false }
+];
+const memberCount = { textContent: '' };
+const mockPreview = {
+  querySelectorAll(selector) {
+    assert.equal(selector, '.aha-list-item-row');
+    return memberRows;
+  },
+  querySelector(selector) {
+    assert.equal(selector, '[data-list-member-count]');
+    return memberCount;
+  }
+};
+const memberInput = {
+  value: 'neste',
+  matches(selector) { return selector === '[data-list-member-search]'; },
+  closest(selector) {
+    assert.equal(selector, '.aha-list-preview');
+    return mockPreview;
+  }
+};
+t.elements['lists-list'].handlers.input({ target: memberInput });
+assert.deepEqual(memberRows.map((row) => row.hidden), [true, false, true]);
+assert.equal(memberCount.textContent, 'Viser 1 av 3 objekter');
+assert.equal(t.writes.length, 0, 'Searching inside a collection does not write');
+t.Lists.render();
+assert.match(t.elements['lists-list'].innerHTML, /id="list-member-search"[^>]*value="neste"/,
+  'Member filter is preserved across view rerenders');
+assert.match(t.elements['lists-list'].innerHTML, /class="aha-list-item-row"[^>]*hidden>/,
+  'Nonmatching members remain in the DOM but are hidden from the view');
+assert.match(t.elements['lists-list'].innerHTML, /Viser 1 av 3 objekter/);
+t.Lists.selectList('B');
+t.Lists.selectList('A');
+assert.match(t.elements['lists-list'].innerHTML, /Viser 3 av 3 objekter/,
+  'Choosing another collection resets the temporary member search');
+assert.equal(t.writes.length, 0, 'Changing the selected collection does not write');
+
 const n = t.writes.length;
 assert.equal(t.Lists.relocateListItem('A', 'entry-1', 'A', 'move').reason, 'invalid_target');
 assert.equal(t.Lists.relocateListItem('A', 'entry-1', 'C', 'copy').reason, 'duplicate');
