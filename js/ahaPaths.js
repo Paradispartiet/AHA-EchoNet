@@ -411,13 +411,42 @@
     return { planned: "Ikke startet", active: "Pågår", done: "Fullført", skipped: "Hoppet over" }[status] || "Ikke startet";
   }
 
-  function pathProgressMarkup(path) {
+  function pathProgressMarkup(path, variant = "detail") {
     const progress = pathProgress(path);
-    return `<div class="aha-path-progress"><label>Fremdrift: ${progress.done} av ${progress.total} steg fullført${progress.skipped ? ` · ${progress.skipped} hoppet over` : ""}</label><progress value="${progress.done}" max="${Math.max(1, progress.total)}" aria-label="Fullførte steg i ${escapeHtml(path.title)}"></progress></div>`;
+    const cssClass = variant === "overview" ? "aha-path-card-progress" : "aha-path-progress";
+    return `<div class="${cssClass}"><label>Fremdrift: ${progress.done} av ${progress.total} steg fullført${progress.skipped ? ` · ${progress.skipped} hoppet over` : ""}</label><progress value="${progress.done}" max="${Math.max(1, progress.total)}" aria-label="Fullførte steg i ${escapeHtml(path.title)}"></progress></div>`;
+  }
+
+  function nextOpenPathStep(path) {
+    const steps = asArray(path?.steps).slice().sort((a, b) => a.order - b.order);
+    return steps.find((step) => step.status === "active")
+      || steps.find((step) => step.status === "planned")
+      || null;
+  }
+
+  function pathStepElementId(stepId) {
+    return `path-step-${encodeURIComponent(stepId)}`;
+  }
+
+  function focusPathStep(stepId) {
+    const target = document.getElementById(pathStepElementId(stepId));
+    if (!target) return false;
+    target.focus?.();
+    target.scrollIntoView?.({ block: "nearest" });
+    return true;
   }
 
   function renderOverviewCard(path, isSelected) {
     const category = path.category || path.type;
+    const progress = pathProgress(path);
+    const nextStep = nextOpenPathStep(path);
+    const nextLabel = nextStep
+      ? `Neste steg: ${nextStep.title}`
+      : !progress.total
+        ? "Ingen steg ennå."
+        : progress.done === progress.total
+          ? "Alle steg fullført."
+          : "Ingen åpne steg. Hoppede steg regnes ikke som fullført.";
     return `
       <article class="aha-panel aha-path-overview-card${isSelected ? " is-selected" : ""}" data-path-card="${escapeHtml(path.id)}">
         <div class="aha-path-header">
@@ -432,9 +461,14 @@
           <span>${escapeHtml(category)}</span>
           <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
         </div>
-        <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
-          ${isSelected ? "Valgt" : "Følg stien"}
-        </button>
+        ${pathProgressMarkup(path, "overview")}
+        <p class="aha-path-next-step">${escapeHtml(nextLabel)}</p>
+        <div class="aha-path-card-actions">
+          <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
+            ${isSelected ? "Åpen sti" : "Se sti"}
+          </button>
+          ${nextStep ? `<button type="button" class="aha-tile-btn aha-tile-btn-primary" data-path-resume="${escapeHtml(path.id)}">Fortsett der du slapp</button>` : ""}
+        </div>
       </article>`;
   }
 
@@ -511,11 +545,13 @@
       `<option value="${escapeHtml(item.source)}::${escapeHtml(item.refId)}::${escapeHtml(item.type)}::${escapeHtml(item.title)}">${escapeHtml(item.title)} (${escapeHtml(item.type)})</option>`
     )).join("");
     const visibleSteps = path.steps.slice().sort((a, b) => a.order - b.order);
+    const nextStep = nextOpenPathStep(path);
+    const progress = pathProgress(path);
     const availableStepIndex = buildAvailableStepIndex(availableItems);
     const stepsHtml = visibleSteps.length
-      ? visibleSteps.map((step) => `
-        <li class="aha-path-step-row${step.status === "done" ? " is-done" : ""}">
-          <span class="aha-path-step-number" aria-hidden="true">${step.order + 1}</span>
+      ? visibleSteps.map((step, index) => `
+        <li id="${escapeHtml(pathStepElementId(step.id))}" class="aha-path-step-row${step.status === "done" ? " is-done" : step.status === "active" ? " is-active" : step.status === "skipped" ? " is-skipped" : ""}" tabindex="-1">
+          <span class="aha-path-step-number" aria-hidden="true">${index + 1}</span>
           <div class="aha-path-step-content">
             <strong>${escapeHtml(step.title)}</strong>
             ${availableStepIndex.has(`${step.source}::${step.refId}`) && ["aha_insights", "aha_lists", "aha_concept_lists", "aha_notes"].includes(step.source)
@@ -532,6 +568,10 @@
               <button type="button" data-step-save="${escapeHtml(path.id)}::${escapeHtml(step.id)}">Lagre steg</button>
             </details>
             <button type="button" class="aha-tile-btn" data-step-remove="${escapeHtml(path.id)}::${escapeHtml(step.id)}" aria-label="Fjern ${escapeHtml(step.title)} fra ${escapeHtml(path.title)}">Fjern steg</button>
+            <div class="aha-path-step-navigation" role="group" aria-label="Navigasjon ved steg ${index + 1}">
+              ${index > 0 ? `<button type="button" class="aha-tile-btn" data-path-step-jump="${escapeHtml(visibleSteps[index - 1].id)}">Forrige steg</button>` : ""}
+              ${index + 1 < visibleSteps.length ? `<button type="button" class="aha-tile-btn" data-path-step-jump="${escapeHtml(visibleSteps[index + 1].id)}">Neste steg</button>` : ""}
+            </div>
           </div>
         </li>`).join("")
       : `<li class="aha-path-preview-empty-step">Ingen steg ennå. Legg til første innsikt, begrepsliste, samling eller notat.</li>`;
@@ -555,6 +595,9 @@
         <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
       </div>
       ${pathProgressMarkup(path)}
+      ${nextStep ? `<div class="aha-path-resume"><p><strong>Neste åpne steg:</strong> ${escapeHtml(nextStep.title)}</p><button type="button" class="aha-tile-btn aha-tile-btn-primary" data-path-step-jump="${escapeHtml(nextStep.id)}">Fortsett der du slapp</button></div>`
+        : progress.total ? `<p class="aha-path-next-step">${progress.done === progress.total ? "Alle steg er fullført." : "Ingen åpne steg. Hoppede steg er ikke markert som fullført."}</p>` : ""}
+      ${visibleSteps.length ? `<nav class="aha-path-step-jump-nav" aria-label="Hopp mellom steg"><strong>Hopp til steg</strong><div>${visibleSteps.map((step, index) => `<button type="button" class="aha-tile-btn${step.status === "done" ? " is-done" : step.status === "active" ? " is-active" : ""}" data-path-step-jump="${escapeHtml(step.id)}" aria-label="Gå til steg ${index + 1}: ${escapeHtml(step.title)}, ${escapeHtml(stepStatusLabel(step.status))}">${index + 1}. ${escapeHtml(step.title)}</button>`).join("")}</div></nav>` : ""}
       <section aria-labelledby="path-preview-steps-title">
         <h3 id="path-preview-steps-title">Fortelling og læringstrinn</h3>
         <ol class="aha-path-steps aha-path-story">${stepsHtml}</ol>
@@ -853,6 +896,23 @@
     document.getElementById("paths-list")?.addEventListener("click", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
+
+      const resumePathId = target.dataset.pathResume;
+      if (resumePathId) {
+        const path = loadPaths().find((item) => item.id === resumePathId && !isUnavailableRecord(item));
+        if (!path) return;
+        selectedPathId = path.id;
+        render();
+        const nextStep = nextOpenPathStep(path);
+        if (!nextStep || !focusPathStep(nextStep.id)) document.getElementById("path-preview-title")?.focus?.();
+        return;
+      }
+
+      const jumpStepId = target.dataset.pathStepJump;
+      if (jumpStepId) {
+        focusPathStep(jumpStepId);
+        return;
+      }
 
       const previewPayload = target.dataset.pathSelectPreview;
       if (previewPayload) {
