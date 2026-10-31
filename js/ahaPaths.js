@@ -411,9 +411,10 @@
     return { planned: "Ikke startet", active: "Pågår", done: "Fullført", skipped: "Hoppet over" }[status] || "Ikke startet";
   }
 
-  function pathProgressMarkup(path) {
+  function pathProgressMarkup(path, variant = "detail") {
     const progress = pathProgress(path);
-    return `<div class="aha-path-progress"><label>Fremdrift: ${progress.done} av ${progress.total} steg fullført${progress.skipped ? ` · ${progress.skipped} hoppet over` : ""}</label><progress value="${progress.done}" max="${Math.max(1, progress.total)}" aria-label="Fullførte steg i ${escapeHtml(path.title)}"></progress></div>`;
+    const cssClass = variant === "overview" ? "aha-path-card-progress" : "aha-path-progress";
+    return `<div class="${cssClass}"><label>Fremdrift: ${progress.done} av ${progress.total} steg fullført${progress.skipped ? ` · ${progress.skipped} hoppet over` : ""}</label><progress value="${progress.done}" max="${Math.max(1, progress.total)}" aria-label="Fullførte steg i ${escapeHtml(path.title)}"></progress></div>`;
   }
 
   function nextOpenPathStep(path) {
@@ -460,7 +461,7 @@
           <span>${escapeHtml(category)}</span>
           <span>Updated ${escapeHtml(formatDate(path.updatedAt || path.createdAt))}</span>
         </div>
-        ${pathProgressMarkup(path)}
+        ${pathProgressMarkup(path, "overview")}
         <p class="aha-path-next-step">${escapeHtml(nextLabel)}</p>
         <div class="aha-path-card-actions">
           <button type="button" class="aha-tile-btn${isSelected ? " aha-tile-btn-primary" : ""}" data-path-select-preview="${escapeHtml(path.id)}" aria-pressed="${isSelected ? "true" : "false"}">
