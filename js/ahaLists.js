@@ -14,6 +14,9 @@
 
   const ALLOWED_TYPES = ["favorites", "todo", "concepts", "process", "quality", "ai", "shared_later"];
   let selectedListId = "";
+  // View-only; never persisted and reset when selecting another collection.
+  let selectedListMemberQuery = "";
+  let relocationNotice = "";
   const projectionReceipts = new Map();
 
   function safeParse(raw, fallback) {
@@ -509,6 +512,42 @@
     return { ok: true, item, list };
   }
 
+  // An explicit relocation changes one saved collection dataset atomically.
+  // Searching, sorting and selecting collections never call this function.
+  function relocateListItem(fromId, itemId, toId, mode = "copy") {
+    if (!["copy", "move"].includes(mode) || !fromId || !itemId || !toId || fromId === toId) {
+      return { ok: false, reason: "invalid_target" };
+    }
+    const lists = loadLists();
+    const from = lists.find((list) => list.id === fromId && !isUnavailableRecord(list));
+    const to = lists.find((list) => list.id === toId && !isUnavailableRecord(list));
+    if (!from || !to) return { ok: false, reason: "list_not_found" };
+    const existing = from.items.find((item) => item.id === itemId);
+    if (!existing) return { ok: false, reason: "item_not_found" };
+    if (to.items.some((item) => item.source === existing.source && item.refId === existing.refId)) {
+      return { ok: false, reason: "duplicate" };
+    }
+    const validation = validateListReference(existing);
+    if (!validation.ok) return { ok: false, reason: "invalid_reference", detail: validation.reason };
+
+    const now = new Date().toISOString();
+    const relocated = normalizeListItem({
+      ...existing,
+      id: mode === "copy" ? uid("list_item") : existing.id,
+      addedAt: mode === "copy" ? now : existing.addedAt
+    }, to.id);
+    to.items.push(relocated);
+    to.updatedAt = now;
+    if (mode === "move") {
+      from.items = from.items.filter((item) => item.id !== itemId);
+      from.updatedAt = now;
+    }
+    saveLists(lists);
+    persistList(to);
+    if (mode === "move") persistList(from);
+    return { ok: true, item: relocated, mode, fromId, toId };
+  }
+
   function removeItemFromList(listId, itemId) {
     const lists = loadLists();
     const index = lists.findIndex((list) => list.id === listId && !isDeletedRecord(list));
@@ -624,6 +663,25 @@
     return asText(list?.status, "Local");
   }
 
+  function uiControlValue(id, fallback = "") {
+    return asText(document.getElementById(id)?.value, fallback);
+  }
+
+  function matchesSearch(query, parts) {
+    return !query || parts.some((part) => String(part || "").toLocaleLowerCase("no").includes(query));
+  }
+
+  function sortVisibleLists(items, sort, countField, time) {
+    const collator = new Intl.Collator("no", { sensitivity: "base", numeric: true });
+    return items.slice().sort((a, b) => {
+      if (sort === "title") return collator.compare(a.title, b.title) || collator.compare(a.id, b.id);
+      if (sort === countField) {
+        return b[countField].length - a[countField].length || time(b) - time(a) || collator.compare(a.title, b.title);
+      }
+      return time(b) - time(a) || collator.compare(a.title, b.title);
+    });
+  }
+
   function renderOverviewCard(list, isSelected) {
     return `
       <article class="aha-panel aha-list-overview-card${isSelected ? " is-selected" : ""}" data-list-card="${escapeHtml(list.id)}">
@@ -696,7 +754,7 @@
     }).join("");
   }
 
-  function renderSelectedPreview(list, allItems, groups) {
+  function renderSelectedPreview(list, allItems, groups, allLists) {
     if (!list) {
       return `<aside class="aha-panel aha-list-preview aha-list-preview-empty" aria-label="List preview">
         <p class="eyebrow">Forhåndsvisning av samling</p>
@@ -711,16 +769,34 @@
     // A collection must never hide members beyond the first five: every saved
     // item remains accessible and removable from the same workspace.
     const visibleItems = list.items;
+    const memberQuery = selectedListMemberQuery.trim().toLocaleLowerCase("no");
+    const memberMatches = (item) => matchesSearch(memberQuery, [item.title, item.type, item.membership_reason]);
+    const shownMemberCount = visibleItems.filter(memberMatches).length;
+    const availableIndex = buildAvailableItemIndex(allItems);
+    const targets = allLists.filter((candidate) => candidate.id !== list.id && !isUnavailableRecord(candidate));
+    const targetOptions = targets.map((candidate) => `<option value="${escapeHtml(candidate.id)}">${escapeHtml(candidate.title)}</option>`).join("");
     const itemsHtml = visibleItems.length
       ? visibleItems.map((item) => `
-        <li class="aha-list-item-row">
+        <li class="aha-list-item-row" data-list-member-search-text="${escapeHtml([item.title, item.type, item.membership_reason].join(" "))}"${memberMatches(item) ? "" : " hidden"}>
           <div>
             <strong>${escapeHtml(item.title)}</strong>
-            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
+            ${availableIndex.has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
             ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
-            <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
+            <div class="module-meta">${escapeHtml(item.type)}${availableIndex.has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
-          <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Remove ${escapeHtml(item.title)} from ${escapeHtml(list.title)}">Remove</button>
+          <div class="aha-list-item-actions">
+            ${targets.length && (availableIndex.has(`${item.source}::${item.refId}`) || item.source === "aha_projection_v2" && item.meta?.inline === true)
+              ? `<label>Til samling
+                  <select data-list-move-target aria-label="Målsamling for ${escapeHtml(item.title)}">
+                    <option value="">Velg samling</option>${targetOptions}
+                  </select>
+                </label>
+                <button type="button" class="aha-tile-btn" data-list-item-action="copy" data-list-source-id="${escapeHtml(list.id)}" data-list-item-id="${escapeHtml(item.id)}">Kopier</button>
+                <button type="button" class="aha-tile-btn" data-list-item-action="move" data-list-source-id="${escapeHtml(list.id)}" data-list-item-id="${escapeHtml(item.id)}">Flytt</button>`
+              : ""}
+            <button type="button" class="aha-tile-btn" data-list-remove="${escapeHtml(list.id)}::${escapeHtml(item.id)}" aria-label="Fjern ${escapeHtml(item.title)} fra ${escapeHtml(list.title)}">Fjern</button>
+            <span class="module-meta" role="status" aria-live="polite" data-list-item-status></span>
+          </div>
         </li>`).join("")
       : `<li class="aha-list-preview-empty-item">No items in this list yet.</li>`;
     const remainingCount = 0;
@@ -740,8 +816,14 @@
         <span>Created ${escapeHtml(formatDate(list.createdAt))}</span>
         <span>Updated ${escapeHtml(formatDate(list.updatedAt || list.createdAt))}</span>
       </div>
+      <p class="module-meta" role="status" aria-live="polite" data-list-relocation-notice>${escapeHtml(relocationNotice)}</p>
       <section aria-labelledby="list-preview-items-title">
         <h3 id="list-preview-items-title">Objekter</h3>
+        ${visibleItems.length ? `<div class="aha-list-member-controls">
+          <label for="list-member-search">Finn objekt i denne samlingen</label>
+          <input id="list-member-search" type="search" data-list-member-search autocomplete="off" value="${escapeHtml(selectedListMemberQuery)}" placeholder="Søk i tittel, type eller medlemsgrunn" />
+          <p class="module-meta" role="status" aria-live="polite" data-list-member-count>Viser ${shownMemberCount} av ${visibleItems.length} objekter</p>
+        </div>` : ""}
         <ul class="aha-list-items">${itemsHtml}</ul>
 
       </section>
@@ -773,14 +855,20 @@
   }
 
   function renderConceptLists() {
-    const lists = loadConceptLists()
-      .filter((list) => !isUnavailableRecord(list))
-      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+    const lists = loadConceptLists().filter((list) => !isUnavailableRecord(list));
+    const query = uiControlValue("concept-lists-search").toLocaleLowerCase("no");
+    const sort = uiControlValue("concept-lists-sort", "updated");
+    const visible = sortVisibleLists(
+      lists.filter((list) => matchesSearch(query, [list.title, list.description, ...list.terms.map((term) => term.term)])),
+      sort, "terms", (list) => Number.isFinite(Date.parse(list.updatedAt)) ? Date.parse(list.updatedAt) : 0
+    );
     const mount = document.getElementById("concept-lists-list");
     const count = document.getElementById("concept-lists-count");
     const termsCount = document.getElementById("concept-terms-count");
     if (count) count.textContent = String(lists.length);
     if (termsCount) termsCount.textContent = String(lists.reduce((sum, list) => sum + list.terms.length, 0));
+    const visibleCount = document.getElementById("concept-lists-visible-count");
+    if (visibleCount) visibleCount.textContent = `Viser ${visible.length} av ${lists.length} begrepslister`;
     if (!mount) return;
 
     if (!lists.length) {
@@ -792,7 +880,11 @@
       return;
     }
 
-    mount.innerHTML = lists.map((list) => {
+    if (!visible.length) {
+      mount.innerHTML = '<article class="aha-panel aha-concept-list-card"><h3>Ingen begrepslister matcher søket.</h3><p>Prøv et annet søkeord.</p></article>';
+      return;
+    }
+    mount.innerHTML = visible.map((list) => {
       const terms = list.terms.length
         ? `<ul class="aha-concept-terms">${list.terms.map((term) => `<li class="aha-concept-term"><div class="aha-concept-term-main"><span><strong>${escapeHtml(term.term)}</strong>${term.definition ? `<span class="aha-concept-term-definition">${escapeHtml(term.definition)}</span>` : ""}</span><button type="button" class="aha-concept-term-remove" data-concept-term-remove="${escapeHtml(list.id)}::${escapeHtml(term.id)}" aria-label="Fjern ${escapeHtml(term.term)}">×</button></div><details class="aha-concept-edit"><summary>Rediger begrep og forklaring</summary><form class="aha-concept-add-form" data-concept-term-edit="${escapeHtml(list.id)}::${escapeHtml(term.id)}"><label>Begrep<input name="term" required value="${escapeHtml(term.term)}" /></label><label>Forklaring<input name="definition" value="${escapeHtml(term.definition)}" /></label><button type="submit">Lagre begrep</button></form><p class="module-meta" role="status" data-concept-edit-status></p></details></li>`).join("")}</ul>`
         : `<p class="module-meta">Listen er tom. Legg til det første begrepet nedenfor.</p>`;
@@ -828,9 +920,14 @@
     const datasetExists = rawDataset !== null || rawConceptDataset !== null;
     if (rawDataset !== null) JSON.parse(rawDataset);
     if (rawConceptDataset !== null) JSON.parse(rawConceptDataset);
-    const lists = loadLists()
-      .filter((list) => !isDeletedRecord(list))
-      .sort((a, b) => listActionTime(b) - listActionTime(a));
+    const lists = loadLists().filter((list) => !isDeletedRecord(list));
+    const query = uiControlValue("lists-search").toLocaleLowerCase("no");
+    const type = uiControlValue("lists-type-filter", "all");
+    const sort = uiControlValue("lists-sort", "updated");
+    const visible = sortVisibleLists(lists.filter((list) =>
+      (type === "all" || list.type === type)
+      && matchesSearch(query, [list.title, list.description, ...asArray(list.tags)])
+    ), sort, "items", listActionTime);
     const groups = global.AHAGroups?.getActiveGroups ? asArray(global.AHAGroups.getActiveGroups()) : [];
     const allItems = collectAvailableItems();
     const statsLists = document.getElementById("lists-count");
@@ -839,6 +936,8 @@
 
     if (statsLists) statsLists.textContent = String(lists.length);
     if (statsItems) statsItems.textContent = String(lists.reduce((sum, list) => sum + list.items.length, 0));
+    const visibleCount = document.getElementById("lists-visible-count");
+    if (visibleCount) visibleCount.textContent = `Viser ${visible.length} av ${lists.length} samlinger`;
     if (!mount) return;
 
     global.AHAModules?.updatePageHealth?.("lists", global.AHAModules.localPageHealth({
@@ -870,13 +969,16 @@
             <p class="eyebrow">Oversikt</p>
             <h2 id="lists-overview-title">Dine samlinger</h2>
           </div>
-          <span>${lists.length} ${lists.length === 1 ? "list" : "lists"}</span>
+          <span>${visible.length} av ${lists.length} samlinger</span>
         </div>
+        ${selected && !visible.some((list) => list.id === selected.id)
+          ? '<p class="aha-list-selection-note" role="status">Den valgte samlingen er skjult i oversikten av filteret, men kan fortsatt redigeres.</p>' : ""}
         <div class="aha-list-overview-grid">
-          ${lists.map((list) => renderOverviewCard(list, list.id === selectedListId)).join("")}
+          ${visible.length ? visible.map((list) => renderOverviewCard(list, list.id === selectedListId)).join("")
+            : '<p class="aha-panel aha-list-no-results">Ingen samlinger matcher søket eller filteret.</p>'}
         </div>
       </section>
-      ${renderSelectedPreview(selected, allItems, groups)}
+      ${renderSelectedPreview(selected, allItems, groups, lists)}
     </div>`;
   }
 
@@ -898,6 +1000,26 @@
 
   function bind() {
     document.getElementById("lists-refresh")?.addEventListener("click", refresh);
+    document.getElementById("lists-list")?.addEventListener("input", (event) => {
+      const input = event.target;
+      if (!input?.matches?.("[data-list-member-search]")) return;
+      selectedListMemberQuery = String(input.value || "");
+      const query = selectedListMemberQuery.trim().toLocaleLowerCase("no");
+      const preview = input.closest(".aha-list-preview");
+      const rows = asArray(Array.from(preview?.querySelectorAll(".aha-list-item-row") || []));
+      let visible = 0;
+      for (const row of rows) {
+        row.hidden = Boolean(query) && !String(row.dataset.listMemberSearchText || "").toLocaleLowerCase("no").includes(query);
+        if (!row.hidden) visible += 1;
+      }
+      const count = preview?.querySelector("[data-list-member-count]");
+      if (count) count.textContent = `Viser ${visible} av ${rows.length} objekter`;
+    });
+    document.getElementById("concept-lists-search")?.addEventListener("input", renderConceptLists);
+    document.getElementById("concept-lists-sort")?.addEventListener("change", renderConceptLists);
+    document.getElementById("lists-search")?.addEventListener("input", renderContent);
+    document.getElementById("lists-type-filter")?.addEventListener("change", renderContent);
+    document.getElementById("lists-sort")?.addEventListener("change", renderContent);
 
     document.getElementById("v2-list-previews")?.addEventListener("click", (event) => {
       const target = event.target;
@@ -1019,8 +1141,31 @@
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
 
+      const action = target.dataset.listItemAction;
+      if (action === "copy" || action === "move") {
+        const row = target.closest(".aha-list-item-row");
+        const toId = row?.querySelector("[data-list-move-target]")?.value || "";
+        const status = row?.querySelector("[data-list-item-status]");
+        const result = relocateListItem(target.dataset.listSourceId, target.dataset.listItemId, toId, action);
+        if (!result.ok) {
+          if (status) status.textContent = ({
+            duplicate: "Objektet finnes allerede i målsamlingen.",
+            invalid_target: "Velg en annen samling først.",
+            invalid_reference: "Kilden er ikke tilgjengelig for flytting.",
+            item_not_found: "Objektet finnes ikke lenger."
+          })[result.reason] || "Kunne ikke flytte eller kopiere objektet.";
+          return;
+        }
+        const targetList = loadLists().find((list) => list.id === toId);
+        relocationNotice = `${action === "copy" ? "Kopiert" : "Flyttet"} til ${targetList?.title || "samlingen"}.`;
+        render();
+        return;
+      }
+
       const previewPayload = target.dataset.listSelectPreview;
       if (previewPayload) {
+        relocationNotice = "";
+        if (selectedListId !== previewPayload) selectedListMemberQuery = "";
         selectedListId = previewPayload;
         render();
         document.getElementById("list-preview-title")?.focus?.();
@@ -1038,6 +1183,7 @@
           }
         }
         selectedListId = "";
+        selectedListMemberQuery = "";
         render();
         return;
       }
@@ -1114,13 +1260,16 @@
     deleteList,
     addItemToList,
     removeItemFromList,
+    relocateListItem,
     collectAvailableItems,
     buildAvailableItemIndex,
     validateListReference,
     renderProjectionListPreviews,
     syncFromDatabase,
     selectList(id) {
-      selectedListId = asText(id, "");
+      const nextId = asText(id, "");
+      if (selectedListId !== nextId) selectedListMemberQuery = "";
+      selectedListId = nextId;
       render();
     },
     render,

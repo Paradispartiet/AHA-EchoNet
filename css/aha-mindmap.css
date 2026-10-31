@@ -183,3 +183,12 @@
 }
 
 .mindmap-details p { margin: 6px 0; }
+
+/* Existing graph edges can be followed without drawing or inventing new links. */
+.mindmap-related { margin-top: 16px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 12px; }
+.mindmap-related h4 { margin: 0 0 6px; font-size: 1rem; }
+.mindmap-related-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 8px; }
+.mindmap-related-action { display: flex; flex-direction: column; width: 100%; gap: 4px; text-align: left; min-height: 48px; padding: 10px 12px; color: inherit; background: rgba(130,167,255,.06); border: 1px solid rgba(130,167,255,.28); border-radius: 10px; cursor: pointer; }
+.mindmap-related-action:hover { border-color: rgba(130,167,255,.75); background: rgba(130,167,255,.11); }
+.mindmap-related-action:focus-visible { outline: 3px solid #8dcaff; outline-offset: 2px; }
+.mindmap-related-action span { color: var(--muted, #aab4c3); font-size: .85rem; }

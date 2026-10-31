@@ -65,7 +65,7 @@ test("A saved collection exposes all six members, not just the first five", asyn
   await expect(page.locator("#list-preview-title")).toHaveText("Alle seks notater");
   await expect(page.locator(".aha-list-item-row")).toHaveCount(6);
   await expect(page.locator(".aha-list-item-row").last()).toContainText("Notat 5");
-  await expect(page.locator(".aha-list-item-row").last().getByRole("button", { name: /Remove/ })).toBeVisible();
+  await expect(page.locator(".aha-list-item-row").last().getByRole("button", { name: /^(Fjern|Remove)\b/i })).toBeVisible();
 });
 
 
