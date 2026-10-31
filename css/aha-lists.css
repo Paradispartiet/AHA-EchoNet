@@ -398,3 +398,71 @@
 .aha-concept-edit .aha-concept-add-form { margin-top: 8px; }
 .aha-concept-edit [role="status"] { min-height: 1.2em; }
 .aha-concept-relation-explanation { display: block; margin-top: 4px; color: var(--muted, #aab4c3); line-height: 1.4; }
+
+/* Search and sorting are read-only controls; inputs remain mounted while views refresh. */
+.aha-list-find-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.aha-list-find-controls label {
+  display: grid;
+  gap: 6px;
+  font-weight: 650;
+  font-size: .9rem;
+  min-width: 0;
+}
+.aha-list-find-controls input,
+.aha-list-find-controls select,
+.aha-list-item-actions select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  color: inherit;
+  padding: 9px 10px;
+  font: inherit;
+}
+.aha-list-find-controls [role="status"] { margin: 0; }
+.aha-list-item-row { align-items: flex-start; }
+.aha-list-item-row > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.aha-list-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+.aha-list-item-actions label {
+  display: grid;
+  gap: 5px;
+  min-width: 130px;
+  font-size: .85rem;
+}
+.aha-list-item-actions [role="status"] { flex-basis: 100%; }
+.aha-list-selection-note,
+.aha-list-no-results { margin: 0; }
+@media (max-width: 760px) {
+  .aha-list-item-actions { justify-content: stretch; width: 100%; }
+  .aha-list-item-actions label { flex: 1 0 100%; }
+  .aha-list-item-actions button { flex: 1 1 120px; }
+}
+
+/* A selected collection can be searched without hiding or modifying saved members. */
+.aha-list-member-controls { display: grid; gap: 6px; }
+.aha-list-member-controls label { font-weight: 650; font-size: .9rem; }
+.aha-list-member-controls input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  color: inherit;
+  padding: 9px 10px;
+  font: inherit;
+}
+.aha-list-member-controls [role="status"] { margin: 0; }
+.aha-list-item-row[hidden] { display: none; }

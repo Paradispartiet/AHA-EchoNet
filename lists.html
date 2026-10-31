@@ -54,6 +54,19 @@
       <article class="aha-list-stat-card"><span>Begrepslister</span><strong id="concept-lists-count">0</strong></article>
       <article class="aha-list-stat-card"><span>Begreper totalt</span><strong id="concept-terms-count">0</strong></article>
     </section>
+    <section class="aha-panel aha-list-find-controls" aria-label="Finn begrepslister">
+      <label for="concept-lists-search">Søk i begrepslister
+        <input id="concept-lists-search" type="search" placeholder="Søk i tittel, beskrivelse eller begreper" autocomplete="off" />
+      </label>
+      <label for="concept-lists-sort">Sorter begrepslister
+        <select id="concept-lists-sort">
+          <option value="updated">Sist oppdatert</option>
+          <option value="title">Tittel A–Å</option>
+          <option value="terms">Flest begreper</option>
+        </select>
+      </label>
+      <p id="concept-lists-visible-count" class="module-meta" role="status" aria-live="polite"></p>
+    </section>
     <section id="concept-lists-list" class="aha-concept-list-grid aha-module-content" aria-live="polite"></section>
 
     <section id="collections" class="aha-panel aha-collections-intro">
@@ -72,6 +85,31 @@
       </form>
     </section>
     <section class="aha-list-stats"><article class="aha-list-stat-card"><span>Samlinger</span><strong id="lists-count">0</strong></article><article class="aha-list-stat-card"><span>Objekter i samlinger</span><strong id="list-items-count">0</strong></article></section>
+    <section class="aha-panel aha-list-find-controls" aria-label="Finn samlinger">
+      <label for="lists-search">Søk i samlinger
+        <input id="lists-search" type="search" placeholder="Søk i tittel, beskrivelse eller etiketter" autocomplete="off" />
+      </label>
+      <label for="lists-type-filter">Filtrer etter type
+        <select id="lists-type-filter">
+          <option value="all">Alle typer</option>
+          <option value="favorites">Favoritter</option>
+          <option value="todo">Gjøremål</option>
+          <option value="concepts">Begreper</option>
+          <option value="process">Prosess</option>
+          <option value="quality">Kvalitet</option>
+          <option value="ai">AI</option>
+          <option value="shared_later">Del senere</option>
+        </select>
+      </label>
+      <label for="lists-sort">Sorter samlinger
+        <select id="lists-sort">
+          <option value="updated">Sist oppdatert</option>
+          <option value="title">Tittel A–Å</option>
+          <option value="items">Flest objekter</option>
+        </select>
+      </label>
+      <p id="lists-visible-count" class="module-meta" role="status" aria-live="polite"></p>
+    </section>
     <section id="lists-list" class="aha-lists-layout aha-module-content" aria-live="polite"></section>
   </main>
   <script src="js/ahaModules.js"></script>
