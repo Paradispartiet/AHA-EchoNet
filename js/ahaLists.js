@@ -961,13 +961,13 @@
           </div>
           <span>${visible.length} av ${lists.length} samlinger</span>
         </div>
+        ${selected && !visible.some((list) => list.id === selected.id)
+          ? '<p class="aha-list-selection-note" role="status">Den valgte samlingen er skjult i oversikten av filteret, men kan fortsatt redigeres.</p>' : ""}
         <div class="aha-list-overview-grid">
           ${visible.length ? visible.map((list) => renderOverviewCard(list, list.id === selectedListId)).join("")
             : '<p class="aha-panel aha-list-no-results">Ingen samlinger matcher søket eller filteret.</p>'}
         </div>
       </section>
-      ${selected && !visible.some((list) => list.id === selected.id)
-        ? '<p class="aha-list-selection-note" role="status">Den valgte samlingen er skjult i oversikten av filteret, men kan fortsatt redigeres.</p>' : ""}
       ${renderSelectedPreview(selected, allItems, groups, lists)}
     </div>`;
   }
