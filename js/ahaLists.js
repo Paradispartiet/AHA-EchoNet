@@ -14,6 +14,8 @@
 
   const ALLOWED_TYPES = ["favorites", "todo", "concepts", "process", "quality", "ai", "shared_later"];
   let selectedListId = "";
+  // View-only; never persisted and reset when selecting another collection.
+  let selectedListMemberQuery = "";
   let relocationNotice = "";
   const projectionReceipts = new Map();
 
@@ -767,12 +769,15 @@
     // A collection must never hide members beyond the first five: every saved
     // item remains accessible and removable from the same workspace.
     const visibleItems = list.items;
+    const memberQuery = selectedListMemberQuery.trim().toLocaleLowerCase("no");
+    const memberMatches = (item) => matchesSearch(memberQuery, [item.title, item.type, item.membership_reason]);
+    const shownMemberCount = visibleItems.filter(memberMatches).length;
     const availableIndex = buildAvailableItemIndex(allItems);
     const targets = allLists.filter((candidate) => candidate.id !== list.id && !isUnavailableRecord(candidate));
     const targetOptions = targets.map((candidate) => `<option value="${escapeHtml(candidate.id)}">${escapeHtml(candidate.title)}</option>`).join("");
     const itemsHtml = visibleItems.length
       ? visibleItems.map((item) => `
-        <li class="aha-list-item-row">
+        <li class="aha-list-item-row" data-list-member-search-text="${escapeHtml([item.title, item.type, item.membership_reason].join(" "))}"${memberMatches(item) ? "" : " hidden"}>
           <div>
             <strong>${escapeHtml(item.title)}</strong>
             ${availableIndex.has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
@@ -814,6 +819,11 @@
       <p class="module-meta" role="status" aria-live="polite" data-list-relocation-notice>${escapeHtml(relocationNotice)}</p>
       <section aria-labelledby="list-preview-items-title">
         <h3 id="list-preview-items-title">Objekter</h3>
+        ${visibleItems.length ? `<div class="aha-list-member-controls">
+          <label for="list-member-search">Finn objekt i denne samlingen</label>
+          <input id="list-member-search" type="search" data-list-member-search autocomplete="off" value="${escapeHtml(selectedListMemberQuery)}" placeholder="Søk i tittel, type eller medlemsgrunn" />
+          <p class="module-meta" role="status" aria-live="polite" data-list-member-count>Viser ${shownMemberCount} av ${visibleItems.length} objekter</p>
+        </div>` : ""}
         <ul class="aha-list-items">${itemsHtml}</ul>
 
       </section>
@@ -990,6 +1000,21 @@
 
   function bind() {
     document.getElementById("lists-refresh")?.addEventListener("click", refresh);
+    document.getElementById("lists-list")?.addEventListener("input", (event) => {
+      const input = event.target;
+      if (!input?.matches?.("[data-list-member-search]")) return;
+      selectedListMemberQuery = String(input.value || "");
+      const query = selectedListMemberQuery.trim().toLocaleLowerCase("no");
+      const preview = input.closest(".aha-list-preview");
+      const rows = asArray(Array.from(preview?.querySelectorAll(".aha-list-item-row") || []));
+      let visible = 0;
+      for (const row of rows) {
+        row.hidden = Boolean(query) && !String(row.dataset.listMemberSearchText || "").toLocaleLowerCase("no").includes(query);
+        if (!row.hidden) visible += 1;
+      }
+      const count = preview?.querySelector("[data-list-member-count]");
+      if (count) count.textContent = `Viser ${visible} av ${rows.length} objekter`;
+    });
     document.getElementById("concept-lists-search")?.addEventListener("input", renderConceptLists);
     document.getElementById("concept-lists-sort")?.addEventListener("change", renderConceptLists);
     document.getElementById("lists-search")?.addEventListener("input", renderContent);
@@ -1140,6 +1165,7 @@
       const previewPayload = target.dataset.listSelectPreview;
       if (previewPayload) {
         relocationNotice = "";
+        if (selectedListId !== previewPayload) selectedListMemberQuery = "";
         selectedListId = previewPayload;
         render();
         document.getElementById("list-preview-title")?.focus?.();
@@ -1157,6 +1183,7 @@
           }
         }
         selectedListId = "";
+        selectedListMemberQuery = "";
         render();
         return;
       }
@@ -1240,7 +1267,9 @@
     renderProjectionListPreviews,
     syncFromDatabase,
     selectList(id) {
-      selectedListId = asText(id, "");
+      const nextId = asText(id, "");
+      if (selectedListId !== nextId) selectedListMemberQuery = "";
+      selectedListId = nextId;
       render();
     },
     render,
