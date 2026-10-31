@@ -28,9 +28,9 @@ const rows = new Map([
 
 const handlers = new Map();
 const fields = {
-  "mindmap-node-type": { value: "all", options: [{}], remove(index) { this.options.splice(index, 1); }, appendChild(option) { this.options.push(option); } },
-  "mindmap-edge-type": { value: "all", options: [{}], remove(index) { this.options.splice(index, 1); }, appendChild(option) { this.options.push(option); } },
-  "mindmap-search": { value: "" },
+  "mindmap-node-type": { value: "all", addEventListener() {}, options: [{}], remove(index) { this.options.splice(index, 1); }, appendChild(option) { this.options.push(option); } },
+  "mindmap-edge-type": { value: "all", addEventListener() {}, options: [{}], remove(index) { this.options.splice(index, 1); }, appendChild(option) { this.options.push(option); } },
+  "mindmap-search": { value: "", addEventListener() {} },
   "mindmap-visual": { innerHTML: "", querySelector() { return null; } },
   "mindmap-branch-legend": { innerHTML: "" },
   "mindmap-details": { innerHTML: "", addEventListener(name, handler) { handlers.set(name, handler); } },
