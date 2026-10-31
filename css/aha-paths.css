@@ -363,16 +363,19 @@
 
 
 /* Progress is derived only from saved step states; no separate counter. */
-.aha-path-progress { margin: 14px 0 18px; display: grid; gap: 8px; }
-.aha-path-progress label { font-size: .9rem; font-weight: 700; }
-.aha-path-progress progress { display: block; width: 100%; height: 12px; accent-color: #69c5a7; }
+.aha-path-progress,
+.aha-path-card-progress { margin: 14px 0 18px; display: grid; gap: 8px; }
+.aha-path-progress label,
+.aha-path-card-progress label { font-size: .9rem; font-weight: 700; }
+.aha-path-progress progress,
+.aha-path-card-progress progress { display: block; width: 100%; height: 12px; accent-color: #69c5a7; }
 .aha-path-step-row.is-done .aha-path-step-number { background: rgba(82, 192, 136, .19); border-color: rgba(82, 192, 136, .45); }
 .aha-path-step-complete { margin: 8px 0; }
 .aha-path-step-complete[aria-pressed="true"] { border-color: rgba(82, 192, 136, .6); color: #b7f0d2; }
 .aha-path-step-fields select { width: 100%; min-height: 44px; }
 
 /* Stier: offline navigation derived from persisted step status only. */
-.aha-path-overview-card .aha-path-progress { margin: 0; gap: 6px; }
+.aha-path-overview-card .aha-path-card-progress { margin: 0; gap: 6px; }
 .aha-path-next-step { margin: 0; overflow-wrap: anywhere; }
 .aha-path-card-actions,
 .aha-path-step-navigation { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
