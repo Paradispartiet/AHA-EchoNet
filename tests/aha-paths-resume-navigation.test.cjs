@@ -91,6 +91,7 @@ const learning = {
 
 const test = makeHarness([learning]);
 assert.match(test.mount.innerHTML, /Fremdrift: 1 av 4 steg fullført/);
+assert.match(test.mount.innerHTML, /class="aha-path-card-progress"/, 'Overview uses its own progress selector');
 assert.match(test.mount.innerHTML, /1 hoppet over/);
 assert.match(test.mount.innerHTML, /Neste steg: Tenk gjennom tema/);
 assert.match(test.mount.innerHTML, /data-path-resume="path-A\/B"/);
@@ -98,6 +99,8 @@ assert.equal(test.writes.length, 0, 'Rendering does not write to storage');
 
 test.click({ pathResume: 'path-A/B' });
 assert.match(test.mount.innerHTML, /Hopp til steg/);
+assert.equal((test.mount.innerHTML.match(/class="aha-path-progress"/g) || []).length, 1,
+  'Existing detail progress selector must match one element after selecting a path');
 assert.match(test.mount.innerHTML, /Neste åpne steg:.*Tenk gjennom tema/);
 assert.match(test.mount.innerHTML, /data-path-step-jump="planned\/3"/);
 assert.match(test.mount.innerHTML, /id="path-step-active%2F2"/);
