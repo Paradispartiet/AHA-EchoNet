@@ -10,6 +10,8 @@ test("Tankekart → Stier → Lister respects real references and writes only on
     }
   });
   await page.addInitScript(() => {
+    if (localStorage.getItem("aha_integration_fixture_ready") === "1") return;
+    localStorage.setItem("aha_integration_fixture_ready", "1");
     localStorage.setItem("aha_insight_chamber_v1", JSON.stringify({
       insights: [{ id: "ins-verified", title: "Beslutning fra kilde" }]
     }));
