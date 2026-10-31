@@ -161,7 +161,7 @@
         const termTitle = asText(typeof term === "string" ? term : term?.term || term?.title || term?.label, "");
         if (!termTitle) return;
         const termRefId = `${refId}:${asText(term?.id, `term_${index}`)}`;
-        const termNode = { id: nodeId("concept", "aha_concept_lists", termRefId), title: termTitle, type: "concept", source: "aha_concept_lists", refId: termRefId, href: "lists.html", meta: safetyMeta(term, STORAGE_KEYS.conceptLists, { conceptListId: refId, definition: asText(term?.definition, "") }) };
+        const termNode = { id: nodeId("concept", "aha_concept_lists", termRefId), title: termTitle, type: "concept", source: "aha_concept_lists", refId: termRefId, href: `lists.html#concept-list-${encodeURIComponent(refId)}`, meta: safetyMeta(term, STORAGE_KEYS.conceptLists, { conceptListId: refId, definition: asText(term?.definition, "") }) };
         addNode(nodes, nodeIndex, termNode);
         registerRef(termNode);
       });
@@ -443,7 +443,9 @@
       ...node,
       source: "aha_semantic_v2",
       refId: asText(node?.refId || node?.id, ""),
-      href: node?.type === "concept" ? "lists.html" : "insights.html",
+      // A V2 preview node is not itself a saved Insight or Concept List.
+      // A generic module URL would misleadingly imply it can be opened there.
+      href: "",
       meta: {
         ...(node?.meta && typeof node.meta === "object" ? node.meta : {}),
         source_key: "v2_projection_preview",
@@ -697,7 +699,9 @@
               <p class="mindmap-meta"><span class="mindmap-badge">${escapeHtml(TYPE_LABELS[node.type] || node.type)}</span> ${escapeHtml(node.source)}</p>
               <p class="mindmap-meta">refId: ${escapeHtml(node.refId)}</p>
               <p class="mindmap-meta">Inn: ${counts.in} · Ut: ${counts.out}</p>
-              <a href="${escapeHtml(node.href)}">Åpne modul</a>
+              ${node.meta?.projection_preview
+                ? '<span class="module-meta">AI-forhåndsvisning – ikke lagret som eget objekt.</span>'
+                : `<a href="${escapeHtml(node.href)}">Åpne modul</a>`}
             </article>
           `;
         }).join("")
@@ -824,7 +828,9 @@
       <p><strong>published_external:</strong> ${escapeHtml(String(selected.meta?.published_external === true))}</p>
       <p><strong>echonet_shared:</strong> ${escapeHtml(String(selected.meta?.echonet_shared === true))}</p>
       <p><strong>sync_enabled:</strong> ${escapeHtml(String(selected.meta?.sync_enabled === true))}</p>
-      <p><a href="${escapeHtml(selected.href)}">Åpne i ${selected.type === "path" ? "Stier" : selected.type === "list" || selected.type === "concept_list" ? "Lister" : "modulen"}</a></p>
+      ${selected.meta?.projection_preview
+        ? '<p class="module-meta">Dette er en AI-forhåndsvisning, ikke et eget lagret objekt. Ingen kildeknapp vises.</p>'
+        : `<p><a href="${escapeHtml(selected.href)}">Åpne i ${selected.type === "path" ? "Stier" : selected.type === "list" || selected.type === "concept_list" || selected.type === "concept" ? "Lister" : "modulen"}</a></p>`}
       <section class="mindmap-related" aria-label="Registrerte koblinger for valgt node">
         <h4>Følg koblingene (${related.length})</h4>
         <p class="module-meta">Bare registrerte koblinger vises. Ingen nye AI-sammenhenger beregnes.</p>
