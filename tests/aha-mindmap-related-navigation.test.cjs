@@ -76,6 +76,8 @@ assert.equal(byId(listId).href, "lists.html#list-list%3A1", "List opens the exac
 assert.equal(byId(pathId).href, "paths.html#path-path%2F1", "Path opens the exact saved knowledge Path");
 assert.equal(byId("concept_list::aha_concept_lists::concept 1").href,
   "lists.html#concept-list-concept%201", "Concept List opens its exact card");
+assert.equal(byId("concept::aha_concept_lists::concept 1:c1").href,
+  "lists.html#concept-list-concept%201", "Concept opens the parent Concept List, not an unrelated page");
 
 const neighbors = ctx.AHAMindmap.connectedMindmapNodes(listId, graph.nodes, graph.edges);
 assert.ok(neighbors.some((n) => n.id === insightId && n.direction === "utgående"));
