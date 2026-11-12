@@ -41,12 +41,37 @@
   const ARTICLE_OWNER_KEY = "aha_paradisavisa_cloud_owner_v1";
   let verifiedArticleOwner = false;
   let articleOwnerCheckVersion = 0;
+  let articleAuthSubscribed = false;
   function articleOwner() {
     try { return localStorage.getItem(ARTICLE_OWNER_KEY) || ""; }
     catch { return "unavailable"; }
   }
   function mayShowAccountArticles() {
     return !articleOwner() || verifiedArticleOwner;
+  }
+  function subscribeArticleOwnerAuth() {
+    // Keep guest mindmaps local-only; only subscribe if account-bound
+    // Paradisavisa history is present on this device.
+    if (articleAuthSubscribed || !articleOwner()) return;
+    const client = global.AHADb?.getClient?.();
+    if (typeof client?.auth?.onAuthStateChange !== "function") return;
+    try {
+      client.auth.onAuthStateChange((event) => {
+        if (!articleOwner()) return;
+        if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          ++articleOwnerCheckVersion;
+          verifiedArticleOwner = false;
+          refresh();
+        } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+          // getUser(), not session storage, decides whose nodes may appear.
+          void verifyArticleOwner();
+        }
+      });
+      articleAuthSubscribed = true;
+    } catch {
+      verifiedArticleOwner = false;
+      refresh();
+    }
   }
   async function verifyArticleOwner() {
     const check = ++articleOwnerCheckVersion;
@@ -58,6 +83,7 @@
     }
     verifiedArticleOwner = false;
     refresh(); // Never keep old article nodes visible while session is checked.
+    subscribeArticleOwnerAuth();
     try {
       const client = global.AHADb?.getClient?.();
       const { data, error } = client ? await client.auth.getUser() : { error: true };
@@ -916,9 +942,10 @@
   function bindUi() {
     const sourceSelector = document.getElementById("mindmap-data-source");
     if (articleOwner()) verifyArticleOwner();
+    global.addEventListener?.("pageshow", () => { if (articleOwner()) void verifyArticleOwner(); });
     global.addEventListener?.("storage", (event) => {
       if (event?.key === ARTICLE_OWNER_KEY || /-auth-token$/.test(String(event?.key || ""))) {
-        verifyArticleOwner();
+        void verifyArticleOwner();
       }
     });
     if (sourceSelector && global.AHAProjectionRuntimeSourceV2?.shouldOpenProduct?.("mindmap")) sourceSelector.value = "v2";
