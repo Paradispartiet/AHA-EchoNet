@@ -46,7 +46,8 @@ function boot() {
     AHADb: { getClient: () => client },
     document: {
       readyState: "loading", addEventListener() {},
-      getElementById() { return null; }
+      getElementById() { return null; },
+      querySelectorAll() { return []; }
     }
   };
   env.window = env;
