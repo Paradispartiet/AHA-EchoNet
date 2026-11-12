@@ -15,7 +15,7 @@ const article = { id: ID, url: "https://paradispartiet.github.io" + ID, title: "
 const storage = new Map(Object.entries({
   aha_paradisavisa_library_v1: JSON.stringify({ version: 1, trackingEnabled: false, articles: [
     article,
-    { ...article, id: "/Paradisavisa/artikler/apnet.html", url: "https://paradispartiet.github.io/Paradisavisa/artikler/apnet.html", readAt: null, savedAt: null, openedAt: "2026-11-12" },
+    { ...article, id: "/Paradisavisa/artikler/apnet.html", url: "https://paradispartiet.github.io/Paradisavisa/artikler/apnet.html", readAt: null, savedAt: null, excerpt: "Bare åpnet", openedAt: "2026-11-12" },
     { ...article, id: "/Paradisavisa/artikler/ondsinnet.html", url: "https://foreign.invalid/steal" }
   ] }),
   aha_lists_v1: JSON.stringify([{ id: "L", title: "Kultur", items: [{ id: "L1", title: article.title, source: "paradisavisa", refId: ID, type: "article" }] }]),
