@@ -11,6 +11,7 @@
     conceptLists: "aha_concept_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
+    paradisavisa: "aha_paradisavisa_library_v1",
     notes: "aha_notes_v1",
     feed: "aha_feed_posts_v1",
     gallery: "aha_gallery_v1",
@@ -184,6 +185,26 @@
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });
+
+    // Separate published Paradisavisa references from local AHAavisa drafts.
+    // Only explicitly saved or marked-as-read articles become knowledge nodes.
+    asArray(raw.paradisavisaLibrary?.articles)
+      .filter((item) => !isUnavailableRecord(item) && (item.savedAt || item.readAt))
+      .forEach((item) => {
+        const refId = asText(item?.id, "");
+        if (!/^\/Paradisavisa\/(?:artikler|posts)\/[^/?#]+\.html$/i.test(refId)) return;
+        const node = {
+          id: nodeId("article", "paradisavisa", refId),
+          title: asText(item.title, "Paradisavisa-artikkel"),
+          type: "article",
+          source: "paradisavisa",
+          refId,
+          href: "paradisavisa.html",
+          meta: safetyMeta(item, STORAGE_KEYS.paradisavisa, { category: asText(item.category, ""), saved: Boolean(item.savedAt), read: Boolean(item.readAt) })
+        };
+        addNode(nodes, nodeIndex, node);
+        registerRef(node);
+      });
 
     asArray(raw.notes).filter((note) => !isUnavailableRecord(note)).forEach((note) => {
       const refId = asText(note?.id, "");
@@ -380,6 +401,7 @@
       + asArray(raw.conceptLists).filter(isUnavailableRecord).length
       + asArray(raw.paths).filter(isUnavailableRecord).length
       + asArray(raw.articles).filter(isUnavailableRecord).length
+      + asArray(raw.paradisavisaLibrary?.articles).filter(isUnavailableRecord).length
       + asArray(raw.notes).filter(isUnavailableRecord).length
       + asArray(raw.feed).filter(isUnavailableRecord).length
       + asArray(raw.gallery).filter(isUnavailableRecord).length
@@ -420,6 +442,7 @@
       conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
+      paradisavisaLibrary: loadByKey(STORAGE_KEYS.paradisavisa, { articles: [] }),
       notes: loadByKey(STORAGE_KEYS.notes, []),
       feed: loadByKey(STORAGE_KEYS.feed, []),
       gallery: loadByKey(STORAGE_KEYS.gallery, []),
