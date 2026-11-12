@@ -5,10 +5,38 @@
   const MAX_BYTES = 524288;
   const MAX_DIM = 1280;
   const ACCEPT = /^image\//i;
+  const VIDEO_MIMES = new Set(["video/mp4","video/webm","video/quicktime"]);
+  const DEMO_MAX_VIDEO_BYTES = 8*1024*1024;
+  const DEMO_ORIGIN = "https://aha-social-offline-demo.invalid";
   const URL_PATTERN = /^\/v1\/social\/media\/[0-9a-f-]{36}$/;
 
   function canChoose(file) {
     return Boolean(file && ACCEPT.test(String(file.type || "")) && file.size <= 25 * 1024 * 1024);
+  }
+
+  function isReelVideo(file) {
+    return Boolean(file && VIDEO_MIMES.has(String(file.type || "").toLowerCase()));
+  }
+  function canPreviewReelVideo(file) {
+    return isReelVideo(file) && file.size>=100 && file.size<=DEMO_MAX_VIDEO_BYTES;
+  }
+  function localVideoPreview(file, video) {
+    if (!canPreviewReelVideo(file)) throw new Error("Velg MP4, MOV eller WebM på maks 8 MB.");
+    const url=global.URL.createObjectURL(file);
+    video.src=url;
+    video.hidden=false;
+    video.controls=true;
+    video.playsInline=true;
+    video.preload="metadata";
+    return () => {
+      if (video.src===url) {
+        video.pause?.();
+        video.removeAttribute("src");
+        video.hidden=true;
+        video.load?.();
+      }
+      global.URL.revokeObjectURL(url);
+    };
   }
 
   function localPreview(file, image) {
@@ -114,6 +142,24 @@
     return data.mediaUrl;
   }
 
+  async function uploadDemoVideo(blob,key,origin) {
+    // Never send video to hosted staging or production image endpoints.
+    if (global.__AHA_OFFLINE_DEMO__!==true || checkedOrigin(origin)!==DEMO_ORIGIN)
+      throw new Error("Videoopplasting finnes bare i den lokale demoen.");
+    if (!canPreviewReelVideo(blob) || !/^[A-Za-z0-9_-]{8,100}$/.test(String(key||"")))
+      throw new Error("Ugyldig lokal Reel-video eller nøkkel.");
+    const headers=await authHeaders();
+    headers["Content-Type"]=blob.type;
+    headers["Idempotency-Key"]=key;
+    const response=await global.fetch(DEMO_ORIGIN+"/v1/social/media",{
+      method:"POST",headers,body:blob,cache:"no-store",credentials:"omit"
+    });
+    if (!response.ok) throw new Error("Lokal Reel-video kunne ikke legges inn.");
+    const data=(await response.json())?.data;
+    if (!data || !URL_PATTERN.test(String(data.mediaUrl||""))) throw new Error("Ugyldig lokalt Reel-svar.");
+    return data.mediaUrl;
+  }
+
   async function deletePending(path, origin) {
     if (!URL_PATTERN.test(String(path || ""))) {
       throw new Error("Ugyldig bildeadresse for sletting.");
@@ -142,9 +188,13 @@
     });
     if (!response.ok) throw new Error("Bildet er ikke tilgjengelig.");
     const type = response.headers?.get?.("content-type")?.split(";")[0]?.trim() || "";
-    if (!["image/webp", "image/png"].includes(type)) throw new Error("Ukjent bildeformat.");
-    const blob = await response.blob();
-    if (blob.size > MAX_BYTES || !blob.size) throw new Error("Ugyldig bildestørrelse.");
+    const demoVideo=global.__AHA_OFFLINE_DEMO__===true && endpoint===DEMO_ORIGIN &&
+      VIDEO_MIMES.has(type) && target.tagName?.toLowerCase()==="video";
+    if (!demoVideo && !["image/webp","image/png"].includes(type))
+      throw new Error("Ukjent eller ikke-godkjent medieformat.");
+    const blob=await response.blob();
+    if (demoVideo ? blob.size<100 || blob.size>DEMO_MAX_VIDEO_BYTES : !blob.size || blob.size>MAX_BYTES)
+      throw new Error("Ugyldig mediestørrelse.");
     const url = global.URL.createObjectURL(blob);
     target.src = url;
     target.hidden = false;
@@ -155,6 +205,7 @@
   }
 
   global.AHASocialMedia = Object.freeze({
-    canChoose, localPreview, prepareImage, upload, deletePending, renderProtected, isPrivateMediaUrl: (url) => URL_PATTERN.test(String(url || ""))
+    canChoose, localPreview, isReelVideo, canPreviewReelVideo, localVideoPreview,
+    prepareImage, upload, uploadDemoVideo, deletePending, renderProtected, isPrivateMediaUrl: (url) => URL_PATTERN.test(String(url || ""))
   });
 })(typeof window !== "undefined" ? window : globalThis);

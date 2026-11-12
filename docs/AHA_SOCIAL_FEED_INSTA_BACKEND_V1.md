@@ -107,3 +107,7 @@ Insta har to forskjellige valg: **Publiser som Feed / Reel / Map** bestemmer met
 ### Etterpublisering: rediger stedstag
 
 En bruker kan nå redigere stedstag på sine **allerede publiserte** Insta-bilder direkte fra innlegget gjennom et lite felt (ingen ny opplasting og ingen ny publisering). Et nytt POST-endepunkt `/v1/social/posts/:id/place` krever autentisering, bare bildeeier har adgang, og redigering av slettede/skjulte poster, Feed-innlegg eller andres bilder avvises i `aha_social.set_post_place_tag_v1`. En Map-post kan ikke miste sitt obligatoriske stedstag. Endringer normaliseres og vises umiddelbart etter oppfriskning. Testes både på fiktive kontoer i Chromium/WebKit og på ekte PostgreSQL med A/B-roller i isolert CI.
+
+### Reel-video i iPad-demoen
+
+I `social-demo.html` kan brukeren velge Reel og forhåndsvise en lokal MP4-, MOV- eller WebM-video på maks 8 MiB. Videoen kan publiseres til **den fiktive minnedatabasen i samme fane**, ses fra konto A/B og spilles av med HTML5-kontroller dersom nettleseren støtter kodeken. Den forsvinner når fanen lukkes/oppdateres. Testens videoinnhold lagres bare som Blob i minnet. Ekte API/server mottar fortsatt **ingen** video: `uploadDemoVideo` avviser alle andre opprinnelser enn den fiktive `.invalid`-adressen. Ingen ny videoserver eller driftskostnad er aktivert.

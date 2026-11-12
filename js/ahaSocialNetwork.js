@@ -87,6 +87,7 @@
     let counter = null;
     let media = null;
     let preview = null;
+    let videoPreview = null;
     let releasePreview = null;
     let discard = null;
     let fileVersion = 0;
@@ -99,7 +100,13 @@
       preview = add("img", form, null, "aha-social-media");
       preview.hidden = true;
       preview.alt = "Lokal forhåndsvisning av bildet";
-      add("p", form, "Velg bilde først. Videoopplasting for Reel kommer senere.", "module-meta");
+      videoPreview=add("video",form,null,"aha-social-media aha-social-reel-preview");
+      videoPreview.hidden=true;
+      videoPreview.controls=true;
+      videoPreview.playsInline=true;
+      videoPreview.preload="metadata";
+      videoPreview.setAttribute("aria-label","Lokal forhåndsvisning av Reel-video");
+      add("p",form,"Velg bilde først. I Reel kan du også forhåndsvise video på iPad. Video kan bare publiseres i denne demoen.","module-meta");
       discard = add("button", form, "Fjern valgt bilde");
       discard.type = "button";
       discard.disabled = true;
@@ -121,8 +128,12 @@
         fileVersion++;
         try {
           const file = media.files?.[0];
-          if (file) releasePreview = global.AHASocialMedia.localPreview(file, preview);
-          discard.disabled = !file;
+          if (file && global.AHASocialMedia.isReelVideo(file)) {
+            if (instaMode!=="reel") throw new Error("Velg Reel før video.");
+            releasePreview=global.AHASocialMedia.localVideoPreview(file,videoPreview);
+            showStatus("Videoen er lokal. Publisering fungerer bare i demoen.");
+          } else if (file) releasePreview=global.AHASocialMedia.localPreview(file,preview);
+          discard.disabled=!file;
         } catch (error) {
           showStatus(error.message || "Kunne ikke forhåndsvise bildet.");
           media.value = "";
@@ -139,14 +150,23 @@
         button.dataset.mode = mode;
         button.setAttribute("aria-pressed", String(mode === instaMode));
         button.addEventListener("click", () => {
-          instaMode = mode;
-          for (const tab of tabButtons) tab.setAttribute("aria-pressed", String(tab.dataset.mode === mode));
-          pendingSignature = null;
+          if (mode!=="reel" && global.AHASocialMedia.isReelVideo(media.files?.[0])) {
+            if (releasePreview) releasePreview();
+            releasePreview=null;
+            media.value="";
+            fileVersion++;
+            discard.disabled=true;
+            consent.checked=false;
+          }
+          instaMode=mode;
+          media.accept=mode==="reel"?"image/*,video/mp4,video/webm,video/quicktime":"image/*";
+          for (const tab of tabButtons) tab.setAttribute("aria-pressed",String(tab.dataset.mode===mode));
+          pendingSignature=null;
           // Keep the expected quick workflow: after choosing an upload type,
           // preview the matching reading tab, but browsing alone never changes
           // the draft publication type.
           setViewMode(mode);
-          if (mode === "reel") showStatus("Reel har foreløpig bare bildecover; videoopplasting kommer senere.");
+          if (mode === "reel") showStatus("Reel kan forhåndsvise video. Video kan publiseres bare i demoen.");
           else if (mode === "map") showStatus("Map viser bilder ordnet etter stedstag.");
           else showStatus("Viser bildeinnlegg.");
         });
@@ -295,20 +315,22 @@
         } catch {}
         if (mediaUrl) {
           const isPrivate = global.AHASocialMedia?.isPrivateMediaUrl?.(mediaUrl);
-          const isVideo = !isPrivate && /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl);
+          const isVideo=(isPrivate && global.__AHA_OFFLINE_DEMO__===true && post.mediaType==="video") ||
+            (!isPrivate && /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl));
           const visual = add(isVideo ? "video" : "img", card, null, "aha-social-media");
           visual.referrerPolicy = "no-referrer";
-          if (isVideo) { visual.controls = true; visual.preload = "none"; visual.src = mediaUrl; }
-          else {
-            visual.loading = "lazy"; visual.alt = post.text || "Innleggsbilde";
-            if (isPrivate) {
-              const generation = renderGeneration;
-              global.AHASocialMedia.renderProtected(mediaUrl, visual, origin()).then((release) => {
-                if (generation !== renderGeneration) release();
-                else mediaReleases.add(release);
-              }).catch(() => { visual.alt = "Bildet kunne ikke vises."; });
-            } else visual.src = mediaUrl;
-          }
+          if (isVideo) { visual.controls=true; visual.playsInline=true; visual.preload="metadata"; }
+          else { visual.loading="lazy"; visual.alt=post.text||"Innleggsbilde"; }
+          if (isPrivate) {
+            const generation=renderGeneration;
+            global.AHASocialMedia.renderProtected(mediaUrl,visual,origin()).then(release=>{
+              if(generation!==renderGeneration)release();
+              else mediaReleases.add(release);
+            }).catch(()=>{
+              if(isVideo) visual.setAttribute("aria-label","Videoen kunne ikke vises.");
+              else visual.alt="Bildet kunne ikke vises.";
+            });
+          } else visual.src=mediaUrl;
         }
       }
       const head = add("div", card, null, "aha-social-post-head");
@@ -459,7 +481,18 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const selectedFile = media?.files?.[0] || null;
-      const placeTag = placeField?.value.trim() || null;
+      const placeTag=placeField?.value.trim()||null;
+      const selectedVideo=Boolean(global.AHASocialMedia?.isReelVideo?.(selectedFile));
+      if (selectedVideo && (instaMode!=="reel" ||
+          !global.AHASocialMedia?.canPreviewReelVideo?.(selectedFile))) {
+        showStatus("Velg Reel og en video på maks 8 MB.");
+        return;
+      }
+      if (selectedVideo && (global.__AHA_OFFLINE_DEMO__!==true ||
+          origin()!=="https://aha-social-offline-demo.invalid")) {
+        showStatus("Ekte Reel-publisering er ikke aktivert. Du kan bare forhåndsvise videoen.");
+        return;
+      }
       if (kind === "feed" && message.value.length > 500) {
         showStatus("Feed har en grense på 500 tegn.");
         return;
@@ -489,14 +522,17 @@
       if (discard) discard.disabled = true;
       try {
         if (selectedFile) {
-          showStatus("Forbereder og laster opp bildet…");
-          // Retrying a failed publication uses the exact same media reference;
-          // the user's photo is never uploaded twice for the same draft.
+          showStatus(selectedVideo?"Legger video i den lokale demoen…":"Forbereder og laster opp bildet…");
+          // Retry uses the same media reference; video is demo-only.
           if (!pendingMediaPath) {
-            const blob = await global.AHASocialMedia.prepareImage(selectedFile);
-            pendingMediaPath = await global.AHASocialMedia.upload(blob, pendingUploadKey, origin());
+            if (selectedVideo)
+              pendingMediaPath=await global.AHASocialMedia.uploadDemoVideo(selectedFile,pendingUploadKey,origin());
+            else {
+              const blob=await global.AHASocialMedia.prepareImage(selectedFile);
+              pendingMediaPath=await global.AHASocialMedia.upload(blob,pendingUploadKey,origin());
+            }
           }
-          payload.mediaUrl = pendingMediaPath;
+          payload.mediaUrl=pendingMediaPath;
         }
         await call("/v1/social/posts", "POST", payload);
         pendingMediaPath = null;

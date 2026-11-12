@@ -76,3 +76,8 @@
 .aha-social-place-editor input{width:100%;font:inherit;min-height:44px;padding:.55rem .7rem;color:#fff;background:#0c111a;border:1px solid #667892;border-radius:8px}
 .aha-social-place-editor-actions{display:flex;flex-wrap:wrap;gap:.5rem}
 .aha-social-place-editor-actions button[type=submit]{background:#e7efff;color:#172136;font-weight:700;border-color:#e7efff}
+
+/* Local Reel preview and movie cards; only the demo accepts video publication. */
+.aha-social-reel-preview{max-height:520px;border-radius:12px;aspect-ratio:9/16;object-fit:contain}
+.aha-social-reel-preview[hidden]{display:none!important}
+.aha-social-post video.aha-social-media{max-height:540px;aspect-ratio:9/16;object-fit:contain}

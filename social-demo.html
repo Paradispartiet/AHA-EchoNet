@@ -130,7 +130,7 @@ window.fetch=async function(request,options={}){
     const selected=target.searchParams.get("kind");
     return json(posts.filter(x=>x.state==="published"&&x.kind===selected).slice().reverse().map(x=>({
       id:x.id,kind:x.kind,text:x.text,mediaUrl:x.mediaUrl,createdAt:x.createdAt,
-      instaMode:x.instaMode,placeTag:x.placeTag,
+      instaMode:x.instaMode,placeTag:x.placeTag,mediaType:x.mediaType,
       authorName:displayName(x.owner),ownPost:x.owner===caller,
       likedByMe:likes.get(x.id)?.has(caller)||false,likeCount:likes.get(x.id)?.size||0,
       commentCount:comments.get(x.id)?.length||0
@@ -139,8 +139,10 @@ window.fetch=async function(request,options={}){
   if(p==="/v1/social/media"&&method==="POST"){
     const file=options.body;
     const id=uid();
-    if(!(file instanceof Blob)||file.size<100||file.size>524288||
-       !["image/png","image/webp"].includes(file.type))return error(400);
+    const video=["video/mp4","video/webm","video/quicktime"].includes(file?.type);
+    if(!(file instanceof Blob)||file.size<100||
+       (video?file.size>8*1024*1024:file.size>524288)||
+       !(video||["image/png","image/webp"].includes(file.type)))return error(400);
     photos.set(id,{owner:caller,blob:file,postId:null});
     return json({mediaId:id,mediaUrl:"/v1/social/media/"+id},201);
   }
@@ -174,10 +176,12 @@ window.fetch=async function(request,options={}){
       if(!mediaMatch)return error(400);
       const pic=photos.get(mediaMatch[1]);
       if(!pic||pic.owner!==caller||pic.postId)return error(404);
+      if(pic.blob.type.startsWith("video/")&&body.instaMode!=="reel")return error(400);
       mediaUrl=body.mediaUrl;
     }
     const id=uid(),post={id,kind:body.kind,owner:caller,text:body.text.trim(),
-      mediaUrl,instaMode:body.kind==="insta"?(body.instaMode||"feed"):null,
+      mediaUrl,mediaType:mediaUrl&&photos.get(mediaUrl.split("/").pop()).blob.type.startsWith("video/")?"video":"image",
+      instaMode:body.kind==="insta"?(body.instaMode||"feed"):null,
       placeTag:body.kind==="insta"?(body.placeTag||null):null,
       createdAt:new Date().toISOString(),state:"published"};
     posts.push(post);
