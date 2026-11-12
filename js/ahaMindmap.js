@@ -64,7 +64,8 @@
           refresh();
         } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
           // getUser(), not session storage, decides whose nodes may appear.
-          void verifyArticleOwner();
+          // Defer Supabase getUser until the auth change callback releases its lock.
+          global.setTimeout?.(() => { if (articleOwner()) void verifyArticleOwner(); }, 0);
         }
       });
       articleAuthSubscribed = true;
