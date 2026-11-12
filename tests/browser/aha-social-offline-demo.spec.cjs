@@ -194,3 +194,50 @@ test("Map posts cannot lose mandatory place tags during post-publication editing
  await editor.getByRole("button",{name:"Lagre stedstag"}).click();
  await expect(social.locator(".aha-social-location")).toContainText("Bergen");
 });
+
+
+test("Reel previews and publishes selected MP4 only in the local in-memory demo",async({page})=>{
+ const outbound=[];
+ page.on("request",r=>{if(r.url().includes("aha-social-offline-demo.invalid"))outbound.push(r.url());});
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const picker=social.locator('input[type="file"]');
+ await expect(picker).toHaveAttribute("accept","image/*");
+ await social.getByRole("button",{name:"Reel",exact:true}).click();
+ await expect(picker).toHaveAttribute("accept",/video\/mp4/);
+ // The inert binary tests transport, DOM preview and authorization boundaries,
+ // not codec decoding. Real playback can be tested with a real iPad clip.
+ const bytes=Buffer.alloc(256,0);
+ bytes.write("ftypisom",4,"ascii");
+ await picker.setInputFiles({name:"reel-preview.mp4",mimeType:"video/mp4",buffer:bytes});
+ const preview=social.locator("video.aha-social-reel-preview");
+ await expect(preview).toBeVisible();
+ await expect(preview).toHaveAttribute("src",/^blob:/);
+ await expect(preview).toHaveAttribute("controls","");
+ await social.locator("textarea").first().fill("Videoreel på iPad-demo");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(social.locator(".aha-social-post")).toContainText("Videoreel på iPad-demo");
+ await expect(social.locator(".aha-social-post video")).toHaveAttribute("src",/^blob:/);
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(social.locator(".aha-social-post video")).toHaveAttribute("src",/^blob:/);
+ await social.getByRole("button",{name:"Vis Reel"}).click();
+ await expect(social.locator(".aha-social-post")).toHaveCount(1);
+ await page.getByRole("button",{name:"Nullstill"}).click();
+ await expect(social.locator(".aha-social-post")).toHaveCount(0);
+ expect(outbound).toHaveLength(0);
+});
+
+test("leaving Reel clears a selected video without uploading or publishing",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ await social.getByRole("button",{name:"Reel",exact:true}).click();
+ const picker=social.locator('input[type="file"]');
+ await picker.setInputFiles({name:"clip.webm",mimeType:"video/webm",buffer:Buffer.alloc(256,1)});
+ await expect(social.locator("video.aha-social-reel-preview")).toBeVisible();
+ await social.getByRole("button",{name:"Map",exact:true}).click();
+ await expect(picker).toHaveAttribute("accept","image/*");
+ await expect(social.locator("video.aha-social-reel-preview")).toBeHidden();
+ expect(await picker.evaluate(el=>el.files.length)).toBe(0);
+ await expect(social.locator(".aha-social-post")).toHaveCount(0);
+});
