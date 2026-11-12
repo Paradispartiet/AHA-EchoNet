@@ -152,4 +152,82 @@ BEGIN
 END;
 $do$;
 COMMIT;
+-- A reported, hidden or owner-deleted post must immediately revoke public
+-- media reads, independent of the still-retained audit row and image bytes.
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-b","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE post_id uuid; media_id uuid; media_path text; reported jsonb;
+BEGIN
+ SELECT (item->>'id')::uuid,item->>'mediaUrl'
+ INTO post_id,media_path
+ FROM jsonb_array_elements(aha_social.list_posts_v1('insta',20)) item
+ WHERE item->>'text'='Staging-bilde A';
+ IF post_id IS NULL THEN RAISE EXCEPTION 'precondition: A shared image not found'; END IF;
+ media_id:=substring(media_path from 18)::uuid;
+ PERFORM set_config('aha.rehearsal_lifecycle_post_id',post_id::text,false);
+ PERFORM set_config('aha.rehearsal_lifecycle_media_id',media_id::text,false);
+ reported:=aha_social.report_post_v1(post_id,'privacy');
+ IF reported->>'reported'<>'true' THEN RAISE EXCEPTION 'B report did not register'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM aha_social.read_media_v1(media_id)) THEN
+  RAISE EXCEPTION 'public image disappeared before moderation'; END IF;
+END;
+$do$;
+COMMIT;
+
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-mod","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE result jsonb; post_id uuid;
+BEGIN
+ post_id:=current_setting('aha.rehearsal_lifecycle_post_id')::uuid;
+ result:=aha_social.moderate_post_v1(post_id,'hide','Reported photo removed for safety review');
+ IF result->>'status'<>'hidden' THEN RAISE EXCEPTION 'moderator did not hide A photo'; END IF;
+END;
+$do$;
+COMMIT;
+
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-b","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE denied boolean:=false; media_id uuid;
+BEGIN
+ media_id:=current_setting('aha.rehearsal_lifecycle_media_id')::uuid;
+ BEGIN PERFORM * FROM aha_social.read_media_v1(media_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'B can fetch moderator-hidden image'; END IF;
+END;
+$do$;
+COMMIT;
+
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE post_id uuid; media_id uuid; denied boolean:=false; result jsonb;
+BEGIN
+ post_id:=current_setting('aha.rehearsal_lifecycle_post_id')::uuid;
+ media_id:=current_setting('aha.rehearsal_lifecycle_media_id')::uuid;
+ IF NOT EXISTS (SELECT 1 FROM aha_social.read_media_v1(media_id)) THEN
+  RAISE EXCEPTION 'owner cannot inspect their hidden image'; END IF;
+ result:=aha_social.delete_post_v1(post_id);
+ IF result->>'deleted'<>'true' THEN RAISE EXCEPTION 'owner delete failed'; END IF;
+ BEGIN PERFORM * FROM aha_social.read_media_v1(media_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'deleted image remains readable to owner'; END IF;
+END;
+$do$;
+COMMIT;
+
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-b","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM * FROM aha_social.read_media_v1(current_setting('aha.rehearsal_lifecycle_media_id')::uuid);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'B can fetch owner-deleted image'; END IF;
+END;
+$do$;
+COMMIT;
 \echo 'AHA staging social image upload PostgreSQL rehearsal: PASS'

@@ -69,7 +69,10 @@ begin
   left join aha_social.posts p on p.id=m.post_id
   where m.id=p_id
     and (
-      (m.profile_id=v_self and (m.post_id is not null or m.created_at >= now()-interval '24 hours'))
+      (m.profile_id=v_self and (
+        (m.post_id is null and m.created_at >= now()-interval '24 hours')
+        or (m.post_id is not null and p.state in ('published','hidden'))
+      ))
       or (p.state='published' and p.id is not null and exists (
         select 1 from aha.profiles author
         where author.id=p.profile_id and author.status='active' and author.deleted_at is null

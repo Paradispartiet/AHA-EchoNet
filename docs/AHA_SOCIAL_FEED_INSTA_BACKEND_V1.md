@@ -67,3 +67,7 @@ En opplasting returnerer en relativ media-referanse (`/v1/social/media/<uuid>`).
 ## Eiersletting og tidsgrense for bilder som ikke ble publisert
 
 Et bilde som er lastet opp, men ikke knyttet til et innlegg, kan nå slettes av **sin egen eier** med autentisert `DELETE /v1/social/media/:id`. En annen konto eller et allerede publisert vedlegg kan ikke slettes via dette endepunktet. Lesing av et *upublisert* bilde stenges ved 24 timer, uavhengig av om operatørstyrt opprydding er kjørt. Publiserte bilder er fortsatt synlige for innloggede kontoer bare mens innlegget er publisert og forfatterprofilen er aktiv. SQL-testen verifiserer utløp, sletting og avslått gjenbruk; HTTP-testen verifiserer separat eierskap. Den operatorstyrte purge-funksjonen teller nå både gamle opplastinger og 30-dagers slettede innlegg.
+
+## Livssyklus for skjulte og slettede bilder
+
+`read_media_v1` gir forfatteren tilgang til egne bilder i et moderatørskjult innlegg for gjennomgang, men **ingen** bruker kan hente bildefilen gjennom media-endepunktet etter at eieren selv har slettet innlegget. For andre kontoer forsvinner tilgangen umiddelbart når innlegget skjules eller slettes. Retensjon av bildedata for revisjon er atskilt fra lesetilgang. PostgreSQL med tre testidentiteter og HTTP-tester dekker `rapport → skjul → avvis lesing → eiersletting → avvis lesing for alle`.

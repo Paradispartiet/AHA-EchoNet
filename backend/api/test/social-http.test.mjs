@@ -94,10 +94,11 @@ class MemoryMediaRepository {
   async read(principal, id) {
     const item = this.rows.get(id);
     if (!item) throw new ApiException(404, "NOT_FOUND", "Media not found");
-    const published = [...this.posts.values()].some(post =>
-      post.mediaUrl === item.path && !post.deleted && !post.hidden
-    );
-    if (!published && item.owner !== principal.subject) {
+    const attached = [...this.posts.values()].find(post => post.mediaUrl === item.path);
+    // A deleted post revokes media access even to its former author. A
+    // moderator-hidden post remains inspectable only by its author.
+    if (attached?.deleted || (attached?.hidden && item.owner !== principal.subject)
+        || (!attached && item.owner !== principal.subject)) {
       throw new ApiException(404, "NOT_FOUND", "Media not available");
     }
     return { contentType: item.mime, bytes: item.bytes };
@@ -367,5 +368,16 @@ test("moderation HTTP rejects normal users and hides reported content after audi
   const after = await request(app.getHttpServer()).get("/v1/social/posts?kind=insta")
     .set("Authorization", "Bearer bob").expect(200);
   assert.equal(after.body.data.length, 0);
+  const attachedMediaId = "33333333-3333-4333-8333-333333333333";
+  await request(app.getHttpServer()).get("/v1/social/media/" + attachedMediaId)
+    .set("Authorization", "Bearer alice").expect(404);
+  await request(app.getHttpServer()).get("/v1/social/media/" + attachedMediaId)
+    .set("Authorization", "Bearer bob").expect(200);
+  await request(app.getHttpServer()).delete("/v1/social/posts/" + instaId)
+    .set("Authorization", "Bearer bob").expect(200);
+  await request(app.getHttpServer()).get("/v1/social/media/" + attachedMediaId)
+    .set("Authorization", "Bearer bob").expect(404);
+  await request(app.getHttpServer()).get("/v1/social/media/" + attachedMediaId)
+    .set("Authorization", "Bearer alice").expect(404);
   assert.deepEqual(moderatorMemory.actions.map(a => a.note), ["Documented policy breach"]);
 });
