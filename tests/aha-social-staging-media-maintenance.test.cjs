@@ -70,17 +70,26 @@ test("purge requires second authorization and uses only dedicated operator funct
  assert.throws(()=>run("purge",env,policy,noNetwork,readCA),/not approved/);
  assert.throws(()=>run("purge",env,{...policy,purgeAuthorized:true},noNetwork,readCA),/acknowledgement/);
  assert.equal(calls,0);
- const approved={...env,AHA_SOCIAL_MAINTENANCE_CONFIRMATION:"RUN_AHA_SOCIAL_STAGE_MEDIA_PURGE"};
+ const approved={...env,
+  AHA_SOCIAL_MAINTENANCE_CONFIRMATION:"RUN_AHA_SOCIAL_STAGE_MEDIA_PURGE",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"2",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"1024"
+ };
  const sql=[];
  const fake=(_exe,args,opts)=>{
   sql.push({query:args.at(-1),options:opts.env.PGOPTIONS});
   if(args.at(-1).includes("has_function_privilege"))
     return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
   if(args.at(-1)===PURGE_SQL)return {status:0,stdout:"2"};
-  return {status:0,stdout:JSON.stringify({count:0,bytes:0})};
+  return {status:0,stdout:JSON.stringify({
+    count:2,bytes:1024,expiredPending:2,expiredPendingBytes:1024,
+    expiredDeleted:0,expiredDeletedBytes:0
+  })};
  };
  const result=run("purge",approved,{...policy,purgeAuthorized:true},fake,readCA);
  assert.equal(result.deleted,2);
+ assert.equal(result.countChangedDuringPurge,false);
+ assert.deepEqual(result.reviewed,{count:2,bytes:1024});
  assert.equal(sql.length,4);
  assert.equal(sql[2].query,PURGE_SQL);
  assert.doesNotMatch(sql[2].options,/default_transaction_read_only/);
@@ -90,4 +99,56 @@ test("failed role preflight never purges",()=>{
  const fake=()=>{calls++;return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:false,isRuntime:true,database:"postgres"})};};
  assert.throws(()=>run("preview",env,policy,fake,readCA),/safety checks/);
  assert.equal(calls,1);
+});
+
+
+test("purge rejects missing or stale review totals before any write", () => {
+ const confirmed={...env,AHA_SOCIAL_MAINTENANCE_CONFIRMATION:"RUN_AHA_SOCIAL_STAGE_MEDIA_PURGE",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"2",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"1024"};
+ const approved={...policy,purgeAuthorized:true};
+ for(const overrides of [
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:""},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:""},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"3"},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"999"},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"0"},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"-2"},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"02"},
+  {AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"1e3"}
+ ]) {
+  let writes=0;
+  const mock=(_exe,args)=>{
+   if(args.at(-1).includes("has_function_privilege"))
+    return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
+   if(args.at(-1)===PURGE_SQL){writes++;throw Error("unexpected destructive action");}
+   return {status:0,stdout:JSON.stringify({
+    count:5,bytes:4000,expiredPending:1,expiredPendingBytes:512,
+    expiredDeleted:1,expiredDeletedBytes:512
+   })};
+  };
+  assert.throws(()=>run("purge",{...confirmed,...overrides},approved,mock,readCA),/not explicitly confirmed/);
+  assert.equal(writes,0);
+ }
+});
+
+test("purge refuses empty and malformed expiry summaries", () => {
+ const approved={...env,AHA_SOCIAL_MAINTENANCE_CONFIRMATION:"RUN_AHA_SOCIAL_STAGE_MEDIA_PURGE",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"1",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"1024"};
+ for(const totals of [
+  {expiredPending:0,expiredDeleted:0,expiredPendingBytes:0,expiredDeletedBytes:0},
+  {expiredPending:-1,expiredDeleted:2,expiredPendingBytes:512,expiredDeletedBytes:512},
+  {expiredPending:1,expiredDeleted:0,expiredPendingBytes:null,expiredDeletedBytes:1024}
+ ]) {
+  let writes=0;
+  const mock=(_exe,args)=>{
+   if(args.at(-1).includes("has_function_privilege"))
+    return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
+   if(args.at(-1)===PURGE_SQL){writes++;throw Error("unexpected destructive action");}
+   return {status:0,stdout:JSON.stringify(totals)};
+  };
+  assert.throws(()=>run("purge",approved,{...policy,purgeAuthorized:true},mock,readCA));
+  assert.equal(writes,0);
+ }
 });

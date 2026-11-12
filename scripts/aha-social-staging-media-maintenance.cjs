@@ -90,10 +90,36 @@ function run(mode,env=process.env,policy=loadPolicy(),spawn=spawnSync,readFile=f
   }
   const before=JSON.parse(query(PREVIEW_SQL,true));
   if (mode==="preview") return {mode,connected:true,changed:false,totals:before};
+
+  // A destructive operator action is allowed only for the exact number and
+  // total bytes previously reviewed during a separate read-only preview.
+  // Recheck from the live database immediately before invoking the purge
+  // function. Any drift fails closed without calling the write function.
+  function boundedExpected(value, max) {
+    if (typeof value !== "string" || !/^(0|[1-9][0-9]{0,9})$/.test(value)) return null;
+    const count=Number(value);
+    return Number.isSafeInteger(count) && count<=max ? count : null;
+  }
+  const expectedCount=boundedExpected(env.AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT,1000000);
+  const expectedBytes=boundedExpected(env.AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES,67108864);
+  const counts=[before.expiredPending,before.expiredDeleted,
+    before.expiredPendingBytes,before.expiredDeletedBytes];
+  if (counts.some(n=>!Number.isSafeInteger(n)||n<0)) {
+    throw new Error("Staging expiry summary was invalid; purge not attempted");
+  }
+  const actualCount=counts[0]+counts[1];
+  const actualBytes=counts[2]+counts[3];
+  if (expectedCount===null || expectedBytes===null || actualCount===0 ||
+      actualCount!==expectedCount || actualBytes!==expectedBytes) {
+    throw new Error("Staging expiry figures changed or were not explicitly confirmed; purge not attempted");
+  }
   const deleted=Number(query(PURGE_SQL,false));
   if (!Number.isSafeInteger(deleted) || deleted<0) throw new Error("Invalid purge count");
   const after=JSON.parse(query(PREVIEW_SQL,true));
-  return {mode,connected:true,changed:true,deleted,totalsBefore:before,totalsAfter:after};
+  return {mode,connected:true,changed:true,deleted,
+    reviewed:{count:expectedCount,bytes:expectedBytes},
+    countChangedDuringPurge:deleted!==expectedCount,
+    totalsBefore:before,totalsAfter:after};
 }
 if (require.main===module) {
   try {
