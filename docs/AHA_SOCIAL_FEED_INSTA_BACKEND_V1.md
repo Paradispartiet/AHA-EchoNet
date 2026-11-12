@@ -111,3 +111,7 @@ En bruker kan nå redigere stedstag på sine **allerede publiserte** Insta-bilde
 ### Reel-video i iPad-demoen
 
 I `social-demo.html` kan brukeren velge Reel og forhåndsvise en lokal MP4-, MOV- eller WebM-video på maks 8 MiB. Videoen kan publiseres til **den fiktive minnedatabasen i samme fane**, ses fra konto A/B og spilles av med HTML5-kontroller dersom nettleseren støtter kodeken. Den forsvinner når fanen lukkes/oppdateres. Testens videoinnhold lagres bare som Blob i minnet. Ekte API/server mottar fortsatt **ingen** video: `uploadDemoVideo` avviser alle andre opprinnelser enn den fiktive `.invalid`-adressen. Ingen ny videoserver eller driftskostnad er aktivert.
+
+### Bilde først: valgfri bildetekst
+
+På Insta er et valgt bilde det obligatoriske innholdet; bildetekst er valgfri, også for Reel og Map (Map må fortsatt ha stedstag). HTML-formen, fiktiv iPad-demo, DTO, tjeneste og PostgreSQL-kontrakt tillater derfor en tom Insta-bildetekst. Feed krever fremdeles minst ett ikke-blankt tegn og maks 500 tegn. Den midlertidige migrasjonen er ennå ikke tatt i bruk mot en delt database.

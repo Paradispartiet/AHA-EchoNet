@@ -181,9 +181,9 @@
     }
     const captionLabel = add("label", form, kind === "feed" ? "Innlegg" : "Bildetekst");
     message = add("textarea", captionLabel);
-    message.required = true;
+    message.required = kind === "feed";
     message.maxLength = kind === "feed" ? 500 : 2000;
-    message.placeholder = kind === "feed" ? "Hva vil du dele?" : "Skriv en bildetekst…";
+    message.placeholder = kind === "feed" ? "Hva vil du dele?" : "Bildetekst (valgfritt)…";
     if (kind === "feed") {
       counter = add("output", form, "0 / 500", "aha-social-counter");
       counter.setAttribute("aria-live", "polite");
@@ -501,7 +501,7 @@
         showStatus("Velg et stedstag for innlegg som skal vises i Map.");
         return;
       }
-      if (!consent.checked || !message.value.trim() || (media && !selectedFile)) {
+      if (!consent.checked || (kind === "feed" && !message.value.trim()) || (media && !selectedFile)) {
         showStatus("Fyll ut innlegget, velg bilde og godkjenn offentlig publisering.");
         return;
       }

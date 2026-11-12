@@ -241,3 +241,25 @@ test("leaving Reel clears a selected video without uploading or publishing",asyn
  expect(await picker.evaluate(el=>el.files.length)).toBe(0);
  await expect(social.locator(".aha-social-post")).toHaveCount(0);
 });
+
+
+test("Insta publishes an image without forcing caption text, Feed still requires its text",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=120;c.height=120;
+   c.getContext("2d").fillRect(0,0,120,120);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"no-caption.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await expect(social.locator("textarea").first()).not.toHaveAttribute("required","");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(social.locator(".aha-social-post img")).toHaveAttribute("src",/^blob:/);
+ await expect(social.locator(".aha-social-post")).toHaveCount(1);
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(social.locator(".aha-social-post img")).toHaveAttribute("src",/^blob:/);
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ await expect(page.locator("#aha-social-mount textarea").first()).toHaveAttribute("required","");
+});

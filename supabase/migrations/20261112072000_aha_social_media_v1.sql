@@ -156,7 +156,9 @@ declare v_self text;v_id uuid;v_old aha_social.posts%rowtype;
 begin
  v_self:=aha_social.require_profile_v1();
  if p_kind is null or p_kind not in('feed','insta')
-  or length(btrim(coalesce(p_body,''))) not between 1 and 2000
+  or p_body is null
+  or (p_kind='feed' and length(btrim(p_body)) not between 1 and 500)
+  or (p_kind='insta' and length(btrim(p_body))>2000)
   or length(btrim(coalesce(p_request_key,''))) not between 8 and 100
   or (p_kind='feed' and (
     length(btrim(p_body))>500 or p_insta_mode is not null or p_place_tag is not null))

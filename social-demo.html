@@ -166,7 +166,7 @@ window.fetch=async function(request,options={}){
   }
   if(p==="/v1/social/posts"&&method==="POST"){
     if(!body?.publish||!["feed","insta"].includes(body.kind)||
-       typeof body.text!=="string"||!body.text.trim()||
+       typeof body.text!=="string"||(body.kind==="feed"&&!body.text.trim())||
        (body.kind==="feed" && body.text.length>500)||
        (body.kind==="insta" && body.instaMode==="map" && !body.placeTag)||
        (body.placeTag && (typeof body.placeTag!=="string"||body.placeTag.length>120)))return error(400);

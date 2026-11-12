@@ -159,3 +159,16 @@ test("post-owner location edit accepts explicit values, rejects missing payload 
  await assert.rejects(service.editPlace(principal,id,{placeTag:3}),error=>error.code==="VALIDATION_FAILED");
  assert.equal(repo.calls.length,2);
 });
+
+
+test("image-first Insta permits a picture without a caption while Feed still requires text",async()=>{
+ const repo=new FakeRepo();
+ const service=new SocialService({assertEnabled(){},assertMedia:SocialGate.prototype.assertMedia},repo);
+ const img="/v1/social/media/33333333-3333-4333-8333-333333333333";
+ const publish={kind:"insta",text:"",mediaUrl:img,requestKey:"caption-optional-001",publish:true};
+ assert.equal(validateSync(Object.assign(new SocialPostInput(),publish)).length,0);
+ await service.publish(principal,publish);
+ assert.deepEqual(repo.calls[0].values,["insta","",img,"caption-optional-001","feed",null]);
+ await assert.rejects(service.publish(principal,{...publish,kind:"feed",mediaUrl:undefined}),e=>e.code==="VALIDATION_FAILED");
+ assert.equal(repo.calls.length,1);
+});

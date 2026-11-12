@@ -65,13 +65,21 @@ BEGIN
   IF v_result->>'status'<>'published' THEN
     RAISE EXCEPTION 'Reel cover post failed';
   END IF;
+  v_result:=aha_social.publish_post_v1('insta','',
+    'https://assets.example.invalid/caption-optional.webp',
+    'image-only-caption-001','feed',null);
+  IF v_result->>'status'<>'published' THEN
+    RAISE EXCEPTION 'An image without caption was rejected';
+  END IF;
   image_posts:=aha_social.list_posts_v1('insta',40);
   IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(image_posts) x
       WHERE x->>'text'='A map photo' AND x->>'instaMode'='map'
        AND x->>'placeTag'='Oslo sentrum') OR
      NOT EXISTS(SELECT 1 FROM jsonb_array_elements(image_posts) x
       WHERE x->>'text'='Reel cover' AND x->>'instaMode'='reel'
-       AND x->>'placeTag'='Bergen') THEN
+       AND x->>'placeTag'='Bergen') OR
+     NOT EXISTS(SELECT 1 FROM jsonb_array_elements(image_posts) x
+      WHERE x->>'text'='' AND x->>'instaMode'='feed' AND x->>'mediaUrl'='https://assets.example.invalid/caption-optional.webp') THEN
     RAISE EXCEPTION 'Insta type or place tag lost in backend list';
   END IF;
 END;

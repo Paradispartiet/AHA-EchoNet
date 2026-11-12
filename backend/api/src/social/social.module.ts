@@ -32,7 +32,7 @@ export class SocialPostInput {
   kind!: Kind;
 
   @IsString()
-  @Length(1, 2000)
+  @Length(0, 2000)
   text!: string;
 
   @IsOptional()
@@ -144,7 +144,8 @@ export class SocialService {
   }
   async publish(principal: AuthPrincipal, input: SocialPostInput): Promise<Result> {
     this.gate.assertEnabled();
-    if (input.publish !== true || !input.text?.trim() || !input.requestKey?.trim()) {
+    if (input.publish !== true || typeof input.text !== "string" ||
+        (input.kind === "feed" && !input.text.trim()) || !input.requestKey?.trim()) {
       throw new ApiException(400, "VALIDATION_FAILED", "Publishing needs a nonempty post and explicit consent");
     }
     const text = input.text.trim();

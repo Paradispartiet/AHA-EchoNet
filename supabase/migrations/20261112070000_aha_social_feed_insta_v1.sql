@@ -13,7 +13,10 @@ create table if not exists aha_social.posts (
  profile_id text not null references aha.profiles(id) on delete restrict,
  request_key text not null check (length(btrim(request_key)) between 8 and 100),
  kind text not null check(kind in ('feed','insta')),
- body text not null check(length(btrim(body)) between 1 and 2000),
+ body text not null check(
+    (kind='feed' and length(btrim(body)) between 1 and 500) or
+    (kind='insta' and length(btrim(body)) between 0 and 2000)
+ ),
  media_url text check(media_url is null or (length(media_url)<=2048 and media_url ~ '^https://[^ ]+$')),
  state text not null default 'published' check(state in ('published','hidden','deleted')),
  created_at timestamptz not null default now(),
@@ -121,7 +124,9 @@ declare v_self text; v_id uuid; v_old aha_social.posts%rowtype;
 begin
  v_self:=aha_social.require_profile_v1();
  if p_kind not in('feed','insta')
-    or length(btrim(coalesce(p_body,''))) not between 1 and 2000
+    or p_body is null
+    or (p_kind='feed' and length(btrim(p_body)) not between 1 and 500)
+    or (p_kind='insta' and length(btrim(p_body))>2000)
     or length(btrim(coalesce(p_request_key,''))) not between 8 and 100
     or (p_kind='insta' and nullif(btrim(coalesce(p_media,'')),'') is null)
     or (p_media is not null and (length(p_media)>2048 or p_media !~ '^https://[^ ]+$')) then
