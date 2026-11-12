@@ -169,7 +169,6 @@ test("published Insta images can be tagged by owner, viewed by B, and never edit
  await expect(social.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
  await page.getByRole("button",{name:"Konto A"}).click();
  await social.locator(".aha-social-more summary").click();
- await social.locator(".aha-social-more summary").click();
  await social.getByRole("button",{name:"Rediger stedstag"}).click();
  await edit.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("");
  await edit.getByRole("button",{name:"Lagre stedstag"}).click();
@@ -192,6 +191,7 @@ test("Map posts cannot lose mandatory place tags during post-publication editing
  await social.locator("textarea").first().fill("Map bilde med plassering");
  await social.getByRole("checkbox").check();
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await social.locator(".aha-social-more summary").click();
  await social.getByRole("button",{name:"Rediger stedstag"}).click();
  const editor=social.locator(".aha-social-place-editor");
  await editor.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("");
