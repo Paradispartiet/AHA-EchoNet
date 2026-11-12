@@ -114,6 +114,20 @@ test("verified owner can explicitly upload only metadata of valid articles", asy
   assert.equal(h.calls.confirms, 1);
 });
 
+test("stale-device uploads preserve existing cloud saves, reads and topic tags", async () => {
+  const h = mock({ remote: [{
+    article_id: "/Paradisavisa/artikler/en-test.html",
+    saved_at: null, read_at: "2026-11-10T12:00:00Z",
+    opened_at: null, open_count: 5, tags: ["Fra annen enhet"]
+  }] });
+  const result = await h.api.upload();
+  assert.equal(result.ok, true);
+  assert.equal(h.calls.upserted[0].read_at, "2026-11-10T12:00:00Z");
+  assert.equal(h.calls.upserted[0].open_count, 5);
+  assert.ok(h.calls.upserted[0].tags.includes("Fra annen enhet"));
+  assert.ok(h.calls.upserted[0].tags.includes("Oslo"));
+});
+
 test("a previously owned device cannot upload another user's private local entries", async () => {
   const h = mock({ uid: "55555555-5555-4555-8555-555555555555" });
   h.local.set("aha_paradisavisa_cloud_owner_v1", "44444444-4444-4444-8444-444444444444");
