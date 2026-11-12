@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paradisavisa · Mitt lesebibliotek | AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <style>
+    .aha-avisa-page{max-width:1180px;margin:0 auto;padding:24px 16px 100px}
+    .aha-avisa-actions,.aha-avisa-filters,.aha-avisa-entry-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+    .aha-avisa-actions a,.aha-avisa-actions button,.aha-avisa-entry button,.aha-avisa-entry a{background:#171a21;color:#f7f7f7;border:1px solid #586174;border-radius:8px;padding:9px 12px;text-decoration:none;cursor:pointer}
+    .aha-avisa-actions :focus-visible,.aha-avisa-filters :focus-visible,.aha-avisa-entry :focus-visible{outline:2px solid #8dc4fa;outline-offset:3px}
+    .aha-avisa-filters label{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+    .aha-avisa-filters input,.aha-avisa-filters select,.aha-avisa-entry input,.aha-avisa-entry select{background:#12151c;border:1px solid #5d6779;color:white;border-radius:8px;padding:9px;font:inherit;max-width:100%}
+    .aha-avisa-stats{display:flex;gap:16px;flex-wrap:wrap;font-weight:700}
+    .aha-avisa-stats span{padding:9px 14px;border:1px solid #465063;border-radius:10px}
+    .aha-avisa-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}
+    .aha-avisa-entry{border:1px solid #4a5160;border-radius:12px;padding:18px;background:#10141d;min-width:0}
+    .aha-avisa-entry h3{margin:.5rem 0;font-size:1.2rem}.aha-avisa-entry p{line-height:1.55}
+    .aha-avisa-meta,.aha-avisa-note{color:#b8c7d8;font-size:.87rem}
+    .aha-avisa-entry form{border-top:1px solid #303845;margin-top:12px;padding-top:12px}
+    .aha-avisa-entry form label{display:block;margin-bottom:6px}
+    .aha-avisa-entry form select{width:100%;margin-bottom:8px}
+    .aha-avisa-entry button[aria-pressed="true"]{border-color:#8dc4fa;background:#23354e}
+    .aha-avisa-entry .aha-avisa-delete{border-color:#935f65}
+    .aha-avisa-cloud-panel{border:1px solid #475971;border-radius:12px;background:#101824;padding:16px;margin:18px 0}
+    .aha-avisa-cloud-panel h2{margin:.2rem 0 .5rem;font-size:1.15rem}
+    .aha-avisa-cloud-panel p{line-height:1.5}
+    #aha-avisa-cloud-erase{border-color:#a16969;background:#2c171b}
+    #aha-avisa-cloud-feedback{font-weight:600}
+    #aha-avisa-feedback{min-height:1.5em}
+    @media(max-width:600px){.aha-avisa-page{padding:12px 8px 80px}.aha-avisa-entry{padding:12px}}
+  </style>
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-avisa-main">Hopp til innhold</a>
+  <div id="aha-global-nav"></div>
+  <main id="aha-avisa-main" class="aha-dashboard aha-avisa-page" tabindex="-1">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header"><div>
+        <p class="eyebrow">AHA · Bibliotek</p>
+        <h1>Det du har lest i Paradisavisa</h1>
+        <p class="aha-module-purpose">Sortér etter tema, tidspunkt og innhold. Ta med artikler du velger inn i dine eksisterende samlinger og kunnskapsstier – og videre til tankekartet.</p>
+      </div></header>
+      <div class="aha-avisa-actions">
+        <a href="search.html">Hele biblioteket</a>
+        <a href="lists.html#collections">Samlinger</a>
+        <a href="paths.html">Kunnskapsstier</a>
+        <a href="mindmap.html">Tankekart</a>
+        <a href="https://paradispartiet.github.io/Paradisavisa/">Åpne Paradisavisa</a>
+      </div>
+      <p class="aha-avisa-note">Biblioteket ligger først på enheten din og kan brukes uten innlogging. Med Aha-konto kan du velge å lagre eller hente en privat skykopi manuelt. Ingen automatisk opplasting eller AI-analyse. På et annet domene må du fremdeles overføre JSON fra Paradisavisa før du eventuelt laster den opp.</p>
+      <section class="aha-avisa-cloud-panel" aria-labelledby="aha-avisa-cloud-title">
+        <h2 id="aha-avisa-cloud-title">Ta med biblioteket til andre enheter</h2>
+        <p>Du bruker samme konto som i History GO. Skykopien kan inneholde hvilke artikler du har åpnet, lest og lagret, samt dine egne temaord. Ingenting deles uten at du velger det.</p>
+        <div class="aha-avisa-actions">
+          <a href="index.html?auth=login&amp;source=aha-paradisavisa-library" id="aha-avisa-cloud-login">Logg inn med Aha</a>
+          <button id="aha-avisa-cloud-upload" type="button">Lagre bibliotek på Aha-kontoen</button>
+          <button id="aha-avisa-cloud-download" type="button">Hent fra Aha-kontoen</button>
+          <button id="aha-avisa-cloud-erase" type="button">Slett skybiblioteket</button>
+        </div>
+        <p id="aha-avisa-cloud-feedback" role="status" aria-live="polite">Skylagring er frivillig. Ingenting overføres automatisk.</p>
+        <p class="aha-avisa-note">Lokal lesehistorikk kan fortsatt slettes separat nedenfor. Skysletting påvirker ikke lokale data. Kontolagring krever at den egenbeskyttede databasetabellen er aktivert.</p>
+      </section>
+      <div class="aha-avisa-actions">
+        <button id="aha-avisa-tracking" type="button" aria-pressed="false">Aktiver lesehistorikk</button>
+        <button id="aha-avisa-clear-history" type="button">Slett lesehistorikk</button>
+        <button id="aha-avisa-export" type="button">Eksporter bibliotek (JSON)</button>
+        <label for="aha-avisa-import">Importer bibliotek (JSON)</label>
+        <input id="aha-avisa-import" type="file" accept=".json,application/json" aria-label="Importer Paradisavisa-bibliotek fra en JSON-fil" />
+      </div>
+      <p id="aha-avisa-owner-notice" class="aha-avisa-note" role="status" aria-live="polite" hidden></p>
+      <p id="aha-avisa-feedback" role="status" aria-live="polite"></p>
+    </section>
+    <section class="aha-panel">
+      <div id="aha-avisa-stats" class="aha-avisa-stats" aria-label="Ditt lesebibliotek"></div>
+      <div class="aha-avisa-filters">
+        <label>Søk etter ord eller innhold<input id="aha-avisa-query" type="search" placeholder="Tittel, ingress, tekstutdrag, emne" /></label>
+        <label>Vis<select id="aha-avisa-scope"><option value="all">Alle registrerte</option><option value="saved">Lagrede</option><option value="read">Leste</option></select></label>
+        <label>Tema<select id="aha-avisa-category"><option value="all">Alle temaer</option></select></label>
+        <label>Tidsrom<select id="aha-avisa-period"><option value="all">Alle tidspunkt</option><option value="7">Siste 7 dager</option><option value="30">Siste 30 dager</option><option value="365">Siste år</option></select></label>
+        <label>Sorter<select id="aha-avisa-sort"><option value="recent">Sist lest / lagret</option><option value="published">Publisert dato</option><option value="category">Tema</option><option value="title">Tittel A–Å</option></select></label>
+      </div>
+    </section>
+    <section class="aha-panel" aria-labelledby="aha-avisa-results-title">
+      <h2 id="aha-avisa-results-title">Artikler</h2>
+      <p class="aha-avisa-note" id="aha-avisa-results-count"></p>
+      <div id="aha-avisa-results" class="aha-avisa-results" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+  <script src="js/ahaParadisavisa.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaParadisavisaCloud.js"></script>
+</body>
+</html>

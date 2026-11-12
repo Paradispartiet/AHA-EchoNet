@@ -14,6 +14,36 @@
 
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
+  const PARADISAVISA_ROOT_URL = "https://paradispartiet.github.io/Paradisavisa/";
+  const AHA_ARTICLE_LIBRARY_URL = "https://paradispartiet.github.io/AHA-EchoNet/paradisavisa.html";
+
+  // Auth return targets are restricted to our own published apps. No arbitrary
+  // external redirect can be introduced through the URL or localStorage.
+  function validatedParadisavisaTarget(raw) {
+    const requested = String(raw || "").trim();
+    if (!requested || requested.startsWith("//") || requested.includes("\\") || /%5c/i.test(requested)) {
+      return PARADISAVISA_ROOT_URL;
+    }
+    try {
+      const root = new URL(PARADISAVISA_ROOT_URL);
+      const target = new URL(requested, root);
+      if (target.origin !== root.origin || !target.pathname.startsWith(root.pathname)
+        || target.username || target.password) return PARADISAVISA_ROOT_URL;
+      return target.href;
+    } catch {
+      return PARADISAVISA_ROOT_URL;
+    }
+  }
+
+  function isParadisavisaLoginReturnRequest() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("source") === "paradisavisa" && params.get("auth") === "login";
+  }
+
+  function isAhaArticleLibraryLoginReturnRequest() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("source") === "aha-paradisavisa-library" && params.get("auth") === "login";
+  }
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -24,14 +54,18 @@
   }
 
   function persistAuthReturnTargetFromUrl() {
-    if (!isHistoryGoLoginReturnRequest()) {
+    const returnUrl = isHistoryGoLoginReturnRequest()
+      ? HISTORY_GO_PROFILE_URL
+      : isParadisavisaLoginReturnRequest()
+        ? validatedParadisavisaTarget(new URLSearchParams(window.location.search).get("next"))
+        : isAhaArticleLibraryLoginReturnRequest()
+          ? AHA_ARTICLE_LIBRARY_URL
+          : "";
+    if (!returnUrl) {
       clearAuthReturnTarget();
       return;
     }
-
-    try {
-      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, HISTORY_GO_PROFILE_URL);
-    } catch {}
+    try { localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, returnUrl); } catch {}
   }
 
   function clearAuthReturnTarget() {
@@ -43,6 +77,17 @@
   function redirectBackToHistoryGoProfile() {
     clearAuthReturnTarget();
     window.location.replace(HISTORY_GO_PROFILE_URL);
+  }
+
+  function redirectBackToParadisavisa() {
+    const target = validatedParadisavisaTarget(new URLSearchParams(window.location.search).get("next"));
+    clearAuthReturnTarget();
+    window.location.replace(target);
+  }
+
+  function redirectBackToAhaArticleLibrary() {
+    clearAuthReturnTarget();
+    window.location.replace(AHA_ARTICLE_LIBRARY_URL);
   }
 
   function countActive(items) {
@@ -3016,6 +3061,14 @@
         redirectBackToHistoryGoProfile();
         return;
       }
+      if (authState.user?.id && isParadisavisaLoginReturnRequest()) {
+        redirectBackToParadisavisa();
+        return;
+      }
+      if (authState.user?.id && isAhaArticleLibraryLoginReturnRequest()) {
+        redirectBackToAhaArticleLibrary();
+        return;
+      }
 
       renderIdentity(authState);
       safeRender("renderProductIntegration", renderProductIntegration);
@@ -3122,7 +3175,8 @@
       modal.setAttribute("aria-hidden", "true");
     };
     const openModal = () => {
-      if (!isHistoryGoLoginReturnRequest()) clearAuthReturnTarget();
+      if (!isHistoryGoLoginReturnRequest() && !isParadisavisaLoginReturnRequest()
+        && !isAhaArticleLibraryLoginReturnRequest()) clearAuthReturnTarget();
       modal.classList.remove("is-hidden");
       modal.setAttribute("aria-hidden", "false");
     };
@@ -3209,6 +3263,9 @@
     getLastState: () => lastState,
     saveProfileName,
     isHistoryGoLoginReturnRequest,
+    isParadisavisaLoginReturnRequest,
+    isAhaArticleLibraryLoginReturnRequest,
+    validatedParadisavisaTarget,
     persistAuthReturnTargetFromUrl,
     clearAuthReturnTarget,
     loadAhaManualSyncHistoryPreview,

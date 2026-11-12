@@ -11,6 +11,7 @@
     conceptLists: "aha_concept_lists_v1",
     paths: "aha_paths_v1",
     articles: "aha_articles_v1",
+    paradisavisa: "aha_paradisavisa_library_v1",
     notes: "aha_notes_v1",
     feed: "aha_feed_posts_v1",
     gallery: "aha_gallery_v1",
@@ -37,6 +38,68 @@
   const BRANCH_COLORS = ["#7ac6ff", "#7bd3b8", "#f5ba67", "#c99cff", "#ff8f9d", "#84d66b", "#71d5e8", "#d8c36a"];
   let graphState = { nodes: [], edges: [], selectedNodeId: "", view: { x: 0, y: 0, scale: 1 } };
   let projectionReceipt = null;
+  const ARTICLE_OWNER_KEY = "aha_paradisavisa_cloud_owner_v1";
+  let verifiedArticleOwner = false;
+  let articleOwnerCheckVersion = 0;
+  let articleAuthSubscribed = false;
+  function articleOwner() {
+    try { return localStorage.getItem(ARTICLE_OWNER_KEY) || ""; }
+    catch { return "unavailable"; }
+  }
+  function mayShowAccountArticles() {
+    return !articleOwner() || verifiedArticleOwner;
+  }
+  function subscribeArticleOwnerAuth() {
+    // Keep guest mindmaps local-only; only subscribe if account-bound
+    // Paradisavisa history is present on this device.
+    if (articleAuthSubscribed || !articleOwner()) return;
+    const client = global.AHADb?.getClient?.();
+    if (typeof client?.auth?.onAuthStateChange !== "function") return;
+    try {
+      client.auth.onAuthStateChange((event) => {
+        if (!articleOwner()) return;
+        if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          ++articleOwnerCheckVersion;
+          verifiedArticleOwner = false;
+          refresh();
+        } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+          // getUser(), not session storage, decides whose nodes may appear.
+          // Defer Supabase getUser until the auth change callback releases its lock.
+          global.setTimeout?.(() => { if (articleOwner()) void verifyArticleOwner(); }, 0);
+        }
+      });
+      articleAuthSubscribed = true;
+    } catch {
+      verifiedArticleOwner = false;
+      refresh();
+    }
+  }
+  async function verifyArticleOwner() {
+    const check = ++articleOwnerCheckVersion;
+    const expected = articleOwner();
+    if (!expected) {
+      verifiedArticleOwner = false;
+      refresh();
+      return true;
+    }
+    verifiedArticleOwner = false;
+    refresh(); // Never keep old article nodes visible while session is checked.
+    subscribeArticleOwnerAuth();
+    try {
+      const client = global.AHADb?.getClient?.();
+      const { data, error } = client ? await client.auth.getUser() : { error: true };
+      if (check !== articleOwnerCheckVersion || articleOwner() !== expected) return false;
+      verifiedArticleOwner = Boolean(!error && data?.user?.id === expected && !data.user.is_anonymous);
+      refresh();
+      return verifiedArticleOwner;
+    } catch {
+      if (check === articleOwnerCheckVersion) {
+        verifiedArticleOwner = false;
+        refresh();
+      }
+      return false;
+    }
+  }
 
   function safeParse(raw, fallback) {
     try {
@@ -184,6 +247,26 @@
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });
+
+    // Separate published Paradisavisa references from local AHAavisa drafts.
+    // Only explicitly saved or marked-as-read articles become knowledge nodes.
+    asArray(raw.paradisavisaLibrary?.articles)
+      .filter((item) => !isUnavailableRecord(item) && (item.savedAt || item.readAt))
+      .forEach((item) => {
+        const refId = asText(item?.id, "");
+        if (!/^\/Paradisavisa\/(?:artikler|posts)\/[^/?#]+\.html$/i.test(refId)) return;
+        const node = {
+          id: nodeId("article", "paradisavisa", refId),
+          title: asText(item.title, "Paradisavisa-artikkel"),
+          type: "article",
+          source: "paradisavisa",
+          refId,
+          href: "paradisavisa.html",
+          meta: safetyMeta(item, STORAGE_KEYS.paradisavisa, { category: asText(item.category, ""), saved: Boolean(item.savedAt), read: Boolean(item.readAt) })
+        };
+        addNode(nodes, nodeIndex, node);
+        registerRef(node);
+      });
 
     asArray(raw.notes).filter((note) => !isUnavailableRecord(note)).forEach((note) => {
       const refId = asText(note?.id, "");
@@ -380,6 +463,7 @@
       + asArray(raw.conceptLists).filter(isUnavailableRecord).length
       + asArray(raw.paths).filter(isUnavailableRecord).length
       + asArray(raw.articles).filter(isUnavailableRecord).length
+      + asArray(raw.paradisavisaLibrary?.articles).filter(isUnavailableRecord).length
       + asArray(raw.notes).filter(isUnavailableRecord).length
       + asArray(raw.feed).filter(isUnavailableRecord).length
       + asArray(raw.gallery).filter(isUnavailableRecord).length
@@ -420,6 +504,8 @@
       conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
+      paradisavisaLibrary: mayShowAccountArticles()
+        ? loadByKey(STORAGE_KEYS.paradisavisa, { articles: [] }) : { articles: [] },
       notes: loadByKey(STORAGE_KEYS.notes, []),
       feed: loadByKey(STORAGE_KEYS.feed, []),
       gallery: loadByKey(STORAGE_KEYS.gallery, []),
@@ -856,6 +942,13 @@
 
   function bindUi() {
     const sourceSelector = document.getElementById("mindmap-data-source");
+    if (articleOwner()) verifyArticleOwner();
+    global.addEventListener?.("pageshow", () => { if (articleOwner()) void verifyArticleOwner(); });
+    global.addEventListener?.("storage", (event) => {
+      if (event?.key === ARTICLE_OWNER_KEY || /-auth-token$/.test(String(event?.key || ""))) {
+        void verifyArticleOwner();
+      }
+    });
     if (sourceSelector && global.AHAProjectionRuntimeSourceV2?.shouldOpenProduct?.("mindmap")) sourceSelector.value = "v2";
     document.getElementById("mindmap-refresh")?.addEventListener("click", refresh);
     document.getElementById("mindmap-data-source")?.addEventListener("change", refresh);
@@ -904,7 +997,9 @@
     buildMindmapLayout,
     renderVisualMindmap,
     render,
-    refresh
+    refresh,
+    verifyArticleOwner,
+    mayShowAccountArticles
   };
 
   if (document.readyState === "loading") {

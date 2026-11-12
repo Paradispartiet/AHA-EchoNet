@@ -1,0 +1,53 @@
+name: Aha Paradisavisa reading-library RLS (PostgreSQL 16)
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/legacy-paradisavisa-reading-library-v1.sql'
+      - 'tests/paradisavisa-reading-library-*.sql'
+      - '.github/workflows/aha-paradisavisa-rls.yml'
+  push:
+    branches:
+      - feature/aha-paradisavisa-reader-library-v1
+    paths:
+      - 'supabase/legacy-paradisavisa-reading-library-v1.sql'
+      - 'tests/paradisavisa-reading-library-*.sql'
+      - '.github/workflows/aha-paradisavisa-rls.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls-two-users:
+    name: Two-user Supabase-style RLS isolation (ephemeral PostgreSQL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ahatest
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: github-only-ephemeral
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ahatest"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: ahatest
+      PGUSER: postgres
+      PGPASSWORD: github-only-ephemeral
+    steps:
+      - uses: actions/checkout@v4
+      - name: Simulate Supabase auth roles and two distinct users
+        run: psql -v ON_ERROR_STOP=1 -f tests/paradisavisa-reading-library-fixture.sql
+      - name: Apply exactly the draft reading-library migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/legacy-paradisavisa-reading-library-v1.sql
+      - name: Verify anonymous denial and account-specific read, write, delete rules
+        run: psql -v ON_ERROR_STOP=1 -f tests/paradisavisa-reading-library-rls.sql
