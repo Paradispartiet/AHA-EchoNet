@@ -9,8 +9,7 @@ DO $do$
 DECLARE v_png bytea; v_response jsonb; v_again jsonb; v_path text; v_media uuid;
  denied boolean:=false; v_count integer;
 BEGIN
- v_png:=decode('89504e470d0a1a0a','hex') || repeat(decode('00','hex')::text,0)::bytea;
- v_png:=v_png || decode(repeat('00',100),'hex');
+ v_png:=decode('89504e470d0a1a0a'||repeat('00',100),'hex');
  BEGIN
   PERFORM aha_social.upload_media_v1('image/svg+xml',v_png,'test-image-a-001');
  EXCEPTION WHEN invalid_parameter_value THEN denied:=true; END;
@@ -27,6 +26,7 @@ BEGIN
    where content_type='image/png' and octet_length(bytes)=108)
  THEN RAISE EXCEPTION 'A cannot view their own pending image'; END IF;
 
+ denied:=false;
  BEGIN
   PERFORM aha_social.publish_post_v1('insta','Invalid ownership attempt',
      '/v1/social/media/00000000-0000-4000-8000-000000000000','test-insta-a-denied');
@@ -34,19 +34,6 @@ BEGIN
  IF NOT denied THEN RAISE EXCEPTION 'nonexistent media accepted'; END IF;
  v_response:=aha_social.publish_post_v1('insta','Staging-bilde A',v_path,'test-insta-a-001');
  IF v_response->>'status'<>'published' THEN RAISE EXCEPTION 'upload publish failed'; END IF;
-END;
-$do$;
-COMMIT;
-
-BEGIN;
-SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-b","aha_provider":"supabase"}',true);
-DO $do$
-DECLARE v_png bytea;v_media uuid;v_own jsonb;denied boolean:=false;v_attempt text;
-BEGIN
- v_media:=(aha_social.list_posts_v1('insta',20)->0->>'mediaUrl')::text::uuid;
-EXCEPTION WHEN invalid_text_representation THEN
- -- Path extraction, not a direct UUID response. Expected.
- NULL;
 END;
 $do$;
 COMMIT;
@@ -74,8 +61,14 @@ COMMIT;
 -- Test another account cannot read a private (not yet published) image.
 BEGIN;
 SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider":"supabase"}',true);
-SELECT aha_social.upload_media_v1('image/png',
+DO $do$
+DECLARE pending jsonb;
+BEGIN
+ pending:=aha_social.upload_media_v1('image/png',
   decode('89504e470d0a1a0a'||repeat('00',100),'hex'), 'test-a-private-002');
+ PERFORM set_config('aha.rehearsal_private_media_id',pending->>'mediaId',false);
+END;
+$do$;
 COMMIT;
 
 BEGIN;
@@ -83,12 +76,21 @@ SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-b","aha_provider"
 DO $do$
 DECLARE v_id uuid;denied boolean:=false;
 BEGIN
- -- Test ID only retrieved by the privileged rehearsal administrator; not exposed through
- -- public social functions. This query must fail for the runtime.
+ v_id:=current_setting('aha.rehearsal_private_media_id')::uuid;
+ BEGIN PERFORM * FROM aha_social.read_media_v1(v_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Other user read an unshared image'; END IF;
+
+ denied:=false;
  BEGIN
   PERFORM count(*) FROM aha_social.media;
  EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Direct storage table read was allowed'; END IF;
+
+ denied:=false;
+ BEGIN PERFORM aha_social.purge_expired_media_v1();
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Runtime could execute operator-only media cleanup'; END IF;
 END;
 $do$;
 ROLLBACK;

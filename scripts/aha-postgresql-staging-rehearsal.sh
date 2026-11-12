@@ -155,6 +155,9 @@ BEGIN
     OR has_function_privilege('aha_runtime_rehearsal','aha_social.require_moderator_v1()','EXECUTE')
     OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderators','SELECT')
     OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderation_events','INSERT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.media','SELECT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.media','INSERT')
+    OR has_function_privilege('aha_runtime_rehearsal','aha_social.purge_expired_media_v1()','EXECUTE')
  THEN RAISE EXCEPTION 'social runtime privileges exceed exact function grants'; END IF;
 END;
 $check$;
