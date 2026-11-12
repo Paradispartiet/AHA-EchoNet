@@ -87,3 +87,7 @@ En separat, **ikke-driftsatt** `deploy/render/social-api-staging.yaml` er nå ti
 ## Stagingens harde lagringsbudsjett
 
 Lagring av opplastede Insta-bilder i PostgreSQL er avgrenset til **8 MiB per profil** og **64 MiB samlet**. En global PostgreSQL-transaksjonslås sørger for at to samtidige kontoer ikke kan passere totalgrensen ved å laste opp parallelt. Hele bildemengden teller, også skjulte og slettede innlegg til operatørens opprydding har kjørt. HTTP 507 (`SOCIAL_MEDIA_QUOTA`) gir en forklarende feilmelding. Et ekstra SQL-testpar fyller opp henholdsvis profilen og hele testlagringen med syntetiske, komprimerbare bytea-fixtures og verifiserer avslag; fixtures slettes innen samme isolerte CI-jobb. Ingen skytjeneste eller produksjonskvote berøres.
+
+## Kontroll av mottaker før sending av token
+
+Den lokale medieklienten kontrollerer nå både den separat konfigurerte `AHA_SOCIAL_API_ORIGIN` og den konkrete API-adressen før **opplasting, lesing eller sletting**. Bare det eksakte, konfigurerte HTTPS-opphavet er tillatt, og stagingflagget må være eksplisitt `true`. Feil URL avvises **før** klienten leser brukerens innloggingstoken eller sender nettverkstrafikk. Tester dekker protokollnedgradering, URL-brukernavn, feil vert, path/query/hash og deaktivert staging.

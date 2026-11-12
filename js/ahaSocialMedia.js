@@ -60,6 +60,29 @@
     }
   }
 
+  function checkedOrigin(raw) {
+    // The caller must not decide where an AHA access token is sent. Match the
+    // separately configured staging endpoint before even requesting a token.
+    // This also rejects URL usernames, paths, protocol downgrade and redirects
+    // to an alternate host. Media requests always use credentials: "omit".
+    if (global.AHA_SOCIAL_STAGING_ENABLED !== true) {
+      throw new Error("Bilde-API er ikke aktivert i staging.");
+    }
+    try {
+      const configured = new URL(String(global.AHA_SOCIAL_API_ORIGIN || ""));
+      const requested = new URL(String(raw || ""));
+      const valid = (url) => url.protocol === "https:" && url.pathname === "/" &&
+        !url.search && !url.hash && !url.username && !url.password;
+      if (!valid(configured) || !valid(requested) ||
+          String(raw) !== requested.origin || requested.origin !== configured.origin) {
+        throw new Error("invalid_origin");
+      }
+      return requested.origin;
+    } catch {
+      throw new Error("Ugyldig eller ikke-godkjent HTTPS-adresse for AHA staging.");
+    }
+  }
+
   async function authHeaders() {
     const session = await global.AHAAuth?.getSession?.();
     if (!session?.access_token) throw new Error("Logg inn i AHA for å publisere bilder.");
@@ -71,10 +94,11 @@
       throw new Error("Bildet må være en liten PNG- eller WebP-fil.");
     }
     if (!/^[A-Za-z0-9_-]{8,100}$/.test(String(key || ""))) throw new Error("Ugyldig opplastingsnøkkel.");
+    const endpoint = checkedOrigin(origin);
     const headers = await authHeaders();
     headers["Content-Type"] = blob.type;
     headers["Idempotency-Key"] = key;
-    const response = await global.fetch(origin + "/v1/social/media", {
+    const response = await global.fetch(endpoint + "/v1/social/media", {
       method: "POST", headers, body: blob, cache: "no-store", credentials: "omit"
     });
     if (!response.ok) {
@@ -94,8 +118,9 @@
     if (!URL_PATTERN.test(String(path || ""))) {
       throw new Error("Ugyldig bildeadresse for sletting.");
     }
+    const endpoint = checkedOrigin(origin);
     const headers = await authHeaders();
-    const response = await global.fetch(origin + path, {
+    const response = await global.fetch(endpoint + path, {
       method: "DELETE", headers, cache: "no-store", credentials: "omit"
     });
     if (!response.ok) {
@@ -110,8 +135,9 @@
 
   async function renderProtected(path, target, origin) {
     if (!URL_PATTERN.test(String(path || ""))) throw new Error("Ugyldig intern bildeadresse.");
+    const endpoint = checkedOrigin(origin);
     const headers = await authHeaders();
-    const response = await global.fetch(origin + path, {
+    const response = await global.fetch(endpoint + path, {
       method: "GET", headers, cache: "no-store", credentials: "omit"
     });
     if (!response.ok) throw new Error("Bildet er ikke tilgjengelig.");

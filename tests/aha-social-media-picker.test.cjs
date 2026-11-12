@@ -17,6 +17,8 @@ function loadWindow(overrides = {}) {
     revokeObjectURL(key) { activity.revoked.push(key); }
   };
   const win = {
+    AHA_SOCIAL_STAGING_ENABLED: true,
+    AHA_SOCIAL_API_ORIGIN: "https://staging.example",
     URL: url,
     document: null,
     fetch: () => { throw new Error("network-not-permitted"); },
@@ -154,4 +156,42 @@ test("discarding uploaded-but-unpublished media requires bearer auth and exact p
   assert.equal(calls[0].opts.method, "DELETE");
   assert.equal(calls[0].opts.headers.Authorization, "Bearer verified-jwt");
   assert.equal(calls[0].opts.credentials, "omit");
+});
+
+
+test("private media helper refuses unconfigured or mismatched origins before reading AHA token", async () => {
+  const path = "/v1/social/media/33333333-3333-4333-8333-333333333333";
+  const blob = new Blob([Buffer.alloc(200)], { type: "image/png" });
+  const invalid = [
+    "", "http://staging.example", "https://staging.example.evil.example",
+    "https://other.example", "https://alice@staging.example",
+    "https://staging.example/path", "https://staging.example?x=1",
+    "https://staging.example#fragment", "https://staging.example/"
+  ];
+  let accessTokenReads = 0, networkCalls = 0;
+  const { api, win } = loadWindow({
+    AHAAuth: { async getSession() {
+      accessTokenReads++;
+      return { access_token: "private-token" };
+    } },
+    fetch() { networkCalls++; throw new Error("unexpected-network"); }
+  });
+  const image = { src: "", hidden: true };
+  for (const origin of invalid) {
+    await assert.rejects(api.upload(blob, "staging-upload-key-1", origin), /HTTPS-adresse/);
+    await assert.rejects(api.renderProtected(path, image, origin), /HTTPS-adresse/);
+    await assert.rejects(api.deletePending(path, origin), /HTTPS-adresse/);
+  }
+  assert.equal(accessTokenReads, 0);
+  assert.equal(networkCalls, 0);
+
+  win.AHA_SOCIAL_STAGING_ENABLED = false;
+  await assert.rejects(api.upload(blob, "staging-upload-key-1", "https://staging.example"), /ikke aktivert/);
+  assert.equal(accessTokenReads, 0);
+
+  win.AHA_SOCIAL_STAGING_ENABLED = true;
+  win.AHA_SOCIAL_API_ORIGIN = "http://staging.example";
+  await assert.rejects(api.deletePending(path, "https://staging.example"), /HTTPS-adresse/);
+  assert.equal(accessTokenReads, 0);
+  assert.equal(networkCalls, 0);
 });
