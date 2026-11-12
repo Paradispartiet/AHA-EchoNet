@@ -22,6 +22,7 @@ function mock(options = {}) {
   const calls = { remote: 0, reads: 0, writes: 0, deletes: 0, verified: 0, confirms: 0, imports: 0 };
   const remote = options.remote || [];
   let tracking = options.tracking ?? false;
+  let authChange = null;
   const chain = {
     select() { return chain; },
     eq() { return chain; },
@@ -51,10 +52,18 @@ function mock(options = {}) {
     }
   };
   const client = {
-    auth: { async getUser() { calls.verified++;
-      return options.guest ? { data: { user: null }, error: null }
-        : { data: { user: { id: uid, is_anonymous: false } }, error: null };
-    } },
+    auth: {
+      onAuthStateChange(callback) {
+        authChange = callback;
+        calls.authSubscriptions = (calls.authSubscriptions || 0) + 1;
+        return { data: { subscription: { unsubscribe() {} } } };
+      },
+      async getUser() {
+        calls.verified++;
+        return options.guest ? { data: { user: null }, error: null }
+          : { data: { user: { id: uid, is_anonymous: false } }, error: null };
+      }
+    },
     from(table) { assert.equal(table, "aha_paradisavisa_reading_library"); return chain; }
   };
   const env = {
@@ -86,7 +95,11 @@ function mock(options = {}) {
   };
   env.window = env;
   vm.runInNewContext(cloudJs, env, { filename: "ahaParadisavisaCloud.js" });
-  return { api: env.AHAParadisavisaCloud, calls, local, uid, getTracking: () => tracking };
+  return {
+    api: env.AHAParadisavisaCloud, calls, local, uid,
+    emitAuth: event => { if (!authChange) throw Error("No auth listener attached"); authChange(event, null); },
+    getTracking: () => tracking
+  };
 }
 
 test("page contains manual cloud actions and loads existing Aha authentication", () => {
@@ -187,6 +200,30 @@ test("the original local library unlocks only after verified owner authenticatio
   assert.equal(result.ok, true);
   assert.equal(h.calls.localOwnerAllowed, true);
   assert.equal(h.calls.remote, 0);
+});
+
+test("same-tab Supabase logout immediately locks a previously verified library", async () => {
+  const h = mock();
+  h.local.set("aha_paradisavisa_cloud_owner_v1", h.uid);
+  const first = await h.api.checkLocalOwner();
+  assert.equal(first.ok, true);
+  assert.equal(h.calls.authSubscriptions, 1);
+  assert.equal(h.calls.localOwnerAllowed, true);
+  h.emitAuth("SIGNED_OUT");
+  assert.equal(h.calls.localOwnerAllowed, false);
+  h.emitAuth("SIGNED_IN");
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls.localOwnerAllowed, true);
+  assert.equal(h.calls.authSubscriptions, 1, "Auth listener must not be duplicated");
+  assert.equal(h.calls.remote, 0);
+});
+
+test("manual upload adopts its owner and subscribes to same-tab signout", async () => {
+  const h = mock();
+  assert.equal((await h.api.upload()).ok, true);
+  assert.equal(h.calls.authSubscriptions, 1);
+  h.emitAuth("SIGNED_OUT");
+  assert.equal(h.calls.localOwnerAllowed, false);
 });
 
 test("upload binds the verified owner before the first network write", async () => {
