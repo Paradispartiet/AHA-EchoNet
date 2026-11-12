@@ -195,3 +195,64 @@ test("private media helper refuses unconfigured or mismatched origins before rea
   assert.equal(accessTokenReads, 0);
   assert.equal(networkCalls, 0);
 });
+
+
+test("Reel video local preview is limited, never uploads and releases its blob URL",()=>{
+ let requests=0;
+ const {api,activity}=loadWindow({fetch(){requests++;}});
+ const file={type:"video/mp4",size:2048};
+ assert.equal(api.isReelVideo(file),true);
+ assert.equal(api.canPreviewReelVideo(file),true);
+ assert.equal(api.canPreviewReelVideo({type:"video/mp4",size:8*1024*1024+1}),false);
+ assert.equal(api.isReelVideo({type:"image/png",size:2048}),false);
+ const video={tagName:"VIDEO",src:"",hidden:true,controls:false,paused:false,
+   pause(){this.paused=true;},load(){},removeAttribute(name){if(name==="src")this.src="";}};
+ const release=api.localVideoPreview(file,video);
+ assert.match(video.src,/^blob:aha-staging-/);
+ assert.equal(video.hidden,false);
+ assert.equal(video.controls,true);
+ assert.equal(requests,0);
+ release();
+ assert.equal(video.hidden,true);
+ assert.equal(video.paused,true);
+ assert.equal(activity.revoked.length,1);
+ assert.equal(requests,0);
+ assert.throws(()=>api.localVideoPreview({type:"video/avi",size:1000},video),/MP4/);
+});
+
+test("Reel video cannot be sent to real staging even when demo marker is spoofed",async()=>{
+ let tokenReads=0,network=0;
+ const {api}=loadWindow({
+  __AHA_OFFLINE_DEMO__:true,
+  AHAAuth:{async getSession(){tokenReads++;return {access_token:"token"};}},
+  fetch(){network++;throw Error("leak");}
+ });
+ const clip=new Blob([Buffer.alloc(256)],{type:"video/mp4"});
+ await assert.rejects(api.uploadDemoVideo(clip,"test-reel-video-001","https://staging.example"),/demoen/);
+ assert.equal(tokenReads,0);
+ assert.equal(network,0);
+ await assert.rejects(api.upload(clip,"test-reel-video-001","https://staging.example"),/PNG|WebP/);
+ assert.equal(tokenReads,0);
+ assert.equal(network,0);
+});
+
+test("offline Reel video mock sends a private Blob only to the exact fictional origin",async()=>{
+ const clip=new Blob([Buffer.alloc(256)],{type:"video/webm"});
+ const calls=[];
+ const origin="https://aha-social-offline-demo.invalid";
+ const {api}=loadWindow({
+  AHA_SOCIAL_API_ORIGIN:origin,
+  __AHA_OFFLINE_DEMO__:true,
+  AHAAuth:{async getSession(){return {access_token:"fictional-a"};}},
+  async fetch(url,opts){calls.push({url,opts});return {
+    ok:true,async json(){return {data:{mediaUrl:"/v1/social/media/33333333-3333-4333-8333-333333333333"}};}
+  }; }
+ });
+ const path=await api.uploadDemoVideo(clip,"test-reel-video-001",origin);
+ assert.equal(path,"/v1/social/media/33333333-3333-4333-8333-333333333333");
+ assert.equal(calls.length,1);
+ assert.equal(calls[0].url,origin+"/v1/social/media");
+ assert.equal(calls[0].opts.headers.Authorization,"Bearer fictional-a");
+ assert.equal(calls[0].opts.body,clip);
+ assert.equal(calls[0].opts.credentials,"omit");
+});

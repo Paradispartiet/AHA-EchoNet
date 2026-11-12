@@ -28,7 +28,7 @@ test("staging image validation is binary-only, dimension-bounded and allows only
   assert.equal(validateStagingImage("image/png",png()).length,108);
   assert.equal(validateStagingImage("image/webp",webp()).length,108);
   for(const [type,input] of [
-    ["image/jpeg",png()], ["image/svg+xml",Buffer.from("<svg>")],
+    ["image/jpeg",png()], ["image/svg+xml",Buffer.from("<svg>")], ["video/mp4",Buffer.alloc(256)], ["video/webm",Buffer.alloc(256)],
     ["image/png",Buffer.from("not a PNG")], ["image/webp",png()],
     ["image/png",png(4096,10)], ["image/webp",webp(8,4096)],
     ["image/png",Buffer.alloc(MAX_SOCIAL_IMAGE_BYTES+1)], ["image/png",null]
