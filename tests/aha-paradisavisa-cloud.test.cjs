@@ -26,7 +26,11 @@ function mock(options = {}) {
     select() { return chain; },
     eq() { return chain; },
     order() { return chain; },
-    range() { calls.reads++; calls.remote++; return Promise.resolve({ data: remote, error: null }); },
+    range(start = 0, end = 99) {
+      calls.reads++;
+      calls.remote++;
+      return Promise.resolve({ data: remote.slice(start, end + 1), error: null });
+    },
     upsert(rows, { onConflict }) {
       assert.equal(onConflict, "profile_id,article_id");
       calls.writes++;
@@ -209,13 +213,27 @@ test("blocked local ownership storage prevents any cloud write or local import",
   assert.equal(download.local.has("aha_paradisavisa_cloud_owner_v1"), false);
 });
 
+test("upload refuses combined local plus cloud collection over 5000 before any write", async () => {
+  const localArticles = Array.from({ length: 2700 }, (_, i) => article("/Paradisavisa/artikler/local-" + i + ".html"));
+  const remoteArticles = Array.from({ length: 2400 }, (_, i) => ({
+    article_id: "/Paradisavisa/artikler/remote-" + i + ".html",
+    title: "En annen enhets artikkel " + i,
+    saved_at: "2026-11-12T10:00:00Z"
+  }));
+  const h = mock({ articles: localArticles, remote: remoteArticles });
+  const result = await h.api.upload();
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /5000/);
+  assert.equal(h.calls.writes, 0);
+  assert.equal(h.local.has("aha_paradisavisa_cloud_owner_v1"), false);
+});
+
 test("oversized remote history must not be silently truncated or overwritten", async () => {
-  const manyRows = Array.from({ length: 100 }, (_, i) => ({
+  const manyRows = Array.from({ length: 5001 }, (_, i) => ({
     article_id: "/Paradisavisa/artikler/test-" + i + ".html", title: "Artikkel " + i,
     saved_at: "2026-11-12T10:00:00Z"
   }));
-  // The mock responds with a full page for every offset, simulating a cloud
-  // collection larger than the 5000 row import/export safety contract.
+  // A real 5001-row remote response must not be truncated at 5000.
   const h = mock({ remote: manyRows });
   const result = await h.api.upload();
   assert.equal(result.ok, false);
