@@ -83,3 +83,7 @@ PostgreSQL 16-regresjonsjobben bygger nå NestJS og starter den mot samme **kort
 ## Egen sosial stagingmal
 
 En separat, **ikke-driftsatt** `deploy/render/social-api-staging.yaml` er nå tilføyd, med database, sosial publisering, canonical sync og import eksplisitt avslått, og `autoDeployTrigger: off`. Gjennomgå `docs/AHA_SOCIAL_STAGING_BLUEPRINT_V1.md` før eventuell operatørgodkjent opprettelse. Eksisterende canonical-staging og produksjon blir ikke endret.
+
+## Stagingens harde lagringsbudsjett
+
+Lagring av opplastede Insta-bilder i PostgreSQL er avgrenset til **8 MiB per profil** og **64 MiB samlet**. En global PostgreSQL-transaksjonslås sørger for at to samtidige kontoer ikke kan passere totalgrensen ved å laste opp parallelt. Hele bildemengden teller, også skjulte og slettede innlegg til operatørens opprydding har kjørt. HTTP 507 (`SOCIAL_MEDIA_QUOTA`) gir en forklarende feilmelding. Et ekstra SQL-testpar fyller opp henholdsvis profilen og hele testlagringen med syntetiske, komprimerbare bytea-fixtures og verifiserer avslag; fixtures slettes innen samme isolerte CI-jobb. Ingen skytjeneste eller produksjonskvote berøres.

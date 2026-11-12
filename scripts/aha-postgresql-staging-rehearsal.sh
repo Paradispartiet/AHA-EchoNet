@@ -208,6 +208,47 @@ END;
 $check$;
 SQL
 
+# The first boundary fixture fills exactly 8 MiB for account A.
+# Age all artificial rows beyond the hourly upload-rate window so the
+# expected failure is unambiguously the storage cap. These zero bytes are
+# synthetic DB fixtures, never real user files.
+admin_psql <<'SQL'
+INSERT INTO aha_social.media(profile_id,request_key,content_type,bytes,created_at)
+SELECT 'profile_a','quota-profile-fixture-'||n,'image/png',
+       decode(repeat('00',524288),'hex'),now()-interval '2 hours'
+FROM generate_series(1,16) n;
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_profile_quota_v1.sql
+
+# The second fixture fills 64 MiB globally, distributed across 16 synthetic
+# profiles so no one account is at its own limit. Account B must be refused
+# solely by the GLOBAL quota; all temporary rows are removed afterward.
+admin_psql <<'SQL'
+DELETE FROM aha_social.media WHERE request_key LIKE 'quota-profile-fixture-%';
+INSERT INTO aha.profiles(id,auth_provider,auth_subject,display_name)
+SELECT 'quota_fixture_'||n,'supabase','quota-fixture-subject-'||n,
+       'Synthetic staging quota profile'
+FROM generate_series(1,16) n;
+INSERT INTO aha_social.media(profile_id,request_key,content_type,bytes,created_at)
+SELECT 'quota_fixture_'||p,'quota-global-fixture-'||p||'-'||n,'image/png',
+       decode(repeat('00',524288),'hex'),now()-interval '2 hours'
+FROM generate_series(1,16) p CROSS JOIN generate_series(1,8) n;
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_global_quota_v1.sql
+
+admin_psql <<'SQL'
+DELETE FROM aha_social.media WHERE request_key LIKE 'quota-global-fixture-%';
+DELETE FROM aha.profiles WHERE id LIKE 'quota_fixture_%';
+SQL
+
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
