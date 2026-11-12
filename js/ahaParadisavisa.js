@@ -2,6 +2,7 @@
 (function (global) {
   "use strict";
   const KEY = "aha_paradisavisa_library_v1";
+  const ARTICLE_ORIGIN = "https://paradispartiet.github.io";
   const LISTS = "aha_lists_v1";
   const PATHS = "aha_paths_v1";
   const $ = (id) => document.getElementById(id);
@@ -23,7 +24,7 @@
       if (!allowedPath(article?.id)) return false;
       try {
         const parsed = new URL(article.url);
-        return parsed.origin === location.origin && parsed.pathname === article.id;
+        return parsed.origin === ARTICLE_ORIGIN && parsed.pathname === article.id;
       } catch { return false; }
     });
     return { version: 1, trackingEnabled: raw?.trackingEnabled === true, articles };
@@ -111,7 +112,7 @@
     if (tags.length) card.appendChild(el("p", "aha-avisa-meta", "Merket: " + tags.join(", ")));
     const actions = el("div", "aha-avisa-entry-actions");
     const link = el("a", "", "Les artikkelen");
-    link.href = new URL(article.id, location.origin).href;
+    link.href = new URL(article.id, ARTICLE_ORIGIN).href;
     actions.appendChild(link);
     actions.appendChild(button(article.savedAt ? "Fjern lagring" : "Lagre", () => {
       update(article.id, { savedAt: article.savedAt ? null : isoNow() });
@@ -204,6 +205,65 @@
         data.articles.length ? "Ingen artikler matcher filtrene." : "Ingen artikler er registrert ennå. Åpne en artikkel i Paradisavisa, og velg «Lagre i Aha» eller aktiver lesehistorikk."));
     } else selected.forEach((a) => target.appendChild(entryCard(a, lists, paths)));
   }
+  function importData(payload) {
+    // Import changes only articles. Never import the file's tracking consent.
+    if (!payload || payload.version !== 1 || !Array.isArray(payload.articles) || payload.articles.length > 5000) {
+      return { ok: false, reason: "invalid_format" };
+    }
+    const data = load(), byId = new Map(data.articles.map((a) => [a.id, a]));
+    let added = 0, updated = 0, rejected = 0;
+    for (const row of payload.articles) {
+      const id = words(row?.id), rawUrl = words(row?.url);
+      let parsed;
+      try { parsed = new URL(rawUrl); } catch { rejected++; continue; }
+      if (!allowedPath(id) || parsed.origin !== ARTICLE_ORIGIN || parsed.pathname !== id) {
+        rejected++; continue;
+      }
+      const safeDate = (v) => {
+        const value = words(v).slice(0, 35);
+        return value && Number.isFinite(Date.parse(value)) ? value : null;
+      };
+      const tags = [...new Set(arr(row.tags).filter((v) => typeof v === "string").map((v) => v.trim().slice(0, 50)).filter(Boolean))].slice(0, 12);
+      const safe = {
+        id, url: ARTICLE_ORIGIN + id, source: "paradisavisa", local_only: true,
+        title: words(row.title).slice(0, 250), summary: words(row.summary).slice(0, 700),
+        excerpt: words(row.excerpt).slice(0, 1100), category: words(row.category).slice(0, 80),
+        publishedAt: safeDate(row.publishedAt), openedAt: safeDate(row.openedAt),
+        readAt: safeDate(row.readAt), savedAt: safeDate(row.savedAt),
+        openCount: Math.max(0, Math.min(100000, Math.floor(Number(row.openCount) || 0))),
+        tags
+      };
+      if (!safe.title || !(safe.savedAt || safe.readAt || safe.openedAt)) { rejected++; continue; }
+      const existing = byId.get(id);
+      if (existing) {
+        byId.set(id, {
+          ...safe, ...existing, id, url: safe.url, source: "paradisavisa", local_only: true,
+          savedAt: existing.savedAt || safe.savedAt, readAt: existing.readAt || safe.readAt,
+          openedAt: existing.openedAt || safe.openedAt,
+          openCount: Math.max(safe.openCount, Number(existing.openCount) || 0),
+          tags: [...new Set([...tags, ...arr(existing.tags)])].slice(0, 12)
+        });
+        updated++;
+      } else { byId.set(id, safe); added++; }
+    }
+    if (!added && !updated) return { ok: false, reason: "no_valid_articles", rejected };
+    data.articles = [...byId.values()].slice(-5000);
+    if (!saveJson(KEY, data)) return { ok: false, reason: "storage_failed" };
+    return { ok: true, added, updated, rejected };
+  }
+  async function importFile(file) {
+    if (!file) return;
+    if (file.size > 2_000_000) return feedback("Filen er for stor (maks 2 MB).");
+    try {
+      const result = importData(JSON.parse(await file.text()));
+      feedback(result.ok
+        ? "Importert: " + result.added + " nye, " + result.updated + " eksisterende artikler. " + result.rejected + " avvist. Lesehistorikk-samtykke er uendret."
+        : "Import avvist. JSON-filen må inneholde et gyldig Paradisavisa-bibliotek.");
+      render();
+    } catch {
+      feedback("Ugyldig JSON-fil. Ingenting ble importert.");
+    }
+  }
   function exportData() {
     const data = load();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -223,9 +283,10 @@
     });
     $("aha-avisa-clear-history").addEventListener("click", clearHistory);
     $("aha-avisa-export").addEventListener("click", exportData);
+    $("aha-avisa-import").addEventListener("change", (event) => { importFile(event.target.files?.[0]); event.target.value = ""; });
     render();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
-  global.AHAParadisavisa = Object.freeze({ load, filtered });
+  global.AHAParadisavisa = Object.freeze({ load, filtered, importData });
 })(window);
