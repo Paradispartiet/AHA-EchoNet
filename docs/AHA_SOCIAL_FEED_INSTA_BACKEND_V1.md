@@ -53,3 +53,7 @@ Backend-controller: `GET /v1/social/moderation/reports?limit=20` og `POST /v1/so
 En ny, isolert `aha_social.media`-tabell støtter maksimalt 512 KiB store WebP/PNG-bilder for teknisk to-kontotest. **Ikke produksjonslagring.** Opplastingen er privat til brukeren selv inntil et eksplisitt Insta-innlegg peker på media-ID-en. Lesetilgangen gis bare til eieren eller til innloggede brukere når tilhørende innlegg er publisert og ikke skjult/slettet. `upload_media_v1`, `read_media_v1` og en operatørstyrt `purge_expired_media_v1` er skilt fra eldre private AHA-data. Ubenyttede medieobjekter utløper logisk etter 24 timer og skal slettes ved operatørkjørt opprydding; ingen automatisk produksjonsjobb opprettes.
 
 For offentlig versjon kreves riktig objektlagring, revisjon av EXIF/metadata, kostnads- og kvotekontroll, og full test av filopplasting på iPad.
+
+## Mobil bildevelger (staging)
+
+AHA Insta viser nå en vanlig `input type=file` med `accept=image/*`, helt lokal forhåndsvisning og eksplisitt samtykkeboks. Opprinnelig fil blir bare åpnet i Canvas etter publiseringsklikk; Canvas skalerer til maks 1280 px og eksporterer WebP/PNG på maks 512 KiB før den sendes som autentisert binær opplasting til `POST /v1/social/media`. Mediereferansen binds deretter til innlegget via ordinær publisering. Bildevisning bruker autentisert `GET /v1/social/media/:id` og kortvarig blob-URL, ikke en offentlig direktelenke. Ingen eksisterende private bilder importeres eller lastes opp. **Videoer støttes ikke av dette første testløpet.**

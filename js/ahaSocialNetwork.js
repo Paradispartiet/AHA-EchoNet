@@ -83,12 +83,31 @@
     message.maxLength = 2000;
     message.placeholder = kind === "feed" ? "Skriv en offentlig oppdatering…" : "Skriv en bildetekst…";
     let media = null;
+    let preview = null;
+    let releasePreview = null;
+    let fileVersion = 0;
     if (kind === "insta") {
-      const mediaLabel = add("label", form, "Offentlig medieadresse (godkjent HTTPS-vert)");
+      const mediaLabel = add("label", form, "Velg bilde fra iPad eller mobil");
       media = add("input", mediaLabel);
-      media.type = "url";
+      media.type = "file";
+      media.accept = "image/*";
       media.required = true;
-      media.placeholder = "https://…";
+      preview = add("img", form, null, "aha-social-media");
+      preview.hidden = true;
+      preview.alt = "Lokal forhåndsvisning av bildet";
+      add("p", form, "Bildet vises bare på denne enheten til du aktivt velger Publiser. Videoopplasting kommer senere.", "module-meta");
+      media.addEventListener("change", () => {
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        fileVersion++;
+        try {
+          const file = media.files?.[0];
+          if (file) releasePreview = global.AHASocialMedia.localPreview(file, preview);
+        } catch (error) {
+          showStatus(error.message || "Kunne ikke forhåndsvise bildet.");
+          media.value = "";
+        }
+      });
     }
     const consentLabel = add("label", form, null, "aha-social-consent");
     const consent = add("input", consentLabel);
@@ -105,6 +124,9 @@
     const list = add("div", panel, null, "module-list aha-social-list");
     let pendingKey = null;
     let pendingSignature = null;
+    let pendingUploadKey = null;
+    const mediaReleases = new Set();
+    let renderGeneration = 0;
 
     function showStatus(text) { status.textContent = text; }
 
@@ -154,17 +176,27 @@
       add("p", card, post.text || "");
       if (kind === "insta" && typeof post.mediaUrl === "string") {
         let mediaUrl;
-        try {
+        if (global.AHASocialMedia?.isPrivateMediaUrl?.(post.mediaUrl)) mediaUrl = post.mediaUrl;
+        else try {
           const parsed = new URL(post.mediaUrl);
           if (parsed.protocol === "https:" && !parsed.username && !parsed.password) mediaUrl = parsed.href;
         } catch {}
         if (mediaUrl) {
-          const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl);
+          const isPrivate = global.AHASocialMedia?.isPrivateMediaUrl?.(mediaUrl);
+          const isVideo = !isPrivate && /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl);
           const visual = add(isVideo ? "video" : "img", card, null, "aha-social-media");
-          visual.src = mediaUrl;
           visual.referrerPolicy = "no-referrer";
-          if (isVideo) { visual.controls = true; visual.preload = "none"; }
-          else { visual.loading = "lazy"; visual.alt = post.text || "Innleggsbilde"; }
+          if (isVideo) { visual.controls = true; visual.preload = "none"; visual.src = mediaUrl; }
+          else {
+            visual.loading = "lazy"; visual.alt = post.text || "Innleggsbilde";
+            if (isPrivate) {
+              const generation = renderGeneration;
+              global.AHASocialMedia.renderProtected(mediaUrl, visual, origin()).then((release) => {
+                if (generation !== renderGeneration) release();
+                else mediaReleases.add(release);
+              }).catch(() => { visual.alt = "Bildet kunne ikke vises."; });
+            } else visual.src = mediaUrl;
+          }
         }
       }
       const actions = add("div", card, null, "aha-social-actions");
@@ -194,6 +226,9 @@
     }
 
     async function load() {
+      renderGeneration++;
+      for (const release of mediaReleases) release();
+      mediaReleases.clear();
       showStatus("Henter delte innlegg…");
       try {
         const posts = await call("/v1/social/posts?kind=" + encodeURIComponent(kind) + "&limit=30");
@@ -211,23 +246,38 @@
     refresh.addEventListener("click", () => load());
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!consent.checked || !message.value.trim() || (media && !media.value.trim())) {
-        showStatus("Fyll ut innlegget og godkjenn offentlig publisering.");
+      const selectedFile = media?.files?.[0] || null;
+      if (!consent.checked || !message.value.trim() || (media && !selectedFile)) {
+        showStatus("Fyll ut innlegget, velg bilde og godkjenn offentlig publisering.");
         return;
       }
       const payload = { kind, text: message.value.trim(), publish: true };
-      if (media) payload.mediaUrl = media.value.trim();
-      const signature = JSON.stringify(payload);
-      if (signature !== pendingSignature) { pendingKey = createKey(); pendingSignature = signature; }
+      const signature = JSON.stringify({ kind, text: payload.text, fileVersion });
+      if (signature !== pendingSignature) {
+        pendingKey = createKey();
+        pendingUploadKey = createKey();
+        pendingSignature = signature;
+      }
       payload.requestKey = pendingKey;
       submit.disabled = true;
       try {
+        if (selectedFile) {
+          showStatus("Forbereder og laster opp bildet…");
+          const blob = await global.AHASocialMedia.prepareImage(selectedFile);
+          payload.mediaUrl = await global.AHASocialMedia.upload(blob, pendingUploadKey, origin());
+        }
         await call("/v1/social/posts", "POST", payload);
         message.value = "";
-        if (media) media.value = "";
+        if (media) {
+          media.value = "";
+          if (releasePreview) releasePreview();
+          releasePreview = null;
+          fileVersion++;
+        }
         consent.checked = false;
         pendingKey = null;
         pendingSignature = null;
+        pendingUploadKey = null;
         await load();
         showStatus("Innlegget er publisert i testfeeden.");
       } catch (error) {

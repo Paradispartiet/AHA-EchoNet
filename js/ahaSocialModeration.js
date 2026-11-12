@@ -78,13 +78,17 @@
             (Array.isArray(item.reasons) ? item.reasons.join(", ") : ""), "module-meta");
           if (typeof item.mediaUrl === "string") {
             try {
-              const uri = new URL(item.mediaUrl);
-              if (uri.protocol === "https:" && !uri.username && !uri.password) {
+              const internal = global.AHASocialMedia?.isPrivateMediaUrl?.(item.mediaUrl);
+              const uri = internal ? null : new URL(item.mediaUrl);
+              if (internal || (uri.protocol === "https:" && !uri.username && !uri.password)) {
                 const image = add(card, "img", null, "aha-social-media");
-                image.src = uri.href;
                 image.alt = "Rapportert medieinnhold";
                 image.loading = "lazy";
                 image.referrerPolicy = "no-referrer";
+                if (global.AHASocialMedia?.isPrivateMediaUrl?.(item.mediaUrl)) {
+                  void global.AHASocialMedia.renderProtected(item.mediaUrl, image, apiOrigin())
+                    .catch(() => { image.alt = "Bildet er utilgjengelig."; });
+                } else image.src = uri.href;
               }
             } catch {}
           }
