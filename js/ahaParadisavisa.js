@@ -2,6 +2,20 @@
 (function (global) {
   "use strict";
   const KEY = "aha_paradisavisa_library_v1";
+  const OWNER_KEY = "aha_paradisavisa_cloud_owner_v1";
+  // The original localStorage key predates accounts. Once its contents have
+  // been backed up to an Aha account, do not display or modify them unless
+  // that same account has been verified by Supabase for this page session.
+  let verifiedLocalOwner = false;
+  function hasLocalOwner() {
+    try { return Boolean(localStorage.getItem(OWNER_KEY)); }
+    catch { return true; } // Fail closed if storage is unreadable.
+  }
+  function localAccessAllowed() { return !hasLocalOwner() || verifiedLocalOwner; }
+  function setOwnerAccess(allowed) {
+    verifiedLocalOwner = allowed === true;
+    if ($("aha-avisa-results")) render();
+  }
   const ARTICLE_ORIGIN = "https://paradispartiet.github.io";
   const LISTS = "aha_lists_v1";
   const PATHS = "aha_paths_v1";
@@ -15,10 +29,15 @@
     catch { return fallback; }
   }
   function saveJson(key, value) {
+    if (key === KEY && !localAccessAllowed()) {
+      feedback("Det lokale biblioteket er knyttet til en annen eller ikke-verifisert Aha-konto.");
+      return false;
+    }
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
     catch { feedback("Kunne ikke lagre. Kontroller nettleserens lokale lagring."); return false; }
   }
   function load() {
+    if (!localAccessAllowed()) return { version: 1, trackingEnabled: false, articles: [] };
     const raw = loadJson(KEY, null);
     const articles = arr(raw?.articles).filter((article) => {
       if (!allowedPath(article?.id)) return false;
@@ -183,10 +202,21 @@
     return result;
   }
   function render() {
+    const locked = !localAccessAllowed();
+    const ownerNotice = $("aha-avisa-owner-notice");
+    if (ownerNotice) {
+      ownerNotice.hidden = !locked;
+      ownerNotice.textContent = locked
+        ? "Dette lokale lesebiblioteket er koblet til en Aha-konto. Logg inn med samme konto for å vise og endre lokale artikler. Skyhandlinger er ikke aktivert automatisk."
+        : "";
+    }
+    ["aha-avisa-tracking", "aha-avisa-clear-history", "aha-avisa-export", "aha-avisa-import",
+      "aha-avisa-query", "aha-avisa-scope", "aha-avisa-category", "aha-avisa-period", "aha-avisa-sort"
+    ].forEach((id) => { const control = $(id); if (control) control.disabled = locked; });
     const data = load();
     const tracking = $("aha-avisa-tracking");
     const sameOrigin = location.origin === ARTICLE_ORIGIN;
-    tracking.disabled = !sameOrigin;
+    tracking.disabled = locked || !sameOrigin;
     tracking.textContent = !sameOrigin ? "Lesehistorikk styres i Paradisavisa" : (data.trackingEnabled ? "Slå av lesehistorikk" : "Aktiver lesehistorikk");
     tracking.setAttribute("aria-pressed", String(data.trackingEnabled));
     const stats = $("aha-avisa-stats");
@@ -291,5 +321,5 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
-  global.AHAParadisavisa = Object.freeze({ load, filtered, importData });
+  global.AHAParadisavisa = Object.freeze({ load, filtered, importData, setOwnerAccess, localAccessAllowed });
 })(window);
