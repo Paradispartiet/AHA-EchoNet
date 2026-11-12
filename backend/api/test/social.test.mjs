@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { validateSync } from "class-validator";
+import { ApiException } from "../dist/api/api-exception.js";
+import { SocialGate, SocialPostInput, SocialListQuery, SocialService } from "../dist/social/social.module.js";
+
+const principal = Object.freeze({ subject: "verified-subject", provider: "supabase", issuer: "https://issuer.example", audience: ["aha-api"] });
+
+class FakeRepo {
+  calls = [];
+  async read(p, action, values) { this.calls.push({ p, action, values }); return []; }
+  async write(p, action, values) { this.calls.push({ p, action, values }); return { ok: true }; }
+}
+
+test("social API refuses default-disabled and production runtimes", () => {
+  const old = { node: process.env.NODE_ENV, stage: process.env.AHA_SOCIAL_STAGING_ENABLED };
+  try {
+    process.env.NODE_ENV = "test";
+    delete process.env.AHA_SOCIAL_STAGING_ENABLED;
+    const gate = new SocialGate();
+    assert.throws(() => gate.assertEnabled(), e => e instanceof ApiException && e.code === "SOCIAL_DISABLED");
+    process.env.AHA_SOCIAL_STAGING_ENABLED = "true";
+    gate.assertEnabled();
+    process.env.NODE_ENV = "production";
+    assert.throws(() => gate.assertEnabled(), e => e.code === "SOCIAL_DISABLED");
+  } finally {
+    if (old.node === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = old.node;
+    if (old.stage === undefined) delete process.env.AHA_SOCIAL_STAGING_ENABLED; else process.env.AHA_SOCIAL_STAGING_ENABLED = old.stage;
+  }
+});
+
+test("social DTO rejects accidental public publication and unbounded queries", () => {
+  const good = Object.assign(new SocialPostInput(), { kind: "feed", text: "En tanke", requestKey: "key-12345678", publish: true });
+  assert.equal(validateSync(good).length, 0);
+  const denied = Object.assign(new SocialPostInput(), { kind: "feed", text: "En tanke", requestKey: "key-12345678", publish: false });
+  assert.ok(validateSync(denied).length > 0);
+  const invalid = Object.assign(new SocialPostInput(), { kind: "wrong", text: "En tanke", requestKey: "key-12345678", publish: true });
+  assert.ok(validateSync(invalid).length > 0);
+  assert.ok(validateSync(Object.assign(new SocialListQuery(), { kind: "feed", limit: 41 })).length > 0);
+});
+
+test("publishing is explicit and media host is allowlisted before any database write", async () => {
+  const repo = new FakeRepo();
+  const gate = { assertEnabled() {}, assertMedia: SocialGate.prototype.assertMedia };
+  const service = new SocialService(gate, repo);
+  await service.publish(principal, { kind: "feed", text: "  Test ", requestKey: "key-12345678", publish: true });
+  assert.deepEqual(repo.calls[0].values, ["feed", "Test", null, "key-12345678"]);
+  await assert.rejects(service.publish(principal, { kind: "feed", text: "   ", requestKey: "key-12345678", publish: true }));
+  await assert.rejects(service.publish(principal, { kind: "feed", text: "Test", requestKey: "key-12345678", publish: false }));
+  await assert.rejects(service.publish(principal, { kind: "insta", text: "Foto", requestKey: "key-12345678", publish: true }));
+  await assert.rejects(service.publish(principal, { kind: "insta", text: "Foto", mediaUrl: "https://not-approved.example/a.webp", requestKey: "key-12345678", publish: true }));
+  assert.equal(repo.calls.length, 1);
+});
+
+test("interactions use fixed repository actions and verified principal", async () => {
+  const repo = new FakeRepo();
+  const service = new SocialService({ assertEnabled() {} }, repo);
+  const id = "11111111-1111-4111-8111-111111111111";
+  await service.list(principal, { kind: "feed", limit: 20 });
+  await service.comments(principal, id);
+  await service.like(principal, id, true);
+  await service.comment(principal, id, "Svar");
+  await service.report(principal, id, "spam");
+  await service.remove(principal, id);
+  assert.deepEqual(repo.calls.map(v => v.action), ["posts", "comments", "like", "comment", "report", "remove"]);
+  assert.ok(repo.calls.every(v => v.p === principal));
+});

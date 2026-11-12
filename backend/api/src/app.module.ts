@@ -15,32 +15,18 @@ import { HealthController } from "./health.controller.js";
 import { LocalImportModule } from "./local-imports/local-import.module.js";
 import { ProfilesModule } from "./profiles/profiles.module.js";
 import { CanonicalSyncModule } from "./sync/sync.module.js";
+import { SocialModule } from "./social/social.module.js";
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, ProfilesModule, LocalImportModule, CanonicalSyncModule, FysenIntegrationModule],
+  imports: [ConfigModule, DatabaseModule, ProfilesModule, LocalImportModule, CanonicalSyncModule, FysenIntegrationModule, SocialModule],
   controllers: [HealthController, AuthContextController],
   providers: [
-    {
-      provide: AUTH_TOKEN_VERIFIER,
-      useClass: JoseTokenVerifier
-    },
-    {
-      provide: AUDIT_SINK,
-      useClass: ConsoleAuditSink
-    },
+    { provide: AUTH_TOKEN_VERIFIER, useClass: JoseTokenVerifier },
+    { provide: AUDIT_SINK, useClass: ConsoleAuditSink },
     SafeAuditService,
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AuditInterceptor
-    },
-    {
-      provide: APP_FILTER,
-      useClass: ApiExceptionFilter
-    }
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_FILTER, useClass: ApiExceptionFilter }
   ]
 })
 export class AppModule {}
