@@ -9,6 +9,7 @@ import { APP_CONFIG, type AppConfig } from "../config/app-config.js";
 import { CanonicalDatabaseService } from "../database/canonical-database.service.js";
 import { SocialModerationController, SocialModerationRepository, SocialModerationService } from "./social-moderation.module.js";
 import { SocialGate, mapSocialDatabaseError } from "./social-shared.js";
+import { SocialMediaController, SocialMediaRepository, SocialMediaService } from "./social-media.module.js";
 export { SocialGate, mapSocialDatabaseError } from "./social-shared.js";
 
 type Kind = "feed" | "insta";
@@ -187,7 +188,7 @@ export class SocialController {
 }
 
 @Module({
-  controllers: [SocialController, SocialModerationController],
-  providers: [SocialGate, SocialRepository, SocialService, SocialModerationRepository, SocialModerationService]
+  controllers: [SocialController, SocialModerationController, SocialMediaController],
+  providers: [SocialGate, SocialRepository, SocialService, SocialModerationRepository, SocialModerationService, SocialMediaRepository, SocialMediaService]
 })
 export class SocialModule {}

@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import type { AppConfig } from "./config/app-config.js";
 import { RequestContextMiddleware } from "./common/request-context.middleware.js";
+import { raw } from "express";
 
 type CorsDecision = (error: Error | null, allow?: boolean) => void;
 
@@ -24,6 +25,9 @@ export function createGlobalValidationPipe(): ValidationPipe {
 }
 
 export function configureApplication(app: INestApplication, config: AppConfig): void {
+  // Strict binary parser for staging media only. Regular JSON routes keep their
+  // existing default body limits; the controller rejects anything over 512 KiB.
+  app.use("/v1/social/media", raw({ type: ["image/png", "image/webp"], limit: "600kb" }));
   const requestContext = new RequestContextMiddleware();
   app.use(requestContext.use.bind(requestContext));
   app.useGlobalPipes(createGlobalValidationPipe());

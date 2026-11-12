@@ -45,18 +45,19 @@ export function mapSocialDatabaseError(error: unknown): never {
       if (pgCode === "42501" && message === "no open social reports") {
         throw new ApiException(409, "CONFLICT", "There are no pending reports to moderate");
       }
-      if (pgCode === "42501" && message === "post unavailable") {
+      if (pgCode === "42501" && (message === "post unavailable" || message === "media unavailable")) {
         throw new ApiException(404, "NOT_FOUND", "The post is not available");
       }
-      if (pgCode === "23505" && message === "idempotency conflict") {
+      if (pgCode === "23505" && (message === "idempotency conflict" || message === "media idempotency conflict")) {
         throw new ApiException(409, "CONFLICT", "This publication key was already used for different content");
       }
-      if (pgCode === "22023" && ["publication rate limit", "comment rate limit"].includes(message)) {
+      if (pgCode === "22023" && ["publication rate limit", "comment rate limit", "media rate limit"].includes(message)) {
         throw new ApiException(429, "SOCIAL_RATE_LIMITED", "Too many recent social actions");
       }
       if (pgCode === "22023" && [
         "invalid social publication", "invalid comment", "invalid report reason",
-        "invalid social feed request", "invalid like action", "invalid social moderation request"
+        "invalid social feed request", "invalid like action", "invalid social moderation request",
+        "invalid social media upload", "invalid social media signature"
       ].includes(message)) {
         throw new ApiException(400, "VALIDATION_FAILED", "The social request is invalid");
       }
