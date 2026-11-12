@@ -79,7 +79,7 @@
     const emblem = add("a", brand, "A", "aha-social-brandmark");
     emblem.href = "index.html";
     emblem.setAttribute("aria-label", "Til AHA Home");
-    emblem.setAttribute("aria-hidden", "true");
+    emblem.title = "Til AHA Home";
     const heading = add("div", brand, null, "aha-social-heading");
     add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");
     add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
