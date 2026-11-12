@@ -9,6 +9,7 @@ import { APP_CONFIG } from "../dist/config/app-config.js";
 import { configureApplication } from "../dist/bootstrap.js";
 import { SocialRepository } from "../dist/social/social.module.js";
 import { SocialModerationRepository } from "../dist/social/social-moderation.module.js";
+import { SocialMediaRepository } from "../dist/social/social-media.module.js";
 
 const TEST_POST_A = "11111111-1111-4111-8111-111111111111";
 const TEST_POST_B = "22222222-2222-4222-8222-222222222222";
@@ -61,6 +62,44 @@ class MemoryModeratorRepository {
     this.actions.push({ postId, action, note });
     return { postId, status: action === "hide" ? "hidden" : "published", auditId: "audit-" + this.actions.length };
   }
+}
+
+class MemoryMediaRepository {
+  rows = new Map();
+  constructor(posts) { this.posts = posts; }
+
+  async upload(principal, mime, bytes, requestKey) {
+    const old = [...this.rows.values()].find(row => row.owner === principal.subject && row.key === requestKey);
+    if (old) {
+      if (old.mime !== mime || !old.bytes.equals(bytes)) throw new ApiException(409, "CONFLICT", "Media changed");
+      return { mediaId: old.id, mediaUrl: old.path, idempotentReplay: true };
+    }
+    const id = "33333333-3333-4333-8333-333333333333";
+    const path = "/v1/social/media/" + id;
+    this.rows.set(id, { id, path, owner: principal.subject, mime, bytes, key: requestKey });
+    return { mediaId: id, mediaUrl: path, idempotentReplay: false };
+  }
+
+  async read(principal, id) {
+    const item = this.rows.get(id);
+    if (!item) throw new ApiException(404, "NOT_FOUND", "Media not found");
+    const published = [...this.posts.values()].some(post =>
+      post.mediaUrl === item.path && !post.deleted && !post.hidden
+    );
+    if (!published && item.owner !== principal.subject) {
+      throw new ApiException(404, "NOT_FOUND", "Media not available");
+    }
+    return { contentType: item.mime, bytes: item.bytes };
+  }
+}
+
+function tinyPng() {
+  const bytes = Buffer.alloc(108);
+  Buffer.from("89504e470d0a1a0a","hex").copy(bytes);
+  bytes.write("IHDR",12,"ascii");
+  bytes.writeUInt32BE(8,16);
+  bytes.writeUInt32BE(8,20);
+  return bytes;
 }
 
 class MemorySocialRepository {
@@ -132,6 +171,7 @@ const prevEnv = { node: process.env.NODE_ENV, gate: process.env.AHA_SOCIAL_STAGI
 let app;
 const memory = new MemorySocialRepository();
 const moderatorMemory = new MemoryModeratorRepository(memory.posts, memory.reports);
+const mediaMemory = new MemoryMediaRepository(memory.posts);
 
 before(async () => {
   process.env.NODE_ENV = "test";
@@ -142,6 +182,7 @@ before(async () => {
     .overrideProvider(AUTH_TOKEN_VERIFIER).useValue(auth)
     .overrideProvider(SocialRepository).useValue(memory)
     .overrideProvider(SocialModerationRepository).useValue(moderatorMemory)
+    .overrideProvider(SocialMediaRepository).useValue(mediaMemory)
     .compile();
   app = module.createNestApplication();
   configureApplication(app, config);
@@ -214,6 +255,41 @@ test("Insta requires approved media host; Bob publishes and Alice sees it", asyn
   const nowFeed = await request(app.getHttpServer()).get("/v1/social/posts?kind=feed")
     .set("Authorization","Bearer bob").expect(200);
   assert.equal(nowFeed.body.data.length,0);
+});
+
+
+
+test("binary staging upload stays private until an explicit Insta post references it", async () => {
+  const raw = tinyPng();
+  await request(app.getHttpServer()).post("/v1/social/media")
+    .set("Content-Type","image/png").set("Idempotency-Key","binary-upload-001")
+    .send(raw).expect(401);
+  const uploaded = await request(app.getHttpServer()).post("/v1/social/media")
+    .set("Authorization","Bearer bob")
+    .set("Content-Type","image/png").set("Idempotency-Key","binary-upload-001")
+    .send(raw).expect(201);
+  const mediaId = uploaded.body.data.mediaId;
+  assert.equal(mediaId,"33333333-3333-4333-8333-333333333333");
+  assert.equal(uploaded.body.data.mediaUrl,"/v1/social/media/" + mediaId);
+  assert.equal(mediaMemory.rows.get(mediaId).bytes.length,raw.length);
+
+  await request(app.getHttpServer()).get("/v1/social/media/" + mediaId)
+    .set("Authorization","Bearer alice").expect(404);
+  await request(app.getHttpServer()).get("/v1/social/media/" + mediaId)
+    .set("Authorization","Bearer bob").expect(200).expect("Cache-Control","private, no-store")
+    .expect("X-Content-Type-Options","nosniff")
+    .expect(({ body }) => assert.equal(body.length,108));
+
+  await request(app.getHttpServer()).post("/v1/social/media")
+    .set("Authorization","Bearer bob")
+    .set("Content-Type","image/png").set("Idempotency-Key","binary-upload-002")
+    .send(Buffer.alloc(600000)).expect(413);
+
+  // The database integration rehearsal separately proves that the uploader
+  // must OWN media in the same atomic transaction as social post publication.
+  memory.posts.get(TEST_POST_B).mediaUrl = uploaded.body.data.mediaUrl;
+  await request(app.getHttpServer()).get("/v1/social/media/" + mediaId)
+    .set("Authorization","Bearer alice").expect(200);
 });
 
 
