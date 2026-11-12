@@ -63,6 +63,9 @@ export function mapSocialDatabaseError(error: unknown): never {
       if (pgCode === "23505" && (message === "idempotency conflict" || message === "media idempotency conflict")) {
         throw new ApiException(409, "CONFLICT", "This publication key was already used for different content");
       }
+      if (pgCode === "22023" && message === "media storage quota") {
+        throw new ApiException(507, "SOCIAL_MEDIA_QUOTA", "Staging image storage capacity has been reached");
+      }
       if (pgCode === "22023" && ["publication rate limit", "comment rate limit", "media rate limit"].includes(message)) {
         throw new ApiException(429, "SOCIAL_RATE_LIMITED", "Too many recent social actions");
       }

@@ -80,6 +80,7 @@
     if (!response.ok) {
       if (response.status === 503) throw new Error("Bildeopplasting er ikke aktivert i staging.");
       if (response.status === 413) throw new Error("Bildet er større enn det testmiljøet støtter.");
+      if (response.status === 507) throw new Error("Testmiljøets bildelagring er full. Fjern upubliserte bilder eller kontakt testansvarlig.");
       throw new Error("Kunne ikke laste opp bildet. Prøv igjen.");
     }
     const data = (await response.json())?.data;

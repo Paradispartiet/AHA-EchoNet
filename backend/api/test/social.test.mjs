@@ -118,6 +118,7 @@ test("social DB errors yield precise, sanitized HTTP status and unfamiliar error
     ["23505", "idempotency conflict", 409, "CONFLICT"],
     ["22023", "publication rate limit", 429, "SOCIAL_RATE_LIMITED"],
     ["22023", "comment rate limit", 429, "SOCIAL_RATE_LIMITED"],
+    ["22023", "media storage quota", 507, "SOCIAL_MEDIA_QUOTA"],
     ["22023", "invalid social publication", 400, "VALIDATION_FAILED"]
   ]) {
     assert.throws(() => mapSocialDatabaseError(make(pgCode, message)),

@@ -21,6 +21,7 @@ create or replace function aha_social.upload_media_v1(p_type text,p_data bytea,p
 returns jsonb language plpgsql volatile security definer
 set search_path = pg_catalog, aha, aha_social as $fn$
 declare v_self text; v_row aha_social.media%rowtype; v_id uuid;
+ v_profile_bytes bigint; v_total_bytes bigint; v_new_bytes integer;
 begin
  v_self:=aha_social.require_profile_v1();
  if p_type is null or p_type not in ('image/webp','image/png')
@@ -47,6 +48,19 @@ begin
  if (select count(*) from aha_social.media
     where profile_id=v_self and created_at>now()-interval '1 hour')>=8 then
   raise exception 'media rate limit' using errcode='22023';
+ end if;
+ -- This temporary PostgreSQL staging store is hard-capped at 8 MiB per
+ -- account and 64 MiB total, including retained hidden/deleted media.
+ -- Global transaction lock prevents concurrent users bypassing the quota.
+ perform pg_advisory_xact_lock(760014,1);
+ v_new_bytes:=octet_length(p_data);
+ select coalesce(sum(octet_length(m.bytes)) filter (where m.profile_id=v_self),0),
+        coalesce(sum(octet_length(m.bytes)),0)
+ into v_profile_bytes,v_total_bytes
+ from aha_social.media m;
+ if v_profile_bytes+v_new_bytes>8388608
+    or v_total_bytes+v_new_bytes>67108864 then
+  raise exception 'media storage quota' using errcode='22023';
  end if;
  insert into aha_social.media(profile_id,request_key,content_type,bytes)
  values(v_self,btrim(p_request_key),p_type,p_data) returning id into v_id;
