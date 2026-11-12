@@ -30,7 +30,7 @@ jobs:
   canonical-postgresql-rehearsal:
     name: PostgreSQL 16 canonical import rehearsal
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     services:
       postgres:
@@ -66,3 +66,68 @@ jobs:
 
       - name: Run clean canonical PostgreSQL rehearsal
         run: bash scripts/aha-postgresql-staging-rehearsal.sh
+
+      # This remains entirely local to the ephemeral GitHub runner.
+      - name: Set up Node 22 for real-HTTP social rehearsal
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend/api/package-lock.json
+
+      - name: Build real NestJS server for ephemeral PostgreSQL
+        working-directory: backend/api
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Generate three short-lived, signed rehearsal JWTs
+        env:
+          AHA_SOCIAL_EPHEMERAL_ACK: RUN_AHA_SOCIAL_EPHEMERAL_CI
+        run: |
+          node scripts/aha-social-ephemeral-auth.cjs \
+            "$RUNNER_TEMP/aha-social-jwks" "$GITHUB_ENV"
+
+      - name: Start only loopback JWKS and NestJS
+        env:
+          NODE_ENV: test
+          PORT: "3100"
+          AHA_SOCIAL_STAGING_ENABLED: "true"
+          AHA_DATABASE_ENABLED: "true"
+          AHA_DATABASE_SSL_MODE: disable
+          AHA_DATABASE_POOL_MAX: "3"
+          AHA_DATABASE_URL: postgresql://aha_runtime_rehearsal:rehearsal-runtime-password-not-production@127.0.0.1:5432/aha_rehearsal
+          AHA_AUTH_PROVIDER: supabase
+          AHA_ALLOWED_ORIGINS: http://127.0.0.1:4177
+          AHA_AUDIT_HASH_SALT: ephemeral-social-ci-salt-not-for-deployment
+          AHA_CANONICAL_SYNC_ENABLED: "false"
+          AHA_LOCAL_IMPORT_ENABLED: "false"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/aha-canonical-sync-hosted-staging-auth-fixture.cjs \
+            serve "$AHA_STAGING_JWKS_FILE" > "$RUNNER_TEMP/aha-social-jwks.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/aha-social-jwks.pid"
+          node backend/api/dist/main.js > "$RUNNER_TEMP/aha-social-api.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/aha-social-api.pid"
+
+      - name: Verify real HTTP plus PostgreSQL with three independent profiles
+        env:
+          NODE_ENV: test
+          PGDATABASE: aha_rehearsal
+          AHA_SOCIAL_STAGING_ENABLED: "true"
+          AHA_SOCIAL_EPHEMERAL_ACK: RUN_AHA_SOCIAL_EPHEMERAL_CI
+          AHA_SOCIAL_E2E_API_ORIGIN: http://127.0.0.1:3100
+        run: node scripts/aha-social-ephemeral-http-e2e.cjs
+
+      - name: Stop ephemeral HTTP services
+        if: always()
+        shell: bash
+        run: |
+          for file in "$RUNNER_TEMP/aha-social-api.pid" "$RUNNER_TEMP/aha-social-jwks.pid"; do
+            if [[ -f "$file" ]]; then
+              pid="$(cat "$file")"
+              if [[ "$pid" =~ ^[0-9]+$ ]]; then kill "$pid" 2>/dev/null || true; fi
+            fi
+          done
+

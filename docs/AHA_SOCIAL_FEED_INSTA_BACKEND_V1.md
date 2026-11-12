@@ -75,3 +75,7 @@ Et bilde som er lastet opp, men ikke knyttet til et innlegg, kan nå slettes av 
 ## Brukerstyrt avbryt av bildeutkast
 
 Insta-testgrensesnittet viser nå «Fjern valgt bilde». Før opplasting fjernes kun forhåndsvisningen og lokal filreferanse. Hvis et bilde ble lastet opp, men innlegget ikke kunne publiseres, bruker knappen den autentiserte `DELETE /v1/social/media/:id`-funksjonen. Ulykket fjerning vises for brukeren; slike upubliserte bilder blir uansett utilgjengelige etter 24 timer. Et nytt bildevalg forsøker å rydde bort eventuell forrige opplasting. Ved midlertidig publiseringsfeil gjenbrukes den samme mediereferansen, slik at gjentatte forsøk ikke lager unødvendige ekstra opplastinger.
+
+## Reell HTTP + PostgreSQL med tre syntetiske profiler i CI
+
+PostgreSQL 16-regresjonsjobben bygger nå NestJS og starter den mot samme **kortlivede, lokale** testdatabase. Et separat CI-skript genererer tre RSA-signerte JWT-er (konto A, konto B og moderator), verifisert av virkelig `JoseTokenVerifier` via loopback-JWKS. Testen bruker autentisert HTTP til bildeopplasting, fremmed-eierskapsavslag, Insta-publisering, lesing fra konto B, rapportering, moderatorskjuling, avvisning av bilder etter skjuling og sletting, samt avbrutt upublisert opplasting. Alle tjenester og data forblir i GitHub-runneren. Ingen produksjon eller hosted staging endres. Eksisterende Render-canonical-staging bruker `NODE_ENV=production` og blir ikke brukt til sosial staging.
