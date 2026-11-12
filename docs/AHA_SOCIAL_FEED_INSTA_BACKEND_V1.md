@@ -91,3 +91,7 @@ Lagring av opplastede Insta-bilder i PostgreSQL er avgrenset til **8 MiB per pro
 ## Kontroll av mottaker før sending av token
 
 Den lokale medieklienten kontrollerer nå både den separat konfigurerte `AHA_SOCIAL_API_ORIGIN` og den konkrete API-adressen før **opplasting, lesing eller sletting**. Bare det eksakte, konfigurerte HTTPS-opphavet er tillatt, og stagingflagget må være eksplisitt `true`. Feil URL avvises **før** klienten leser brukerens innloggingstoken eller sender nettverkstrafikk. Tester dekker protokollnedgradering, URL-brukernavn, feil vert, path/query/hash og deaktivert staging.
+
+## Sikker staging-opprydding
+
+Det er lagt inn et operatorverktøy som som standard kun viser planen uten databaseforbindelse. Separat sosial stagingdatabase, bekreftet prosjektref og eksplisitt driftsgodkjenning må foreligge før aggregert forhåndsvisning eller operatørstyrt opprydding. Se `docs/AHA_SOCIAL_STAGING_MEDIA_MAINTENANCE_V1.md`.
