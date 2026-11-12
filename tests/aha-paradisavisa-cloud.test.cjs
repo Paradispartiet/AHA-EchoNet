@@ -68,6 +68,7 @@ function mock(options = {}) {
   };
   const env = {
     URL, Date, Promise, console, Array,
+    setTimeout: (fn) => setImmediate(fn),
     localStorage: {
       getItem: (key) => local.get(key) || null,
       setItem: (key, val) => {
