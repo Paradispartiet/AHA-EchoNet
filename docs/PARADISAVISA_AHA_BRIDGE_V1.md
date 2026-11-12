@@ -15,8 +15,8 @@
 - Automatisk loggføring er **av som standard** og aktiveres ved eksplisitt trykk. En åpning er ikke det samme som lest; lest markeres manuelt eller når artikkelslutten vises etter samtykke.
 - Manuell lagring og lesemarkering fungerer uten å slå på automatisk sporing.
 - Ingen retroaktiv import av tidligere faktisk lesing, og ingen synk mellom enheter eller browser-profiler.
-- Eksporter JSON og slett lesehistorikk via Aha. Ved sletting beholdes brukervalgte lagringer og samlings-/stikoblinger.
-- V1 krever at avis og Aha ligger på **samme origin**. Hvis kanonisk Aha ligger på et annet domene, må V2 bruke en eksplisitt eksport/import eller autentisert samtykkestyrt overføring. Aldri forsøk cross-origin localStorage.
+- Eksporter JSON fra både avis og Aha, importer kontrollert JSON i Aha og slett lesehistorikk via Aha. Ved sletting beholdes brukervalgte lagringer og samlings-/stikoblinger.
+- Direkte, automatisk deling av lokal leselogg i V1 fungerer kun når avis og Aha ligger på **samme origin**. Ved ulike domener kan brukeren eksplisitt **eksportere JSON i Paradisavisa og importere JSON i Aha**. Importen validerer kanoniske avis-URL-er og endrer aldri mottakerens samtykke til sporing. Aldri forsøk cross-origin localStorage.
 
 ## Eiergrenser
 - \`aha_articles_v1\` er **AHAavisas egne lokale utkast**, ikke publiserte Paradisavisa-artikler; ikke skriv i denne nøkkelen.
