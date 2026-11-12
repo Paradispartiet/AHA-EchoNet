@@ -67,7 +67,7 @@ set search_path = pg_catalog, aha, aha_social as $fn$
 declare v_self text; v_out jsonb;
 begin
  v_self:=aha_social.require_profile_v1();
- if p_kind not in ('feed','insta') or p_limit not between 1 and 40 then
+ if p_kind is null or p_kind not in ('feed','insta') or p_limit is null or p_limit not between 1 and 40 then
   raise exception 'invalid social feed request' using errcode='22023';
  end if;
  select coalesce(jsonb_agg(x.obj order by x.created_at desc),'[]'::jsonb) into v_out
@@ -166,6 +166,7 @@ begin
  if not exists(select 1 from aha_social.posts where id=p_id and state='published') then
   raise exception 'post unavailable' using errcode='42501';
  end if;
+ if p_like is null then raise exception 'invalid like action' using errcode='22023'; end if;
  if p_like then
   insert into aha_social.likes(post_id,profile_id) values(p_id,v_self) on conflict do nothing;
  else

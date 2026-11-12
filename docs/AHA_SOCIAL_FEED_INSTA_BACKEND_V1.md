@@ -31,3 +31,7 @@ Server er **hardstoppet i production** og krever \`AHA_SOCIAL_STAGING_ENABLED=tr
 5. Undersøk og opphev kostnadssperren **i egen godkjent produksjonsprosess**; nåværende kilde er \`ops/canonical-sync-production-rollout-v1.json\` med \`cost_hold_remote_disabled\`.
 
 Dette er en faktisk serverimplementasjon, men **ikke** en påstand om at Feed/Insta nå er lansert som sosial tjeneste.
+
+## To-profil regresjon i isolert PostgreSQL
+
+`supabase/tests/aha_postgresql_social_rehearsal_v1.sql` kjøres med `aha_runtime_rehearsal` fra den eksisterende PostgreSQL 16-workflowen etter eksplisitte, **kun lokale** funksjonsrettigheter. Konto A publiserer Feed; konto B leser, liker, kommenterer og rapporterer, men kan ikke slette innlegget. Konto B publiserer Insta; konto A leser innlegget. Testen verifiserer også idempotens, at slettede innlegg ikke vises, at direkte tabellwrites nekteres, at interne hjelpefunksjoner ikke kan kalles, at NULL-limit nekteres og at ukjent profil ikke kan lese. Den utfører ingen hosted staging-/production-kall og er ikke en fysisk to-brukertest.
