@@ -23,7 +23,8 @@ Kun metadata som er nødvendig for et privat lesebibliotek sendes: kanonisk arti
 - `aha_paradisavisa_library_v1` er den lokale datakilden. `trackingEnabled` overføres **aldri** til skyen og kan ikke aktiveres ved import.
 - Delte innloggingssesjoner betyr ikke automatisk samtykke til leselogg i skyen.
 - `aha_paradisavisa_cloud_owner_v1` låser skyhandlinger på en lokal enhet til kontoen som først tok en sikkerhetskopi. Kontobytte avbryter opplasting og nedlasting i stedet for å blande innhold.
-- Dette er en **skylagringssperre**, ikke ennå en fullstendig profiladskillelse av den gamle delte localStorage-nøkkelen. På delt enhet må lokal lesehistorikk fortsatt behandles som synlig for andre som bruker samme nettleserprofil.
+- **Ny personvernsperre:** Når den lokale lesehistorikken har en konto-eier, krever artikkelbiblioteket, Paradisavisas artikkelknapper og Ahas tankekart bekreftet innlogging med denne eieren før de viser eller endrer denne historikken. Utlogging og kontobytte låser igjen visningen. Ueide gjestebiblioteker er fortsatt tilgjengelige uten konto.
+- Dette er en **grensesnitt- og skylagringssperre**, ikke kryptert eller komplett profiladskillelse av samme localStorage i delt nettleserprofil. Teknisk kyndige brukere på samme enhet kan fortsatt lese nettleserlagringen. Full adskillelse krever kontooppdelte lokale lagringsnøkler og en kontrollert migrasjon av eksisterende historikk.
 - Import beholder brukerens lokale lagringsmarkeringer og endrer ikke samtykke til automatisk lesehistorikk.
 - Ved opplasting er sammenslåing additiv: gamle sky-markeringer og temaord beholdes; en utdatert enhet kan ikke slette nyere skydetaljer. Et bevisst valg om å fjerne hele skybiblioteket finnes separat.
 - Hvis tabell/RLS ikke er aktivert, eller innlogging ikke kan bekreftes, gjør frontend **ingen** usikre fallback-skrivinger til generelle Aha-tabeller.
@@ -37,6 +38,7 @@ Forutsetninger:
 - Kjør migrasjonen kun etter egen databasebackup og kontroll på staging-prosjekt.
 - Migrasjonen oppretter `public.aha_paradisavisa_reading_library` med nøkkel `(profile_id, article_id)`, minimerte data og RLS.
 - RLS er aktiv og tvunget. Rollen `authenticated` får bare tilgang til rader der `profile_id = auth.uid()`. Anonyme brukere får ingen tabellrettigheter.
+- **CI-kontroll:** `aha-paradisavisa-rls.yml` oppretter en tom PostgreSQL 16-database med emulerte Supabase-roller, kjører den nøyaktige SQL-migrasjonen og tester to brukere pluss anonym tilgang. Denne kontrollen er bestått, men erstatter **ikke** ekte Supabase-test før produksjonsaktivering.
 - Test minst to **ekte forskjellige Supabase-brukere**: hver ser bare egne rader, A kan ikke lese/endre/slette Bs data; anonym får ingen tilgang.
 - Kontroller eksport, nettleserbytte, logg ut, brukerbytte, sletting, nettverksfeil, dobbeltklikk og iPhone/iPad Safari.
 - Aktiver etter godkjent CI, databasemigrasjon i riktig prosjekt, og godkjent menneskelig sikkerhetsgjennomgang. Ingen tjeneste/sekret-rolle legges inn i frontend.
