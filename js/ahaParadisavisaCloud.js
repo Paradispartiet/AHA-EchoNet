@@ -18,11 +18,15 @@
   }
   function getLocalOwner() {
     try { return localStorage.getItem(OWNER) || ""; }
-    catch { return ""; }
+    // If browser storage is inaccessible, fail closed. Do not treat it as a
+    // new guest device that is safe to bind to the current account.
+    catch { return "storage-unavailable"; }
   }
   function setLocalOwner(uid) {
-    try { localStorage.setItem(OWNER, uid); return true; }
-    catch { return false; }
+    try {
+      localStorage.setItem(OWNER, uid);
+      return localStorage.getItem(OWNER) === uid;
+    } catch { return false; }
   }
   function validId(id) {
     return /^\/Paradisavisa\/(?:artikler|posts)\/[^/?#]+\.html$/i.test(String(id || ""));
@@ -108,6 +112,9 @@
   }
   function labelServerError(error) {
     const code = String(error?.code || "");
+    if (code === "AHA_LIBRARY_TOO_LARGE") {
+      return "Skybiblioteket er større enn grensen på 5000 artikler. Ingen data ble overskrevet; kontakt prosjektansvarlig før overføring.";
+    }
     // Never show raw SQL/service diagnostics or expose sensitive query details.
     if (code === "42P01" || code === "PGRST205" || code === "PGRST116") {
       return "Kontolagringen er ikke klargjort i Aha-databasen. Det lokale biblioteket er uendret.";
@@ -119,14 +126,19 @@
   }
   async function readRemote(client, uid) {
     const result = [];
-    for (let offset = 0; offset < MAX_ARTICLES; offset += BATCH_SIZE) {
+    // Fetch one additional row if the collection hits the cap. A silent
+    // truncation could otherwise conceal saved articles on another device.
+    for (let offset = 0; offset <= MAX_ARTICLES; offset += BATCH_SIZE) {
       const { data, error } = await client.from(TABLE)
         .select("article_id,title,summary,excerpt,category,published_at,saved_at,read_at,opened_at,open_count,tags")
         .eq("profile_id", uid)
         .order("article_id", { ascending: true })
-        .range(offset, offset + BATCH_SIZE - 1);
+        .range(offset, Math.min(offset + BATCH_SIZE - 1, MAX_ARTICLES));
       if (error) throw error;
       const batch = Array.isArray(data) ? data : [];
+      if (offset + batch.length > MAX_ARTICLES) {
+        throw Object.assign(new Error("Cloud library exceeds the supported row limit"), { code: "AHA_LIBRARY_TOO_LARGE" });
+      }
       result.push(...batch);
       if (batch.length < BATCH_SIZE) break;
     }
@@ -176,16 +188,18 @@
           tags: [...new Set([...(Array.isArray(older.tags) ? older.tags : []), ...row.tags])].slice(0, 12)
         };
       });
+      // Claim local ownership BEFORE the first cloud write. If browser
+      // storage is blocked, refuse the transfer instead of leaking data to
+      // the cloud while leaving the device unbound for the next account.
+      if (!setLocalOwner(auth.userId)) {
+        global.AHAParadisavisa?.setOwnerAccess?.(false);
+        return { ok: false, reason: "Nettleseren kan ikke lagre sikker kontotilknytning. Ingen artikler ble lastet opp." };
+      }
       for (let i = 0; i < merged.length; i += BATCH_SIZE) {
         const { error } = await auth.client.from(TABLE)
           .upsert(merged.slice(i, i + BATCH_SIZE), { onConflict: "profile_id,article_id" });
         if (error) throw error;
         updated += Math.min(BATCH_SIZE, merged.length - i);
-        // Mark ownership immediately after the first committed batch, even if
-        // a later batch fails; otherwise another account could leak the remainder.
-        if (!setLocalOwner(auth.userId)) {
-          return { ok: false, reason: "Noen artikler er overført, men nettleseren kunne ikke huske kontoeieren. Ikke bytt konto på denne enheten." };
-        }
       }
       return { ok: true, reason: updated + " artikkelregistreringer er lagret på Aha-kontoen. Eldre kontomarkeringer beholdes. Ingenting synkroniseres automatisk." };
     } catch (error) {
@@ -209,11 +223,14 @@
       if (!rows.length) return { ok: false, reason: "Det finnes ingen artikkelregistreringer på denne Aha-kontoen." };
       const articles = rows.map(articleFromRow).filter(Boolean);
       if (!articles.length) return { ok: false, reason: "Skybiblioteket inneholder ingen gyldige artikkelreferanser." };
-      const result = global.AHAParadisavisa?.importData?.({ version: 1, articles, trackingEnabled: false });
-      if (!result?.ok) return { ok: false, reason: "Importen feilet. Lokale data ble ikke slettet." };
+      // The imported article rows must never be written to a local profile
+      // that cannot remember the verified owning account.
       if (!setLocalOwner(auth.userId)) {
-        return { ok: false, reason: "Artiklene ble importert, men nettleseren kunne ikke lagre konto-eierskapet." };
+        global.AHAParadisavisa?.setOwnerAccess?.(false);
+        return { ok: false, reason: "Nettleseren kan ikke lagre kontotilknytning. Ingen artikler ble importert." };
       }
+      const result = global.AHAParadisavisa?.importData?.({ version: 1, articles, trackingEnabled: false });
+      if (!result?.ok) return { ok: false, reason: "Importen feilet. Lokale artikler ble ikke slettet." };
       return { ok: true, reason: "Hentet " + articles.length + " artikler fra Aha-kontoen. Lokal sporing er uendret." };
     } catch (error) {
       return { ok: false, reason: labelServerError(error) };
