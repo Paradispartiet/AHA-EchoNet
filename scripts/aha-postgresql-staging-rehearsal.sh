@@ -51,6 +51,11 @@ VALUES
   ('profile_a', 'supabase', 'rehearsal-user-a', 'Rehearsal A'),
   ('profile_b', 'supabase', 'rehearsal-user-b', 'Rehearsal B');
 
+-- Only this isolated rehearsal gets a moderator account; no production seeding.
+INSERT INTO aha.profiles(id,auth_provider,auth_subject,display_name)
+VALUES('profile_mod','supabase','rehearsal-user-mod','Rehearsal Moderator');
+INSERT INTO aha_social.moderators(profile_id) VALUES('profile_mod');
+
 INSERT INTO aha.workspaces (id, owner_profile_id, workspace_type, name, visibility, status)
 VALUES
   ('workspace_a', 'profile_a', 'personal', 'A', 'private', 'active'),
@@ -135,6 +140,8 @@ GRANT EXECUTE ON FUNCTION aha_social.delete_post_v1(uuid) TO aha_runtime_rehears
 GRANT EXECUTE ON FUNCTION aha_social.like_post_v1(uuid,boolean) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.comment_post_v1(uuid,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.report_post_v1(uuid,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.moderation_queue_v1(integer) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.moderate_post_v1(uuid,text,text) TO aha_runtime_rehearsal;
 
 DO $check$
 BEGIN
@@ -143,6 +150,9 @@ BEGIN
     OR has_table_privilege('aha_runtime_rehearsal','aha_social.comments','UPDATE')
     OR has_table_privilege('aha_runtime_rehearsal','aha_social.reports','SELECT')
     OR has_function_privilege('aha_runtime_rehearsal','aha_social.require_profile_v1()','EXECUTE')
+    OR has_function_privilege('aha_runtime_rehearsal','aha_social.require_moderator_v1()','EXECUTE')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderators','SELECT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderation_events','INSERT')
  THEN RAISE EXCEPTION 'social runtime privileges exceed exact function grants'; END IF;
 END;
 $check$;
@@ -152,6 +162,11 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_rehearsal_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql
 
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \

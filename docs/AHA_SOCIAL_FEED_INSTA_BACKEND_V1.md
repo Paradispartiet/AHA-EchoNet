@@ -35,3 +35,9 @@ Dette er en faktisk serverimplementasjon, men **ikke** en påstand om at Feed/In
 ## To-profil regresjon i isolert PostgreSQL
 
 `supabase/tests/aha_postgresql_social_rehearsal_v1.sql` kjøres med `aha_runtime_rehearsal` fra den eksisterende PostgreSQL 16-workflowen etter eksplisitte, **kun lokale** funksjonsrettigheter. Konto A publiserer Feed; konto B leser, liker, kommenterer og rapporterer, men kan ikke slette innlegget. Konto B publiserer Insta; konto A leser innlegget. Testen verifiserer også idempotens, at slettede innlegg ikke vises, at direkte tabellwrites nekteres, at interne hjelpefunksjoner ikke kan kalles, at NULL-limit nekteres og at ukjent profil ikke kan lese. Den utfører ingen hosted staging-/production-kall og er ikke en fysisk to-brukertest.
+
+## Moderering i staging
+
+Nye funksjoner `aha_social.moderation_queue_v1(limit)` og `aha_social.moderate_post_v1(postId, action, note)` krever en **egen, manuelt gitt** aktiv rad i `aha_social.moderators`, knyttet til verifisert profil. Ingen bruker kan gi seg selv denne rollen via API-et. Køen viser rapportert innhold med rapportantall og årsaker, ikke identiteten til rapportørene. Beslutningene `hide` og `dismiss` skriver til et separat append-only `aha_social.moderation_events`-register. Dismissed rapport åpnes ikke automatisk på nytt ved identisk rapport fra samme person. Rollen seedes kun i isolert CI-database; **ingen** produksjonsmoderator opprettes.
+
+SQL-regresjon `supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql` tester ikke-moderator-avslag, forsøk på selvpromotering, kø, avvisning av rapport, gjenrapportering, skjuling, utilgjengelige skjulte innlegg og forbud mot forfalskede revisjonslogger.
