@@ -49,7 +49,7 @@ test("publishing is explicit and media host is allowlisted before any database w
   const gate = { assertEnabled() {}, assertMedia: SocialGate.prototype.assertMedia };
   const service = new SocialService(gate, repo);
   await service.publish(principal, { kind: "feed", text: "  Test ", requestKey: "key-12345678", publish: true });
-  assert.deepEqual(repo.calls[0].values, ["feed", "Test", null, "key-12345678"]);
+  assert.deepEqual(repo.calls[0].values, ["feed", "Test", null, "key-12345678", null, null]);
   await assert.rejects(service.publish(principal, { kind: "feed", text: "   ", requestKey: "key-12345678", publish: true }));
   await assert.rejects(service.publish(principal, { kind: "feed", text: "Test", requestKey: "key-12345678", publish: false }));
   await assert.rejects(service.publish(principal, { kind: "insta", text: "Foto", requestKey: "key-12345678", publish: true }));
@@ -71,7 +71,7 @@ test("Insta accepts only exact internal staging media references, never untruste
     });
     assert.equal(validateSync(dto).length, 0);
     await service.publish(principal, dto);
-    assert.deepEqual(repo.calls[0].values, ["insta", "Bilde fra iPad", ref, "media-publish-001"]);
+    assert.deepEqual(repo.calls[0].values, ["insta", "Bilde fra iPad", ref, "media-publish-001", "feed", null]);
 
     for (const invalid of [
       "/v1/social/media/not-a-uuid",
@@ -126,4 +126,20 @@ test("social DB errors yield precise, sanitized HTTP status and unfamiliar error
   }
   const unknown = make("42501", "other confidential database detail");
   assert.throws(() => mapSocialDatabaseError(unknown), e => e === unknown);
+});
+
+test("Feed hard-stops at 500 characters; Insta formats and place tags persist to SQL boundary", async () => {
+ const repository = new FakeRepo();
+ const service = new SocialService({assertEnabled(){},assertMedia:SocialGate.prototype.assertMedia},repository);
+ const base={kind:"feed",text:"x".repeat(500),requestKey:"feed-500-chars",publish:true};
+ await service.publish(principal,base);
+ assert.equal(repository.calls[0].values[1].length,500);
+ await assert.rejects(service.publish(principal,{...base,text:"x".repeat(501)}),e=>e.code==="VALIDATION_FAILED");
+ await assert.rejects(service.publish(principal,{...base,placeTag:"Oslo"}),e=>e.code==="VALIDATION_FAILED");
+ const ref="/v1/social/media/33333333-3333-4333-8333-333333333333";
+ await service.publish(principal,{kind:"insta",text:"Sted",mediaUrl:ref,instaMode:"map",placeTag:"  Oslo sentrum  ",requestKey:"map-place-001",publish:true});
+ assert.deepEqual(repository.calls[1].values,["insta","Sted",ref,"map-place-001","map","Oslo sentrum"]);
+ await assert.rejects(service.publish(principal,{kind:"insta",text:"Sted",mediaUrl:ref,instaMode:"map",requestKey:"map-no-tag-01",publish:true}),e=>e.code==="VALIDATION_FAILED");
+ await assert.rejects(service.publish(principal,{kind:"insta",text:"Sted",mediaUrl:ref,instaMode:"reel",placeTag:"x".repeat(121),requestKey:"reel-big-tag",publish:true}),e=>e.code==="VALIDATION_FAILED");
+ assert.equal(repository.calls.length,2);
 });

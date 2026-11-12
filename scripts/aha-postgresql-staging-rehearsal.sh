@@ -136,6 +136,7 @@ GRANT USAGE ON SCHEMA aha_social TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.list_posts_v1(text,integer) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.list_comments_v1(uuid) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text,text,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.delete_post_v1(uuid) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.like_post_v1(uuid,boolean) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.comment_post_v1(uuid,text) TO aha_runtime_rehearsal;

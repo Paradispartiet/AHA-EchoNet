@@ -41,6 +41,15 @@ export class SocialPostInput {
   @Matches(/^(?:https:\/\/[^\s]+|\/v1\/social\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
   mediaUrl?: string;
 
+  @IsOptional()
+  @IsIn(["feed", "reel", "map"])
+  instaMode?: "feed" | "reel" | "map";
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 120)
+  placeTag?: string;
+
   @IsString()
   @Length(8, 100)
   requestKey!: string;
@@ -93,7 +102,7 @@ export class SocialRepository {
   ): Promise<Record<string, unknown>> {
     // No user-supplied table names or SQL are permitted.
     const commands: Record<typeof action, string> = {
-      publish: "select aha_social.publish_post_v1($1::text,$2::text,$3::text,$4::text) as result",
+      publish: "select aha_social.publish_post_v1($1::text,$2::text,$3::text,$4::text,$5::text,$6::text) as result",
       remove: "select aha_social.delete_post_v1($1::uuid) as result",
       like: "select aha_social.like_post_v1($1::uuid,$2::boolean) as result",
       comment: "select aha_social.comment_post_v1($1::uuid,$2::text) as result",
@@ -129,8 +138,20 @@ export class SocialService {
     if (input.publish !== true || !input.text?.trim() || !input.requestKey?.trim()) {
       throw new ApiException(400, "VALIDATION_FAILED", "Publishing needs a nonempty post and explicit consent");
     }
+    const text = input.text.trim();
+    const placeTag = input.placeTag?.trim() || null;
+    const instaMode = input.kind === "insta" ? (input.instaMode || "feed") : null;
+    if ((input.kind === "feed" && (text.length > 500 || input.instaMode || placeTag)) ||
+        (input.kind === "insta" && (
+          !["feed", "reel", "map"].includes(instaMode || "") ||
+          (placeTag !== null && placeTag.length > 120) ||
+          (instaMode === "map" && !placeTag)
+        ))) {
+      throw new ApiException(400, "VALIDATION_FAILED", "Invalid Feed length or Insta location/format");
+    }
     const media = this.gate.assertMedia(input.kind, input.mediaUrl);
-    return this.repository.write(principal, "publish", [input.kind, input.text.trim(), media, input.requestKey.trim()]);
+    return this.repository.write(principal, "publish",
+      [input.kind, text, media, input.requestKey.trim(), instaMode, placeTag]);
   }
   async remove(principal: AuthPrincipal, id: string): Promise<Result> {
     this.gate.assertEnabled();

@@ -118,6 +118,20 @@ begin
 end;
 $fn$;
 
+-- Every Insta picture can carry a free-text location tag. The subtype is
+-- persisted for Feed/Reel/Map views, not inferred from its caption.
+alter table aha_social.posts
+ add column insta_mode text,
+ add column place_tag text,
+ add constraint social_post_insta_mode_check check(
+   (kind='insta' and insta_mode in('feed','reel','map')) or
+   (kind='feed' and insta_mode is null and place_tag is null)
+ ),
+ add constraint social_post_place_tag_check check (
+   place_tag is null or length(btrim(place_tag)) between 1 and 120
+ );
+-- Reel initially accepts an image cover only; video transport is not enabled.
+
 -- Preserve old explicit public-HTTPS URLs for legacy posts, but permit
 -- a verified internal media reference after an owned pending upload.
 alter table aha_social.posts drop constraint posts_media_url_check;
@@ -132,7 +146,8 @@ alter table aha_social.posts
  );
 
 create or replace function aha_social.publish_post_v1(
- p_kind text,p_body text,p_media text,p_request_key text
+ p_kind text,p_body text,p_media text,p_request_key text,
+ p_insta_mode text,p_place_tag text
 )
 returns jsonb language plpgsql volatile security definer
 set search_path = pg_catalog, aha, aha_social as $fn$
@@ -143,7 +158,13 @@ begin
  if p_kind is null or p_kind not in('feed','insta')
   or length(btrim(coalesce(p_body,''))) not between 1 and 2000
   or length(btrim(coalesce(p_request_key,''))) not between 8 and 100
-  or (p_kind='insta' and nullif(btrim(coalesce(p_media,'')),'') is null)
+  or (p_kind='feed' and (
+    length(btrim(p_body))>500 or p_insta_mode is not null or p_place_tag is not null))
+  or (p_kind='insta' and (
+    nullif(btrim(coalesce(p_media,'')),'') is null
+    or coalesce(p_insta_mode,'') not in ('feed','reel','map')
+    or (p_insta_mode='map' and nullif(btrim(coalesce(p_place_tag,'')),'') is null)
+    or length(btrim(coalesce(p_place_tag,'')))>120))
   or (p_media is not null and (
     length(p_media)>2048 or (
      p_media !~ '^https://[^ ]+$'
@@ -157,7 +178,9 @@ begin
    where profile_id=v_self and request_key=p_request_key;
  if found then
   if v_old.kind<>p_kind or v_old.body<>btrim(p_body)
-    or v_old.media_url is distinct from p_media then
+    or v_old.media_url is distinct from p_media
+    or v_old.insta_mode is distinct from p_insta_mode
+    or v_old.place_tag is distinct from nullif(btrim(p_place_tag),'') then
     raise exception 'idempotency conflict' using errcode='23505';
   end if;
   return jsonb_build_object('id',v_old.id,'status',v_old.state,'idempotentReplay',true);
@@ -177,13 +200,59 @@ begin
     raise exception 'media unavailable' using errcode='42501';
   end if;
  end if;
- insert into aha_social.posts(profile_id,request_key,kind,body,media_url)
- values(v_self,btrim(p_request_key),p_kind,btrim(p_body),p_media)
+ insert into aha_social.posts(profile_id,request_key,kind,body,media_url,insta_mode,place_tag)
+ values(v_self,btrim(p_request_key),p_kind,btrim(p_body),p_media,
+        p_insta_mode,nullif(btrim(p_place_tag),''))
  returning id into v_id;
  if v_internal then
   update aha_social.media set post_id=v_id where id=v_media_id and profile_id=v_self;
  end if;
  return jsonb_build_object('id',v_id,'status','published','idempotentReplay',false);
+end;
+$fn$;
+
+-- Backward-compatible 4-argument SQL entry for existing staging fixtures.
+-- New API requests the 6-argument version, which validates subtype/tag.
+create or replace function aha_social.publish_post_v1(
+ p_kind text,p_body text,p_media text,p_request_key text
+)
+returns jsonb language sql volatile security definer
+set search_path = pg_catalog, aha, aha_social
+as $fn$
+ select aha_social.publish_post_v1(
+   p_kind,p_body,p_media,p_request_key,
+   case when p_kind='insta' then 'feed' else null end,null
+ );
+$fn$;
+
+-- Refresh the fixed list contract without changing its permissions.
+create or replace function aha_social.list_posts_v1(p_kind text,p_limit integer)
+returns jsonb language plpgsql stable security definer
+set search_path = pg_catalog, aha, aha_social as $fn$
+declare v_self text; v_out jsonb;
+begin
+ v_self:=aha_social.require_profile_v1();
+ if p_kind is null or p_kind not in ('feed','insta') or p_limit is null or p_limit not between 1 and 40 then
+  raise exception 'invalid social feed request' using errcode='22023';
+ end if;
+ select coalesce(jsonb_agg(x.obj order by x.created_at desc),'[]'::jsonb) into v_out
+ from (
+  select p.created_at,
+  jsonb_build_object(
+    'id',p.id,'kind',p.kind,'text',p.body,'mediaUrl',p.media_url,
+    'instaMode',p.insta_mode,'placeTag',p.place_tag,
+    'createdAt',p.created_at,
+    'authorName',coalesce(nullif(btrim(a.display_name),''),'AHA-bruker'),
+    'ownPost',p.profile_id=v_self,
+    'likeCount',(select count(*) from aha_social.likes l where l.post_id=p.id),
+    'commentCount',(select count(*) from aha_social.comments c where c.post_id=p.id and c.state='visible'),
+    'likedByMe',exists(select 1 from aha_social.likes l where l.post_id=p.id and l.profile_id=v_self)
+  ) obj from aha_social.posts p
+  join aha.profiles a on a.id=p.profile_id and a.status='active' and a.deleted_at is null
+  where p.kind=p_kind and p.state='published'
+  order by p.created_at desc,p.id desc limit p_limit
+ ) x;
+ return v_out;
 end;
 $fn$;
 
@@ -211,5 +280,6 @@ revoke all on function aha_social.upload_media_v1(text,bytea,text) from public;
 revoke all on function aha_social.read_media_v1(uuid) from public;
 revoke all on function aha_social.delete_pending_media_v1(uuid) from public;
 revoke all on function aha_social.publish_post_v1(text,text,text,text) from public;
+revoke all on function aha_social.publish_post_v1(text,text,text,text,text,text) from public;
 revoke all on function aha_social.purge_expired_media_v1() from public;
 commit;
