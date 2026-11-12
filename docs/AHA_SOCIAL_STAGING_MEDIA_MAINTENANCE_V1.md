@@ -15,3 +15,7 @@ Scriptet nekter bruk av de allerede kjente canonical-staging- og Auth-prosjekten
 ## Ekstra sperre før faktisk sletting
 
 En `--purge` krever nå at operatøren først kjører en egen `--preview` og leser hvor mange bilder og hvor mange bytes som kan fjernes. Ved sletting må **begge** verdiene settes eksplisitt i `AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT` og `AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES`. Verktøyet henter tallene på nytt i lesemodus umiddelbart før sletting. Hvis de er ulike, mangler eller antallet er null, avbrytes handlingen uten å kalle slettefunksjonen. Hvis antallet likevel endres mellom forhåndskontroll og gjennomføring, rapporteres `countChangedDuringPurge` i resultatet for manuell avviksbehandling. Opprett ingen automatisk oppryddingsplan.
+
+## Atomisk slettekontroll
+
+Siste kontroll og sletting kjøres i **én PostgreSQL-transaksjon**. Den låser både `aha_social.posts` og `aha_social.media` mot samtidige endringer, kontrollerer det godkjente antallet og antall bytes på nytt, og kaller først deretter operatørfunksjonen. Ved avvik, lock-timeout eller uventet slettet antall rulles **hele transaksjonen tilbake**. SQL bygges kun fra validerte heltall, aldri fra profilinnhold, tokens eller DSN. Dette er fremdeles ikke en automatisk jobb.

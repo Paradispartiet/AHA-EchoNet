@@ -1,6 +1,6 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
-const {loadPolicy,validate,run,PREVIEW_SQL,PURGE_SQL}=
+const {loadPolicy,validate,run,PREVIEW_SQL,PURGE_SQL,atomicPurgeSql}=
  require("../scripts/aha-social-staging-media-maintenance.cjs");
 
 const ref="aaaaaaaaaaaaaaaaaaaa";
@@ -80,7 +80,7 @@ test("purge requires second authorization and uses only dedicated operator funct
   sql.push({query:args.at(-1),options:opts.env.PGOPTIONS});
   if(args.at(-1).includes("has_function_privilege"))
     return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
-  if(args.at(-1)===PURGE_SQL)return {status:0,stdout:"2"};
+  if(args.at(-1)===atomicPurgeSql(2,1024))return {status:0,stdout:"2"};
   return {status:0,stdout:JSON.stringify({
     count:2,bytes:1024,expiredPending:2,expiredPendingBytes:1024,
     expiredDeleted:0,expiredDeletedBytes:0
@@ -91,7 +91,7 @@ test("purge requires second authorization and uses only dedicated operator funct
  assert.equal(result.countChangedDuringPurge,false);
  assert.deepEqual(result.reviewed,{count:2,bytes:1024});
  assert.equal(sql.length,4);
- assert.equal(sql[2].query,PURGE_SQL);
+ assert.equal(sql[2].query,atomicPurgeSql(2,1024));
  assert.doesNotMatch(sql[2].options,/default_transaction_read_only/);
 });
 test("failed role preflight never purges",()=>{
@@ -121,7 +121,7 @@ test("purge rejects missing or stale review totals before any write", () => {
   const mock=(_exe,args)=>{
    if(args.at(-1).includes("has_function_privilege"))
     return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
-   if(args.at(-1)===PURGE_SQL){writes++;throw Error("unexpected destructive action");}
+   if(args.at(-1).includes("LOCK TABLE")){writes++;throw Error("unexpected destructive action");}
    return {status:0,stdout:JSON.stringify({
     count:5,bytes:4000,expiredPending:1,expiredPendingBytes:512,
     expiredDeleted:1,expiredDeletedBytes:512
@@ -145,10 +145,50 @@ test("purge refuses empty and malformed expiry summaries", () => {
   const mock=(_exe,args)=>{
    if(args.at(-1).includes("has_function_privilege"))
     return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
-   if(args.at(-1)===PURGE_SQL){writes++;throw Error("unexpected destructive action");}
+   if(args.at(-1).includes("LOCK TABLE")){writes++;throw Error("unexpected destructive action");}
    return {status:0,stdout:JSON.stringify(totals)};
   };
   assert.throws(()=>run("purge",approved,{...policy,purgeAuthorized:true},mock,readCA));
   assert.equal(writes,0);
  }
+});
+
+
+test("atomic purge SQL locks post state and media, rechecks before deletion",()=>{
+ const sql=atomicPurgeSql(2,1024);
+ assert.ok(sql.startsWith("BEGIN;"));
+ assert.match(sql,/LOCK TABLE aha_social\.posts, aha_social\.media IN SHARE ROW EXCLUSIVE MODE/);
+ assert.ok(sql.indexOf("LOCK TABLE")<sql.indexOf("v_count <> 2"));
+ assert.ok(sql.indexOf("v_bytes <> 1024")<sql.indexOf("SELECT aha_social.purge_expired_media_v1() INTO v_deleted"));
+ assert.match(sql,/v_deleted <> 2/);
+ assert.match(sql,/purge rolled back/);
+ assert.match(sql,/COMMIT;\nSELECT 2::integer;/);
+ for(const values of [[0,1024],[-1,1024],[1,-1],[1,67108865],[1,1.5],
+  [1000001,100],[NaN,100],["1",100],[1,"100"]]) {
+  assert.throws(()=>atomicPurgeSql(...values),/Invalid confirmed/);
+ }
+});
+
+test("SQL execution failure remains fail-closed and hides raw output",()=>{
+ const approved={...env,
+  AHA_SOCIAL_MAINTENANCE_CONFIRMATION:"RUN_AHA_SOCIAL_STAGE_MEDIA_PURGE",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_COUNT:"2",
+  AHA_SOCIAL_MAINTENANCE_EXPECTED_PURGE_BYTES:"1024"};
+ let writeAttempts=0;
+ const mock=(_exe,args)=>{
+  const statement=args.at(-1);
+  if(statement.includes("has_function_privilege"))
+   return {status:0,stdout:JSON.stringify({schemaPresent:true,mayPurge:true,isRuntime:false,database:"postgres"})};
+  if(statement.includes("LOCK TABLE")){
+   writeAttempts++;
+   return {status:3,stdout:"",stderr:"raw secret-bearing database output"};
+  }
+  return {status:0,stdout:JSON.stringify({
+   count:2,bytes:1024,expiredPending:2,expiredPendingBytes:1024,
+   expiredDeleted:0,expiredDeletedBytes:0
+  })};
+ };
+ assert.throws(()=>run("purge",approved,{...policy,purgeAuthorized:true},mock,readCA),
+  /Staging SQL check failed/);
+ assert.equal(writeAttempts,1);
 });

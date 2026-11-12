@@ -24,6 +24,34 @@ const PREVIEW_SQL = [
 ].join(" ");
 const PURGE_SQL = "select aha_social.purge_expired_media_v1();";
 
+// Keep the retention eligibility check and the destructive function call
+// in one PostgreSQL transaction. Write locks on BOTH tables block any
+// concurrent upload, deletion or moderation change until commit/rollback.
+function atomicPurgeSql(expectedCount,expectedBytes) {
+ if (!Number.isSafeInteger(expectedCount) || expectedCount<1 || expectedCount>1000000 ||
+     !Number.isSafeInteger(expectedBytes) || expectedBytes<0 || expectedBytes>67108864) {
+  throw new Error("Invalid confirmed staging purge totals");
+ }
+ return [
+  "BEGIN;",
+  "LOCK TABLE aha_social.posts, aha_social.media IN SHARE ROW EXCLUSIVE MODE;",
+  "DO $social_purge$ DECLARE v_count bigint; v_bytes bigint; v_deleted integer; BEGIN",
+  "SELECT count(*),coalesce(sum(octet_length(m.bytes)),0)",
+  "INTO v_count,v_bytes FROM aha_social.media m",
+  "LEFT JOIN aha_social.posts p ON p.id=m.post_id",
+  "WHERE (m.post_id IS NULL AND m.created_at<now()-interval '24 hours')",
+  "OR (p.state='deleted' AND p.deleted_at<now()-interval '30 days');",
+  "IF v_count <> "+expectedCount+" OR v_bytes <> "+expectedBytes+" THEN",
+  "RAISE EXCEPTION 'staging media totals changed; purge aborted'; END IF;",
+  "SELECT aha_social.purge_expired_media_v1() INTO v_deleted;",
+  "IF v_deleted <> "+expectedCount+" THEN",
+  "RAISE EXCEPTION 'staging media deleted count changed; purge rolled back'; END IF;",
+  "END $social_purge$;",
+  "COMMIT;",
+  "SELECT "+expectedCount+"::integer;"
+ ].join("\n");
+}
+
 function loadPolicy() { return JSON.parse(fs.readFileSync(POLICY_PATH,"utf8")); }
 function validate(mode, env, policy, readFile=fs.readFileSync) {
   if (mode==="plan") return { mode, authorized:false };
@@ -113,7 +141,7 @@ function run(mode,env=process.env,policy=loadPolicy(),spawn=spawnSync,readFile=f
       actualCount!==expectedCount || actualBytes!==expectedBytes) {
     throw new Error("Staging expiry figures changed or were not explicitly confirmed; purge not attempted");
   }
-  const deleted=Number(query(PURGE_SQL,false));
+  const deleted=Number(query(atomicPurgeSql(expectedCount,expectedBytes),false));
   if (!Number.isSafeInteger(deleted) || deleted<0) throw new Error("Invalid purge count");
   const after=JSON.parse(query(PREVIEW_SQL,true));
   return {mode,connected:true,changed:true,deleted,
@@ -131,4 +159,4 @@ if (require.main===module) {
     process.exitCode=1;
   }
 }
-module.exports={loadPolicy,validate,run,PREVIEW_SQL,ROLE_SQL,PURGE_SQL};
+module.exports={loadPolicy,validate,run,PREVIEW_SQL,ROLE_SQL,PURGE_SQL,atomicPurgeSql};
