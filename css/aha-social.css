@@ -53,3 +53,18 @@
 .aha-social-enabled .aha-legacy-insta-compose,
 .aha-social-enabled .aha-legacy-insta-import,
 .aha-social-enabled .aha-personal-trust{display:none!important}
+
+/* Separate reading modes from posting type. Map is a place-tag gallery;
+   no GPS or coordinate lookup occurs without an explicit separate design. */
+.aha-social-browser{margin-top:1.05rem;padding:.9rem;background:#151b26;border:1px solid #36445a;border-radius:12px}
+.aha-social-browser-title{margin:0 0 .55rem;font-weight:650;color:#d3deef}
+.aha-social-place-search{display:grid;gap:.35rem;margin-top:.65rem;color:#d1dcef}
+.aha-social-place-search[hidden]{display:none!important}
+.aha-social-place-search input{width:100%;min-height:44px;font:inherit;color:white;background:#0c111a;border:1px solid #58657c;border-radius:9px;padding:.6rem .8rem}
+.aha-social-place-group{border:1px solid #3b4b60;border-radius:12px;padding:.7rem}
+.aha-social-place-group h3{font-size:1rem;margin:0 0 .7rem;color:#dbe8fa}
+.aha-social-place-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:.65rem}
+.aha-social-place-grid .aha-social-media{max-height:15rem;object-fit:cover}
+.aha-social-location{background:transparent!important;border:0!important;color:#b6d6ff;text-align:left;font-weight:650;font-size:.93rem;padding:.35rem 0!important;min-height:34px!important;cursor:pointer}
+.aha-social-location:hover{text-decoration:underline}
+@media(max-width:520px){.aha-social-place-grid{grid-template-columns:1fr}}

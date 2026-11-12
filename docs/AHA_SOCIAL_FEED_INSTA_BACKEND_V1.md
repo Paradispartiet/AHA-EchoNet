@@ -99,3 +99,7 @@ Det er lagt inn et operatorverktøy som som standard kun viser planen uten datab
 ## Format og design – Feed / Insta
 
 AHA Feed er **tekst først** med synlig tegnteller og hard grense på **500 tegn**, kontrollert også i NestJS og PostgreSQL. Insta er **bilde først** og har et enkelt valg mellom **Feed, Reel og Map**, samt frivillig stedstag på *alle* bildeinnlegg. Map-innlegg krever stedstag. Stedet er foreløpig en normalisert fritekstetikett (ikke koordinater, GPS-sporing eller geokoding). Reel er foreløpig bildebåret visning/cover; **videoopplasting er ikke aktivert** og må ha eget sikkerhets- og lagringsopplegg. Formatet og stedstag lagres i `aha_social.posts` og returneres i listen. Ingen produksjonsressurs aktiveres. Se `supabase/tests/aha_postgresql_social_formats_places_v1.sql` for ekte PostgreSQL-test.
+
+### Skille mellom publisering og utforsking
+
+Insta har to forskjellige valg: **Publiser som Feed / Reel / Map** bestemmer metadataene på et nytt bilde; **Vis Feed / Vis Reel / Vis Map** styrer kun hvilke innlegg som vises. Å bla mellom visningene endrer ikke utkastet. Map grupperer bilder etter stedstag og har et søkefelt; et stedstag på et bilde kan trykkes på for å se alle bildene merket med stedet. Dette er en søkbar stedsoversikt, ikke en geografisk kartflate: friteksttaggene har ikke koordinater, så ingen falske kartmarkører vises.

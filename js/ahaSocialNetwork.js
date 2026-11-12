@@ -79,6 +79,9 @@
 
     const form = add("form", panel, null, "module-form aha-social-compose");
     let instaMode = "feed";
+    let viewMode = "feed";
+    let placeSearch = null;
+    let cachedPosts = [];
     let placeField = null;
     let message = null;
     let counter = null;
@@ -127,7 +130,7 @@
         }
       });
       const types = add("fieldset", form, null, "aha-social-type-selector");
-      const legend = add("legend", types, "Visning");
+      const legend = add("legend", types, "Publiser som");
       const bar = add("div", types, null, "aha-social-tabs");
       const modes = ["feed","reel","map"];
       const tabButtons = modes.map((mode) => {
@@ -139,10 +142,13 @@
           instaMode = mode;
           for (const tab of tabButtons) tab.setAttribute("aria-pressed", String(tab.dataset.mode === mode));
           pendingSignature = null;
-          if (mode === "reel") showStatus("Reel viser foreløpig bilder; videoopplasting krever egen sikker lagring.");
-          else if (mode === "map") showStatus("Map viser bilder med stedstag.");
+          // Keep the expected quick workflow: after choosing an upload type,
+          // preview the matching reading tab, but browsing alone never changes
+          // the draft publication type.
+          setViewMode(mode);
+          if (mode === "reel") showStatus("Reel har foreløpig bare bildecover; videoopplasting kommer senere.");
+          else if (mode === "map") showStatus("Map viser bilder ordnet etter stedstag.");
           else showStatus("Viser bildeinnlegg.");
-          void load();
         });
         return button;
       });
@@ -180,6 +186,29 @@
     status.setAttribute("role", "status");
     const refresh = add("button", panel, "Oppdater delte innlegg", "aha-social-refresh");
     refresh.type = "button";
+    let viewButtons = [];
+    if (kind === "insta") {
+      const browser = add("nav", panel, null, "aha-social-browser");
+      browser.setAttribute("aria-label", "Bla i Insta");
+      add("p", browser, "Utforsk bilder", "aha-social-browser-title");
+      const actions = add("div", browser, null, "aha-social-tabs aha-social-reading-tabs");
+      viewButtons = ["feed","reel","map"].map((mode) => {
+        const button = add("button", actions, mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map");
+        button.type = "button";
+        button.dataset.view = mode;
+        button.setAttribute("aria-pressed", String(mode === viewMode));
+        button.addEventListener("click", () => setViewMode(mode));
+        return button;
+      });
+      const searchLabel = add("label", browser, "Søk etter stedstag");
+      searchLabel.className = "aha-social-place-search";
+      placeSearch = add("input", searchLabel);
+      placeSearch.type = "search";
+      placeSearch.placeholder = "Finn bilder fra et sted";
+      placeSearch.setAttribute("aria-label", "Søk etter stedstag");
+      searchLabel.hidden = true;
+      placeSearch.addEventListener("input", () => renderList());
+    }
     const list = add("div", panel, null, "module-list aha-social-list");
     let pendingKey = null;
     let pendingSignature = null;
@@ -254,8 +283,8 @@
       } catch (error) { add("p", section, error.message || "Kunne ikke vise kommentarer."); }
     }
 
-    function renderPost(post) {
-      const card = add("article", list, null, "module-card aha-social-post");
+    function renderPost(post, parent = list) {
+      const card = add("article", parent, null, "module-card aha-social-post");
       if (kind === "feed") add("p", card, post.text || "", "aha-social-feed-copy");
       if (kind === "insta" && typeof post.mediaUrl === "string") {
         let mediaUrl;
@@ -286,7 +315,16 @@
       add("strong", head, post.authorName || "AHA-bruker");
       add("span", head, isoDate(post.createdAt), "module-meta");
       if (kind === "insta") {
-        if (post.placeTag) add("span", card, "📍 " + post.placeTag, "aha-social-location");
+        if (post.placeTag) {
+          const place = add("button", card, "📍 " + post.placeTag, "aha-social-location");
+          place.type = "button";
+          place.setAttribute("aria-label", "Se bilder fra " + post.placeTag);
+          place.addEventListener("click", () => {
+            if (!placeSearch) return;
+            placeSearch.value = post.placeTag;
+            setViewMode("map");
+          });
+        }
         add("p", card, post.text || "", "aha-social-caption");
         add("span", card, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Feed", "aha-social-kind");
       }
@@ -316,25 +354,62 @@
       }
     }
 
-    async function load() {
+    function setViewMode(mode) {
+      if (!["feed","reel","map"].includes(mode) || kind !== "insta") return;
+      viewMode = mode;
+      for (const button of viewButtons) {
+        button.setAttribute("aria-pressed", String(button.dataset.view === mode));
+      }
+      if (placeSearch) placeSearch.parentElement.hidden = mode !== "map";
+      renderList();
+    }
+
+    function renderList() {
       renderGeneration++;
       for (const release of mediaReleases) release();
       mediaReleases.clear();
+      clear(list);
+      const rows = cachedPosts;
+      const search = (placeSearch?.value || "").trim().toLocaleLowerCase("nb-NO");
+      const displayed = kind !== "insta" || viewMode === "feed" ? rows
+        : viewMode === "reel" ? rows.filter(post => post.instaMode === "reel")
+        : rows.filter(post => typeof post.placeTag === "string" &&
+            post.placeTag.trim() && post.placeTag.toLocaleLowerCase("nb-NO").includes(search));
+      if (!displayed.length) {
+        add("p", list, viewMode === "map" && search
+          ? "Ingen bilder funnet for dette stedet."
+          : "Ingen publiserte innlegg ennå.");
+      } else if (kind === "insta" && viewMode === "map") {
+        // Place names are labels, not fabricated GPS points. Build a browsable
+        // map-like place gallery without assuming any coordinates or location.
+        const places = new Map();
+        for (const post of displayed) {
+          const label = post.placeTag.trim();
+          const key = label.toLocaleLowerCase("nb-NO");
+          if (!places.has(key)) places.set(key,{label,posts:[]});
+          places.get(key).posts.push(post);
+        }
+        for (const group of places.values()) {
+          const section = add("section", list, null, "aha-social-place-group");
+          add("h3", section, "📍 " + group.label + " · " + group.posts.length + " bilder");
+          const gallery = add("div", section, null, "aha-social-place-grid");
+          for (const post of group.posts) renderPost(post,gallery);
+        }
+      } else {
+        for (const post of displayed) renderPost(post);
+      }
+      showStatus("Viser " + displayed.length + " delte innlegg.");
+    }
+
+    async function load() {
       showStatus("Henter delte innlegg…");
       try {
         const posts = await call("/v1/social/posts?kind=" + encodeURIComponent(kind) + "&limit=30");
-        clear(list);
-        const rows = Array.isArray(posts) ? posts : [];
-        const displayed = kind === "insta" && instaMode === "map"
-          ? rows.filter((post) => Boolean(post.placeTag))
-          : kind === "insta" && instaMode === "reel"
-            ? rows.filter((post) => post.instaMode === "reel")
-            : rows;
-        if (!displayed.length) add("p", list, "Ingen publiserte innlegg ennå.");
-        for (const post of displayed) renderPost(post);
-        showStatus("Viser " + displayed.length + " delte innlegg.");
+        cachedPosts = Array.isArray(posts) ? posts : [];
+        renderList();
       } catch (error) {
-        clear(list);
+        cachedPosts = [];
+        renderList();
         showStatus(error.message || "Kunne ikke hente feeden.");
       }
     }

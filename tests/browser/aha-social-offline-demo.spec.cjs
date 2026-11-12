@@ -100,3 +100,36 @@ test("Insta Map retains the photo location and filters the view across demo acco
  await social.getByRole("button",{name:"Feed",exact:true}).click();
  await expect(social.locator(".aha-social-post")).toContainText("Bilde fra sentrum");
 });
+
+
+test("Map browsing is separate from the publish type and place tags can filter posts",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=160;c.height=100;
+   c.getContext("2d").fillRect(0,0,160,100);
+   const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"tagged.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await social.getByRole("button",{name:"Map",exact:true}).click();
+ await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
+ await social.locator("textarea").first().fill("Et stedstaggede bilde");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
+ const publishMap=social.getByRole("button",{name:"Map",exact:true});
+ await expect(publishMap).toHaveAttribute("aria-pressed","true");
+ await social.getByRole("button",{name:"Vis Feed"}).click();
+ await expect(publishMap).toHaveAttribute("aria-pressed","true");
+ await expect(social.locator(".aha-social-post")).toContainText("Et stedstaggede bilde");
+ await social.getByRole("button",{name:"Se bilder fra Oslo sentrum"}).click();
+ await expect(social.getByRole("button",{name:"Vis Map"})).toHaveAttribute("aria-pressed","true");
+ await expect(social.getByRole("searchbox",{name:"Søk etter stedstag"})).toHaveValue("Oslo sentrum");
+ await expect(social.locator(".aha-social-place-group")).toHaveCount(1);
+ await social.getByRole("searchbox",{name:"Søk etter stedstag"}).fill("Tromsø");
+ await expect(social.locator(".aha-social-post")).toHaveCount(0);
+ await expect(social.locator(".aha-social-list")).toContainText("Ingen bilder funnet");
+ await social.getByRole("searchbox",{name:"Søk etter stedstag"}).fill("OSLO");
+ await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
+});
