@@ -89,6 +89,24 @@
     return data.mediaUrl;
   }
 
+  async function deletePending(path, origin) {
+    if (!URL_PATTERN.test(String(path || ""))) {
+      throw new Error("Ugyldig bildeadresse for sletting.");
+    }
+    const headers = await authHeaders();
+    const response = await global.fetch(origin + path, {
+      method: "DELETE", headers, cache: "no-store", credentials: "omit"
+    });
+    if (!response.ok) {
+      throw new Error("Kunne ikke fjerne det upubliserte bildet.");
+    }
+    const body = await response.json().catch(() => null);
+    if (body?.data?.deleted !== true) {
+      throw new Error("Slettingen ble ikke bekreftet.");
+    }
+    return true;
+  }
+
   async function renderProtected(path, target, origin) {
     if (!URL_PATTERN.test(String(path || ""))) throw new Error("Ugyldig intern bildeadresse.");
     const headers = await authHeaders();
@@ -110,6 +128,6 @@
   }
 
   global.AHASocialMedia = Object.freeze({
-    canChoose, localPreview, prepareImage, upload, renderProtected, isPrivateMediaUrl: (url) => URL_PATTERN.test(String(url || ""))
+    canChoose, localPreview, prepareImage, upload, deletePending, renderProtected, isPrivateMediaUrl: (url) => URL_PATTERN.test(String(url || ""))
   });
 })(typeof window !== "undefined" ? window : globalThis);

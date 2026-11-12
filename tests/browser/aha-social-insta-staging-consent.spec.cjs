@@ -140,6 +140,13 @@ test("AHA Insta keeps image private until consent and shows published media to a
   await expect(preview).toBeVisible();
   expect(calls.uploads).toBe(0);
   expect(calls.publishes).toBe(0);
+  await social.getByRole("button", { name: "Fjern valgt bilde" }).click();
+  await expect(preview).toBeHidden();
+  expect(calls.uploads).toBe(0);
+  await social.locator('input[type="file"]').setInputFiles({
+    name: "photo.png", mimeType: "image/png", buffer: Buffer.from(bytes)
+  });
+  await expect(preview).toBeVisible();
   await social.locator("textarea").first().fill("Mitt første delte bilde");
   await social.getByRole("checkbox").check();
   expect(calls.uploads).toBe(0);

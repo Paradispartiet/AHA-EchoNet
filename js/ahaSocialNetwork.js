@@ -85,6 +85,7 @@
     let media = null;
     let preview = null;
     let releasePreview = null;
+    let discard = null;
     let fileVersion = 0;
     if (kind === "insta") {
       const mediaLabel = add("label", form, "Velg bilde fra iPad eller mobil");
@@ -96,16 +97,33 @@
       preview.hidden = true;
       preview.alt = "Lokal forhåndsvisning av bildet";
       add("p", form, "Bildet vises bare på denne enheten til du aktivt velger Publiser. Videoopplasting kommer senere.", "module-meta");
+      discard = add("button", form, "Fjern valgt bilde");
+      discard.type = "button";
+      discard.disabled = true;
       media.addEventListener("change", () => {
+        // A failed publication may have left a private staged upload.
+        // Discard that previous draft when the user selects a new picture.
+        if (pendingMediaPath) {
+          const old = pendingMediaPath;
+          pendingMediaPath = null;
+          void global.AHASocialMedia.deletePending(old, origin()).catch(() => {
+            showStatus("Forrige opplastede bilde kunne ikke slettes. Det blir utilgjengelig etter 24 timer.");
+          });
+        }
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
         if (releasePreview) releasePreview();
         releasePreview = null;
         fileVersion++;
         try {
           const file = media.files?.[0];
           if (file) releasePreview = global.AHASocialMedia.localPreview(file, preview);
+          discard.disabled = !file;
         } catch (error) {
           showStatus(error.message || "Kunne ikke forhåndsvise bildet.");
           media.value = "";
+          discard.disabled = true;
         }
       });
     }
@@ -125,6 +143,33 @@
     let pendingKey = null;
     let pendingSignature = null;
     let pendingUploadKey = null;
+    let pendingMediaPath = null;
+    if (discard) {
+      discard.addEventListener("click", async () => {
+        if (submit.disabled) return;
+        discard.disabled = true;
+        const staged = pendingMediaPath;
+        if (staged) {
+          try {
+            await global.AHASocialMedia.deletePending(staged, origin());
+          } catch (error) {
+            showStatus(error.message || "Kunne ikke fjerne bildet fra staging.");
+            discard.disabled = false;
+            return;
+          }
+        }
+        pendingMediaPath = null;
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        media.value = "";
+        fileVersion++;
+        consent.checked = false;
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        showStatus("Bildet er fjernet. Ingen innlegg er publisert.");
+      });
+    }
     const mediaReleases = new Set();
     let renderGeneration = 0;
 
@@ -260,13 +305,21 @@
       }
       payload.requestKey = pendingKey;
       submit.disabled = true;
+      if (media) media.disabled = true;
+      if (discard) discard.disabled = true;
       try {
         if (selectedFile) {
           showStatus("Forbereder og laster opp bildet…");
-          const blob = await global.AHASocialMedia.prepareImage(selectedFile);
-          payload.mediaUrl = await global.AHASocialMedia.upload(blob, pendingUploadKey, origin());
+          // Retrying a failed publication uses the exact same media reference;
+          // the user's photo is never uploaded twice for the same draft.
+          if (!pendingMediaPath) {
+            const blob = await global.AHASocialMedia.prepareImage(selectedFile);
+            pendingMediaPath = await global.AHASocialMedia.upload(blob, pendingUploadKey, origin());
+          }
+          payload.mediaUrl = pendingMediaPath;
         }
         await call("/v1/social/posts", "POST", payload);
+        pendingMediaPath = null;
         message.value = "";
         if (media) {
           media.value = "";
@@ -282,7 +335,11 @@
         showStatus("Innlegget er publisert i testfeeden.");
       } catch (error) {
         showStatus(error.message || "Publiseringen feilet.");
-      } finally { submit.disabled = false; }
+      } finally {
+        submit.disabled = false;
+        if (media) media.disabled = false;
+        if (discard) discard.disabled = !media?.files?.length;
+      }
     });
     await load();
     return true;

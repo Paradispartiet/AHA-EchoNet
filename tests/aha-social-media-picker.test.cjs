@@ -133,3 +133,25 @@ test("published media is fetched with bearer auth and rendered through a tempora
   release();
   assert.equal(activity.revoked.length,1);
 });
+
+
+test("discarding uploaded-but-unpublished media requires bearer auth and exact private path", async () => {
+  const calls = [];
+  const { api } = loadWindow({
+    AHAAuth: { async getSession() { return { access_token: "verified-jwt" }; } },
+    async fetch(url, opts) {
+      calls.push({ url, opts });
+      return { ok: true, async json() { return { data: { deleted: true } }; } };
+    }
+  });
+  await assert.rejects(api.deletePending("https://evil.example/m", "https://staging.example"), /Ugyldig/);
+  await assert.rejects(api.deletePending("/v1/social/media/not-a-uuid", "https://staging.example"), /Ugyldig/);
+  assert.equal(calls.length, 0);
+  const id = "/v1/social/media/33333333-3333-4333-8333-333333333333";
+  assert.equal(await api.deletePending(id, "https://staging.example"), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://staging.example" + id);
+  assert.equal(calls[0].opts.method, "DELETE");
+  assert.equal(calls[0].opts.headers.Authorization, "Bearer verified-jwt");
+  assert.equal(calls[0].opts.credentials, "omit");
+});

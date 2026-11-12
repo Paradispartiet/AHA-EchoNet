@@ -71,3 +71,7 @@ Et bilde som er lastet opp, men ikke knyttet til et innlegg, kan nå slettes av 
 ## Livssyklus for skjulte og slettede bilder
 
 `read_media_v1` gir forfatteren tilgang til egne bilder i et moderatørskjult innlegg for gjennomgang, men **ingen** bruker kan hente bildefilen gjennom media-endepunktet etter at eieren selv har slettet innlegget. For andre kontoer forsvinner tilgangen umiddelbart når innlegget skjules eller slettes. Retensjon av bildedata for revisjon er atskilt fra lesetilgang. PostgreSQL med tre testidentiteter og HTTP-tester dekker `rapport → skjul → avvis lesing → eiersletting → avvis lesing for alle`.
+
+## Brukerstyrt avbryt av bildeutkast
+
+Insta-testgrensesnittet viser nå «Fjern valgt bilde». Før opplasting fjernes kun forhåndsvisningen og lokal filreferanse. Hvis et bilde ble lastet opp, men innlegget ikke kunne publiseres, bruker knappen den autentiserte `DELETE /v1/social/media/:id`-funksjonen. Ulykket fjerning vises for brukeren; slike upubliserte bilder blir uansett utilgjengelige etter 24 timer. Et nytt bildevalg forsøker å rydde bort eventuell forrige opplasting. Ved midlertidig publiseringsfeil gjenbrukes den samme mediereferansen, slik at gjentatte forsøk ikke lager unødvendige ekstra opplastinger.
