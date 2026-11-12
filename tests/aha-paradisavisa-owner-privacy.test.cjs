@@ -37,6 +37,7 @@ function boot() {
   };
   const env = {
     URL, Date, console, Math, Array,
+    setTimeout: (fn) => setImmediate(fn),
     localStorage: {
       getItem: key => store.get(key) || null,
       setItem: (key, val) => { writes++; store.set(key, val); }
