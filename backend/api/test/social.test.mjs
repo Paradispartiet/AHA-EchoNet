@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { validateSync } from "class-validator";
 import { ApiException } from "../dist/api/api-exception.js";
-import { SocialGate, SocialPostInput, SocialListQuery, SocialService } from "../dist/social/social.module.js";
+import { CanonicalDatabaseError } from "../dist/database/database.errors.js";
+import { SocialGate, SocialPostInput, SocialListQuery, SocialService, mapSocialDatabaseError } from "../dist/social/social.module.js";
 
 const principal = Object.freeze({ subject: "verified-subject", provider: "supabase", issuer: "https://issuer.example", audience: ["aha-api"] });
 
@@ -64,4 +65,24 @@ test("interactions use fixed repository actions and verified principal", async (
   await service.remove(principal, id);
   assert.deepEqual(repo.calls.map(v => v.action), ["posts", "comments", "like", "comment", "report", "remove"]);
   assert.ok(repo.calls.every(v => v.p === principal));
+});
+
+
+test("social DB errors yield precise, sanitized HTTP status and unfamiliar errors remain fail-closed", () => {
+  const make = (code, message) => {
+    const cause = Object.assign(new Error(message), { code });
+    return new CanonicalDatabaseError("DATABASE_UNAVAILABLE", cause);
+  };
+  for (const [pgCode, message, expectedHttp, expectedCode] of [
+    ["42501", "post unavailable", 404, "NOT_FOUND"],
+    ["23505", "idempotency conflict", 409, "CONFLICT"],
+    ["22023", "publication rate limit", 429, "SOCIAL_RATE_LIMITED"],
+    ["22023", "comment rate limit", 429, "SOCIAL_RATE_LIMITED"],
+    ["22023", "invalid social publication", 400, "VALIDATION_FAILED"]
+  ]) {
+    assert.throws(() => mapSocialDatabaseError(make(pgCode, message)),
+      e => e instanceof ApiException && e.getStatus() === expectedHttp && e.code === expectedCode);
+  }
+  const unknown = make("42501", "other confidential database detail");
+  assert.throws(() => mapSocialDatabaseError(unknown), e => e === unknown);
 });

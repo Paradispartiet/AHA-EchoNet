@@ -7,6 +7,7 @@ import type { AuthPrincipal } from "../auth/auth.types.js";
 import type { AhaRequest } from "../common/request-context.js";
 import { APP_CONFIG, type AppConfig } from "../config/app-config.js";
 import { CanonicalDatabaseService } from "../database/canonical-database.service.js";
+import { CanonicalDatabaseError } from "../database/database.errors.js";
 
 type Kind = "feed" | "insta";
 type Result = Record<string, unknown> | Record<string, unknown>[];
@@ -86,20 +87,53 @@ export class SocialGate {
   }
 }
 
+// Exact PostgreSQL error-to-HTTP mapping for the separate social contract.
+// All other DB exceptions remain sanitized by the existing canonical error filter.
+export function mapSocialDatabaseError(error: unknown): never {
+  if (error instanceof CanonicalDatabaseError) {
+    const cause: unknown = error.cause;
+    if (cause && typeof cause === "object") {
+      const pgError = cause as { code?: unknown; message?: unknown };
+      const pgCode = String(pgError.code || "");
+      const message = String(pgError.message || "").trim();
+      if (pgCode === "42501" && message === "post unavailable") {
+        throw new ApiException(404, "NOT_FOUND", "The post is not available");
+      }
+      if (pgCode === "23505" && message === "idempotency conflict") {
+        throw new ApiException(409, "CONFLICT", "This publication key was already used for different content");
+      }
+      if (pgCode === "22023" && ["publication rate limit", "comment rate limit"].includes(message)) {
+        throw new ApiException(429, "SOCIAL_RATE_LIMITED", "Too many recent social actions");
+      }
+      if (pgCode === "22023" && [
+        "invalid social publication", "invalid comment", "invalid report reason",
+        "invalid social feed request", "invalid like action"
+      ].includes(message)) {
+        throw new ApiException(400, "VALIDATION_FAILED", "The social request is invalid");
+      }
+    }
+  }
+  throw error;
+}
+
 @Injectable()
 export class SocialRepository {
   constructor(private readonly database: CanonicalDatabaseService) {}
 
   async read(principal: AuthPrincipal, action: "posts" | "comments", params: unknown[]): Promise<Result> {
-    return this.database.withReadSession(principal, async (client) => {
-      const sql = action === "posts"
-        ? "select aha_social.list_posts_v1($1::text,$2::integer) as result"
-        : "select aha_social.list_comments_v1($1::uuid) as result";
-      const response = await client.query<{ result: unknown }>(sql, params);
-      const value = response.rows[0]?.result;
-      if (!Array.isArray(value)) throw new Error("invalid_social_read_response");
-      return value as Record<string, unknown>[];
-    });
+    try {
+      return await this.database.withReadSession(principal, async (client) => {
+        const sql = action === "posts"
+          ? "select aha_social.list_posts_v1($1::text,$2::integer) as result"
+          : "select aha_social.list_comments_v1($1::uuid) as result";
+        const response = await client.query<{ result: unknown }>(sql, params);
+        const value = response.rows[0]?.result;
+        if (!Array.isArray(value)) throw new Error("invalid_social_read_response");
+        return value as Record<string, unknown>[];
+      });
+    } catch (error) {
+      return mapSocialDatabaseError(error);
+    }
   }
 
   async write(
@@ -115,12 +149,16 @@ export class SocialRepository {
       comment: "select aha_social.comment_post_v1($1::uuid,$2::text) as result",
       report: "select aha_social.report_post_v1($1::uuid,$2::text) as result"
     };
-    return this.database.withCommandSession(principal, async (client) => {
-      const response = await client.query<{ result: unknown }>(commands[action], params);
-      const value = response.rows[0]?.result;
-      if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid_social_write_response");
-      return value as Record<string, unknown>;
-    });
+    try {
+      return await this.database.withCommandSession(principal, async (client) => {
+        const response = await client.query<{ result: unknown }>(commands[action], params);
+        const value = response.rows[0]?.result;
+        if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid_social_write_response");
+        return value as Record<string, unknown>;
+      });
+    } catch (error) {
+      return mapSocialDatabaseError(error);
+    }
   }
 }
 
