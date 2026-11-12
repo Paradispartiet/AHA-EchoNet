@@ -15,6 +15,7 @@
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
   const PARADISAVISA_ROOT_URL = "https://paradispartiet.github.io/Paradisavisa/";
+  const AHA_ARTICLE_LIBRARY_URL = "https://paradispartiet.github.io/AHA-EchoNet/paradisavisa.html";
 
   // Auth return targets are restricted to our own published apps. No arbitrary
   // external redirect can be introduced through the URL or localStorage.
@@ -38,6 +39,11 @@
     const params = new URLSearchParams(window.location.search);
     return params.get("source") === "paradisavisa" && params.get("auth") === "login";
   }
+
+  function isAhaArticleLibraryLoginReturnRequest() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("source") === "aha-paradisavisa-library" && params.get("auth") === "login";
+  }
   function hasHistoryGoPayload() {
     return Boolean(String(localStorage.getItem("aha_import_payload_v1") || "").trim());
   }
@@ -52,7 +58,9 @@
       ? HISTORY_GO_PROFILE_URL
       : isParadisavisaLoginReturnRequest()
         ? validatedParadisavisaTarget(new URLSearchParams(window.location.search).get("next"))
-        : "";
+        : isAhaArticleLibraryLoginReturnRequest()
+          ? AHA_ARTICLE_LIBRARY_URL
+          : "";
     if (!returnUrl) {
       clearAuthReturnTarget();
       return;
@@ -75,6 +83,11 @@
     const target = validatedParadisavisaTarget(new URLSearchParams(window.location.search).get("next"));
     clearAuthReturnTarget();
     window.location.replace(target);
+  }
+
+  function redirectBackToAhaArticleLibrary() {
+    clearAuthReturnTarget();
+    window.location.replace(AHA_ARTICLE_LIBRARY_URL);
   }
 
   function countActive(items) {
@@ -3052,6 +3065,10 @@
         redirectBackToParadisavisa();
         return;
       }
+      if (authState.user?.id && isAhaArticleLibraryLoginReturnRequest()) {
+        redirectBackToAhaArticleLibrary();
+        return;
+      }
 
       renderIdentity(authState);
       safeRender("renderProductIntegration", renderProductIntegration);
@@ -3158,7 +3175,8 @@
       modal.setAttribute("aria-hidden", "true");
     };
     const openModal = () => {
-      if (!isHistoryGoLoginReturnRequest() && !isParadisavisaLoginReturnRequest()) clearAuthReturnTarget();
+      if (!isHistoryGoLoginReturnRequest() && !isParadisavisaLoginReturnRequest()
+        && !isAhaArticleLibraryLoginReturnRequest()) clearAuthReturnTarget();
       modal.classList.remove("is-hidden");
       modal.setAttribute("aria-hidden", "false");
     };
@@ -3246,6 +3264,7 @@
     saveProfileName,
     isHistoryGoLoginReturnRequest,
     isParadisavisaLoginReturnRequest,
+    isAhaArticleLibraryLoginReturnRequest,
     validatedParadisavisaTarget,
     persistAuthReturnTargetFromUrl,
     clearAuthReturnTarget,
