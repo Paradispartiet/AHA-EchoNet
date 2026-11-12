@@ -76,7 +76,9 @@
     panel.dataset.socialKind = kind;
     const mast = add("header", panel, null, "aha-social-masthead");
     const brand = add("div", mast, null, "aha-social-brand");
-    const emblem = add("span", brand, "A", "aha-social-brandmark");
+    const emblem = add("a", brand, "A", "aha-social-brandmark");
+    emblem.href = "index.html";
+    emblem.setAttribute("aria-label", "Til AHA Home");
     emblem.setAttribute("aria-hidden", "true");
     const heading = add("div", brand, null, "aha-social-heading");
     add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");

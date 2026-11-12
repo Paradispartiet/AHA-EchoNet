@@ -263,3 +263,49 @@ test("Insta publishes an image without forcing caption text, Feed still requires
  await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
  await expect(page.locator("#aha-social-mount textarea").first()).toHaveAttribute("required","");
 });
+
+
+test("social design keeps X-style Feed text after author and Instagram media before actions and caption",async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ await expect(social.locator(".aha-social-masthead")).toBeVisible();
+ await expect(social.locator(".aha-social-navigation a[aria-current='page']")).toHaveText("Feed");
+ await expect(social.locator(".aha-social-compose-lead .aha-social-avatar")).toBeVisible();
+ await social.locator("textarea").first().fill("Tidslinje med 500 tegn");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Feed"}).click();
+ const feedCard=social.locator(".aha-social-post").first();
+ await expect(feedCard.locator(".aha-social-avatar")).toBeVisible();
+ const feedOrder=await feedCard.evaluate(card=>Array.from(card.children).map(el=>el.classList.contains("aha-social-post-head")?"head":el.classList.contains("aha-social-feed-copy")?"text":el.classList.contains("aha-social-actions")?"actions":"other"));
+ expect(feedOrder.indexOf("head")).toBeLessThan(feedOrder.indexOf("text"));
+ expect(feedOrder.indexOf("text")).toBeLessThan(feedOrder.indexOf("actions"));
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const insta=page.locator("#aha-social-mount");
+ await expect(insta.locator(".aha-social-navigation a[aria-current='page']")).toHaveText("Insta");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=180;c.height=120;
+   const cx=c.getContext("2d");cx.fillStyle="#6677bd";cx.fillRect(0,0,180,120);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await insta.locator('input[type="file"]').setInputFiles({name:"social-design.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await insta.locator("textarea").first().fill("Bilde før tekst");
+ await insta.getByRole("checkbox").check();
+ await insta.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ const instaCard=insta.locator(".aha-social-post").first();
+ await expect(instaCard.locator("header .aha-social-avatar")).toBeVisible();
+ await expect(instaCard.locator("img.aha-social-media")).toHaveAttribute("src",/^blob:/);
+ const order=await instaCard.evaluate(card=>Array.from(card.children).map(el=>
+   el.classList.contains("aha-social-post-head")?"head":
+   el.classList.contains("aha-social-media")?"media":
+   el.classList.contains("aha-social-actions")?"actions":
+   el.classList.contains("aha-social-caption")?"caption":"other"));
+ expect(order.indexOf("head")).toBeLessThan(order.indexOf("media"));
+ expect(order.indexOf("media")).toBeLessThan(order.indexOf("actions"));
+ expect(order.indexOf("actions")).toBeLessThan(order.indexOf("caption"));
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+ await page.setViewportSize({width:834,height:1112});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+});

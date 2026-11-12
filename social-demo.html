@@ -9,48 +9,42 @@
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:#090b11;color:#f4f5f8;line-height:1.5}
-a{color:inherit}
-.shell{width:min(100% - 2rem,780px);margin:auto;padding:1.1rem 0 4rem}
-.demo-header{display:flex;justify-content:space-between;gap:1rem;align-items:center;border-bottom:1px solid #303847;padding:.7rem 0 1.1rem}
-.brand{font-size:1.4rem;letter-spacing:.09em;font-weight:800}
-.demo-label{font-size:.75rem;letter-spacing:.08em;color:#d6dce7}
-.banner{margin-top:1.3rem;border:1px solid #667185;border-radius:14px;padding:1rem 1.1rem;background:#161d29}
-.banner h1{font-size:clamp(1.3rem,4vw,1.9rem);margin:.1rem 0 .45rem}
-.banner p{margin:.3rem 0;color:#d5dce9}
+body{margin:0;background:#090b10;color:#f4f6fa;line-height:1.5}
+.shell{width:min(calc(100% - 1.4rem),740px);margin:0 auto;padding:0 0 3rem}
+.demo-header{position:sticky;top:0;z-index:8;display:flex;align-items:center;
+  justify-content:space-between;gap:1rem;min-height:57px;padding:.5rem .75rem;
+  background:rgba(9,11,16,.96);backdrop-filter:blur(18px);border-bottom:1px solid #303847}
+.brand{font-size:1.18rem;letter-spacing:.065em;font-weight:900;line-height:1}
+.demo-label{font-size:.72rem;letter-spacing:.09em;color:#bac5d5;font-weight:700}
+.banner{display:grid;gap:.2rem;margin:.65rem .35rem;border:1px solid #354459;border-radius:12px;
+  padding:.6rem .85rem;background:#151d2a}
+.banner h1{font-size:.94rem;margin:0;font-weight:780;color:#eaf1ff}
+.banner p{margin:0;font-size:.75rem;color:#b7c7d9;line-height:1.45}
 .banner strong{color:#fff}
-.tabs{display:flex;gap:.65rem;margin:1.3rem 0}
-.tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid #525d72;border-radius:12px;padding:.8rem;min-height:48px;font-weight:700}
-.tabs a[aria-current="page"]{background:#e9f0ff;color:#131825;border-color:#e9f0ff}
-.account{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-bottom:1.1rem}
-.account-label{font-size:.9rem;color:#dbe1e8;margin-right:.25rem}
-button{font:inherit;cursor:pointer;color:inherit;background:#263246;border:1px solid #697587;padding:.7rem .95rem;border-radius:9px;min-height:44px}
-button:disabled{opacity:.55;cursor:not-allowed}
-button[aria-pressed="true"]{background:#dfe8ff;color:#141b28;font-weight:700}
-button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #95bfff;outline-offset:2px}
-#demo-account-status{color:#dae4f3}
-.aha-panel{background:#141923;border:1px solid #303a4a;border-radius:15px;padding:1.1rem}
-.eyebrow{font-size:.73rem;letter-spacing:.13em;text-transform:uppercase;color:#b2c7e7;font-weight:700}
-.aha-social-panel h2{margin:.2rem 0;font-size:1.32rem}
-.aha-social-panel p{overflow-wrap:anywhere}
-.aha-social-intro{color:#d4d9e4}
-.module-form textarea,.module-form input:not([type=checkbox]):not([type=file]),.aha-social-comment-form input{width:100%;min-height:46px;padding:.7rem .8rem;background:#0e121b;color:#fff;border:1px solid #647085;border-radius:9px;font:inherit}
-.module-form textarea{min-height:105px;resize:vertical}
-.module-form input[type=file]{width:100%;font:inherit}
-.module-form button[type=submit]{background:#e7efff;color:#16213b;font-weight:700;border-color:#e7efff}
-.aha-social-consent{font-size:.95rem;color:#f1f4fb}
-.aha-social-consent input{width:21px;height:21px;flex-shrink:0}
-.module-card{background:#191f2b;border:1px solid #485468;border-radius:11px;padding:1rem}
-.module-meta{color:#b8c6d9;font-size:.86rem}
-.aha-social-actions button{font-size:.9rem}
-.aha-social-media{background:#070a10;border-radius:9px;max-width:100%}
-.aha-social-status{color:#bed1e9}
-.help{border-top:1px solid #303847;margin-top:2rem;padding-top:1rem;color:#d4dce8}
-.help h2{font-size:1.05rem}
-.help ol{padding-left:1.3rem}
-.help li{margin:.45rem 0}
-.help strong{color:white}
-@media(max-width:480px){.shell{width:calc(100% - 1.1rem)}.banner,.aha-panel{padding:.85rem}.account button{flex:1}.demo-header{align-items:flex-start}}
+.tabs{display:none}
+.account{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin:.55rem .35rem}
+.account-label{font-size:.78rem;color:#aebdd0;margin-right:.25rem}
+.account button{font:inherit;cursor:pointer;color:#cbd7e6;background:#182334;
+  border:1px solid #4b5b72;padding:.4rem .8rem;border-radius:999px;min-height:40px;font-size:.82rem}
+.account button[aria-pressed="true"]{background:#e6f1ff;color:#132239;border-color:#e6f1ff;font-weight:800}
+.account button:focus-visible,.account a:focus-visible{outline:3px solid #b6d7ff;outline-offset:2px}
+#demo-account-status{font-size:.76rem;color:#aebbd0;margin:.2rem .5rem .65rem}
+#aha-social-mount{margin-top:0}
+.help{border-top:1px solid #303847;margin:1.4rem .45rem 0;padding:.9rem .3rem;color:#bbc8d9}
+.help h2{font-size:.9rem;margin:.1rem 0 .35rem}
+.help ol{font-size:.82rem;padding-left:1.25rem;margin:.3rem 0}
+.help li{margin:.2rem 0}
+.help p{font-size:.76rem;margin:.55rem 0}
+.help strong{color:#eaf1fb}
+@media(max-width:520px){
+  .shell{width:100%}
+  .demo-header{padding:.55rem .9rem}
+  .banner{margin:.6rem .65rem}
+  .account{margin:.55rem .7rem;gap:.3rem}
+  .account button{padding:.35rem .65rem}
+  #demo-account-status{margin:.2rem .85rem .6rem}
+  .help{margin:1rem .85rem}
+}
 </style>
 </head>
 <body>

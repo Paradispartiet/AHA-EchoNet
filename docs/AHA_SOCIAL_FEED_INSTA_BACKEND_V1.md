@@ -115,3 +115,7 @@ I `social-demo.html` kan brukeren velge Reel og forhåndsvise en lokal MP4-, MOV
 ### Bilde først: valgfri bildetekst
 
 På Insta er et valgt bilde det obligatoriske innholdet; bildetekst er valgfri, også for Reel og Map (Map må fortsatt ha stedstag). HTML-formen, fiktiv iPad-demo, DTO, tjeneste og PostgreSQL-kontrakt tillater derfor en tom Insta-bildetekst. Feed krever fremdeles minst ett ikke-blankt tegn og maks 500 tegn. Den midlertidige migrasjonen er ennå ikke tatt i bruk mot en delt database.
+
+### Ren sosial design-V2 (Feed som X/Twitter, Insta som Instagram)
+
+I PR-forhåndsvisningen er Feed nå utformet som en **kompakt teksttidslinje** med profilavatar, avsender/tid, tekstinnlegg, reaksjoner og smale skillelinjer. Insta er en **bildefeed** med profilheader, fullbredde skarpt bilde/video, handlinger, eventuelt bildetekst og stedstag. Begge har enkel masthead, tydelige faner, ett innmatingsfelt og mobil/iPad-tilpasset layout. Det finnes ingen fremmede logoer eller kopierte bilder; AHA har egen identitet. Dette er kun styling av eksisterende nettverkskomponent og testdemonstrasjon. Lokal/privat AHA-innhold migreres ikke eller deles ikke automatisk. Automatisk browser-regresjon verifiserer leserekkefølge og horisontal overflow ved 390px og 834px.
