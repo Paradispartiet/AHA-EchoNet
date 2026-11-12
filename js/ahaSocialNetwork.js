@@ -418,6 +418,13 @@
         const marker = add("span", head, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Bilde", "aha-social-kind");
         marker.setAttribute("aria-label", "Innleggstype: " + marker.textContent);
       }
+      // Contextual actions stay available but never compete with the text,
+      // image, like and comment controls in the primary action row.
+      const more = add("details", head, null, "aha-social-more");
+      const moreTrigger = add("summary", more, "···");
+      moreTrigger.setAttribute("aria-label", "Flere valg");
+      moreTrigger.title = "Flere valg";
+      const secondaryActions = add("div", more, null, "aha-social-more-actions");
       const actions = add("div", card, null, "aha-social-actions");
       if (kind === "insta") {
         const caption = card.querySelector(".aha-social-caption");
@@ -431,7 +438,7 @@
       if (kind === "insta" && post.ownPost) {
         // Inline editing changes only the optional location label. It does not
         // re-upload the image, re-publish the post, or import private content.
-        const editButton = add("button", actions, post.placeTag ? "Rediger stedstag" : "Legg til stedstag");
+        const editButton = add("button", secondaryActions, post.placeTag ? "Rediger stedstag" : "Legg til stedstag");
         editButton.type = "button";
         const editor = add("form", card, null, "aha-social-place-editor");
         editor.hidden = true;
@@ -449,6 +456,7 @@
         const cancel = add("button", buttons, "Avbryt");
         cancel.type = "button";
         editButton.addEventListener("click", () => {
+          more.open = false;
           editor.hidden = !editor.hidden;
           editButton.setAttribute("aria-expanded", String(!editor.hidden));
           if (!editor.hidden) placeInput.focus();
@@ -486,15 +494,17 @@
         void showComments(commentSection, post.id);
       });
       if (post.ownPost) {
-        const remove = add("button", actions, "Slett");
+        const remove = add("button", secondaryActions, "Slett");
         remove.type = "button";
         remove.addEventListener("click", () => {
+          more.open = false;
           if (global.confirm("Slette dette publiserte innlegget?")) mutate("/v1/social/posts/" + encodeURIComponent(post.id), "DELETE", null, "Innlegget er slettet.");
         });
       } else {
-        const report = add("button", actions, "Rapporter");
+        const report = add("button", secondaryActions, "Rapporter");
         report.type = "button";
         report.addEventListener("click", () => {
+          more.open = false;
           const reason = global.prompt("Årsak: spam, abuse, privacy eller other", "spam");
           if (["spam", "abuse", "privacy", "other"].includes(reason)) {
             mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/reports", "POST", { reason }, "Rapport mottatt.");

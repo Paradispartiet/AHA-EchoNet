@@ -363,3 +363,43 @@
   .aha-social-lightbox{width:100vw;height:100dvh;border:0;border-radius:0;padding:3.4rem .35rem .35rem}
   .aha-social-lightbox-image{max-height:calc(100dvh - 4rem)}
 }
+
+
+/* Context menu: only core timeline actions remain visible beneath posts.
+   Delete, report and photo tag editing sit in a native details disclosure. */
+.aha-social-more{
+  position:relative;margin-left:auto;flex:0 0 auto;color:#b5c3d6;
+  font-size:.88rem;
+}
+.aha-social-more>summary{
+  display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;
+  list-style:none;cursor:pointer;user-select:none;
+  font-size:1.35rem;line-height:1;letter-spacing:.09em;
+}
+.aha-social-more>summary::-webkit-details-marker{display:none}
+.aha-social-more>summary:hover,.aha-social-more[open]>summary{
+  background:#223045;color:#f5f9ff;
+}
+.aha-social-more-actions{
+  position:absolute;right:0;top:calc(100% + .15rem);z-index:5;
+  width:max-content;min-width:182px;max-width:min(82vw,280px);
+  display:grid;gap:0;padding:.25rem;background:#1b2635;
+  border:1px solid #506077;border-radius:12px;
+  box-shadow:0 16px 32px rgba(0,0,0,.4);
+}
+.aha-social-more:not([open]) .aha-social-more-actions{display:none}
+.aha-social-more-actions button{
+  display:block;width:100%;min-height:44px;text-align:left;
+  padding:.65rem .85rem;background:transparent;border:0;
+  border-radius:8px;color:#ecf2f9;font:inherit;font-size:.86rem;cursor:pointer;
+}
+.aha-social-more-actions button:hover{background:#35445b}
+.aha-social-more-actions button:focus-visible,.aha-social-more>summary:focus-visible{
+  outline:3px solid #bbdaff;outline-offset:2px;
+}
+.aha-social-more-actions button:last-child:not(:first-child){border-top:1px solid #38475d}
+.aha-social-more-actions button:is(:only-child){color:#f3ced0}
+.aha-social-kind{margin-left:.35rem}
+.aha-social-post-head{overflow:visible}
+.aha-social-post{overflow-wrap:anywhere;overflow:visible}

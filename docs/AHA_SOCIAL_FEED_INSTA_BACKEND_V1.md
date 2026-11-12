@@ -123,3 +123,7 @@ I PR-forhåndsvisningen er Feed nå utformet som en **kompakt teksttidslinje** m
 ### Bildevisning og kommentarer
 
 Insta-bilder i den delte testfeeden åpnes nå med et trykk (eller tastatur Enter/Mellomrom) i et tilgjengelig, fullskjerms HTML-dialogvindu. Bildet gjenbruker allerede lastet medie-URL, og bildedata hentes ikke på nytt eller videresendes. Lukk med «Lukk bildet», Escape eller trykk utenfor. Kommentarer er skjult til brukeren åpner dem, og kan lukkes igjen. Tom feed har en tydelig førstegangsvisning. Disse endringene gjelder ikke private/lokale innlegg når sosial staging er deaktivert.
+
+### Diskré meny for sekundære handlinger
+
+Innlegg viser nå bare **Lik** og **Kommentarer** som direkte handlinger. **Slett**, **Rapporter**, og **Legg til / rediger stedstag** ligger i en liten, tastaturtilgjengelig «Flere valg»-meny på hvert innlegg. Valgene følger de eksisterende eierrettighetene; fiktiv konto B kan ikke slette eller endre konto A sine poster. Testene er oppdatert for både iPad/WebKit og Chromium. Menyen bruker nettleserens native `details/summary` og aktiverer ingen nye serverkall.

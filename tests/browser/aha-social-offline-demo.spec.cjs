@@ -16,11 +16,16 @@ test("offline iPad/Chromium preview exercises real Feed UI with two simulated ac
  await page.getByRole("button",{name:"Konto B"}).click();
  await expect(page.locator("#demo-account-b")).toHaveAttribute("aria-pressed","true");
  await expect(social.locator(".aha-social-post")).toContainText("Testpost i lokal forhåndsvisning");
- await expect(social.getByRole("button",{name:"Rapporter"})).toBeVisible();
+ await expect(social.getByRole("button",{name:"Rapporter"})).toHaveCount(0);
  await expect(social.getByRole("button",{name:"Slett"})).toHaveCount(0);
+ await social.locator(".aha-social-more summary").click();
+ await expect(social.getByRole("button",{name:"Rapporter"})).toBeVisible();
+ await social.locator(".aha-social-more summary").click();
  await social.getByRole("button",{name:/Lik \(/}).click();
  await expect(social.getByRole("button",{name:/Likt \(1\)/})).toBeVisible();
  await page.getByRole("button",{name:"Konto A"}).click();
+ await expect(social.getByRole("button",{name:"Slett"})).toHaveCount(0);
+ await social.locator(".aha-social-more summary").click();
  await expect(social.getByRole("button",{name:"Slett"})).toBeVisible();
  page.once("dialog",dialog=>dialog.accept());
  await social.getByRole("button",{name:"Slett"}).click();
@@ -152,6 +157,7 @@ test("published Insta images can be tagged by owner, viewed by B, and never edit
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
  await expect(social.locator(".aha-social-post")).toContainText("Et bilde som tagges senere");
  await expect(social.locator(".aha-social-location")).toHaveCount(0);
+ await social.locator(".aha-social-more summary").click();
  await social.getByRole("button",{name:"Legg til stedstag"}).click();
  const edit=social.locator(".aha-social-place-editor");
  await expect(edit).toBeVisible();
@@ -162,6 +168,8 @@ test("published Insta images can be tagged by owner, viewed by B, and never edit
  await expect(social.locator(".aha-social-location")).toContainText("Oslo, Frogner");
  await expect(social.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
  await page.getByRole("button",{name:"Konto A"}).click();
+ await social.locator(".aha-social-more summary").click();
+ await social.locator(".aha-social-more summary").click();
  await social.getByRole("button",{name:"Rediger stedstag"}).click();
  await edit.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("");
  await edit.getByRole("button",{name:"Lagre stedstag"}).click();
@@ -358,4 +366,54 @@ test("Feed comments are collapsed by default and can be opened and closed",async
  await button.click();
  await expect(button).toHaveAttribute("aria-expanded","false");
  await expect(card.locator(".aha-social-comments")).toBeHidden();
+});
+
+
+test("Feed and Insta keep only primary actions visible, with owner-only overflow tools",async({page})=>{
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const feed=page.locator("#aha-social-mount");
+ await feed.locator("textarea").first().fill("En ryddig X-lignende tidslinje");
+ await feed.getByRole("checkbox").check();
+ await feed.getByRole("button",{name:"Publiser i AHA Feed"}).click();
+ const card=feed.locator(".aha-social-post").first();
+ await expect(card.locator(".aha-social-actions button")).toHaveCount(2);
+ await expect(card.getByRole("button",{name:"Slett"})).toHaveCount(0);
+ await card.locator(".aha-social-more summary").click();
+ await expect(card.getByRole("button",{name:"Slett"})).toBeVisible();
+ await page.getByRole("button",{name:"Konto B"}).click();
+ const visitor=feed.locator(".aha-social-post").first();
+ await expect(visitor.getByRole("button",{name:"Slett"})).toHaveCount(0);
+ await visitor.locator(".aha-social-more summary").click();
+ await expect(visitor.getByRole("button",{name:"Rapporter"})).toBeVisible();
+ await expect(visitor.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
+});
+
+test("Insta owner can edit a place tag through the overflow menu without altering the media",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=150;c.height=100;
+   c.getContext("2d").fillRect(0,0,150,100);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"place.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ const card=social.locator(".aha-social-post").first();
+ const photo=card.locator("img.aha-social-media");
+ await expect(photo).toHaveAttribute("src",/^blob:/);
+ const initial=await photo.getAttribute("src");
+ await expect(card.locator(".aha-social-actions button")).toHaveCount(2);
+ await expect(card.getByRole("button",{name:"Legg til stedstag"})).toHaveCount(0);
+ await card.locator(".aha-social-more summary").click();
+ await card.getByRole("button",{name:"Legg til stedstag"}).click();
+ await expect(card.locator(".aha-social-more")).not.toHaveAttribute("open","");
+ await card.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("Oslo");
+ await card.getByRole("button",{name:"Lagre stedstag"}).click();
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo");
+ await expect(social.locator(".aha-social-post img.aha-social-media")).toHaveAttribute("src",/^blob:/);
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(social.getByRole("button",{name:"Legg til stedstag"})).toHaveCount(0);
+ await expect(social.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
 });
