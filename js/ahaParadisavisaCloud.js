@@ -136,16 +136,35 @@
     // Do not perform remote reads, writes or session changes before explicit consent.
     let updated = 0;
     try {
-      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      // Merge existing cloud marks before writing. A stale second device must
+      // never silently clear a save, reading timestamp, or topic tag.
+      // Deliberate cloud deletion has its own separate, confirmed action.
+      const current = await readRemote(auth.client, auth.userId);
+      const byId = new Map(current.map((row) => [row.article_id, row]));
+      const merged = rows.map((row) => {
+        const older = byId.get(row.article_id);
+        if (!older) return row;
+        return {
+          ...row,
+          saved_at: row.saved_at || older.saved_at || null,
+          read_at: row.read_at || older.read_at || null,
+          opened_at: row.opened_at || older.opened_at || null,
+          open_count: Math.max(Number(row.open_count) || 0, Number(older.open_count) || 0),
+          tags: [...new Set([...(Array.isArray(older.tags) ? older.tags : []), ...row.tags])].slice(0, 12)
+        };
+      });
+      for (let i = 0; i < merged.length; i += BATCH_SIZE) {
         const { error } = await auth.client.from(TABLE)
-          .upsert(rows.slice(i, i + BATCH_SIZE), { onConflict: "profile_id,article_id" });
+          .upsert(merged.slice(i, i + BATCH_SIZE), { onConflict: "profile_id,article_id" });
         if (error) throw error;
-        updated += Math.min(BATCH_SIZE, rows.length - i);
+        updated += Math.min(BATCH_SIZE, merged.length - i);
+        // Mark ownership immediately after the first committed batch, even if
+        // a later batch fails; otherwise another account could leak the remainder.
+        if (!setLocalOwner(auth.userId)) {
+          return { ok: false, reason: "Noen artikler er overført, men nettleseren kunne ikke huske kontoeieren. Ikke bytt konto på denne enheten." };
+        }
       }
-      if (!setLocalOwner(auth.userId)) {
-        return { ok: false, reason: "Skykopien er oppdatert, men kontoeieren kunne ikke lagres på denne enheten. Kontroller nettleserinnstillingene før videre bruk." };
-      }
-      return { ok: true, reason: updated + " artikkelregistreringer er lagret på Aha-kontoen. Ingenting synkroniseres automatisk." };
+      return { ok: true, reason: updated + " artikkelregistreringer er lagret på Aha-kontoen. Eldre kontomarkeringer beholdes. Ingenting synkroniseres automatisk." };
     } catch (error) {
       return { ok: false, reason: labelServerError(error) + (updated ? " Enkelte artikler kan allerede være overført." : "") };
     }
