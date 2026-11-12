@@ -279,7 +279,10 @@
       } else { byId.set(id, safe); added++; }
     }
     if (!added && !updated) return { ok: false, reason: "no_valid_articles", rejected };
-    data.articles = [...byId.values()].slice(-5000);
+    // Do not silently drop older local saves when combining a large import
+    // with an existing library. The user must explicitly reconcile volumes.
+    if (byId.size > 5000) return { ok: false, reason: "too_many_articles", rejected };
+    data.articles = [...byId.values()];
     if (!saveJson(KEY, data)) return { ok: false, reason: "storage_failed" };
     return { ok: true, added, updated, rejected };
   }
@@ -290,7 +293,9 @@
       const result = importData(JSON.parse(await file.text()));
       feedback(result.ok
         ? "Importert: " + result.added + " nye, " + result.updated + " eksisterende artikler. " + result.rejected + " avvist. Lesehistorikk-samtykke er uendret."
-        : "Import avvist. JSON-filen må inneholde et gyldig Paradisavisa-bibliotek.");
+        : result.reason === "too_many_articles"
+          ? "Import avvist: samlet bibliotek ville overstige 5000 artikler. Ingen eksisterende artikler er fjernet."
+          : "Import avvist. JSON-filen må inneholde et gyldig Paradisavisa-bibliotek.");
       render();
     } catch {
       feedback("Ugyldig JSON-fil. Ingenting ble importert.");
