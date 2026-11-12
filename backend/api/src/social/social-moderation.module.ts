@@ -7,7 +7,7 @@ import type { AuthPrincipal } from "../auth/auth.types.js";
 import type { AhaRequest } from "../common/request-context.js";
 import { APP_CONFIG, type AppConfig } from "../config/app-config.js";
 import { CanonicalDatabaseService } from "../database/canonical-database.service.js";
-import { SocialGate, mapSocialDatabaseError } from "./social.module.js";
+import { SocialGate, mapSocialDatabaseError } from "./social-shared.js";
 
 export class ModerationQueueQuery {
   @IsOptional()
