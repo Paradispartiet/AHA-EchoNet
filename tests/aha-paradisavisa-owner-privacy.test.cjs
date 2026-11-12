@@ -19,6 +19,22 @@ function boot() {
     ["aha_paradisavisa_library_v1", JSON.stringify({ version: 1, trackingEnabled: true, articles: [article] })]
   ]);
   let writes = 0;
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  let signedInId = ownerId;
+  let authListener = null;
+  let subscriptionCount = 0;
+  const client = {
+    auth: {
+      async getUser() {
+        return { data: { user: signedInId ? { id: signedInId, is_anonymous: false } : null }, error: null };
+      },
+      onAuthStateChange(handler) {
+        authListener = handler;
+        subscriptionCount++;
+        return { data: { subscription: { unsubscribe() {} } } };
+      }
+    }
+  };
   const env = {
     URL, Date, console, Math, Array,
     localStorage: {
@@ -26,6 +42,7 @@ function boot() {
       setItem: (key, val) => { writes++; store.set(key, val); }
     },
     location: { origin: "https://paradispartiet.github.io" },
+    AHADb: { getClient: () => client },
     document: {
       readyState: "loading", addEventListener() {},
       getElementById() { return null; }
@@ -34,7 +51,12 @@ function boot() {
   env.window = env;
   vm.runInNewContext(librarySource, env);
   vm.runInNewContext(mindmapSource, env);
-  return { env, store, writes: () => writes };
+  return {
+    env, store, writes: () => writes,
+    setSignedInId: id => { signedInId = id; },
+    emitAuth: event => { if (!authListener) throw Error("No Supabase listener"); authListener(event, null); },
+    subscriptionCount: () => subscriptionCount
+  };
 }
 
 test("AHA library hides owner-bound article records until the account has been verified", () => {
@@ -62,6 +84,29 @@ test("Verified owner can view original local records; later logout re-locks them
   assert.equal(h.env.AHAParadisavisa.load().articles.length, 1);
   h.env.AHAParadisavisa.setOwnerAccess(false);
   assert.equal(h.env.AHAParadisavisa.load().articles.length, 0);
+  assert.equal(h.writes(), 0);
+});
+
+test("mindmap hides account-bound article nodes immediately on same-tab logout", async () => {
+  const h = boot();
+  assert.equal((await h.env.AHAMindmap.verifyArticleOwner()), true);
+  assert.equal(h.subscriptionCount(), 1);
+  assert.equal(h.env.AHAMindmap.collectGraphData().nodes.some(n => n.source === "paradisavisa"), true);
+
+  h.setSignedInId("");
+  h.emitAuth("SIGNED_OUT");
+  assert.equal(h.env.AHAMindmap.collectGraphData().nodes.some(n => n.source === "paradisavisa"), false);
+
+  h.setSignedInId("22222222-2222-4222-8222-222222222222");
+  h.emitAuth("SIGNED_IN");
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.env.AHAMindmap.collectGraphData().nodes.some(n => n.source === "paradisavisa"), false);
+
+  h.setSignedInId("11111111-1111-4111-8111-111111111111");
+  h.emitAuth("SIGNED_IN");
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.env.AHAMindmap.collectGraphData().nodes.some(n => n.source === "paradisavisa"), true);
+  assert.equal(h.subscriptionCount(), 1);
   assert.equal(h.writes(), 0);
 });
 
