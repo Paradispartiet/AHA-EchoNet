@@ -19,3 +19,7 @@ En `--purge` krever nå at operatøren først kjører en egen `--preview` og les
 ## Atomisk slettekontroll
 
 Siste kontroll og sletting kjøres i **én PostgreSQL-transaksjon**. Den låser både `aha_social.posts` og `aha_social.media` mot samtidige endringer, kontrollerer det godkjente antallet og antall bytes på nytt, og kaller først deretter operatørfunksjonen. Ved avvik, lock-timeout eller uventet slettet antall rulles **hele transaksjonen tilbake**. SQL bygges kun fra validerte heltall, aldri fra profilinnhold, tokens eller DSN. Dette er fremdeles ikke en automatisk jobb.
+
+### Virkelig PostgreSQL-test av sletterutinen
+
+`bash scripts/aha-social-media-atomic-purge-rehearsal.sh` kjøres kun mot GitHub Actions' midlertidige PostgreSQL 16-database. Den legger inn ett syntetisk utløpt bilde, forsøker sletting med et feilaktig godkjent antall og kontrollerer rollback. Deretter slettes nøyaktig dette ene bildet under lås med korrekt antall og bytes. Ikke-utløpte vedlegg verifiseres bevart. Scriptet nekter øvrige miljøer før første databasespørring.
