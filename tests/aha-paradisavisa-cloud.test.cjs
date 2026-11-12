@@ -62,6 +62,7 @@ function mock(options = {}) {
     document: { readyState: "loading", addEventListener() {}, getElementById() { return null; } },
     AHADb: { getClient: () => client },
     AHAParadisavisa: {
+      setOwnerAccess(allowed) { calls.localOwnerAllowed = allowed; },
       load() { return { articles, trackingEnabled: tracking }; },
       importData(payload) {
         calls.imports++;
@@ -158,6 +159,24 @@ test("explicit delete sends account-scoped delete only and retains local data", 
   assert.equal(h.calls.deletes, 1);
   assert.equal(h.calls.remote, 1);
   assert.equal(h.calls.imports, 0);
+});
+
+test("owner verification never fetches the cloud library and rejects a different signed-in user", async () => {
+  const h = mock({ uid: "55555555-5555-4555-8555-555555555555" });
+  h.local.set("aha_paradisavisa_cloud_owner_v1", "44444444-4444-4444-8444-444444444444");
+  const result = await h.api.checkLocalOwner();
+  assert.equal(result.ok, false);
+  assert.equal(h.calls.localOwnerAllowed, false);
+  assert.equal(h.calls.remote, 0);
+});
+
+test("the original local library unlocks only after verified owner authentication", async () => {
+  const h = mock();
+  h.local.set("aha_paradisavisa_cloud_owner_v1", h.uid);
+  const result = await h.api.checkLocalOwner();
+  assert.equal(result.ok, true);
+  assert.equal(h.calls.localOwnerAllowed, true);
+  assert.equal(h.calls.remote, 0);
 });
 
 test("SQL enforces private account-based RLS on all operations", () => {
