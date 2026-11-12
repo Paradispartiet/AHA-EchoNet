@@ -228,6 +228,7 @@
       title: String(input.title || fallback.title || "").trim(),
       src,
       caption: String(input.caption || fallback.caption || "").trim(),
+      placeTag: String(input.placeTag ?? input.place_tag ?? fallback.placeTag ?? fallback.place_tag ?? "").trim().slice(0,120),
       content_type: contentType,
       tags: Array.isArray(input.tags) ? input.tags : (Array.isArray(fallback.tags) ? fallback.tags : []),
       ownerId: String(input.ownerId || fallback.ownerId || profile.id),
@@ -872,6 +873,9 @@
         ${post.title ? `<p class="insta-post-title">${escapeHtml(post.title)}</p>` : ""}
         ${post.caption ? `<p class="insta-caption"><strong>@${escapeHtml(owner.username)}</strong> ${escapeHtml(post.caption)}</p>` : ""}
 
+        ${post.placeTag ? `<p class="insta-place-tag">📍 ${escapeHtml(post.placeTag)}</p>` : ""}
+        ${isOwner ? `<button type="button" class="insta-edit-place" data-insta-place="${escapeHtml(post.id)}">${post.placeTag ? "Rediger stedstag" : "Legg til stedstag"}</button>` : ""}
+
         ${renderComments(post)}
       </article>
     `;
@@ -1411,6 +1415,23 @@
     return entries[index];
   }
 
+  function setPostPlaceTag(postId, tag) {
+    const posts=load();
+    const index=posts.findIndex(post=>post.id===postId && !isUnavailableRecord(post));
+    if(index<0)return null;
+    const owner=getPostOwner(posts[index]);
+    const profile=ensureProfile();
+    if(owner.id!==profile.id && owner.username!==profile.username)return null;
+    if(typeof tag!=="string" || tag.trim().length>120)return null;
+    const placeTag=tag.trim();
+    posts[index]={...posts[index],placeTag,updated_at:nowIso(),
+      meta:{...(posts[index].meta||{}),place_tag:placeTag,local_only:true}};
+    save(posts);
+    persistPost(posts[index]);
+    render(posts);
+    return posts[index];
+  }
+
   async function addPost(input) {
     const profile = ensureProfile();
     const src = String(input.src || "").trim();
@@ -1421,6 +1442,7 @@
       title: String(input.title || "").trim(),
       src,
       caption: String(input.caption || "").trim(),
+      placeTag: String(input.placeTag || "").trim().slice(0,120),
       content_type: contentType,
       tags: Array.isArray(input.tags) ? input.tags : [],
       source_app: "aha",
@@ -1499,12 +1521,14 @@
       const title = document.getElementById("insta-title");
       const src = document.getElementById("insta-src");
       const caption = document.getElementById("insta-caption");
+      const placeTag = document.getElementById("insta-place-tag");
 
-      addPost({ title: title?.value, src: src?.value, caption: caption?.value });
+      addPost({ title: title?.value, src: src?.value, caption: caption?.value, placeTag: placeTag?.value });
 
       if (title) title.value = "";
       if (src) src.value = "";
       if (caption) caption.value = "";
+      if (placeTag) placeTag.value = "";
     });
 
     document.getElementById("insta-list")?.addEventListener("click", (event) => {
@@ -1518,6 +1542,12 @@
       }
       if (target.dataset.instaShowAll) {
         setFeedFilter("all");
+        return;
+      }
+      if (target.dataset.instaPlace) {
+        const post=load().find(item=>item.id===target.dataset.instaPlace);
+        const answer=window.prompt?.("Stedstag for dette lokale bildet (maks 120 tegn)",post?.placeTag||"");
+        if(answer!==null && answer!==undefined) setPostPlaceTag(target.dataset.instaPlace,answer);
         return;
       }
       if (target.dataset.instaDelete) deletePost(target.dataset.instaDelete);
@@ -1632,6 +1662,7 @@
     syncFromDatabase,
     syncSocialFromDatabase,
     addPost,
+    setPostPlaceTag,
     deletePost,
     copyPostText,
     render

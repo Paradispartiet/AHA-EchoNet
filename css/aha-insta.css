@@ -407,3 +407,7 @@
 .aha-insta-page .insta-feed-empty { --personal-accent: var(--aha-color-coral); gap: 10px; text-align: left; }
 .aha-insta-page .insta-feed-empty h3 { font-size: 1.2rem; }
 .aha-insta-page .insta-feed-empty .aha-tile-actions { justify-content: flex-start; }
+
+/* User-editable place tags remain local, including for imported pictures. */
+.insta-place-tag{margin:.3rem 1rem;color:#aaccf3;font-weight:600;font-size:.9rem}
+.insta-edit-place{display:block;margin:.2rem 1rem .6rem;padding:.3rem .65rem;background:transparent;border:1px solid #61708a;border-radius:7px;color:inherit;font:inherit;cursor:pointer;min-height:36px}
