@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AHA Feed og Insta · Interaktiv test uten server</title>
+<link rel="stylesheet" href="css/aha-social.css">
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#090b11;color:#f4f5f8;line-height:1.5}
+a{color:inherit}
+.shell{width:min(100% - 2rem,780px);margin:auto;padding:1.1rem 0 4rem}
+.demo-header{display:flex;justify-content:space-between;gap:1rem;align-items:center;border-bottom:1px solid #303847;padding:.7rem 0 1.1rem}
+.brand{font-size:1.4rem;letter-spacing:.09em;font-weight:800}
+.demo-label{font-size:.75rem;letter-spacing:.08em;color:#d6dce7}
+.banner{margin-top:1.3rem;border:1px solid #667185;border-radius:14px;padding:1rem 1.1rem;background:#161d29}
+.banner h1{font-size:clamp(1.3rem,4vw,1.9rem);margin:.1rem 0 .45rem}
+.banner p{margin:.3rem 0;color:#d5dce9}
+.banner strong{color:#fff}
+.tabs{display:flex;gap:.65rem;margin:1.3rem 0}
+.tabs a{flex:1;text-align:center;text-decoration:none;border:1px solid #525d72;border-radius:12px;padding:.8rem;min-height:48px;font-weight:700}
+.tabs a[aria-current="page"]{background:#e9f0ff;color:#131825;border-color:#e9f0ff}
+.account{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.account-label{font-size:.9rem;color:#dbe1e8;margin-right:.25rem}
+button{font:inherit;cursor:pointer;color:inherit;background:#263246;border:1px solid #697587;padding:.7rem .95rem;border-radius:9px;min-height:44px}
+button:disabled{opacity:.55;cursor:not-allowed}
+button[aria-pressed="true"]{background:#dfe8ff;color:#141b28;font-weight:700}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #95bfff;outline-offset:2px}
+#demo-account-status{color:#dae4f3}
+.aha-panel{background:#141923;border:1px solid #303a4a;border-radius:15px;padding:1.1rem}
+.eyebrow{font-size:.73rem;letter-spacing:.13em;text-transform:uppercase;color:#b2c7e7;font-weight:700}
+.aha-social-panel h2{margin:.2rem 0;font-size:1.32rem}
+.aha-social-panel p{overflow-wrap:anywhere}
+.aha-social-intro{color:#d4d9e4}
+.module-form textarea,.module-form input:not([type=checkbox]):not([type=file]),.aha-social-comment-form input{width:100%;min-height:46px;padding:.7rem .8rem;background:#0e121b;color:#fff;border:1px solid #647085;border-radius:9px;font:inherit}
+.module-form textarea{min-height:105px;resize:vertical}
+.module-form input[type=file]{width:100%;font:inherit}
+.module-form button[type=submit]{background:#e7efff;color:#16213b;font-weight:700;border-color:#e7efff}
+.aha-social-consent{font-size:.95rem;color:#f1f4fb}
+.aha-social-consent input{width:21px;height:21px;flex-shrink:0}
+.module-card{background:#191f2b;border:1px solid #485468;border-radius:11px;padding:1rem}
+.module-meta{color:#b8c6d9;font-size:.86rem}
+.aha-social-actions button{font-size:.9rem}
+.aha-social-media{background:#070a10;border-radius:9px;max-width:100%}
+.aha-social-status{color:#bed1e9}
+.help{border-top:1px solid #303847;margin-top:2rem;padding-top:1rem;color:#d4dce8}
+.help h2{font-size:1.05rem}
+.help ol{padding-left:1.3rem}
+.help li{margin:.45rem 0}
+.help strong{color:white}
+@media(max-width:480px){.shell{width:calc(100% - 1.1rem)}.banner,.aha-panel{padding:.85rem}.account button{flex:1}.demo-header{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="demo-header">
+  <span class="brand">AHA</span>
+  <span class="demo-label">FEED / INSTA · TEST</span>
+</header>
+<section class="banner" aria-label="Viktig om testmiljøet">
+  <h1>Prøv AHA Feed og Insta på iPad</h1>
+  <p><strong>Dette er en interaktiv simulering, ikke en ekte publisering.</strong>
+  Du tester de faktiske AHA-kontrollene mot en lokal, fiktiv server i denne fanen.</p>
+  <p>Ingen konto, database eller ekstern tjeneste kontaktes. Ikke legg inn personlig innhold.
+  Alt forsvinner når du oppdaterer eller lukker fanen.</p>
+</section>
+<nav class="tabs" aria-label="Velg modul">
+  <a id="demo-tab-feed" href="?vis=feed">Feed</a>
+  <a id="demo-tab-insta" href="?vis=insta">Insta</a>
+</nav>
+<section class="account" aria-label="Bytt testkonto">
+  <span class="account-label">Testkonto:</span>
+  <button id="demo-account-a" type="button" aria-pressed="true">Konto A</button>
+  <button id="demo-account-b" type="button" aria-pressed="false">Konto B</button>
+  <button id="demo-reset" type="button">Nullstill</button>
+</section>
+<p id="demo-account-status" role="status">Du tester som konto A.</p>
+<div id="aha-social-mount" data-social-kind="feed"></div>
+<section class="help">
+  <h2>Forslag til test</h2>
+  <ol>
+    <li>Skriv et kort innlegg, eller velg et bilde i Insta.</li>
+    <li>Merk av for publisering og trykk «Publiser».</li>
+    <li>Bytt til <strong>konto B</strong>, trykk «Oppdater delte innlegg», og kontroller at posten vises.</li>
+    <li>Prøv likerklikk, kommentar eller rapportering. Bytt tilbake til A for å slette.</li>
+  </ol>
+  <p>Vil du teste den ekte serveren med to innlogginger, må en separat stagingserver fortsatt godkjennes og settes opp. Denne demoen tester bare brukergrensesnittet og samspillet med simulerte svar.</p>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const origin="https://aha-social-offline-demo.invalid";
+const validViews=new Set(["feed","insta"]);
+const kind=new URLSearchParams(location.search).get("vis");
+const view=validViews.has(kind)?kind:"feed";
+document.getElementById("aha-social-mount").dataset.socialKind=view;
+document.getElementById("demo-tab-"+view).setAttribute("aria-current","page");
+window.AHA_SOCIAL_STAGING_ENABLED=true;
+window.AHA_SOCIAL_API_ORIGIN=origin;
+let activeAccount="demo-a";
+const posts=[],photos=new Map(),comments=new Map(),likes=new Map(),reports=new Map();
+window.__AHA_OFFLINE_DEMO__=true;
+window.AHAAuth=Object.freeze({
+  async getSession(){return {access_token:activeAccount};}
+});
+function uid(){return window.crypto?.randomUUID?.() || "11111111-1111-4111-8111-"+Math.random().toString(16).slice(2,14).padEnd(12,"0");}
+function json(data,status=200){return new Response(JSON.stringify({data}),{status,headers:{"content-type":"application/json","cache-control":"no-store"}});}
+function error(status){return json({error:"unavailable"},status);}
+const displayName=user=>user==="demo-a"?"Testkonto A":"Testkonto B";
+window.fetch=async function(request,options={}){
+  const target=new URL(String(request));
+  if(target.origin!==origin || !target.pathname.startsWith("/v1/social/")){
+    throw new Error("Denne simuleringen tillater ingen eksterne nettverksforespørsler.");
+  }
+  const method=String(options.method||"GET").toUpperCase();
+  const caller=String(options.headers?.Authorization||"").replace(/^Bearer /,"");
+  if(!["demo-a","demo-b"].includes(caller))return error(401);
+  const p=target.pathname;
+  let body=null;
+  if(options.body!=null && !(options.body instanceof Blob)){
+    try {body=JSON.parse(options.body);}
+    catch {return error(400);}
+  }
+  const media=p.match(/^\/v1\/social\/media\/([0-9a-f-]{36})$/);
+  const detail=p.match(/^\/v1\/social\/posts\/([0-9a-f-]{36})(?:\/(like|comments|reports))?$/);
+  if(p==="/v1/social/posts" && method==="GET"){
+    const selected=target.searchParams.get("kind");
+    return json(posts.filter(x=>x.state==="published"&&x.kind===selected).slice().reverse().map(x=>({
+      id:x.id,kind:x.kind,text:x.text,mediaUrl:x.mediaUrl,createdAt:x.createdAt,
+      authorName:displayName(x.owner),ownPost:x.owner===caller,
+      likedByMe:likes.get(x.id)?.has(caller)||false,likeCount:likes.get(x.id)?.size||0,
+      commentCount:comments.get(x.id)?.length||0
+    })));
+  }
+  if(p==="/v1/social/media"&&method==="POST"){
+    const file=options.body;
+    const id=uid();
+    if(!(file instanceof Blob)||file.size<100||file.size>524288||
+       !["image/png","image/webp"].includes(file.type))return error(400);
+    photos.set(id,{owner:caller,blob:file,postId:null});
+    return json({mediaId:id,mediaUrl:"/v1/social/media/"+id},201);
+  }
+  if(media){
+    const pic=photos.get(media[1]);
+    if(!pic)return error(404);
+    const attached=posts.find(x=>x.id===pic.postId);
+    if(method==="GET"){
+      const allowed=pic.owner===caller&&(!attached||attached.state!=="deleted")||
+        attached?.state==="published";
+      if(!allowed)return error(404);
+      return new Response(pic.blob,{status:200,headers:{
+        "content-type":pic.blob.type,"cache-control":"private, no-store"
+      }});
+    }
+    if(method==="DELETE"){
+      if(pic.owner!==caller||pic.postId)return error(404);
+      photos.delete(media[1]);
+      return json({mediaId:media[1],deleted:true});
+    }
+  }
+  if(p==="/v1/social/posts"&&method==="POST"){
+    if(!body?.publish||!["feed","insta"].includes(body.kind)||
+       typeof body.text!=="string"||!body.text.trim())return error(400);
+    let mediaUrl=null;
+    if(body.kind==="insta"){
+      const mediaMatch=String(body.mediaUrl||"").match(/^\/v1\/social\/media\/([0-9a-f-]{36})$/);
+      if(!mediaMatch)return error(400);
+      const pic=photos.get(mediaMatch[1]);
+      if(!pic||pic.owner!==caller||pic.postId)return error(404);
+      mediaUrl=body.mediaUrl;
+    }
+    const id=uid(),post={id,kind:body.kind,owner:caller,text:body.text.trim(),
+      mediaUrl,createdAt:new Date().toISOString(),state:"published"};
+    posts.push(post);
+    if(mediaUrl)photos.get(mediaUrl.split("/").pop()).postId=id;
+    return json({id,status:"published",idempotentReplay:false},201);
+  }
+  if(detail){
+    const post=posts.find(x=>x.id===detail[1]);
+    if(!post||post.state!=="published")return error(404);
+    const action=detail[2];
+    if(!action&&method==="DELETE"){
+      if(post.owner!==caller)return error(404);
+      post.state="deleted";
+      return json({id:post.id,deleted:true});
+    }
+    if(action==="like"&&method==="POST"){
+      if(!likes.has(post.id))likes.set(post.id,new Set());
+      body?.liked?likes.get(post.id).add(caller):likes.get(post.id).delete(caller);
+      return json({postId:post.id,liked:!!body?.liked});
+    }
+    if(action==="comments"&&method==="GET"){
+      return json((comments.get(post.id)||[]).map(x=>({
+        id:x.id,text:x.text,authorName:displayName(x.author),createdAt:x.createdAt,
+        ownComment:x.author===caller
+      })));
+    }
+    if(action==="comments"&&method==="POST"){
+      if(typeof body?.text!=="string"||!body.text.trim())return error(400);
+      if(!comments.has(post.id))comments.set(post.id,[]);
+      const comment={id:uid(),text:body.text.trim(),author:caller,createdAt:new Date().toISOString()};
+      comments.get(post.id).push(comment);
+      return json({id:comment.id},201);
+    }
+    if(action==="reports"&&method==="POST"){
+      if(post.owner===caller)return error(403);
+      if(!reports.has(post.id))reports.set(post.id,new Set());
+      reports.get(post.id).add(caller);
+      return json({postId:post.id,reported:true},201);
+    }
+  }
+  return error(404);
+};
+function switchAccount(account){
+  activeAccount=account;
+  for(const id of ["demo-a","demo-b"]){
+    document.getElementById("demo-account-"+id.slice(-1)).setAttribute("aria-pressed",String(id===account));
+  }
+  document.getElementById("demo-account-status").textContent="Du tester som "+displayName(account)+".";
+  document.querySelector(".aha-social-refresh")?.click();
+}
+document.getElementById("demo-account-a").addEventListener("click",()=>switchAccount("demo-a"));
+document.getElementById("demo-account-b").addEventListener("click",()=>switchAccount("demo-b"));
+document.getElementById("demo-reset").addEventListener("click",()=>{
+  posts.length=0;photos.clear();comments.clear();likes.clear();reports.clear();
+  switchAccount("demo-a");
+});
+})();
+</script>
+<script src="js/ahaSocialMedia.js"></script>
+<script src="js/ahaSocialNetwork.js"></script>
+</body>
+</html>
