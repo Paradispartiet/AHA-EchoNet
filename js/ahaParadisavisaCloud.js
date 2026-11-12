@@ -175,6 +175,16 @@
       // never silently clear a save, reading timestamp, or topic tag.
       // Deliberate cloud deletion has its own separate, confirmed action.
       const current = await readRemote(auth.client, auth.userId);
+      // Different devices may hold different saved articles. Guard the union
+      // before upserting; otherwise a valid 4,900-row cloud plus 4,900 new
+      // local rows could become an unreadable 9,800-row cloud silently.
+      const unionIds = new Set([
+        ...current.map((row) => String(row.article_id || "")),
+        ...rows.map((row) => row.article_id)
+      ]);
+      if (unionIds.size > MAX_ARTICLES) {
+        return { ok: false, reason: "Samlet sky- og lokalbibliotek ville overstige 5000 artikler. Ingen skyregistreringer ble skrevet eller fjernet." };
+      }
       const byId = new Map(current.map((row) => [row.article_id, row]));
       const merged = rows.map((row) => {
         const older = byId.get(row.article_id);
