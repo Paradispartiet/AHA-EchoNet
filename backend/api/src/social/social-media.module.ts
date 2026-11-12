@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Headers, Inject, Injectable, Module, Param, ParseUUIDPipe,
+  Controller, Delete, Get, Headers, Inject, Injectable, Module, Param, ParseUUIDPipe,
   Post, Req, Res
 } from "@nestjs/common";
 import type { Response } from "express";
@@ -106,6 +106,21 @@ export class SocialMediaRepository {
     } catch (error) { return mapSocialDatabaseError(error); }
   }
 
+  async removePending(principal: AuthPrincipal, id: string): Promise<Record<string, unknown>> {
+    try {
+      return await this.database.withCommandSession(principal, async client => {
+        const response = await client.query<{ result: unknown }>(
+          "select aha_social.delete_pending_media_v1($1::uuid) as result", [id]
+        );
+        const result = response.rows[0]?.result;
+        if (!result || typeof result !== "object" || Array.isArray(result)) {
+          throw new Error("invalid_social_media_remove_response");
+        }
+        return result as Record<string, unknown>;
+      });
+    } catch (error) { return mapSocialDatabaseError(error); }
+  }
+
   async read(principal: AuthPrincipal, id: string): Promise<{ contentType: string; bytes: Buffer }> {
     try {
       return await this.database.withReadSession(principal, async client => {
@@ -145,6 +160,11 @@ export class SocialMediaService {
     this.gate.assertEnabled();
     return this.repository.read(principal, id);
   }
+
+  async removePending(principal: AuthPrincipal, id: string) {
+    this.gate.assertEnabled();
+    return this.repository.removePending(principal, id);
+  }
 }
 
 @Controller("v1/social")
@@ -163,6 +183,12 @@ export class SocialMediaController {
     const mime = String(contentType || "").split(";")[0]?.trim().toLowerCase() || "";
     const result = await this.media.upload(requirePrincipal(request), mime, request.body, requestKey);
     return apiSuccess(request, this.config.serviceVersion, result);
+  }
+
+  @Delete("media/:id")
+  async removePending(@Req() request: AhaRequest, @Param("id", new ParseUUIDPipe()) id: string) {
+    return apiSuccess(request, this.config.serviceVersion,
+      await this.media.removePending(requirePrincipal(request), id));
   }
 
   @Get("media/:id")

@@ -68,12 +68,36 @@ begin
   select 1 from aha_social.media m
   left join aha_social.posts p on p.id=m.post_id
   where m.id=p_id
-    and (m.profile_id=v_self or (p.state='published' and p.id is not null))
+    and (
+      (m.profile_id=v_self and (m.post_id is not null or m.created_at >= now()-interval '24 hours'))
+      or (p.state='published' and p.id is not null and exists (
+        select 1 from aha.profiles author
+        where author.id=p.profile_id and author.status='active' and author.deleted_at is null
+      ))
+    )
  ) then
   raise exception 'media unavailable' using errcode='42501';
  end if;
  return query select m.content_type,m.bytes from aha_social.media m
    where m.id=p_id;
+end;
+$fn$;
+
+-- An account can immediately discard its own unpublished image. Once
+-- attached to a post, only the separate post deletion/moderation path applies.
+create or replace function aha_social.delete_pending_media_v1(p_id uuid)
+returns jsonb language plpgsql volatile security definer
+set search_path = pg_catalog, aha, aha_social as $fn$
+declare v_self text; v_id uuid;
+begin
+ v_self:=aha_social.require_profile_v1();
+ delete from aha_social.media
+ where id=p_id and profile_id=v_self and post_id is null
+ returning id into v_id;
+ if v_id is null then
+  raise exception 'media unavailable' using errcode='42501';
+ end if;
+ return jsonb_build_object('mediaId',v_id,'deleted',true);
 end;
 $fn$;
 
@@ -152,21 +176,23 @@ $fn$;
 create or replace function aha_social.purge_expired_media_v1()
 returns integer language plpgsql volatile security definer
 set search_path = pg_catalog, aha, aha_social as $fn$
-declare v_count integer;
+declare v_deleted integer; v_orphaned integer;
 begin
  delete from aha_social.media m
  using aha_social.posts p
  where m.post_id=p.id and p.state='deleted'
    and p.deleted_at<now()-interval '30 days';
+ get diagnostics v_deleted=row_count;
  delete from aha_social.media m
  where m.post_id is null and m.created_at<now()-interval '24 hours';
- get diagnostics v_count=row_count;
- return v_count;
+ get diagnostics v_orphaned=row_count;
+ return v_deleted+v_orphaned;
 end;
 $fn$;
 
 revoke all on function aha_social.upload_media_v1(text,bytea,text) from public;
 revoke all on function aha_social.read_media_v1(uuid) from public;
+revoke all on function aha_social.delete_pending_media_v1(uuid) from public;
 revoke all on function aha_social.publish_post_v1(text,text,text,text) from public;
 revoke all on function aha_social.purge_expired_media_v1() from public;
 commit;

@@ -144,6 +144,7 @@ GRANT EXECUTE ON FUNCTION aha_social.moderation_queue_v1(integer) TO aha_runtime
 GRANT EXECUTE ON FUNCTION aha_social.moderate_post_v1(uuid,text,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.upload_media_v1(text,bytea,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.read_media_v1(uuid) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.delete_pending_media_v1(uuid) TO aha_runtime_rehearsal;
 
 DO $check$
 BEGIN
@@ -173,10 +174,39 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql
 
+# This expired orphan is inserted by the ephemeral admin for TTL coverage;
+# no runtime role gets direct media table access.
+admin_psql <<'SQL'
+INSERT INTO aha_social.media(id,profile_id,request_key,content_type,bytes,created_at)
+VALUES (
+  '66666666-6666-4666-8666-666666666666',
+  'profile_a',
+  'expired-private-media-001',
+  'image/png',
+  decode('89504e470d0a1a0a' || repeat('00',100),'hex'),
+  now()-interval '25 hours'
+);
+SQL
+
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_media_rehearsal_v1.sql
+
+# Cleanup is never exposed to the browser or the runtime identity.
+admin_psql <<'SQL'
+DO $check$
+DECLARE purged integer;
+BEGIN
+ SELECT aha_social.purge_expired_media_v1() INTO purged;
+ IF purged <> 1 THEN RAISE EXCEPTION 'expected one expired orphan purged, got %',purged; END IF;
+ IF EXISTS (SELECT 1 FROM aha_social.media
+            WHERE id='66666666-6666-4666-8666-666666666666') THEN
+    RAISE EXCEPTION 'expired orphan retained after operator purge';
+ END IF;
+END;
+$check$;
+SQL
 
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \

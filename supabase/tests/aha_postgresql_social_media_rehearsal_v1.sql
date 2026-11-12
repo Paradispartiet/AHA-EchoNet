@@ -87,6 +87,14 @@ BEGIN
  EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Direct storage table read was allowed'; END IF;
 
+ -- A different profile cannot discard A's pending attachment.
+ denied:=false;
+ BEGIN
+   PERFORM aha_social.delete_pending_media_v1(v_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Account B deleted A pending image'; END IF;
+
+
  denied:=false;
  BEGIN PERFORM aha_social.purge_expired_media_v1();
  EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
@@ -94,4 +102,54 @@ BEGIN
 END;
 $do$;
 ROLLBACK;
+
+-- The owner can remove only pending uploads. Already attached uploads are
+-- protected by the published post lifecycle and moderator decisions.
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE pending_id uuid; published_id uuid; denied boolean:=false; result jsonb;
+BEGIN
+ pending_id:=current_setting('aha.rehearsal_private_media_id')::uuid;
+ result:=aha_social.delete_pending_media_v1(pending_id);
+ IF result->>'deleted'<>'true' THEN
+  RAISE EXCEPTION 'Owner could not remove unpublished image';
+ END IF;
+ denied:=false;
+ BEGIN PERFORM * FROM aha_social.read_media_v1(pending_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Deleted pending media remains readable'; END IF;
+
+ published_id:=substring((
+   select item->>'mediaUrl' from jsonb_array_elements(aha_social.list_posts_v1('insta',20)) item
+   where item->>'text'='Staging-bilde A'
+ ) from 18)::uuid;
+ denied:=false;
+ BEGIN PERFORM aha_social.delete_pending_media_v1(published_id);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Owner deleted media attached to a published post'; END IF;
+END;
+$do$;
+COMMIT;
+
+-- 25-hour-old unshared media is inaccessible even to its former owner,
+-- before a privileged cleanup is run.
+BEGIN;
+SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider":"supabase"}',true);
+DO $do$
+DECLARE denied boolean:=false; expired uuid:='66666666-6666-4666-8666-666666666666';
+BEGIN
+ BEGIN PERFORM * FROM aha_social.read_media_v1(expired);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Expired unshared image was still readable'; END IF;
+
+ denied:=false;
+ BEGIN
+   PERFORM aha_social.publish_post_v1('insta','Expired image cannot publish',
+     '/v1/social/media/'||expired::text,'test-expired-image-a');
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Expired image was published'; END IF;
+END;
+$do$;
+COMMIT;
 \echo 'AHA staging social image upload PostgreSQL rehearsal: PASS'

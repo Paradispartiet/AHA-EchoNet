@@ -74,10 +74,21 @@ class MemoryMediaRepository {
       if (old.mime !== mime || !old.bytes.equals(bytes)) throw new ApiException(409, "CONFLICT", "Media changed");
       return { mediaId: old.id, mediaUrl: old.path, idempotentReplay: true };
     }
-    const id = "33333333-3333-4333-8333-333333333333";
+    const id = this.rows.size === 0 ? "33333333-3333-4333-8333-333333333333" : "77777777-7777-4777-8777-777777777777";
     const path = "/v1/social/media/" + id;
     this.rows.set(id, { id, path, owner: principal.subject, mime, bytes, key: requestKey });
     return { mediaId: id, mediaUrl: path, idempotentReplay: false };
+  }
+
+  async removePending(principal, id) {
+    const item = this.rows.get(id);
+    if (!item || item.owner !== principal.subject) {
+      throw new ApiException(404, "NOT_FOUND", "Pending media not found");
+    }
+    const attached = [...this.posts.values()].some(post => post.mediaUrl === item.path);
+    if (attached) throw new ApiException(404, "NOT_FOUND", "Media is already attached");
+    this.rows.delete(id);
+    return { mediaId: id, deleted: true };
   }
 
   async read(principal, id) {
@@ -301,10 +312,33 @@ test("binary staging upload stays private until an explicit Insta post reference
     .set("Authorization", "Bearer alice").expect(200);
   assert.equal(fromAlice.body.data[0].mediaUrl, uploaded.body.data.mediaUrl);
   assert.equal(fromAlice.body.data[0].ownPost, false);
+  // An attached media object must not be individually deleted, even by
+  // its author. Remove the post first via the separate post lifecycle.
+  await request(app.getHttpServer()).delete("/v1/social/media/" + mediaId)
+    .set("Authorization", "Bearer bob").expect(404);
   await request(app.getHttpServer()).get("/v1/social/media/" + mediaId)
     .set("Authorization", "Bearer alice").expect(200);
 });
 
+
+test("unpublished media can be discarded only by its owner", async () => {
+  const uploaded = await request(app.getHttpServer()).post("/v1/social/media")
+    .set("Authorization", "Bearer alice")
+    .set("Content-Type", "image/png")
+    .set("Idempotency-Key", "owner-cancel-image-1")
+    .send(tinyPng()).expect(201);
+  const id = uploaded.body.data.mediaId;
+  assert.equal(id, "77777777-7777-4777-8777-777777777777");
+  await request(app.getHttpServer()).delete("/v1/social/media/" + id)
+    .set("Authorization", "Bearer bob").expect(404);
+  await request(app.getHttpServer()).get("/v1/social/media/" + id)
+    .set("Authorization", "Bearer alice").expect(200);
+  await request(app.getHttpServer()).delete("/v1/social/media/" + id)
+    .set("Authorization", "Bearer alice").expect(200)
+    .expect(({ body }) => assert.equal(body.data.deleted, true));
+  await request(app.getHttpServer()).get("/v1/social/media/" + id)
+    .set("Authorization", "Bearer alice").expect(404);
+});
 
 test("moderation HTTP rejects normal users and hides reported content after audited decision", async () => {
   const instaId = TEST_POST_B;
