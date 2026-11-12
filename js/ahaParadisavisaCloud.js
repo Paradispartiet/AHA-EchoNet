@@ -10,6 +10,7 @@
   const MAX_ARTICLES = 5000;
   const BATCH_SIZE = 100;
   let busy = false;
+  let authWatchInstalled = false;
 
   const $ = (id) => document.getElementById(id);
   function feedback(message) {
@@ -25,7 +26,9 @@
   function setLocalOwner(uid) {
     try {
       localStorage.setItem(OWNER, uid);
-      return localStorage.getItem(OWNER) === uid;
+      const persisted = localStorage.getItem(OWNER) === uid;
+      if (persisted) watchLocalOwnerAuth();
+      return persisted;
     } catch { return false; }
   }
   function validId(id) {
@@ -86,6 +89,31 @@
   }
 
   let ownerCheckVersion = 0;
+  function watchLocalOwnerAuth() {
+    // A guest library never activates an auth client at page load.
+    if (authWatchInstalled || !getLocalOwner()) return;
+    const client = global.AHADb?.getClient?.();
+    if (typeof client?.auth?.onAuthStateChange !== "function") return;
+    try {
+      client.auth.onAuthStateChange((event) => {
+        if (!getLocalOwner()) return;
+        if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          // Auth may change in the SAME tab: storage and pageshow do not fire.
+          // Invalidate any old verified-account request before it resolves.
+          ++ownerCheckVersion;
+          global.AHAParadisavisa?.setOwnerAccess?.(false);
+          feedback("Du er logget ut. Dette biblioteket er låst til den opprinnelige Aha-kontoen.");
+        } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+          global.AHAParadisavisa?.setOwnerAccess?.(false);
+          void checkLocalOwner();
+        }
+      });
+      authWatchInstalled = true;
+    } catch {
+      // Fail closed on auth events: the explicit verification still guards
+      // page load and cloud writes even when subscription is unavailable.
+    }
+  }
   async function checkLocalOwner() {
     const seq = ++ownerCheckVersion;
     const previousOwner = getLocalOwner();
@@ -93,6 +121,8 @@
       global.AHAParadisavisa?.setOwnerAccess?.(true);
       return { ok: true, unbound: true };
     }
+    global.AHAParadisavisa?.setOwnerAccess?.(false);
+    watchLocalOwnerAuth();
     try {
       const auth = await verifiedAccount();
       if (seq !== ownerCheckVersion) return { ok: false, reason: "superseded" };
