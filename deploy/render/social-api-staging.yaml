@@ -1,0 +1,42 @@
+# ISOLATED AHA social staging candidate. SOURCE FILE ONLY — not deployed.
+# Do NOT register this Blueprint or provision paid infrastructure without
+# separate operator approval. It is intentionally outside root render.yaml.
+# New services are health-only: no database, auth identities, canonical sync,
+# media uploads or social sharing is enabled by this file.
+services:
+  - type: web
+    name: aha-social-api-staging
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    rootDir: backend/api
+    buildCommand: npm ci --include=dev --ignore-scripts --no-audit --no-fund && npm run build && npm prune --omit=dev --ignore-scripts --no-audit --no-fund
+    startCommand: node dist/main.js
+    healthCheckPath: /v1/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: development
+      - key: AHA_SOCIAL_STAGING_ENABLED
+        value: "false"
+      - key: AHA_DATABASE_ENABLED
+        value: "false"
+      - key: AHA_DATABASE_SSL_MODE
+        value: verify-full
+      - key: AHA_DATABASE_POOL_MAX
+        value: "3"
+      - key: AHA_CANONICAL_SYNC_ENABLED
+        value: "false"
+      - key: AHA_LOCAL_IMPORT_ENABLED
+        value: "false"
+      - key: AHA_RUNTIME_ACTIVATED
+        value: "false"
+      - key: AHA_ALLOWED_ORIGINS
+        value: https://paradispartiet.github.io
+      - key: AHA_AUTH_PROVIDER
+        value: supabase
+      - key: AHA_AUDIT_HASH_SALT
+        generateValue: true

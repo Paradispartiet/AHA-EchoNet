@@ -79,3 +79,7 @@ Insta-testgrensesnittet viser nå «Fjern valgt bilde». Før opplasting fjernes
 ## Reell HTTP + PostgreSQL med tre syntetiske profiler i CI
 
 PostgreSQL 16-regresjonsjobben bygger nå NestJS og starter den mot samme **kortlivede, lokale** testdatabase. Et separat CI-skript genererer tre RSA-signerte JWT-er (konto A, konto B og moderator), verifisert av virkelig `JoseTokenVerifier` via loopback-JWKS. Testen bruker autentisert HTTP til bildeopplasting, fremmed-eierskapsavslag, Insta-publisering, lesing fra konto B, rapportering, moderatorskjuling, avvisning av bilder etter skjuling og sletting, samt avbrutt upublisert opplasting. Alle tjenester og data forblir i GitHub-runneren. Ingen produksjon eller hosted staging endres. Eksisterende Render-canonical-staging bruker `NODE_ENV=production` og blir ikke brukt til sosial staging.
+
+## Egen sosial stagingmal
+
+En separat, **ikke-driftsatt** `deploy/render/social-api-staging.yaml` er nå tilføyd, med database, sosial publisering, canonical sync og import eksplisitt avslått, og `autoDeployTrigger: off`. Gjennomgå `docs/AHA_SOCIAL_STAGING_BLUEPRINT_V1.md` før eventuell operatørgodkjent opprettelse. Eksisterende canonical-staging og produksjon blir ikke endret.
