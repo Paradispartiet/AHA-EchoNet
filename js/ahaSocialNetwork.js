@@ -71,13 +71,34 @@
     const kind = getKind(mount);
     if (!mount || !kind) return false;
     active = true;
-    global.document.body?.classList?.add("aha-social-enabled");
+    global.document.body?.classList?.add("aha-social-enabled", "aha-social-" + kind);
     const panel = add("section", mount, null, "aha-panel aha-social-panel");
-    add("p", panel, "AHA-NETTVERK · TESTMILJØ", "eyebrow");
-    add("h2", panel, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
-    add("p", panel, "Dette er atskilt fra dine private, lokale poster. Ingenting deles uten at du velger «Publiser» og bekrefter det.", "aha-social-intro");
+    panel.dataset.socialKind = kind;
+    const mast = add("header", panel, null, "aha-social-masthead");
+    const brand = add("div", mast, null, "aha-social-brand");
+    const emblem = add("span", brand, "A", "aha-social-brandmark");
+    emblem.setAttribute("aria-hidden", "true");
+    const heading = add("div", brand, null, "aha-social-heading");
+    add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");
+    add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
+    const navigation = add("nav", mast, null, "aha-social-navigation");
+    navigation.setAttribute("aria-label", "AHA sosiale flater");
+    for (const page of ["feed", "insta"]) {
+      const link = add("a", navigation, page === "feed" ? "Feed" : "Insta");
+      link.href = global.__AHA_OFFLINE_DEMO__ === true
+        ? "social-demo.html?vis=" + page
+        : page + ".html";
+      if (page === kind) link.setAttribute("aria-current", "page");
+    }
+    add("p", panel, "Egen testfeed · private AHA-innlegg deles aldri automatisk.", "aha-social-intro");
 
     const form = add("form", panel, null, "module-form aha-social-compose");
+    if (kind === "feed") {
+      const composeLead = add("div", form, null, "aha-social-compose-lead");
+      const avatar = add("span", composeLead, "A", "aha-social-avatar aha-social-self-avatar");
+      avatar.setAttribute("aria-hidden", "true");
+      add("strong", composeLead, "Skriv et innlegg");
+    }
     let instaMode = "feed";
     let viewMode = "feed";
     let placeSearch = null;
@@ -92,7 +113,7 @@
     let discard = null;
     let fileVersion = 0;
     if (kind === "insta") {
-      const mediaLabel = add("label", form, "Velg bilde fra iPad eller mobil");
+      const mediaLabel = add("label", form, "Nytt bilde eller Reel");
       media = add("input", mediaLabel);
       media.type = "file";
       media.accept = "image/*";
@@ -106,7 +127,7 @@
       videoPreview.playsInline=true;
       videoPreview.preload="metadata";
       videoPreview.setAttribute("aria-label","Lokal forhåndsvisning av Reel-video");
-      add("p",form,"Velg bilde først. I Reel kan du også forhåndsvise video på iPad. Video kan bare publiseres i denne demoen.","module-meta");
+      add("p",form,"Bilde først · video er foreløpig kun tilgjengelig i demoen.","module-meta aha-social-upload-hint");
       discard = add("button", form, "Fjern valgt bilde");
       discard.type = "button";
       discard.disabled = true;
@@ -198,19 +219,21 @@
     const consent = add("input", consentLabel);
     consent.type = "checkbox";
     consent.required = true;
-    add("span", consentLabel, "Jeg vil publisere dette innlegget slik at andre innloggede AHA-brukere kan se det.");
+    add("span", consentLabel, "Del dette med de andre testkontoene.");
     const submit = add("button", form, kind === "feed" ? "Publiser i AHA Feed" : "Publiser i AHA Insta");
     submit.type = "submit";
 
     const status = add("p", panel, "", "module-meta aha-social-status");
     status.setAttribute("role", "status");
-    const refresh = add("button", panel, "Oppdater delte innlegg", "aha-social-refresh");
+    const feedTools = add("div", panel, null, "aha-social-feed-tools");
+    add("h3", feedTools, kind === "feed" ? "Tidslinje" : "Utforsk", "aha-social-feed-heading");
+    const refresh = add("button", feedTools, "Oppdater delte innlegg", "aha-social-refresh");
     refresh.type = "button";
     let viewButtons = [];
     if (kind === "insta") {
       const browser = add("nav", panel, null, "aha-social-browser");
       browser.setAttribute("aria-label", "Bla i Insta");
-      add("p", browser, "Utforsk bilder", "aha-social-browser-title");
+      add("p", browser, "Velg visning", "aha-social-browser-title");
       const actions = add("div", browser, null, "aha-social-tabs aha-social-reading-tabs");
       viewButtons = ["feed","reel","map"].map((mode) => {
         const button = add("button", actions, mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map");
@@ -305,6 +328,15 @@
 
     function renderPost(post, parent = list) {
       const card = add("article", parent, null, "module-card aha-social-post");
+      card.classList.add("aha-social-post-" + kind);
+      const head = add("header", card, null, "aha-social-post-head");
+      const displayName = post.authorName || "AHA-bruker";
+      const avatar = add("span", head, displayName.trim().slice(0, 1).toLocaleUpperCase("nb-NO") || "A", "aha-social-avatar");
+      avatar.setAttribute("aria-hidden", "true");
+      const meta = add("div", head, null, "aha-social-author-meta");
+      add("strong", meta, displayName);
+      const published = add("time", meta, isoDate(post.createdAt), "module-meta");
+      if (post.createdAt) published.dateTime = String(post.createdAt);
       if (kind === "feed") add("p", card, post.text || "", "aha-social-feed-copy");
       if (kind === "insta" && typeof post.mediaUrl === "string") {
         let mediaUrl;
@@ -333,12 +365,9 @@
           } else visual.src=mediaUrl;
         }
       }
-      const head = add("div", card, null, "aha-social-post-head");
-      add("strong", head, post.authorName || "AHA-bruker");
-      add("span", head, isoDate(post.createdAt), "module-meta");
       if (kind === "insta") {
         if (post.placeTag) {
-          const place = add("button", card, "📍 " + post.placeTag, "aha-social-location");
+          const place = add("button", meta, "📍 " + post.placeTag, "aha-social-location");
           place.type = "button";
           place.setAttribute("aria-label", "Se bilder fra " + post.placeTag);
           place.addEventListener("click", () => {
@@ -347,10 +376,15 @@
             setViewMode("map");
           });
         }
-        add("p", card, post.text || "", "aha-social-caption");
-        add("span", card, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Feed", "aha-social-kind");
+        if (post.text) add("p", card, post.text, "aha-social-caption");
+        const marker = add("span", head, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Bilde", "aha-social-kind");
+        marker.setAttribute("aria-label", "Innleggstype: " + marker.textContent);
       }
       const actions = add("div", card, null, "aha-social-actions");
+      if (kind === "insta") {
+        const caption = card.querySelector(".aha-social-caption");
+        if (caption) card.insertBefore(actions, caption);
+      }
       const like = add("button", actions, (post.likedByMe ? "♥ Likt" : "♡ Lik") + " (" + Number(post.likeCount || 0) + ")");
       like.type = "button";
       like.addEventListener("click", () => mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/like", "POST", { liked: !post.likedByMe }, "Likerklikk oppdatert."));
