@@ -50,15 +50,19 @@ assert.equal(query("?auth=login&source=historygo&next=%2FParadisavisa%2F"),
   HG_PROFILE, "History GO's return target must not change");
 assert.equal(query("?auth=login&source=other"), "", "Unknown origins must clear previous return targets");
 assert.equal(query("?auth=login&source=paradisavisa"), AVISA_ROOT);
+assert.equal(query("?auth=login&source=aha-paradisavisa-library"),
+  AHA_ROOT + "paradisavisa.html", "Aha readers should return to their library, never be sent away to the newspaper");
 
 callback.local.set(KEY, AVISA_ROOT + "artikler/kultur.html");
 assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), AVISA_ROOT + "artikler/kultur.html");
 callback.local.set(KEY, "https://malicious.example/path");
 assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), "");
+callback.local.set(KEY, AHA_ROOT + "paradisavisa.html");
+assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), AHA_ROOT + "paradisavisa.html");
 callback.local.set(KEY, HG_PROFILE);
 assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), HG_PROFILE);
 callback.local.set(KEY, AHA_ROOT);
-assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), "", "Only two known return routes are permitted");
+assert.equal(callback.context.AHAAuthCallbackDebug.getStoredReturnTarget(), "", "Only exact allowlisted return routes are permitted");
 assert.match(dashboardSource, /isParadisavisaLoginReturnRequest/);
 assert.match(callbackSource, /returnDestinationLabel/);
 console.log("PASS: verified Aha callbacks return only to approved History GO or Paradisavisa URLs");
