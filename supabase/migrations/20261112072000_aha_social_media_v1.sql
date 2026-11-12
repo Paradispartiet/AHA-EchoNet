@@ -256,6 +256,33 @@ begin
 end;
 $fn$;
 
+
+-- Owner-only editing of location labels on already published Insta photos.
+-- This never changes post publication state, image bytes or owner.
+create or replace function aha_social.set_post_place_tag_v1(p_id uuid,p_place_tag text)
+returns jsonb language plpgsql volatile security definer
+set search_path = pg_catalog, aha, aha_social as $fn$
+declare v_self text;v_post aha_social.posts%rowtype;v_tag text;
+begin
+ v_self:=aha_social.require_profile_v1();
+ v_tag:=nullif(btrim(coalesce(p_place_tag,'')),'');
+ if length(v_tag)>120 then
+  raise exception 'invalid social place tag' using errcode='22023';
+ end if;
+ select * into v_post from aha_social.posts
+  where id=p_id and profile_id=v_self and kind='insta' and state='published'
+  for update;
+ if not found then
+  raise exception 'post unavailable' using errcode='42501';
+ end if;
+ if v_post.insta_mode='map' and v_tag is null then
+  raise exception 'invalid social place tag' using errcode='22023';
+ end if;
+ update aha_social.posts set place_tag=v_tag where id=v_post.id;
+ return jsonb_build_object('id',v_post.id,'placeTag',v_tag,'updated',true);
+end;
+$fn$;
+
 -- Operator-only data minimization; no runtime/browser grants.
 -- Remove orphan media after 24 h and user-deleted posts after 30 days.
 -- Hidden posts are intentionally retained for audited moderation review.
@@ -282,4 +309,5 @@ revoke all on function aha_social.delete_pending_media_v1(uuid) from public;
 revoke all on function aha_social.publish_post_v1(text,text,text,text) from public;
 revoke all on function aha_social.publish_post_v1(text,text,text,text,text,text) from public;
 revoke all on function aha_social.purge_expired_media_v1() from public;
+revoke all on function aha_social.set_post_place_tag_v1(uuid,text) from public;
 commit;

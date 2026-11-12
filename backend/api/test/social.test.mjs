@@ -143,3 +143,19 @@ test("Feed hard-stops at 500 characters; Insta formats and place tags persist to
  await assert.rejects(service.publish(principal,{kind:"insta",text:"Sted",mediaUrl:ref,instaMode:"reel",placeTag:"x".repeat(121),requestKey:"reel-big-tag",publish:true}),e=>e.code==="VALIDATION_FAILED");
  assert.equal(repository.calls.length,2);
 });
+
+
+test("post-owner location edit accepts explicit values, rejects missing payload and respects social gate", async () => {
+ const repo=new FakeRepo();
+ const service=new SocialService({assertEnabled(){}},repo);
+ const id="33333333-3333-4333-8333-333333333333";
+ await service.editPlace(principal,id,{placeTag:"  Oslo sentrum  "});
+ assert.deepEqual(repo.calls[0].values,[id,"Oslo sentrum"]);
+ assert.equal(repo.calls[0].action,"place");
+ await service.editPlace(principal,id,{placeTag:null});
+ assert.deepEqual(repo.calls[1].values,[id,null]);
+ await assert.rejects(service.editPlace(principal,id,{}),error=>error.code==="VALIDATION_FAILED");
+ await assert.rejects(service.editPlace(principal,id,{placeTag:"X".repeat(121)}),error=>error.code==="VALIDATION_FAILED");
+ await assert.rejects(service.editPlace(principal,id,{placeTag:3}),error=>error.code==="VALIDATION_FAILED");
+ assert.equal(repo.calls.length,2);
+});

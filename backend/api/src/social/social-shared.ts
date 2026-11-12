@@ -72,7 +72,7 @@ export function mapSocialDatabaseError(error: unknown): never {
       if (pgCode === "22023" && [
         "invalid social publication", "invalid comment", "invalid report reason",
         "invalid social feed request", "invalid like action", "invalid social moderation request",
-        "invalid social media upload", "invalid social media signature"
+        "invalid social media upload", "invalid social media signature", "invalid social place tag"
       ].includes(message)) {
         throw new ApiException(400, "VALIDATION_FAILED", "The social request is invalid");
       }

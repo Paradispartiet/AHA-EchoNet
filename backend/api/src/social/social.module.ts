@@ -64,6 +64,14 @@ export class SocialLikeInput {
   liked!: boolean;
 }
 
+export class SocialPlaceTagInput {
+  // Null explicitly removes an optional tag. Omission is not a write request.
+  @IsOptional()
+  @IsString()
+  @Length(0, 120)
+  placeTag?: string | null;
+}
+
 export class SocialCommentInput {
   @IsString()
   @Length(1, 500)
@@ -97,13 +105,14 @@ export class SocialRepository {
 
   async write(
     principal: AuthPrincipal,
-    action: "publish" | "remove" | "like" | "comment" | "report",
+    action: "publish" | "remove" | "place" | "like" | "comment" | "report",
     params: unknown[]
   ): Promise<Record<string, unknown>> {
     // No user-supplied table names or SQL are permitted.
     const commands: Record<typeof action, string> = {
       publish: "select aha_social.publish_post_v1($1::text,$2::text,$3::text,$4::text,$5::text,$6::text) as result",
       remove: "select aha_social.delete_post_v1($1::uuid) as result",
+      place: "select aha_social.set_post_place_tag_v1($1::uuid,$2::text) as result",
       like: "select aha_social.like_post_v1($1::uuid,$2::boolean) as result",
       comment: "select aha_social.comment_post_v1($1::uuid,$2::text) as result",
       report: "select aha_social.report_post_v1($1::uuid,$2::text) as result"
@@ -153,6 +162,15 @@ export class SocialService {
     return this.repository.write(principal, "publish",
       [input.kind, text, media, input.requestKey.trim(), instaMode, placeTag]);
   }
+  async editPlace(principal: AuthPrincipal, id: string, input: SocialPlaceTagInput): Promise<Result> {
+    this.gate.assertEnabled();
+    if (!input || !Object.prototype.hasOwnProperty.call(input, "placeTag") ||
+        (input.placeTag !== null && typeof input.placeTag !== "string") ||
+        (typeof input.placeTag === "string" && input.placeTag.trim().length > 120)) {
+      throw new ApiException(400, "VALIDATION_FAILED", "A place tag must be explicitly provided");
+    }
+    return this.repository.write(principal, "place", [id, input.placeTag?.trim() || null]);
+  }
   async remove(principal: AuthPrincipal, id: string): Promise<Result> {
     this.gate.assertEnabled();
     return this.repository.write(principal, "remove", [id]);
@@ -195,6 +213,12 @@ export class SocialController {
   @Delete("posts/:id")
   async remove(@Req() req: AhaRequest, @Param("id", new ParseUUIDPipe()) id: string) {
     return apiSuccess(req, this.config.serviceVersion, await this.service.remove(requirePrincipal(req), id));
+  }
+  @Post("posts/:id/place")
+  async editPlace(@Req() req: AhaRequest, @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() input: SocialPlaceTagInput) {
+    return apiSuccess(req, this.config.serviceVersion,
+      await this.service.editPlace(requirePrincipal(req), id, input));
   }
   @Post("posts/:id/like")
   async like(@Req() req: AhaRequest, @Param("id", new ParseUUIDPipe()) id: string, @Body() input: SocialLikeInput) {

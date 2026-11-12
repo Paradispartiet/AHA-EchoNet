@@ -138,6 +138,7 @@ GRANT EXECUTE ON FUNCTION aha_social.list_comments_v1(uuid) TO aha_runtime_rehea
 GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text,text,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.delete_post_v1(uuid) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.set_post_place_tag_v1(uuid,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.like_post_v1(uuid,boolean) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.comment_post_v1(uuid,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.report_post_v1(uuid,text) TO aha_runtime_rehearsal;
@@ -181,6 +182,11 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_formats_places_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_place_edits_v1.sql
 
 # This expired orphan is inserted by the ephemeral admin for TTL coverage;
 # no runtime role gets direct media table access.
