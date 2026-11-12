@@ -1,4 +1,5 @@
 const assert = require('assert');
+const test = require('node:test');
 const fs = require('fs');
 const vm = require('vm');
 
