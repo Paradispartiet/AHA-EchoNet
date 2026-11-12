@@ -72,3 +72,31 @@ test("Feed counts toward 500 characters and Insta is image-first with mode and l
  await insta.getByRole("button",{name:"Reel",exact:true}).click();
  await expect(insta.getByRole("button",{name:"Reel",exact:true})).toHaveAttribute("aria-pressed","true");
 });
+
+
+test("Insta Map retains the photo location and filters the view across demo accounts",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=160;c.height=90;
+   const cx=c.getContext("2d");cx.fillStyle="#2251aa";cx.fillRect(0,0,160,90);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({
+   name:"oslo.png",mimeType:"image/png",buffer:Buffer.from(bytes)
+ });
+ await social.getByRole("button",{name:"Map",exact:true}).click();
+ await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
+ await social.locator("textarea").first().fill("Bilde fra sentrum");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(social.locator(".aha-social-post")).toContainText("Bilde fra sentrum");
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo sentrum");
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo sentrum");
+ await social.getByRole("button",{name:"Reel",exact:true}).click();
+ await expect(social.locator(".aha-social-post")).toHaveCount(0);
+ await social.getByRole("button",{name:"Feed",exact:true}).click();
+ await expect(social.locator(".aha-social-post")).toContainText("Bilde fra sentrum");
+});

@@ -47,3 +47,9 @@
    enabling the separately gated network or altering saved local entries. */
 #feed-character-count{display:block;text-align:right;margin:.3rem 0 .65rem}
 #feed-text{min-height:7rem;resize:vertical}
+
+/* When the explicitly enabled shared feed is visible, do not leave empty
+   local-only sections or contradictory privacy labels in the UI. */
+.aha-social-enabled .aha-legacy-insta-compose,
+.aha-social-enabled .aha-legacy-insta-import,
+.aha-social-enabled .aha-personal-trust{display:none!important}
