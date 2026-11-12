@@ -48,16 +48,16 @@
   }
 
   function persistAuthReturnTargetFromUrl() {
-    const target = isHistoryGoLoginReturnRequest()
+    const returnUrl = isHistoryGoLoginReturnRequest()
       ? HISTORY_GO_PROFILE_URL
       : isParadisavisaLoginReturnRequest()
         ? validatedParadisavisaTarget(new URLSearchParams(window.location.search).get("next"))
         : "";
-    if (!target) {
+    if (!returnUrl) {
       clearAuthReturnTarget();
       return;
     }
-    try { localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, target); } catch {}
+    try { localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, returnUrl); } catch {}
   }
 
   function clearAuthReturnTarget() {
