@@ -7,6 +7,26 @@
   const CALLBACK_TIMEOUT_MS = 8000;
   const AHA_AUTH_RETURN_TO_KEY = "aha_auth_return_to_v1";
   const HISTORY_GO_PROFILE_URL = "https://paradispartiet.github.io/History-Go/profile.html";
+  const PARADISAVISA_ROOT_URL = "https://paradispartiet.github.io/Paradisavisa/";
+
+  function validatedParadisavisaTarget(value) {
+    const raw = String(value || "").trim();
+    if (!raw || raw.startsWith("//") || raw.includes("\\") || /%5c/i.test(raw)) return "";
+    try {
+      const root = new URL(PARADISAVISA_ROOT_URL);
+      const target = new URL(raw, root);
+      return target.origin === root.origin && target.pathname.startsWith(root.pathname)
+        && !target.username && !target.password ? target.href : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function returnDestinationLabel() {
+    const target = getStoredReturnTarget();
+    return target === HISTORY_GO_PROFILE_URL ? "History Go"
+      : target.startsWith(PARADISAVISA_ROOT_URL) ? "Paradisavisa" : "AHA Dashboard";
+  }
 
   function status(message) {
     const el = document.getElementById("auth-callback-status");
@@ -88,6 +108,8 @@
     try {
       const value = String(localStorage.getItem(AHA_AUTH_RETURN_TO_KEY) || "").trim();
       if (value === HISTORY_GO_PROFILE_URL) return value;
+      const avisaTarget = validatedParadisavisaTarget(value);
+      if (avisaTarget) return avisaTarget;
     } catch {}
     return "";
   }
@@ -179,10 +201,7 @@
           .catch((error) => ({ ok: false, error }));
         warnProfileFailure("existing session", profileResult);
 
-        status(returnTarget
-          ? "Du er allerede innlogget. Sender deg tilbake til History Go …"
-          : "Du er allerede innlogget. Sender deg til AHA Dashboard …"
-        );
+        status("Du er allerede innlogget. Sender deg til " + returnDestinationLabel() + " …");
         goAfterAuth(700);
         return;
       }
@@ -209,10 +228,7 @@
         warnProfileFailure("auth callback", profileResult);
 
         cleanCallbackUrl();
-        status(returnTarget
-          ? "Innlogging fullført. Sender deg tilbake til History Go …"
-          : "Innlogging fullført. Sender deg til AHA Dashboard …"
-        );
+        status("Innlogging fullført. Sender deg til " + returnDestinationLabel() + " …");
         goAfterAuth(700);
         return;
       }
