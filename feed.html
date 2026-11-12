@@ -32,7 +32,8 @@
     <section class="aha-panel aha-personal-compose">
       <div class="aha-personal-compose-head"><p class="eyebrow">Ny</p><h2>Ny post</h2></div>
       <form id="feed-form" class="module-form">
-        <textarea id="feed-text" placeholder="Skriv en lokal post …"></textarea>
+        <textarea id="feed-text" maxlength="500" aria-describedby="feed-character-count" placeholder="Hva vil du dele?"></textarea>
+        <output id="feed-character-count" class="aha-social-counter" aria-live="polite" aria-label="Antall tegn">0 / 500</output>
         <button type="submit">Lagre lokalt og send til AHA</button>
       </form>
     </section>

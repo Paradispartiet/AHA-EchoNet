@@ -42,3 +42,8 @@
 .aha-social-panel button{min-height:40px}
 .aha-social-enabled .aha-personal-compose,.aha-social-enabled .aha-personal-collection,.aha-social-enabled .insta-profile-section,.aha-social-enabled .insta-stories-section,.aha-social-enabled .insta-feed-section,.aha-social-enabled #insta-compose-panel,.aha-social-enabled .insta-import-focus{display:none!important}
 @media(max-width:520px){.aha-social-panel{padding:.8rem}.aha-social-panel .aha-social-compose{padding:.75rem}}
+
+/* Existing private/local Feed follows the same 500-character rule without
+   enabling the separately gated network or altering saved local entries. */
+#feed-character-count{display:block;text-align:right;margin:.3rem 0 .65rem}
+#feed-text{min-height:7rem;resize:vertical}
