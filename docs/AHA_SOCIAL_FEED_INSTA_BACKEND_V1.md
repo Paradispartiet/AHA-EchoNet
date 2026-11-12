@@ -95,3 +95,7 @@ Den lokale medieklienten kontrollerer nå både den separat konfigurerte `AHA_SO
 ## Sikker staging-opprydding
 
 Det er lagt inn et operatorverktøy som som standard kun viser planen uten databaseforbindelse. Separat sosial stagingdatabase, bekreftet prosjektref og eksplisitt driftsgodkjenning må foreligge før aggregert forhåndsvisning eller operatørstyrt opprydding. Se `docs/AHA_SOCIAL_STAGING_MEDIA_MAINTENANCE_V1.md`.
+
+## Format og design – Feed / Insta
+
+AHA Feed er **tekst først** med synlig tegnteller og hard grense på **500 tegn**, kontrollert også i NestJS og PostgreSQL. Insta er **bilde først** og har et enkelt valg mellom **Feed, Reel og Map**, samt frivillig stedstag på *alle* bildeinnlegg. Map-innlegg krever stedstag. Stedet er foreløpig en normalisert fritekstetikett (ikke koordinater, GPS-sporing eller geokoding). Reel er foreløpig bildebåret visning/cover; **videoopplasting er ikke aktivert** og må ha eget sikkerhets- og lagringsopplegg. Formatet og stedstag lagres i `aha_social.posts` og returneres i listen. Ingen produksjonsressurs aktiveres. Se `supabase/tests/aha_postgresql_social_formats_places_v1.sql` for ekte PostgreSQL-test.

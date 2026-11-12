@@ -175,6 +175,13 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql
 
+# Validate the actual six-argument Feed/Reel/Map and location-tag SQL contract,
+# under the same narrow runtime account as real user requests.
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_formats_places_v1.sql
+
 # This expired orphan is inserted by the ephemeral admin for TTL coverage;
 # no runtime role gets direct media table access.
 admin_psql <<'SQL'
