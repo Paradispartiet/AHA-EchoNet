@@ -105,7 +105,8 @@
           feedback("Du er logget ut. Dette biblioteket er låst til den opprinnelige Aha-kontoen.");
         } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
           global.AHAParadisavisa?.setOwnerAccess?.(false);
-          void checkLocalOwner();
+          // Supabase auth callbacks must not call getUser while the auth lock is held.
+          global.setTimeout?.(() => { if (getLocalOwner()) void checkLocalOwner(); }, 0);
         }
       });
       authWatchInstalled = true;
