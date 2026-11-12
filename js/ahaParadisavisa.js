@@ -185,7 +185,9 @@
   function render() {
     const data = load();
     const tracking = $("aha-avisa-tracking");
-    tracking.textContent = data.trackingEnabled ? "Slå av lesehistorikk" : "Aktiver lesehistorikk";
+    const sameOrigin = location.origin === ARTICLE_ORIGIN;
+    tracking.disabled = !sameOrigin;
+    tracking.textContent = !sameOrigin ? "Lesehistorikk styres i Paradisavisa" : (data.trackingEnabled ? "Slå av lesehistorikk" : "Aktiver lesehistorikk");
     tracking.setAttribute("aria-pressed", String(data.trackingEnabled));
     const stats = $("aha-avisa-stats");
     stats.replaceChildren();
@@ -278,6 +280,7 @@
       $(id).addEventListener(id === "aha-avisa-query" ? "input" : "change", render);
     });
     $("aha-avisa-tracking").addEventListener("click", () => {
+      if (location.origin !== ARTICLE_ORIGIN) return feedback("Åpne Paradisavisa for å styre lesehistorikken der. Bruk eksport/import mellom ulike domener.");
       const state = load(); state.trackingEnabled = !state.trackingEnabled;
       if (saveJson(KEY, state)) { feedback(state.trackingEnabled ? "Frivillig lesehistorikk er aktivert." : "Automatisk lesehistorikk er av."); render(); }
     });
