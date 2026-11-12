@@ -119,3 +119,7 @@ På Insta er et valgt bilde det obligatoriske innholdet; bildetekst er valgfri, 
 ### Ren sosial design-V2 (Feed som X/Twitter, Insta som Instagram)
 
 I PR-forhåndsvisningen er Feed nå utformet som en **kompakt teksttidslinje** med profilavatar, avsender/tid, tekstinnlegg, reaksjoner og smale skillelinjer. Insta er en **bildefeed** med profilheader, fullbredde skarpt bilde/video, handlinger, eventuelt bildetekst og stedstag. Begge har enkel masthead, tydelige faner, ett innmatingsfelt og mobil/iPad-tilpasset layout. Det finnes ingen fremmede logoer eller kopierte bilder; AHA har egen identitet. Dette er kun styling av eksisterende nettverkskomponent og testdemonstrasjon. Lokal/privat AHA-innhold migreres ikke eller deles ikke automatisk. Automatisk browser-regresjon verifiserer leserekkefølge og horisontal overflow ved 390px og 834px.
+
+### Bildevisning og kommentarer
+
+Insta-bilder i den delte testfeeden åpnes nå med et trykk (eller tastatur Enter/Mellomrom) i et tilgjengelig, fullskjerms HTML-dialogvindu. Bildet gjenbruker allerede lastet medie-URL, og bildedata hentes ikke på nytt eller videresendes. Lukk med «Lukk bildet», Escape eller trykk utenfor. Kommentarer er skjult til brukeren åpner dem, og kan lukkes igjen. Tom feed har en tydelig førstegangsvisning. Disse endringene gjelder ikke private/lokale innlegg når sosial staging er deaktivert.

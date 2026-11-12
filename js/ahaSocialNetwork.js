@@ -255,6 +255,24 @@
       placeSearch.addEventListener("input", () => renderList());
     }
     const list = add("div", panel, null, "module-list aha-social-list");
+    // The image viewer uses an existing, already loaded image URL. No second
+    // authenticated download, external share or original-image upload occurs.
+    const viewer = kind === "insta" ? add("dialog", panel, null, "aha-social-lightbox") : null;
+    let viewerImage = null;
+    if (viewer) {
+      viewer.setAttribute("aria-label", "Bildevisning");
+      const closeViewer = add("button", viewer, "Lukk bildet", "aha-social-lightbox-close");
+      closeViewer.type = "button";
+      closeViewer.addEventListener("click", () => viewer.close());
+      viewerImage = add("img", viewer, null, "aha-social-lightbox-image");
+      viewer.addEventListener("click", (event) => {
+        if (event.target === viewer) viewer.close();
+      });
+      viewer.addEventListener("close", () => {
+        viewerImage.removeAttribute("src");
+        viewerImage.alt = "";
+      });
+    }
     let pendingKey = null;
     let pendingSignature = null;
     let pendingUploadKey = null;
@@ -365,6 +383,24 @@
               else visual.alt="Bildet kunne ikke vises.";
             });
           } else visual.src=mediaUrl;
+          if (!isVideo && viewer) {
+            visual.tabIndex = 0;
+            visual.setAttribute("role", "button");
+            visual.setAttribute("aria-label", "Forstørr bilde");
+            const openImage = () => {
+              if (!visual.getAttribute("src") || typeof viewer.showModal !== "function") return;
+              viewerImage.src = visual.currentSrc || visual.src;
+              viewerImage.alt = visual.alt || "Bilde i AHA Insta";
+              if (!viewer.open) viewer.showModal();
+            };
+            visual.addEventListener("click", openImage);
+            visual.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openImage();
+              }
+            });
+          }
         }
       }
       if (kind === "insta") {
@@ -389,6 +425,8 @@
       }
       const like = add("button", actions, (post.likedByMe ? "♥ Likt" : "♡ Lik") + " (" + Number(post.likeCount || 0) + ")");
       like.type = "button";
+      like.classList.add("aha-social-action-like");
+      like.setAttribute("aria-pressed", String(Boolean(post.likedByMe)));
       like.addEventListener("click", () => mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/like", "POST", { liked: !post.likedByMe }, "Likerklikk oppdatert."));
       if (kind === "insta" && post.ownPost) {
         // Inline editing changes only the optional location label. It does not
@@ -433,8 +471,20 @@
       }
       const comment = add("button", actions, "Kommentarer (" + Number(post.commentCount || 0) + ")");
       comment.type = "button";
+      comment.classList.add("aha-social-action-comment");
+      comment.setAttribute("aria-expanded", "false");
       const commentSection = add("div", card, null, "aha-social-comments");
-      comment.addEventListener("click", () => showComments(commentSection, post.id));
+      commentSection.hidden = true;
+      comment.addEventListener("click", () => {
+        if (!commentSection.hidden) {
+          commentSection.hidden = true;
+          comment.setAttribute("aria-expanded", "false");
+          return;
+        }
+        commentSection.hidden = false;
+        comment.setAttribute("aria-expanded", "true");
+        void showComments(commentSection, post.id);
+      });
       if (post.ownPost) {
         const remove = add("button", actions, "Slett");
         remove.type = "button";
@@ -465,6 +515,7 @@
 
     function renderList() {
       renderGeneration++;
+      if (viewer?.open) viewer.close();
       for (const release of mediaReleases) release();
       mediaReleases.clear();
       clear(list);
@@ -475,9 +526,16 @@
         : rows.filter(post => typeof post.placeTag === "string" &&
             post.placeTag.trim() && post.placeTag.toLocaleLowerCase("nb-NO").includes(search));
       if (!displayed.length) {
-        add("p", list, viewMode === "map" && search
+        const empty = add("section", list, null, "aha-social-empty");
+        add("span", empty, kind === "feed" ? "✎" : "▧", "aha-social-empty-icon")
+          .setAttribute("aria-hidden", "true");
+        add("h3", empty, viewMode === "map" && search
           ? "Ingen bilder funnet for dette stedet."
-          : "Ingen publiserte innlegg ennå.");
+          : kind === "feed" ? "Tidslinjen er tom ennå" : "Ingen bilder her ennå");
+        add("p", empty, viewMode === "map" && search
+          ? "Prøv et annet stedsnavn."
+          : kind === "feed" ? "Det første delte innlegget vil dukke opp her."
+            : "Bilder vises her når noen har delt dem.");
       } else if (kind === "insta" && viewMode === "map") {
         // Place names are labels, not fabricated GPS points. Build a browsable
         // map-like place gallery without assuming any coordinates or location.

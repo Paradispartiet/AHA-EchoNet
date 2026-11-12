@@ -309,3 +309,53 @@ test("social design keeps X-style Feed text after author and Instagram media bef
  await page.setViewportSize({width:834,height:1112});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
 });
+
+
+test("Insta full-screen image viewer works by touch and keyboard, without second network fetch",async({page})=>{
+ const external=[];
+ page.on("request",request=>{if(request.url().includes("aha-social-offline-demo.invalid"))external.push(request.url());});
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const pixels=await page.evaluate(async()=>{
+  const canvas=document.createElement("canvas");canvas.width=180;canvas.height=140;
+  const ctx=canvas.getContext("2d");ctx.fillStyle="#4a71bc";ctx.fillRect(0,0,180,140);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+  return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"view.png",mimeType:"image/png",buffer:Buffer.from(pixels)});
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ const picture=social.locator(".aha-social-post img.aha-social-media");
+ await expect(picture).toHaveAttribute("src",/^blob:/);
+ await picture.click();
+ const dialog=social.getByRole("dialog",{name:"Bildevisning"});
+ await expect(dialog).toBeVisible();
+ await expect(dialog.locator("img")).toHaveAttribute("src",/^blob:/);
+ await dialog.getByRole("button",{name:"Lukk bildet"}).click();
+ await expect(dialog).toBeHidden();
+ await picture.focus();
+ await page.keyboard.press("Enter");
+ await expect(dialog).toBeVisible();
+ await page.keyboard.press("Escape");
+ await expect(dialog).toBeHidden();
+ expect(external).toHaveLength(0);
+});
+
+test("Feed comments are collapsed by default and can be opened and closed",async({page})=>{
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ await social.locator("textarea").first().fill("Kommentarene åpnes ved behov");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Feed"}).click();
+ const card=social.locator(".aha-social-post").first();
+ const button=card.getByRole("button",{name:"Kommentarer (0)"});
+ await expect(button).toHaveAttribute("aria-expanded","false");
+ await expect(card.locator(".aha-social-comments")).toBeHidden();
+ await button.click();
+ await expect(button).toHaveAttribute("aria-expanded","true");
+ await expect(card.locator(".aha-social-comments")).toBeVisible();
+ await expect(card.getByPlaceholder("Skriv en kommentar")).toBeVisible();
+ await button.click();
+ await expect(button).toHaveAttribute("aria-expanded","false");
+ await expect(card.locator(".aha-social-comments")).toBeHidden();
+});
