@@ -8,6 +8,7 @@ import { AUTH_TOKEN_VERIFIER } from "../dist/auth/auth.types.js";
 import { APP_CONFIG } from "../dist/config/app-config.js";
 import { configureApplication } from "../dist/bootstrap.js";
 import { SocialRepository } from "../dist/social/social.module.js";
+import { SocialModerationRepository } from "../dist/social/social-moderation.module.js";
 
 const TEST_POST_A = "11111111-1111-4111-8111-111111111111";
 const TEST_POST_B = "22222222-2222-4222-8222-222222222222";
@@ -15,7 +16,7 @@ const ISSUER = "https://issuer.example";
 
 const auth = {
   async verify(token) {
-    if (!["alice", "bob"].includes(token)) throw new Error("invalid signature");
+    if (!["alice", "bob", "moderator"].includes(token)) throw new Error("invalid signature");
     return { subject: token, provider: "test-provider", issuer: ISSUER, audience: ["aha-api"] };
   }
 };
@@ -33,6 +34,35 @@ const config = Object.freeze({
   existingExpressRuntimePrimary: true
 });
 
+class MemoryModeratorRepository {
+  constructor(posts, reports) {
+    this.posts = posts;
+    this.reports = reports;
+    this.actions = [];
+  }
+
+  async queue(principal, limit) {
+    if (principal.subject !== "moderator") throw new ApiException(403, "FORBIDDEN", "Moderator required");
+    return this.reports.filter(r => {
+      const post = this.posts.get(r.postId);
+      return post && !post.deleted && !post.hidden && !r.decided;
+    }).slice(0, limit).map(r => ({
+      postId: r.postId, text: this.posts.get(r.postId).text, reportCount: 1, reasons: [r.reason]
+    }));
+  }
+
+  async decide(principal, postId, action, note) {
+    if (principal.subject !== "moderator") throw new ApiException(403, "FORBIDDEN", "Moderator required");
+    const post = this.posts.get(postId);
+    const reported = this.reports.filter(r => r.postId === postId && !r.decided);
+    if (!post || post.deleted || post.hidden || !reported.length) throw new ApiException(409, "CONFLICT", "No open case");
+    if (action === "hide") post.hidden = true;
+    reported.forEach(r => { r.decided = action; });
+    this.actions.push({ postId, action, note });
+    return { postId, status: action === "hide" ? "hidden" : "published", auditId: "audit-" + this.actions.length };
+  }
+}
+
 class MemorySocialRepository {
   posts = new Map();
   likes = new Set();
@@ -42,7 +72,7 @@ class MemorySocialRepository {
   async read(principal, action, params) {
     if (action === "posts") {
       const [kind, limit] = params;
-      return [...this.posts.values()].filter(p => p.kind === kind && !p.deleted).slice(0, limit).map(p => ({
+      return [...this.posts.values()].filter(p => p.kind === kind && !p.deleted && !p.hidden).slice(0, limit).map(p => ({
         id: p.id,
         kind: p.kind,
         text: p.text,
@@ -101,6 +131,7 @@ class MemorySocialRepository {
 const prevEnv = { node: process.env.NODE_ENV, gate: process.env.AHA_SOCIAL_STAGING_ENABLED, media: process.env.AHA_SOCIAL_MEDIA_ORIGINS };
 let app;
 const memory = new MemorySocialRepository();
+const moderatorMemory = new MemoryModeratorRepository(memory.posts, memory.reports);
 
 before(async () => {
   process.env.NODE_ENV = "test";
@@ -110,6 +141,7 @@ before(async () => {
     .overrideProvider(APP_CONFIG).useValue(config)
     .overrideProvider(AUTH_TOKEN_VERIFIER).useValue(auth)
     .overrideProvider(SocialRepository).useValue(memory)
+    .overrideProvider(SocialModerationRepository).useValue(moderatorMemory)
     .compile();
   app = module.createNestApplication();
   configureApplication(app, config);
@@ -182,4 +214,35 @@ test("Insta requires approved media host; Bob publishes and Alice sees it", asyn
   const nowFeed = await request(app.getHttpServer()).get("/v1/social/posts?kind=feed")
     .set("Authorization","Bearer bob").expect(200);
   assert.equal(nowFeed.body.data.length,0);
+});
+
+
+test("moderation HTTP rejects normal users and hides reported content after audited decision", async () => {
+  const instaId = TEST_POST_B;
+  await request(app.getHttpServer()).post("/v1/social/posts/" + instaId + "/reports")
+    .set("Authorization", "Bearer alice").send({ reason: "spam" }).expect(201);
+
+  await request(app.getHttpServer()).get("/v1/social/moderation/reports")
+    .set("Authorization", "Bearer alice").expect(403);
+  await request(app.getHttpServer()).post("/v1/social/moderation/posts/" + instaId + "/decision")
+    .set("Authorization", "Bearer alice")
+    .send({ action: "hide", note: "Unauthorized operator" }).expect(403);
+
+  const queue = await request(app.getHttpServer()).get("/v1/social/moderation/reports?limit=10")
+    .set("Authorization", "Bearer moderator").expect(200);
+  assert.equal(queue.body.data.length, 1);
+  assert.equal(queue.body.data[0].postId, instaId);
+
+  await request(app.getHttpServer()).post("/v1/social/moderation/posts/" + instaId + "/decision")
+    .set("Authorization", "Bearer moderator")
+    .send({ action: "hide", note: "  Documented policy breach  " }).expect(201)
+    .expect(({ body }) => {
+      assert.equal(body.data.status, "hidden");
+      assert.ok(body.data.auditId);
+    });
+
+  const after = await request(app.getHttpServer()).get("/v1/social/posts?kind=insta")
+    .set("Authorization", "Bearer bob").expect(200);
+  assert.equal(after.body.data.length, 0);
+  assert.deepEqual(moderatorMemory.actions.map(a => a.note), ["Documented policy breach"]);
 });

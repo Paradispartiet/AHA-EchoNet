@@ -7,7 +7,7 @@ SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider"
 DO $do$
 DECLARE v_insta uuid; denied boolean:=false; result jsonb;
 BEGIN
- select id into v_insta from aha_social.posts where kind='insta' and state='published';
+ select (aha_social.list_posts_v1('insta',20)->0->>'id')::uuid into v_insta;
  if v_insta is null then raise exception 'precondition: B Insta post missing'; end if;
  BEGIN PERFORM aha_social.moderation_queue_v1(20);
  EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
@@ -61,7 +61,7 @@ SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-a","aha_provider"
 DO $do$
 DECLARE v_insta uuid; result jsonb;
 BEGIN
- select id into v_insta from aha_social.posts where kind='insta' and state='published';
+ select (aha_social.list_posts_v1('insta',20)->0->>'id')::uuid into v_insta;
  result:=aha_social.report_post_v1(v_insta,'spam');
  if result->>'status'<>'dismissed' then
    raise exception 'repeat report bypassed moderator decision: %',result; end if;
@@ -76,7 +76,7 @@ SELECT set_config('request.jwt.claims','{"sub":"rehearsal-user-mod","aha_provide
 DO $do$
 DECLARE v_insta uuid; result jsonb; queue jsonb; denied boolean:=false;
 BEGIN
- select id into v_insta from aha_social.posts where kind='insta' and state='published';
+ select (aha_social.list_posts_v1('insta',20)->0->>'id')::uuid into v_insta;
  perform aha_social.report_post_v1(v_insta,'privacy');
  queue:=aha_social.moderation_queue_v1(10);
  if jsonb_array_length(queue)<>1 then raise exception 'new reporter was not queued'; end if;

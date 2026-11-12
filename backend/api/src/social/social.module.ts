@@ -8,6 +8,7 @@ import type { AhaRequest } from "../common/request-context.js";
 import { APP_CONFIG, type AppConfig } from "../config/app-config.js";
 import { CanonicalDatabaseService } from "../database/canonical-database.service.js";
 import { CanonicalDatabaseError } from "../database/database.errors.js";
+import { SocialModerationController, SocialModerationRepository, SocialModerationService } from "./social-moderation.module.js";
 
 type Kind = "feed" | "insta";
 type Result = Record<string, unknown> | Record<string, unknown>[];
@@ -96,6 +97,12 @@ export function mapSocialDatabaseError(error: unknown): never {
       const pgError = cause as { code?: unknown; message?: unknown };
       const pgCode = String(pgError.code || "");
       const message = String(pgError.message || "").trim();
+      if (pgCode === "42501" && message === "social moderator required") {
+        throw new ApiException(403, "FORBIDDEN", "Moderator access is required");
+      }
+      if (pgCode === "42501" && message === "no open social reports") {
+        throw new ApiException(409, "CONFLICT", "There are no pending reports to moderate");
+      }
       if (pgCode === "42501" && message === "post unavailable") {
         throw new ApiException(404, "NOT_FOUND", "The post is not available");
       }
@@ -107,7 +114,7 @@ export function mapSocialDatabaseError(error: unknown): never {
       }
       if (pgCode === "22023" && [
         "invalid social publication", "invalid comment", "invalid report reason",
-        "invalid social feed request", "invalid like action"
+        "invalid social feed request", "invalid like action", "invalid social moderation request"
       ].includes(message)) {
         throw new ApiException(400, "VALIDATION_FAILED", "The social request is invalid");
       }
@@ -240,7 +247,7 @@ export class SocialController {
 }
 
 @Module({
-  controllers: [SocialController],
-  providers: [SocialGate, SocialRepository, SocialService]
+  controllers: [SocialController, SocialModerationController],
+  providers: [SocialGate, SocialRepository, SocialService, SocialModerationRepository, SocialModerationService]
 })
 export class SocialModule {}
