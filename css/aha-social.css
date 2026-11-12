@@ -403,3 +403,15 @@
 .aha-social-kind{margin-left:.35rem}
 .aha-social-post-head{overflow:visible}
 .aha-social-post{overflow-wrap:anywhere;overflow:visible}
+
+/* A calm composer: users see exactly when their text/photo is ready to share. */
+.aha-social-compose>button[type="submit"]:disabled{
+  opacity:.46;cursor:not-allowed;filter:saturate(.55);box-shadow:none;
+}
+.aha-social-compose>button[type="submit"]:not(:disabled){
+  transition:background-color .12s ease,opacity .12s ease;
+}
+.aha-social-counter.near-limit{font-weight:800}
+@media(prefers-reduced-motion:reduce){
+  .aha-social-compose>button[type="submit"]:not(:disabled){transition:none}
+}

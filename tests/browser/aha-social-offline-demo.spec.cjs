@@ -417,3 +417,51 @@ test("Insta owner can edit a place tag through the overflow menu without alterin
  await expect(social.getByRole("button",{name:"Legg til stedstag"})).toHaveCount(0);
  await expect(social.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
 });
+
+
+test("Feed composer enables publish only after non-empty text and explicit sharing",async({page})=>{
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const ui=page.locator("#aha-social-mount");
+ const send=ui.getByRole("button",{name:"Publiser i AHA Feed"});
+ const text=ui.locator("textarea").first();
+ await expect(send).toBeDisabled();
+ await text.fill("Testinnlegg");
+ await expect(send).toBeDisabled();
+ await ui.getByRole("checkbox").check();
+ await expect(send).toBeEnabled();
+ await ui.getByRole("checkbox").uncheck();
+ await expect(send).toBeDisabled();
+ await ui.getByRole("checkbox").check();
+ await text.fill("    ");
+ await expect(send).toBeDisabled();
+ await text.fill("a".repeat(500));
+ await expect(send).toBeEnabled();
+ await expect(ui.locator(".aha-social-counter")).toHaveText("500 / 500");
+ await send.click();
+ await expect(send).toBeDisabled();
+ await expect(ui.locator(".aha-social-post")).toContainText("a".repeat(40));
+});
+
+test("Insta image-first composer requires media, consent and location only for Map",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const ui=page.locator("#aha-social-mount");
+ const send=ui.getByRole("button",{name:"Publiser i AHA Insta"});
+ await expect(send).toBeDisabled();
+ await ui.getByRole("checkbox").check();
+ await expect(send).toBeDisabled();
+ const pixels=await page.evaluate(async()=>{
+  const c=document.createElement("canvas");c.width=130;c.height=130;
+  c.getContext("2d").fillRect(0,0,130,130);
+  const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+  return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await ui.locator('input[type="file"]').setInputFiles({name:"simple.png",mimeType:"image/png",buffer:Buffer.from(pixels)});
+ await expect(send).toBeEnabled();
+ await ui.getByRole("button",{name:"Map",exact:true}).click();
+ await expect(send).toBeDisabled();
+ await ui.locator('input[type="text"][maxlength="120"]').fill("Oslo");
+ await expect(send).toBeEnabled();
+ await ui.getByRole("button",{name:"Fjern valgt bilde"}).click();
+ await expect(send).toBeDisabled();
+ await expect(ui.getByRole("checkbox")).not.toBeChecked();
+});

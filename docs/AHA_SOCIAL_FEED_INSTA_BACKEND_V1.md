@@ -127,3 +127,7 @@ Insta-bilder i den delte testfeeden åpnes nå med et trykk (eller tastatur Ente
 ### Diskré meny for sekundære handlinger
 
 Innlegg viser nå bare **Lik** og **Kommentarer** som direkte handlinger. **Slett**, **Rapporter**, og **Legg til / rediger stedstag** ligger i en liten, tastaturtilgjengelig «Flere valg»-meny på hvert innlegg. Valgene følger de eksisterende eierrettighetene; fiktiv konto B kan ikke slette eller endre konto A sine poster. Testene er oppdatert for både iPad/WebKit og Chromium. Menyen bruker nettleserens native `details/summary` og aktiverer ingen nye serverkall.
+
+### Et enklere publiseringsfelt
+
+Knappen «Publiser» er nå deaktivert inntil nødvendige vilkår er oppfylt, og under pågående opplasting. Feed krever ikke-tom tekst innen 500 tegn og eksplisitt samtykke. Insta krever et bilde (eller en gyldig Reel-video i den lokale demoen) og eksplisitt samtykke; Map krever i tillegg stedstag. Bildetekst på Insta er valgfri. Knappen deaktiveres igjen etter vellykket publisering eller når bilde/samtykke fjernes. Teksten ved samtykket skiller nå korrekt mellom fiktive demokontoer og innloggede brukere i et faktisk testmiljø.

@@ -192,6 +192,7 @@
           if (mode === "reel") showStatus("Reel kan forhåndsvise video. Video kan publiseres bare i demoen.");
           else if (mode === "map") showStatus("Map viser bilder ordnet etter stedstag.");
           else showStatus("Viser bildeinnlegg.");
+          updateComposerState();
         });
         return button;
       });
@@ -221,9 +222,35 @@
     const consent = add("input", consentLabel);
     consent.type = "checkbox";
     consent.required = true;
-    add("span", consentLabel, "Del dette med de andre testkontoene.");
+    add("span", consentLabel, global.__AHA_OFFLINE_DEMO__ === true
+      ? "Del med de andre testkontoene i denne fanen."
+      : "Del med andre innloggede AHA-brukere i testmiljøet.");
     const submit = add("button", form, kind === "feed" ? "Publiser i AHA Feed" : "Publiser i AHA Insta");
     submit.type = "submit";
+    let publishing = false;
+    function updateComposerState() {
+      const picked = media?.files?.[0] || null;
+      const readyText = kind !== "feed" ||
+        (message.value.trim().length > 0 && message.value.length <= 500);
+      const readyMedia = kind !== "insta" || Boolean(picked);
+      const readyPlace = kind !== "insta" || instaMode !== "map" ||
+        Boolean(placeField?.value.trim());
+      const video = global.AHASocialMedia?.isReelVideo?.(picked);
+      const readyVideo = !video || (
+        instaMode === "reel" &&
+        global.AHASocialMedia.canPreviewReelVideo(picked) &&
+        global.__AHA_OFFLINE_DEMO__ === true &&
+        origin() === "https://aha-social-offline-demo.invalid"
+      );
+      submit.disabled = publishing || !consent.checked || !readyText ||
+        !readyMedia || !readyPlace || !readyVideo;
+      return !submit.disabled;
+    }
+    message.addEventListener("input", updateComposerState);
+    consent.addEventListener("change", updateComposerState);
+    media?.addEventListener("change", updateComposerState);
+    placeField?.addEventListener("input", updateComposerState);
+    updateComposerState();
 
     const status = add("p", panel, "", "module-meta aha-social-status");
     status.setAttribute("role", "status");
@@ -301,6 +328,7 @@
         if (releasePreview) releasePreview();
         releasePreview = null;
         showStatus("Bildet er fjernet. Ingen innlegg er publisert.");
+        updateComposerState();
       });
     }
     const mediaReleases = new Set();
@@ -621,7 +649,8 @@
         pendingSignature = signature;
       }
       payload.requestKey = pendingKey;
-      submit.disabled = true;
+      publishing = true;
+      updateComposerState();
       if (media) media.disabled = true;
       if (discard) discard.disabled = true;
       try {
@@ -658,9 +687,10 @@
       } catch (error) {
         showStatus(error.message || "Publiseringen feilet.");
       } finally {
-        submit.disabled = false;
+        publishing = false;
         if (media) media.disabled = false;
         if (discard) discard.disabled = !media?.files?.length;
+        updateComposerState();
       }
     });
     await load();
