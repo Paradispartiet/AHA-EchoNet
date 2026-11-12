@@ -24,6 +24,10 @@ test("social API refuses default-disabled and production runtimes", () => {
     gate.assertEnabled();
     process.env.NODE_ENV = "production";
     assert.throws(() => gate.assertEnabled(), e => e.code === "SOCIAL_DISABLED");
+    delete process.env.NODE_ENV;
+    assert.throws(() => gate.assertEnabled(), e => e.code === "SOCIAL_DISABLED");
+    process.env.NODE_ENV = "other";
+    assert.throws(() => gate.assertEnabled(), e => e.code === "SOCIAL_DISABLED");
   } finally {
     if (old.node === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = old.node;
     if (old.stage === undefined) delete process.env.AHA_SOCIAL_STAGING_ENABLED; else process.env.AHA_SOCIAL_STAGING_ENABLED = old.stage;

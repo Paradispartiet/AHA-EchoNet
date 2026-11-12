@@ -8,7 +8,10 @@ type Kind = "feed" | "insta";
 export class SocialGate {
   assertEnabled(): void {
     // Staging-only: production is blocked independently of all other AHA flags.
-    if (process.env.NODE_ENV === "production" || process.env.AHA_SOCIAL_STAGING_ENABLED !== "true") {
+    // Unknown/missing NODE_ENV is unsafe: deployment must explicitly choose a
+    // nonproduction runtime in addition to the separate staging opt-in flag.
+    if (!["test", "development"].includes(String(process.env.NODE_ENV || ""))
+        || process.env.AHA_SOCIAL_STAGING_ENABLED !== "true") {
       throw new ApiException(503, "SOCIAL_DISABLED", "AHA social publishing is not enabled");
     }
   }

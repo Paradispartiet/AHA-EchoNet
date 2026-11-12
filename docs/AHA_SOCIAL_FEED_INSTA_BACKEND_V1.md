@@ -61,3 +61,5 @@ AHA Insta viser nå en vanlig `input type=file` med `accept=image/*`, helt lokal
 ## Rettet kontrakt: bildevedlegg → Insta-publisering
 
 En opplasting returnerer en relativ media-referanse (`/v1/social/media/<uuid>`). `SocialPostInput` og `SocialGate.assertMedia` aksepterer kun den eksakte formen som intern URL, mens eksterne lenker fremdeles må være HTTPS fra eksplisitt godkjent origin. Ved publisering validerer PostgreSQL eierskapet og knytter bildet til innlegget i samme transaksjon. Den nye HTTP-regresjonen verifiserer `POST /v1/social/media` → `POST /v1/social/posts` → `GET /v1/social/posts` → autentisert `GET /v1/social/media/:id` med to kontoer. Uten denne rettelsen ble opplastet media avvist ved publisering.
+
+**Forsterket staging-sperre:** API godtar bare eksplisitt `NODE_ENV=test` eller `NODE_ENV=development` **sammen med** `AHA_SOCIAL_STAGING_ENABLED=true`. Produksjon, udefinert og ukjent miljøverdi avvises, selv om staging-flagget ved feil skulle stå på. Oppsett av egen staging server må bevise begge variablene uten å endre prod.
