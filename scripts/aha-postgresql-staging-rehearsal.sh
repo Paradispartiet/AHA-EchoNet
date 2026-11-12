@@ -142,6 +142,8 @@ GRANT EXECUTE ON FUNCTION aha_social.comment_post_v1(uuid,text) TO aha_runtime_r
 GRANT EXECUTE ON FUNCTION aha_social.report_post_v1(uuid,text) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.moderation_queue_v1(integer) TO aha_runtime_rehearsal;
 GRANT EXECUTE ON FUNCTION aha_social.moderate_post_v1(uuid,text,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.upload_media_v1(text,bytea,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.read_media_v1(uuid) TO aha_runtime_rehearsal;
 
 DO $check$
 BEGIN
@@ -167,6 +169,11 @@ PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \
   -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
   -f supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_rehearsal_v1.sql
 
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
   psql -X -v ON_ERROR_STOP=1 \

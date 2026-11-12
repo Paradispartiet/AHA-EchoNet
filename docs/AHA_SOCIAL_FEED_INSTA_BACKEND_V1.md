@@ -47,3 +47,9 @@ Backend-controller: `GET /v1/social/moderation/reports?limit=20` og `POST /v1/so
 ## Modereringsgrensesnitt
 
 `social-moderation.html` er et separat stagingpanel som krever eksisterende AHA-innlogging og eksplisitt klientkonfigurasjon (`AHA_SOCIAL_STAGING_ENABLED === true`, godkjent HTTPS `AHA_SOCIAL_API_ORIGIN`). Hver beslutning krever begrunnelse og vises bare for aktive moderatorer fordi API og database utfører uavhengige tilgangskontroller. Siden lenkes **ikke** fra den ordinære produksjonsnavigasjonen. Dette er en demonstrerbar testklient, ikke en driftsatt operatørvakt.
+
+## Begrenset staging-opplasting av bilder
+
+En ny, isolert `aha_social.media`-tabell støtter maksimalt 512 KiB store WebP/PNG-bilder for teknisk to-kontotest. **Ikke produksjonslagring.** Opplastingen er privat til brukeren selv inntil et eksplisitt Insta-innlegg peker på media-ID-en. Lesetilgangen gis bare til eieren eller til innloggede brukere når tilhørende innlegg er publisert og ikke skjult/slettet. `upload_media_v1`, `read_media_v1` og en operatørstyrt `purge_expired_media_v1` er skilt fra eldre private AHA-data. Ubenyttede medieobjekter utløper logisk etter 24 timer og skal slettes ved operatørkjørt opprydding; ingen automatisk produksjonsjobb opprettes.
+
+For offentlig versjon kreves riktig objektlagring, revisjon av EXIF/metadata, kostnads- og kvotekontroll, og full test av filopplasting på iPad.
