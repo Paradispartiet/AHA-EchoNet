@@ -43,3 +43,7 @@ Nye funksjoner `aha_social.moderation_queue_v1(limit)` og `aha_social.moderate_p
 SQL-regresjon `supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql` tester ikke-moderator-avslag, forsøk på selvpromotering, kø, avvisning av rapport, gjenrapportering, skjuling, utilgjengelige skjulte innlegg og forbud mot forfalskede revisjonslogger.
 
 Backend-controller: `GET /v1/social/moderation/reports?limit=20` og `POST /v1/social/moderation/posts/:id/decision` med `{action:"hide"|"dismiss",note}`. Begge krever signert Bearer JWT; databasen krever separat moderatorregistrering. HTTP-testen bruker tre testidentiteter og kontrollert testlagring, ikke produksjonsdata.
+
+## Modereringsgrensesnitt
+
+`social-moderation.html` er et separat stagingpanel som krever eksisterende AHA-innlogging og eksplisitt klientkonfigurasjon (`AHA_SOCIAL_STAGING_ENABLED === true`, godkjent HTTPS `AHA_SOCIAL_API_ORIGIN`). Hver beslutning krever begrunnelse og vises bare for aktive moderatorer fordi API og database utfører uavhengige tilgangskontroller. Siden lenkes **ikke** fra den ordinære produksjonsnavigasjonen. Dette er en demonstrerbar testklient, ikke en driftsatt operatørvakt.
