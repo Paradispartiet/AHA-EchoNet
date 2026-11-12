@@ -80,6 +80,28 @@
     }
     return { ok: true, client, userId: data.user.id };
   }
+
+  let ownerCheckVersion = 0;
+  async function checkLocalOwner() {
+    const seq = ++ownerCheckVersion;
+    const previousOwner = getLocalOwner();
+    if (!previousOwner) {
+      global.AHAParadisavisa?.setOwnerAccess?.(true);
+      return { ok: true, unbound: true };
+    }
+    try {
+      const auth = await verifiedAccount();
+      if (seq !== ownerCheckVersion) return { ok: false, reason: "superseded" };
+      const allowed = auth.ok && auth.userId === previousOwner;
+      global.AHAParadisavisa?.setOwnerAccess?.(allowed);
+      if (!allowed) feedback("Det lokale biblioteket er låst til en annen Aha-konto. Logg inn med riktig konto for å se innholdet. Skydata er ikke overført.");
+      else feedback("Aha-kontoen er bekreftet. Det lokale biblioteket er tilgjengelig; ingen automatisk opplasting.");
+      return { ok: allowed };
+    } catch {
+      if (seq === ownerCheckVersion) global.AHAParadisavisa?.setOwnerAccess?.(false);
+      return { ok: false, reason: "auth_failed" };
+    }
+  }
   function ownershipAllowed(userId) {
     const currentOwner = getLocalOwner();
     return !currentOwner || currentOwner === userId;
@@ -125,6 +147,7 @@
     if (!ownershipAllowed(auth.userId)) {
       return { ok: false, reason: "Biblioteket på denne enheten er knyttet til en annen Aha-konto. Eksporter en sikkerhetskopi og bytt til riktig konto før synkronisering." };
     }
+    global.AHAParadisavisa?.setOwnerAccess?.(true);
     const library = global.AHAParadisavisa?.load?.();
     const articles = Array.isArray(library?.articles) ? library.articles : [];
     const rows = articles.map((a) => rowForAccount(a, auth.userId)).filter((a) => a && a.title);
@@ -175,6 +198,7 @@
     if (!ownershipAllowed(auth.userId)) {
       return { ok: false, reason: "Denne nettleseren har et bibliotek knyttet til en annen Aha-konto. Skydata ble ikke blandet inn." };
     }
+    global.AHAParadisavisa?.setOwnerAccess?.(true);
     const local = global.AHAParadisavisa?.load?.();
     if (Array.isArray(local?.articles) && local.articles.length &&
       !global.confirm("Hente kontobiblioteket og slå det sammen med " + local.articles.length + " lokale registreringer? Eksisterende markeringer og lesehistorikk-samtykke beholdes.")) {
@@ -221,11 +245,17 @@
     uploadButton?.addEventListener("click", () => handleClick(uploadButton, upload));
     downloadButton?.addEventListener("click", () => handleClick(downloadButton, download));
     eraseButton?.addEventListener("click", () => handleClick(eraseButton, eraseCloud));
-    // Initial page render intentionally performs no auth or cloud requests.
-    feedback("Kontolagring er valgfritt. Ingenting lastes opp eller hentes automatisk.");
+    // Account verification only for a library previously bound to an owner.
+    // This never reads or writes any article rows in Supabase.
+    if (getLocalOwner()) checkLocalOwner();
+    else feedback("Kontolagring er valgfritt. Ingenting lastes opp eller hentes automatisk.");
   }
   global.AHAParadisavisaCloud = Object.freeze({
-    upload, download, eraseCloud, rowForAccount, articleFromRow, ownershipAllowed
+    upload, download, eraseCloud, rowForAccount, articleFromRow, ownershipAllowed, checkLocalOwner
+  });
+  global.addEventListener?.("pageshow", () => { if (getLocalOwner()) checkLocalOwner(); });
+  global.addEventListener?.("storage", (event) => {
+    if (event?.key === OWNER || (event?.key && /-auth-token$/.test(event.key))) checkLocalOwner();
   });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
