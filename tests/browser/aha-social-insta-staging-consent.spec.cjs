@@ -162,8 +162,14 @@ test("AHA Insta keeps image private until consent and shows published media to a
   await page.evaluate(() => { window.__AHA_SOCIAL_BROWSER_ACCOUNT = "account-b"; });
   await social.getByRole("button", { name: "Oppdater delte innlegg" }).click();
   await expect(social.locator(".aha-social-post")).toContainText("Mitt første delte bilde");
+  // Report is deliberately under the small contextual menu; the visitor
+  // must never receive an owner-only delete or place editing command.
+  await expect(social.getByRole("button", { name: "Rapporter" })).toHaveCount(0);
+  await expect(social.getByRole("button", { name: "Slett" })).toHaveCount(0);
+  await social.locator(".aha-social-post .aha-social-more summary").click();
   await expect(social.getByRole("button", { name: "Rapporter" })).toBeVisible();
   await expect(social.getByRole("button", { name: "Slett" })).toHaveCount(0);
+  await expect(social.getByRole("button", { name: "Rediger stedstag" })).toHaveCount(0);
   await expect(social.locator(".aha-social-post img")).toHaveAttribute("src", /^blob:/);
 
   expect(posts).toHaveLength(1);
