@@ -38,6 +38,41 @@
   const BRANCH_COLORS = ["#7ac6ff", "#7bd3b8", "#f5ba67", "#c99cff", "#ff8f9d", "#84d66b", "#71d5e8", "#d8c36a"];
   let graphState = { nodes: [], edges: [], selectedNodeId: "", view: { x: 0, y: 0, scale: 1 } };
   let projectionReceipt = null;
+  const ARTICLE_OWNER_KEY = "aha_paradisavisa_cloud_owner_v1";
+  let verifiedArticleOwner = false;
+  let articleOwnerCheckVersion = 0;
+  function articleOwner() {
+    try { return localStorage.getItem(ARTICLE_OWNER_KEY) || ""; }
+    catch { return "unavailable"; }
+  }
+  function mayShowAccountArticles() {
+    return !articleOwner() || verifiedArticleOwner;
+  }
+  async function verifyArticleOwner() {
+    const check = ++articleOwnerCheckVersion;
+    const expected = articleOwner();
+    if (!expected) {
+      verifiedArticleOwner = false;
+      refresh();
+      return true;
+    }
+    verifiedArticleOwner = false;
+    refresh(); // Never keep old article nodes visible while session is checked.
+    try {
+      const client = global.AHADb?.getClient?.();
+      const { data, error } = client ? await client.auth.getUser() : { error: true };
+      if (check !== articleOwnerCheckVersion || articleOwner() !== expected) return false;
+      verifiedArticleOwner = Boolean(!error && data?.user?.id === expected && !data.user.is_anonymous);
+      refresh();
+      return verifiedArticleOwner;
+    } catch {
+      if (check === articleOwnerCheckVersion) {
+        verifiedArticleOwner = false;
+        refresh();
+      }
+      return false;
+    }
+  }
 
   function safeParse(raw, fallback) {
     try {
@@ -442,7 +477,8 @@
       conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
-      paradisavisaLibrary: loadByKey(STORAGE_KEYS.paradisavisa, { articles: [] }),
+      paradisavisaLibrary: mayShowAccountArticles()
+        ? loadByKey(STORAGE_KEYS.paradisavisa, { articles: [] }) : { articles: [] },
       notes: loadByKey(STORAGE_KEYS.notes, []),
       feed: loadByKey(STORAGE_KEYS.feed, []),
       gallery: loadByKey(STORAGE_KEYS.gallery, []),
@@ -879,6 +915,12 @@
 
   function bindUi() {
     const sourceSelector = document.getElementById("mindmap-data-source");
+    if (articleOwner()) verifyArticleOwner();
+    global.addEventListener?.("storage", (event) => {
+      if (event?.key === ARTICLE_OWNER_KEY || /-auth-token$/.test(String(event?.key || ""))) {
+        verifyArticleOwner();
+      }
+    });
     if (sourceSelector && global.AHAProjectionRuntimeSourceV2?.shouldOpenProduct?.("mindmap")) sourceSelector.value = "v2";
     document.getElementById("mindmap-refresh")?.addEventListener("click", refresh);
     document.getElementById("mindmap-data-source")?.addEventListener("change", refresh);
@@ -927,7 +969,9 @@
     buildMindmapLayout,
     renderVisualMindmap,
     render,
-    refresh
+    refresh,
+    verifyArticleOwner,
+    mayShowAccountArticles
   };
 
   if (document.readyState === "loading") {
