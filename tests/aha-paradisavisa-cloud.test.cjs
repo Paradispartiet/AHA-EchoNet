@@ -32,6 +32,7 @@ function mock(options = {}) {
       calls.writes++;
       calls.remote++;
       calls.upserted = rows;
+      calls.ownerAtWrite = local.get("aha_paradisavisa_cloud_owner_v1") || "";
       return Promise.resolve({ error: options.sqlError || null });
     },
     delete() {
@@ -56,7 +57,12 @@ function mock(options = {}) {
     URL, Date, Promise, console, Array,
     localStorage: {
       getItem: (key) => local.get(key) || null,
-      setItem: (key, val) => local.set(key, val),
+      setItem: (key, val) => {
+        if (options.refuseOwnerWrite && key === "aha_paradisavisa_cloud_owner_v1") {
+          throw Error("Browser profile is read only");
+        }
+        local.set(key, val);
+      },
       removeItem: (key) => local.delete(key)
     },
     document: { readyState: "loading", addEventListener() {}, getElementById() { return null; } },
@@ -177,6 +183,44 @@ test("the original local library unlocks only after verified owner authenticatio
   assert.equal(result.ok, true);
   assert.equal(h.calls.localOwnerAllowed, true);
   assert.equal(h.calls.remote, 0);
+});
+
+test("upload binds the verified owner before the first network write", async () => {
+  const h = mock();
+  const result = await h.api.upload();
+  assert.equal(result.ok, true);
+  assert.equal(h.calls.ownerAtWrite, h.uid);
+});
+
+test("blocked local ownership storage prevents any cloud write or local import", async () => {
+  const upload = mock({ refuseOwnerWrite: true });
+  const a = await upload.api.upload();
+  assert.equal(a.ok, false);
+  assert.equal(upload.calls.writes, 0);
+  assert.equal(upload.local.has("aha_paradisavisa_cloud_owner_v1"), false);
+
+  const download = mock({ refuseOwnerWrite: true, articles: [], remote: [{
+    article_id: "/Paradisavisa/artikler/en-test.html", title: "En trygg artikkel",
+    saved_at: "2026-11-12T10:00:00Z", read_at: null, opened_at: null
+  }] });
+  const b = await download.api.download();
+  assert.equal(b.ok, false);
+  assert.equal(download.calls.imports, 0);
+  assert.equal(download.local.has("aha_paradisavisa_cloud_owner_v1"), false);
+});
+
+test("oversized remote history must not be silently truncated or overwritten", async () => {
+  const manyRows = Array.from({ length: 100 }, (_, i) => ({
+    article_id: "/Paradisavisa/artikler/test-" + i + ".html", title: "Artikkel " + i,
+    saved_at: "2026-11-12T10:00:00Z"
+  }));
+  // The mock responds with a full page for every offset, simulating a cloud
+  // collection larger than the 5000 row import/export safety contract.
+  const h = mock({ remote: manyRows });
+  const result = await h.api.upload();
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /5000/);
+  assert.equal(h.calls.writes, 0);
 });
 
 test("SQL enforces private account-based RLS on all operations", () => {
