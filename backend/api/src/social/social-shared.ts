@@ -18,6 +18,15 @@ export class SocialGate {
       throw new ApiException(400, "VALIDATION_FAILED", "An Insta post requires hosted media");
     }
     if (!mediaUrl) return null;
+    // The staging upload API returns a relative reference. It is NOT an
+    // external URL; SQL separately verifies that the authenticated author
+    // owns the private media record before attaching it to a published post.
+    if (/^\/v1\/social\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(mediaUrl)) {
+      return mediaUrl.toLowerCase();
+    }
+    if (mediaUrl.startsWith("/")) {
+      throw new ApiException(400, "VALIDATION_FAILED", "Invalid internal AHA media reference");
+    }
     let url: URL;
     try { url = new URL(mediaUrl); }
     catch { throw new ApiException(400, "VALIDATION_FAILED", "Invalid media URL"); }

@@ -285,11 +285,24 @@ test("binary staging upload stays private until an explicit Insta post reference
     .set("Content-Type","image/png").set("Idempotency-Key","binary-upload-002")
     .send(Buffer.alloc(600000)).expect(413);
 
-  // The database integration rehearsal separately proves that the uploader
-  // must OWN media in the same atomic transaction as social post publication.
-  memory.posts.get(TEST_POST_B).mediaUrl = uploaded.body.data.mediaUrl;
+  // Use the actual POST endpoint with the upload's internal media URL.
+  // The PostgreSQL integration rehearsal independently proves that the
+  // profile must own the attachment when the post is committed.
+  const published = await request(app.getHttpServer()).post("/v1/social/posts")
+    .set("Authorization", "Bearer bob")
+    .send({
+      kind: "insta", text: "Uploaded from iPad",
+      mediaUrl: uploaded.body.data.mediaUrl,
+      requestKey: "test-bob-uploaded-insta-1", publish: true
+    }).expect(201);
+  assert.equal(published.body.data.id, TEST_POST_B);
+
+  const fromAlice = await request(app.getHttpServer()).get("/v1/social/posts?kind=insta")
+    .set("Authorization", "Bearer alice").expect(200);
+  assert.equal(fromAlice.body.data[0].mediaUrl, uploaded.body.data.mediaUrl);
+  assert.equal(fromAlice.body.data[0].ownPost, false);
   await request(app.getHttpServer()).get("/v1/social/media/" + mediaId)
-    .set("Authorization","Bearer alice").expect(200);
+    .set("Authorization", "Bearer alice").expect(200);
 });
 
 

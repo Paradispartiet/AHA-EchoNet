@@ -14,3 +14,6 @@
 .aha-social-comment-form{display:flex;gap:.5rem;flex-wrap:wrap}
 .aha-social-comment-form input{flex:1 1 12rem;min-width:0}
 .aha-social-status{min-height:1.5rem}
+
+/* Avoid overriding the HTML hidden attribute on private previews. */
+.aha-social-media[hidden]{display:none !important}

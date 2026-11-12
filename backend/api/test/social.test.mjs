@@ -53,6 +53,42 @@ test("publishing is explicit and media host is allowlisted before any database w
   assert.equal(repo.calls.length, 1);
 });
 
+test("Insta accepts only exact internal staging media references, never untrusted paths", async () => {
+  const ref = "/v1/social/media/33333333-3333-4333-8333-333333333333";
+  const repo = new FakeRepo();
+  const service = new SocialService(new SocialGate(), repo);
+  const oldEnv = { stage: process.env.AHA_SOCIAL_STAGING_ENABLED, node: process.env.NODE_ENV };
+  try {
+    process.env.NODE_ENV = "test";
+    process.env.AHA_SOCIAL_STAGING_ENABLED = "true";
+    const dto = Object.assign(new SocialPostInput(), {
+      kind: "insta", text: "Bilde fra iPad", mediaUrl: ref,
+      requestKey: "media-publish-001", publish: true
+    });
+    assert.equal(validateSync(dto).length, 0);
+    await service.publish(principal, dto);
+    assert.deepEqual(repo.calls[0].values, ["insta", "Bilde fra iPad", ref, "media-publish-001"]);
+
+    for (const invalid of [
+      "/v1/social/media/not-a-uuid",
+      "/v1/social/media/" + "33333333-3333-4333-8333-333333333333" + "?secret=1",
+      "/v1/social/media/33333333-3333-4333-8333-333333333333/extra",
+      "//evil.example/media/33333333-3333-4333-8333-333333333333",
+      "javascript:alert(1)", "http://insecure.example/photo.png"
+    ]) {
+      const badDto = Object.assign(new SocialPostInput(), { ...dto, mediaUrl: invalid });
+      assert.ok(validateSync(badDto).length > 0, "Expected DTO rejection: " + invalid);
+      await assert.rejects(service.publish(principal, badDto), e => e instanceof ApiException && e.code === "VALIDATION_FAILED");
+    }
+    assert.equal(repo.calls.length, 1);
+  } finally {
+    if (oldEnv.stage === undefined) delete process.env.AHA_SOCIAL_STAGING_ENABLED;
+    else process.env.AHA_SOCIAL_STAGING_ENABLED = oldEnv.stage;
+    if (oldEnv.node === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = oldEnv.node;
+  }
+});
+
 test("interactions use fixed repository actions and verified principal", async () => {
   const repo = new FakeRepo();
   const service = new SocialService({ assertEnabled() {} }, repo);

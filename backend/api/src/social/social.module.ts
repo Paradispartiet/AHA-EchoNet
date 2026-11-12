@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Inject, Injectable, Module, Param, ParseUUIDPipe, Post, Query, Req } from "@nestjs/common";
 import { Type } from "class-transformer";
-import { Equals, IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUrl, Length, Max, Min } from "class-validator";
+import { Equals, IsBoolean, IsIn, IsInt, IsOptional, IsString, Matches, Length, Max, Min } from "class-validator";
 import { apiSuccess } from "../api/api-contract.js";
 import { ApiException } from "../api/api-exception.js";
 import type { AuthPrincipal } from "../auth/auth.types.js";
@@ -36,7 +36,9 @@ export class SocialPostInput {
   text!: string;
 
   @IsOptional()
-  @IsUrl({ protocols: ["https"], require_protocol: true })
+  @IsString()
+  @Length(1, 2048)
+  @Matches(/^(?:https:\/\/[^\s]+|\/v1\/social\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i)
   mediaUrl?: string;
 
   @IsString()

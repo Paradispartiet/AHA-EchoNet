@@ -57,3 +57,7 @@ For offentlig versjon kreves riktig objektlagring, revisjon av EXIF/metadata, ko
 ## Mobil bildevelger (staging)
 
 AHA Insta viser nå en vanlig `input type=file` med `accept=image/*`, helt lokal forhåndsvisning og eksplisitt samtykkeboks. Opprinnelig fil blir bare åpnet i Canvas etter publiseringsklikk; Canvas skalerer til maks 1280 px og eksporterer WebP/PNG på maks 512 KiB før den sendes som autentisert binær opplasting til `POST /v1/social/media`. Mediereferansen binds deretter til innlegget via ordinær publisering. Bildevisning bruker autentisert `GET /v1/social/media/:id` og kortvarig blob-URL, ikke en offentlig direktelenke. Ingen eksisterende private bilder importeres eller lastes opp. **Videoer støttes ikke av dette første testløpet.**
+
+## Rettet kontrakt: bildevedlegg → Insta-publisering
+
+En opplasting returnerer en relativ media-referanse (`/v1/social/media/<uuid>`). `SocialPostInput` og `SocialGate.assertMedia` aksepterer kun den eksakte formen som intern URL, mens eksterne lenker fremdeles må være HTTPS fra eksplisitt godkjent origin. Ved publisering validerer PostgreSQL eierskapet og knytter bildet til innlegget i samme transaksjon. Den nye HTTP-regresjonen verifiserer `POST /v1/social/media` → `POST /v1/social/posts` → `GET /v1/social/posts` → autentisert `GET /v1/social/media/:id` med to kontoer. Uten denne rettelsen ble opplastet media avvist ved publisering.
