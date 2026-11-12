@@ -103,3 +103,7 @@ AHA Feed er **tekst først** med synlig tegnteller og hard grense på **500 tegn
 ### Skille mellom publisering og utforsking
 
 Insta har to forskjellige valg: **Publiser som Feed / Reel / Map** bestemmer metadataene på et nytt bilde; **Vis Feed / Vis Reel / Vis Map** styrer kun hvilke innlegg som vises. Å bla mellom visningene endrer ikke utkastet. Map grupperer bilder etter stedstag og har et søkefelt; et stedstag på et bilde kan trykkes på for å se alle bildene merket med stedet. Dette er en søkbar stedsoversikt, ikke en geografisk kartflate: friteksttaggene har ikke koordinater, så ingen falske kartmarkører vises.
+
+### Etterpublisering: rediger stedstag
+
+En bruker kan nå redigere stedstag på sine **allerede publiserte** Insta-bilder direkte fra innlegget gjennom et lite felt (ingen ny opplasting og ingen ny publisering). Et nytt POST-endepunkt `/v1/social/posts/:id/place` krever autentisering, bare bildeeier har adgang, og redigering av slettede/skjulte poster, Feed-innlegg eller andres bilder avvises i `aha_social.set_post_place_tag_v1`. En Map-post kan ikke miste sitt obligatoriske stedstag. Endringer normaliseres og vises umiddelbart etter oppfriskning. Testes både på fiktive kontoer i Chromium/WebKit og på ekte PostgreSQL med A/B-roller i isolert CI.

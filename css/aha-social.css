@@ -68,3 +68,11 @@
 .aha-social-location{background:transparent!important;border:0!important;color:#b6d6ff;text-align:left;font-weight:650;font-size:.93rem;padding:.35rem 0!important;min-height:34px!important;cursor:pointer}
 .aha-social-location:hover{text-decoration:underline}
 @media(max-width:520px){.aha-social-place-grid{grid-template-columns:1fr}}
+
+/* Edit a published picture's location inline; avoid disruptive browser prompts. */
+.aha-social-place-editor{display:grid;gap:.55rem;background:#101726;border:1px solid #43546e;border-radius:10px;margin:.65rem 0;padding:.75rem}
+.aha-social-place-editor[hidden]{display:none!important}
+.aha-social-place-editor label{display:grid;gap:.35rem;font-weight:600}
+.aha-social-place-editor input{width:100%;font:inherit;min-height:44px;padding:.55rem .7rem;color:#fff;background:#0c111a;border:1px solid #667892;border-radius:8px}
+.aha-social-place-editor-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.aha-social-place-editor-actions button[type=submit]{background:#e7efff;color:#172136;font-weight:700;border-color:#e7efff}

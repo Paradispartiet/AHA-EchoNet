@@ -332,6 +332,47 @@
       const like = add("button", actions, (post.likedByMe ? "♥ Likt" : "♡ Lik") + " (" + Number(post.likeCount || 0) + ")");
       like.type = "button";
       like.addEventListener("click", () => mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/like", "POST", { liked: !post.likedByMe }, "Likerklikk oppdatert."));
+      if (kind === "insta" && post.ownPost) {
+        // Inline editing changes only the optional location label. It does not
+        // re-upload the image, re-publish the post, or import private content.
+        const editButton = add("button", actions, post.placeTag ? "Rediger stedstag" : "Legg til stedstag");
+        editButton.type = "button";
+        const editor = add("form", card, null, "aha-social-place-editor");
+        editor.hidden = true;
+        const placeLabel = add("label", editor, "Stedstag for dette bildet");
+        const placeInput = add("input", placeLabel);
+        placeInput.type = "text";
+        placeInput.maxLength = 120;
+        placeInput.value = post.placeTag || "";
+        placeInput.placeholder = "Skriv et sted";
+        placeInput.autocomplete = "off";
+        add("p", editor, "Stedstaggen vises for andre. Bare du kan endre den.", "module-meta");
+        const buttons = add("div", editor, null, "aha-social-place-editor-actions");
+        const save = add("button", buttons, "Lagre stedstag");
+        save.type = "submit";
+        const cancel = add("button", buttons, "Avbryt");
+        cancel.type = "button";
+        editButton.addEventListener("click", () => {
+          editor.hidden = !editor.hidden;
+          editButton.setAttribute("aria-expanded", String(!editor.hidden));
+          if (!editor.hidden) placeInput.focus();
+        });
+        editButton.setAttribute("aria-expanded", "false");
+        cancel.addEventListener("click", () => { editor.hidden = true; editButton.setAttribute("aria-expanded","false"); });
+        editor.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const tag = placeInput.value.trim();
+          if (post.instaMode === "map" && !tag) {
+            showStatus("Map-innlegg må ha et stedstag.");
+            return;
+          }
+          if (tag.length > 120) { showStatus("Stedstag kan ikke være over 120 tegn."); return; }
+          save.disabled = true;
+          const changed = await mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/place",
+            "POST", { placeTag: tag || null }, "Stedstag oppdatert.");
+          if (!changed) save.disabled = false;
+        });
+      }
       const comment = add("button", actions, "Kommentarer (" + Number(post.commentCount || 0) + ")");
       comment.type = "button";
       const commentSection = add("div", card, null, "aha-social-comments");

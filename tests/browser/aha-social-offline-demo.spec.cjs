@@ -133,3 +133,64 @@ test("Map browsing is separate from the publish type and place tags can filter p
  await social.getByRole("searchbox",{name:"Søk etter stedstag"}).fill("OSLO");
  await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
 });
+
+
+test("published Insta images can be tagged by owner, viewed by B, and never edited by B",async({page})=>{
+ const calls=[];
+ page.on("request",request=>{if(request.url().includes("aha-social-offline-demo.invalid"))calls.push(request.url());});
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=180;c.height=110;
+   const cx=c.getContext("2d");cx.fillStyle="#365ab5";cx.fillRect(0,0,180,110);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"owner-image.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await social.locator("textarea").first().fill("Et bilde som tagges senere");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(social.locator(".aha-social-post")).toContainText("Et bilde som tagges senere");
+ await expect(social.locator(".aha-social-location")).toHaveCount(0);
+ await social.getByRole("button",{name:"Legg til stedstag"}).click();
+ const edit=social.locator(".aha-social-place-editor");
+ await expect(edit).toBeVisible();
+ await edit.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("  Oslo, Frogner  ");
+ await edit.getByRole("button",{name:"Lagre stedstag"}).click();
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo, Frogner");
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo, Frogner");
+ await expect(social.getByRole("button",{name:"Rediger stedstag"})).toHaveCount(0);
+ await page.getByRole("button",{name:"Konto A"}).click();
+ await social.getByRole("button",{name:"Rediger stedstag"}).click();
+ await edit.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("");
+ await edit.getByRole("button",{name:"Lagre stedstag"}).click();
+ await expect(social.locator(".aha-social-location")).toHaveCount(0);
+ expect(calls).toHaveLength(0);
+});
+
+test("Map posts cannot lose mandatory place tags during post-publication editing",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const bytes=await page.evaluate(async()=>{
+  const c=document.createElement("canvas");c.width=180;c.height=100;
+  c.getContext("2d").fillRect(0,0,180,100);
+  const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+  return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await social.locator('input[type="file"]').setInputFiles({name:"map.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await social.getByRole("button",{name:"Map",exact:true}).click();
+ await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
+ await social.locator("textarea").first().fill("Map bilde med plassering");
+ await social.getByRole("checkbox").check();
+ await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await social.getByRole("button",{name:"Rediger stedstag"}).click();
+ const editor=social.locator(".aha-social-place-editor");
+ await editor.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("");
+ await editor.getByRole("button",{name:"Lagre stedstag"}).click();
+ await expect(social.locator(".aha-social-status")).toContainText("Map-innlegg må ha et stedstag");
+ await expect(social.locator(".aha-social-location")).toContainText("Oslo sentrum");
+ await editor.getByRole("textbox",{name:"Stedstag for dette bildet"}).fill("Bergen");
+ await editor.getByRole("button",{name:"Lagre stedstag"}).click();
+ await expect(social.locator(".aha-social-location")).toContainText("Bergen");
+});

@@ -125,7 +125,7 @@ window.fetch=async function(request,options={}){
     catch {return error(400);}
   }
   const media=p.match(/^\/v1\/social\/media\/([0-9a-f-]{36})$/);
-  const detail=p.match(/^\/v1\/social\/posts\/([0-9a-f-]{36})(?:\/(like|comments|reports))?$/);
+  const detail=p.match(/^\/v1\/social\/posts\/([0-9a-f-]{36})(?:\/(like|comments|reports|place))?$/);
   if(p==="/v1/social/posts" && method==="GET"){
     const selected=target.searchParams.get("kind");
     return json(posts.filter(x=>x.state==="published"&&x.kind===selected).slice().reverse().map(x=>({
@@ -192,6 +192,14 @@ window.fetch=async function(request,options={}){
       if(post.owner!==caller)return error(404);
       post.state="deleted";
       return json({id:post.id,deleted:true});
+    }
+    if(action==="place"&&method==="POST"){
+      if(post.owner!==caller||post.kind!=="insta")return error(404);
+      if(!body||!("placeTag" in body)||!(body.placeTag===null||typeof body.placeTag==="string"))return error(400);
+      const tag=typeof body.placeTag==="string"?body.placeTag.trim():null;
+      if((tag&&tag.length>120)||(post.instaMode==="map"&&!tag))return error(400);
+      post.placeTag=tag||null;
+      return json({id:post.id,placeTag:post.placeTag,updated:true});
     }
     if(action==="like"&&method==="POST"){
       if(!likes.has(post.id))likes.set(post.id,new Set());
