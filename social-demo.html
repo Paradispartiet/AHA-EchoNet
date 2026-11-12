@@ -130,6 +130,7 @@ window.fetch=async function(request,options={}){
     const selected=target.searchParams.get("kind");
     return json(posts.filter(x=>x.state==="published"&&x.kind===selected).slice().reverse().map(x=>({
       id:x.id,kind:x.kind,text:x.text,mediaUrl:x.mediaUrl,createdAt:x.createdAt,
+      instaMode:x.instaMode,placeTag:x.placeTag,
       authorName:displayName(x.owner),ownPost:x.owner===caller,
       likedByMe:likes.get(x.id)?.has(caller)||false,likeCount:likes.get(x.id)?.size||0,
       commentCount:comments.get(x.id)?.length||0
@@ -163,7 +164,10 @@ window.fetch=async function(request,options={}){
   }
   if(p==="/v1/social/posts"&&method==="POST"){
     if(!body?.publish||!["feed","insta"].includes(body.kind)||
-       typeof body.text!=="string"||!body.text.trim())return error(400);
+       typeof body.text!=="string"||!body.text.trim()||
+       (body.kind==="feed" && body.text.length>500)||
+       (body.kind==="insta" && body.instaMode==="map" && !body.placeTag)||
+       (body.placeTag && (typeof body.placeTag!=="string"||body.placeTag.length>120)))return error(400);
     let mediaUrl=null;
     if(body.kind==="insta"){
       const mediaMatch=String(body.mediaUrl||"").match(/^\/v1\/social\/media\/([0-9a-f-]{36})$/);
@@ -173,7 +177,9 @@ window.fetch=async function(request,options={}){
       mediaUrl=body.mediaUrl;
     }
     const id=uid(),post={id,kind:body.kind,owner:caller,text:body.text.trim(),
-      mediaUrl,createdAt:new Date().toISOString(),state:"published"};
+      mediaUrl,instaMode:body.kind==="insta"?(body.instaMode||"feed"):null,
+      placeTag:body.kind==="insta"?(body.placeTag||null):null,
+      createdAt:new Date().toISOString(),state:"published"};
     posts.push(post);
     if(mediaUrl)photos.get(mediaUrl.split("/").pop()).postId=id;
     return json({id,status:"published",idempotentReplay:false},201);

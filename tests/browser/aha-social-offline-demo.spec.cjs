@@ -53,3 +53,22 @@ test("offline iPad/Chromium preview handles local picture and account visibility
  await expect(social.locator(".aha-social-post")).toHaveCount(0);
  expect(external).toHaveLength(0);
 });
+
+test("Feed counts toward 500 characters and Insta is image-first with mode and location",async({page})=>{
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const feed=page.locator("#aha-social-mount");
+ const input=feed.locator("textarea").first();
+ await expect(input).toHaveAttribute("maxlength","500");
+ await expect(feed.locator(".aha-social-counter")).toHaveText("0 / 500");
+ await input.fill("a".repeat(500));
+ await expect(feed.locator(".aha-social-counter")).toHaveText("500 / 500");
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const insta=page.locator("#aha-social-mount");
+ await expect(insta.locator('input[type="file"]')).toHaveCount(1);
+ await expect(insta.getByRole("button",{name:"Feed",exact:true})).toHaveAttribute("aria-pressed","true");
+ await insta.getByRole("button",{name:"Map",exact:true}).click();
+ await expect(insta.getByRole("button",{name:"Map",exact:true})).toHaveAttribute("aria-pressed","true");
+ await expect(insta.locator('input[type="text"][maxlength="120"]')).toBeVisible();
+ await insta.getByRole("button",{name:"Reel",exact:true}).click();
+ await expect(insta.getByRole("button",{name:"Reel",exact:true})).toHaveAttribute("aria-pressed","true");
+});

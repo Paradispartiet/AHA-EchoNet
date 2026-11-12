@@ -17,3 +17,28 @@
 
 /* Avoid overriding the HTML hidden attribute on private previews. */
 .aha-social-media[hidden]{display:none !important}
+
+/* Shared, uncluttered Feed/Insta reading layout. Local-first modules remain
+   available unchanged whenever the separate social staging is disabled. */
+.aha-social-panel{max-width:760px;margin:1rem auto;background:#10141c;border:1px solid #343e51;border-radius:16px;padding:clamp(1rem,3vw,1.65rem);color:#f5f7fc}
+.aha-social-panel .aha-social-intro{font-size:.9rem;color:#aebcd3;line-height:1.45}
+.aha-social-panel .aha-social-compose{background:#191f2a;border:1px solid #354257;border-radius:13px;padding:1rem;gap:.7rem}
+.aha-social-panel .aha-social-compose textarea,.aha-social-panel .aha-social-compose input[type="text"]{background:#0c111a;color:#fff;border:1px solid #58657c;border-radius:10px;font:inherit;padding:.75rem .85rem;outline-offset:2px}
+.aha-social-panel .aha-social-compose textarea{resize:vertical;min-height:7rem}
+.aha-social-counter{justify-self:end;font-variant-numeric:tabular-nums;font-weight:650;color:#b4c3d9}
+.aha-social-counter.near-limit{color:#ffcb78}
+.aha-social-type-selector{border:0;padding:0;margin:0;min-width:0}
+.aha-social-type-selector legend{font-weight:650;font-size:.9rem;padding:0;margin-bottom:.3rem}
+.aha-social-tabs{display:flex;gap:.4rem}
+.aha-social-tabs button{flex:1;min-height:44px;border:1px solid #62718a;border-radius:10px;padding:.55rem;background:transparent;color:#eef2fa;font:inherit;cursor:pointer}
+.aha-social-tabs button[aria-pressed="true"]{background:#e8eef9;color:#182132;font-weight:700}
+.aha-social-panel .aha-social-media{border-radius:10px;max-height:40rem;object-fit:contain;background:#090c12}
+.aha-social-panel .aha-social-list{margin-top:1rem;gap:.8rem}
+.aha-social-panel .aha-social-post{background:#161c27;border:1px solid #303d50;border-radius:13px;padding:1rem}
+.aha-social-feed-copy{font-size:1.06rem;white-space:pre-wrap;line-height:1.6;margin:.2rem 0 1rem}
+.aha-social-caption{margin:.45rem 0;white-space:pre-wrap}
+.aha-social-location{display:block;color:#b6d6ff;font-size:.93rem;font-weight:600}
+.aha-social-kind{display:inline-flex;font-size:.73rem;color:#c2d2e7;text-transform:uppercase;letter-spacing:.08em}
+.aha-social-panel button{min-height:40px}
+.aha-social-enabled .aha-personal-compose,.aha-social-enabled .aha-personal-collection,.aha-social-enabled .insta-profile-section,.aha-social-enabled .insta-stories-section,.aha-social-enabled .insta-feed-section,.aha-social-enabled #insta-compose-panel,.aha-social-enabled .insta-import-focus{display:none!important}
+@media(max-width:520px){.aha-social-panel{padding:.8rem}.aha-social-panel .aha-social-compose{padding:.75rem}}

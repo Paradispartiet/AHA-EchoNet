@@ -71,17 +71,17 @@
     const kind = getKind(mount);
     if (!mount || !kind) return false;
     active = true;
+    global.document.body?.classList?.add("aha-social-enabled");
     const panel = add("section", mount, null, "aha-panel aha-social-panel");
     add("p", panel, "AHA-NETTVERK · TESTMILJØ", "eyebrow");
     add("h2", panel, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
     add("p", panel, "Dette er atskilt fra dine private, lokale poster. Ingenting deles uten at du velger «Publiser» og bekrefter det.", "aha-social-intro");
 
     const form = add("form", panel, null, "module-form aha-social-compose");
-    const captionLabel = add("label", form, kind === "feed" ? "Tekst" : "Bildetekst");
-    const message = add("textarea", captionLabel);
-    message.required = true;
-    message.maxLength = 2000;
-    message.placeholder = kind === "feed" ? "Skriv en offentlig oppdatering…" : "Skriv en bildetekst…";
+    let instaMode = "feed";
+    let placeField = null;
+    let message = null;
+    let counter = null;
     let media = null;
     let preview = null;
     let releasePreview = null;
@@ -96,7 +96,7 @@
       preview = add("img", form, null, "aha-social-media");
       preview.hidden = true;
       preview.alt = "Lokal forhåndsvisning av bildet";
-      add("p", form, "Bildet vises bare på denne enheten til du aktivt velger Publiser. Videoopplasting kommer senere.", "module-meta");
+      add("p", form, "Velg bilde først. Videoopplasting for Reel kommer senere.", "module-meta");
       discard = add("button", form, "Fjern valgt bilde");
       discard.type = "button";
       discard.disabled = true;
@@ -126,6 +126,47 @@
           discard.disabled = true;
         }
       });
+      const types = add("fieldset", form, null, "aha-social-type-selector");
+      const legend = add("legend", types, "Visning");
+      const bar = add("div", types, null, "aha-social-tabs");
+      const modes = ["feed","reel","map"];
+      const tabButtons = modes.map((mode) => {
+        const button = add("button", bar, mode === "feed" ? "Feed" : mode === "reel" ? "Reel" : "Map");
+        button.type = "button";
+        button.dataset.mode = mode;
+        button.setAttribute("aria-pressed", String(mode === instaMode));
+        button.addEventListener("click", () => {
+          instaMode = mode;
+          for (const tab of tabButtons) tab.setAttribute("aria-pressed", String(tab.dataset.mode === mode));
+          pendingSignature = null;
+          if (mode === "reel") showStatus("Reel viser foreløpig bilder; videoopplasting krever egen sikker lagring.");
+          else if (mode === "map") showStatus("Map viser bilder med stedstag.");
+          else showStatus("Viser bildeinnlegg.");
+          void load();
+        });
+        return button;
+      });
+      const tagLabel = add("label", form, "Stedstag · valgfritt for Feed og Reel");
+      placeField = add("input", tagLabel);
+      placeField.type = "text";
+      placeField.maxLength = 120;
+      placeField.placeholder = "Legg til et sted, f.eks. Oslo";
+      placeField.autocomplete = "off";
+    }
+    const captionLabel = add("label", form, kind === "feed" ? "Innlegg" : "Bildetekst");
+    message = add("textarea", captionLabel);
+    message.required = true;
+    message.maxLength = kind === "feed" ? 500 : 2000;
+    message.placeholder = kind === "feed" ? "Hva vil du dele?" : "Skriv en bildetekst…";
+    if (kind === "feed") {
+      counter = add("output", form, "0 / 500", "aha-social-counter");
+      counter.setAttribute("aria-live", "polite");
+      counter.setAttribute("aria-label", "Antall tegn");
+      const updateCount = () => {
+        counter.textContent = message.value.length + " / 500";
+        counter.classList.toggle("near-limit", message.value.length >= 450);
+      };
+      message.addEventListener("input", updateCount);
     }
     const consentLabel = add("label", form, null, "aha-social-consent");
     const consent = add("input", consentLabel);
@@ -215,10 +256,7 @@
 
     function renderPost(post) {
       const card = add("article", list, null, "module-card aha-social-post");
-      const head = add("div", card, null, "aha-social-post-head");
-      add("strong", head, post.authorName || "AHA-bruker");
-      add("span", head, isoDate(post.createdAt), "module-meta");
-      add("p", card, post.text || "");
+      if (kind === "feed") add("p", card, post.text || "", "aha-social-feed-copy");
       if (kind === "insta" && typeof post.mediaUrl === "string") {
         let mediaUrl;
         if (global.AHASocialMedia?.isPrivateMediaUrl?.(post.mediaUrl)) mediaUrl = post.mediaUrl;
@@ -243,6 +281,14 @@
             } else visual.src = mediaUrl;
           }
         }
+      }
+      const head = add("div", card, null, "aha-social-post-head");
+      add("strong", head, post.authorName || "AHA-bruker");
+      add("span", head, isoDate(post.createdAt), "module-meta");
+      if (kind === "insta") {
+        if (post.placeTag) add("span", card, "📍 " + post.placeTag, "aha-social-location");
+        add("p", card, post.text || "", "aha-social-caption");
+        add("span", card, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Feed", "aha-social-kind");
       }
       const actions = add("div", card, null, "aha-social-actions");
       const like = add("button", actions, (post.likedByMe ? "♥ Likt" : "♡ Lik") + " (" + Number(post.likeCount || 0) + ")");
@@ -279,9 +325,14 @@
         const posts = await call("/v1/social/posts?kind=" + encodeURIComponent(kind) + "&limit=30");
         clear(list);
         const rows = Array.isArray(posts) ? posts : [];
-        if (!rows.length) add("p", list, "Ingen publiserte innlegg ennå.");
-        for (const post of rows) renderPost(post);
-        showStatus("Viser " + rows.length + " delte innlegg.");
+        const displayed = kind === "insta" && instaMode === "map"
+          ? rows.filter((post) => Boolean(post.placeTag))
+          : kind === "insta" && instaMode === "reel"
+            ? rows.filter((post) => post.instaMode === "reel")
+            : rows;
+        if (!displayed.length) add("p", list, "Ingen publiserte innlegg ennå.");
+        for (const post of displayed) renderPost(post);
+        showStatus("Viser " + displayed.length + " delte innlegg.");
       } catch (error) {
         clear(list);
         showStatus(error.message || "Kunne ikke hente feeden.");
@@ -292,12 +343,25 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const selectedFile = media?.files?.[0] || null;
+      const placeTag = placeField?.value.trim() || null;
+      if (kind === "feed" && message.value.length > 500) {
+        showStatus("Feed har en grense på 500 tegn.");
+        return;
+      }
+      if (kind === "insta" && instaMode === "map" && !placeTag) {
+        showStatus("Velg et stedstag for innlegg som skal vises i Map.");
+        return;
+      }
       if (!consent.checked || !message.value.trim() || (media && !selectedFile)) {
         showStatus("Fyll ut innlegget, velg bilde og godkjenn offentlig publisering.");
         return;
       }
       const payload = { kind, text: message.value.trim(), publish: true };
-      const signature = JSON.stringify({ kind, text: payload.text, fileVersion });
+      if (kind === "insta") {
+        payload.instaMode = instaMode;
+        if (placeTag) payload.placeTag = placeTag;
+      }
+      const signature = JSON.stringify({ kind, text: payload.text, fileVersion, instaMode, placeTag });
       if (signature !== pendingSignature) {
         pendingKey = createKey();
         pendingUploadKey = createKey();
@@ -321,6 +385,8 @@
         await call("/v1/social/posts", "POST", payload);
         pendingMediaPath = null;
         message.value = "";
+        if (counter) counter.textContent = "0 / 500";
+        if (placeField) placeField.value = "";
         if (media) {
           media.value = "";
           if (releasePreview) releasePreview();
