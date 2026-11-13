@@ -31,6 +31,29 @@
     while (node.firstChild) node.removeChild(node.firstChild);
   }
 
+  // Small, accessible action icons; keep the button's Norwegian text and
+  // accessible name intact so actions remain usable with VoiceOver.
+  function addActionIcon(button, action) {
+    const shapes = {
+      like: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z",
+      comment: "M20 11.5a8 8 0 0 1-8.5 8 8.1 8.1 0 0 1-3.2-.8L3 21l2.2-5.3A8 8 0 1 1 20 11.5Z"
+    };
+    if (!shapes[action]) return;
+    const svg = global.document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("class", "aha-social-action-icon");
+    const path = global.document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", shapes[action]);
+    svg.appendChild(path);
+    button.prepend(svg);
+  }
+
   function isoDate(raw) {
     const date = new Date(String(raw || ""));
     return Number.isNaN(date.getTime()) ? "" : date.toLocaleString("no-NO");
@@ -132,7 +155,7 @@
       const composeLead = add("div", form, null, "aha-social-compose-lead");
       const avatar = add("span", composeLead, "A", "aha-social-avatar aha-social-self-avatar");
       avatar.setAttribute("aria-hidden", "true");
-      add("strong", composeLead, "Skriv et innlegg");
+      add("strong", composeLead, "Hva skjer?");
     }
     let instaMode = "feed";
     let viewMode = "feed";
@@ -150,7 +173,10 @@
     let fileVersion = 0;
     function updatePickerLabel() {
       if (mediaLabel?.firstChild) {
-        mediaLabel.firstChild.textContent = media?.files?.length ? "Bytt bilde" : "Velg bilde eller video";
+        const selected = media?.files?.[0];
+        mediaLabel.firstChild.textContent = selected
+          ? (global.AHASocialMedia?.isReelVideo?.(selected) ? "Bytt video" : "Bytt bilde")
+          : "Velg bilde eller video";
       }
     }
     if (kind === "insta") {
@@ -249,7 +275,7 @@
     message = add("textarea", captionLabel);
     message.required = kind === "feed";
     message.maxLength = kind === "feed" ? 500 : 2000;
-    message.placeholder = kind === "feed" ? "Hva vil du dele?" : "Bildetekst (valgfritt)…";
+    message.placeholder = kind === "feed" ? "Del en tanke …" : "Skriv en bildetekst …";
     if (kind === "feed") {
       counter = add("output", form, "0 / 500", "aha-social-counter");
       counter.setAttribute("aria-live", "polite");
@@ -300,7 +326,7 @@
     const status = add("p", panel, "", "module-meta aha-social-status");
     status.setAttribute("role", "status");
     const feedTools = add("div", panel, null, "aha-social-feed-tools");
-    add("h3", feedTools, kind === "feed" ? "Tidslinje" : "Utforsk", "aha-social-feed-heading");
+    add("h3", feedTools, kind === "feed" ? "Siste innlegg" : "Nye bilder", "aha-social-feed-heading");
     const refresh = add("button", feedTools, "Oppdater delte innlegg", "aha-social-refresh");
     refresh.type = "button";
     let viewButtons = [];
@@ -310,8 +336,9 @@
       add("p", browser, "Velg visning", "aha-social-browser-title");
       const actions = add("div", browser, null, "aha-social-tabs aha-social-reading-tabs");
       viewButtons = ["feed","reel","map"].map((mode) => {
-        const button = add("button", actions, mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map");
+        const button = add("button", actions, mode === "feed" ? "Feed" : mode === "reel" ? "Reel" : "Map");
         button.type = "button";
+        button.setAttribute("aria-label", mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map");
         button.dataset.view = mode;
         button.setAttribute("aria-pressed", String(mode === viewMode));
         button.addEventListener("click", () => setViewMode(mode));
@@ -506,8 +533,9 @@
         const caption = card.querySelector(".aha-social-caption");
         if (caption) card.insertBefore(actions, caption);
       }
-      const like = add("button", actions, (post.likedByMe ? "♥ Likt" : "♡ Lik") + " (" + Number(post.likeCount || 0) + ")");
+      const like = add("button", actions, (post.likedByMe ? "Likt" : "Lik") + " (" + Number(post.likeCount || 0) + ")");
       like.type = "button";
+      addActionIcon(like, "like");
       like.classList.add("aha-social-action-like");
       like.setAttribute("aria-pressed", String(Boolean(post.likedByMe)));
       like.addEventListener("click", () => mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/like", "POST", { liked: !post.likedByMe }, "Likerklikk oppdatert."));
@@ -555,6 +583,7 @@
       }
       const comment = add("button", actions, "Kommentarer (" + Number(post.commentCount || 0) + ")");
       comment.type = "button";
+      addActionIcon(comment, "comment");
       comment.classList.add("aha-social-action-comment");
       comment.setAttribute("aria-expanded", "false");
       const commentSection = add("div", card, null, "aha-social-comments");
