@@ -465,3 +465,29 @@ test("Insta image-first composer requires media, consent and location only for M
  await expect(send).toBeDisabled();
  await expect(ui.getByRole("checkbox")).not.toBeChecked();
 });
+
+
+test("private Insta draft can always discard its photo before consent or caption",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const ui=page.locator("#aha-social-mount");
+ const send=ui.getByRole("button",{name:"Publiser i AHA Insta"});
+ const discard=ui.getByRole("button",{name:"Fjern valgt bilde"});
+ const preview=ui.getByAltText("Lokal forhåndsvisning av bildet");
+ const bytes=await page.evaluate(async()=>{
+  const canvas=document.createElement("canvas");canvas.width=120;canvas.height=120;
+  canvas.getContext("2d").fillRect(0,0,120,120);
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+  return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await ui.locator('input[type="file"]').setInputFiles({name:"draft.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await expect(preview).toBeVisible();
+ await expect(discard).toBeEnabled();
+ await expect(send).toBeDisabled();
+ await discard.click();
+ await expect(preview).toBeHidden();
+ await expect(discard).toBeDisabled();
+ await expect(send).toBeDisabled();
+ await expect(ui.getByRole("checkbox")).not.toBeChecked();
+ await expect(ui.locator(".aha-social-post")).toHaveCount(0);
+ expect(await ui.locator('input[type="file"]').evaluate(input=>input.files.length)).toBe(0);
+});

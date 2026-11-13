@@ -306,7 +306,9 @@
     let pendingMediaPath = null;
     if (discard) {
       discard.addEventListener("click", async () => {
-        if (submit.disabled) return;
+        // Clearing a local draft must not depend on whether the separate
+        // publish action is ready. Only an in-flight publish blocks edits.
+        if (publishing) return;
         discard.disabled = true;
         const staged = pendingMediaPath;
         if (staged) {
