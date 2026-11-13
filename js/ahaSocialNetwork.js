@@ -106,6 +106,29 @@
     const heading = add("div", brand, null, "aha-social-heading");
     add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");
     add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
+    const headerActions = kind === "insta" ? add("div", mast, null, "aha-social-header-actions") : null;
+    const headerAdd = headerActions ? add("button", headerActions, "+ Legg til", "aha-social-header-add") : null;
+    if (headerAdd) {
+      headerAdd.type = "button";
+      headerAdd.setAttribute("aria-label", "Legg til post");
+      headerAdd.setAttribute("aria-haspopup", "dialog");
+    }
+    const headerMore = headerActions ? add("details", headerActions, null, "aha-social-header-more") : null;
+    let profileMenuButton = null;
+    const browseMenuButtons = new Map();
+    if (headerMore) {
+      const trigger = add("summary", headerMore, "···");
+      trigger.setAttribute("aria-label", "Flere visninger");
+      const menu = add("div", headerMore, null, "aha-social-header-menu");
+      profileMenuButton = add("button", menu, "Min profil");
+      profileMenuButton.type = "button";
+      for (const mode of ["feed","reel","map"]) {
+        const name = mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map";
+        const button = add("button", menu, name);
+        button.type = "button";
+        browseMenuButtons.set(mode, button);
+      }
+    }
     const navigation = add("nav", mast, null, "aha-social-navigation");
     navigation.setAttribute("aria-label", "AHA sosiale flater");
     // An app-style bottom dock. The middle action opens the local composer
@@ -149,7 +172,20 @@
     panel.appendChild(navigation);
     add("p", panel, "Testmiljø · ingen private AHA-innlegg deles automatisk.", "aha-social-intro");
 
-    const form = add("form", panel, null, "module-form aha-social-compose");
+    const composeDialog = kind === "insta" ? add("dialog", panel, null, "aha-social-compose-dialog") : null;
+    if (composeDialog) {
+      composeDialog.setAttribute("aria-label", "Nytt innlegg");
+      const dialogHead = add("div", composeDialog, null, "aha-social-dialog-head");
+      add("strong", dialogHead, "Nytt innlegg");
+      const dismiss = add("button", dialogHead, "Lukk");
+      dismiss.type = "button";
+      dismiss.setAttribute("aria-label", "Lukk nytt innlegg");
+      dismiss.addEventListener("click", () => composeDialog.close());
+      headerAdd.addEventListener("click", () => {
+        if (!composeDialog.open) composeDialog.showModal();
+      });
+    }
+    const form = add("form", composeDialog || panel, null, "module-form aha-social-compose");
     form.id = "aha-social-compose";
     if (kind === "feed") {
       const composeLead = add("div", form, null, "aha-social-compose-lead");
@@ -158,7 +194,7 @@
       add("strong", composeLead, "Hva skjer?");
     }
     let instaMode = "feed";
-    let viewMode = "feed";
+    let viewMode = kind === "insta" ? "profile" : "feed";
     let placeSearch = null;
     let cachedPosts = [];
     let placeField = null;
@@ -253,10 +289,8 @@
           media.accept=mode==="reel"?"image/*,video/mp4,video/webm,video/quicktime":"image/*";
           for (const tab of tabButtons) tab.setAttribute("aria-pressed",String(tab.dataset.mode===mode));
           pendingSignature=null;
-          // Keep the expected quick workflow: after choosing an upload type,
-          // preview the matching reading tab, but browsing alone never changes
-          // the draft publication type.
-          setViewMode(mode);
+          // Selecting the post type must not navigate away from the profile.
+          // The full Feed/Reel/Map views live in the header's overflow menu.
           if (mode === "reel") showStatus("Reel kan forhåndsvise video. Video kan publiseres bare i demoen.");
           else if (mode === "map") showStatus("Map viser bilder ordnet etter stedstag.");
           else showStatus("Viser bildeinnlegg.");
@@ -325,6 +359,21 @@
 
     const status = add("p", panel, "", "module-meta aha-social-status");
     status.setAttribute("role", "status");
+    const profile = kind === "insta" ? add("section", panel, null, "aha-social-my-profile") : null;
+    let profileName = null;
+    let profileCount = null;
+    let profileGrid = null;
+    if (profile) {
+      const identity = add("header", profile, null, "aha-social-profile-identity");
+      const icon = add("span", identity, "A", "aha-social-avatar aha-social-profile-avatar");
+      icon.setAttribute("aria-hidden", "true");
+      const description = add("div", identity, null, "aha-social-profile-info");
+      profileName = add("h3", description, "Min profil");
+      profileCount = add("span", description, "0 innlegg", "aha-social-profile-count");
+      add("h4", profile, "Mine bilder", "aha-social-grid-heading");
+      profileGrid = add("div", profile, null, "aha-social-my-grid");
+      profileGrid.setAttribute("aria-label", "Mine bilder");
+    }
     const feedTools = add("div", panel, null, "aha-social-feed-tools");
     add("h3", feedTools, kind === "feed" ? "Siste innlegg" : "Nye bilder", "aha-social-feed-heading");
     const refresh = add("button", feedTools, "Oppdater delte innlegg", "aha-social-refresh");
@@ -354,6 +403,10 @@
       placeSearch.addEventListener("input", () => renderList());
     }
     const list = add("div", panel, null, "module-list aha-social-list");
+    if (profile) {
+      list.hidden = true;
+      feedTools.hidden = true;
+    }
     // The image viewer uses an existing, already loaded image URL. No second
     // authenticated download, external share or original-image upload occurs.
     const viewer = kind === "insta" ? add("dialog", panel, null, "aha-social-lightbox") : null;
