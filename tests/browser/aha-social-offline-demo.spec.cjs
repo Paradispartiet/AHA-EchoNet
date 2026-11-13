@@ -513,3 +513,28 @@ test("Insta image-first picker shrinks when a photo is selected and resets on di
  const restored=await pickerLabel.evaluate(el=>el.getBoundingClientRect().height);
  expect(restored).toBeGreaterThan(selected+50);
 });
+
+test("app shell keeps the iPad dock fixed and makes Feed/Insta navigation touch-friendly",async({page})=>{
+ await page.setViewportSize({width:820,height:1180});
+ await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ const dock=social.getByRole("navigation",{name:"AHA sosiale flater"});
+ await expect(dock).toHaveCSS("position","fixed");
+ await expect(dock.getByRole("link",{name:"Feed"})).toHaveAttribute("aria-current","page");
+ await expect(dock.getByRole("button",{name:"Skriv nytt innlegg"})).toBeVisible();
+ await dock.getByRole("button",{name:"Skriv nytt innlegg"}).click();
+ await expect(social.locator("textarea").first()).toBeFocused();
+ const width=await page.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+ expect(width.page).toBeLessThanOrEqual(width.viewport+1);
+ await dock.getByRole("link",{name:"Insta"}).click();
+ const insta=page.locator("#aha-social-mount");
+ await expect(insta).toHaveAttribute("data-social-kind","insta");
+ const instaDock=insta.getByRole("navigation",{name:"AHA sosiale flater"});
+ await expect(instaDock.getByRole("link",{name:"Insta"})).toHaveAttribute("aria-current","page");
+ await expect(instaDock.getByRole("button",{name:"Velg bilde til nytt innlegg"})).toBeVisible();
+ const form=insta.locator(".aha-social-compose");
+ await expect(form.locator(".aha-social-type-selector")).toBeVisible();
+ await expect(form.locator('input[type="file"]')).toHaveCount(1);
+ const widths=await page.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
+ expect(widths.page).toBeLessThanOrEqual(widths.viewport+1);
+});
