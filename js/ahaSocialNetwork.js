@@ -533,8 +533,11 @@
         const caption = card.querySelector(".aha-social-caption");
         if (caption) card.insertBefore(actions, caption);
       }
-      const like = add("button", actions, (post.likedByMe ? "Likt" : "Lik") + " (" + Number(post.likeCount || 0) + ")");
+      const likeCount = Number(post.likeCount || 0);
+      const like = add("button", actions, String(likeCount));
       like.type = "button";
+      like.setAttribute("aria-label", (post.likedByMe ? "Likt" : "Lik") + " (" + likeCount + ")");
+      like.title = (post.likedByMe ? "Fjern likerklikk" : "Lik innlegget");
       addActionIcon(like, "like");
       like.classList.add("aha-social-action-like");
       like.setAttribute("aria-pressed", String(Boolean(post.likedByMe)));
@@ -581,8 +584,11 @@
           if (!changed) save.disabled = false;
         });
       }
-      const comment = add("button", actions, "Kommentarer (" + Number(post.commentCount || 0) + ")");
+      const commentCount = Number(post.commentCount || 0);
+      const comment = add("button", actions, String(commentCount));
       comment.type = "button";
+      comment.setAttribute("aria-label", "Kommentarer (" + commentCount + ")");
+      comment.title = "Se og skriv kommentarer";
       addActionIcon(comment, "comment");
       comment.classList.add("aha-social-action-comment");
       comment.setAttribute("aria-expanded", "false");
