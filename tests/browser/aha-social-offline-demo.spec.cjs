@@ -49,7 +49,7 @@ test("offline iPad/Chromium preview handles local picture and account visibility
  await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
  await page.getByRole("button",{name:"Legg til post"}).click();
  const social=page.locator("#aha-social-mount");
- await expect(social.getByRole("heading",{name:"Delte bilder og videoer"})).toBeVisible();
+ await expect(social.locator(".aha-social-my-profile")).toBeVisible();
  const bytes=await page.evaluate(async()=>{
   const c=document.createElement("canvas");c.width=100;c.height=100;
   const ctx=c.getContext("2d");ctx.fillStyle="#283d65";ctx.fillRect(0,0,100,100);
@@ -144,13 +144,13 @@ test("Map browsing is separate from the publish type and place tags can filter p
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
  await openInstaView(page,"map");
  await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
- const publishMap=social.getByRole("button",{name:"Map",exact:true});
+ const publishMap=social.locator('.aha-social-type-selector button[data-mode="map"]');
  await expect(publishMap).toHaveAttribute("aria-pressed","true");
  await openInstaView(page,"feed");
  await expect(publishMap).toHaveAttribute("aria-pressed","true");
  await expect(social.locator(".aha-social-post")).toContainText("Et stedstaggede bilde");
  await social.getByRole("button",{name:"Se bilder fra Oslo sentrum"}).click();
- await expect(social.getByRole("button",{name:"Vis Map"})).toHaveAttribute("aria-pressed","true");
+ await expect(social.locator('.aha-social-reading-tabs button[data-view="map"]')).toHaveAttribute("aria-pressed","true");
  await expect(social.getByRole("searchbox",{name:"Søk etter stedstag"})).toHaveValue("Oslo sentrum");
  await expect(social.locator(".aha-social-place-group")).toHaveCount(1);
  await social.getByRole("searchbox",{name:"Søk etter stedstag"}).fill("Tromsø");
