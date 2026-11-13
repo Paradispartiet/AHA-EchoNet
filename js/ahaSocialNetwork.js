@@ -142,13 +142,19 @@
     let message = null;
     let counter = null;
     let media = null;
+    let mediaLabel = null;
     let preview = null;
     let videoPreview = null;
     let releasePreview = null;
     let discard = null;
     let fileVersion = 0;
+    function updatePickerLabel() {
+      if (mediaLabel?.firstChild) {
+        mediaLabel.firstChild.textContent = media?.files?.length ? "Bytt bilde" : "Velg bilde eller video";
+      }
+    }
     if (kind === "insta") {
-      const mediaLabel = add("label", form, "Nytt bilde eller Reel");
+      mediaLabel = add("label", form, "Velg bilde eller video");
       media = add("input", mediaLabel);
       media.type = "file";
       media.accept = "image/*";
@@ -195,6 +201,7 @@
           media.value = "";
           discard.disabled = true;
         }
+        updatePickerLabel();
       });
       const types = add("fieldset", form, null, "aha-social-type-selector");
       form.insertBefore(types, mediaLabel);
@@ -213,6 +220,7 @@
             media.value="";
             fileVersion++;
             discard.disabled=true;
+            updatePickerLabel();
             consent.checked=false;
           }
           instaMode=mode;
@@ -363,6 +371,7 @@
         pendingUploadKey = null;
         media.value = "";
         fileVersion++;
+        updatePickerLabel();
         consent.checked = false;
         if (releasePreview) releasePreview();
         releasePreview = null;
@@ -713,6 +722,7 @@
         if (placeField) placeField.value = "";
         if (media) {
           media.value = "";
+          updatePickerLabel();
           if (releasePreview) releasePreview();
           releasePreview = null;
           fileVersion++;
