@@ -630,3 +630,38 @@ test("Insta opens on my profile with only my square photo grid and one header co
  await openInstaView(page,"feed");
  await expect(insta.locator(".aha-social-post")).toContainText("Mitt eget bilde");
 });
+
+test("Insta closing a draft never leaves a picture or sharing consent behind",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const social=page.locator("#aha-social-mount");
+ await social.getByRole("button",{name:"Legg til post"}).click();
+ const modal=social.getByRole("dialog",{name:"Nytt innlegg"});
+ const input=modal.locator('input[type="file"]');
+ const bytes=await page.evaluate(async()=>{
+   const c=document.createElement("canvas");c.width=120;c.height=120;
+   c.getContext("2d").fillRect(0,0,120,120);
+   const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+   return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await input.setInputFiles({name:"unshared.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await expect(modal.getByAltText("Lokal forhåndsvisning av bildet")).toBeVisible();
+ await modal.locator("textarea").fill("Skal ikke publiseres");
+ await modal.getByRole("button",{name:"Map",exact:true}).click();
+ await modal.getByRole("checkbox").check();
+ await modal.getByRole("button",{name:"Lukk nytt innlegg"}).click();
+ await expect(modal).toBeHidden();
+ await social.getByRole("button",{name:"Legg til post"}).click();
+ await expect(modal).toBeVisible();
+ await expect(modal.locator("textarea")).toHaveValue("");
+ await expect(modal.getByRole("checkbox")).not.toBeChecked();
+ await expect(modal.getByRole("button",{name:"Feed",exact:true})).toHaveAttribute("aria-pressed","true");
+ await expect(modal.getByAltText("Lokal forhåndsvisning av bildet")).toBeHidden();
+ await expect(modal.getByRole("button",{name:"Publiser i AHA Insta"})).toBeDisabled();
+ expect(await input.evaluate(element=>element.files.length)).toBe(0);
+ await modal.locator("textarea").fill("Forkastes med Escape");
+ await page.keyboard.press("Escape");
+ await expect(modal).toBeHidden();
+ await expect(social.locator(".aha-social-my-grid .aha-social-grid-tile")).toHaveCount(0);
+ await social.getByRole("button",{name:"Legg til post"}).click();
+ await expect(modal.locator("textarea")).toHaveValue("");
+});
