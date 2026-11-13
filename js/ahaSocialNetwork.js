@@ -258,6 +258,9 @@
       : "Del med andre innloggede AHA-brukere i testmiljøet.");
     const submit = add("button", form, kind === "feed" ? "Publiser i AHA Feed" : "Publiser i AHA Insta");
     submit.type = "submit";
+    const publishRow = add("div", form, null, "aha-social-publish-row");
+    publishRow.appendChild(consentLabel);
+    publishRow.appendChild(submit);
     let publishing = false;
     function updateComposerState() {
       const picked = media?.files?.[0] || null;
