@@ -909,7 +909,7 @@
 }
 #aha-social-mount .aha-social-compose-dialog{
   position:fixed;inset:0;z-index:70;
-  width:min(100vw - 20px,540px);max-width:540px;
+  width:min(calc(100vw - 20px),540px);max-width:540px;
   max-height:calc(100dvh - 36px);height:auto;margin:auto;
   padding:0;border:1px solid #46566d;border-radius:18px;
   overflow:auto;color:#f5f7fc;background:#090c11;
