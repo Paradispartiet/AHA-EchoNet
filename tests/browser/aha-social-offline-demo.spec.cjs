@@ -47,6 +47,7 @@ test("offline iPad/Chromium preview handles local picture and account visibility
  });
  await social.locator('input[type="file"]').setInputFiles({name:"demo.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
  await expect(social.getByAltText("Lokal forhåndsvisning av bildet")).toBeVisible();
+ await expect(social.locator('input[type="file"]').locator("..")).toContainText("Bytt bilde");
  await social.locator("textarea").first().fill("Bilde fra iPad-demo");
  await social.getByRole("checkbox").check();
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
