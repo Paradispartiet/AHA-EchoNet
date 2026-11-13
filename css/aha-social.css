@@ -604,7 +604,7 @@
   background:#050609;border-radius:15px;
 }
 #aha-social-mount .aha-social-upload-hint{font-size:.74rem}
-#aha-social-mount .aha-social-compose>button:not([type="submit"]):disabled{display:none}
+#aha-social-mount .aha-social-compose>button:not([type="submit"]):disabled{opacity:.38;cursor:not-allowed}
 #aha-social-mount .aha-social-compose input[type="text"]{
   min-height:48px;background:#101721;border-radius:12px;
   border-color:#33435b;
