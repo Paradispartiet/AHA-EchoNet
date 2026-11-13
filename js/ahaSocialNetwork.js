@@ -357,7 +357,9 @@
     placeField?.addEventListener("input", updateComposerState);
     updateComposerState();
 
-    const status = add("p", panel, "", "module-meta aha-social-status");
+    // Keep upload/consent errors inside the open compose sheet.
+    // In profile mode, routine loading messages stay off the main screen.
+    const status = add("p", composeDialog || panel, "", "module-meta aha-social-status");
     status.setAttribute("role", "status");
     const profile = kind === "insta" ? add("section", panel, null, "aha-social-my-profile") : null;
     let profileName = null;
