@@ -11,8 +11,10 @@ test("offline iPad/Chromium preview exercises real Feed UI with two simulated ac
  const external=[];
  page.on("request",request=>{if(request.url().includes("aha-social-offline-demo.invalid"))external.push(request.url());});
  await page.goto("/social-demo.html?vis=feed",{waitUntil:"domcontentloaded"});
+ await page.locator(".demo-about > summary").click();
  await expect(page.getByRole("heading",{name:"Prøv AHA Feed og Insta på iPad"})).toBeVisible();
  await expect(page.getByText("Dette er en interaktiv simulering, ikke en ekte publisering.")).toBeVisible();
+ await page.locator(".demo-about > summary").click();
  const social=page.locator("#aha-social-mount");
  await expect(social.getByRole("heading",{name:"Delte oppdateringer"})).toBeVisible();
  await expect(social.locator(".aha-social-status")).toContainText("0 delte innlegg");
