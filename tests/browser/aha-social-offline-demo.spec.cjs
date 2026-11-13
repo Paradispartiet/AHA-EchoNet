@@ -583,3 +583,48 @@ test("app shell keeps the iPad dock fixed and makes Feed/Insta navigation touch-
  const widths=await page.evaluate(()=>({page:document.documentElement.scrollWidth,viewport:innerWidth}));
  expect(widths.page).toBeLessThanOrEqual(widths.viewport+1);
 });
+
+test("Insta opens on my profile with only my square photo grid and one header compose action",async({page})=>{
+ await page.setViewportSize({width:834,height:1112});
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const insta=page.locator("#aha-social-mount");
+ await expect(insta.locator(".aha-social-my-profile")).toBeVisible();
+ await expect(insta.getByRole("heading",{name:"Mine bilder"})).toBeVisible();
+ await expect(insta.getByRole("button",{name:"Legg til post"})).toBeVisible();
+ await expect(insta.getByRole("dialog",{name:"Nytt innlegg"})).toBeHidden();
+ await expect(insta.locator(".aha-social-browser")).toBeHidden();
+ await expect(insta.locator(".aha-social-navigation")).toBeHidden();
+ await expect(insta.locator(".aha-social-profile-empty")).toContainText("Ingen bilder ennå");
+ await insta.getByRole("button",{name:"Legg til post"}).click();
+ const compose=insta.getByRole("dialog",{name:"Nytt innlegg"});
+ await expect(compose).toBeVisible();
+ const bytes=await page.evaluate(async()=>{
+  const c=document.createElement("canvas");c.width=130;c.height=130;
+  c.getContext("2d").fillRect(0,0,130,130);
+  const blob=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+  return Array.from(new Uint8Array(await blob.arrayBuffer()));
+ });
+ await compose.locator('input[type="file"]').setInputFiles({
+   name:"my-grid.png",mimeType:"image/png",buffer:Buffer.from(bytes)
+ });
+ await compose.locator("textarea").first().fill("Mitt eget bilde");
+ await compose.getByRole("checkbox").check();
+ await compose.getByRole("button",{name:"Publiser i AHA Insta"}).click();
+ await expect(compose).toBeHidden();
+ const grid=insta.locator(".aha-social-my-grid");
+ const tiles=grid.locator(".aha-social-grid-tile");
+ await expect(tiles).toHaveCount(1);
+ await expect(insta.locator(".aha-social-profile-count")).toHaveText("1 innlegg");
+ await expect(tiles.first().locator("img")).toHaveAttribute("src",/^blob:/);
+ expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(3);
+ await tiles.first().click();
+ const detail=insta.getByRole("dialog",{name:"Vis bildeinnlegg"});
+ await expect(detail).toContainText("Mitt eget bilde");
+ await detail.getByRole("button",{name:"Lukk bildeinnlegg"}).click();
+ await expect(detail).toBeHidden();
+ await page.getByRole("button",{name:"Konto B"}).click();
+ await expect(tiles).toHaveCount(0);
+ await expect(insta.locator(".aha-social-profile-empty")).toContainText("Ingen bilder ennå");
+ await openInstaView(page,"feed");
+ await expect(insta.locator(".aha-social-post")).toContainText("Mitt eget bilde");
+});
