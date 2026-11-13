@@ -491,3 +491,25 @@ test("private Insta draft can always discard its photo before consent or caption
  await expect(ui.locator(".aha-social-post")).toHaveCount(0);
  expect(await ui.locator('input[type="file"]').evaluate(input=>input.files.length)).toBe(0);
 });
+
+test("Insta image-first picker shrinks when a photo is selected and resets on discard",async({page})=>{
+ await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
+ const ui=page.locator("#aha-social-mount");
+ const picker=ui.locator('input[type="file"]');
+ const pickerLabel=ui.locator('.aha-social-compose label:has(> input[type="file"])');
+ const initial=await pickerLabel.evaluate(el=>el.getBoundingClientRect().height);
+ const bytes=await page.evaluate(async()=>{
+  const c=document.createElement("canvas");c.width=140;c.height=110;
+  c.getContext("2d").fillRect(0,0,140,110);
+  const b=await new Promise(resolve=>c.toBlob(resolve,"image/png"));
+  return Array.from(new Uint8Array(await b.arrayBuffer()));
+ });
+ await picker.setInputFiles({name:"test.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
+ await expect(ui.getByAltText("Lokal forhåndsvisning av bildet")).toBeVisible();
+ const selected=await pickerLabel.evaluate(el=>el.getBoundingClientRect().height);
+ expect(selected).toBeLessThan(initial-50);
+ await ui.getByRole("button",{name:"Fjern valgt bilde"}).click();
+ await expect(ui.getByAltText("Lokal forhåndsvisning av bildet")).toBeHidden();
+ const restored=await pickerLabel.evaluate(el=>el.getBoundingClientRect().height);
+ expect(restored).toBeGreaterThan(selected+50);
+});

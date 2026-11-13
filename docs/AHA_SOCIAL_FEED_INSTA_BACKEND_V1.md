@@ -135,3 +135,7 @@ Knappen «Publiser» er nå deaktivert inntil nødvendige vilkår er oppfylt, og
 ### Utkast: fjern bilde uten samtykke
 
 Bilde/film kan fjernes fra den lokale komponisten **før** publiseringsknappen er aktiv og før delingssamtykke. Den tidligere koblingen fra «Fjern valgt bilde» til `submit.disabled` gjorde at en fjerning kunne stoppes når samtykke manglet; nå blokkeres kun redigering under en pågående faktisk publisering (`publishing`). Eget iPad/Chromium-regresjonstilfelle verifiserer ingen opplasting, tomt filvalg og skjult forhåndsvisning. 
+
+### Større bilde i Insta-komponisten
+
+Når et bilde eller en lokalt testet Reel-video vises, krymper den store bildevelgeren automatisk til en diskret knapp. Når utkastet tømmes, vokser den tilbake. Dette er ren CSS knyttet til faktisk forhåndsvisning (ikke et nytt API eller en ekstra JavaScript-tilstand) og kontrolleres i iPad/WebKit og Chromium.

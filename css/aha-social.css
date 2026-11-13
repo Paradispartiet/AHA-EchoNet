@@ -415,3 +415,27 @@
 @media(prefers-reduced-motion:reduce){
   .aha-social-compose>button[type="submit"]:not(:disabled){transition:none}
 }
+
+/* Shrink the large file picker once a local picture/video preview is visible.
+   CSS-only state: no JS state to go stale after discard, reset or upload. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose:has(> .aha-social-media:not([hidden]))
+  label:has(>input[type="file"]){
+  min-height:52px;
+  flex-direction:row;
+  justify-content:flex-start;
+  padding:.45rem .85rem;
+  border-style:solid;
+  border-color:#50627d;
+  background:#161f2d;
+  font-size:.82rem;
+  border-radius:11px;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose:has(> .aha-social-media:not([hidden]))
+  label:has(>input[type="file"])::before{
+  content:"↻";
+  width:29px;height:29px;
+  border-radius:50%;
+  font-size:1.05rem;
+  background:#2a3e58;
+  border-color:#728aa9;
+}
