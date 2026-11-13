@@ -182,7 +182,10 @@
       dismiss.setAttribute("aria-label", "Lukk nytt innlegg");
       dismiss.addEventListener("click", () => composeDialog.close());
       headerAdd.addEventListener("click", () => {
-        if (!composeDialog.open) composeDialog.showModal();
+        if (!composeDialog.open) {
+          status.textContent = "";
+          composeDialog.showModal();
+        }
       });
     }
     const form = add("form", composeDialog || panel, null, "module-form aha-social-compose");
