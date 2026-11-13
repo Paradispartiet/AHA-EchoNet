@@ -107,7 +107,7 @@
     add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");
     add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
     const headerActions = kind === "insta" ? add("div", mast, null, "aha-social-header-actions") : null;
-    const headerAdd = headerActions ? add("button", headerActions, "+ Legg til", "aha-social-header-add") : null;
+    const headerAdd = headerActions ? add("button", headerActions, "+ Legg til post", "aha-social-header-add") : null;
     if (headerAdd) {
       headerAdd.type = "button";
       headerAdd.setAttribute("aria-label", "Legg til post");
