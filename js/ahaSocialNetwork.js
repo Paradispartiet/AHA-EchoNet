@@ -739,7 +739,7 @@
             if (candidate.protocol === "https:" && !candidate.username && !candidate.password) validUrl = candidate.href;
           } catch {}
         }
-        const video = post.mediaType === "video" || /\\.(mp4|webm|mov)(\\?|$)/i.test(validUrl);
+        const video = post.mediaType === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(validUrl);
         if (validUrl) {
           const visual = add(video ? "video" : "img", tile, null, "aha-social-grid-image");
           visual.referrerPolicy = "no-referrer";
