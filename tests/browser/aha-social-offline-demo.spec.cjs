@@ -13,6 +13,9 @@ test("offline iPad/Chromium preview exercises real Feed UI with two simulated ac
  await social.getByRole("checkbox").check();
  await social.getByRole("button",{name:"Publiser i AHA Feed"}).click();
  await expect(social.locator(".aha-social-post")).toContainText("Testpost i lokal forhåndsvisning");
+ await expect(social.locator(".aha-social-post .aha-social-action-icon")).toHaveCount(2);
+ await expect(social.getByRole("button",{name:"Lik (0)"})).toBeVisible();
+ await expect(social.getByRole("button",{name:"Kommentarer (0)"})).toBeVisible();
  await page.getByRole("button",{name:"Konto B"}).click();
  await expect(page.locator("#demo-account-b")).toHaveAttribute("aria-pressed","true");
  await expect(social.locator(".aha-social-post")).toContainText("Testpost i lokal forhåndsvisning");
@@ -52,6 +55,9 @@ test("offline iPad/Chromium preview handles local picture and account visibility
  await social.getByRole("checkbox").check();
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
  await expect(social.locator(".aha-social-post")).toContainText("Bilde fra iPad-demo");
+ await expect(social.locator(".aha-social-post .aha-social-action-icon")).toHaveCount(2);
+ await expect(social.getByRole("button",{name:"Lik (0)"})).toBeVisible();
+ await expect(social.getByRole("button",{name:"Kommentarer (0)"})).toBeVisible();
  await expect(social.locator(".aha-social-post img")).toHaveAttribute("src",/^blob:/);
  await page.getByRole("button",{name:"Konto B"}).click();
  await expect(social.locator(".aha-social-post img")).toHaveAttribute("src",/^blob:/);
