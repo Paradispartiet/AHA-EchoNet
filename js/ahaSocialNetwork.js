@@ -85,16 +85,46 @@
     add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
     const navigation = add("nav", mast, null, "aha-social-navigation");
     navigation.setAttribute("aria-label", "AHA sosiale flater");
-    for (const page of ["feed", "insta"]) {
-      const link = add("a", navigation, page === "feed" ? "Feed" : "Insta");
-      link.href = global.__AHA_OFFLINE_DEMO__ === true
-        ? "social-demo.html?vis=" + page
-        : page + ".html";
-      if (page === kind) link.setAttribute("aria-current", "page");
+    // An app-style bottom dock. The middle action opens the local composer
+    // rather than attempting publication or bypassing the consent gate.
+    for (const page of ["feed", "compose", "insta"]) {
+      const item = add(page === "compose" ? "button" : "a", navigation, null,
+        page === "compose" ? "aha-social-nav-compose" : "aha-social-nav-page");
+      if (page === "compose") {
+        item.type = "button";
+        item.setAttribute("aria-label", kind === "feed" ? "Skriv nytt innlegg" : "Velg bilde til nytt innlegg");
+        item.addEventListener("click", () => {
+          form.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (kind === "feed") message?.focus({ preventScroll: true });
+          else media?.click();
+        });
+      } else {
+        item.href = global.__AHA_OFFLINE_DEMO__ === true
+          ? "social-demo.html?vis=" + page : page + ".html";
+        if (page === kind) item.setAttribute("aria-current", "page");
+      }
+      const svg = global.document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.8");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      svg.setAttribute("aria-hidden", "true");
+      const path = global.document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", page === "feed"
+        ? "M5 5h14M5 10h14M5 15h10M5 20h7"
+        : page === "insta"
+          ? "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5a4 4 0 1 0 0 8a4 4 0 0 0 0-8Zm5.5-.5h.01"
+          : "M12 5v14M5 12h14");
+      svg.appendChild(path);
+      item.appendChild(svg);
+      add("span", item, page === "feed" ? "Feed" : page === "insta" ? "Insta" : "Ny");
     }
-    add("p", panel, "Egen testfeed · private AHA-innlegg deles aldri automatisk.", "aha-social-intro");
+    add("p", panel, "Testmiljø · ingen private AHA-innlegg deles automatisk.", "aha-social-intro");
 
     const form = add("form", panel, null, "module-form aha-social-compose");
+    form.id = "aha-social-compose";
     if (kind === "feed") {
       const composeLead = add("div", form, null, "aha-social-compose-lead");
       const avatar = add("span", composeLead, "A", "aha-social-avatar aha-social-self-avatar");
@@ -164,6 +194,7 @@
         }
       });
       const types = add("fieldset", form, null, "aha-social-type-selector");
+      form.insertBefore(types, mediaLabel);
       const legend = add("legend", types, "Publiser som");
       const bar = add("div", types, null, "aha-social-tabs");
       const modes = ["feed","reel","map"];
