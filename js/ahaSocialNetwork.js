@@ -379,8 +379,10 @@
     const refresh = add("button", feedTools, "Oppdater delte innlegg", "aha-social-refresh");
     refresh.type = "button";
     let viewButtons = [];
+    let browser = null;
     if (kind === "insta") {
-      const browser = add("nav", panel, null, "aha-social-browser");
+      browser = add("nav", panel, null, "aha-social-browser");
+      browser.hidden = true;
       browser.setAttribute("aria-label", "Bla i Insta");
       add("p", browser, "Velg visning", "aha-social-browser-title");
       const actions = add("div", browser, null, "aha-social-tabs aha-social-reading-tabs");
@@ -406,6 +408,20 @@
     if (profile) {
       list.hidden = true;
       feedTools.hidden = true;
+    }
+    const postDialog = profile ? add("dialog", panel, null, "aha-social-post-dialog") : null;
+    const postDialogBody = postDialog ? add("div", postDialog, null, "aha-social-post-dialog-body") : null;
+    if (postDialog) {
+      postDialog.setAttribute("aria-label", "Vis bildeinnlegg");
+      const closePost = add("button", postDialog, "Lukk", "aha-social-post-dialog-close");
+      closePost.type = "button";
+      closePost.setAttribute("aria-label", "Lukk bildeinnlegg");
+      postDialog.insertBefore(closePost, postDialogBody);
+      closePost.addEventListener("click", () => postDialog.close());
+      postDialog.addEventListener("close", () => {
+        clear(postDialogBody);
+        renderList();
+      });
     }
     // The image viewer uses an existing, already loaded image URL. No second
     // authenticated download, external share or original-image upload occurs.
@@ -678,13 +694,85 @@
     }
 
     function setViewMode(mode) {
-      if (!["feed","reel","map"].includes(mode) || kind !== "insta") return;
+      if (!["profile","feed","reel","map"].includes(mode) || kind !== "insta") return;
       viewMode = mode;
+      if (profile) profile.hidden = mode !== "profile";
+      if (list) list.hidden = mode === "profile";
+      if (feedTools) feedTools.hidden = mode === "profile";
+      if (browser) browser.hidden = mode === "profile";
       for (const button of viewButtons) {
         button.setAttribute("aria-pressed", String(button.dataset.view === mode));
       }
       if (placeSearch) placeSearch.parentElement.hidden = mode !== "map";
+      headerMore.open = false;
       renderList();
+    }
+    if (profileMenuButton) profileMenuButton.addEventListener("click", () => setViewMode("profile"));
+    for (const [mode, button] of browseMenuButtons) {
+      button.addEventListener("click", () => setViewMode(mode));
+    }
+
+    function renderProfile() {
+      if (!profile || !profileGrid) return 0;
+      clear(profileGrid);
+      const own = cachedPosts.filter(post => post.ownPost === true);
+      const firstName = own.find(post => post.authorName)?.authorName;
+      profileName.textContent = firstName || "Min profil";
+      profileCount.textContent = own.length + (own.length === 1 ? " innlegg" : " innlegg");
+      if (!own.length) {
+        const empty = add("div", profileGrid, null, "aha-social-profile-empty");
+        add("span", empty, "▧", "aha-social-profile-empty-icon").setAttribute("aria-hidden", "true");
+        add("p", empty, "Ingen bilder ennå");
+        add("small", empty, "Legg til et bilde fra knappen øverst.");
+        return 0;
+      }
+      for (const post of own) {
+        const tile = add("button", profileGrid, null, "aha-social-grid-tile");
+        tile.type = "button";
+        tile.setAttribute("aria-label", "Vis innlegg" + (post.text ? ": " + post.text.slice(0, 100) : ""));
+        const raw = typeof post.mediaUrl === "string" ? post.mediaUrl : "";
+        const privateUrl = global.AHASocialMedia?.isPrivateMediaUrl?.(raw);
+        let validUrl = privateUrl ? raw : "";
+        if (!validUrl) {
+          try {
+            const candidate = new URL(raw);
+            if (candidate.protocol === "https:" && !candidate.username && !candidate.password) validUrl = candidate.href;
+          } catch {}
+        }
+        const video = post.mediaType === "video" || /\\.(mp4|webm|mov)(\\?|$)/i.test(validUrl);
+        if (validUrl) {
+          const visual = add(video ? "video" : "img", tile, null, "aha-social-grid-image");
+          visual.referrerPolicy = "no-referrer";
+          if (video) {
+            visual.playsInline = true;
+            visual.muted = true;
+            visual.preload = "metadata";
+          } else {
+            visual.alt = "";
+            visual.loading = "lazy";
+          }
+          if (privateUrl) {
+            const generation = renderGeneration;
+            global.AHASocialMedia.renderProtected(validUrl, visual, origin()).then(release => {
+              if (generation !== renderGeneration) release();
+              else mediaReleases.add(release);
+            }).catch(() => {
+              tile.setAttribute("aria-label", "Bildet kunne ikke vises");
+              add("span", tile, "Bilde utilgjengelig", "aha-social-grid-unavailable");
+            });
+          } else visual.src = validUrl;
+        } else add("span", tile, "Bilde utilgjengelig", "aha-social-grid-unavailable");
+        if (post.instaMode === "reel") {
+          const marker = add("span", tile, "▶", "aha-social-grid-reel");
+          marker.setAttribute("aria-hidden", "true");
+        }
+        tile.addEventListener("click", () => {
+          clear(postDialogBody);
+          renderPost(post, postDialogBody);
+          postDialog.showModal();
+        });
+      }
+      return own.length;
     }
 
     function renderList() {
@@ -694,6 +782,11 @@
       mediaReleases.clear();
       clear(list);
       const rows = cachedPosts;
+      if (kind === "insta" && viewMode === "profile") {
+        const count = renderProfile();
+        showStatus("Mine bilder: " + count + " innlegg.");
+        return;
+      }
       const search = (placeSearch?.value || "").trim().toLocaleLowerCase("nb-NO");
       const displayed = kind !== "insta" || viewMode === "feed" ? rows
         : viewMode === "reel" ? rows.filter(post => post.instaMode === "reel")
@@ -819,6 +912,10 @@
         pendingKey = null;
         pendingSignature = null;
         pendingUploadKey = null;
+        if (kind === "insta") {
+          if (composeDialog?.open) composeDialog.close();
+          setViewMode("profile");
+        }
         await load();
         showStatus("Innlegget er publisert i testfeeden.");
       } catch (error) {
