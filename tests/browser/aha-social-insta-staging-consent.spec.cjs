@@ -114,7 +114,10 @@ test("AHA Insta keeps image private until consent and shows published media to a
 
   await page.goto("/insta.html", { waitUntil: "domcontentloaded" });
   const social = page.locator("#aha-social-mount .aha-social-panel");
-  await expect(social.getByRole("heading", { name: "Delte bilder og videoer" })).toBeVisible();
+  await expect(social.locator(".aha-social-my-profile")).toBeVisible();
+  await expect(social.locator(".aha-social-my-grid")).toBeVisible();
+  await expect(social.locator(".aha-social-compose-dialog")).toBeHidden();
+  await social.getByRole("button", { name: "Legg til post" }).click();
   const preview = social.getByAltText("Lokal forhåndsvisning av bildet");
   await expect(preview).toBeHidden();
 
@@ -155,6 +158,10 @@ test("AHA Insta keeps image private until consent and shows published media to a
   await expect(social.locator(".aha-social-status")).toContainText("publisert i testfeeden");
   expect(calls.uploads).toBe(1);
   expect(calls.publishes).toBe(1);
+  await expect(social.locator(".aha-social-compose-dialog")).toBeHidden();
+  await expect(social.locator(".aha-social-my-grid .aha-social-grid-tile")).toHaveCount(1);
+  await social.locator(".aha-social-header-more > summary").click();
+  await social.getByRole("button", { name: "Vis Feed" }).click();
   await expect(social.locator(".aha-social-post")).toContainText("Mitt første delte bilde");
   await expect(social.locator(".aha-social-post img")).toHaveAttribute("src", /^blob:/);
 
