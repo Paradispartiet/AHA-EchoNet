@@ -180,7 +180,11 @@
       const dismiss = add("button", dialogHead, "Lukk");
       dismiss.type = "button";
       dismiss.setAttribute("aria-label", "Lukk nytt innlegg");
-      dismiss.addEventListener("click", () => composeDialog.close());
+      dismiss.addEventListener("click", () => { void abandonDraft(); });
+      composeDialog.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        void abandonDraft();
+      });
       headerAdd.addEventListener("click", () => {
         if (!composeDialog.open) {
           status.textContent = "";
@@ -450,6 +454,48 @@
     let pendingSignature = null;
     let pendingUploadKey = null;
     let pendingMediaPath = null;
+    let abandoningDraft = false;
+    async function abandonDraft() {
+      if (!composeDialog?.open || publishing || abandoningDraft) return;
+      abandoningDraft = true;
+      try {
+        // A canceled post must not keep a selected image, previous consent,
+        // or an unshared staged upload around for the next composer session.
+        if (pendingMediaPath) {
+          try {
+            await global.AHASocialMedia.deletePending(pendingMediaPath, origin());
+          } catch (error) {
+            showStatus(error.message || "Kunne ikke fjerne kladden fra staging.");
+            return;
+          }
+        }
+        pendingMediaPath = null;
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        if (media) {
+          media.value = "";
+          media.accept = "image/*";
+        }
+        if (message) message.value = "";
+        if (placeField) placeField.value = "";
+        if (consent) consent.checked = false;
+        if (discard) discard.disabled = true;
+        instaMode = "feed";
+        for (const button of form.querySelectorAll(".aha-social-type-selector button[data-mode]")) {
+          button.setAttribute("aria-pressed", String(button.dataset.mode === "feed"));
+        }
+        fileVersion++;
+        updatePickerLabel();
+        updateComposerState();
+        showStatus("");
+        composeDialog.close();
+      } finally {
+        abandoningDraft = false;
+      }
+    }
     if (discard) {
       discard.addEventListener("click", async () => {
         // Clearing a local draft must not depend on whether the separate
