@@ -121,6 +121,9 @@
       item.appendChild(svg);
       add("span", item, page === "feed" ? "Feed" : page === "insta" ? "Insta" : "Ny");
     }
+    // Keep the dock outside the blurred sticky masthead: WebKit otherwise
+    // treats the header as the containing block for position:fixed.
+    panel.appendChild(navigation);
     add("p", panel, "Testmiljø · ingen private AHA-innlegg deles automatisk.", "aha-social-intro");
 
     const form = add("form", panel, null, "module-form aha-social-compose");
