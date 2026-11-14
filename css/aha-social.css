@@ -1079,3 +1079,16 @@
 #aha-social-mount[data-social-kind="insta"] .aha-social-compose-options:not([open]) .aha-social-type-selector{
   display:none!important;
 }
+
+/* The photo grid is the profile, not another labelled dashboard section. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-grid-heading{
+  position:absolute!important;width:1px;height:1px;
+  margin:-1px;padding:0;border:0;overflow:hidden;
+  white-space:nowrap;clip-path:inset(50%);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-my-grid{
+  border-top:1px solid #293341;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-profile-identity{
+  padding-bottom:1.15rem;
+}
