@@ -635,6 +635,8 @@ test("Insta opens on my profile with only my square photo grid and one header co
  const tiles=grid.locator(".aha-social-grid-tile");
  await expect(tiles).toHaveCount(1);
  await expect(insta.locator(".aha-social-profile-count")).toHaveText("1 innlegg");
+ await expect(insta.locator(".aha-social-profile-info h3")).toHaveText("Testkonto A");
+ await expect(insta.locator(".aha-social-profile-avatar")).toHaveText("T");
  await expect(tiles.first().locator("img")).toHaveAttribute("src",/^blob:/);
  expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(" ").length)).toBe(3);
  await tiles.first().click();
