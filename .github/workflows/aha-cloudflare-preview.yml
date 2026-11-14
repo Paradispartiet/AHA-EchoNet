@@ -1,0 +1,113 @@
+name: AHA Cloudflare preview (manual only)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/aha-cloudflare-preview.yml'
+      - 'scripts/build-cloudflare-preview.mjs'
+      - 'docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md'
+  workflow_dispatch:
+    inputs:
+      pages_project:
+        description: AHA Direct Upload Pages project name
+        required: true
+        default: aha-echonet-preview
+        type: string
+      create_project:
+        description: Create a new Pages project on the first run only
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check Cloudflare static package (no credentials)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build static frontend allowlist
+        run: node scripts/build-cloudflare-preview.mjs
+
+      - name: Check published files are frontend-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .cloudflare-preview-dist/index.html
+          test -f .cloudflare-preview-dist/feed.html
+          test -f .cloudflare-preview-dist/insta.html
+          test -f .cloudflare-preview-dist/js/ahaFeed.js
+          test -f .cloudflare-preview-dist/css/aha-dashboard.css
+          test ! -e .cloudflare-preview-dist/server.js
+          test ! -e .cloudflare-preview-dist/backend
+          test ! -e .cloudflare-preview-dist/supabase
+          test ! -e .cloudflare-preview-dist/.github
+          test ! -e .cloudflare-preview-dist/package.json
+
+  preview:
+    # No automatic trigger; refuse to deploy a PR branch or a tagged ref.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: aha-cloudflare-preview
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js for static packaging
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build allowlisted frontend only
+        env:
+          AHA_BUILD_SHA: ${{ github.sha }}
+        run: node scripts/build-cloudflare-preview.mjs
+
+      - name: Create a Pages project in the AHA account (optional, first run)
+        if: inputs.create_project == true
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT: ${{ inputs.pages_project }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN}" || -z "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
+            echo "::error::Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in aha-cloudflare-preview."
+            exit 1
+          fi
+          if [[ ! "${PAGES_PROJECT}" =~ ^[a-z0-9][a-z0-9-]{1,61}$ ]]; then
+            echo "::error::Invalid Cloudflare Pages project name."
+            exit 1
+          fi
+          npx --yes wrangler@4 pages project create "${PAGES_PROJECT}" --production-branch=main
+
+      - name: Deploy to isolated Cloudflare Pages preview
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT: ${{ inputs.pages_project }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN}" || -z "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
+            echo "::error::Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in aha-cloudflare-preview."
+            exit 1
+          fi
+          if [[ ! "${PAGES_PROJECT}" =~ ^[a-z0-9][a-z0-9-]{1,61}$ ]]; then
+            echo "::error::Invalid Cloudflare Pages project name."
+            exit 1
+          fi
+          npx --yes wrangler@4 pages deploy .cloudflare-preview-dist \
+            --project-name="${PAGES_PROJECT}" \
+            --branch=aha-preview
