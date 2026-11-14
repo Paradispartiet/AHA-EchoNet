@@ -92,7 +92,7 @@ if (sha) {
 await writeFile(path.join(out, "robots.txt"), "User-agent: *\nDisallow: /\n");
 await writeFile(
   path.join(out, "_headers"),
-  "/*\\n  X-Robots-Tag: noindex, nofollow, noarchive\\n  X-Content-Type-Options: nosniff\\n  Referrer-Policy: strict-origin-when-cross-origin\\n"
+  "/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n"
 );
 console.log("Cloudflare staging static build: " + copied.length + " public frontend assets.");
 console.log("Excluded: server, backend, SQL, workflows, secrets, docs, source tests.");
