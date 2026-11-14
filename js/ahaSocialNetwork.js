@@ -377,10 +377,12 @@
     let profileName = null;
     let profileCount = null;
     let profileGrid = null;
+    let profileAvatar = null;
+    let signedInProfileName = "";
     if (profile) {
       const identity = add("header", profile, null, "aha-social-profile-identity");
-      const icon = add("span", identity, "A", "aha-social-avatar aha-social-profile-avatar");
-      icon.setAttribute("aria-hidden", "true");
+      profileAvatar = add("span", identity, "A", "aha-social-avatar aha-social-profile-avatar");
+      profileAvatar.setAttribute("aria-hidden", "true");
       const description = add("div", identity, null, "aha-social-profile-info");
       profileName = add("h3", description, "Min profil");
       profileCount = add("span", description, "0 innlegg", "aha-social-profile-count");
@@ -778,7 +780,10 @@
       clear(profileGrid);
       const own = cachedPosts.filter(post => post.ownPost === true);
       const firstName = own.find(post => post.authorName)?.authorName;
-      profileName.textContent = firstName || "Min profil";
+      const displayName = signedInProfileName || firstName || "Min profil";
+      profileName.textContent = displayName;
+      profileAvatar.textContent = displayName === "Min profil"
+        ? "A" : displayName.trim().slice(0, 1).toLocaleUpperCase("nb-NO") || "A";
       profileCount.textContent = own.length + (own.length === 1 ? " innlegg" : " innlegg");
       if (!own.length) {
         const empty = add("div", profileGrid, null, "aha-social-profile-empty");
@@ -899,6 +904,23 @@
       }
     }
 
+    async function loadSignedInProfile() {
+      if (!profile || typeof global.AHAAuth?.loadProfile !== "function") return;
+      try {
+        // Only the authenticated profile's own display name, never an email,
+        // is used for the public-facing header.
+        const response = await global.AHAAuth.loadProfile();
+        const name = response?.ok && typeof response.data?.display_name === "string"
+          ? response.data.display_name.trim().slice(0, 80) : "";
+        if (name) {
+          signedInProfileName = name;
+          if (viewMode === "profile") renderProfile();
+        }
+      } catch {
+        // An unavailable optional profile lookup must not block the image grid.
+      }
+    }
+
     refresh.addEventListener("click", () => load());
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1001,6 +1023,7 @@
       }
     });
     await load();
+    await loadSignedInProfile();
     return true;
   }
 
