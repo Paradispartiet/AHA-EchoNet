@@ -152,13 +152,14 @@ test("Map browsing is separate from the publish type and place tags can filter p
  await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
  await social.locator("textarea").first().fill("Et stedstaggede bilde");
  await social.getByRole("checkbox").check();
+ await expect(social.locator('.aha-social-type-selector button[data-mode="map"]')).toHaveAttribute("aria-pressed","true");
  await social.getByRole("button",{name:"Publiser i AHA Insta"}).click();
  await openInstaView(page,"map");
  await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
- const publishMap=social.locator('.aha-social-type-selector button[data-mode="map"]');
- await expect(publishMap).toHaveAttribute("aria-pressed","true");
+ // Browsing Map/Feed never changes the type of the next post.
+ await expect(social.locator('.aha-social-type-selector button[data-mode="feed"]')).toHaveAttribute("aria-pressed","true");
  await openInstaView(page,"feed");
- await expect(publishMap).toHaveAttribute("aria-pressed","true");
+ await expect(social.locator('.aha-social-type-selector button[data-mode="feed"]')).toHaveAttribute("aria-pressed","true");
  await expect(social.locator(".aha-social-post")).toContainText("Et stedstaggede bilde");
  await social.getByRole("button",{name:"Se bilder fra Oslo sentrum"}).click();
  await expect(social.locator('.aha-social-reading-tabs button[data-view="map"]')).toHaveAttribute("aria-pressed","true");
@@ -169,6 +170,11 @@ test("Map browsing is separate from the publish type and place tags can filter p
  await expect(social.locator(".aha-social-list")).toContainText("Ingen bilder funnet");
  await social.getByRole("searchbox",{name:"Søk etter stedstag"}).fill("OSLO");
  await expect(social.locator(".aha-social-place-group")).toContainText("Oslo sentrum");
+ await social.getByRole("button",{name:"Legg til post"}).click();
+ const form= social.getByRole("dialog",{name:"Nytt innlegg"});
+ await expect(form.locator(".aha-social-compose-options > summary")).toHaveText("Bilde · andre formater");
+ await expect(form.getByRole("button",{name:"Publiser i AHA Insta"})).toBeDisabled();
+ await form.getByRole("button",{name:"Lukk nytt innlegg"}).click();
 });
 
 
