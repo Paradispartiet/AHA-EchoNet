@@ -25,7 +25,8 @@ on:
 jobs:
   browser-evaluation:
     name: Browser corpus and iPad WebKit gate
-    runs-on: ubuntu-latest
+    # Playwright 1.55 does not support the ubuntu-26.04 GitHub latest runner.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5

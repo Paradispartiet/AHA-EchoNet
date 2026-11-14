@@ -1,0 +1,1094 @@
+/* AHA social V2: two focused, dark, responsive reading surfaces.
+   Feed is text-first; Insta is image-first. Do not affect the local-only
+   screens unless their explicitly enabled social mount is in use. */
+
+#aha-social-mount {
+  --social-bg:#090b10; --social-surface:#0e1219;
+  --social-raised:#171d29; --social-line:#2b3443;
+  --social-ink:#f5f7fb; --social-muted:#a1aebe;
+  --social-accent:#94caff; --social-focus:#b5d5ff;
+  width:min(100%,700px); margin:0 auto; color:var(--social-ink);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#aha-social-mount *,#aha-social-mount *::before,#aha-social-mount *::after{box-sizing:border-box}
+#aha-social-mount button,#aha-social-mount input,#aha-social-mount textarea{font:inherit}
+#aha-social-mount button,#aha-social-mount a{touch-action:manipulation}
+#aha-social-mount button:focus-visible,#aha-social-mount a:focus-visible,
+#aha-social-mount textarea:focus-visible,#aha-social-mount input:focus-visible{
+  outline:3px solid var(--social-focus);outline-offset:2px;
+}
+.aha-social-panel{
+  margin:0 auto; padding:0;max-width:700px;min-width:0;
+  overflow:clip; color:var(--social-ink);background:var(--social-bg);
+  border:1px solid var(--social-line);border-radius:18px;
+  box-shadow:0 12px 36px rgba(0,0,0,.12);
+}
+.aha-social-masthead{
+  position:sticky;top:0;z-index:4;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;padding:.85rem 1.15rem;
+  background:rgba(11,15,22,.95);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--social-line);
+}
+.aha-social-brand{display:flex;align-items:center;gap:.68rem;min-width:0}
+.aha-social-brandmark{
+  display:grid;place-items:center;flex:0 0 39px;
+  width:39px;height:39px;border-radius:12px;
+  background:#f3f6fc;color:#111826;font-size:1.35rem;
+  font-weight:900;letter-spacing:-.06em;
+}
+.aha-social-heading{min-width:0}
+.aha-social-brandname{display:block;font-weight:750;font-size:.86rem;letter-spacing:.025em;line-height:1.2}
+.aha-social-heading h2{font-size:.74rem;line-height:1.4;letter-spacing:0;
+  margin:.1rem 0 0;color:var(--social-muted);font-weight:500}
+.aha-social-navigation{display:flex;align-items:center;gap:.16rem;flex:0 0 auto}
+.aha-social-navigation a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:55px;min-height:44px;padding:.45rem .85rem;
+  text-decoration:none;color:var(--social-muted);font-size:.91rem;
+  font-weight:700;border-radius:999px;border:1px solid transparent;
+}
+.aha-social-navigation a[aria-current="page"]{
+  color:#fff;background:#243347;border-color:#43546d;
+}
+.aha-social-navigation a:hover{color:white;background:#1a2331}
+.aha-social-intro{
+  color:var(--social-muted);margin:0;padding:.6rem 1.15rem;
+  font-size:.77rem;line-height:1.4;border-bottom:1px solid var(--social-line);
+}
+.aha-social-compose{
+  display:grid;gap:.8rem;margin:0;padding:1.12rem 1.2rem 1.2rem;
+  background:var(--social-bg);border:0;
+  border-bottom:1px solid var(--social-line);
+}
+.aha-social-compose-lead{display:flex;gap:.7rem;align-items:center;font-size:.9rem}
+.aha-social-avatar{
+  display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;
+  border-radius:50%;background:linear-gradient(150deg,#6c8bf8,#456078 75%);
+  color:white;font-weight:800;font-size:1rem;
+  border:2px solid #303c54;
+}
+.aha-social-self-avatar{background:linear-gradient(145deg,#515e87,#384c76)}
+.aha-social-compose-lead strong{font-size:.88rem;color:#c7d4e5}
+.aha-social-compose label:not(.aha-social-consent){
+  display:grid;gap:.4rem;color:#dce4f1;font-weight:650;font-size:.91rem;
+}
+.aha-social-compose textarea{
+  width:100%;max-width:100%;min-height:92px;padding:.6rem .15rem;
+  background:transparent;border:0;border-radius:0;color:var(--social-ink);
+  font-size:1.13rem;line-height:1.55;resize:vertical;outline-offset:4px;
+}
+.aha-social-compose textarea::placeholder{color:#8999ac;opacity:1}
+.aha-social-counter{
+  justify-self:end;color:var(--social-muted);font-weight:650;
+  font-variant-numeric:tabular-nums;font-size:.84rem;
+}
+.aha-social-counter.near-limit{color:#ffcf8a}
+.aha-social-consent{display:flex;align-items:center;gap:.6rem;
+  color:#b5c0d0;font-weight:450;font-size:.8rem;line-height:1.4}
+.aha-social-consent input{flex:0 0 auto;width:18px;height:18px;margin:0;
+  accent-color:#a4d0fa}
+.aha-social-compose>button[type="submit"]{
+  justify-self:end;min-width:148px;min-height:44px;
+  border-radius:999px;border:0;padding:.62rem 1.2rem;
+  background:#e4f0ff;color:#102036;font-weight:800;cursor:pointer;
+}
+.aha-social-compose>button[type="submit"]:hover{background:#fff}
+.aha-social-compose>button[type="submit"]:disabled{opacity:.52;cursor:not-allowed}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose{gap:.55rem}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose textarea{
+  margin-left:52px;width:calc(100% - 52px);min-height:98px;
+  border-bottom:1px solid #293447;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose label:not(.aha-social-consent){
+  font-size:.78rem;color:var(--social-muted);
+}
+
+/* Insta: large picture picker, then type, location and optional caption. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose{
+  padding:1rem 1.1rem;gap:.84rem;background:var(--social-bg);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose label:has(>input[type="file"]){
+  position:relative;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;text-align:center;gap:.45rem;
+  min-height:190px;padding:1rem;border:1.5px dashed #67758b;
+  border-radius:15px;background:linear-gradient(155deg,#1c2431,#0e1219);
+  font-size:1rem;cursor:pointer;color:#dce9f8;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose label:has(>input[type="file"])::before{
+  content:"+";display:grid;place-items:center;
+  width:54px;height:54px;border-radius:50%;
+  border:1px solid #8d9cba;background:#293447;color:white;
+  font-size:2.15rem;font-weight:350;line-height:1;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose input[type="file"]{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;
+  cursor:pointer;z-index:1;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose label:has(>input[type="file"]):focus-within{
+  outline:3px solid var(--social-focus);outline-offset:2px
+}
+.aha-social-upload-hint{font-size:.76rem;color:var(--social-muted);margin:-.3rem 0 .15rem}
+.aha-social-compose .aha-social-media{
+  display:block;width:100%;max-height:min(65vh,560px);
+  margin:.15rem 0 .4rem;object-fit:contain;
+  background:#050709;border-radius:12px;
+}
+.aha-social-compose .aha-social-media[hidden]{display:none!important}
+.aha-social-compose>button:not([type="submit"]){
+  justify-self:start;min-height:38px;font-size:.8rem;
+  color:#cdd9ed;background:#1a2534;border:1px solid #4b5870;
+  border-radius:999px;padding:.42rem .8rem;cursor:pointer;
+}
+.aha-social-compose>button:not([type="submit"]):disabled{opacity:.45}
+.aha-social-type-selector{border:0;padding:0;margin:.1rem 0 0;min-width:0}
+.aha-social-type-selector legend{margin-bottom:.38rem;font-size:.78rem;
+  color:var(--social-muted);font-weight:650}
+.aha-social-tabs{display:flex;align-items:center;gap:.4rem;min-width:0}
+.aha-social-tabs button{
+  flex:1;min-height:44px;padding:.5rem .75rem;
+  color:#c0ccdd;border:1px solid #4c586c;border-radius:10px;
+  background:transparent;font-size:.86rem;font-weight:700;cursor:pointer;
+}
+.aha-social-tabs button[aria-pressed="true"]{color:#101c30;background:#e3edfb;border-color:#e3edfb}
+.aha-social-compose input[type="text"]{
+  width:100%;min-width:0;min-height:44px;color:#f3f6fc;
+  background:#131a24;border:1px solid #53627b;border-radius:10px;
+  padding:.65rem .8rem;
+}
+.aha-social-compose input[type="text"]::placeholder{color:#8998af}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose textarea{
+  min-height:60px;font-size:.95rem;border-bottom:1px solid #374357;
+}
+
+/* Slim reading controls instead of large nested cards. */
+.aha-social-status{padding:.4rem 1.15rem;margin:0;min-height:1.6rem;
+  color:#b1c0d1;font-size:.8rem}
+.aha-social-status:empty{padding:0;min-height:0}
+.aha-social-feed-tools{display:flex;align-items:center;justify-content:space-between;
+  gap:.8rem;padding:.65rem 1.1rem;border-bottom:1px solid var(--social-line)}
+.aha-social-feed-heading{font-size:.92rem;margin:0;font-weight:800}
+.aha-social-refresh{min-height:38px;padding:.35rem .75rem;font-size:.75rem;
+  font-weight:650;color:#b9cfea;background:#171f2b;border:1px solid #35455d;
+  border-radius:999px;cursor:pointer}
+.aha-social-browser{margin:0;padding:.8rem 1.1rem;
+  border-bottom:1px solid var(--social-line);background:transparent}
+.aha-social-browser-title{font-size:.77rem;color:var(--social-muted);
+  font-weight:650;margin:0 0 .45rem}
+.aha-social-reading-tabs button{border:0;border-bottom:2px solid transparent;
+  border-radius:0;background:transparent;color:var(--social-muted)}
+.aha-social-reading-tabs button[aria-pressed="true"]{
+  background:transparent;color:#fff;border-bottom-color:#c7e1ff;
+}
+.aha-social-place-search{display:grid;gap:.3rem;margin-top:.65rem;
+  color:#b7c9de;font-size:.8rem}
+.aha-social-place-search[hidden]{display:none!important}
+.aha-social-place-search input{width:100%;min-height:44px;padding:.6rem .8rem;
+  border-radius:10px;border:1px solid #53627b;background:#111924;color:#fff}
+
+/* Feed: author at left, flowing content and a thin, readable timeline. */
+.aha-social-list{display:block;margin:0;padding:0;min-width:0}
+.aha-social-post{min-width:0;overflow-wrap:anywhere;
+  background:transparent;border:0;border-radius:0;box-shadow:none;
+  padding:1rem 1.2rem;margin:0;
+  border-bottom:1px solid var(--social-line)}
+.aha-social-post-head{display:flex;align-items:center;gap:.7rem;min-width:0;
+  justify-content:flex-start;margin:0 0 .65rem}
+.aha-social-author-meta{display:flex;flex-direction:column;justify-content:center;
+  min-width:0;flex:1;line-height:1.32}
+.aha-social-author-meta strong{font-size:.9rem;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;color:var(--social-ink)}
+.aha-social-author-meta time{color:var(--social-muted);font-size:.72rem}
+.aha-social-feed-copy{font-size:1.02rem;line-height:1.56;white-space:pre-wrap;
+  margin:.15rem 0 .6rem 54px;color:#f0f3fa}
+.aha-social-actions{display:flex;flex-wrap:wrap;align-items:center;
+  gap:.35rem .7rem;margin:.65rem 0 0}
+.aha-social-post-feed .aha-social-actions{margin-left:48px}
+.aha-social-actions button{min-height:40px;background:transparent;
+  color:#b9c6d8;border:1px solid transparent;border-radius:999px;
+  padding:.35rem .6rem;font-size:.79rem;cursor:pointer}
+.aha-social-actions button:hover{background:#1c2b3b;color:#ecf4ff}
+.aha-social-post-feed .aha-social-actions button:first-child{color:#ee9eb2}
+.aha-social-comments{display:grid;gap:.45rem;margin:.6rem 0 0}
+.aha-social-comment{border:1px solid var(--social-line);
+  border-radius:10px;background:#141c29;padding:.55rem .75rem;font-size:.84rem}
+.aha-social-comment-form{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.45rem}
+.aha-social-comment-form input{flex:1 1 12rem;min-width:0;min-height:44px;
+  padding:.6rem .75rem;background:#0e1724;border:1px solid #53637a;
+  border-radius:999px;color:white}
+.aha-social-comment-form button{min-height:44px;padding:.5rem .8rem;border-radius:999px;
+  border:1px solid #667c95;background:#25354b;color:white}
+
+/* Insta: author -> full-width media -> actions -> caption. */
+.aha-social-post-insta{padding:0;margin:0;border-bottom:1px solid var(--social-line);
+  background:var(--social-bg)}
+.aha-social-post-insta .aha-social-post-head{
+  margin:0;padding:.9rem 1rem;min-height:66px;gap:.65rem}
+.aha-social-post-insta .aha-social-avatar{
+  width:40px;height:40px;flex-basis:40px;
+  background:linear-gradient(140deg,#c66ed0,#8358dc 48%,#ff9161);
+  border:2px solid #241a32;box-shadow:0 0 0 1px #a65a9e}
+.aha-social-kind{margin-left:auto;color:#a8b3c6;
+  text-transform:uppercase;letter-spacing:.1em;font-weight:750;font-size:.66rem}
+.aha-social-post-insta>.aha-social-media{display:block;
+  width:100%;max-width:100%;max-height:min(75vh,630px);margin:0 auto;
+  object-fit:contain;background:#030406;border:0;border-radius:0}
+.aha-social-post-insta>.aha-social-media[hidden]{display:none!important}
+.aha-social-post-insta>.aha-social-media:is(video){aspect-ratio:9/16}
+.aha-social-post-insta .aha-social-actions{
+  margin:0;padding:.6rem .8rem .3rem;gap:.15rem .4rem;
+}
+.aha-social-post-insta .aha-social-actions button:first-child{
+  color:#ffb2c2;font-weight:750;font-size:.91rem}
+.aha-social-caption{margin:.25rem 1rem .85rem;white-space:pre-wrap;
+  font-size:.9rem;line-height:1.55;color:#e8edf6}
+.aha-social-location{display:inline-flex;align-items:center;justify-content:flex-start;
+  margin:.15rem 0 0;min-height:24px!important;
+  padding:0!important;color:#adcdf6;text-align:left;
+  font-weight:500;font-size:.74rem;background:transparent!important;
+  border:0!important;cursor:pointer}
+.aha-social-location:hover{text-decoration:underline}
+.aha-social-post-insta .aha-social-comments,
+.aha-social-post-insta .aha-social-place-editor{margin:.5rem 1rem 1rem}
+.aha-social-place-editor{display:grid;gap:.55rem;padding:.75rem;
+  background:#101727;border:1px solid #40506a;border-radius:12px}
+.aha-social-place-editor[hidden]{display:none!important}
+.aha-social-place-editor label{display:grid;gap:.3rem;font-size:.86rem}
+.aha-social-place-editor input{width:100%;min-height:44px;padding:.6rem .75rem;
+  color:white;background:#0a121e;border:1px solid #596a87;border-radius:9px}
+.aha-social-place-editor-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.aha-social-place-editor-actions button[type="submit"]{background:#e5efff;
+  border-color:#e5efff;color:#142039;font-weight:700}
+.aha-social-reel-preview{aspect-ratio:9/16;object-fit:contain}
+.aha-social-post video.aha-social-media{max-height:80vh;aspect-ratio:9/16;object-fit:contain}
+
+/* Map groups are visually distinct, but never claim GPS coordinates. */
+.aha-social-place-group{padding:.75rem;border-bottom:1px solid var(--social-line)}
+.aha-social-place-group h3{font-size:.93rem;margin:.2rem 0 .75rem}
+.aha-social-place-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.aha-social-place-grid .aha-social-post-insta{
+  border:1px solid #3a4559;border-radius:12px;overflow:hidden;min-width:0}
+.aha-social-place-grid .aha-social-post-insta>.aha-social-media{
+  max-height:240px;aspect-ratio:1/1;object-fit:cover}
+.aha-social-place-grid .aha-social-post-head{padding:.6rem;min-height:50px}
+.aha-social-place-grid .aha-social-avatar{width:32px;height:32px;flex-basis:32px}
+.aha-social-place-grid .aha-social-caption{font-size:.82rem;margin:.25rem .65rem .65rem}
+.aha-social-place-grid .aha-social-actions{padding:.2rem .4rem}
+.aha-social-place-grid .aha-social-actions button{font-size:.72rem}
+
+/* Local/private Feed/Insta stay intact when the network switch is off. */
+.aha-social-enabled .aha-personal-header,
+.aha-social-enabled .aha-personal-compose,
+.aha-social-enabled .aha-personal-collection,
+.aha-social-enabled .insta-profile-section,
+.aha-social-enabled .insta-stories-section,
+.aha-social-enabled .insta-feed-section,
+.aha-social-enabled .aha-legacy-insta-compose,
+.aha-social-enabled .aha-legacy-insta-import,
+.aha-social-enabled .aha-personal-trust{display:none!important}
+#feed-character-count{display:block;text-align:right;margin:.4rem 0 .65rem}
+#feed-text{min-height:7rem;resize:vertical}
+.aha-social-enabled .aha-dashboard{width:min(100%,760px);margin-inline:auto}
+.aha-social-enabled .aha-dashboard #aha-social-mount{margin-top:.5rem}
+
+/* Tablet and iPhone/iPad portrait: no horizontal overflow or tiny controls. */
+@media(max-width:640px){
+  #aha-social-mount{width:100%}
+  .aha-social-panel{border-radius:0;border-left:0;border-right:0}
+  .aha-social-masthead{padding:.7rem .8rem}
+  .aha-social-intro{padding:.45rem .8rem}
+  .aha-social-compose{padding:.85rem .9rem}
+  .aha-social-post{padding:.8rem .9rem}
+  .aha-social-post-insta{padding:0}
+  .aha-social-post-insta .aha-social-post-head{padding:.75rem .85rem}
+  .aha-social-brandmark{width:35px;height:35px;flex-basis:35px}
+  .aha-social-navigation a{min-width:50px;padding:.4rem .65rem}
+  .aha-social-feed-copy{margin-left:51px}
+  .aha-social-post-feed .aha-social-actions{margin-left:47px}
+  .aha-social-post-insta .aha-social-actions{padding:.5rem .6rem}
+  .aha-social-place-grid{gap:.35rem}
+  .aha-social-place-grid .aha-social-post-insta{padding:0}
+}
+@media(max-width:380px){
+  .aha-social-masthead{gap:.3rem}
+  .aha-social-brand{gap:.35rem}
+  .aha-social-heading h2{font-size:.68rem}
+  .aha-social-navigation a{min-width:45px;padding:.45rem .5rem;font-size:.83rem}
+  .aha-social-post-insta .aha-social-actions{gap:.1rem}
+  .aha-social-actions button{padding:.35rem .35rem;font-size:.73rem}
+}
+@media(prefers-reduced-motion:reduce){#aha-social-mount *{scroll-behavior:auto!important}}
+
+
+/* Compact, accessible actions and a native full-screen Insta image viewer. */
+.aha-social-action-like[aria-pressed="true"]{color:#ff92a8!important;background:rgba(229,78,111,.11)!important}
+.aha-social-action-comment[aria-expanded="true"]{background:#213047!important;color:#e6f1ff!important}
+.aha-social-comments[hidden]{display:none!important}
+.aha-social-post-insta>img[role="button"].aha-social-media{cursor:zoom-in}
+.aha-social-post-insta>img[role="button"].aha-social-media:focus-visible{
+  outline:3px solid #b9d9ff;outline-offset:-4px;
+}
+.aha-social-lightbox{
+  position:fixed;inset:0;box-sizing:border-box;
+  width:min(calc(100vw - 1rem),1050px);max-width:none;
+  height:min(calc(100dvh - 1rem),1050px);max-height:none;
+  border:1px solid #59677d;border-radius:14px;padding:3.5rem .75rem .75rem;
+  overflow:auto;background:#080a0e;color:white;
+  box-shadow:0 18px 80px rgba(0,0,0,.6);
+}
+.aha-social-lightbox::backdrop{background:rgba(0,0,0,.86);backdrop-filter:blur(5px)}
+.aha-social-lightbox-image{
+  display:block;max-width:100%;max-height:calc(100dvh - 5.5rem);
+  width:auto;height:auto;object-fit:contain;margin:auto;
+}
+.aha-social-lightbox-close{
+  position:absolute;right:.65rem;top:.65rem;min-height:42px;
+  background:#1c2635;border:1px solid #60708a;border-radius:999px;
+  color:#fff;padding:.5rem 1.05rem;font-size:.86rem;cursor:pointer;
+}
+.aha-social-empty{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:2.2rem 1.1rem 2.6rem;color:#c1cede;
+}
+.aha-social-empty-icon{
+  display:grid;place-items:center;width:63px;height:63px;
+  border:1px solid #48586f;border-radius:50%;font-size:2rem;
+  margin-bottom:.8rem;color:#c2d9f1;
+}
+.aha-social-empty h3{font-size:1.05rem;line-height:1.3;margin:0;color:#f0f4fa}
+.aha-social-empty p{font-size:.87rem;line-height:1.5;margin:.5rem 0 0}
+@media(max-width:520px){
+  .aha-social-lightbox{width:100vw;height:100dvh;border:0;border-radius:0;padding:3.4rem .35rem .35rem}
+  .aha-social-lightbox-image{max-height:calc(100dvh - 4rem)}
+}
+
+
+/* Context menu: only core timeline actions remain visible beneath posts.
+   Delete, report and photo tag editing sit in a native details disclosure. */
+.aha-social-more{
+  position:relative;margin-left:auto;flex:0 0 auto;color:#b5c3d6;
+  font-size:.88rem;
+}
+.aha-social-more>summary{
+  display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;
+  list-style:none;cursor:pointer;user-select:none;
+  font-size:1.35rem;line-height:1;letter-spacing:.09em;
+}
+.aha-social-more>summary::-webkit-details-marker{display:none}
+.aha-social-more>summary:hover,.aha-social-more[open]>summary{
+  background:#223045;color:#f5f9ff;
+}
+.aha-social-more-actions{
+  position:absolute;right:0;top:calc(100% + .15rem);z-index:5;
+  width:max-content;min-width:182px;max-width:min(82vw,280px);
+  display:grid;gap:0;padding:.25rem;background:#1b2635;
+  border:1px solid #506077;border-radius:12px;
+  box-shadow:0 16px 32px rgba(0,0,0,.4);
+}
+.aha-social-more:not([open]) .aha-social-more-actions{display:none}
+.aha-social-more-actions button{
+  display:block;width:100%;min-height:44px;text-align:left;
+  padding:.65rem .85rem;background:transparent;border:0;
+  border-radius:8px;color:#ecf2f9;font:inherit;font-size:.86rem;cursor:pointer;
+}
+.aha-social-more-actions button:hover{background:#35445b}
+.aha-social-more-actions button:focus-visible,.aha-social-more>summary:focus-visible{
+  outline:3px solid #bbdaff;outline-offset:2px;
+}
+.aha-social-more-actions button:last-child:not(:first-child){border-top:1px solid #38475d}
+.aha-social-more-actions button:is(:only-child){color:#f3ced0}
+.aha-social-kind{margin-left:.35rem}
+.aha-social-post-head{overflow:visible}
+.aha-social-post{overflow-wrap:anywhere;overflow:visible}
+
+/* A calm composer: users see exactly when their text/photo is ready to share. */
+.aha-social-compose>button[type="submit"]:disabled{
+  opacity:.46;cursor:not-allowed;filter:saturate(.55);box-shadow:none;
+}
+.aha-social-compose>button[type="submit"]:not(:disabled){
+  transition:background-color .12s ease,opacity .12s ease;
+}
+.aha-social-counter.near-limit{font-weight:800}
+@media(prefers-reduced-motion:reduce){
+  .aha-social-compose>button[type="submit"]:not(:disabled){transition:none}
+}
+
+/* Application shell — shared by the safe staging app and its offline demo.
+   Full-width media, a persistent touch dock and one primary publishing action.
+   Applies only when the opt-in social mount is active. */
+.aha-social-enabled{background:#080a0e;color:#f7f8fb}
+.aha-social-enabled #aha-global-nav{display:none!important}
+.aha-social-enabled .aha-dashboard{
+  box-sizing:border-box;max-width:760px!important;width:100%!important;
+  padding:0!important;margin:0 auto!important;background:#080a0e;
+}
+.aha-social-enabled .aha-dashboard #aha-social-mount{margin-top:0}
+#aha-social-mount{
+  --social-bg:#080a0e;--social-surface:#0c1017;
+  --social-raised:#151c27;--social-line:#262e3c;
+  --social-muted:#aab4c3;--social-accent:#d9ebff;
+  width:min(100%,760px);padding-bottom:calc(85px + env(safe-area-inset-bottom));
+}
+#aha-social-mount .aha-social-panel{
+  max-width:760px;overflow:visible;border:0;border-radius:0;
+  box-shadow:none;background:var(--social-bg);min-height:60vh;
+}
+#aha-social-mount .aha-social-masthead{
+  top:0;z-index:12;min-height:66px;padding:.55rem 1.1rem;
+  background:rgba(8,10,14,.94);border-bottom:1px solid #252e39;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+}
+#aha-social-mount .aha-social-brand{gap:.8rem}
+#aha-social-mount .aha-social-brandmark{
+  width:38px;height:38px;flex-basis:38px;border-radius:13px;
+  background:#eff5ff;color:#0c1525;font-size:1.35rem;text-decoration:none;
+}
+#aha-social-mount .aha-social-brandname{
+  color:#f6f8fc;font-size:1.12rem;font-weight:800;letter-spacing:-.025em;
+}
+#aha-social-mount .aha-social-heading h2{
+  font-size:.72rem;line-height:1.3;color:#a4b0c0;margin:2px 0 0;
+}
+#aha-social-mount .aha-social-navigation{
+  position:fixed;left:50%;bottom:0;z-index:30;
+  transform:translateX(-50%);display:flex;justify-content:space-evenly;
+  align-items:flex-start;gap:0;width:min(100vw,760px);
+  min-height:calc(75px + env(safe-area-inset-bottom));
+  padding:7px 12px calc(8px + env(safe-area-inset-bottom));
+  border:1px solid #303b4b;border-bottom:0;
+  border-radius:20px 20px 0 0;
+  background:rgba(17,23,32,.97);box-shadow:0 -10px 38px rgba(0,0,0,.4);
+  -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);
+}
+#aha-social-mount .aha-social-navigation>a,
+#aha-social-mount .aha-social-navigation>button{
+  display:flex;flex:1 1 0;min-width:0;min-height:56px;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;position:relative;
+  padding:3px 7px;border:0;border-radius:12px;background:transparent;
+  text-align:center;text-decoration:none;font:700 .72rem/1.2 system-ui,-apple-system,sans-serif;
+  color:#a6b2c1;cursor:pointer;
+}
+#aha-social-mount .aha-social-navigation svg{display:block;width:25px;height:25px}
+#aha-social-mount .aha-social-navigation a[aria-current="page"]{
+  color:#f1f7ff;background:transparent;border:0;
+}
+#aha-social-mount .aha-social-navigation a[aria-current="page"]::after{
+  content:"";position:absolute;bottom:0;width:18px;height:3px;
+  border-radius:99px;background:#d7eaff;
+}
+#aha-social-mount .aha-social-navigation>.aha-social-nav-compose{
+  color:#edf4ff;flex:0 0 34%;
+}
+#aha-social-mount .aha-social-nav-compose svg{
+  box-sizing:content-box;background:#e8f1ff;color:#111f33;
+  width:24px;height:24px;padding:10px;border-radius:50%;
+}
+#aha-social-mount .aha-social-nav-compose:active svg{transform:scale(.95)}
+#aha-social-mount .aha-social-intro{
+  padding:.48rem 1.15rem;font-size:.73rem;color:#99aabd;
+  background:#0d131c;border-bottom:1px solid #242d39;
+}
+#aha-social-mount .aha-social-compose{
+  gap:.7rem;padding:1rem 1.15rem 1.05rem;background:#080a0e;
+  border-bottom:1px solid #2d3644;scroll-margin-top:75px;
+}
+#aha-social-mount .aha-social-compose-lead{gap:.7rem}
+#aha-social-mount .aha-social-compose-lead strong{
+  color:#e2ebf7;font-weight:650;font-size:.92rem;
+}
+#aha-social-mount .aha-social-avatar{
+  width:44px;height:44px;flex-basis:44px;
+  border:1px solid #536987;background:#34455f;font-size:1rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose textarea{
+  box-sizing:border-box;margin-left:52px;width:calc(100% - 52px);
+  min-height:76px;padding:.2rem .1rem .65rem;font-size:1.13rem;
+  line-height:1.5;border-bottom:0;resize:vertical;
+}
+#aha-social-mount .aha-social-counter{justify-self:end;margin-top:-.3rem}
+#aha-social-mount .aha-social-publish-row{
+  display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;
+  justify-content:space-between;border-top:1px solid #29313c;
+  padding-top:.8rem;min-width:0;
+}
+#aha-social-mount .aha-social-publish-row .aha-social-consent{
+  flex:1 1 175px;min-width:0;color:#b5c1d0;font-size:.78rem;
+}
+#aha-social-mount .aha-social-publish-row .aha-social-consent input{
+  width:20px;height:20px;accent-color:#c8e3ff;
+}
+#aha-social-mount .aha-social-publish-row>button{
+  flex:0 0 auto;min-height:46px;min-width:126px;
+  border:0;border-radius:999px;background:#e5f0ff;color:#122138;
+  padding:.6rem 1rem;font-size:.86rem;font-weight:800;
+  cursor:pointer;box-shadow:none;
+}
+#aha-social-mount .aha-social-publish-row>button:disabled{
+  background:#4b596b;color:#b7c2d0;opacity:.6;cursor:not-allowed;
+}
+#aha-social-mount .aha-social-publish-row>button:not(:disabled):active{transform:scale(.98)}
+#aha-social-mount .aha-social-feed-tools{
+  position:relative;padding:.68rem 1.15rem;
+  gap:1rem;background:#080a0e;border-bottom:1px solid #28303d;
+}
+#aha-social-mount .aha-social-feed-heading{
+  font-size:1rem;letter-spacing:-.015em;font-weight:770;
+}
+#aha-social-mount .aha-social-refresh{
+  display:grid;place-items:center;min-width:44px;height:44px;
+  padding:0;font-size:0;border:0;background:transparent;
+  color:#d1deed;
+}
+#aha-social-mount .aha-social-refresh::before{
+  content:"↻";font-size:1.55rem;font-weight:400;
+}
+#aha-social-mount .aha-social-status{padding:.3rem 1.15rem;font-size:.76rem}
+#aha-social-mount .aha-social-browser{
+  padding:.15rem 1.15rem .65rem;border-bottom:1px solid #27303d;
+}
+#aha-social-mount .aha-social-browser-title{display:none}
+#aha-social-mount .aha-social-reading-tabs{gap:0}
+#aha-social-mount .aha-social-reading-tabs button{
+  min-height:48px;border-radius:0;border-bottom-width:3px;
+  padding:.55rem .7rem;font-size:.89rem;
+}
+#aha-social-mount .aha-social-post{
+  padding:1rem 1.15rem;border-bottom:1px solid #28313d;
+}
+#aha-social-mount .aha-social-post-feed .aha-social-feed-copy{
+  font-size:1.06rem;line-height:1.55;margin-left:53px;
+}
+#aha-social-mount .aha-social-post-feed .aha-social-actions{margin-left:48px}
+#aha-social-mount .aha-social-actions button{min-height:44px}
+#aha-social-mount .aha-social-post-insta{padding:0}
+#aha-social-mount .aha-social-post-insta .aha-social-post-head{
+  padding:.8rem 1.05rem;min-height:66px;
+}
+#aha-social-mount .aha-social-post-insta>.aha-social-media{
+  max-height:min(78svh,780px);width:100%;border-radius:0;
+}
+#aha-social-mount .aha-social-post-insta .aha-social-actions{padding:.45rem .7rem .2rem}
+#aha-social-mount .aha-social-caption{margin:.25rem 1.05rem 1rem}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose{
+  gap:.75rem;padding:.9rem 1.1rem 1.05rem;
+}
+#aha-social-mount .aha-social-type-selector{margin:0}
+#aha-social-mount .aha-social-type-selector legend{
+  font-size:.77rem;color:#99aabd;margin-bottom:.4rem;
+}
+#aha-social-mount .aha-social-type-selector .aha-social-tabs{
+  padding:3px;gap:3px;border:1px solid #313e50;
+  background:#111823;border-radius:13px;
+}
+#aha-social-mount .aha-social-type-selector .aha-social-tabs button{
+  min-height:40px;border:0;border-radius:10px;font-size:.88rem;
+  background:transparent;color:#b8c5d6;
+}
+#aha-social-mount .aha-social-type-selector .aha-social-tabs button[aria-pressed="true"]{
+  background:#2e4056;color:white;box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose label:has(>input[type="file"]){
+  border:1px solid #38475b;border-radius:16px;min-height:164px;
+  background:radial-gradient(circle at 50% 25%,#293647 0%,#141c26 62%,#0c1118 100%);
+  color:#f0f4fb;font-size:1rem;font-weight:650;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose label:has(>input[type="file"])::before{
+  border:0;background:#e6f1ff;color:#172337;
+  width:52px;height:52px;font-size:1.85rem;
+}
+#aha-social-mount .aha-social-compose .aha-social-media{
+  max-height:min(72svh,640px);margin:0;
+  background:#050609;border-radius:15px;
+}
+#aha-social-mount .aha-social-upload-hint{font-size:.74rem}
+#aha-social-mount .aha-social-compose>button:not([type="submit"]):disabled{opacity:.38;cursor:not-allowed}
+#aha-social-mount .aha-social-compose input[type="text"]{
+  min-height:48px;background:#101721;border-radius:12px;
+  border-color:#33435b;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose textarea{
+  min-height:56px;border-bottom:0;
+  border-radius:12px;background:#101721;
+  padding:.65rem .8rem;resize:vertical;
+}
+#aha-social-mount .aha-social-place-grid{gap:.45rem}
+#aha-social-mount .aha-social-place-grid .aha-social-post-insta{border-radius:10px}
+@media(max-width:640px){
+  #aha-social-mount .aha-social-masthead{padding:.55rem .9rem}
+  #aha-social-mount .aha-social-compose{padding:.85rem .95rem}
+  #aha-social-mount[data-social-kind="insta"] .aha-social-compose{padding:.85rem .95rem}
+  #aha-social-mount .aha-social-post{padding:.9rem .95rem}
+  #aha-social-mount .aha-social-post-insta{padding:0}
+  #aha-social-mount .aha-social-post-insta .aha-social-post-head{padding:.75rem .95rem}
+  #aha-social-mount .aha-social-navigation{border-left:0;border-right:0}
+  #aha-social-mount .aha-social-publish-row{align-items:stretch;gap:.7rem}
+  #aha-social-mount .aha-social-publish-row>button{margin-left:auto}
+}
+@media(max-width:380px){
+  #aha-social-mount .aha-social-publish-row>button{width:100%}
+  #aha-social-mount .aha-social-publish-row .aha-social-consent{flex-basis:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  #aha-social-mount .aha-social-nav-compose:active svg,
+  #aha-social-mount .aha-social-publish-row>button:not(:disabled):active{transform:none}
+}
+
+/* Shrink the large file picker once a local picture/video preview is visible.
+   CSS-only state: no JS state to go stale after discard, reset or upload. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose:has(> .aha-social-media:not([hidden]))
+  label:has(>input[type="file"]){
+  min-height:52px;
+  flex-direction:row;
+  justify-content:flex-start;
+  padding:.45rem .85rem;
+  border-style:solid;
+  border-color:#50627d;
+  background:#161f2d;
+  font-size:.82rem;
+  border-radius:11px;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose:has(> .aha-social-media:not([hidden]))
+  label:has(>input[type="file"])::before{
+  content:"↻";
+  width:29px;height:29px;
+  border-radius:50%;
+  font-size:1.05rem;
+  background:#2a3e58;
+  border-color:#728aa9;
+}
+
+/* V3 — distinct products, not a generic dashboard in two colors.
+   All styling is confined to the opt-in staging mount. */
+
+/* X-like Feed: a narrow, text-led conversation with quiet separators. */
+#aha-social-mount[data-social-kind="feed"]{
+  width:min(100%,680px);--social-accent:#93d5ff;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-navigation{
+  width:min(100vw,680px);
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-masthead{
+  min-height:60px;border-bottom:1px solid #252d37;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-brandmark{
+  width:34px;height:34px;flex-basis:34px;border-radius:50%;
+  background:#f1f6fd;color:#101820;font-size:1.2rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-brandname{
+  font-size:1.2rem;letter-spacing:-.035em;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose{
+  padding:1.05rem 1.15rem 1rem;gap:.4rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose-lead strong{
+  font-size:.98rem;color:#e7eef8;font-weight:600;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose label:not(.aha-social-consent){
+  font-size:0;line-height:0;gap:0;min-width:0;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose label textarea{
+  font-size:1.19rem;line-height:1.46;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-compose textarea::placeholder{
+  color:#9caabc;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-publish-row{
+  border-top:1px solid #242b35;gap:.65rem;margin-top:.2rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-publish-row>button{
+  min-width:135px;background:#d9ecff;color:#112033;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-feed-tools{
+  padding:.45rem 1.15rem;min-height:56px;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed{
+  padding:.9rem 1.15rem .55rem;
+  transition:background-color .12s ease;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed:focus-within{
+  background:#0e151e;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-post-head{
+  align-items:center;margin-bottom:.2rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-avatar{
+  width:42px;height:42px;flex-basis:42px;border-radius:50%;
+  background:#273e59;border-color:#46617b;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-author-meta{
+  flex-direction:row;flex-wrap:wrap;align-items:baseline;
+  justify-content:flex-start;column-gap:.55rem;row-gap:0;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-author-meta strong{
+  font-size:.91rem;font-weight:800;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-author-meta time{
+  font-size:.73rem;color:#91a1b5;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-feed-copy{
+  margin:.15rem 0 .3rem 52px;font-size:1.03rem;line-height:1.5;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-actions{
+  max-width:260px;justify-content:space-between;
+  margin:.3rem 0 0 46px;gap:.2rem;
+}
+#aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-actions button{
+  min-width:64px;min-height:44px;justify-content:center;
+  color:#8da1ba;font-size:.76rem;font-weight:560;
+}
+
+/* Instagram-like Insta: photo takes priority, with minimal action chrome. */
+#aha-social-mount[data-social-kind="insta"]{
+  --social-accent:#ffb0d6;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-brandname{
+  font-size:1.24rem;font-weight:780;letter-spacing:-.04em;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-brandmark{
+  color:#11121b;background:linear-gradient(135deg,#fcf1b7,#ffc4ce 50%,#bcb8ff);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose{
+  padding:1rem 1rem 1.1rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta .aha-social-post-head{
+  margin:0;padding:.65rem 1rem;min-height:58px;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta .aha-social-avatar{
+  width:41px;height:41px;flex-basis:41px;
+  border:2px solid #191220;
+  box-shadow:0 0 0 2px #d67ea5;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta>.aha-social-media{
+  max-height:min(80svh,760px);object-fit:contain;
+  background:#030406;border-radius:0;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta .aha-social-actions{
+  justify-content:flex-start;gap:.4rem;
+  margin:0;padding:.35rem .8rem .1rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta .aha-social-actions button{
+  min-width:58px;min-height:50px;padding:.35rem .4rem;
+  color:#e9eff7;font-size:.76rem;font-weight:700;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-post-insta .aha-social-action-icon{
+  width:27px;height:27px;stroke-width:1.9;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-caption{
+  margin:.2rem 1rem .95rem;font-size:.91rem;line-height:1.48;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-browser{
+  padding:.2rem 1rem .7rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-reading-tabs button{
+  font-size:.84rem;text-transform:uppercase;letter-spacing:.055em;
+  font-weight:760;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid{
+  gap:3px;grid-template-columns:repeat(3,minmax(0,1fr));
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-post-insta{
+  border:0;border-radius:3px;background:#10151d;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-post-insta>.aha-social-media{
+  max-height:230px;aspect-ratio:1/1;object-fit:cover;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-post-head{
+  padding:.3rem .4rem;min-height:41px;gap:.3rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-avatar{
+  width:26px;height:26px;flex-basis:26px;font-size:.65rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-actions button{
+  min-width:43px;min-height:44px;font-size:.7rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-action-icon{
+  width:19px;height:19px;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-caption{
+  padding:0 .45rem;font-size:.76rem;margin:.15rem 0 .55rem;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+/* Real iconography with counts, never emoji masquerading as controls. */
+#aha-social-mount .aha-social-actions button.aha-social-action-like,
+#aha-social-mount .aha-social-actions button.aha-social-action-comment{
+  display:inline-flex;align-items:center;gap:.4rem;
+  border:0;background:transparent;border-radius:999px;
+  box-shadow:none;
+}
+#aha-social-mount .aha-social-actions .aha-social-action-icon{
+  flex:0 0 auto;width:21px;height:21px;display:block;
+}
+#aha-social-mount .aha-social-action-like[aria-pressed="true"] .aha-social-action-icon{
+  fill:currentColor;
+}
+#aha-social-mount .aha-social-action-comment[aria-expanded="true"]{
+  color:#c6e6ff!important;background:#192636!important;
+}
+@media (hover:hover){
+  #aha-social-mount .aha-social-actions button.aha-social-action-like:hover{
+    color:#ff8da1;
+  }
+  #aha-social-mount .aha-social-actions button.aha-social-action-comment:hover{
+    color:#98d8ff;
+  }
+}
+@media(max-width:430px){
+  #aha-social-mount[data-social-kind="feed"] .aha-social-post-feed{padding:.8rem .8rem .5rem}
+  #aha-social-mount[data-social-kind="feed"] .aha-social-post-feed .aha-social-feed-copy{
+    margin-left:49px;
+  }
+  #aha-social-mount[data-social-kind="insta"] .aha-social-place-grid .aha-social-post-head{
+    padding:.25rem;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #aha-social-mount[data-social-kind="feed"] .aha-social-post-feed{transition:none}
+}
+
+/* V4 Insta profile — app home is a personal image grid. All creation and
+   secondary views are intentionally disclosed rather than always visible. */
+#aha-social-mount[data-social-kind="insta"]{
+  padding-bottom:calc(20px + env(safe-area-inset-bottom));
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-navigation,
+#aha-social-mount[data-social-kind="insta"] .aha-social-intro,
+#aha-social-mount[data-social-kind="insta"] .aha-social-reading-tabs{
+  display:none!important;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-masthead{
+  min-height:66px;padding:.55rem .95rem;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-brandmark{
+  width:34px;height:34px;flex-basis:34px;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-heading h2{
+  display:none;
+}
+#aha-social-mount .aha-social-header-actions{
+  display:flex;align-items:center;gap:.4rem;flex:0 0 auto;
+}
+#aha-social-mount .aha-social-header-add{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:.5rem .86rem;border-radius:12px;
+  border:1px solid #526078;background:#f1f5fb;color:#192437;
+  font-size:.84rem;font-weight:800;letter-spacing:-.01em;
+  cursor:pointer;white-space:nowrap;
+}
+#aha-social-mount .aha-social-header-more{position:relative;flex:0 0 auto}
+#aha-social-mount .aha-social-header-more>summary{
+  display:grid;place-items:center;min-width:44px;height:44px;
+  padding:0;background:transparent;color:#f1f5ff;border-radius:11px;
+  font-size:1.38rem;cursor:pointer;letter-spacing:1px;list-style:none;
+}
+#aha-social-mount .aha-social-header-more>summary::-webkit-details-marker{display:none}
+#aha-social-mount .aha-social-header-more[open]>summary{
+  background:#263448;
+}
+#aha-social-mount .aha-social-header-menu{
+  position:absolute;right:0;top:calc(100% + 5px);
+  z-index:40;width:190px;padding:5px;
+  background:#182130;border:1px solid #445368;
+  border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);
+}
+#aha-social-mount .aha-social-header-more:not([open]) .aha-social-header-menu{
+  display:none;
+}
+#aha-social-mount .aha-social-header-menu button{
+  display:block;width:100%;text-align:left;min-height:44px;
+  background:transparent;border:0;color:#eef5fe;
+  border-radius:9px;padding:.55rem .8rem;
+  font-size:.86rem;font-weight:600;cursor:pointer;
+}
+#aha-social-mount .aha-social-header-menu button:hover,
+#aha-social-mount .aha-social-header-menu button:focus-visible{
+  background:#31415b;
+}
+#aha-social-mount .aha-social-compose-dialog{
+  position:fixed;inset:0;z-index:70;
+  width:min(calc(100vw - 20px),540px);max-width:540px;
+  max-height:calc(100dvh - 36px);height:auto;margin:auto;
+  padding:0;border:1px solid #46566d;border-radius:18px;
+  overflow:auto;color:#f5f7fc;background:#090c11;
+  box-shadow:0 25px 80px rgba(0,0,0,.6);
+}
+#aha-social-mount .aha-social-compose-dialog:not([open]){display:none!important}
+#aha-social-mount .aha-social-compose-dialog::backdrop{
+  background:rgba(0,0,0,.79);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+}
+#aha-social-mount .aha-social-dialog-head{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:.5rem;padding:.65rem 1rem;min-height:58px;
+  border-bottom:1px solid #283443;background:#101720;
+}
+#aha-social-mount .aha-social-dialog-head strong{
+  font-size:1rem;font-weight:800;
+}
+#aha-social-mount .aha-social-dialog-head button{
+  min-width:48px;min-height:44px;padding:0 .6rem;
+  border:0;background:transparent;color:#d3e5ff;
+  font:700 .86rem system-ui,-apple-system,sans-serif;cursor:pointer;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-dialog .aha-social-compose{
+  padding:1rem 1.1rem 1.2rem;border:0;max-width:none;
+}
+#aha-social-mount .aha-social-my-profile{
+  display:block;min-height:56svh;background:#080a0e;
+}
+#aha-social-mount .aha-social-my-profile[hidden],
+#aha-social-mount .aha-social-list[hidden],
+#aha-social-mount .aha-social-browser[hidden],
+#aha-social-mount .aha-social-feed-tools[hidden]{
+  display:none!important;
+}
+#aha-social-mount .aha-social-profile-identity{
+  display:flex;align-items:center;gap:1.25rem;
+  padding:1.65rem 1.4rem 1.35rem;min-height:130px;
+}
+#aha-social-mount .aha-social-profile-avatar{
+  width:82px;height:82px;flex-basis:82px;border:3px solid #080a0e;
+  box-shadow:0 0 0 2px #bb86b4;
+  background:linear-gradient(145deg,#cd88c2,#7b85c5);
+  font-size:2rem;
+}
+#aha-social-mount .aha-social-profile-info{min-width:0;flex:1}
+#aha-social-mount .aha-social-profile-info h3{
+  margin:0 0 .35rem;color:#f7f9ff;font-size:1.3rem;
+  font-weight:780;letter-spacing:-.03em;overflow-wrap:anywhere;
+}
+#aha-social-mount .aha-social-profile-count{
+  color:#afbece;font-size:.9rem;
+}
+#aha-social-mount .aha-social-grid-heading{
+  margin:0;padding:.72rem 1rem;
+  font-size:.86rem;letter-spacing:.01em;font-weight:740;
+  border-top:1px solid #293341;color:#e2eaf4;
+}
+#aha-social-mount .aha-social-my-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:3px;width:100%;min-width:0;
+}
+#aha-social-mount .aha-social-grid-tile{
+  position:relative;display:block;width:100%;min-width:0;
+  padding:0;border:0;border-radius:0;aspect-ratio:1;
+  background:#111822;overflow:hidden;cursor:pointer;
+}
+#aha-social-mount .aha-social-grid-image{
+  display:block;width:100%;height:100%;
+  object-fit:cover;object-position:center;
+}
+#aha-social-mount .aha-social-grid-tile:focus-visible{
+  outline:3px solid #d6e5ff;outline-offset:-3px;z-index:2;
+}
+#aha-social-mount .aha-social-grid-reel{
+  position:absolute;top:.5rem;right:.5rem;
+  color:white;font-size:1rem;text-shadow:0 1px 4px #000;
+}
+#aha-social-mount .aha-social-grid-unavailable{
+  position:absolute;inset:0;display:grid;place-items:center;
+  color:#bdcde0;padding:12px;text-align:center;font-size:.76rem;
+}
+#aha-social-mount .aha-social-profile-empty{
+  grid-column:1/-1;display:flex;align-items:center;
+  flex-direction:column;justify-content:center;text-align:center;
+  min-height:255px;padding:1.3rem;color:#e5ebf4;
+}
+#aha-social-mount .aha-social-profile-empty-icon{
+  display:grid;place-items:center;width:65px;height:65px;
+  border:2px solid #627188;border-radius:50%;
+  font-size:2rem;color:#e0e9f4;
+}
+#aha-social-mount .aha-social-profile-empty p{
+  font-size:.96rem;font-weight:750;margin:.8rem 0 .15rem;
+}
+#aha-social-mount .aha-social-profile-empty small{
+  font-size:.81rem;color:#aab9cd;
+}
+#aha-social-mount .aha-social-post-dialog{
+  position:fixed;inset:0;z-index:60;
+  width:min(calc(100vw - 20px),650px);max-width:650px;
+  max-height:calc(100dvh - 26px);padding:0 0 .5rem;
+  overflow:auto;margin:auto;
+  color:#f6f8fc;background:#080a0e;
+  border:1px solid #465367;border-radius:16px;
+  box-shadow:0 25px 70px rgba(0,0,0,.68);
+}
+#aha-social-mount .aha-social-post-dialog:not([open]){display:none!important}
+#aha-social-mount .aha-social-post-dialog::backdrop{
+  background:rgba(0,0,0,.85);
+}
+#aha-social-mount .aha-social-post-dialog-close{
+  position:sticky;top:.35rem;left:calc(100% - 68px);
+  z-index:4;min-height:44px;margin:.35rem .45rem -44px 0;
+  padding:.4rem .8rem;border:1px solid #52617a;
+  border-radius:999px;background:#182334;color:#f4f7fb;
+  font-size:.84rem;font-weight:700;cursor:pointer;
+}
+@media(max-width:520px){
+  #aha-social-mount[data-social-kind="insta"] .aha-social-masthead{
+    padding:.5rem .7rem;
+  }
+  #aha-social-mount .aha-social-header-add{padding:.4rem .65rem;font-size:.8rem}
+  #aha-social-mount .aha-social-profile-identity{
+    gap:1rem;padding:1.35rem 1rem;min-height:112px;
+  }
+  #aha-social-mount .aha-social-profile-avatar{
+    width:72px;height:72px;flex-basis:72px;font-size:1.75rem;
+  }
+  #aha-social-mount .aha-social-my-grid{gap:2px}
+  #aha-social-mount .aha-social-compose-dialog{
+    width:100vw;height:100dvh;max-width:none;max-height:none;
+    border:0;border-radius:0;
+  }
+  #aha-social-mount .aha-social-post-dialog{
+    width:100vw;max-width:none;max-height:100dvh;
+    min-height:100dvh;border:0;border-radius:0;
+  }
+}
+
+/* One understated format disclosure in Insta composer. Default is a picture.
+   Reel/Map remain available without occupying the primary image workflow. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options{
+  display:block;margin:.1rem 0;padding:0;border:0;min-width:0;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary{
+  display:inline-flex;align-items:center;gap:.4rem;
+  min-height:44px;padding:.35rem .5rem;border-radius:9px;
+  color:#aabbd1;font-size:.82rem;font-weight:600;
+  cursor:pointer;list-style:none;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary::after{
+  content:"⌄";font-size:1.08rem;line-height:1;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary::-webkit-details-marker{
+  display:none;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options[open]>summary{
+  color:#f1f5ff;background:#1a2635;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options[open]>summary::after{
+  transform:rotate(180deg);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options .aha-social-type-selector{
+  margin:.4rem 0 .2rem;min-width:0;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options:not([open]) .aha-social-type-selector{
+  display:none!important;
+}
+
+/* The photo grid is the profile, not another labelled dashboard section. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-grid-heading{
+  position:absolute!important;width:1px;height:1px;
+  margin:-1px;padding:0;border:0;overflow:hidden;
+  white-space:nowrap;clip-path:inset(50%);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-my-grid{
+  border-top:1px solid #293341;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-profile-identity{
+  padding-bottom:1.15rem;
+}

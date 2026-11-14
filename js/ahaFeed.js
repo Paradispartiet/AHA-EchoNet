@@ -203,7 +203,7 @@
       external_published: false,
       echonet_shared: false
     };
-    if (!post.text) return null;
+    if (!post.text || post.text.length > 500) return null;
     post.meta = createLocalOnlyMeta(post);
     const baseContract = window.AHAContracts?.createBaseItem?.({
       id: post.id,
@@ -242,11 +242,21 @@
   function bind() {
     const form = document.getElementById("feed-form");
     if (!form) return;
+    const text = document.getElementById("feed-text");
+    const counter = document.getElementById("feed-character-count");
+    const updateCount = () => {
+      if (!counter || !text) return;
+      counter.textContent = text.value.length + " / 500";
+      counter.classList.toggle("near-limit", text.value.length >= 450);
+    };
+    text?.addEventListener("input", updateCount);
+    updateCount();
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      const text = document.getElementById("feed-text");
-      addPost({ text: text?.value });
-      if (text) text.value = "";
+      if (!text || !text.value.trim() || text.value.length > 500) return;
+      void addPost({ text: text.value });
+      text.value = "";
+      updateCount();
     });
     document.getElementById("feed-list")?.addEventListener("click", (event) => {
       const target = event.target;

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/aha-feed.css" />
   <link rel="stylesheet" href="css/aha-personal-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-social.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
@@ -27,10 +28,12 @@
       </div>
     </section>
 
+    <div id="aha-social-mount" data-social-kind="feed"></div>
     <section class="aha-panel aha-personal-compose">
       <div class="aha-personal-compose-head"><p class="eyebrow">Ny</p><h2>Ny post</h2></div>
       <form id="feed-form" class="module-form">
-        <textarea id="feed-text" placeholder="Skriv en lokal post …"></textarea>
+        <textarea id="feed-text" maxlength="500" aria-describedby="feed-character-count" placeholder="Hva vil du dele?"></textarea>
+        <output id="feed-character-count" class="aha-social-counter" aria-live="polite" aria-label="Antall tegn">0 / 500</output>
         <button type="submit">Lagre lokalt og send til AHA</button>
       </form>
     </section>
@@ -39,6 +42,7 @@
       <h2>Lokale poster</h2>
       <div id="feed-list" class="module-list"></div>
     </section>
+
   </main>
 
   <script src="js/ahaModuleApi.js"></script>
@@ -60,6 +64,7 @@
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaFeed.js"></script>
   <script src="js/ahaPersonalMaterialStatus.js"></script>
+  <script src="js/ahaSocialNetwork.js"></script>
 <script src="js/ahaModules.js"></script>
 <script src="js/ahaGlobalNav.js"></script>
 </body>

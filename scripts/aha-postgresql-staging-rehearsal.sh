@@ -51,6 +51,11 @@ VALUES
   ('profile_a', 'supabase', 'rehearsal-user-a', 'Rehearsal A'),
   ('profile_b', 'supabase', 'rehearsal-user-b', 'Rehearsal B');
 
+-- Only this isolated rehearsal gets a moderator account; no production seeding.
+INSERT INTO aha.profiles(id,auth_provider,auth_subject,display_name)
+VALUES('profile_mod','supabase','rehearsal-user-mod','Rehearsal Moderator');
+INSERT INTO aha_social.moderators(profile_id) VALUES('profile_mod');
+
 INSERT INTO aha.workspaces (id, owner_profile_id, workspace_type, name, visibility, status)
 VALUES
   ('workspace_a', 'profile_a', 'personal', 'A', 'private', 'active'),
@@ -122,6 +127,140 @@ BEGIN
   END IF;
 END
 $do$;
+SQL
+
+# Social contract is exercised only in this ephemeral PostgreSQL 16 rehearsal.
+# Production and hosted staging grants remain completely unchanged.
+admin_psql <<'SQL'
+GRANT USAGE ON SCHEMA aha_social TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.list_posts_v1(text,integer) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.list_comments_v1(uuid) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.publish_post_v1(text,text,text,text,text,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.delete_post_v1(uuid) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.set_post_place_tag_v1(uuid,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.like_post_v1(uuid,boolean) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.comment_post_v1(uuid,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.report_post_v1(uuid,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.moderation_queue_v1(integer) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.moderate_post_v1(uuid,text,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.upload_media_v1(text,bytea,text) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.read_media_v1(uuid) TO aha_runtime_rehearsal;
+GRANT EXECUTE ON FUNCTION aha_social.delete_pending_media_v1(uuid) TO aha_runtime_rehearsal;
+
+DO $check$
+BEGIN
+ IF has_table_privilege('aha_runtime_rehearsal','aha_social.posts','SELECT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.posts','INSERT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.comments','UPDATE')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.reports','SELECT')
+    OR has_function_privilege('aha_runtime_rehearsal','aha_social.require_profile_v1()','EXECUTE')
+    OR has_function_privilege('aha_runtime_rehearsal','aha_social.require_moderator_v1()','EXECUTE')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderators','SELECT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.moderation_events','INSERT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.media','SELECT')
+    OR has_table_privilege('aha_runtime_rehearsal','aha_social.media','INSERT')
+    OR has_function_privilege('aha_runtime_rehearsal','aha_social.purge_expired_media_v1()','EXECUTE')
+ THEN RAISE EXCEPTION 'social runtime privileges exceed exact function grants'; END IF;
+END;
+$check$;
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_rehearsal_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_moderation_rehearsal_v1.sql
+
+# Validate the actual six-argument Feed/Reel/Map and location-tag SQL contract,
+# under the same narrow runtime account as real user requests.
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_formats_places_v1.sql
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_place_edits_v1.sql
+
+# This expired orphan is inserted by the ephemeral admin for TTL coverage;
+# no runtime role gets direct media table access.
+admin_psql <<'SQL'
+INSERT INTO aha_social.media(id,profile_id,request_key,content_type,bytes,created_at)
+VALUES (
+  '66666666-6666-4666-8666-666666666666',
+  'profile_a',
+  'expired-private-media-001',
+  'image/png',
+  decode('89504e470d0a1a0a' || repeat('00',100),'hex'),
+  now()-interval '25 hours'
+);
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_rehearsal_v1.sql
+
+# Cleanup is never exposed to the browser or the runtime identity.
+admin_psql <<'SQL'
+DO $check$
+DECLARE purged integer;
+BEGIN
+ SELECT aha_social.purge_expired_media_v1() INTO purged;
+ IF purged <> 1 THEN RAISE EXCEPTION 'expected one expired orphan purged, got %',purged; END IF;
+ IF EXISTS (SELECT 1 FROM aha_social.media
+            WHERE id='66666666-6666-4666-8666-666666666666') THEN
+    RAISE EXCEPTION 'expired orphan retained after operator purge';
+ END IF;
+END;
+$check$;
+SQL
+
+# The first boundary fixture fills exactly 8 MiB for account A.
+# Age all artificial rows beyond the hourly upload-rate window so the
+# expected failure is unambiguously the storage cap. These zero bytes are
+# synthetic DB fixtures, never real user files.
+admin_psql <<'SQL'
+INSERT INTO aha_social.media(profile_id,request_key,content_type,bytes,created_at)
+SELECT 'profile_a','quota-profile-fixture-'||n,'image/png',
+       decode(repeat('00',524288),'hex'),now()-interval '2 hours'
+FROM generate_series(1,16) n;
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_profile_quota_v1.sql
+
+# The second fixture fills 64 MiB globally, distributed across 16 synthetic
+# profiles so no one account is at its own limit. Account B must be refused
+# solely by the GLOBAL quota; all temporary rows are removed afterward.
+admin_psql <<'SQL'
+DELETE FROM aha_social.media WHERE request_key LIKE 'quota-profile-fixture-%';
+INSERT INTO aha.profiles(id,auth_provider,auth_subject,display_name)
+SELECT 'quota_fixture_'||n,'supabase','quota-fixture-subject-'||n,
+       'Synthetic staging quota profile'
+FROM generate_series(1,16) n;
+INSERT INTO aha_social.media(profile_id,request_key,content_type,bytes,created_at)
+SELECT 'quota_fixture_'||p,'quota-global-fixture-'||p||'-'||n,'image/png',
+       decode(repeat('00',524288),'hex'),now()-interval '2 hours'
+FROM generate_series(1,16) p CROSS JOIN generate_series(1,8) n;
+SQL
+
+PGPASSWORD="$AHA_RUNTIME_PASSWORD" \
+  psql -X -v ON_ERROR_STOP=1 \
+  -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" -U aha_runtime_rehearsal \
+  -f supabase/tests/aha_postgresql_social_media_global_quota_v1.sql
+
+admin_psql <<'SQL'
+DELETE FROM aha_social.media WHERE request_key LIKE 'quota-global-fixture-%';
+DELETE FROM aha.profiles WHERE id LIKE 'quota_fixture_%';
 SQL
 
 PGPASSWORD="$AHA_RUNTIME_PASSWORD" \

@@ -1,0 +1,12 @@
+{
+  "version": "aha_social_stage_media_maintenance_v1",
+  "status": "not_authorized_no_social_staging_database",
+  "stagingProjectRef": null,
+  "databaseName": "postgres",
+  "previewAuthorized": false,
+  "purgeAuthorized": false,
+  "requiredSslMode": "verify-full",
+  "defaultAction": "plan_only",
+  "profileLimitBytes": 8388608,
+  "totalLimitBytes": 67108864
+}

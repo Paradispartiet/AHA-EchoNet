@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AHA – moderering (staging)</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-social.css" />
+</head>
+<body>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard aha-shell-reading">
+    <section class="aha-panel aha-social-panel">
+      <p class="eyebrow">AHA-NETTVERK · TESTMILJØ</p>
+      <h1>Modereringskø</h1>
+      <p>Kun for innloggede moderatorer i et eksplisitt aktivert stagingmiljø. Rapportører vises ikke med identitet.</p>
+      <p>Beslutninger krever skriftlig begrunnelse og loggføres. Dette er ikke en produksjonsaktiv tjeneste.</p>
+      <button id="aha-moderation-refresh" type="button">Oppdater rapporter</button>
+      <p id="aha-moderation-status" role="status" class="module-meta"></p>
+      <div id="aha-moderation-list" class="module-list aha-social-list"></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaAuth.js"></script>
+  <script src="js/ahaSocialMedia.js"></script>
+  <script src="js/ahaSocialModeration.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>

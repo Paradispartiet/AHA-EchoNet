@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/aha-insta.css" />
   <link rel="stylesheet" href="css/aha-personal-surfaces.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-social.css" />
 </head>
 <body>
   <div id="aha-global-nav"></div>
@@ -28,6 +29,7 @@
       </div>
     </section>
 
+    <div id="aha-social-mount" data-social-kind="insta"></div>
     <section class="aha-panel insta-profile-section" id="insta-profile-section">
       <h2 class="sr-only">Min profil</h2>
       <div id="insta-profile-card"></div>
@@ -53,19 +55,21 @@
       <div id="insta-list" class="module-list"></div>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-legacy-insta-compose">
       <details id="insta-compose-panel" class="insta-collapsible">
         <summary>+ Ny post</summary>
         <form id="insta-form" class="module-form">
           <input id="insta-title" type="text" placeholder="Tittel" />
           <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
+          <label for="insta-place-tag">Stedstag (valgfritt)</label>
+          <input id="insta-place-tag" type="text" maxlength="120" placeholder="Hvor ble bildet tatt?" />
           <textarea id="insta-caption" placeholder="Caption …"></textarea>
           <button type="submit">Lagre lokalt</button>
         </form>
       </details>
     </section>
 
-    <section class="aha-panel">
+    <section class="aha-panel aha-legacy-insta-import">
       <details class="insta-collapsible">
         <summary>Flytt fra Instagram / importer fra enhet</summary>
         <div class="module-form insta-import-focus">
@@ -107,6 +111,8 @@
   <script src="js/ahaContracts.js"></script>
   <script src="js/ahaInsta.js"></script>
   <script src="js/ahaPersonalMaterialStatus.js"></script>
+  <script src="js/ahaSocialMedia.js"></script>
+  <script src="js/ahaSocialNetwork.js"></script>
 <script src="js/ahaModules.js"></script>
 <script src="js/ahaGlobalNav.js"></script>
 </body>

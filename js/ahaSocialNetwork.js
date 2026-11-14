@@ -1,0 +1,1035 @@
+// Optional, explicitly configured staging UI for AHA Feed and AHA Insta.
+// Private local posts remain in their original modules, never auto-shared.
+(function (global) {
+  "use strict";
+  const VERSION = "aha_social_staging_v1";
+  const ALLOWED_KINDS = new Set(["feed", "insta"]);
+  let active = false;
+
+  function origin() {
+    try {
+      const url = new URL(String(global.AHA_SOCIAL_API_ORIGIN || ""));
+      if (url.protocol !== "https:" || url.pathname !== "/" || url.search || url.hash || url.username || url.password) return "";
+      return url.origin;
+    } catch { return ""; }
+  }
+
+  function isEnabled() {
+    // No default production activation. The separate NestJS gate also denies production.
+    return global.AHA_SOCIAL_STAGING_ENABLED === true && Boolean(origin());
+  }
+
+  function add(tag, parent, text, className) {
+    const element = global.document.createElement(tag);
+    if (text !== undefined && text !== null) element.textContent = String(text);
+    if (className) element.className = className;
+    if (parent) parent.appendChild(element);
+    return element;
+  }
+
+  function clear(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  // Small, accessible action icons; keep the button's Norwegian text and
+  // accessible name intact so actions remain usable with VoiceOver.
+  function addActionIcon(button, action) {
+    const shapes = {
+      like: "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z",
+      comment: "M20 11.5a8 8 0 0 1-8.5 8 8.1 8.1 0 0 1-3.2-.8L3 21l2.2-5.3A8 8 0 1 1 20 11.5Z"
+    };
+    if (!shapes[action]) return;
+    const svg = global.document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("class", "aha-social-action-icon");
+    const path = global.document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", shapes[action]);
+    svg.appendChild(path);
+    button.prepend(svg);
+  }
+
+  function isoDate(raw) {
+    const date = new Date(String(raw || ""));
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleString("no-NO");
+  }
+
+  function getKind(mount) {
+    const kind = mount?.dataset?.socialKind;
+    return ALLOWED_KINDS.has(kind) ? kind : null;
+  }
+
+  async function call(path, method = "GET", payload = null) {
+    const session = await global.AHAAuth?.getSession?.();
+    if (!session?.access_token) throw new Error("Logg inn i AHA for å se og publisere innlegg.");
+    const headers = { Authorization: "Bearer " + session.access_token };
+    if (payload !== null) headers["Content-Type"] = "application/json";
+    const response = await global.fetch(origin() + path, {
+      method, headers, body: payload !== null ? JSON.stringify(payload) : undefined,
+      cache: "no-store", credentials: "omit"
+    });
+    let body;
+    try { body = await response.json(); } catch { body = null; }
+    if (!response.ok || !body || !("data" in body)) {
+      if (response.status === 503) throw new Error("AHA sin sosiale testtjeneste er ikke aktivert.");
+      if (response.status === 401) throw new Error("Du må logge inn på nytt.");
+      throw new Error("Kunne ikke gjennomføre handlingen. Prøv igjen.");
+    }
+    return body.data;
+  }
+
+  function createKey() {
+    if (global.crypto?.randomUUID) return "aha-" + global.crypto.randomUUID();
+    return "aha-" + Date.now() + "-" + Math.random().toString(36).slice(2, 16);
+  }
+
+  async function init() {
+    if (active || !isEnabled() || !global.document) return false;
+    const mount = global.document.getElementById("aha-social-mount");
+    const kind = getKind(mount);
+    if (!mount || !kind) return false;
+    active = true;
+    global.document.body?.classList?.add("aha-social-enabled", "aha-social-" + kind);
+    const panel = add("section", mount, null, "aha-panel aha-social-panel");
+    panel.dataset.socialKind = kind;
+    const mast = add("header", panel, null, "aha-social-masthead");
+    const brand = add("div", mast, null, "aha-social-brand");
+    const emblem = add("a", brand, "A", "aha-social-brandmark");
+    emblem.href = "index.html";
+    emblem.setAttribute("aria-label", "Til AHA Home");
+    emblem.title = "Til AHA Home";
+    const heading = add("div", brand, null, "aha-social-heading");
+    add("span", heading, kind === "feed" ? "AHA Feed" : "AHA Insta", "aha-social-brandname");
+    add("h2", heading, kind === "feed" ? "Delte oppdateringer" : "Delte bilder og videoer");
+    const headerActions = kind === "insta" ? add("div", mast, null, "aha-social-header-actions") : null;
+    const headerAdd = headerActions ? add("button", headerActions, "+ Legg til post", "aha-social-header-add") : null;
+    if (headerAdd) {
+      headerAdd.type = "button";
+      headerAdd.setAttribute("aria-label", "Legg til post");
+      headerAdd.setAttribute("aria-haspopup", "dialog");
+    }
+    const headerMore = headerActions ? add("details", headerActions, null, "aha-social-header-more") : null;
+    let profileMenuButton = null;
+    const browseMenuButtons = new Map();
+    if (headerMore) {
+      const trigger = add("summary", headerMore, "···");
+      trigger.setAttribute("aria-label", "Flere visninger");
+      const menu = add("div", headerMore, null, "aha-social-header-menu");
+      profileMenuButton = add("button", menu, "Min profil");
+      profileMenuButton.type = "button";
+      for (const mode of ["feed","reel","map"]) {
+        const name = mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map";
+        const button = add("button", menu, name);
+        button.type = "button";
+        browseMenuButtons.set(mode, button);
+      }
+    }
+    const navigation = add("nav", mast, null, "aha-social-navigation");
+    navigation.setAttribute("aria-label", "AHA sosiale flater");
+    // An app-style bottom dock. The middle action opens the local composer
+    // rather than attempting publication or bypassing the consent gate.
+    for (const page of ["feed", "compose", "insta"]) {
+      const item = add(page === "compose" ? "button" : "a", navigation, null,
+        page === "compose" ? "aha-social-nav-compose" : "aha-social-nav-page");
+      if (page === "compose") {
+        item.type = "button";
+        item.setAttribute("aria-label", kind === "feed" ? "Skriv nytt innlegg" : "Velg bilde til nytt innlegg");
+        item.addEventListener("click", () => {
+          form.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (kind === "feed") message?.focus({ preventScroll: true });
+          else media?.click();
+        });
+      } else {
+        item.href = global.__AHA_OFFLINE_DEMO__ === true
+          ? "social-demo.html?vis=" + page : page + ".html";
+        if (page === kind) item.setAttribute("aria-current", "page");
+      }
+      const svg = global.document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.8");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      svg.setAttribute("aria-hidden", "true");
+      const path = global.document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", page === "feed"
+        ? "M5 5h14M5 10h14M5 15h10M5 20h7"
+        : page === "insta"
+          ? "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5a4 4 0 1 0 0 8a4 4 0 0 0 0-8Zm5.5-.5h.01"
+          : "M12 5v14M5 12h14");
+      svg.appendChild(path);
+      item.appendChild(svg);
+      add("span", item, page === "feed" ? "Feed" : page === "insta" ? "Insta" : "Ny");
+    }
+    // Keep the dock outside the blurred sticky masthead: WebKit otherwise
+    // treats the header as the containing block for position:fixed.
+    panel.appendChild(navigation);
+    add("p", panel, "Testmiljø · ingen private AHA-innlegg deles automatisk.", "aha-social-intro");
+
+    const composeDialog = kind === "insta" ? add("dialog", panel, null, "aha-social-compose-dialog") : null;
+    if (composeDialog) {
+      composeDialog.setAttribute("aria-label", "Nytt innlegg");
+      const dialogHead = add("div", composeDialog, null, "aha-social-dialog-head");
+      add("strong", dialogHead, "Nytt innlegg");
+      const dismiss = add("button", dialogHead, "Lukk");
+      dismiss.type = "button";
+      dismiss.setAttribute("aria-label", "Lukk nytt innlegg");
+      dismiss.addEventListener("click", () => { void abandonDraft(); });
+      composeDialog.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        void abandonDraft();
+      });
+      headerAdd.addEventListener("click", () => {
+        if (!composeDialog.open) {
+          status.textContent = "";
+          composeDialog.showModal();
+        }
+      });
+    }
+    const form = add("form", composeDialog || panel, null, "module-form aha-social-compose");
+    form.id = "aha-social-compose";
+    if (kind === "feed") {
+      const composeLead = add("div", form, null, "aha-social-compose-lead");
+      const avatar = add("span", composeLead, "A", "aha-social-avatar aha-social-self-avatar");
+      avatar.setAttribute("aria-hidden", "true");
+      add("strong", composeLead, "Hva skjer?");
+    }
+    let instaMode = "feed";
+    let viewMode = kind === "insta" ? "profile" : "feed";
+    let placeSearch = null;
+    let cachedPosts = [];
+    let placeField = null;
+    let message = null;
+    let counter = null;
+    let media = null;
+    let mediaLabel = null;
+    let preview = null;
+    let videoPreview = null;
+    let releasePreview = null;
+    let discard = null;
+    let fileVersion = 0;
+    function updatePickerLabel() {
+      if (mediaLabel?.firstChild) {
+        const selected = media?.files?.[0];
+        mediaLabel.firstChild.textContent = selected
+          ? (global.AHASocialMedia?.isReelVideo?.(selected) ? "Bytt video" : "Bytt bilde")
+          : "Velg bilde eller video";
+      }
+    }
+    if (kind === "insta") {
+      mediaLabel = add("label", form, "Velg bilde eller video");
+      media = add("input", mediaLabel);
+      media.type = "file";
+      media.accept = "image/*";
+      media.required = true;
+      preview = add("img", form, null, "aha-social-media");
+      preview.hidden = true;
+      preview.alt = "Lokal forhåndsvisning av bildet";
+      videoPreview=add("video",form,null,"aha-social-media aha-social-reel-preview");
+      videoPreview.hidden=true;
+      videoPreview.controls=true;
+      videoPreview.playsInline=true;
+      videoPreview.preload="metadata";
+      videoPreview.setAttribute("aria-label","Lokal forhåndsvisning av Reel-video");
+      discard = add("button", form, "Fjern valgt bilde");
+      discard.type = "button";
+      discard.disabled = true;
+      media.addEventListener("change", () => {
+        // A failed publication may have left a private staged upload.
+        // Discard that previous draft when the user selects a new picture.
+        if (pendingMediaPath) {
+          const old = pendingMediaPath;
+          pendingMediaPath = null;
+          void global.AHASocialMedia.deletePending(old, origin()).catch(() => {
+            showStatus("Forrige opplastede bilde kunne ikke slettes. Det blir utilgjengelig etter 24 timer.");
+          });
+        }
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        fileVersion++;
+        try {
+          const file = media.files?.[0];
+          if (file && global.AHASocialMedia.isReelVideo(file)) {
+            if (instaMode!=="reel") throw new Error("Velg Reel før video.");
+            releasePreview=global.AHASocialMedia.localVideoPreview(file,videoPreview);
+            showStatus("Videoen er lokal. Publisering fungerer bare i demoen.");
+          } else if (file) releasePreview=global.AHASocialMedia.localPreview(file,preview);
+          discard.disabled=!file;
+        } catch (error) {
+          showStatus(error.message || "Kunne ikke forhåndsvise bildet.");
+          media.value = "";
+          discard.disabled = true;
+        }
+        updatePickerLabel();
+      });
+      // A photo is the default. Video/Map modes are deliberately tucked
+      // away so the primary create flow is simply photo -> caption -> share.
+      const formatOptions = add("details", form, null, "aha-social-compose-options");
+      const formatSummary = add("summary", formatOptions, "Bilde · andre formater");
+      const types = add("fieldset", formatOptions, null, "aha-social-type-selector");
+      const legend = add("legend", types, "Format");
+      const bar = add("div", types, null, "aha-social-tabs");
+      const modes = ["feed","reel","map"];
+      const tabButtons = modes.map((mode) => {
+        const button = add("button", bar, mode === "feed" ? "Feed" : mode === "reel" ? "Reel" : "Map");
+        button.type = "button";
+        button.dataset.mode = mode;
+        button.setAttribute("aria-pressed", String(mode === instaMode));
+        button.addEventListener("click", () => {
+          if (mode!=="reel" && global.AHASocialMedia.isReelVideo(media.files?.[0])) {
+            if (releasePreview) releasePreview();
+            releasePreview=null;
+            media.value="";
+            fileVersion++;
+            discard.disabled=true;
+            updatePickerLabel();
+            consent.checked=false;
+          }
+          instaMode=mode;
+          formatSummary.textContent = mode === "reel" ? "Reel · endre format" :
+            mode === "map" ? "Map · endre format" : "Bilde · andre formater";
+          formatOptions.open = false;
+          media.accept=mode==="reel"?"image/*,video/mp4,video/webm,video/quicktime":"image/*";
+          for (const tab of tabButtons) tab.setAttribute("aria-pressed",String(tab.dataset.mode===mode));
+          pendingSignature=null;
+          // Selecting the post type must not navigate away from the profile.
+          // The full Feed/Reel/Map views live in the header's overflow menu.
+          if (mode === "reel") showStatus("Reel kan forhåndsvise video. Video kan publiseres bare i demoen.");
+          else if (mode === "map") showStatus("Map viser bilder ordnet etter stedstag.");
+          else showStatus("Viser bildeinnlegg.");
+          updateComposerState();
+        });
+        return button;
+      });
+      const tagLabel = add("label", form, "Stedstag · valgfritt for Feed og Reel");
+      placeField = add("input", tagLabel);
+      placeField.type = "text";
+      placeField.maxLength = 120;
+      placeField.placeholder = "Legg til et sted, f.eks. Oslo";
+      placeField.autocomplete = "off";
+    }
+    const captionLabel = add("label", form, kind === "feed" ? "Innlegg" : "Bildetekst");
+    message = add("textarea", captionLabel);
+    message.required = kind === "feed";
+    message.maxLength = kind === "feed" ? 500 : 2000;
+    message.placeholder = kind === "feed" ? "Del en tanke …" : "Skriv en bildetekst …";
+    if (kind === "feed") {
+      counter = add("output", form, "0 / 500", "aha-social-counter");
+      counter.setAttribute("aria-live", "polite");
+      counter.setAttribute("aria-label", "Antall tegn");
+      const updateCount = () => {
+        counter.textContent = message.value.length + " / 500";
+        counter.classList.toggle("near-limit", message.value.length >= 450);
+      };
+      message.addEventListener("input", updateCount);
+    }
+    const consentLabel = add("label", form, null, "aha-social-consent");
+    const consent = add("input", consentLabel);
+    consent.type = "checkbox";
+    consent.required = true;
+    add("span", consentLabel, global.__AHA_OFFLINE_DEMO__ === true
+      ? "Del med de andre testkontoene i denne fanen."
+      : "Del med andre innloggede AHA-brukere i testmiljøet.");
+    const submit = add("button", form, kind === "feed" ? "Publiser i AHA Feed" : "Publiser i AHA Insta");
+    submit.type = "submit";
+    const publishRow = add("div", form, null, "aha-social-publish-row");
+    publishRow.appendChild(consentLabel);
+    publishRow.appendChild(submit);
+    let publishing = false;
+    function updateComposerState() {
+      const picked = media?.files?.[0] || null;
+      const readyText = kind !== "feed" ||
+        (message.value.trim().length > 0 && message.value.length <= 500);
+      const readyMedia = kind !== "insta" || Boolean(picked);
+      const readyPlace = kind !== "insta" || instaMode !== "map" ||
+        Boolean(placeField?.value.trim());
+      const video = global.AHASocialMedia?.isReelVideo?.(picked);
+      const readyVideo = !video || (
+        instaMode === "reel" &&
+        global.AHASocialMedia.canPreviewReelVideo(picked) &&
+        global.__AHA_OFFLINE_DEMO__ === true &&
+        origin() === "https://aha-social-offline-demo.invalid"
+      );
+      submit.disabled = publishing || !consent.checked || !readyText ||
+        !readyMedia || !readyPlace || !readyVideo;
+      return !submit.disabled;
+    }
+    message.addEventListener("input", updateComposerState);
+    consent.addEventListener("change", updateComposerState);
+    media?.addEventListener("change", updateComposerState);
+    placeField?.addEventListener("input", updateComposerState);
+    updateComposerState();
+
+    // Keep upload/consent errors inside the open compose sheet.
+    // In profile mode, routine loading messages stay off the main screen.
+    const status = add("p", composeDialog || panel, "", "module-meta aha-social-status");
+    status.setAttribute("role", "status");
+    const profile = kind === "insta" ? add("section", panel, null, "aha-social-my-profile") : null;
+    let profileName = null;
+    let profileCount = null;
+    let profileGrid = null;
+    let profileAvatar = null;
+    let signedInProfileName = "";
+    if (profile) {
+      const identity = add("header", profile, null, "aha-social-profile-identity");
+      profileAvatar = add("span", identity, "A", "aha-social-avatar aha-social-profile-avatar");
+      profileAvatar.setAttribute("aria-hidden", "true");
+      const description = add("div", identity, null, "aha-social-profile-info");
+      profileName = add("h3", description, "Min profil");
+      profileCount = add("span", description, "0 innlegg", "aha-social-profile-count");
+      add("h4", profile, "Mine bilder", "aha-social-grid-heading");
+      profileGrid = add("div", profile, null, "aha-social-my-grid");
+      profileGrid.setAttribute("aria-label", "Mine bilder");
+    }
+    const feedTools = add("div", panel, null, "aha-social-feed-tools");
+    add("h3", feedTools, kind === "feed" ? "Siste innlegg" : "Nye bilder", "aha-social-feed-heading");
+    const refresh = add("button", feedTools, "Oppdater delte innlegg", "aha-social-refresh");
+    refresh.type = "button";
+    let viewButtons = [];
+    let browser = null;
+    if (kind === "insta") {
+      browser = add("nav", panel, null, "aha-social-browser");
+      browser.hidden = true;
+      browser.setAttribute("aria-label", "Bla i Insta");
+      add("p", browser, "Velg visning", "aha-social-browser-title");
+      const actions = add("div", browser, null, "aha-social-tabs aha-social-reading-tabs");
+      viewButtons = ["feed","reel","map"].map((mode) => {
+        const button = add("button", actions, mode === "feed" ? "Feed" : mode === "reel" ? "Reel" : "Map");
+        button.type = "button";
+        button.setAttribute("aria-label", mode === "feed" ? "Vis Feed" : mode === "reel" ? "Vis Reel" : "Vis Map");
+        button.dataset.view = mode;
+        button.setAttribute("aria-pressed", String(mode === viewMode));
+        button.addEventListener("click", () => setViewMode(mode));
+        return button;
+      });
+      const searchLabel = add("label", browser, "Søk etter stedstag");
+      searchLabel.className = "aha-social-place-search";
+      placeSearch = add("input", searchLabel);
+      placeSearch.type = "search";
+      placeSearch.placeholder = "Finn bilder fra et sted";
+      placeSearch.setAttribute("aria-label", "Søk etter stedstag");
+      searchLabel.hidden = true;
+      placeSearch.addEventListener("input", () => renderList());
+    }
+    const list = add("div", panel, null, "module-list aha-social-list");
+    if (profile) {
+      list.hidden = true;
+      feedTools.hidden = true;
+    }
+    const postDialog = profile ? add("dialog", panel, null, "aha-social-post-dialog") : null;
+    const postDialogBody = postDialog ? add("div", postDialog, null, "aha-social-post-dialog-body") : null;
+    if (postDialog) {
+      postDialog.setAttribute("aria-label", "Vis bildeinnlegg");
+      const closePost = add("button", postDialog, "Lukk", "aha-social-post-dialog-close");
+      closePost.type = "button";
+      closePost.setAttribute("aria-label", "Lukk bildeinnlegg");
+      postDialog.insertBefore(closePost, postDialogBody);
+      closePost.addEventListener("click", () => postDialog.close());
+      postDialog.addEventListener("close", () => {
+        clear(postDialogBody);
+        renderList();
+      });
+    }
+    // The image viewer uses an existing, already loaded image URL. No second
+    // authenticated download, external share or original-image upload occurs.
+    const viewer = kind === "insta" ? add("dialog", panel, null, "aha-social-lightbox") : null;
+    let viewerImage = null;
+    if (viewer) {
+      viewer.setAttribute("aria-label", "Bildevisning");
+      const closeViewer = add("button", viewer, "Lukk bildet", "aha-social-lightbox-close");
+      closeViewer.type = "button";
+      closeViewer.addEventListener("click", () => viewer.close());
+      viewerImage = add("img", viewer, null, "aha-social-lightbox-image");
+      viewer.addEventListener("click", (event) => {
+        if (event.target === viewer) viewer.close();
+      });
+      viewer.addEventListener("close", () => {
+        viewerImage.removeAttribute("src");
+        viewerImage.alt = "";
+      });
+    }
+    let pendingKey = null;
+    let pendingSignature = null;
+    let pendingUploadKey = null;
+    let pendingMediaPath = null;
+    let abandoningDraft = false;
+    async function abandonDraft() {
+      if (!composeDialog?.open || publishing || abandoningDraft) return;
+      abandoningDraft = true;
+      try {
+        // A canceled post must not keep a selected image, previous consent,
+        // or an unshared staged upload around for the next composer session.
+        if (pendingMediaPath) {
+          try {
+            await global.AHASocialMedia.deletePending(pendingMediaPath, origin());
+          } catch (error) {
+            showStatus(error.message || "Kunne ikke fjerne kladden fra staging.");
+            return;
+          }
+        }
+        pendingMediaPath = null;
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        if (media) {
+          media.value = "";
+          media.accept = "image/*";
+        }
+        if (message) message.value = "";
+        if (placeField) placeField.value = "";
+        if (consent) consent.checked = false;
+        if (discard) discard.disabled = true;
+        instaMode = "feed";
+        const formatOptions = form.querySelector(".aha-social-compose-options");
+        if (formatOptions) {
+          formatOptions.open = false;
+          formatOptions.querySelector("summary").textContent = "Bilde · andre formater";
+        }
+        for (const button of form.querySelectorAll(".aha-social-type-selector button[data-mode]")) {
+          button.setAttribute("aria-pressed", String(button.dataset.mode === "feed"));
+        }
+        fileVersion++;
+        updatePickerLabel();
+        updateComposerState();
+        showStatus("");
+        composeDialog.close();
+      } finally {
+        abandoningDraft = false;
+      }
+    }
+    if (discard) {
+      discard.addEventListener("click", async () => {
+        // Clearing a local draft must not depend on whether the separate
+        // publish action is ready. Only an in-flight publish blocks edits.
+        if (publishing) return;
+        discard.disabled = true;
+        const staged = pendingMediaPath;
+        if (staged) {
+          try {
+            await global.AHASocialMedia.deletePending(staged, origin());
+          } catch (error) {
+            showStatus(error.message || "Kunne ikke fjerne bildet fra staging.");
+            discard.disabled = false;
+            return;
+          }
+        }
+        pendingMediaPath = null;
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        media.value = "";
+        fileVersion++;
+        updatePickerLabel();
+        consent.checked = false;
+        if (releasePreview) releasePreview();
+        releasePreview = null;
+        showStatus("Bildet er fjernet. Ingen innlegg er publisert.");
+        updateComposerState();
+      });
+    }
+    const mediaReleases = new Set();
+    let renderGeneration = 0;
+
+    function showStatus(text) { status.textContent = text; }
+
+    async function mutate(path, method, payload, success) {
+      try {
+        await call(path, method, payload);
+        showStatus(success || "Oppdatert.");
+        await load();
+        return true;
+      } catch (error) {
+        showStatus(error.message || "Handlingen feilet.");
+        return false;
+      }
+    }
+
+    function renderComment(section, item) {
+      const row = add("div", section, null, "aha-social-comment");
+      add("strong", row, item.authorName || "AHA-bruker");
+      add("span", row, " " + (item.text || ""));
+    }
+
+    async function showComments(section, postId) {
+      clear(section);
+      try {
+        const comments = await call("/v1/social/posts/" + encodeURIComponent(postId) + "/comments");
+        for (const comment of Array.isArray(comments) ? comments : []) renderComment(section, comment);
+        if (!comments.length) add("p", section, "Ingen kommentarer ennå.");
+        const commentForm = add("form", section, null, "aha-social-comment-form");
+        const field = add("input", commentForm);
+        field.type = "text"; field.placeholder = "Skriv en kommentar"; field.maxLength = 500; field.required = true;
+        const send = add("button", commentForm, "Kommenter"); send.type = "submit";
+        commentForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!field.value.trim()) return;
+          if (await mutate("/v1/social/posts/" + encodeURIComponent(postId) + "/comments", "POST", { text: field.value.trim() }, "Kommentar publisert.")) {
+            await showComments(section, postId);
+          }
+        });
+      } catch (error) { add("p", section, error.message || "Kunne ikke vise kommentarer."); }
+    }
+
+    function renderPost(post, parent = list) {
+      const card = add("article", parent, null, "module-card aha-social-post");
+      card.classList.add("aha-social-post-" + kind);
+      const head = add("header", card, null, "aha-social-post-head");
+      const displayName = post.authorName || "AHA-bruker";
+      const avatar = add("span", head, displayName.trim().slice(0, 1).toLocaleUpperCase("nb-NO") || "A", "aha-social-avatar");
+      avatar.setAttribute("aria-hidden", "true");
+      const meta = add("div", head, null, "aha-social-author-meta");
+      add("strong", meta, displayName);
+      const published = add("time", meta, isoDate(post.createdAt), "module-meta");
+      if (post.createdAt) published.dateTime = String(post.createdAt);
+      if (kind === "feed") add("p", card, post.text || "", "aha-social-feed-copy");
+      if (kind === "insta" && typeof post.mediaUrl === "string") {
+        let mediaUrl;
+        if (global.AHASocialMedia?.isPrivateMediaUrl?.(post.mediaUrl)) mediaUrl = post.mediaUrl;
+        else try {
+          const parsed = new URL(post.mediaUrl);
+          if (parsed.protocol === "https:" && !parsed.username && !parsed.password) mediaUrl = parsed.href;
+        } catch {}
+        if (mediaUrl) {
+          const isPrivate = global.AHASocialMedia?.isPrivateMediaUrl?.(mediaUrl);
+          const isVideo=(isPrivate && global.__AHA_OFFLINE_DEMO__===true && post.mediaType==="video") ||
+            (!isPrivate && /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl));
+          const visual = add(isVideo ? "video" : "img", card, null, "aha-social-media");
+          visual.referrerPolicy = "no-referrer";
+          if (isVideo) { visual.controls=true; visual.playsInline=true; visual.preload="metadata"; }
+          else { visual.loading="lazy"; visual.alt=post.text||"Innleggsbilde"; }
+          if (isPrivate) {
+            const generation=renderGeneration;
+            global.AHASocialMedia.renderProtected(mediaUrl,visual,origin()).then(release=>{
+              if(generation!==renderGeneration)release();
+              else mediaReleases.add(release);
+            }).catch(()=>{
+              if(isVideo) visual.setAttribute("aria-label","Videoen kunne ikke vises.");
+              else visual.alt="Bildet kunne ikke vises.";
+            });
+          } else visual.src=mediaUrl;
+          if (!isVideo && viewer) {
+            visual.tabIndex = 0;
+            visual.setAttribute("role", "button");
+            visual.setAttribute("aria-label", "Forstørr bilde");
+            const openImage = () => {
+              if (!visual.getAttribute("src") || typeof viewer.showModal !== "function") return;
+              viewerImage.src = visual.currentSrc || visual.src;
+              viewerImage.alt = visual.alt || "Bilde i AHA Insta";
+              if (!viewer.open) viewer.showModal();
+            };
+            visual.addEventListener("click", openImage);
+            visual.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openImage();
+              }
+            });
+          }
+        }
+      }
+      if (kind === "insta") {
+        if (post.placeTag) {
+          const place = add("button", meta, "📍 " + post.placeTag, "aha-social-location");
+          place.type = "button";
+          place.setAttribute("aria-label", "Se bilder fra " + post.placeTag);
+          place.addEventListener("click", () => {
+            if (!placeSearch) return;
+            placeSearch.value = post.placeTag;
+            setViewMode("map");
+          });
+        }
+        if (post.text) add("p", card, post.text, "aha-social-caption");
+        const marker = add("span", head, post.instaMode === "reel" ? "Reel" : post.instaMode === "map" ? "Map" : "Bilde", "aha-social-kind");
+        marker.setAttribute("aria-label", "Innleggstype: " + marker.textContent);
+      }
+      // Contextual actions stay available but never compete with the text,
+      // image, like and comment controls in the primary action row.
+      const more = add("details", head, null, "aha-social-more");
+      const moreTrigger = add("summary", more, "···");
+      moreTrigger.setAttribute("aria-label", "Flere valg");
+      moreTrigger.title = "Flere valg";
+      const secondaryActions = add("div", more, null, "aha-social-more-actions");
+      const actions = add("div", card, null, "aha-social-actions");
+      if (kind === "insta") {
+        const caption = card.querySelector(".aha-social-caption");
+        if (caption) card.insertBefore(actions, caption);
+      }
+      const likeCount = Number(post.likeCount || 0);
+      const like = add("button", actions, String(likeCount));
+      like.type = "button";
+      like.setAttribute("aria-label", (post.likedByMe ? "Likt" : "Lik") + " (" + likeCount + ")");
+      like.title = (post.likedByMe ? "Fjern likerklikk" : "Lik innlegget");
+      addActionIcon(like, "like");
+      like.classList.add("aha-social-action-like");
+      like.setAttribute("aria-pressed", String(Boolean(post.likedByMe)));
+      like.addEventListener("click", () => mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/like", "POST", { liked: !post.likedByMe }, "Likerklikk oppdatert."));
+      if (kind === "insta" && post.ownPost) {
+        // Inline editing changes only the optional location label. It does not
+        // re-upload the image, re-publish the post, or import private content.
+        const editButton = add("button", secondaryActions, post.placeTag ? "Rediger stedstag" : "Legg til stedstag");
+        editButton.type = "button";
+        const editor = add("form", card, null, "aha-social-place-editor");
+        editor.hidden = true;
+        const placeLabel = add("label", editor, "Stedstag for dette bildet");
+        const placeInput = add("input", placeLabel);
+        placeInput.type = "text";
+        placeInput.maxLength = 120;
+        placeInput.value = post.placeTag || "";
+        placeInput.placeholder = "Skriv et sted";
+        placeInput.autocomplete = "off";
+        add("p", editor, "Stedstaggen vises for andre. Bare du kan endre den.", "module-meta");
+        const buttons = add("div", editor, null, "aha-social-place-editor-actions");
+        const save = add("button", buttons, "Lagre stedstag");
+        save.type = "submit";
+        const cancel = add("button", buttons, "Avbryt");
+        cancel.type = "button";
+        editButton.addEventListener("click", () => {
+          more.open = false;
+          editor.hidden = !editor.hidden;
+          editButton.setAttribute("aria-expanded", String(!editor.hidden));
+          if (!editor.hidden) placeInput.focus();
+        });
+        editButton.setAttribute("aria-expanded", "false");
+        cancel.addEventListener("click", () => { editor.hidden = true; editButton.setAttribute("aria-expanded","false"); });
+        editor.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const tag = placeInput.value.trim();
+          if (post.instaMode === "map" && !tag) {
+            showStatus("Map-innlegg må ha et stedstag.");
+            return;
+          }
+          if (tag.length > 120) { showStatus("Stedstag kan ikke være over 120 tegn."); return; }
+          save.disabled = true;
+          const changed = await mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/place",
+            "POST", { placeTag: tag || null }, "Stedstag oppdatert.");
+          if (!changed) save.disabled = false;
+        });
+      }
+      const commentCount = Number(post.commentCount || 0);
+      const comment = add("button", actions, String(commentCount));
+      comment.type = "button";
+      comment.setAttribute("aria-label", "Kommentarer (" + commentCount + ")");
+      comment.title = "Se og skriv kommentarer";
+      addActionIcon(comment, "comment");
+      comment.classList.add("aha-social-action-comment");
+      comment.setAttribute("aria-expanded", "false");
+      const commentSection = add("div", card, null, "aha-social-comments");
+      commentSection.hidden = true;
+      comment.addEventListener("click", () => {
+        if (!commentSection.hidden) {
+          commentSection.hidden = true;
+          comment.setAttribute("aria-expanded", "false");
+          return;
+        }
+        commentSection.hidden = false;
+        comment.setAttribute("aria-expanded", "true");
+        void showComments(commentSection, post.id);
+      });
+      if (post.ownPost) {
+        const remove = add("button", secondaryActions, "Slett");
+        remove.type = "button";
+        remove.addEventListener("click", () => {
+          more.open = false;
+          if (global.confirm("Slette dette publiserte innlegget?")) mutate("/v1/social/posts/" + encodeURIComponent(post.id), "DELETE", null, "Innlegget er slettet.");
+        });
+      } else {
+        const report = add("button", secondaryActions, "Rapporter");
+        report.type = "button";
+        report.addEventListener("click", () => {
+          more.open = false;
+          const reason = global.prompt("Årsak: spam, abuse, privacy eller other", "spam");
+          if (["spam", "abuse", "privacy", "other"].includes(reason)) {
+            mutate("/v1/social/posts/" + encodeURIComponent(post.id) + "/reports", "POST", { reason }, "Rapport mottatt.");
+          }
+        });
+      }
+    }
+
+    function setViewMode(mode) {
+      if (!["profile","feed","reel","map"].includes(mode) || kind !== "insta") return;
+      viewMode = mode;
+      if (profile) profile.hidden = mode !== "profile";
+      if (list) list.hidden = mode === "profile";
+      if (feedTools) feedTools.hidden = mode === "profile";
+      if (browser) browser.hidden = mode === "profile";
+      for (const button of viewButtons) {
+        button.setAttribute("aria-pressed", String(button.dataset.view === mode));
+      }
+      if (placeSearch) placeSearch.parentElement.hidden = mode !== "map";
+      headerMore.open = false;
+      renderList();
+    }
+    if (profileMenuButton) profileMenuButton.addEventListener("click", () => setViewMode("profile"));
+    for (const [mode, button] of browseMenuButtons) {
+      button.addEventListener("click", () => setViewMode(mode));
+    }
+
+    function renderProfile() {
+      if (!profile || !profileGrid) return 0;
+      clear(profileGrid);
+      const own = cachedPosts.filter(post => post.ownPost === true);
+      const firstName = own.find(post => post.authorName)?.authorName;
+      const displayName = signedInProfileName || firstName || "Min profil";
+      profileName.textContent = displayName;
+      profileAvatar.textContent = displayName === "Min profil"
+        ? "A" : displayName.trim().slice(0, 1).toLocaleUpperCase("nb-NO") || "A";
+      profileCount.textContent = own.length + (own.length === 1 ? " innlegg" : " innlegg");
+      if (!own.length) {
+        const empty = add("div", profileGrid, null, "aha-social-profile-empty");
+        add("span", empty, "▧", "aha-social-profile-empty-icon").setAttribute("aria-hidden", "true");
+        add("p", empty, "Ingen bilder ennå");
+        return 0;
+      }
+      for (const post of own) {
+        const tile = add("button", profileGrid, null, "aha-social-grid-tile");
+        tile.type = "button";
+        tile.setAttribute("aria-label", "Vis innlegg" + (post.text ? ": " + post.text.slice(0, 100) : ""));
+        const raw = typeof post.mediaUrl === "string" ? post.mediaUrl : "";
+        const privateUrl = global.AHASocialMedia?.isPrivateMediaUrl?.(raw);
+        let validUrl = privateUrl ? raw : "";
+        if (!validUrl) {
+          try {
+            const candidate = new URL(raw);
+            if (candidate.protocol === "https:" && !candidate.username && !candidate.password) validUrl = candidate.href;
+          } catch {}
+        }
+        const video = post.mediaType === "video" || /\.(mp4|webm|mov)(\?|$)/i.test(validUrl);
+        if (validUrl) {
+          const visual = add(video ? "video" : "img", tile, null, "aha-social-grid-image");
+          visual.referrerPolicy = "no-referrer";
+          if (video) {
+            visual.playsInline = true;
+            visual.muted = true;
+            visual.preload = "metadata";
+          } else {
+            visual.alt = "";
+            visual.loading = "lazy";
+          }
+          if (privateUrl) {
+            const generation = renderGeneration;
+            global.AHASocialMedia.renderProtected(validUrl, visual, origin()).then(release => {
+              if (generation !== renderGeneration) release();
+              else mediaReleases.add(release);
+            }).catch(() => {
+              tile.setAttribute("aria-label", "Bildet kunne ikke vises");
+              add("span", tile, "Bilde utilgjengelig", "aha-social-grid-unavailable");
+            });
+          } else visual.src = validUrl;
+        } else add("span", tile, "Bilde utilgjengelig", "aha-social-grid-unavailable");
+        if (post.instaMode === "reel") {
+          const marker = add("span", tile, "▶", "aha-social-grid-reel");
+          marker.setAttribute("aria-hidden", "true");
+        }
+        tile.addEventListener("click", () => {
+          clear(postDialogBody);
+          renderPost(post, postDialogBody);
+          postDialog.showModal();
+        });
+      }
+      return own.length;
+    }
+
+    function renderList() {
+      renderGeneration++;
+      if (viewer?.open) viewer.close();
+      for (const release of mediaReleases) release();
+      mediaReleases.clear();
+      clear(list);
+      const rows = cachedPosts;
+      if (kind === "insta" && viewMode === "profile") {
+        const count = renderProfile();
+        showStatus("Mine bilder: " + count + " innlegg.");
+        return;
+      }
+      const search = (placeSearch?.value || "").trim().toLocaleLowerCase("nb-NO");
+      const displayed = kind !== "insta" || viewMode === "feed" ? rows
+        : viewMode === "reel" ? rows.filter(post => post.instaMode === "reel")
+        : rows.filter(post => typeof post.placeTag === "string" &&
+            post.placeTag.trim() && post.placeTag.toLocaleLowerCase("nb-NO").includes(search));
+      if (!displayed.length) {
+        const empty = add("section", list, null, "aha-social-empty");
+        add("span", empty, kind === "feed" ? "✎" : "▧", "aha-social-empty-icon")
+          .setAttribute("aria-hidden", "true");
+        add("h3", empty, viewMode === "map" && search
+          ? "Ingen bilder funnet for dette stedet."
+          : kind === "feed" ? "Tidslinjen er tom ennå" : "Ingen bilder her ennå");
+        add("p", empty, viewMode === "map" && search
+          ? "Prøv et annet stedsnavn."
+          : kind === "feed" ? "Det første delte innlegget vil dukke opp her."
+            : "Bilder vises her når noen har delt dem.");
+      } else if (kind === "insta" && viewMode === "map") {
+        // Place names are labels, not fabricated GPS points. Build a browsable
+        // map-like place gallery without assuming any coordinates or location.
+        const places = new Map();
+        for (const post of displayed) {
+          const label = post.placeTag.trim();
+          const key = label.toLocaleLowerCase("nb-NO");
+          if (!places.has(key)) places.set(key,{label,posts:[]});
+          places.get(key).posts.push(post);
+        }
+        for (const group of places.values()) {
+          const section = add("section", list, null, "aha-social-place-group");
+          add("h3", section, "📍 " + group.label + " · " + group.posts.length + " bilder");
+          const gallery = add("div", section, null, "aha-social-place-grid");
+          for (const post of group.posts) renderPost(post,gallery);
+        }
+      } else {
+        for (const post of displayed) renderPost(post);
+      }
+      showStatus("Viser " + displayed.length + " delte innlegg.");
+    }
+
+    async function load() {
+      showStatus("Henter delte innlegg…");
+      try {
+        const posts = await call("/v1/social/posts?kind=" + encodeURIComponent(kind) + "&limit=30");
+        cachedPosts = Array.isArray(posts) ? posts : [];
+        renderList();
+      } catch (error) {
+        cachedPosts = [];
+        renderList();
+        showStatus(error.message || "Kunne ikke hente feeden.");
+      }
+    }
+
+    async function loadSignedInProfile() {
+      if (!profile || typeof global.AHAAuth?.loadProfile !== "function") return;
+      try {
+        // Only the authenticated profile's own display name, never an email,
+        // is used for the public-facing header.
+        const response = await global.AHAAuth.loadProfile();
+        const name = response?.ok && typeof response.data?.display_name === "string"
+          ? response.data.display_name.trim().slice(0, 80) : "";
+        if (name) {
+          signedInProfileName = name;
+          if (viewMode === "profile") renderProfile();
+        }
+      } catch {
+        // An unavailable optional profile lookup must not block the image grid.
+      }
+    }
+
+    refresh.addEventListener("click", () => load());
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const selectedFile = media?.files?.[0] || null;
+      const placeTag=placeField?.value.trim()||null;
+      const selectedVideo=Boolean(global.AHASocialMedia?.isReelVideo?.(selectedFile));
+      if (selectedVideo && (instaMode!=="reel" ||
+          !global.AHASocialMedia?.canPreviewReelVideo?.(selectedFile))) {
+        showStatus("Velg Reel og en video på maks 8 MB.");
+        return;
+      }
+      if (selectedVideo && (global.__AHA_OFFLINE_DEMO__!==true ||
+          origin()!=="https://aha-social-offline-demo.invalid")) {
+        showStatus("Ekte Reel-publisering er ikke aktivert. Du kan bare forhåndsvise videoen.");
+        return;
+      }
+      if (kind === "feed" && message.value.length > 500) {
+        showStatus("Feed har en grense på 500 tegn.");
+        return;
+      }
+      if (kind === "insta" && instaMode === "map" && !placeTag) {
+        showStatus("Velg et stedstag for innlegg som skal vises i Map.");
+        return;
+      }
+      if (!consent.checked || (kind === "feed" && !message.value.trim()) || (media && !selectedFile)) {
+        showStatus("Fyll ut innlegget, velg bilde og godkjenn offentlig publisering.");
+        return;
+      }
+      const payload = { kind, text: message.value.trim(), publish: true };
+      if (kind === "insta") {
+        payload.instaMode = instaMode;
+        if (placeTag) payload.placeTag = placeTag;
+      }
+      const signature = JSON.stringify({ kind, text: payload.text, fileVersion, instaMode, placeTag });
+      if (signature !== pendingSignature) {
+        pendingKey = createKey();
+        pendingUploadKey = createKey();
+        pendingSignature = signature;
+      }
+      payload.requestKey = pendingKey;
+      publishing = true;
+      updateComposerState();
+      if (media) media.disabled = true;
+      if (discard) discard.disabled = true;
+      try {
+        if (selectedFile) {
+          showStatus(selectedVideo?"Legger video i den lokale demoen…":"Forbereder og laster opp bildet…");
+          // Retry uses the same media reference; video is demo-only.
+          if (!pendingMediaPath) {
+            if (selectedVideo)
+              pendingMediaPath=await global.AHASocialMedia.uploadDemoVideo(selectedFile,pendingUploadKey,origin());
+            else {
+              const blob=await global.AHASocialMedia.prepareImage(selectedFile);
+              pendingMediaPath=await global.AHASocialMedia.upload(blob,pendingUploadKey,origin());
+            }
+          }
+          payload.mediaUrl=pendingMediaPath;
+        }
+        await call("/v1/social/posts", "POST", payload);
+        pendingMediaPath = null;
+        message.value = "";
+        if (counter) counter.textContent = "0 / 500";
+        if (placeField) placeField.value = "";
+        if (media) {
+          media.value = "";
+          updatePickerLabel();
+          if (releasePreview) releasePreview();
+          releasePreview = null;
+          fileVersion++;
+        }
+        consent.checked = false;
+        pendingKey = null;
+        pendingSignature = null;
+        pendingUploadKey = null;
+        if (kind === "insta") {
+          // Every new post starts with the ordinary photo flow, even after
+          // publishing a Reel/Map post. Browsing modes remain independent.
+          instaMode = "feed";
+          media.accept = "image/*";
+          const format = form.querySelector(".aha-social-compose-options");
+          if (format) {
+            format.open = false;
+            format.querySelector("summary").textContent = "Bilde · andre formater";
+          }
+          for (const button of form.querySelectorAll(".aha-social-type-selector button[data-mode]")) {
+            button.setAttribute("aria-pressed", String(button.dataset.mode === "feed"));
+          }
+          if (composeDialog?.open) composeDialog.close();
+          setViewMode("profile");
+        }
+        await load();
+        showStatus("Innlegget er publisert i testfeeden.");
+      } catch (error) {
+        showStatus(error.message || "Publiseringen feilet.");
+      } finally {
+        publishing = false;
+        if (media) media.disabled = false;
+        if (discard) discard.disabled = !media?.files?.length;
+        updateComposerState();
+      }
+    });
+    await load();
+    await loadSignedInProfile();
+    return true;
+  }
+
+  const api = Object.freeze({ VERSION, isEnabled, init });
+  global.AHASocialNetwork = api;
+  if (global.document && isEnabled()) {
+    if (global.document.readyState === "loading") global.document.addEventListener("DOMContentLoaded", () => { void init(); }, { once: true });
+    else void init();
+  }
+})(typeof window !== "undefined" ? window : globalThis);

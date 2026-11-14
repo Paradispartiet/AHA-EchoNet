@@ -1,4 +1,5 @@
 const assert = require('assert');
+const test = require('node:test');
 const fs = require('fs');
 const vm = require('vm');
 
@@ -228,3 +229,23 @@ function loadSearch(localStorage) {
 
   console.log('aha-insta local-only boundary tests passed');
 })();
+
+
+test("private Insta media accepts editable place tags without becoming externally published", async()=>{
+ const sandbox=loadInsta();
+ const api=sandbox.AHAInsta;
+ const post=await api.addPost({title:"Park",src:"/test/frogner.webp",caption:"Et lokalt bilde"});
+ assert.equal(post.placeTag,"");
+ assert.equal(post.local_only,true);
+ assert.equal(post.published_external,false);
+ const tagged=api.setPostPlaceTag(post.id,"  Oslo, Frogner  ");
+ assert.equal(tagged.placeTag,"Oslo, Frogner");
+ assert.equal(tagged.meta.place_tag,"Oslo, Frogner");
+ assert.equal(tagged.published_external,false);
+ assert.equal(tagged.echonet_shared,false);
+ assert.equal(tagged.sync_enabled,false);
+ assert.equal(api.load().find(x=>x.id===post.id).placeTag,"Oslo, Frogner");
+ assert.equal(api.setPostPlaceTag(post.id,"x".repeat(121)),null);
+ assert.equal(api.load()[0].placeTag,"Oslo, Frogner");
+ assert.equal(api.setPostPlaceTag(post.id,"").placeTag,"");
+});
