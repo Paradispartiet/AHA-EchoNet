@@ -237,7 +237,6 @@
       videoPreview.playsInline=true;
       videoPreview.preload="metadata";
       videoPreview.setAttribute("aria-label","Lokal forhåndsvisning av Reel-video");
-      add("p",form,"Bilde først · video er foreløpig kun tilgjengelig i demoen.","module-meta aha-social-upload-hint");
       discard = add("button", form, "Fjern valgt bilde");
       discard.type = "button";
       discard.disabled = true;
@@ -272,9 +271,12 @@
         }
         updatePickerLabel();
       });
-      const types = add("fieldset", form, null, "aha-social-type-selector");
-      form.insertBefore(types, mediaLabel);
-      const legend = add("legend", types, "Publiser som");
+      // A photo is the default. Video/Map modes are deliberately tucked
+      // away so the primary create flow is simply photo -> caption -> share.
+      const formatOptions = add("details", form, null, "aha-social-compose-options");
+      const formatSummary = add("summary", formatOptions, "Bilde · andre formater");
+      const types = add("fieldset", formatOptions, null, "aha-social-type-selector");
+      const legend = add("legend", types, "Format");
       const bar = add("div", types, null, "aha-social-tabs");
       const modes = ["feed","reel","map"];
       const tabButtons = modes.map((mode) => {
@@ -293,6 +295,9 @@
             consent.checked=false;
           }
           instaMode=mode;
+          formatSummary.textContent = mode === "reel" ? "Reel · endre format" :
+            mode === "map" ? "Map · endre format" : "Bilde · andre formater";
+          formatOptions.open = false;
           media.accept=mode==="reel"?"image/*,video/mp4,video/webm,video/quicktime":"image/*";
           for (const tab of tabButtons) tab.setAttribute("aria-pressed",String(tab.dataset.mode===mode));
           pendingSignature=null;
@@ -484,6 +489,11 @@
         if (consent) consent.checked = false;
         if (discard) discard.disabled = true;
         instaMode = "feed";
+        const formatOptions = form.querySelector(".aha-social-compose-options");
+        if (formatOptions) {
+          formatOptions.open = false;
+          formatOptions.querySelector("summary").textContent = "Bilde · andre formater";
+        }
         for (const button of form.querySelectorAll(".aha-social-type-selector button[data-mode]")) {
           button.setAttribute("aria-pressed", String(button.dataset.mode === "feed"));
         }
