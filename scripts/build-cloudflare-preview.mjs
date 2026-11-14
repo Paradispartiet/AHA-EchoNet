@@ -72,8 +72,9 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 for (const dir of frontendDirs) await copyTree(dir);
 
 const required = [
-  "index.html", "feed.html", "insta.html",
-  "js/ahaConfig.js", "js/ahaFeed.js", "css/aha-dashboard.css"
+  "index.html", "chat.html", "feed.html", "insta.html", "auth-callback.html",
+  "js/ahaConfig.js", "js/ahaAuth.js", "js/ahaFeed.js", "js/ahaInsta.js",
+  "js/ahaChatInsightPipeline.js", "css/aha-dashboard.css"
 ];
 const missing = required.filter(file => !copied.includes(file));
 if (missing.length) throw new Error("Cloudflare preview missing required frontend assets: " + missing.join(", "));
@@ -89,5 +90,9 @@ if (sha) {
 }
 
 await writeFile(path.join(out, "robots.txt"), "User-agent: *\nDisallow: /\n");
+await writeFile(
+  path.join(out, "_headers"),
+  "/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n"
+);
 console.log("Cloudflare staging static build: " + copied.length + " public frontend assets.");
 console.log("Excluded: server, backend, SQL, workflows, secrets, docs, source tests.");

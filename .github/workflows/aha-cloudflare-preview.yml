@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/aha-cloudflare-preview.yml'
       - 'scripts/build-cloudflare-preview.mjs'
+      - 'scripts/check-cloudflare-preview.mjs'
       - 'docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md'
   workflow_dispatch:
     inputs:
@@ -39,6 +40,9 @@ jobs:
       - name: Build static frontend allowlist
         run: node scripts/build-cloudflare-preview.mjs
 
+      - name: Check critical pages, local assets and preview headers
+        run: node scripts/check-cloudflare-preview.mjs
+
       - name: Check published files are frontend-only
         shell: bash
         run: |
@@ -72,6 +76,9 @@ jobs:
         env:
           AHA_BUILD_SHA: ${{ github.sha }}
         run: node scripts/build-cloudflare-preview.mjs
+
+      - name: Check preview bundle before upload
+        run: node scripts/check-cloudflare-preview.mjs
 
       - name: Create a Pages project in the AHA account (optional, first run)
         if: inputs.create_project == true
