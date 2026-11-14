@@ -609,7 +609,8 @@ test("Insta opens on my profile with only my square photo grid and one header co
  await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
  const insta=page.locator("#aha-social-mount");
  await expect(insta.locator(".aha-social-my-profile")).toBeVisible();
- await expect(insta.getByRole("heading",{name:"Mine bilder"})).toBeVisible();
+ await expect(insta.getByRole("heading",{name:"Mine bilder"})).toHaveCount(1);
+ await expect(insta.locator(".aha-social-grid-heading")).toHaveCSS("position","absolute");
  await expect(insta.getByRole("button",{name:"Legg til post"})).toBeVisible();
  await expect(insta.getByRole("dialog",{name:"Nytt innlegg"})).toBeHidden();
  await expect(insta.locator(".aha-social-browser")).toBeHidden();
