@@ -789,7 +789,6 @@
         const empty = add("div", profileGrid, null, "aha-social-profile-empty");
         add("span", empty, "▧", "aha-social-profile-empty-icon").setAttribute("aria-hidden", "true");
         add("p", empty, "Ingen bilder ennå");
-        add("small", empty, "Legg til et bilde fra knappen øverst.");
         return 0;
       }
       for (const post of own) {
