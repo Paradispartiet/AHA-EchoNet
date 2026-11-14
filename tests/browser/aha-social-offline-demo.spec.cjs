@@ -1,5 +1,14 @@
 const {test,expect}=require("@playwright/test");
 
+async function selectInstaFormat(page,mode) {
+ const composer=page.locator("#aha-social-mount .aha-social-compose-dialog");
+ const disclosure=composer.locator(".aha-social-compose-options");
+ if (!(await disclosure.evaluate(element=>element.open))) {
+   await disclosure.locator("summary").click();
+ }
+ await composer.getByRole("button",{name:mode,exact:true}).click();
+}
+
 async function openInstaView(page,mode="feed"){
  const names={profile:"Min profil",feed:"Vis Feed",reel:"Vis Reel",map:"Vis Map"};
  await page.locator("#aha-social-mount .aha-social-header-more > summary").click();
@@ -89,12 +98,12 @@ test("Feed counts toward 500 characters and Insta is image-first with mode and l
  await page.getByRole("button",{name:"Legg til post"}).click();
  const insta=page.locator("#aha-social-mount");
  await expect(insta.locator('input[type="file"]')).toHaveCount(1);
- await expect(insta.getByRole("button",{name:"Feed",exact:true})).toHaveAttribute("aria-pressed","true");
- await insta.getByRole("button",{name:"Map",exact:true}).click();
- await expect(insta.getByRole("button",{name:"Map",exact:true})).toHaveAttribute("aria-pressed","true");
+ await expect(insta.locator('.aha-social-type-selector button[data-mode="feed"]')).toHaveAttribute("aria-pressed","true");
+ await selectInstaFormat(page,"Map");
+ await expect(insta.locator('.aha-social-type-selector button[data-mode="map"]')).toHaveAttribute("aria-pressed","true");
  await expect(insta.locator('input[type="text"][maxlength="120"]')).toBeVisible();
- await insta.getByRole("button",{name:"Reel",exact:true}).click();
- await expect(insta.getByRole("button",{name:"Reel",exact:true})).toHaveAttribute("aria-pressed","true");
+ await selectInstaFormat(page,"Reel");
+ await expect(insta.locator('.aha-social-type-selector button[data-mode="reel"]')).toHaveAttribute("aria-pressed","true");
 });
 
 
@@ -111,7 +120,7 @@ test("Insta Map retains the photo location and filters the view across demo acco
  await social.locator('input[type="file"]').setInputFiles({
    name:"oslo.png",mimeType:"image/png",buffer:Buffer.from(bytes)
  });
- await social.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
  await social.locator("textarea").first().fill("Bilde fra sentrum");
  await social.getByRole("checkbox").check();
@@ -139,7 +148,7 @@ test("Map browsing is separate from the publish type and place tags can filter p
    return Array.from(new Uint8Array(await blob.arrayBuffer()));
  });
  await social.locator('input[type="file"]').setInputFiles({name:"tagged.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
- await social.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
  await social.locator("textarea").first().fill("Et stedstaggede bilde");
  await social.getByRole("checkbox").check();
@@ -212,7 +221,7 @@ test("Map posts cannot lose mandatory place tags during post-publication editing
   return Array.from(new Uint8Array(await blob.arrayBuffer()));
  });
  await social.locator('input[type="file"]').setInputFiles({name:"map.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
- await social.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await social.locator('input[type="text"][maxlength="120"]').fill("Oslo sentrum");
  await social.locator("textarea").first().fill("Map bilde med plassering");
  await social.getByRole("checkbox").check();
@@ -239,7 +248,7 @@ test("Reel previews and publishes selected MP4 only in the local in-memory demo"
  const social=page.locator("#aha-social-mount");
  const picker=social.locator('input[type="file"]');
  await expect(picker).toHaveAttribute("accept","image/*");
- await social.getByRole("button",{name:"Reel",exact:true}).click();
+ await selectInstaFormat(page,"Reel");
  await expect(picker).toHaveAttribute("accept",/video\/mp4/);
  // The inert binary tests transport, DOM preview and authorization boundaries,
  // not codec decoding. Real playback can be tested with a real iPad clip.
@@ -269,11 +278,11 @@ test("leaving Reel clears a selected video without uploading or publishing",asyn
  await page.goto("/social-demo.html?vis=insta",{waitUntil:"domcontentloaded"});
  await page.getByRole("button",{name:"Legg til post"}).click();
  const social=page.locator("#aha-social-mount");
- await social.getByRole("button",{name:"Reel",exact:true}).click();
+ await selectInstaFormat(page,"Reel");
  const picker=social.locator('input[type="file"]');
  await picker.setInputFiles({name:"clip.webm",mimeType:"video/webm",buffer:Buffer.alloc(256,1)});
  await expect(social.locator("video.aha-social-reel-preview")).toBeVisible();
- await social.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await expect(picker).toHaveAttribute("accept","image/*");
  await expect(social.locator("video.aha-social-reel-preview")).toBeHidden();
  expect(await picker.evaluate(el=>el.files.length)).toBe(0);
@@ -496,7 +505,7 @@ test("Insta image-first composer requires media, consent and location only for M
  });
  await ui.locator('input[type="file"]').setInputFiles({name:"simple.png",mimeType:"image/png",buffer:Buffer.from(pixels)});
  await expect(send).toBeEnabled();
- await ui.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await expect(send).toBeDisabled();
  await ui.locator('input[type="text"][maxlength="120"]').fill("Oslo");
  await expect(send).toBeEnabled();
@@ -578,6 +587,9 @@ test("app shell keeps the iPad dock fixed and makes Feed/Insta navigation touch-
  await insta.getByRole("button",{name:"Legg til post"}).click();
  await expect(insta.getByRole("dialog",{name:"Nytt innlegg"})).toBeVisible();
  const form=insta.locator(".aha-social-compose");
+ await expect(form.locator(".aha-social-compose-options > summary")).toBeVisible();
+ await expect(form.locator(".aha-social-type-selector")).toBeHidden();
+ await form.locator(".aha-social-compose-options > summary").click();
  await expect(form.locator(".aha-social-type-selector")).toBeVisible();
  await expect(form.locator('input[type="file"]')).toHaveCount(1);
  await insta.getByRole("button",{name:"Lukk nytt innlegg"}).click();
@@ -646,7 +658,7 @@ test("Insta closing a draft never leaves a picture or sharing consent behind",as
  await input.setInputFiles({name:"unshared.png",mimeType:"image/png",buffer:Buffer.from(bytes)});
  await expect(modal.getByAltText("Lokal forhåndsvisning av bildet")).toBeVisible();
  await modal.locator("textarea").fill("Skal ikke publiseres");
- await modal.getByRole("button",{name:"Map",exact:true}).click();
+ await selectInstaFormat(page,"Map");
  await modal.getByRole("checkbox").check();
  await modal.getByRole("button",{name:"Lukk nytt innlegg"}).click();
  await expect(modal).toBeHidden();
@@ -654,7 +666,7 @@ test("Insta closing a draft never leaves a picture or sharing consent behind",as
  await expect(modal).toBeVisible();
  await expect(modal.locator("textarea")).toHaveValue("");
  await expect(modal.getByRole("checkbox")).not.toBeChecked();
- await expect(modal.getByRole("button",{name:"Feed",exact:true})).toHaveAttribute("aria-pressed","true");
+ await expect(modal.locator('.aha-social-type-selector button[data-mode="feed"]')).toHaveAttribute("aria-pressed","true");
  await expect(modal.getByAltText("Lokal forhåndsvisning av bildet")).toBeHidden();
  await expect(modal.getByRole("button",{name:"Publiser i AHA Insta"})).toBeDisabled();
  expect(await input.evaluate(element=>element.files.length)).toBe(0);
