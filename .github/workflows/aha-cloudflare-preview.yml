@@ -1,6 +1,11 @@
 name: AHA Cloudflare preview (manual only)
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/aha-cloudflare-preview.yml'
+      - 'scripts/build-cloudflare-preview.mjs'
+      - 'docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md'
   workflow_dispatch:
     inputs:
       pages_project:
@@ -18,6 +23,37 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    name: Check Cloudflare static package (no credentials)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build static frontend allowlist
+        run: node scripts/build-cloudflare-preview.mjs
+
+      - name: Check published files are frontend-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .cloudflare-preview-dist/index.html
+          test -f .cloudflare-preview-dist/feed.html
+          test -f .cloudflare-preview-dist/insta.html
+          test -f .cloudflare-preview-dist/js/ahaFeed.js
+          test -f .cloudflare-preview-dist/css/aha-dashboard.css
+          test ! -e .cloudflare-preview-dist/server.js
+          test ! -e .cloudflare-preview-dist/backend
+          test ! -e .cloudflare-preview-dist/supabase
+          test ! -e .cloudflare-preview-dist/.github
+          test ! -e .cloudflare-preview-dist/package.json
+
   preview:
     # No automatic trigger; refuse to deploy a PR branch or a tagged ref.
     if: github.ref == 'refs/heads/main'
