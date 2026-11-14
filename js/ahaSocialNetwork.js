@@ -974,6 +974,18 @@
         pendingSignature = null;
         pendingUploadKey = null;
         if (kind === "insta") {
+          // Every new post starts with the ordinary photo flow, even after
+          // publishing a Reel/Map post. Browsing modes remain independent.
+          instaMode = "feed";
+          media.accept = "image/*";
+          const format = form.querySelector(".aha-social-compose-options");
+          if (format) {
+            format.open = false;
+            format.querySelector("summary").textContent = "Bilde · andre formater";
+          }
+          for (const button of form.querySelectorAll(".aha-social-type-selector button[data-mode]")) {
+            button.setAttribute("aria-pressed", String(button.dataset.mode === "feed"));
+          }
           if (composeDialog?.open) composeDialog.close();
           setViewMode("profile");
         }
