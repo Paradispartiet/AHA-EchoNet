@@ -1049,3 +1049,33 @@
     min-height:100dvh;border:0;border-radius:0;
   }
 }
+
+/* One understated format disclosure in Insta composer. Default is a picture.
+   Reel/Map remain available without occupying the primary image workflow. */
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options{
+  display:block;margin:.1rem 0;padding:0;border:0;min-width:0;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary{
+  display:inline-flex;align-items:center;gap:.4rem;
+  min-height:44px;padding:.35rem .5rem;border-radius:9px;
+  color:#aabbd1;font-size:.82rem;font-weight:600;
+  cursor:pointer;list-style:none;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary::after{
+  content:"⌄";font-size:1.08rem;line-height:1;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options>summary::-webkit-details-marker{
+  display:none;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options[open]>summary{
+  color:#f1f5ff;background:#1a2635;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options[open]>summary::after{
+  transform:rotate(180deg);
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options .aha-social-type-selector{
+  margin:.4rem 0 .2rem;min-width:0;
+}
+#aha-social-mount[data-social-kind="insta"] .aha-social-compose-options:not([open]) .aha-social-type-selector{
+  display:none!important;
+}
