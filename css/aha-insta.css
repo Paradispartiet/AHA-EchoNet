@@ -30,6 +30,55 @@
 
 .insta-collapsible[open] summary { margin-bottom: 12px; color: var(--aha-muted); }
 
+/* Direct image selection on iPad: the file input opens Photos or Files. */
+.insta-photo-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  color: var(--aha-text);
+  border: 1px solid var(--aha-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .035);
+  font: inherit;
+}
+.insta-photo-input::file-selector-button {
+  border: 1px solid var(--aha-line);
+  border-radius: 10px;
+  background: var(--aha-yellow);
+  padding: 9px 14px;
+  margin-right: 12px;
+  color: #141414;
+  font: inherit;
+  font-weight: 800;
+}
+.insta-photo-preview[hidden] { display: none; }
+.insta-photo-preview {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 10px 0;
+}
+.insta-photo-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid var(--aha-line);
+}
+.insta-photo-preview button {
+  padding: 8px 12px;
+  border: 1px solid var(--aha-line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--aha-text);
+}
+.insta-media-url { border-top: 1px solid var(--aha-line); padding-top: 10px; }
+.insta-compose-status { min-height: 1.4em; color: var(--aha-muted); font-size: .9rem; }
+#insta-submit:disabled { opacity: .55; cursor: progress; }
+
 /* Avatars */
 .insta-avatar {
   display: inline-flex;
