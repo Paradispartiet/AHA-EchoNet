@@ -57,10 +57,22 @@
       <details id="insta-compose-panel" class="insta-collapsible">
         <summary>+ Ny post</summary>
         <form id="insta-form" class="module-form">
-          <input id="insta-title" type="text" placeholder="Tittel" />
-          <input id="insta-src" type="text" placeholder="Bilde-/video-url eller path" />
-          <textarea id="insta-caption" placeholder="Caption …"></textarea>
-          <button type="submit">Lagre lokalt</button>
+          <label for="insta-file">Bilde fra iPad</label>
+          <input id="insta-file" class="insta-photo-input" type="file" accept="image/*,.heic,.heif" aria-describedby="insta-upload-note" />
+          <p id="insta-upload-note" class="module-meta">Velg fra Bilder eller Filer. Bildet tilpasses for privat, lokal lagring på denne enheten.</p>
+          <div id="insta-photo-preview" class="insta-photo-preview" hidden>
+            <img id="insta-preview-image" alt="Valgt bilde før lokal lagring" />
+            <button id="insta-clear-file" type="button">Fjern valgt bilde</button>
+          </div>
+          <details class="insta-collapsible insta-media-url">
+            <summary>Bruk bildelenke i stedet</summary>
+            <label for="insta-src">Bildelenke</label>
+            <input id="insta-src" type="url" placeholder="https://…" inputmode="url" />
+          </details>
+          <input id="insta-title" type="text" placeholder="Tittel (valgfritt)" />
+          <textarea id="insta-caption" placeholder="Skriv en bildetekst (valgfritt) …"></textarea>
+          <p id="insta-compose-status" class="insta-compose-status" role="status" aria-live="polite"></p>
+          <button id="insta-submit" type="submit">Lagre bildepost lokalt</button>
         </form>
       </details>
     </section>

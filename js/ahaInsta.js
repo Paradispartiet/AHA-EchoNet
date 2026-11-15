@@ -201,10 +201,22 @@
     return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
   }
 
+  // Do not duplicate potentially large local image data URLs in post signatures.
+  function mediaSignature(value) {
+    const raw = String(value || "").trim();
+    if (!raw.startsWith("data:")) return normalizeDedupField(raw);
+    let hash = 2166136261;
+    for (let i = 0; i < raw.length; i += 1) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `local-image:${raw.length}:${(hash >>> 0).toString(16)}`;
+  }
+
   function createPostSignature(input = {}) {
     const platform = normalizeDedupField(input.source_app || input.source || "aha_insta");
     const timestamp = normalizeDedupField(input.originalInstagramDate || input.created_at || "");
-    const media = normalizeDedupField(input.src || input.media_uri || input.uri || input.path || "");
+    const media = mediaSignature(input.src || input.media_uri || input.uri || input.path || "");
     const caption = normalizeDedupField(input.caption || input.text || input.title || "");
     const permalink = normalizeDedupField(input.permalink || input.meta?.permalink || "");
     return [platform, timestamp, media, caption, permalink].join("||");
@@ -277,6 +289,70 @@
       reader.onerror = () => reject(reader.error || new Error("Kunne ikke lese fil."));
       reader.readAsDataURL(file);
     });
+  }
+
+  // Local-only iPad photo selection. Compress before storing because localStorage
+  // has a small quota and original iPad photos may be many megabytes.
+  const MAX_LOCAL_IMAGE_UPLOAD_BYTES = 40 * 1024 * 1024;
+  const MAX_LOCAL_IMAGE_DATA_URL_LENGTH = 900000;
+  let selectedLocalPhoto = "";
+  let isPreparingLocalPhoto = false;
+
+  async function prepareLocalImage(file) {
+    if (!file || !(String(file.type || "").startsWith("image/") || /\\.(?:heic|heif)$/i.test(file.name || ""))) {
+      throw new Error("Velg et bilde fra Bilder eller Filer.");
+    }
+    if (file.size > MAX_LOCAL_IMAGE_UPLOAD_BYTES) {
+      throw new Error("Bildet er for stort. Velg et mindre bilde (maks 40 MB).");
+    }
+    if (!window.URL?.createObjectURL) throw new Error("Nettleseren støtter ikke bildefiler her.");
+    const temporaryUrl = window.URL.createObjectURL(file);
+    try {
+      const photo = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Bildet kunne ikke åpnes. Prøv JPG, PNG eller HEIC fra Bilder."));
+        image.src = temporaryUrl;
+      });
+      if (!photo.naturalWidth || !photo.naturalHeight) throw new Error("Bildet har ugyldig størrelse.");
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Nettleseren klarte ikke å klargjøre bildet.");
+
+      let maxEdge = 1400;
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const scale = Math.min(1, maxEdge / Math.max(photo.naturalWidth, photo.naturalHeight));
+        canvas.width = Math.max(1, Math.round(photo.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(photo.naturalHeight * scale));
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(photo, 0, 0, canvas.width, canvas.height);
+        const result = canvas.toDataURL("image/jpeg", Math.max(0.5, 0.84 - attempt * 0.06));
+        if (result.startsWith("data:image/jpeg;base64,") && result.length <= MAX_LOCAL_IMAGE_DATA_URL_LENGTH) {
+          return result;
+        }
+        maxEdge = Math.round(maxEdge * 0.8);
+      }
+      throw new Error("Bildet blir for stort for lokal lagring. Prøv et mindre bilde.");
+    } finally {
+      window.URL.revokeObjectURL(temporaryUrl);
+    }
+  }
+
+  function updateComposeStatus(message) {
+    const node = document.getElementById("insta-compose-status");
+    if (node) node.textContent = String(message || "");
+  }
+
+  function resetSelectedPhoto(clearFileInput = true) {
+    selectedLocalPhoto = "";
+    const input = document.getElementById("insta-file");
+    const preview = document.getElementById("insta-photo-preview");
+    const image = document.getElementById("insta-preview-image");
+    if (input && clearFileInput) input.value = "";
+    if (image) image.removeAttribute("src");
+    if (preview) preview.hidden = true;
   }
 
   async function parseInstagramJsonFile(file) {
@@ -1450,7 +1526,7 @@
       createdAt: post.created_at,
       updatedAt: post.created_at,
       tags: post.tags,
-      meta: { insta_post_id: post.id, src: post.src }
+      meta: { insta_post_id: post.id, ...(post.src.startsWith("data:") ? { local_media: true } : { src: post.src }) }
     });
 
     if (baseContract) {
@@ -1470,7 +1546,7 @@
         user_created: true,
         imported: false,
         created_at: post.created_at,
-        meta: { insta_post_id: post.id, insta_object_type: "post", src: post.src, local_only: true, published_external: false, echonet_shared: false, sync_enabled: false, origin_app: "aha_insta" }
+        meta: { insta_post_id: post.id, insta_object_type: "post", local_media: post.src.startsWith("data:"), src: post.src.startsWith("data:") ? "" : post.src, local_only: true, published_external: false, echonet_shared: false, sync_enabled: false, origin_app: "aha_insta" }
       });
     }
 
@@ -1494,17 +1570,69 @@
 
   function bind() {
     const form = document.getElementById("insta-form");
-    form?.addEventListener("submit", (event) => {
+    const fileInput = document.getElementById("insta-file");
+    const linkInput = document.getElementById("insta-src");
+    const submit = document.getElementById("insta-submit");
+
+    fileInput?.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      // Keep the native picker filename visible while replacing the preview.
+      resetSelectedPhoto(false);
+      if (!file) return;
+      isPreparingLocalPhoto = true;
+      if (submit) submit.disabled = true;
+      updateComposeStatus("Klargjør bildet for lokal lagring …");
+      try {
+        selectedLocalPhoto = await prepareLocalImage(file);
+        const preview = document.getElementById("insta-photo-preview");
+        const image = document.getElementById("insta-preview-image");
+        if (image) image.src = selectedLocalPhoto;
+        if (preview) preview.hidden = false;
+        if (linkInput) linkInput.value = "";
+        updateComposeStatus("Bildet er klart. Du kan lagre posten.");
+      } catch (error) {
+        updateComposeStatus(error?.message || "Kunne ikke lese bildet.");
+      } finally {
+        isPreparingLocalPhoto = false;
+        if (submit) submit.disabled = false;
+      }
+    });
+
+    document.getElementById("insta-clear-file")?.addEventListener("click", () => {
+      resetSelectedPhoto();
+      updateComposeStatus("Bildet er fjernet.");
+    });
+
+    form?.addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (isPreparingLocalPhoto) return;
       const title = document.getElementById("insta-title");
-      const src = document.getElementById("insta-src");
       const caption = document.getElementById("insta-caption");
-
-      addPost({ title: title?.value, src: src?.value, caption: caption?.value });
-
-      if (title) title.value = "";
-      if (src) src.value = "";
-      if (caption) caption.value = "";
+      const src = selectedLocalPhoto || String(linkInput?.value || "").trim();
+      if (!src) {
+        updateComposeStatus("Velg et bilde fra iPad først, eller bruk en bildelenke.");
+        fileInput?.focus();
+        return;
+      }
+      if (submit) submit.disabled = true;
+      updateComposeStatus("Lagrer bildet lokalt …");
+      try {
+        const post = await addPost({ title: title?.value, src, caption: caption?.value });
+        if (!post) throw new Error("Kunne ikke opprette bildeposten.");
+        if (title) title.value = "";
+        if (linkInput) linkInput.value = "";
+        if (caption) caption.value = "";
+        resetSelectedPhoto();
+        setFeedFilter("all");
+        updateComposeStatus("Bildet er lagret lokalt på denne iPaden. Ikke publisert eksternt.");
+      } catch (error) {
+        const quota = error?.name === "QuotaExceededError";
+        updateComposeStatus(quota
+          ? "Lagringsplassen i nettleseren er full. Bildet ble ikke lagret. Prøv et mindre bilde."
+          : (error?.message || "Kunne ikke lagre posten lokalt."));
+      } finally {
+        if (submit) submit.disabled = false;
+      }
     });
 
     document.getElementById("insta-list")?.addEventListener("click", (event) => {
@@ -1513,7 +1641,7 @@
       if (target.dataset.instaOpenCompose) {
         const section = document.getElementById("insta-compose-panel");
         if (section) section.open = true;
-        document.getElementById("insta-src")?.focus?.();
+        document.getElementById("insta-file")?.focus?.();
         return;
       }
       if (target.dataset.instaShowAll) {

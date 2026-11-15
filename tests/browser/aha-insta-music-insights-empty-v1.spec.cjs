@@ -6,9 +6,32 @@ test("Insta opens the real composer from an empty feed", async ({ page }) => {
   await expect(empty).toBeVisible();
   await empty.getByRole("button", { name: "Lag første post" }).click();
   await expect(page.locator("#insta-compose-panel")).toHaveAttribute("open", "");
-  await expect(page.locator("#insta-src")).toBeFocused();
+  await expect(page.locator("#insta-file")).toBeFocused();
   const count = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_insta_posts_v1") || "[]").length);
   expect(count).toBe(0);
+});
+
+test("Insta iPad photo picker saves an actual image locally across reload", async ({ page }) => {
+  await page.goto("/insta.html", { waitUntil: "domcontentloaded" });
+  await page.locator("#insta-list").getByRole("button", { name: "Lag første post" }).click();
+  const imagePng = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRk8AAAAASUVORK5CYII=",
+    "base64"
+  );
+  await page.locator("#insta-file").setInputFiles({ name: "aha-test.png", mimeType: "image/png", buffer: imagePng });
+  await expect(page.locator("#insta-photo-preview")).toBeVisible();
+    expect((await page.locator("#insta-preview-image").getAttribute("src")).startsWith("data:image/jpeg;base64,")).toBe(true);
+  await page.locator("#insta-submit").click();
+  await expect(page.locator("#insta-compose-status")).toContainText("lagret lokalt");
+  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(1);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(1);
+  const posts = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_insta_posts_v1") || "[]"));
+  expect(posts).toHaveLength(1);
+  expect(posts[0].published_external).toBe(false);
+  expect(posts[0].echonet_shared).toBe(false);
+  await page.evaluate((id) => window.AHAInsta.deletePost(id), posts[0].id);
+  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(0);
 });
 
 test("Innsikter differentiates an empty archive from an unmatched search", async ({ page }) => {
