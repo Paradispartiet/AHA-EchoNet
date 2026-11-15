@@ -345,12 +345,12 @@
     if (node) node.textContent = String(message || "");
   }
 
-  function resetSelectedPhoto() {
+  function resetSelectedPhoto(clearFileInput = true) {
     selectedLocalPhoto = "";
     const input = document.getElementById("insta-file");
     const preview = document.getElementById("insta-photo-preview");
     const image = document.getElementById("insta-preview-image");
-    if (input) input.value = "";
+    if (input && clearFileInput) input.value = "";
     if (image) image.removeAttribute("src");
     if (preview) preview.hidden = true;
   }
@@ -1576,7 +1576,8 @@
 
     fileInput?.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
-      resetSelectedPhoto();
+      // Keep the native picker filename visible while replacing the preview.
+      resetSelectedPhoto(false);
       if (!file) return;
       isPreparingLocalPhoto = true;
       if (submit) submit.disabled = true;
