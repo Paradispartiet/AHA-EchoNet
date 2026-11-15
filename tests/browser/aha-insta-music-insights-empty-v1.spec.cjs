@@ -20,7 +20,7 @@ test("Insta iPad photo picker saves an actual image locally across reload", asyn
   );
   await page.locator("#insta-file").setInputFiles({ name: "aha-test.png", mimeType: "image/png", buffer: imagePng });
   await expect(page.locator("#insta-photo-preview")).toBeVisible();
-  await expect(page.locator("#insta-preview-image")).toHaveAttribute("src", /^data:image\\/jpeg;base64,/);
+    expect((await page.locator("#insta-preview-image").getAttribute("src")).startsWith("data:image/jpeg;base64,")).toBe(true);
   await page.locator("#insta-submit").click();
   await expect(page.locator("#insta-compose-status")).toContainText("lagret lokalt");
   await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(1);
