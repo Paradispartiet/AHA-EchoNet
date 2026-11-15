@@ -1526,7 +1526,7 @@
       createdAt: post.created_at,
       updatedAt: post.created_at,
       tags: post.tags,
-      meta: { insta_post_id: post.id, src: post.src }
+      meta: { insta_post_id: post.id, ...(post.src.startsWith("data:") ? { local_media: true } : { src: post.src }) }
     });
 
     if (baseContract) {
@@ -1546,7 +1546,7 @@
         user_created: true,
         imported: false,
         created_at: post.created_at,
-        meta: { insta_post_id: post.id, insta_object_type: "post", src: post.src, local_only: true, published_external: false, echonet_shared: false, sync_enabled: false, origin_app: "aha_insta" }
+        meta: { insta_post_id: post.id, insta_object_type: "post", local_media: post.src.startsWith("data:"), src: post.src.startsWith("data:") ? "" : post.src, local_only: true, published_external: false, echonet_shared: false, sync_enabled: false, origin_app: "aha_insta" }
       });
     }
 
