@@ -1641,7 +1641,7 @@
       if (target.dataset.instaOpenCompose) {
         const section = document.getElementById("insta-compose-panel");
         if (section) section.open = true;
-        document.getElementById("insta-src")?.focus?.();
+        document.getElementById("insta-file")?.focus?.();
         return;
       }
       if (target.dataset.instaShowAll) {
