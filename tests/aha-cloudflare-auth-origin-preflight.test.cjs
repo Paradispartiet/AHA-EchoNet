@@ -49,7 +49,13 @@ assert.equal(alreadyConfigured.AHA_AUTH_REDIRECT_URL, "https://example.test/redi
 // Legacy ChamberSync must not make network calls or overwrite local data
 // when AHA Auth is tested on the Cloudflare preview.
 const chamberSource = fs.readFileSync(path.join(__dirname, "..", "js", "ahaChamberSync.js"), "utf8");
-function chamberContext(origin) {
+const builderSource = fs.readFileSync(path.join(__dirname, "..", "scripts", "build-cloudflare-preview.mjs"), "utf8");
+const chamberMarker = "  let syncDisabled = false;";
+const previewMarker = "  let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_NO_CHAMBER_SYNC";
+assert.ok(chamberSource.includes(chamberMarker), "Historical chamber sync source must be unchanged");
+assert.ok(builderSource.includes(previewMarker), "Preview build must override chamber sync in copied bundle");
+const previewChamberSource = chamberSource.replace(chamberMarker, previewMarker);
+function chamberContext(origin, source = chamberSource) {
   const events = new Map();
   let remoteCalls = 0;
   const window = {
@@ -62,11 +68,11 @@ function chamberContext(origin) {
     dispatchEvent() {}
   };
   const localStorage = {getItem: () => '{"insights":[{"id":"demo"}]}', setItem() {throw Error("Unexpected local overwrite");}};
-  vm.runInNewContext(chamberSource, {window, localStorage, setTimeout, clearTimeout, console, Date, CustomEvent: class {}}, {filename:"ahaChamberSync.js"});
+  vm.runInNewContext(source, {window, localStorage, setTimeout, clearTimeout, console, Date, CustomEvent: class {}}, {filename:"ahaChamberSync.js"});
   return {window, events, getRemoteCalls: () => remoteCalls};
 }
 (async () => {
-  const preview = chamberContext(previewOrigin);
+  const preview = chamberContext(previewOrigin, previewChamberSource);
   assert.equal(preview.window.AHAChamberSync.isReady(), false);
   assert.equal((await preview.window.AHAChamberSync.pull()).ok, false);
   assert.equal((await preview.window.AHAChamberSync.push()).ok, false);
