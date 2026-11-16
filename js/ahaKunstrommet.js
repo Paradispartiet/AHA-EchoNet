@@ -234,6 +234,38 @@
     }
   }
 
+  function removeArtworkCollectionLinks(artworkId) {
+    if (global.AHA_CONFIG?.lists?.enableDatabaseSync === true) {
+      throw new Error("Databasesynkronisering er aktiv. Kan ikke endre samlingskoblinger lokalt uten kontroll.");
+    }
+    const refs = global.AHAKunstrommetReferences;
+    const lists = global.AHALists;
+    if (!refs || !lists?.loadLists || !lists?.saveLists) throw new Error("Lokale samlinger er utilgjengelige.");
+    const existing = lists.loadLists();
+    let removed = 0;
+    const next = existing.map((list) => {
+      const members = Array.isArray(list.items) ? list.items : [];
+      const filtered = members.filter((member) => !(member.source === "aha_kunstrommet" && member.refId === artworkId));
+      if (filtered.length === members.length) return list;
+      removed += members.length - filtered.length;
+      return { ...list, items: filtered, updatedAt: new Date().toISOString() };
+    });
+    if (removed) lists.saveLists(next);
+    refs.remove(artworkId);
+    return removed;
+  }
+
+  function unlinkCurrentArtwork() {
+    if (!current) return;
+    if (!global.confirm("Fjerne kunstverket fra alle lokale Aha-samlinger? Selve skissen beholdes. Tekst som tidligere er sendt til Aha, påvirkes ikke.")) return;
+    try {
+      const removed = removeArtworkCollectionLinks(current.id);
+      linkStatus(removed
+        ? "Fjernet " + removed + " samlingskobling" + (removed === 1 ? "" : "er") + ". Kunstverket beholdes privat i Kunstrommet."
+        : "Ingen samlingskoblinger å fjerne.");
+    } catch (error) { linkStatus("Kunne ikke fjerne koblingene: " + error.message); }
+  }
+
   async function openLinkedArtwork() {
     const hash = global.location?.hash || "";
     if (!hash.startsWith("#art-")) return;
@@ -377,8 +409,12 @@
           if (!global.confirm("Slette skissen permanent fra denne nettleseren?")) return;
           try {
             await erase(item.id);
-            try { global.AHAKunstrommetReferences?.remove?.(item.id); }
-            catch (error) { linkStatus("Skissen er slettet, men Aha-referansen kunne ikke fjernes: " + error.message); }
+            try { removeArtworkCollectionLinks(item.id); }
+            catch (error) {
+              // Never resurrect a deleted image merely because the collection index failed.
+              try { global.AHAKunstrommetReferences?.remove?.(item.id); } catch {}
+              linkStatus("Skissen er slettet, men noen gamle samlingskoblinger kan stå igjen: " + error.message);
+            }
             if (current?.id === item.id) { dirty = false; create(); }
             await refreshList();
           } catch (error) { status(error.message); }
@@ -539,6 +575,7 @@
     });
     $("kunstrommet-send-aha").addEventListener("click", sendTextToAha);
     $("kunstrommet-link-collection")?.addEventListener("click", addCurrentToCollection);
+    $("kunstrommet-unlink-aha")?.addEventListener("click", unlinkCurrentArtwork);
     $("kunstrommet-collection-select")?.addEventListener("focus", renderCollectionOptions);
     renderCollectionOptions();
     openLinkedArtwork();
