@@ -151,6 +151,22 @@
     const list = document.getElementById("aha-psych-saved-list");
     const deleteAll = document.getElementById("aha-psych-delete-all");
     if (!form || !textarea || !consent || !list || !deleteAll) return;
+    // github.io shares browser storage between History GO and other Pages apps.
+    // Refuse sensitive private storage on that shared origin.
+    if (global.location?.hostname === "paradispartiet.github.io") {
+      textarea.disabled = true;
+      consent.disabled = true;
+      deleteAll.disabled = true;
+      const submit = form.querySelector?.('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      list.textContent = "Dette private arkivet åpnes ikke på GitHub Pages sitt delte domene.";
+      const link = document.createElement("a");
+      link.href = "https://aha-echonet.vercel.app/psykologi.html";
+      link.textContent = "Åpne Psykologirommet på AHAs separate adresse";
+      list.append(link);
+      status.textContent = "Bruk AHA-adressen for å holde Psykologirommet atskilt fra andre GitHub Pages-apper.";
+      return;
+    }
     let previewSource = "aha";
     textarea.addEventListener("input", () => { previewSource = "aha"; });
 
