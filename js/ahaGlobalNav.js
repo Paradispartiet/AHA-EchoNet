@@ -44,6 +44,7 @@
       description: "Dine egne tekster, medier og utkast.",
       items: [
         { moduleId: "notes", label: "Notater", hint: "Skriv og analyser egne notater" },
+        { moduleId: "kunstrommet", label: "Kunstrommet", hint: "Ditt personlige atelier med lerret og skissebok" },
         { moduleId: "gallery", label: "Galleri", hint: "Samle visuelt materiale" },
         { moduleId: "insta", label: "AHA Insta", hint: "Personlig mediearkiv" },
         { moduleId: "music", label: "AHA Music", hint: "Musikkmetadata og oppdagelser" },
