@@ -230,4 +230,33 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     expect(graphAfterRevoke.nodes.some((node) => node.type === "artwork")).toBe(false);
   });
 
+  test("existing AHA Gallery inspires artwork only after manual text copy", async ({ page }) => {
+    const requests = [];
+    page.on("request", (request) => {
+      if (request.url().includes("example.invalid/gallery-photo")) requests.push(request.url());
+    });
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const galleryItem = {
+      id: "gallery-example", title: "Gamle atelierer",
+      description: "Fargeforsøk og arbeidslys",
+      src: "https://example.invalid/gallery-photo.jpg", type: "image",
+      local_only: true
+    };
+    await page.evaluate((item) => localStorage.setItem("aha_gallery_v1", JSON.stringify([item])), galleryItem);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("#kunstrommet-gallery-inspiration .kunstrommet-inspiration-item")).toHaveCount(1);
+    await expect(page.locator("#kunstrommet-note")).toHaveValue("");
+    await page.locator("#kunstrommet-gallery-inspiration button").click();
+    await expect(page.locator("#kunstrommet-note")).toHaveValue(
+      /Inspirasjon fra Aha Galleri: Gamle atelierer/
+    );
+    await expect(page.locator("#kunstrommet-save-state")).toHaveText("Ikke lagret");
+    const galleryAfter = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_gallery_v1")));
+    expect(galleryAfter).toEqual([galleryItem]);
+    const note = await page.locator("#kunstrommet-note").inputValue();
+    expect(note).toContain("Fargeforsøk og arbeidslys");
+    expect(note).not.toContain("example.invalid");
+    expect(requests).toHaveLength(0);
+  });
+
 });
