@@ -28,6 +28,29 @@ const disallowedPaths = [
 const errors = [];
 let checkedAssets = 0;
 
+// Cost lockdown is enforced without talking to Azure or any remote provider.
+// AHA's former Azure canonical pilot is disabled after unexpected charges.
+// Do not allow preview publication if repository policy accidentally reactivates it.
+const costHoldPolicy = path.join(root, "ops/canonical-sync-production-rollout-v1.json");
+try {
+  const policy = JSON.parse(await readFile(costHoldPolicy, "utf8"));
+  const required = {
+    "status": policy.status === "cost_hold_remote_disabled",
+    "productionActivationEnabled": policy.productionActivationEnabled === false,
+    "frontend.remoteProductionSyncAllowed": policy.frontend?.remoteProductionSyncAllowed === false,
+    "frontend.egressCostHoldActive": policy.frontend?.egressCostHoldActive === true,
+    "frontend.automaticSync": policy.frontend?.automaticSync === false,
+    "frontend.loginTriggeredSync": policy.frontend?.loginTriggeredSync === false,
+    "frontend.authReadyTriggeredSync": policy.frontend?.authReadyTriggeredSync === false,
+    "frontend.backgroundSync": policy.frontend?.backgroundSync === false
+  };
+  for (const [key, ok] of Object.entries(required)) {
+    if (!ok) errors.push("Azure cost hold must remain locked: " + key);
+  }
+} catch (err) {
+  errors.push("Azure cost hold policy missing/unreadable: " + (err?.message || String(err)));
+}
+
 async function exists(filename) {
   try { await stat(path.join(dist, filename)); return true; }
   catch (err) { if (err?.code === "ENOENT") return false; throw err; }
@@ -58,6 +81,9 @@ async function checkLocalReference(page, raw) {
 
 for (const filename of disallowedPaths) {
   if (await exists(filename)) errors.push("Non-frontend file included: " + filename);
+}
+if (await exists("canonical-sync-production-pilot.html")) {
+  errors.push("Disabled Azure production pilot page must not ship in Cloudflare preview.");
 }
 for (const filename of requiredScripts) await requireFile(filename);
 
