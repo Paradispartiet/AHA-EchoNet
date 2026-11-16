@@ -98,6 +98,42 @@ if (!chamberSource.includes(chamberSourceMarker)) {
 }
 await writeFile(chamberBundle, chamberSource.replace(chamberSourceMarker, chamberPreviewMarker));
 
+// Auth was still upserting aha_profiles automatically after every login and
+// during PKCE callbacks. Until AHA DB-03's hosted RLS/grants are inspected,
+// preview sign-in must remain read-only apart from Supabase Auth session state.
+// Patch ONLY the copied Cloudflare assets. Original GitHub Pages remains intact.
+async function replacePreviewOnly(relative, replacements) {
+  if (!copied.includes(relative)) throw new Error("Cloudflare preview missing " + relative);
+  const target = path.join(out, relative);
+  let source = await readFile(target, "utf8");
+  for (const { from, to } of replacements) {
+    const parts = source.split(from);
+    if (parts.length !== 2) {
+      throw new Error("Fail-closed preview Auth marker changed in " + relative);
+    }
+    source = parts.join(to);
+  }
+  await writeFile(target, source);
+}
+
+await replacePreviewOnly("js/ahaAuth.js", [
+  {
+    from: "    const existing = await loadProfile(user);",
+    to: "    const existing = await loadProfile(user);\n    if (true) return existing; // AHA_CLOUDFLARE_PREVIEW_AUTH_PROFILE_READ_ONLY"
+  },
+  {
+    from: "  async function saveProfileName(displayName) {",
+    to: "  async function saveProfileName(displayName) {\n    return { ok: false, reason: \"preview_read_only\" }; // AHA_CLOUDFLARE_PREVIEW_NO_PROFILE_NAME_WRITE"
+  }
+]);
+
+await replacePreviewOnly("js/ahaAuthCallback.js", [
+  {
+    from: "    if (!session?.user?.id) return { ok: false, reason: \"missing_user\" };",
+    to: "    if (!session?.user?.id) return { ok: false, reason: \"missing_user\" };\n    if (true) {\n      // AHA_CLOUDFLARE_PREVIEW_CALLBACK_READ_ONLY: no fallback profile upsert.\n      const readProfile = global.AHAAuth?.loadProfile;\n      return typeof readProfile === \"function\"\n        ? await readProfile(session.user)\n        : { ok: false, reason: \"preview_read_only\" };\n    }"
+  }
+]);
+
 const sha = process.env.AHA_BUILD_SHA || process.env.GITHUB_SHA;
 if (sha) {
   if (!/^[a-f0-9]{40}$/i.test(sha)) throw new Error("AHA_BUILD_SHA must be a 40-character commit SHA.");
