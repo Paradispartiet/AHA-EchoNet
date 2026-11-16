@@ -26,10 +26,8 @@ echo "AHA legacy synthetic two-user RLS rehearsal passed."
 # Exercise the *actual* hosted-style read-only audit SQL against the same
 # synthetic schema. The AHA project remains entirely untouched.
 audit_result="$(psql -v ON_ERROR_STOP=1 -At -f supabase/audits/aha_legacy_readonly_preflight.sql)"
-preflight_ok="$(printf '%s\n' "$audit_result" | grep -c '|POLICY_PREFLIGHT_OK
- || true)"
-optional_missing="$(printf '%s\n' "$audit_result" | grep -c 'aha_insight_embeddings|.*|MISSING_TABLE
- || true)"
+preflight_ok="$(printf '%s\n' "$audit_result" | grep -c -F '|POLICY_PREFLIGHT_OK' || :)"
+optional_missing="$(printf '%s\n' "$audit_result" | grep -F 'aha_insight_embeddings|' | grep -c -F '|MISSING_TABLE' || :)"
 if [[ "$preflight_ok" != "12" || "$optional_missing" != "1" ]]; then
   echo "AHA legacy catalog audit unexpected results: expected 12 OK and optional embeddings missing" >&2
   printf '%s\n' "$audit_result" >&2
