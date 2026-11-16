@@ -141,6 +141,15 @@
       phase: 1
     },
     {
+      id: "psykologirommet",
+      title: "Psykologirommet",
+      type: "personal",
+      status: "active",
+      href: "psykologi.html",
+      description: "Personlig lokal kobling til Psykologirommet i History Go. Kun brukerens egen valgte tekst, etter to eksplisitte bekreftelser. Ingen automatisk fagverkaktivering, AI, backend eller deling.",
+      phase: 1
+    },
+    {
       id: "historygo",
       title: "History Go",
       type: "historygo",
@@ -254,6 +263,7 @@
     lists: moduleIcon('<path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'),
     paths: moduleIcon('<circle cx="5" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="19" cy="15" r="2"/><path d="m6.5 15.5 4-6.5M13.7 8.4l3.6 5.2"/>'),
     mindmap: moduleIcon('<circle cx="12" cy="12" r="2.4"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="m10.2 10.4-3.8-3M13.8 10.4l3.8-3M10.2 13.6l-3.8 3M13.8 13.6l3.8 3"/>'),
+    psykologirommet: moduleIcon('<path d="M12 20c-5-3-8-6-8-10a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4-3 7-8 10Z"/><path d="M8.5 12h7M12 8.5v7"/>'),
     historygo: moduleIcon('<path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z"/><circle cx="12" cy="10" r="2"/>'),
     gallery: moduleIcon('<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5.5 17 4.2-4 3 2.8 2.3-2 3.5 3.2"/>'),
     notes: moduleIcon('<path d="M6 4h9l3 3v13H6z"/><path d="M15 4v4h4M9 12h6M9 16h5"/>'),
