@@ -143,4 +143,63 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
       expect(project.last_ingested_at).toBeUndefined();
     }
   });
+  test("saved artwork links to collection and opens from mindmap without sharing pixels", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => localStorage.setItem("aha_lists_v1", JSON.stringify([{
+      id: "collection-art-test", title: "Mine kunstprosjekter", type: "favorites",
+      local_only: true, sync_enabled: false, published_external: false,
+      echonet_shared: false, items: []
+    }])));
+    await page.locator("#kunstrommet-title").fill("Maleri med rødt");
+    await page.locator("#kunstrommet-note").fill("Personlig, ikke delt");
+    await page.locator("#kunstrommet-save").click();
+    await expect(page.locator("#kunstrommet-save-state")).toHaveText("Lagret på denne enheten");
+
+    const projectId = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open("aha_kunstrommet_v1", 1);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      return new Promise((resolve, reject) => {
+        const req = db.transaction("projects", "readonly").objectStore("projects").getAll();
+        req.onsuccess = () => resolve(req.result[0]?.id);
+        req.onerror = () => reject(req.error);
+      });
+    });
+    expect(projectId).toBeTruthy();
+    await page.locator("#kunstrommet-collection-select").focus();
+    await page.locator("#kunstrommet-collection-select").selectOption("collection-art-test");
+    await page.locator("#kunstrommet-link-collection").click();
+    await expect(page.locator("#kunstrommet-link-state")).toContainText("knyttet til samlingen");
+
+    const localBridge = await page.evaluate(() => ({
+      refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
+      lists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]")
+    }));
+    expect(localBridge.refs).toHaveLength(1);
+    expect(localBridge.refs[0].id).toBe(projectId);
+    expect(JSON.stringify(localBridge.refs)).not.toContain("Personlig, ikke delt");
+    expect(JSON.stringify(localBridge.refs)).not.toContain("strokes");
+    expect(localBridge.lists[0].items[0].source).toBe("aha_kunstrommet");
+    expect(localBridge.lists[0].items[0].refId).toBe(projectId);
+
+    await page.goto("/mindmap.html", { waitUntil: "domcontentloaded" });
+    const artwork = await page.evaluate(() => {
+      const graph = window.AHAMindmap.collectGraphData();
+      const node = graph.nodes.find((item) => item.source === "aha_kunstrommet");
+      return {
+        node,
+        hasEdge: graph.edges.some((edge) => edge.to === node?.id && edge.type === "list_contains")
+      };
+    });
+    expect(artwork.node.refId).toBe(projectId);
+    expect(artwork.hasEdge).toBe(true);
+    expect(artwork.node.href).toBe("kunstrommet.html#art-" + encodeURIComponent(projectId));
+
+    await page.goto("/" + artwork.node.href, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#kunstrommet-title")).toHaveValue("Maleri med rødt");
+    await expect(page.locator("#kunstrommet-note")).toHaveValue("Personlig, ikke delt");
+  });
+
 });
