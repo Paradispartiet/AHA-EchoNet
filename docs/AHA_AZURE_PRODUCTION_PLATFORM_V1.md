@@ -1,5 +1,8 @@
 # AHA Azure Production Platform v1
 
+> **DRIFTSVARSEL 16.11.2026 – Azure deaktivert ifølge prosjekteier.** Etter en uventet Azure-regning på 1 200 måtte Azure-løsningen deaktiveres. Denne filens eldre beskrivelser av «aktiv production» og toprofil-piloten er **historiske gjennomføringsbevis, ikke bekreftet nåværende drift**. Gjeldende eksakt ressursstatus, fakturering, gjenopprettbarhet og backupsituasjon er ikke undersøkt i Azure. **Ikke reaktiver, redeployer eller start betalte Azure-ressurser automatisk.** Videre AHA-arbeid prioriterer eksisterende Supabase og Cloudflare-preview uten nye faste kostnader. Status føres også i [felles databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md) (DB-05).
+
+
 Status: **deployet i Azure North Europe; production-readiness er gjennomført; canonical sync kjører som en bounded manual production-pilot med nøyaktig 2 verifiserte profiler. Automatisk/login-triggered/auth-ready/background sync er fortsatt AV.**
 
 Den operative sannhetskilden for den aktive piloten er:
