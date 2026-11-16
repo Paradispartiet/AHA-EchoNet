@@ -36,6 +36,12 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     await page.locator("#kunstrommet-save").click();
     await expect(page.locator("#kunstrommet-save-state")).toHaveText("Lagret på denne enheten");
     await expect(page.locator(".kunstrommet-project")).toHaveCount(1);
+    await expect(page.locator(".kunstrommet-preview")).toHaveCount(1);
+    const previewPixel = await page.locator(".kunstrommet-preview").evaluate((el) => {
+      const data = el.getContext("2d").getImageData(72, 64, 1, 1).data;
+      return Array.from(data);
+    });
+    expect(previewPixel.slice(0, 3)).not.toEqual([255, 255, 255]);
 
     const saved = await page.evaluate(() => new Promise((resolve, reject) => {
       const request = indexedDB.open("aha_kunstrommet_v1", 1);
@@ -100,5 +106,41 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     expect(stored[0].last_ingested_at).toBeUndefined();
     await expect(page.locator("#kunstrommet-aha-state"))
       .toContainText("Ingenting sendes uten");
+  });
+
+  test("visual sketchbook supports copying and searching without Aha transfer", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kunstrommet-title").fill("Sommer i Oslo");
+    await page.locator("#kunstrommet-note").fill("Farger fra parken");
+    await page.locator("#kunstrommet-save").click();
+    await expect(page.locator(".kunstrommet-project")).toHaveCount(1);
+    await page.locator(".kunstrommet-project button").filter({ hasText: "Lag kopi" }).click();
+    await expect(page.locator(".kunstrommet-project")).toHaveCount(2);
+    await expect(page.locator("#kunstrommet-project-count")).toContainText("2 lagrede verk");
+
+    await page.locator("#kunstrommet-project-search").fill("kopi");
+    await expect(page.locator(".kunstrommet-project")).toHaveCount(1);
+    await expect(page.locator(".kunstrommet-project strong")).toContainText("Sommer i Oslo – kopi");
+    await page.locator("#kunstrommet-project-search").fill("finnes ikke");
+    await expect(page.locator(".kunstrommet-project")).toHaveCount(0);
+    await expect(page.locator("#kunstrommet-project-count")).toContainText("Ingen treff");
+    await page.locator("#kunstrommet-project-search").fill("");
+    await expect(page.locator(".kunstrommet-project")).toHaveCount(2);
+
+    const projects = await page.evaluate(() => new Promise((resolve, reject) => {
+      const request = indexedDB.open("aha_kunstrommet_v1", 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const getAll = request.result.transaction("projects", "readonly").objectStore("projects").getAll();
+        getAll.onsuccess = () => resolve(getAll.result);
+        getAll.onerror = () => reject(getAll.error);
+      };
+    }));
+    expect(projects).toHaveLength(2);
+    for (const project of projects) {
+      expect(project.local_only).toBe(true);
+      expect(project.shared).toBe(false);
+      expect(project.last_ingested_at).toBeUndefined();
+    }
   });
 });
