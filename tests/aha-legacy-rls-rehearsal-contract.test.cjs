@@ -19,6 +19,10 @@ for (const table of ["aha_profiles","aha_notes","aha_source_events","aha_feed_po
 assert.match(audit, /pg_policies/);
 assert.match(audit, /pg_class/);
 assert.match(audit, /relrowsecurity/);
+assert.match(audit, /has_table_privilege\('authenticated', c\.oid, 'SELECT'\)/);
+assert.match(audit, /has_table_privilege\('authenticated', c\.oid, 'INSERT'\)/);
+assert.match(audit, /has_table_privilege\('authenticated', c\.oid, 'UPDATE'\)/);
+assert.match(audit, /REVIEW_MISSING_TABLE_GRANT/);
 
 const fixture = read("supabase/tests/aha_legacy_rls_rehearsal_v1.sql");
 assert.ok(fixture.includes("SET LOCAL ROLE authenticated"));
@@ -47,4 +51,8 @@ assert.match(runner, /PGPORT:-.*5432/, "Fixture must only run on expected local 
 assert.match(runner, /-f supabase\/audits\/aha_legacy_readonly_preflight\.sql/, "CI must execute actual catalog audit");
 assert.match(runner, /preflight_ok.*12/, "All 12 legacy core tables must pass");
 assert.match(runner, /optional_missing.*1/, "Missing optional embeddings must be reported explicitly");
+assert.match(runner, /REVOKE UPDATE ON TABLE public\.aha_notes FROM authenticated/, "Synthetic fixture must remove an UPDATE grant");
+assert.match(runner, /REVIEW_MISSING_TABLE_GRANT/, "Negative control must check resulting SQL audit status");
+assert.match(runner, /GRANT UPDATE ON TABLE public\.aha_notes TO authenticated/, "Fixture must restore the grant");
+assert.match(runner, /remaining_ok.*11/, "Only one synthetic table must fail under negative control");
 console.log("AHA legacy hosted read-only audit + isolated RLS test contract: PASS");
