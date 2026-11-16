@@ -25,6 +25,7 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 
 - `node scripts/build-cloudflare-preview.mjs` lager `.cloudflare-preview-dist/` av allowlistede frontendfiltyper fra webområder.
 - `node scripts/check-cloudflare-preview.mjs` sjekker sentrale HTML-sider, lokale CSS/JS-referanser, at forbudte server-/databasefiler ikke finnes i pakken, og `_headers`/robots-noindex. Kjøres både i PR-verifisering og før manuell deploy.
+- **Azure-kostnadssperre 16.11.2026:** Bruker bekrefter at Azure ble deaktivert etter en uventet regning, og at faktureringen senere er stoppet. `ops/canonical-sync-production-rollout-v1.json` står med `cost_hold_remote_disabled`, `productionActivationEnabled=false`, `remoteProductionSyncAllowed=false` og aktiv `egressCostHoldActive`. Preview-sjekken feiler ved uventet oppheving av denne sperren og byggingen utelater `canonical-sync-production-pilot.html`. **Ikke** reaktiver Azure, eller aktiver canonical cloud-sync uten eksplisitt ny beslutning og kostnadskontroll.
 - `_headers` setter `X-Robots-Tag: noindex`, `X-Content-Type-Options: nosniff` og `Referrer-Policy` på statiske Pages-responser. Dette erstatter **ikke** Cloudflare Access.
 - Bygget må inneholde `index.html`, `feed.html`, `insta.html` og kjerneskript/CSS, ellers feiler det.
 - Frontend-commit SHA settes på samme `ahaChatInsightPipeline.js`-markør som GitHub Pages.
@@ -52,6 +53,8 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 - Access-policyen for preview var i Cloudflare UI avgrenset til én e-postadresse. Test i privat Safari-vindu utløste Cloudflare-innlogging. Denne beskyttelsen gjelder wildcard-preview, **ikke** produksjonsroten `aha-echonet-preview.pages.dev`.
 - `js/ahaConfig.js` peker fremdeles på GitHub Pages for `AHA_APP_URL` og `AHA_AUTH_CALLBACK_URL`. Supabase OAuth/PKCE, redirect allowlist, CORS og autentisert databasebruk fra Cloudflare-domenet er **ikke** produksjonsgodkjent. Ikke aktiver dette bare ved å endre URL.
 - AI-backend brukes fortsatt eksternt via konfigurert Render-adresse; ingen egen Cloudflare Worker for modellkjøring er opprettet.
+- Bruker har bekreftet at Azure-faktureringen er stoppet, men **Azure-data-/backupstatus er ikke verifisert**. Det tidligere aktive toprofilforsøket er historikk, ikke live-tilgjengelighet. Felles databaseoversikt: [DATABASE_REGISTER.md](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md).
+- Innlogging på Cloudflare Pages er fortsatt en separat testport: AHA Auth redirect i `js/ahaConfig.js` peker mot GitHub Pages. Ikke endre automatisk til Cloudflare før godkjente redirect-URL-er er kontrollert i AHA sin **egen Supabase-konto**. Cloudflare Access-innlogging er ikke det samme som Supabase Auth.
 - Separat Cloudflare-origin får separat `localStorage`. Ikke forvent at tidligere chatlogg, poster eller lokal History Go-import dukker opp på ny origin.
 
 ### Manuell funksjonstest – syntetiske data, ingen ekte brukerinformasjon
