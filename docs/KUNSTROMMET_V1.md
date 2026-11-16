@@ -10,6 +10,8 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 - Angre og gjør om (innenfor aktiv arbeidsøkt) med Ctrl/⌘-snarveier, navngiving og frie kunstnernotater.
 - Inkrementell visning av penselstrøk for å redusere forsinkelser på nettbrett og beskyttelse mot utilsiktet ekstra pekere.
 - Lokal skissebok i IndexedDB med åpne, lagre, slette; per lokal AHA-profilnøkkel, med advarsel før tap av ulagrede endringer.
+- Skissebok med **forhåndsvisninger fra eksisterende penselstrøk**, søk i titler og notater, og «Lag kopi». Forhåndsvisningene tegnes midlertidig i nettleseren, ikke som ekstra bildefiler. Kopier får egen ID og ingen arvet Aha-kildeidentitet.
+- For rask visning av store arkiv vises inntil 40 av de nyeste treffene om gangen; eldre skisser kan finnes via søket.
 - Eksport av PNG og prosjektformatet `aha-kunstrommet-v1` som JSON; import av validerte prosjekter.
 - Direkte navigasjon til AHA Home, tankekart og Galleri.
 - **Eksplisitt** handling «Send tekst til Aha» bruker eksisterende AHAIngest til å sende **bare tittel og notat** som lokal kilde/innsikt; ingen piksler, vektorstreker eller bildefiler sendes.
@@ -17,7 +19,7 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 ## Viktige begrensninger
 - Ateliertegninger er **lokalt lagret i denne nettleseren og på denne enheten**. Innlogging gir ikke automatisk synkronisering eller backup. Tømming av nettleserdata kan slette skissene.
 - Profilnøkkelen brukes til lokal partisjonering, ikke sikker autentisering mellom brukere på en delt enhet.
-- Aha-tekstinnsendelse er ikke en direkte kobling av selve skissen til eksisterende samlinger/stier. Den krever eget referansearbeid senere.
+- Aha-tekstinnsendelse er ikke en direkte kobling av selve skissen til eksisterende samlinger/stier. Den krever eget referansearbeid senere. Kopiering eller søk utløser ingen Aha-innsending.
 - Viskelæret legger hvit pensel over streker, og første versjon støtter ikke lag, import av eksterne bildefiler eller kollasj.
 - Begrensninger på 3 000 strøk og 2 400 punkter per strøk verner mot ubegrenset minnebruk; overføres ikke automatisk til sky.
 - Ingen EchoNet-deling, publisering, database-sync, KI-bildeanalyse eller automatiske API-kall fra selve verkstedet.
