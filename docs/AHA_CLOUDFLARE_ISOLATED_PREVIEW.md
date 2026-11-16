@@ -82,7 +82,7 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 
 Bruker har bekreftet at den nye Cloudflare Supabase-innloggingen fungerer, men «Mitt AHA» viste tidligere bare **lokale AHA-objekter** og en fast tekst som kunne misforstås som innloggingsstatus. `profile.html` har nå en **egen og eksplisitt lesebasert kontosjekk**:
 
-1. Åpne `profile.html` på Cloudflare-preview og velg «Kontroller Supabase-konto». Ingen automatisk nettverksforespørsel utløses når siden lastes.
+1. Åpne `profile.html` på Cloudflare-preview og velg «Kontroller Supabase-konto». Ingen automatisk **Supabase Auth- eller databasespørring** utløses ved sidelasting; siden laster likevel Supabase SDK fra CDN.
 2. `js/ahaProfileSupabaseStatus.js` godtar **kun AHA-prosjektet** `wshmybqyksrwkawqleiz`, verifiserer innlogget bruker med `auth.getUser()` og ber om **kun id-feltet i vedkommendes egen rad** i `public.aha_profiles`.
 3. Teksten skiller mellom ingen aktiv sesjon, verifisert sesjon med funnet profilrad, manglende/usynlig profilrad og feil ved tabell/RLS. Den viser ingen e-post, UUID, tokens eller rå serverfeil.
 4. Sjekken gjør **ingen** `upsert` / `insert` / `update` / `delete`, laster ikke opp lokale data og aktiverer ingen legacy- eller canonical-sync.
