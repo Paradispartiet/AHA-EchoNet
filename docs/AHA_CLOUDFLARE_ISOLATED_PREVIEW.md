@@ -78,6 +78,19 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 
 **Felles statuskilde:** [Paradispartiets databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md). Denne planen er ikke et eget databaseregister. Endrede databaser og faktisk verifiserte migreringer føres bare i hovedregisteret.
 
+### Port B.1 – lesebasert kontosjekk på «Mitt AHA» (16.11)
+
+Bruker har bekreftet at den nye Cloudflare Supabase-innloggingen fungerer, men «Mitt AHA» viste tidligere bare **lokale AHA-objekter** og en fast tekst som kunne misforstås som innloggingsstatus. `profile.html` har nå en **egen og eksplisitt lesebasert kontosjekk**:
+
+1. Åpne `profile.html` på Cloudflare-preview og velg «Kontroller Supabase-konto». Ingen automatisk nettverksforespørsel utløses når siden lastes.
+2. `js/ahaProfileSupabaseStatus.js` godtar **kun AHA-prosjektet** `wshmybqyksrwkawqleiz`, verifiserer innlogget bruker med `auth.getUser()` og ber om **kun id-feltet i vedkommendes egen rad** i `public.aha_profiles`.
+3. Teksten skiller mellom ingen aktiv sesjon, verifisert sesjon med funnet profilrad, manglende/usynlig profilrad og feil ved tabell/RLS. Den viser ingen e-post, UUID, tokens eller rå serverfeil.
+4. Sjekken gjør **ingen** `upsert` / `insert` / `update` / `delete`, laster ikke opp lokale data og aktiverer ingen legacy- eller canonical-sync.
+5. **Begrensning:** En egen profilrad som er lesbar er **ikke** et fullstendig bevis på isolasjon mellom to brukere, kapasitet, restore eller pålitelig cloud sync. Live-kontroll av RLS og schema i AHA-kontoen må fremdeles gjennomføres før ekte persondata flyttes.
+6. Kontrollen er verifisert med isolert Node-test (`tests/aha-profile-supabase-status-readonly.test.cjs`), men gir **ikke** live-resultat før bruker trykker knappen på publisert Cloudflare-preview.
+
+Dette er en funksjon på **den eksisterende profilstaten**, ikke et nytt databaseregister eller en ny produksjonsdatabase. Oppdater bare [felles databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md) for nye bekreftede databasefakta.
+
 ## Etterkontroll 14.11.2026 og gjenstående grenser
 
 - Visuell test på iPad Safari har vist Home, Chat og Insta med riktig CSS/navigasjon. Dette er **ikke** bevis for at AI-modell, innlogging i AHA eller databasepersist fungerer fra ny origin.
