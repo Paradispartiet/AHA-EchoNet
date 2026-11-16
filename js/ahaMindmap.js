@@ -434,7 +434,7 @@
     const raw = {
       insights: loadByKey(STORAGE_KEYS.insights, { insights: [] }),
       sourceEvents: loadByKey(STORAGE_KEYS.sourceEvents, []),
-      lists: loadByKey(STORAGE_KEYS.lists, []),
+      lists: global.AHAKunstrommetReferences?.overlayLists?.(loadByKey(STORAGE_KEYS.lists, [])) || loadByKey(STORAGE_KEYS.lists, []),
       conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
