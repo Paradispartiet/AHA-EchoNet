@@ -26,6 +26,9 @@ const rootStaticExtensions = new Set([
 const rootStaticNames = new Set([
   "manifest.json", "site.webmanifest", "sw.js", "service-worker.js"
 ]);
+const disabledProductionPages = new Set([
+  "canonical-sync-production-pilot.html"
+]);
 const forbiddenNames = /(?:^\.|\.local(?:\.|$)|\.secret(?:\.|$)|^(?:secrets?|credentials?)(?:\.|$))/i;
 const forbiddenDirs = new Set(["node_modules", "test", "tests", "__tests__", "fixtures"]);
 const copied = [];
@@ -33,6 +36,7 @@ const copied = [];
 async function maybeCopy(source, relative, allowRoot = false) {
   const name = path.basename(relative);
   const ext = path.extname(name).toLowerCase();
+  if (disabledProductionPages.has(relative.split(path.sep).join("/"))) return;
   if (forbiddenNames.test(name)) return;
   if (allowRoot
     ? !(rootStaticExtensions.has(ext) || rootStaticNames.has(name))
