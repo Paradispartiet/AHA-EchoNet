@@ -23,8 +23,8 @@ assert.match(pages.profile, /aha-profile-card-meta/, "Meta profile should keep a
 assert.match(pages.profile, /aha-profile-card-archive/, "Afterwork should keep a dedicated profile card");
 for (const phrase of [
   "lokal statusflate",
-  "Ingen profil deles eksternt",
-  "Ingen EchoNet-identitet er aktivert",
+  "Ingen lokal profil deles eksternt automatisk",
+  "Supabase-innlogging kontrolleres separat",
   "History Go-statusen vises som lokal read-only importstatus",
   "AHA Profil skriver ikke tilbake til History Go"
 ]) {
