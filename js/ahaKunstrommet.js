@@ -93,24 +93,24 @@
     };
   }
 
-  function drawStroke(stroke) {
+  function drawStroke(stroke, target = ctx) {
     const points = stroke.points;
     if (!Array.isArray(points) || !points.length) return;
-    ctx.strokeStyle = stroke.color;
-    ctx.fillStyle = stroke.color;
-    ctx.lineWidth = stroke.size;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    target.strokeStyle = stroke.color;
+    target.fillStyle = stroke.color;
+    target.lineWidth = stroke.size;
+    target.lineCap = "round";
+    target.lineJoin = "round";
     if (points.length === 1) {
-      ctx.beginPath();
-      ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
-      ctx.fill();
+      target.beginPath();
+      target.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+      target.fill();
       return;
     }
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    points.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
-    ctx.stroke();
+    target.beginPath();
+    target.moveTo(points[0].x, points[0].y);
+    points.slice(1).forEach((p) => target.lineTo(p.x, p.y));
+    target.stroke();
   }
 
   function redraw() {
@@ -208,6 +208,35 @@
     status("Ny skisse – ikke lagret");
   }
 
+  function makePreview(item) {
+    // A temporary canvas: no thumbnail files or base64 pixels are persisted or transmitted.
+    const preview = document.createElement("canvas");
+    preview.width = 240;
+    preview.height = 160;
+    preview.className = "kunstrommet-preview";
+    preview.setAttribute("role", "img");
+    preview.setAttribute("aria-label", "Forhåndsvisning av " + (item.title || "skisse uten tittel"));
+    const painter = preview.getContext?.("2d");
+    if (!painter) return preview;
+    painter.fillStyle = "#ffffff";
+    painter.fillRect(0, 0, preview.width, preview.height);
+    painter.save();
+    painter.scale(preview.width / WIDTH, preview.height / HEIGHT);
+    (Array.isArray(item.strokes) ? item.strokes : []).forEach((stroke) => drawStroke(stroke, painter));
+    painter.restore();
+    return preview;
+  }
+
+  async function duplicateProject(item) {
+    const copy = newRecord();
+    copy.title = (String(item.title || "Skisse").slice(0, 105) + " – kopi").slice(0, 120);
+    copy.note = String(item.note || "").slice(0, 4000);
+    copy.strokes = structuredCloneSafe(item.strokes || []);
+    // Copies never inherit an Aha source event, ingest timestamp or sharing state.
+    await put(copy);
+    await refreshList();
+  }
+
   function button(text, click, dangerous = false) {
     const el = document.createElement("button");
     el.type = "button";
@@ -224,22 +253,36 @@
     try { items = await records(); }
     catch (error) { mount.textContent = "Lokal lagring utilgjengelig: " + error.message; return; }
     items.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
-    if (!items.length) {
+    const search = $("kunstrommet-project-search").value.trim().toLocaleLowerCase("no-NO");
+    const matches = search
+      ? items.filter((item) => (String(item.title || "") + " " + String(item.note || "")).toLocaleLowerCase("no-NO").includes(search))
+      : items;
+    const visible = matches.slice(0, 40);
+    $("kunstrommet-project-count").textContent = matches.length
+      ? (matches.length === items.length ? items.length + " lagrede verk" : matches.length + " treff av " + items.length + " verk")
+        + (matches.length > visible.length ? " · viser de 40 nyeste" : "")
+      : (items.length ? "Ingen treff" : "Ingen lagrede verk");
+    if (!visible.length) {
       const p = document.createElement("p");
-      p.textContent = "Ingen lagrede skisser ennå. Lag din første på lerretet.";
+      p.textContent = items.length
+        ? "Ingen skisser matcher søket. Prøv et annet ord."
+        : "Ingen lagrede skisser ennå. Lag din første på lerretet.";
       mount.appendChild(p);
       return;
     }
-    for (const item of items) {
+    for (const item of visible) {
       const wrap = document.createElement("article");
       wrap.className = "kunstrommet-project";
+      if (current?.id === item.id) wrap.classList.add("kunstrommet-project-current");
+      const preview = makePreview(item);
       const name = document.createElement("strong");
       name.textContent = item.title || "Uten tittel";
       const date = document.createElement("small");
       date.textContent = new Date(item.updated_at).toLocaleDateString("no-NO");
       const actions = document.createElement("div");
       actions.append(
-        button("Åpne", () => { if (confirmDiscard()) load(item); }),
+        button("Åpne", () => { if (confirmDiscard()) { load(item); refreshList(); } }),
+        button("Lag kopi", () => duplicateProject(item).catch((error) => { status("Kunne ikke kopiere: " + error.message); })),
         button("Slett", async () => {
           if (!global.confirm("Slette skissen permanent fra denne nettleseren?")) return;
           try {
@@ -249,7 +292,7 @@
           } catch (error) { status(error.message); }
         }, true)
       );
-      wrap.append(name, date, actions);
+      wrap.append(preview, name, date, actions);
       mount.appendChild(wrap);
     }
   }
@@ -390,6 +433,9 @@
       if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return;
       $("kunstrommet-color").value = color;
       setTool("pen");
+    });
+    $("kunstrommet-project-search").addEventListener("input", () => {
+      refreshList().catch((error) => { status("Søk feilet: " + error.message); });
     });
     $("kunstrommet-new").addEventListener("click", create);
     $("kunstrommet-save").addEventListener("click", () => save().catch((error) => status("Lagring feilet: " + error.message)));
