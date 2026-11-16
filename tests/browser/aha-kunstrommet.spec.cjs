@@ -175,14 +175,28 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
 
     const localBridge = await page.evaluate(() => ({
       refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
-      lists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]")
+      memberships: JSON.parse(localStorage.getItem("aha_kunstrommet_memberships_v1") || "[]"),
+      rawLists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"),
+      visibleLists: window.AHALists.loadLists()
     }));
     expect(localBridge.refs).toHaveLength(1);
     expect(localBridge.refs[0].id).toBe(projectId);
     expect(JSON.stringify(localBridge.refs)).not.toContain("Personlig, ikke delt");
     expect(JSON.stringify(localBridge.refs)).not.toContain("strokes");
-    expect(localBridge.lists[0].items[0].source).toBe("aha_kunstrommet");
-    expect(localBridge.lists[0].items[0].refId).toBe(projectId);
+    expect(localBridge.rawLists[0].items).toHaveLength(0);
+    expect(JSON.stringify(localBridge.rawLists)).not.toContain("Maleri med rødt");
+    expect(localBridge.memberships).toHaveLength(1);
+    expect(localBridge.memberships[0].artworkId).toBe(projectId);
+    expect(localBridge.visibleLists[0].items[0].source).toBe("aha_kunstrommet");
+    expect(localBridge.visibleLists[0].items[0].refId).toBe(projectId);
+
+    await page.evaluate(() => localStorage.setItem("aha_profile_id", "other-local-profile"));
+    const otherProfile = await page.evaluate(() => ({
+      visible: window.AHALists.loadLists(),
+      graph: window.AHAMindmap?.collectGraphData?.()
+    }));
+    expect(otherProfile.visible[0].items).toHaveLength(0);
+    await page.evaluate(() => localStorage.removeItem("aha_profile_id"));
 
     await page.goto("/mindmap.html", { waitUntil: "domcontentloaded" });
     const artwork = await page.evaluate(() => {
@@ -205,9 +219,11 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     await expect(page.locator("#kunstrommet-link-state")).toContainText("Fjernet 1 samlingskobling");
     const revoked = await page.evaluate(() => ({
       refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
-      lists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]")
+      memberships: JSON.parse(localStorage.getItem("aha_kunstrommet_memberships_v1") || "[]"),
+      lists: window.AHALists.loadLists()
     }));
     expect(revoked.refs).toHaveLength(0);
+    expect(revoked.memberships).toHaveLength(0);
     expect(revoked.lists[0].items).toHaveLength(0);
     await page.goto("/mindmap.html", { waitUntil: "domcontentloaded" });
     const graphAfterRevoke = await page.evaluate(() => window.AHAMindmap.collectGraphData());
