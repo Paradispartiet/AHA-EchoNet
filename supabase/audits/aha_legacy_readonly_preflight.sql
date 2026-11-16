@@ -22,7 +22,11 @@ WITH expected(table_name, owner_column, expected_policies) AS (
   ('aha_insight_embeddings', 'profile_id', 4)
 ),
 tables AS (
-  SELECT e.*, c.oid, coalesce(c.relrowsecurity, false) AS rls_enabled
+  SELECT
+    e.*, c.oid, coalesce(c.relrowsecurity, false) AS rls_enabled,
+    coalesce(has_table_privilege('authenticated', c.oid, 'SELECT'), false) AS authenticated_can_select,
+    coalesce(has_table_privilege('authenticated', c.oid, 'INSERT'), false) AS authenticated_can_insert,
+    coalesce(has_table_privilege('authenticated', c.oid, 'UPDATE'), false) AS authenticated_can_update
   FROM expected e
   LEFT JOIN pg_namespace ns ON ns.nspname = 'public'
   LEFT JOIN pg_class c ON c.relnamespace = ns.oid
@@ -63,6 +67,9 @@ SELECT
   t.table_name,
   (t.oid IS NOT NULL) AS table_exists,
   t.rls_enabled,
+  t.authenticated_can_select,
+  t.authenticated_can_insert,
+  t.authenticated_can_update,
   p.policy_count,
   p.own_select,
   p.own_insert,
@@ -71,6 +78,8 @@ SELECT
   CASE
     WHEN t.oid IS NULL THEN 'MISSING_TABLE'
     WHEN NOT t.rls_enabled THEN 'FAIL_RLS_DISABLED'
+    WHEN NOT (t.authenticated_can_select AND t.authenticated_can_insert AND t.authenticated_can_update)
+      THEN 'REVIEW_MISSING_TABLE_GRANT'
     WHEN p.anonymous_or_public_policy THEN 'REVIEW_PUBLIC_POLICY'
     WHEN NOT (p.own_select AND p.own_insert AND p.own_update) THEN 'REVIEW_MISSING_OWN_POLICY'
     WHEN p.policy_count <> t.expected_policies THEN 'REVIEW_EXTRA_OR_MISSING_POLICY'
@@ -87,4 +96,7 @@ COMMIT;
 --    private canonical aha.* nor all other unknown tables/functions/grants.
 -- 2) Even POLICY_PREFLIGHT_OK cannot prove correct RLS logic or isolation.
 --    A separate real two-user test must prove A cannot read/change B's data.
--- 3) This makes no data modifications. Never "fix" policies blindly.
+-- 3) authenticated_can_* checks direct/inherited table grants (for REST
+--    access); they do NOT prove that the project's Data API is enabled
+--    or that the table's schema is exposed to the API.
+-- 4) This makes no data modifications. Never "fix" policies blindly.

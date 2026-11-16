@@ -34,3 +34,17 @@ if [[ "$preflight_ok" != "12" || "$optional_missing" != "1" ]]; then
   exit 1
 fi
 echo "AHA hosted-style read-only catalog audit passed against isolated synthetic fixture: 12/12 core tables."
+
+# Negative control: deliberately revoke UPDATE on *synthetic* aha_notes.
+# A read-only audit must find the missing SQL GRANT even when RLS is sound.
+# The guard above explicitly blocks running this against any hosted database.
+psql -v ON_ERROR_STOP=1 -c 'REVOKE UPDATE ON TABLE public.aha_notes FROM authenticated' >/dev/null
+negative_result="$(psql -v ON_ERROR_STOP=1 -At -f supabase/audits/aha_legacy_readonly_preflight.sql)"
+missing_grant="$(printf '%s\n' "$negative_result" | grep -F 'aha_notes|' | grep -c -F '|REVIEW_MISSING_TABLE_GRANT' || :)"
+remaining_ok="$(printf '%s\n' "$negative_result" | grep -c -F '|POLICY_PREFLIGHT_OK' || :)"
+if [[ "$missing_grant" != "1" || "$remaining_ok" != "11" ]]; then
+  echo "AHA catalog grant negative-control failed: a missing UPDATE grant was not detected" >&2
+  exit 1
+fi
+psql -v ON_ERROR_STOP=1 -c 'GRANT UPDATE ON TABLE public.aha_notes TO authenticated' >/dev/null
+echo "AHA synthetic grant negative-control passed: missing UPDATE grant flagged, then restored."
