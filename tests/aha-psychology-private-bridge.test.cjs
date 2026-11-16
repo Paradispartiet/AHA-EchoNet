@@ -103,6 +103,12 @@ const openLink = promotedActions.find((child) => child.textContent === "Åpne i 
 assert.equal(openLink.href, "insights.html#insight-" + encodeURIComponent(copy.id));
 const retract = promotedActions.find((child) => child.textContent === "Fjern AHA-kopien");
 assert.ok(retract);
+const deletePrivate = promotedActions.find((child) => child.textContent === "Slett");
+deletePrivate.handlers.click();
+assert.equal(JSON.parse(contents.get(key)).length, 1, "private original cannot be removed while regular insight copy exists");
+assert.match(nodes["aha-psych-import-status"].textContent, /Fjern først AHA-kopien/);
+nodes["aha-psych-delete-all"].handlers.click();
+assert.equal(JSON.parse(contents.get(key)).length, 1, "bulk deletion is blocked until promoted copies are recalled");
 win.confirm = () => false;
 retract.handlers.click();
 assert.equal(JSON.parse(contents.get(chamberKey)).insights.length, 2);
