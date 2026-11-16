@@ -3,7 +3,11 @@
 Status: **utkast til PR, local-only pilot**. Ikke publisert, ikke mobilgodkjent.
 
 ## Produktgrense
-Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologirommet**. Eksisterende Galleri er uendret, og kan fortsatt lagre visuelle referanser. Kunstrommet er for å **skape** egne bilder, ikke å administrere mediereferanser.
+**Eksisterende Aha Galleri er den eneste samlingen for bilde-, video- og inspirasjonsreferanser.** Kunstrommet er et personlig atelier for å *lage* kunst og holde skisser under arbeid. Det er ikke et nytt Galleri. Psykologirommet er helt uavhengig.
+
+Kunstrommet bruker `AHAGallery.load()` til å vise en liten liste av eksisterende referanser. «Bruk som inspirasjon» kopierer bare referansens tittel og beskrivelse inn i den åpne skissens *ulagrede* notat ved et eksplisitt klikk. Ingen bilder, videoer, nettadresser eller mediefiler kopieres, og det opprettes ingen ekstra Galleri-database. Verk som lages i Kunstrommet legges heller ikke automatisk i Galleriet.
+
+Galleriet kan inneholde eksterne medier som først hentes når du åpner selve Galleriet. Kunstrommet viser bare referansenes tekst og laster ikke inn mediebilder til inspirasjonslisten.
 
 ## I denne første versjonen
 - Lerret 1200 × 800, tegning med Pointer Events (mus, berøring, pekepenn), penselfarge, hurtigpalett, tykkelse og hvitt viskelær.
@@ -13,7 +17,7 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 - Skissebok med **forhåndsvisninger fra eksisterende penselstrøk**, søk i titler og notater, og «Lag kopi». Forhåndsvisningene tegnes midlertidig i nettleseren, ikke som ekstra bildefiler. Kopier får egen ID og ingen arvet Aha-kildeidentitet.
 - For rask visning av store arkiv vises inntil 40 av de nyeste treffene om gangen; eldre skisser kan finnes via søket.
 - Eksport av PNG og prosjektformatet `aha-kunstrommet-v1` som JSON; import av validerte prosjekter.
-- Direkte navigasjon til AHA Home, tankekart og Galleri.
+- Direkte navigasjon til AHA Home, tankekart og Galleri. Den eksisterende gallerisiden har en egen snarvei tilbake til Kunstrommet.
 - **Etter eksplisitt brukerhandling** kan et lagret kunstverk legges i en valgt lokal Aha-samling. Referansen lagres per lokal profil i `aha_kunstrommet_refs_v2_<profil>`, og samlingstilknytningen lagres i Kunstrommets egen profilfiltrerte indeks `aha_kunstrommet_memberships_v1`. Ahas delte `aha_lists_v1` lagrer verken kunstverkstittel eller selve referansen.
 - For brukeren vises koblingen som et *virtuelt medlem* i Ahas samlinger og som en read-only kant i tankekartet. Bare verkets prosjekt-ID og tittel brukes lokalt; **ikke** penselstrøk, piksler, notater eller andre mediedata. Lenken åpner originalen i IndexedDB og kan trekkes tilbake uten å slette skissen.
 - Tidligere versjons samlingsrader med kunstverk flyttes automatisk til Kunstrommets profilfiltrerte koblingsindeks ved åpning av Ahas samlinger. Gamle, felles referansenøkler migreres til profilspesifikke nøkler og fjernes etter vellykket kopiering.
