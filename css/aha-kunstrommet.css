@@ -72,3 +72,15 @@
 .kunstrommet-project-current { border-color:#f1cc82; }
 .kunstrommet-project > div { flex-wrap:wrap; }
 .kunstrommet-project-search:focus-visible { outline: 2px solid #f1cc82; outline-offset:3px; }
+
+/* Intentional, local-only AHA collection link. */
+#kunstrommet-collection-select { display:block; width:100%; min-height:42px;
+  box-sizing:border-box; margin:7px 0 12px; padding:9px 12px;
+  border-radius:9px; border:1px solid #586476; background:#151c27;
+  color:#f8fafc; font:inherit; }
+#kunstrommet-link-collection { display:block; width:100%; min-height:44px;
+  padding:10px 12px; border:1px solid #f1cc82; border-radius:9px;
+  background:#f1cc82; color:#20232c; font:inherit; font-weight:700; cursor:pointer; }
+#kunstrommet-collection-select:focus-visible, #kunstrommet-link-collection:focus-visible {
+  outline:2px solid #f1cc82; outline-offset:3px;
+}
