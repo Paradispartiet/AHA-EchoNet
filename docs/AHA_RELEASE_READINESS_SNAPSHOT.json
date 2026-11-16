@@ -160,7 +160,7 @@
       "registry_status": "active",
       "maturity": "ready",
       "release_state": "ready",
-      "boundary": "Local-only personlig atelier med IndexedDB-skisser, manuell PNG/JSON-eksport, eksplisitt tekst-only AHAIngest og opt-in peker fra kunstverk til Ahas lokale samlinger/tankekart. Bare tittel og prosjekt-ID i referanseindeksen; ingen piksler/notater, backend, synk, EchoNet eller deling. Fysisk iOS Safari-test gjenstår."
+      "boundary": "Local-only personlig atelier med IndexedDB-skisser, profilfiltrert tittel/referanseindeks, lokal medlemskaps-overlay til Ahas samlinger/tankekart og eksplisitt tekst-only AHAIngest. Ingen private verkstitler/ID i aha_lists_v1, ingen piksler/notater, backend, synk eller deling. Lokal profilnøkkel er ikke sikker tilgangskontroll. Fysisk iOS Safari-test gjenstår."
     },
     {
       "id": "notes",
