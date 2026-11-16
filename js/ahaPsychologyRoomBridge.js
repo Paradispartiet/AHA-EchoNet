@@ -192,6 +192,10 @@
         button.className = "aha-tile-btn aha-tile-btn-secondary";
         button.textContent = "Slett";
         button.addEventListener("click", () => {
+          if (readPromoted(entry)) {
+            message("Fjern først AHA-kopien i Innsikter. Ellers mister du muligheten til å trekke kopien tilbake herfra.");
+            return;
+          }
           if (!global.confirm("Slette denne refleksjonen fra Mitt AHA?")) return;
           if (!save(readSaved().filter((item) => item.id !== entry.id))) {
             message("Kunne ikke lagre slettingen i denne nettleseren.");
@@ -305,6 +309,10 @@
     });
 
     deleteAll.addEventListener("click", () => {
+      if (readSaved().some((entry) => readPromoted(entry))) {
+        message("Fjern først alle AHA-kopier i Innsikter. Da kan du slette det private arkivet uten å etterlate kopier.");
+        return;
+      }
       if (!global.confirm("Slette alle refleksjonene i dette AHA-rommet?")) return;
       if (!save([])) {
         message("Kunne ikke slette lokale refleksjoner.");
