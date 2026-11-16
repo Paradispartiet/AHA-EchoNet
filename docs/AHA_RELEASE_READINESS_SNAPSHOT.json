@@ -155,6 +155,14 @@
       "boundary": "Lokal-only galleriobjekter har eksplisitt ikke-publisert/EchoNet-ikke-delt metadata, tekstlig AHAIngest-sporbarhet, stabil source-id mot åpenbar re-ingest-duplisering og søk-regresjonstest."
     },
     {
+      "id": "kunstrommet",
+      "title": "Kunstrommet",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only personlig atelier med IndexedDB-skisser, lerret, manuell PNG/JSON-eksport og eksplisitt tekst-only AHAIngest. Ingen automatisk bildeanalyse, backend, sync, EchoNet eller deling. Fysisk iOS Safari-test kreves før publisering."
+    },
+    {
       "id": "notes",
       "title": "Notes",
       "registry_status": "active",
