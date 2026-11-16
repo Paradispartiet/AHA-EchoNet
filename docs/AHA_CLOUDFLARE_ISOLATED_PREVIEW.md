@@ -78,6 +78,17 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 
 **Felles statuskilde:** [Paradispartiets databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md). Denne planen er ikke et eget databaseregister. Endrede databaser og faktisk verifiserte migreringer føres bare i hovedregisteret.
 
+### Port C.0 – kontroller RLS før første private sky-write (16.11)
+
+**Hvorfor:** Innloggingen på Cloudflare er brukerbekreftet, men dette viser **ikke** at databaseoppføringer er sikre eller at `public.aha_*`-tabellene har aktive eierskapspolicyer. Canonical `aha.*`-migrasjonsprøven dekker et **annet** schema.
+
+To ulike og eksplisitt adskilte kontroller er derfor lagt til:
+
+- **Kildebasert CI-test uten persondata:** `.github/workflows/aha-legacy-rls-rehearsal.yml` starter én *disponibel PostgreSQL 16*-database med kun syntetiske brukere A/B. Den installerer gjeldende `supabase/schema.sql`, `supabase/policies.sql` og `supabase/chamber.sql`, og prøver at A ikke kan lese/endre B, B ikke kan se A, og anonym bruker ikke kan lese noen av 12 legacy-tabeller. **Ingen** tilgang til Supabase-prosjekter, Azure, GitHub-secrets eller brukerfiler. Embeddings/pgvector er utenfor denne testen.
+- **Faktisk AHA Supabase – bare kataloginnsyn:** `supabase/audits/aha_legacy_readonly_preflight.sql` kan kjøres av kontoeier i SQL Editor i prosjekt **`wshmybqyksrwkawqleiz`**, ikke Fysen. Skriptet har `BEGIN READ ONLY` og leser bare PostgreSQLs systemkataloger for kjente `public.aha_*`-tabeller (inkludert valgfri `aha_insight_embeddings`). Det inspiserer om RLS er aktivt og om forventede owner-policyer finnes; ingen innholdsrader, person-ID-er eller passord hentes.
+
+**Tolkning:** `POLICY_PREFLIGHT_OK` betyr kun at de forventede policyuttrykkene *ser ut til* å være installert. En manglende valgfri embeddingtabell må vurderes separat, ikke opprettes automatisk. Katalogkontrollen kan ikke oppdage alle semantiske eller indirekte lekkasjer. **Før første ekte innholdsimport kreves en separat live-test med to godkjente testbrukere fra faktisk browser/API**, bekreftet profilstatus på «Mitt AHA», kontrollert eksport/restore og eksplisitt brukerhandling. Ikke opprett ekstra Supabase-prosjekter eller gjenaktiver Azure.
+
 ### Port B.1 – lesebasert kontosjekk på «Mitt AHA» (16.11)
 
 Bruker har bekreftet at den nye Cloudflare Supabase-innloggingen fungerer, men «Mitt AHA» viste tidligere bare **lokale AHA-objekter** og en fast tekst som kunne misforstås som innloggingsstatus. `profile.html` har nå en **egen og eksplisitt lesebasert kontosjekk**:
