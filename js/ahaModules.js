@@ -319,6 +319,7 @@
     "notes",
     "feed",
     "gallery",
+    "kunstrommet",
     "insta",
     "insights",
     "sources",
