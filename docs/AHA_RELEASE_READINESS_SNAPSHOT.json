@@ -147,6 +147,14 @@
       "boundary": "Manuell local-only import boundary fra `aha_import_payload_v1` til AHA source events/insights med kompakt importlogg, databasepersist av som standard, ingen write-back til History Go-lagring uten eksplisitt flagg, og tester for AHA/HG-separasjon, no sync/backend/EchoNet og no EmneMatcher."
     },
     {
+      "id": "psykologirommet",
+      "title": "Psykologirommet",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only Psykologirommet koblet til History GO: brukeren skriver og velger selv én tekst, forhåndsviser og bekrefter privat lagring i AHA. Ingen lesing av screening, tester eller History GO-notater. Ingen AHAIngest, AI, database, backend, sync, EchoNet eller automatisk deling."
+    },
+    {
       "id": "gallery",
       "title": "Galleri",
       "registry_status": "active",
