@@ -236,21 +236,12 @@
 
   function removeArtworkCollectionLinks(artworkId) {
     if (global.AHA_CONFIG?.lists?.enableDatabaseSync === true) {
-      throw new Error("Databasesynkronisering er aktiv. Kan ikke endre samlingskoblinger lokalt uten kontroll.");
+      throw new Error("Databasesynkronisering er aktiv. Kan ikke endre samlingskoblinger uten kontroll.");
     }
     const refs = global.AHAKunstrommetReferences;
-    const lists = global.AHALists;
-    if (!refs || !lists?.loadLists || !lists?.saveLists) throw new Error("Lokale samlinger er utilgjengelige.");
-    const existing = lists.loadLists();
-    let removed = 0;
-    const next = existing.map((list) => {
-      const members = Array.isArray(list.items) ? list.items : [];
-      const filtered = members.filter((member) => !(member.source === "aha_kunstrommet" && member.refId === artworkId));
-      if (filtered.length === members.length) return list;
-      removed += members.length - filtered.length;
-      return { ...list, items: filtered, updatedAt: new Date().toISOString() };
-    });
-    if (removed) lists.saveLists(next);
+    if (!refs?.unlinkArtwork || !refs?.remove) throw new Error("Lokale kunstverkreferanser er utilgjengelige.");
+    // Artwork links live in a separate owner-scoped overlay, not aha_lists_v1.
+    const removed = refs.unlinkArtwork(artworkId);
     refs.remove(artworkId);
     return removed;
   }
