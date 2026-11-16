@@ -160,7 +160,7 @@
       "registry_status": "active",
       "maturity": "ready",
       "release_state": "ready",
-      "boundary": "Local-only personlig atelier med IndexedDB-skisser, lerret, manuell PNG/JSON-eksport og eksplisitt tekst-only AHAIngest. Ingen automatisk bildeanalyse, backend, sync, EchoNet eller deling. Fysisk iOS Safari-test kreves før publisering."
+      "boundary": "Local-only personlig atelier med IndexedDB-skisser, manuell PNG/JSON-eksport, eksplisitt tekst-only AHAIngest og opt-in peker fra kunstverk til Ahas lokale samlinger/tankekart. Bare tittel og prosjekt-ID i referanseindeksen; ingen piksler/notater, backend, synk, EchoNet eller deling. Fysisk iOS Safari-test gjenstår."
     },
     {
       "id": "notes",
