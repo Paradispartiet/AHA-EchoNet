@@ -18,7 +18,7 @@
           <p class="eyebrow">Profil</p>
           <h1>Mitt AHA</h1>
           <p class="aha-module-purpose">Din oversikt over aktivitet, innsikter og det du har bygget opp i AHA.</p>
-          <p class="aha-personal-trust">Dette er en lokal statusflate · Ingen profil deles eksternt · Ingen EchoNet-identitet er aktivert</p>
+          <p class="aha-personal-trust">Denne oversikten viser lokal AHA-aktivitet. Supabase-innlogging kontrolleres separat, og lokale data deles ikke automatisk.</p>
         </div>
       </header>
       <div class="aha-status-stack">
@@ -27,6 +27,18 @@
         <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
       </div>
       <div id="aha-profile-overview" aria-live="polite"></div>
+    </section>
+
+    <section class="aha-panel aha-profile-card" aria-labelledby="aha-supabase-profile-title">
+      <p class="eyebrow">Konto og skylagring</p>
+      <h2 id="aha-supabase-profile-title">Supabase-konto</h2>
+      <p class="aha-module-purpose">Kontroller bare om innloggingen er gyldig og din egen AHA-profilrad er synlig. Sjekken lagrer ikke noe og starter ingen synkronisering.</p>
+      <p id="aha-supabase-profile-result" class="aha-module-purpose" role="status" aria-live="polite">Ikke kontrollert ennå.</p>
+      <div class="aha-tile-actions">
+        <button id="aha-check-supabase-profile" class="aha-tile-btn aha-tile-btn-primary" type="button">Kontroller Supabase-konto</button>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html?login=1">Gå til innlogging</a>
+      </div>
+      <p class="aha-module-purpose">En lesbar profilrad betyr ikke at RLS er fulltestet, eller at samtaler og innsikter er lagret i skyen.</p>
     </section>
 
     <section class="aha-panel aha-profile-activity-panel">
@@ -71,6 +83,10 @@
       </div>
     </section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaProfileSupabaseStatus.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaConversationInsightSnapshot.js"></script>
   <script src="js/ahaDashboard.js"></script>
