@@ -18,7 +18,7 @@
   let current = null;
   let dirty = false;
   let activeStroke = null;
-  let history = [];
+  let activePointerId = null;
   let future = [];
   let tool = "pen";
 
@@ -127,7 +127,7 @@
   }
 
   function start(event) {
-    if (!current || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (!current || activeStroke || (event.pointerType === "mouse" && event.button !== 0)) return;
     if (current.strokes.length >= MAX_STROKES) { status("Grense nådd. Eksporter eller start en ny skisse."); return; }
     event.preventDefault();
     const point = pointOf(event);
@@ -136,24 +136,28 @@
       size: tool === "eraser" ? Math.max(16, Number($("kunstrommet-size").value) * 2) : Number($("kunstrommet-size").value),
       points: [point]
     };
+    activePointerId = event.pointerId;
     try { canvas.setPointerCapture(event.pointerId); } catch {}
-    redraw();
+    drawStroke(activeStroke);
   }
 
   function move(event) {
-    if (!activeStroke) return;
+    if (!activeStroke || (event.pointerId !== undefined && event.pointerId !== activePointerId)) return;
     event.preventDefault();
     const point = pointOf(event);
     const prior = activeStroke.points[activeStroke.points.length - 1];
     if (Math.hypot(point.x - prior.x, point.y - prior.y) < 2 || activeStroke.points.length >= MAX_POINTS) return;
     activeStroke.points.push(point);
-    redraw();
+    // Paint the new segment only. Replaying the entire drawing on every pointermove
+    // grows quadratically for long strokes and becomes sluggish on mobile Safari.
+    drawStroke({ color: activeStroke.color, size: activeStroke.size, points: [prior, point] });
   }
 
-  function end() {
-    if (!activeStroke) return;
+  function end(event = {}) {
+    if (!activeStroke || (event.pointerId !== undefined && event.pointerId !== activePointerId)) return;
     current.strokes.push(activeStroke);
     activeStroke = null;
+    activePointerId = null;
     future = [];
     markDirty();
     redraw();
@@ -185,6 +189,7 @@
     current = { ...record, strokes: structuredCloneSafe(record.strokes || []) };
     future = [];
     activeStroke = null;
+    activePointerId = null;
     dirty = false;
     $("kunstrommet-title").value = current.title || "";
     $("kunstrommet-note").value = current.note || "";
@@ -336,6 +341,33 @@
     } catch (error) { ahaStatus("Kunne ikke sende til Aha: " + error.message); }
   }
 
+  function undoStroke() {
+    if (!current?.strokes.length) return;
+    future.push(current.strokes.pop());
+    markDirty();
+    redraw();
+  }
+
+  function redoStroke() {
+    if (!current || !future.length) return;
+    current.strokes.push(future.pop());
+    markDirty();
+    redraw();
+  }
+
+  function handleShortcut(event) {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+    if (event.target?.closest?.("input,textarea,[contenteditable]")) return;
+    const key = String(event.key || "").toLowerCase();
+    if (key === "z" && event.shiftKey || key === "y" && !event.shiftKey) {
+      event.preventDefault();
+      redoStroke();
+    } else if (key === "z") {
+      event.preventDefault();
+      undoStroke();
+    }
+  }
+
   function bind() {
     load(newRecord());
     status("Ny skisse – ikke lagret");
@@ -349,13 +381,15 @@
     $("kunstrommet-size").addEventListener("input", () => { $("kunstrommet-size-value").value = $("kunstrommet-size").value; });
     $("kunstrommet-title").addEventListener("input", markDirty);
     $("kunstrommet-note").addEventListener("input", markDirty);
-    $("kunstrommet-undo").addEventListener("click", () => {
-      if (!current.strokes.length) return;
-      future.push(current.strokes.pop()); markDirty(); redraw();
-    });
-    $("kunstrommet-redo").addEventListener("click", () => {
-      if (!future.length) return;
-      current.strokes.push(future.pop()); markDirty(); redraw();
+    $("kunstrommet-undo").addEventListener("click", undoStroke);
+    $("kunstrommet-redo").addEventListener("click", redoStroke);
+    document.addEventListener("keydown", handleShortcut);
+    $("kunstrommet-palette").addEventListener("click", (event) => {
+      const swatch = event.target?.closest?.("button[data-kunstrommet-color]");
+      const color = swatch?.dataset?.kunstrommetColor;
+      if (!color || !/^#[0-9a-f]{6}$/i.test(color)) return;
+      $("kunstrommet-color").value = color;
+      setTool("pen");
     });
     $("kunstrommet-new").addEventListener("click", create);
     $("kunstrommet-save").addEventListener("click", () => save().catch((error) => status("Lagring feilet: " + error.message)));
