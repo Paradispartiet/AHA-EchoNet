@@ -23,7 +23,7 @@
       return entries.filter((entry) =>
         entry && typeof entry.id === "string" && validText(entry.text)
         && typeof entry.created_at === "string"
-      ).slice(-MAX_ITEMS);
+      );
     } catch {
       return [];
     }
@@ -31,7 +31,8 @@
 
   function save(entries) {
     try {
-      global.localStorage.setItem(KEY, JSON.stringify(entries.slice(-MAX_ITEMS)));
+      if (entries.length > MAX_ITEMS) return false;
+      global.localStorage.setItem(KEY, JSON.stringify(entries));
       return true;
     } catch {
       return false;
@@ -58,6 +59,8 @@
     const list = document.getElementById("aha-psych-saved-list");
     const deleteAll = document.getElementById("aha-psych-delete-all");
     if (!form || !textarea || !consent || !list || !deleteAll) return;
+    let previewSource = "aha";
+    textarea.addEventListener("input", () => { previewSource = "aha"; });
 
     function message(value) { status.textContent = value; }
 
@@ -109,6 +112,7 @@
         return;
       }
       textarea.value = text;
+      previewSource = "historygo";
       consent.checked = false;
       message("Valgt tekst er mottatt fra Psykologirommet. Les og bekreft før du lagrer.");
       textarea.focus();
@@ -131,14 +135,19 @@
         consent.checked = false;
         return;
       }
+      if (entries.length >= MAX_ITEMS) {
+        message("Arkivet har 30 refleksjoner. Slett en eldre refleksjon før du lagrer flere.");
+        return;
+      }
       entries.push({ id: createId(), text, created_at: new Date().toISOString(),
-        source_app: "historygo", source_type: "psychology_user_selected_text",
+        source_app: previewSource, source_type: "psychology_user_selected_text",
         visibility: "local_private" });
       if (!save(entries)) {
         message("Kunne ikke lagre lokalt. Ingen tekst ble sendt til en server.");
         return;
       }
       textarea.value = "";
+      previewSource = "aha";
       consent.checked = false;
       message("Valgt tekst er lagret privat i AHA på denne enheten.");
       render();
@@ -146,6 +155,7 @@
 
     document.getElementById("aha-psych-clear-preview")?.addEventListener("click", () => {
       textarea.value = "";
+      previewSource = "aha";
       consent.checked = false;
       message("Tekstfeltet er tømt.");
     });
