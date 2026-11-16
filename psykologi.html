@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Psykologirommet – Mitt AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <style>
+    .aha-psych-page { max-width: 880px; margin: 0 auto; }
+    .aha-psych-page .aha-panel { margin-bottom: 1rem; }
+    .aha-psych-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+    .aha-psych-form { display: grid; gap: .8rem; }
+    .aha-psych-form textarea { display: block; width: 100%; box-sizing: border-box; min-height: 8rem; padding: .85rem; border: 1px solid #8b99a6; border-radius: .65rem; background: var(--aha-surface, #fff); color: var(--aha-text, #222); font: inherit; }
+    .aha-psych-check { display: flex; gap: .65rem; align-items: start; }
+    .aha-psych-entry { padding: .9rem 0; border-bottom: 1px solid #aaa5; }
+    .aha-psych-entry p { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .aha-psych-entry small { display: block; margin-bottom: .4rem; opacity: .8; }
+    .aha-psych-status { min-height: 1.6rem; }
+    .aha-psych-page button { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard aha-shell-reading aha-psych-page">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">Mitt AHA · Personlig rom</p>
+          <h1>Psykologirommet</h1>
+          <p class="aha-module-purpose">Et personlig rom for refleksjon. Selve Psykologirommet ligger i History GO og er uavhengig av Kunstrommet.</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn aha-tile-btn-primary" href="https://paradispartiet.github.io/History-Go/?room=psychology">Åpne Psykologirommet</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html">Tilbake til AHA</a>
+      </div>
+    </section>
+
+    <section class="aha-panel" aria-labelledby="aha-psych-share-heading">
+      <h2 id="aha-psych-share-heading">Ta med en valgt innsikt</h2>
+      <p>Du bestemmer selv hvilken tekst du vil ta med fra Psykologirommet. Ingen svar på tester, screening, profiler, øvelser eller notater leses automatisk. Du kan også skrive eller lime inn din egen korte innsikt her.</p>
+      <form id="aha-psych-import-form" class="aha-psych-form">
+        <label for="aha-psych-selected-text">Teksten du vil bevare i Mitt AHA</label>
+        <textarea id="aha-psych-selected-text" maxlength="1500" required placeholder="Skriv eller lim inn det du selv ønsker å ta med …"></textarea>
+        <label class="aha-psych-check"><input id="aha-psych-import-consent" type="checkbox" required /> <span>Jeg velger å lagre akkurat denne teksten lokalt i Mitt AHA.</span></label>
+        <div class="aha-psych-actions">
+          <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lagre privat i AHA</button>
+          <button type="button" id="aha-psych-clear-preview" class="aha-tile-btn aha-tile-btn-secondary">Tøm feltet</button>
+        </div>
+        <p id="aha-psych-import-status" class="aha-psych-status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="aha-muted">Lagres bare i nettleseren på denne enheten. Ingen AI-analyse, database, modelltrening, konto-synkronisering eller EchoNet-deling. Dette materialet blir ikke automatisk en AHA-innsikt i tankekart eller andre moduler.</p>
+    </section>
+
+    <section class="aha-panel" aria-labelledby="aha-psych-saved-heading">
+      <h2 id="aha-psych-saved-heading">Mine valgte refleksjoner</h2>
+      <div id="aha-psych-saved-list"></div>
+      <div class="aha-psych-actions"><button id="aha-psych-delete-all" class="aha-tile-btn aha-tile-btn-secondary" type="button">Slett alle fra AHA</button></div>
+    </section>
+  </main>
+  <script src="js/ahaPsychologyRoomBridge.js"></script>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
