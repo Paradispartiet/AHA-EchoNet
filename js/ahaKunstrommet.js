@@ -163,6 +163,55 @@
     redraw();
   }
 
+  function renderGalleryInspiration() {
+    const mount = $("kunstrommet-gallery-inspiration");
+    if (!mount) return;
+    mount.replaceChildren();
+    // Reuse Aha Gallery's canonical local collection. This is not a second gallery
+    // or another store of media assets, and no image URLs are fetched here.
+    const items = (global.AHAGallery?.load?.() || [])
+      .filter((item) => item && !item.deleted_at && !item.deletedAt && item.archived !== true)
+      .slice(0, 8);
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "Ingen referanser i Galleriet ennå. Legg til inspirasjon i Aha Galleri.";
+      mount.appendChild(empty);
+      return;
+    }
+    items.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "kunstrommet-inspiration-item";
+      const title = document.createElement("strong");
+      title.textContent = String(item.title || "Uten tittel").slice(0, 120);
+      const desc = document.createElement("p");
+      desc.textContent = String(item.description || "").slice(0, 240);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Bruk som inspirasjon";
+      button.addEventListener("click", () => {
+        // Text is copied only at an explicit user click. The source remains
+        // unchanged in AHA Gallery; no pixels, paths or media URLs are copied.
+        const titleText = String(item.title || "Uten tittel").trim().slice(0, 120);
+        const description = String(item.description || "").trim().slice(0, 500);
+        const addition = ["Inspirasjon fra Aha Galleri: " + titleText, description]
+          .filter(Boolean).join("\n");
+        const note = $("kunstrommet-note");
+        const combined = [note.value.trim(), addition].filter(Boolean).join("\n\n");
+        if (combined.length > 4000) {
+          status("Notatet er for langt til å legge til inspirasjonen.");
+          return;
+        }
+        note.value = combined;
+        markDirty();
+        note.focus();
+      });
+      card.append(title);
+      if (desc.textContent) card.append(desc);
+      card.append(button);
+      mount.appendChild(card);
+    });
+  }
+
   function linkStatus(message) {
     const target = $("kunstrommet-link-state");
     if (target) target.textContent = message;
@@ -569,6 +618,7 @@
     $("kunstrommet-unlink-aha")?.addEventListener("click", unlinkCurrentArtwork);
     $("kunstrommet-collection-select")?.addEventListener("focus", renderCollectionOptions);
     renderCollectionOptions();
+    renderGalleryInspiration();
     openLinkedArtwork();
     global.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
     refreshList();
