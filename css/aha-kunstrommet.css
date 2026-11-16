@@ -52,3 +52,13 @@
   .kunstrommet-toolbar input[type="range"] { width: 72px; }
   .kunstrommet-toolbar button { min-height: 44px; }
 }
+
+.kunstrommet-palette { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin: 0 0 14px; }
+.kunstrommet-palette > span { margin-right:4px; color: #c5cedd; font-size:.85rem; }
+.kunstrommet-palette button {
+  width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--swatch); border: 2px solid #aeb5be;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.25); cursor:pointer;
+}
+.kunstrommet-palette button:hover { box-shadow: 0 0 0 3px rgba(241,204,130,.45); }
+.kunstrommet-palette button:focus-visible { outline: 3px solid #f1cc82; outline-offset: 3px; }
