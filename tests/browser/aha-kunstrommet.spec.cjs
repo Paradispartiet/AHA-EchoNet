@@ -200,6 +200,18 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     await page.goto("/" + artwork.node.href, { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kunstrommet-title")).toHaveValue("Maleri med rødt");
     await expect(page.locator("#kunstrommet-note")).toHaveValue("Personlig, ikke delt");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator("#kunstrommet-unlink-aha").click();
+    await expect(page.locator("#kunstrommet-link-state")).toContainText("Fjernet 1 samlingskobling");
+    const revoked = await page.evaluate(() => ({
+      refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
+      lists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]")
+    }));
+    expect(revoked.refs).toHaveLength(0);
+    expect(revoked.lists[0].items).toHaveLength(0);
+    await page.goto("/mindmap.html", { waitUntil: "domcontentloaded" });
+    const graphAfterRevoke = await page.evaluate(() => window.AHAMindmap.collectGraphData());
+    expect(graphAfterRevoke.nodes.some((node) => node.type === "artwork")).toBe(false);
   });
 
 });
