@@ -38,4 +38,10 @@ assert.doesNotMatch(runner, /\.supabase\.co|azure\.com|https?:\/\//i, "Runner mu
 assert.match(runner, /psql.*supabase\/schema\.sql/);
 assert.match(runner, /psql.*supabase\/policies\.sql/);
 assert.match(runner, /psql.*supabase\/chamber\.sql/);
+assert.match(runner, /PGDATABASE:-.*aha_legacy_rehearsal/, "Fixture must refuse non-disposable database");
+assert.match(runner, /PGHOST:-.*127\.0\.0\.1/, "Fixture must refuse remote database");
+assert.match(runner, /PGPORT:-.*5432/, "Fixture must only run on expected local port");
+assert.match(runner, /-f supabase\/audits\/aha_legacy_readonly_preflight\.sql/, "CI must execute actual catalog audit");
+assert.match(runner, /preflight_ok.*12/, "All 12 legacy core tables must pass");
+assert.match(runner, /optional_missing.*1/, "Missing optional embeddings must be reported explicitly");
 console.log("AHA legacy hosted read-only audit + isolated RLS test contract: PASS");
