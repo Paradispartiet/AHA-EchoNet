@@ -17,6 +17,7 @@ let domReady = null;
 function makeNode(tag = "div") {
   return {
     tag, children: [], style: {}, attributes: {}, value: "", textContent: "", files: [],
+    classList: { classes: [], add(name) { this.classes.push(name); }, remove(name) { this.classes = this.classes.filter(x => x !== name); } },
     events: {},
     addEventListener(name, fn) { this.events[name] = fn; },
     setAttribute(name, val) { this.attributes[name] = val; },
@@ -130,6 +131,8 @@ const flush = async () => { for (let i = 0; i < 15; i++) await Promise.resolve()
   assert.equal(saved.note, "Et personlig eksperiment");
   assert.equal(saved.owner, "test-person");
   assert.equal(ingestion.length, 0, "Saving a sketch does not send any text to Aha");
+  assert.equal(getEl("kunstrommet-projects").children[0].children[0].tag, "canvas",
+    "Saved sketch has an ephemeral canvas thumbnail");
 
   getEl("kunstrommet-json").dispatch("click");
   assert.equal(filesDownloaded.length, 1);
@@ -146,11 +149,30 @@ const flush = async () => { for (let i = 0; i < 15; i++) await Promise.resolve()
   assert.ok(!Object.prototype.hasOwnProperty.call(ingestion[0], "strokes"));
   assert.ok(!Object.prototype.hasOwnProperty.call(ingestion[0], "image"));
 
+  const firstCard = getEl("kunstrommet-projects").children[0];
+  const copyButton = firstCard.children[3].children.find(node => node.textContent === "Lag kopi");
+  assert.ok(copyButton, "Copy button exists");
+  copyButton.dispatch("click");
+  await flush();
+  assert.equal(data.size, 2, "Copy produces a second local sketch");
+  assert.equal(ingestion.length, 1, "Copy must not trigger ingest");
+  const copy = [...data.values()].find(item => item.title.includes("kopi"));
+  assert.ok(copy, "Copied project gets a distinct name");
+  assert.equal(copy.last_ingested_at, undefined, "Copy must not inherit Aha ingestion metadata");
+  assert.equal(copy.last_source_event_id, undefined, "Copy must not inherit Aha source identity");
+  getEl("kunstrommet-project-search").value = "kopi";
+  getEl("kunstrommet-project-search").dispatch("input");
+  await flush();
+  assert.equal(getEl("kunstrommet-projects").children.length, 1, "Search filters local sketchbook");
+  getEl("kunstrommet-project-search").value = "";
+  getEl("kunstrommet-project-search").dispatch("input");
+  await flush();
+
   getEl("kunstrommet-new").dispatch("click");
   getEl("kunstrommet-import").files = [{ size: 2500, async text() { return JSON.stringify(exported); } }];
   getEl("kunstrommet-import").dispatch("change", { target: getEl("kunstrommet-import") });
   await flush();
-  assert.equal(data.size, 2, "Manual JSON import creates a new personal sketch");
+  assert.equal(data.size, 3, "Manual JSON import creates a new personal sketch");
   assert.equal(ingestion.length, 1, "Import must not auto ingest");
   assert.ok([...data.values()].every((record) => record.owner === "test-person"));
 
@@ -158,7 +180,7 @@ const flush = async () => { for (let i = 0; i < 15; i++) await Promise.resolve()
   getEl("kunstrommet-import").files = [{ size: 200, async text() { return '{"format":"aha-kunstrommet-v1","strokes":[{"color":"red"}]}'; } }];
   getEl("kunstrommet-import").dispatch("change", { target: getEl("kunstrommet-import") });
   await flush();
-  assert.equal(data.size, 2, "Malformed project import must not create a record");
+  assert.equal(data.size, 3, "Malformed project import must not create a record");
   assert.equal(ingestion.length, 1, "Malformed import must not invoke Aha");
-  console.log("Kunstrommet interaction: PASS (touch drawing, save, undo/redo, export, import, opt-in ingest)");
+  console.log("Kunstrommet interaction: PASS (touch, previews, copy, search, save, undo/redo, export, import, opt-in ingest)");
 })().catch((err) => { console.error(err); process.exitCode = 1; });
