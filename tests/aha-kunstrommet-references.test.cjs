@@ -46,6 +46,10 @@ result = lists.addItemToList(list.id, { source: "aha_kunstrommet", type: "artwor
 assert.equal(result.ok, true);
 assert.equal(result.item.title, "Havet");
 assert.equal(lists.addItemToList(list.id, { source: "aha_kunstrommet", type: "artwork", refId: "art-1" }).reason, "duplicate");
+assert.equal(JSON.parse(store.get("aha_lists_v1"))[0].items.length, 0,
+  "Shared AHA lists must never store artwork titles or project IDs");
+assert.equal(lists.loadLists()[0].items[0].title, "Havet",
+  "Current profile sees owner-scoped artwork membership");
 
 let graph = map.collectGraphData();
 const artwork = graph.nodes.find((node) => node.refId === "art-1" && node.type === "artwork");
@@ -64,14 +68,18 @@ assert.equal(refs.load().length, 1);
 // A different local profile must not discover the first profile's reference.
 store.set("aha_profile_id", "artist-2");
 assert.equal(refs.load().length, 0, "Artwork pointers are scoped by local profile");
+assert.equal(lists.loadLists()[0].items.length, 0, "Other profile cannot see collection item or title");
 graph = map.collectGraphData();
 assert.ok(!graph.nodes.some((node) => node.refId === "art-1" && node.type === "artwork"));
+assert.ok(!graph.edges.some((edge) => edge.type === "list_contains"));
 assert.throws(() => refs.upsert(art), /ugyldig lokal identitet/);
 store.set("aha_profile_id", "artist-1");
 
-// Deletion stops resolving the artwork but does not automatically modify user-authored lists.
+// Deletion removes the owner-scoped membership without modifying other list data.
 assert.equal(refs.remove("art-1"), true);
 assert.equal(refs.load().length, 0);
+assert.equal(refs.memberships().length, 0);
+assert.equal(lists.loadLists()[0].items.length, 0);
 assert.equal(lists.validateListReference({ source: "aha_kunstrommet", type: "artwork", refId: "art-1" }).ok, false);
 graph = map.collectGraphData();
 assert.equal(graph.nodes.some((node) => node.type === "artwork"), false);
@@ -83,4 +91,25 @@ assert.match(html, /kunstrommet-collection-select/);
 assert.match(read("lists.html"), /ahaKunstrommetReferences\.js/);
 assert.match(read("mindmap.html"), /ahaKunstrommetReferences\.js/);
 assert.doesNotMatch(read("js/ahaKunstrommetReferences.js"), /\bfetch\s*\(|\bXMLHttpRequest\b|AHAIngest|EchoNet.*send/i);
-console.log("Kunstrommet references: PASS (opt-in, stable source, local safety, lists, mindmap, profile and deletion)");
+// Legacy bridge migration: old PR versions put artwork title into the shared
+// AHA list. Migrate into the private overlay and scrub shared data.
+refs.upsert(art);
+store.set("aha_lists_v1", JSON.stringify([{
+  id: list.id, title: "Mine malerier", type: "favorites",
+  items: [{ id: "legacy-1", source: "aha_kunstrommet", type: "artwork",
+    refId: "art-1", title: "Havet er privat" }]
+}]));
+const migrated = lists.loadLists();
+assert.equal(migrated[0].items.length, 1);
+assert.equal(migrated[0].items[0].title, "Havet");
+assert.equal(refs.memberships().length, 1);
+assert.equal(JSON.parse(store.get("aha_lists_v1"))[0].items.length, 0,
+  "Legacy global art row must be removed after migration");
+assert.equal(store.get("aha_lists_v1").includes("Havet er privat"), false,
+  "Legacy artwork title must not survive in globally shared list storage");
+store.set("aha_profile_id", "artist-2");
+assert.equal(lists.loadLists()[0].items.length, 0,
+  "Migrated legacy artwork must remain invisible to another local profile");
+store.set("aha_profile_id", "artist-1");
+
+console.log("Kunstrommet references: PASS (opt-in, owner-scoped memberships, legacy cleanup, lists, mindmap, profile and deletion)");
