@@ -557,6 +557,22 @@
       out.push({ id: `gallery_${item.id}`, title: asText(item?.title, "Galleriobjekt"), type: "gallery_item", source: "aha_gallery", refId: asText(item?.id, ""), meta: {} });
     });
 
+    // Only explicitly linked artwork identities are discoverable to AHA Lists.
+    // No private canvas data or artist notes are read from Kunstrommet.
+    asArray(global.AHAKunstrommetReferences?.load?.()).forEach((artwork) => {
+      if (isUnavailableRecord(artwork)) return;
+      const refId = asText(artwork?.id, "");
+      if (!refId) return;
+      out.push({
+        id: `artwork_${refId}`,
+        title: asText(artwork?.title, "Kunstverk"),
+        type: "artwork",
+        source: "aha_kunstrommet",
+        refId,
+        meta: { local_only: true, referenced_artwork: true }
+      });
+    });
+
     asArray(loadRawByKey(INSTA_KEY, [])).filter((post) => !isUnavailableRecord(post)).forEach((post) => {
       out.push({ id: `insta_${post.id}`, title: asText(post?.title || post?.caption, "Insta-post"), type: "insta_post", source: "aha_insta", refId: asText(post?.id, ""), meta: {} });
     });
@@ -588,7 +604,7 @@
   }
 
   function validateListReference(itemInput, availableItems = collectAvailableItems()) {
-    const allowedSources = new Set(["aha_insights", "aha_notes", "aha_feed", "aha_gallery", "aha_insta", "aha_projection_v2"]);
+    const allowedSources = new Set(["aha_insights", "aha_notes", "aha_feed", "aha_gallery", "aha_insta", "aha_kunstrommet", "aha_projection_v2"]);
     const source = asText(itemInput?.source, "");
     const refId = asText(itemInput?.refId || itemInput?.ref_id, "");
     if (!source) return { ok: false, reason: "missing_source" };
@@ -716,7 +732,7 @@
         <li class="aha-list-item-row">
           <div>
             <strong>${escapeHtml(item.title)}</strong>
-            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
+            ${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? `<a class="aha-tile-btn" href="${escapeHtml(item.source === "aha_insights" ? "insights.html#insight-" + encodeURIComponent(item.refId) : item.source === "aha_notes" ? "notes.html" : item.source === "aha_gallery" ? "gallery.html" : item.source === "aha_kunstrommet" ? "kunstrommet.html#art-" + encodeURIComponent(item.refId) : item.source === "aha_feed" ? "feed.html" : item.source === "aha_insta" ? "insta.html" : "lists.html")}">Åpne kilden</a>` : ""}
             ${item.membership_reason ? `<p class="aha-v2-membership-reason"><span>Medlemsgrunn:</span> ${escapeHtml(item.membership_reason)}</p>` : ""}
             <div class="module-meta">${escapeHtml(item.type)}${buildAvailableItemIndex(allItems).has(`${item.source}::${item.refId}`) ? "" : " · ikke lenger tilgjengelig"}</div>
           </div>
