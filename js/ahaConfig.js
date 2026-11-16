@@ -2,9 +2,20 @@
 // Runtime configuration for AHA-EchoNet.
 // Public Supabase frontend config only. Do not put database passwords or service-role keys here.
 
-window.AHA_APP_URL = window.AHA_APP_URL || "https://paradispartiet.github.io/AHA-EchoNet/";
-window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
-window.AHA_AUTH_REDIRECT_URL = window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL;
+// The preview uses its own origin, and Supabase PKCE stores the verifier per origin.
+// A callback to GitHub Pages cannot complete a login started on Cloudflare Pages.
+// Only the exact, Access-protected AHA preview origin is eligible here.
+// Do not publish this routing change until the exact callback is allowlisted
+// under AHA's Supabase project: Authentication > URL Configuration.
+(function configureAhaAuthOrigin() {
+  const githubApp = "https://paradispartiet.github.io/AHA-EchoNet/";
+  const githubCallback = "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
+  const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
+  const isExactPreview = window.location?.origin === previewOrigin;
+  window.AHA_APP_URL = window.AHA_APP_URL || (isExactPreview ? previewOrigin + "/" : githubApp);
+  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || (isExactPreview ? previewOrigin + "/auth-callback.html" : githubCallback);
+  window.AHA_AUTH_REDIRECT_URL = window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL;
+})();
 window.AHA_SUPABASE_URL = window.AHA_SUPABASE_URL || "https://wshmybqyksrwkawqleiz.supabase.co";
 window.AHA_SUPABASE_PUBLISHABLE_KEY = window.AHA_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_fgfxuPJBpZ9CFcYufBBgjg_8YEmi13m";
 

@@ -47,6 +47,37 @@ Cloudflare-URL-en fra kjøringsloggen skal brukes til testing, ikke som offentli
 
 **Først etter en egen godkjenning** vurderes produksjonsdomene, CORS, autentisering, API-flytting, bilde-R2 og eventuell datamigrering.
 
+## Tilbake til privat AHA-lagring uten Azure – portene fra 16.11.2026
+
+**Mål:** Behold AHA på gratis Cloudflare Pages og den separate AHA Supabase-organisasjonen (EchoNet, samlet 39 / 500 MB observert 16.11). Azure er deaktivert, fakturering stoppet ifølge prosjekteier. Ingen betalte nyopprettelser, Azure-reaktivering eller direkte kopiering av persondata før eksplisitt samtykke og gjenopprettbar sikkerhetskopi.
+
+### Port A – bevar kildene (før endring i synk)
+
+1. Behold GitHub Pages og Cloudflare-preview uendret som to separate nettleseropprinnelser; `localStorage` flyttes **ikke** mellom dem. Ikke nullstill Safari, tøm nettsteddata eller slett lokal data mens vi kartlegger innhold.
+2. For hver origin/enhet: bruk AHA `privacy.html` sin **avgrensede safe export** der den støtter de aktuelle modulene. Den skal ikke inneholde tokens, OAuth/PKCE eller andre hemmeligheter. Kontroller eksporten og lagre den privat – ikke i GitHub.
+3. Gjør lesebasert inventar i AHA Supabase DB-03 (prosjektref `wshmybqyksrwkawqleiz`): tabeller, RLS, Auth, størrelse, kvoter og nåværende brukerdata. **Ingen SQL-endring på dette stadiet.**
+4. Azure DB-05 og tidligere toprofil-pilot er en egen, deaktivert datakilde. Eksistensen av en gammel PITR-restore-test er ikke bevis på at en eksport eller backup fortsatt finnes. Undersøk dette uten å reaktivere Azure.
+
+### Port B – Supabase Auth på Cloudflare-preview
+
+1. I **AHA sin egen** Supabase-konto, åpne **Authentication → URL Configuration** for `wshmybqyksrwkawqleiz`.
+2. Behold dagens GitHub Pages Site URL og eksisterende redirect-adresser. **Legg til nøyaktig** `https://aha-preview.aha-echonet-preview.pages.dev/auth-callback.html` i Redirect URLs, uten wildcard.
+3. Kontroller at Cloudflare Access fortsatt beskytter preview. AHA bruker Supabase **PKCE**, slik at sign-in må starte og avsluttes på **samme** preview-origin. En callback på GitHub Pages kan ikke hente PKCE-verifieren fra Cloudflare-lagringen.
+4. Først etter at Redirect URL er bekreftet kan denne origin-routing-PR-en merges og **manuell** Pages-preview deployes fra `main`; aldri automatisk deploy eller endring av produksjons-Site-URL.
+5. Test én privat testprofil på iPad Safari: logg inn, bekreft `auth-callback.html` på preview-origin, bekreft riktig `aha_profiles`-rad og utlogging. Kontroller at feil konto ikke får lese testprofilens data. Ingen automatiske content-importer.
+6. **Sikkerhetsgrense:** `AHAChamberSync` er eksplisitt deaktivert på Cloudflare-preview under Auth-testen, da den gamle modulen ellers kan kjøre pull/push automatisk på `aha:auth-ready`. Dette endrer ikke GitHub Pages. AHA Feed/Insta forblir lokal-only i preview.
+
+### Port C – trygg personvernbevisst synk (senere separat implementasjon)
+
+1. Kartlegg kilde til måltabell med eksisterende `docs/AHA_LOCAL_TO_CANONICAL_MAPPING_V1.md`, `supabase/schema.sql`, `supabase/policies.sql` og `supabase/migrations/README.md`; **ikke** importer alle lokale nøkler. Det gamle `public.aha_*`-laget og det private canonical `aha.*`-laget er to ulike modeller.
+2. Verifiser RLS med **to forskjellige testbrukere** (A kan ikke lese, endre eller slette B), least-privilege, samtykke, konfliktregler og idempotens. `auth.uid()`-policyer i kildekoden må faktisk være installert og aktivert i databasen før testing med reelle data.
+3. Opprett **en manuelt initiert, reversibel** import av godkjente samtaler, kilder og innsikter fra en privat, kontrollert eksport. Første test kun syntetiske data; deretter én samtykkende profil, med tellinger, hash, eksport/restore-bevis og rollback.
+4. Ikke flytt lokale bilder/data-URL-er inn i JSONB. Det finnes ennå ikke en godkjent privat bildeopplastingsløsning. Feed/Insta sosial produksjonsbackend i PR #1035 er staging-only og en separat arbeidsstrøm.
+5. Velg Supabase DB-03 som *kandidat*, **ikke automatisk mål**, for canonical lagring: selve tabellene, sikkerhetsmodellen og skrive-/lesekostnadene må vurderes før drift. Ingen automatisk bakgrunnssynk, ingen offentlig deling, ingen Azure.
+6. Kontroller månedlig databaseforbruk og eksport; Supabase Free har **ikke automatiske databasebackuper**. Manuell trygg eksport/gjenoppretting er nødvendig, og kvotene må holdes under Free-grensene.
+
+**Felles statuskilde:** [Paradispartiets databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md). Denne planen er ikke et eget databaseregister. Endrede databaser og faktisk verifiserte migreringer føres bare i hovedregisteret.
+
 ## Etterkontroll 14.11.2026 og gjenstående grenser
 
 - Visuell test på iPad Safari har vist Home, Chat og Insta med riktig CSS/navigasjon. Dette er **ikke** bevis for at AI-modell, innlogging i AHA eller databasepersist fungerer fra ny origin.

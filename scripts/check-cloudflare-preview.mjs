@@ -86,6 +86,12 @@ if (await exists("canonical-sync-production-pilot.html")) {
   errors.push("Disabled Azure production pilot page must not ship in Cloudflare preview.");
 }
 for (const filename of requiredScripts) await requireFile(filename);
+const chamberBundlePath = path.join(dist, "js/ahaChamberSync.js");
+const chamberBundle = await readFile(chamberBundlePath, "utf8").catch(() => "");
+if (!chamberBundle.includes("let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_NO_CHAMBER_SYNC")) {
+  errors.push("Cloudflare preview must disable legacy chamber auto-sync without modifying original source.");
+}
+
 
 for (const [filename, identifiers] of Object.entries(criticalPages)) {
   if (!(await exists(filename))) {

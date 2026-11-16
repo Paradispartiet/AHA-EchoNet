@@ -83,6 +83,21 @@ const required = [
 const missing = required.filter(file => !copied.includes(file));
 if (missing.length) throw new Error("Cloudflare preview missing required frontend assets: " + missing.join(", "));
 
+// The original chamber source is covered by historical production proof hashes.
+// Never change it for preview. Block automatic legacy pull/push only in the
+// copied Cloudflare bundle, so login tests cannot overwrite private local data.
+const chamberSourceMarker = "  let syncDisabled = false;";
+const chamberPreviewMarker = "  let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_NO_CHAMBER_SYNC";
+const chamberBundle = path.join(out, "js/ahaChamberSync.js");
+if (!copied.includes("js/ahaChamberSync.js")) {
+  throw new Error("Cloudflare preview missing legacy chamber script needed for fail-closed bundling.");
+}
+const chamberSource = await readFile(chamberBundle, "utf8");
+if (!chamberSource.includes(chamberSourceMarker)) {
+  throw new Error("Chamber sync marker changed: fail closed before Cloudflare deploy.");
+}
+await writeFile(chamberBundle, chamberSource.replace(chamberSourceMarker, chamberPreviewMarker));
+
 const sha = process.env.AHA_BUILD_SHA || process.env.GITHUB_SHA;
 if (sha) {
   if (!/^[a-f0-9]{40}$/i.test(sha)) throw new Error("AHA_BUILD_SHA must be a 40-character commit SHA.");
