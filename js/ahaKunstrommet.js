@@ -116,7 +116,7 @@
   function redraw() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    (current?.strokes || []).forEach(drawStroke);
+    (current?.strokes || []).forEach((stroke) => drawStroke(stroke));
     if (activeStroke) drawStroke(activeStroke);
   }
 
