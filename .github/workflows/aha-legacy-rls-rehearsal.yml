@@ -1,0 +1,64 @@
+name: AHA legacy Supabase RLS rehearsal (isolated)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/schema.sql"
+      - "supabase/policies.sql"
+      - "supabase/chamber.sql"
+      - "supabase/audits/aha_legacy_readonly_preflight.sql"
+      - "supabase/tests/aha_legacy_rls_rehearsal_v1.sql"
+      - "scripts/aha-legacy-rls-rehearsal.sh"
+      - "tests/aha-legacy-rls-rehearsal-contract.test.cjs"
+      - "docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md"
+      - ".github/workflows/aha-legacy-rls-rehearsal.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/schema.sql"
+      - "supabase/policies.sql"
+      - "supabase/chamber.sql"
+      - "supabase/audits/aha_legacy_readonly_preflight.sql"
+      - "supabase/tests/aha_legacy_rls_rehearsal_v1.sql"
+      - "scripts/aha-legacy-rls-rehearsal.sh"
+      - "tests/aha-legacy-rls-rehearsal-contract.test.cjs"
+      - "docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md"
+      - ".github/workflows/aha-legacy-rls-rehearsal.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-legacy-rls:
+    name: Synthetic two-user AHA legacy RLS test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aha_legacy_rehearsal
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local-fixture-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aha_legacy_rehearsal"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: aha_legacy_rehearsal
+      PGUSER: postgres
+      PGPASSWORD: local-fixture-only
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Run isolated legacy RLS test
+        run: bash scripts/aha-legacy-rls-rehearsal.sh
