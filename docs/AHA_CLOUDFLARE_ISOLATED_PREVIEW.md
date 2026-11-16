@@ -90,6 +90,21 @@ To ulike og eksplisitt adskilte kontroller er derfor lagt til:
 
 **Tolkning:** `POLICY_PREFLIGHT_OK` betyr kun at de forventede policyuttrykkene *ser ut til* å være installert. En manglende valgfri embeddingtabell må vurderes separat, ikke opprettes automatisk. Katalogkontrollen kan ikke oppdage alle semantiske eller indirekte lekkasjer. **Før første ekte innholdsimport kreves en separat live-test med to godkjente testbrukere fra faktisk browser/API**, bekreftet profilstatus på «Mitt AHA», kontrollert eksport/restore og eksplisitt brukerhandling. Ikke opprett ekstra Supabase-prosjekter eller gjenaktiver Azure.
 
+### Port B.2 – forhindre profilskriving ved Auth i Cloudflare-preview (16.11)
+
+**Oppdaget etter de tidligere grønne innloggingstestene:** `js/ahaAuth.js` kaller `ensureProfile()` under statusoppdatering, og den opprinnelige funksjonen gjør `upsert` av `public.aha_profiles` selv for en allerede innlogget bruker. `js/ahaAuthCallback.js` har også en fallback som gjør `upsert` når Supabase-innloggingen fullføres. Det var dermed **ikke korrekt å beskrive hele Auth-flyten som skrivebeskyttet**, selv om den manuelle profilstesten og legacy chamber-synk er skrivebeskyttede/sperret. Eldre preview-innlogging kan allerede ha opprettet eller oppdatert en profilrad; det er **ikke bekreftet** fra hosted AHA DB-03.
+
+Frem til faktisk EchoNet RLS/grants, backup og to-bruker Data API-test er verifisert, endrer Cloudflare-bygget **bare kopier** av `js/ahaAuth.js` og `js/ahaAuthCallback.js`:
+
+- `ensureProfile()` returnerer en eksisterende **lesebasert** `loadProfile()`-respons uten `upsert`.
+- `saveProfileName()` gir eksplisitt `preview_read_only` i stedet for å lagre navn. Dette er en midlertidig preview-grense; profilnavn skal ikke fremstå som lagret.
+- Auth-callback bruker `AHAAuth.loadProfile(session.user)`; manglende `AHAAuth` fører til fail-closed, **aldri** direkte fallback-`upsert`.
+- Supabase PKCE, sesjonsopprettelse/-fornyelse og vanlig innlogging kan fortsatt fungere; dette er **ikke** databaseprofil-skriving.
+- CI kontrollerer markørene i det faktisk bygde previewet, og en separat Node-test simulerer innlogging med falskt Supabase-clientobjekt og feiler ved profil-`upsert`.
+- De opprinnelige Auth- og callbackfilene på GitHub Pages er **uendret**; denne sperren gjelder bare neste **manuelle** Cloudflare-preview-deploy. Cloudflare-versjonen som allerede er publisert har ikke nødvendigvis sperren før den blir publisert på nytt.
+
+**Avgrensning:** Denne sperren retter kjente **Auth-utløste profilskrivinger**, ikke en generell nettverksbrannmur eller godkjenning av andre appmodulers manuelle/sosiale skriveruter. Ingen automatisk innholdsimport/synk eller Azure oppheves. Ikke bruk ekte privat datamigrering før hosted AHA DB-03 er kontrollert.
+
 ### Port B.1 – lesebasert kontosjekk på «Mitt AHA» (16.11)
 
 Bruker har bekreftet at den nye Cloudflare Supabase-innloggingen fungerer, men «Mitt AHA» viste tidligere bare **lokale AHA-objekter** og en fast tekst som kunne misforstås som innloggingsstatus. `profile.html` har nå en **egen og eksplisitt lesebasert kontosjekk**:
