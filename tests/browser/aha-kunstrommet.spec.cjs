@@ -174,7 +174,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     await expect(page.locator("#kunstrommet-link-state")).toContainText("knyttet til samlingen");
 
     const localBridge = await page.evaluate(() => ({
-      refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
+      refs: JSON.parse(localStorage.getItem(window.AHAKunstrommetReferences.profileKey()) || "[]"),
       memberships: JSON.parse(localStorage.getItem("aha_kunstrommet_memberships_v1") || "[]"),
       rawLists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"),
       visibleLists: window.AHALists.loadLists()
@@ -218,7 +218,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     await page.locator("#kunstrommet-unlink-aha").click();
     await expect(page.locator("#kunstrommet-link-state")).toContainText("Fjernet 1 samlingskobling");
     const revoked = await page.evaluate(() => ({
-      refs: JSON.parse(localStorage.getItem("aha_kunstrommet_references_v1") || "[]"),
+      refs: JSON.parse(localStorage.getItem(window.AHAKunstrommetReferences.profileKey()) || "[]"),
       memberships: JSON.parse(localStorage.getItem("aha_kunstrommet_memberships_v1") || "[]"),
       lists: window.AHALists.loadLists()
     }));
