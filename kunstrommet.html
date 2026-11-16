@@ -45,6 +45,17 @@
             <button type="button" id="kunstrommet-undo">Angre</button>
             <button type="button" id="kunstrommet-redo">Gjør om</button>
           </div>
+          <div class="kunstrommet-palette" id="kunstrommet-palette" role="group" aria-label="Farger til kunstverket">
+            <span>Fargepalett</span>
+            <button type="button" data-kunstrommet-color="#22212a" style="--swatch:#22212a" aria-label="Velg kullsvart"></button>
+            <button type="button" data-kunstrommet-color="#ffffff" style="--swatch:#ffffff" aria-label="Velg hvit"></button>
+            <button type="button" data-kunstrommet-color="#dd5948" style="--swatch:#dd5948" aria-label="Velg rød"></button>
+            <button type="button" data-kunstrommet-color="#edac55" style="--swatch:#edac55" aria-label="Velg oker"></button>
+            <button type="button" data-kunstrommet-color="#e8d979" style="--swatch:#e8d979" aria-label="Velg gul"></button>
+            <button type="button" data-kunstrommet-color="#4e8862" style="--swatch:#4e8862" aria-label="Velg grønn"></button>
+            <button type="button" data-kunstrommet-color="#4b81ab" style="--swatch:#4b81ab" aria-label="Velg blå"></button>
+            <button type="button" data-kunstrommet-color="#9c70a3" style="--swatch:#9c70a3" aria-label="Velg fiolett"></button>
+          </div>
           <div class="kunstrommet-paper">
             <canvas id="kunstrommet-canvas" width="1200" height="800" aria-label="Tegneflate. Bruk mus, finger eller pekepenn for å tegne.">Nettleseren støtter ikke tegneflaten.</canvas>
           </div>
@@ -59,7 +70,7 @@
               <input type="file" id="kunstrommet-import" accept=".json,application/json" />
             </label>
           </div>
-          <p class="kunstrommet-hint">Tegninger lagres kun i denne nettleseren. Eksporter prosjektet for å ha en sikkerhetskopi du selv kan ta vare på.</p>
+          <p class="kunstrommet-hint">Tegninger lagres kun i denne nettleseren. Eksporter prosjektet for sikkerhetskopi. Snarveier: Ctrl/⌘ + Z for angre, Ctrl/⌘ + Shift + Z for gjør om.</p>
         </section>
       </div>
       <aside class="kunstrommet-sidebar">
