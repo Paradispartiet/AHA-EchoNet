@@ -327,6 +327,7 @@
     "mindmap",
     "search",
     "historygo",
+    "psykologirommet",
     "music",
     "knowledge-workbench",
     "data-intake",
