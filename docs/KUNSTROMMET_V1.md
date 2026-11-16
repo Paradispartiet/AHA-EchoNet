@@ -14,7 +14,7 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 - For rask visning av store arkiv vises inntil 40 av de nyeste treffene om gangen; eldre skisser kan finnes via søket.
 - Eksport av PNG og prosjektformatet `aha-kunstrommet-v1` som JSON; import av validerte prosjekter.
 - Direkte navigasjon til AHA Home, tankekart og Galleri.
-- **Etter eksplisitt brukerhandling** kan et lagret kunstverk legges i en valgt lokal Aha-samling. En separat, lokal og profilavgrenset referanseindeks (`aha_kunstrommet_references_v1`) inneholder bare prosjekt-ID og tittel – **ikke** penselstrøk, piksler, notater eller andre mediedata. Samlingen peker på det faktiske kunstverket i IndexedDB.
+- **Etter eksplisitt brukerhandling** kan et lagret kunstverk legges i en valgt lokal Aha-samling. En separat, lokal og profilavgrenset referanseindeks (`aha_kunstrommet_references_v1`) inneholder bare prosjekt-ID og tittel – **ikke** penselstrøk, piksler, notater eller andre mediedata. Samlingen peker på det faktiske kunstverket i IndexedDB. Koblingen kan trekkes tilbake fra Kunstrommet, uten å slette selve kunstverket.
 - Ahas tankekart viser kun kunstverk som er frivillig lagt til som referanser. Kartet viser forbindelsen mellom samling og kunstverk og lenker tilbake til `kunstrommet.html#art-...` for å åpne originalen. Verket er tilgjengelig bare på samme nettleser/enhet/profil.
 - **Eksplisitt** handling «Send tekst til Aha» bruker eksisterende AHAIngest til å sende **bare tittel og notat** som lokal kilde/innsikt; ingen piksler, vektorstreker eller bildefiler sendes.
 
@@ -24,7 +24,7 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 - Ahas tekstinnsending og referansebro er **to forskjellige handlinger**: førstnevnte sender kun tekst til eksisterende AHAIngest; sistnevnte legger et pekerobjekt til en valgt samling. Det er fortsatt ingen direkte stireferanse, og ingen av handlingene sender tegningen. Kopiering eller søk utløser ingen Aha-innsending.
 - Viskelæret legger hvit pensel over streker, og første versjon støtter ikke lag, import av eksterne bildefiler eller kollasj.
 - Begrensninger på 3 000 strøk og 2 400 punkter per strøk verner mot ubegrenset minnebruk; overføres ikke automatisk til sky.
-- Ingen EchoNet-deling, publisering, database-sync, KI-bildeanalyse eller automatiske API-kall fra selve verkstedet. Samlingskobling blokkeres hvis Lists' databasesynkronisering uttrykkelig er aktivert. Ved sletting av kunstverk fjernes den lokale referanseindeksen; gamle samlingsrader blir utilgjengelige, men slettes ikke automatisk.
+- Ingen EchoNet-deling, publisering, database-sync, KI-bildeanalyse eller automatiske API-kall fra selve verkstedet. Samlingskobling blokkeres hvis Lists' databasesynkronisering uttrykkelig er aktivert. «Fjern kunstverkets samlingskoblinger» sletter de lokale samlingsreferansene og referanseindeksen etter bekreftelse, uten å slette skissen eller tidligere separate Aha-tekstinnsendinger. Sletting av skissen rydder også lokale samlingskoblinger så lenge List-synkronisering er av.
 
 ## Før eventuell merge/lansering
 1. Kjør `node tests/aha-kunstrommet-contract.test.cjs`, `node tests/aha-kunstrommet-interaction.test.cjs`, `node tests/aha-kunstrommet-references.test.cjs`, komplett `npm test` og Playwright for Chromium/iPad WebKit på siste PR-commit.
