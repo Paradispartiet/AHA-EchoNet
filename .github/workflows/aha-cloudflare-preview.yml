@@ -6,6 +6,7 @@ on:
       - '.github/workflows/aha-cloudflare-preview.yml'
       - 'scripts/build-cloudflare-preview.mjs'
       - 'scripts/check-cloudflare-preview.mjs'
+      - 'ops/canonical-sync-production-rollout-v1.json'
       - 'docs/AHA_CLOUDFLARE_ISOLATED_PREVIEW.md'
   workflow_dispatch:
     inputs:
