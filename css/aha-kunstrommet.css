@@ -62,3 +62,13 @@
 }
 .kunstrommet-palette button:hover { box-shadow: 0 0 0 3px rgba(241,204,130,.45); }
 .kunstrommet-palette button:focus-visible { outline: 3px solid #f1cc82; outline-offset: 3px; }
+
+/* Sketchbook: ephemeral on-device previews rendered from existing vector strokes. */
+.kunstrommet-search-label { display:block; font-size:.85rem; font-weight:700; margin: 12px 0 6px; }
+.kunstrommet-project-search { width:100%; min-height:42px; box-sizing:border-box; padding:9px 12px;
+  color:#f8fafc; background:#151c27; border:1px solid #596272; border-radius:10px; font:inherit; }
+.kunstrommet-project-count { color:#aab6c6; margin:8px 0 14px; font-size:.78rem; }
+.kunstrommet-preview { display:block; width:100%; height:auto; aspect-ratio:3/2; border-radius:8px; background:#fff; }
+.kunstrommet-project-current { border-color:#f1cc82; }
+.kunstrommet-project > div { flex-wrap:wrap; }
+.kunstrommet-project-search:focus-visible { outline: 2px solid #f1cc82; outline-offset:3px; }
