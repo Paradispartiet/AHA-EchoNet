@@ -11,11 +11,13 @@ const criticalPages = {
   "chat.html": ["id=\"msg\"", "id=\"btn-send\""],
   "feed.html": ["id=\"feed-form\"", "id=\"feed-text\"", "id=\"feed-list\""],
   "insta.html": ["id=\"insta-profile-card\"", "id=\"insta-form\""],
-  "auth-callback.html": ["id=\"auth-callback-status\""]
+  "auth-callback.html": ["id=\"auth-callback-status\""],
+  "profile.html": ["id=\"aha-check-supabase-profile\"", "id=\"aha-supabase-profile-result\""]
 };
 const requiredScripts = [
   "js/ahaConfig.js",
   "js/ahaAuth.js",
+  "js/ahaProfileSupabaseStatus.js",
   "js/ahaFeed.js",
   "js/ahaInsta.js",
   "js/ahaChatInsightPipeline.js"
