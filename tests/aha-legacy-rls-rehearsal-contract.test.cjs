@@ -4,6 +4,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const root = path.join(__dirname, "..");
 const read = p => fs.readFileSync(path.join(root, p), "utf8");
 
@@ -34,6 +35,8 @@ assert.match(workflow, /aha_legacy_rehearsal/);
 assert.match(workflow, /bash scripts\/aha-legacy-rls-rehearsal\.sh/);
 assert.doesNotMatch(workflow, /\$\{\{\s*secrets\./, "Isolated test may not use production secrets");
 const runner = read("scripts/aha-legacy-rls-rehearsal.sh");
+const syntax = spawnSync("bash", ["-n", "scripts/aha-legacy-rls-rehearsal.sh"], {cwd: root, encoding: "utf8"});
+assert.equal(syntax.status, 0, "Shell fixture must parse: " + (syntax.stderr || syntax.stdout));
 assert.doesNotMatch(runner, /\.supabase\.co|azure\.com|https?:\/\//i, "Runner must not connect to hosted providers");
 assert.match(runner, /psql.*supabase\/schema\.sql/);
 assert.match(runner, /psql.*supabase\/policies\.sql/);
