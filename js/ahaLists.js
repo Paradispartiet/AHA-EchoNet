@@ -326,13 +326,31 @@
     return lists[index];
   }
 
+  function stripPrivateArtworkItems(list) {
+    return {
+      ...list,
+      items: asArray(list?.items).filter((item) => item?.source !== "aha_kunstrommet")
+    };
+  }
+
   function loadLists() {
-    const parsed = loadRawByKey(LISTS_KEY, []);
-    return asArray(parsed).map((list) => normalizeList(list));
+    let parsed = asArray(loadRawByKey(LISTS_KEY, []));
+    const bridge = global.AHAKunstrommetReferences;
+    if (bridge?.migrateLegacyRows) {
+      const migrated = bridge.migrateLegacyRows(parsed);
+      if (migrated.changed) {
+        // Remove legacy artwork titles from AHA's shared list storage.
+        localStorage.setItem(LISTS_KEY, JSON.stringify(migrated.lists));
+        parsed = migrated.lists;
+      }
+    }
+    const normalized = parsed.map((list) => normalizeList(list));
+    return bridge?.overlayLists ? bridge.overlayLists(normalized) : normalized;
   }
 
   function saveLists(lists) {
-    localStorage.setItem(LISTS_KEY, JSON.stringify(asArray(lists)));
+    // Never persist virtual artwork membership into shared/syncable AHA lists.
+    localStorage.setItem(LISTS_KEY, JSON.stringify(asArray(lists).map(stripPrivateArtworkItems)));
     return asArray(lists);
   }
 
@@ -345,7 +363,7 @@
     }
     if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
     try {
-      return await global.AHARepository.saveList(list);
+      return await global.AHARepository.saveList(stripPrivateArtworkItems(list));
     } catch (error) {
       return { ok: false, error, fallback: "localOnly" };
     }
@@ -394,7 +412,7 @@
     }
     if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
     return Promise.allSettled(asArray(lists).map((list) => {
-      return Promise.resolve().then(() => global.AHARepository.saveList(list));
+      return Promise.resolve().then(() => global.AHARepository.saveList(stripPrivateArtworkItems(list)));
     }));
   }
 
@@ -494,6 +512,18 @@
     const duplicate = list.items.some((it) => String(it.refId) === String(validation.item.refId) && String(it.source) === String(validation.item.source));
     if (duplicate) return { ok: false, reason: "duplicate", list };
 
+    if (validation.item.source === "aha_kunstrommet") {
+      // Membership stays in Kunstrommet's owner-scoped overlay; never
+      // enters shared AHA Lists or a remote repository.
+      if (isDatabaseSyncEnabled()) return { ok: false, reason: "database_sync_enabled" };
+      const linked = global.AHAKunstrommetReferences?.addMembership?.(listId, validation.item.refId);
+      if (!linked?.ok) return { ok: false, reason: linked?.reason || "bridge_unavailable" };
+      const updated = loadLists().find((entry) => entry.id === listId);
+      return { ok: true, item: updated?.items.find((entry) =>
+        entry.source === "aha_kunstrommet" && entry.refId === validation.item.refId),
+        list: updated };
+    }
+
     const item = normalizeListItem({
       ...validation.item,
       id: uid("list_item"),
@@ -515,6 +545,12 @@
     if (index < 0) return null;
 
     const list = lists[index];
+    const targetItem = list.items.find((item) => item.id === itemId);
+    if (targetItem?.source === "aha_kunstrommet") {
+      if (isDatabaseSyncEnabled()) return null;
+      const removed = global.AHAKunstrommetReferences?.removeMembership?.(listId, targetItem.refId);
+      return removed ? loadLists().find((entry) => entry.id === listId) : null;
+    }
     const nextItems = list.items.filter((item) => item.id !== itemId);
     if (nextItems.length === list.items.length) return null;
 
