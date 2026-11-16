@@ -82,6 +82,16 @@
           <p id="kunstrommet-project-count" class="kunstrommet-project-count" role="status" aria-live="polite"></p>
           <div id="kunstrommet-projects" class="kunstrommet-projects"></div>
         </section>
+        <section class="aha-panel" aria-labelledby="kunstrommet-links-title">
+          <p class="eyebrow">Aha · personlig organisering</p>
+          <h2 id="kunstrommet-links-title">Knytt kunstverket til en samling</h2>
+          <p>Velg en av dine lokale Aha-samlinger. Bare verkets tittel og en referanse lagres i samlingen. Selve tegningen og notatene forblir i Kunstrommet.</p>
+          <label for="kunstrommet-collection-select">Velg samling</label>
+          <select id="kunstrommet-collection-select"><option value="">Velg samling</option></select>
+          <button type="button" id="kunstrommet-link-collection">Legg kunstverket i samlingen</button>
+          <p id="kunstrommet-link-state" role="status" aria-live="polite" class="kunstrommet-hint">Lagre kunstverket først. Ingen koblinger opprettes automatisk.</p>
+          <a href="lists.html#collections" class="aha-tile-btn">Åpne samlinger</a>
+        </section>
         <section class="aha-panel" aria-labelledby="kunstrommet-aha-title">
           <p class="eyebrow">Frivillig tilkobling</p>
           <h2 id="kunstrommet-aha-title">Ta med ideen til Aha</h2>
@@ -103,6 +113,8 @@
   <script src="js/ahaEmbeddings.js"></script>
   <script src="js/ahaIngest.js"></script>
   <script src="js/ahaContracts.js"></script>
+  <script src="js/ahaKunstrommetReferences.js"></script>
+  <script src="js/ahaLists.js"></script>
   <script src="js/ahaKunstrommet.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaGlobalNav.js"></script>
