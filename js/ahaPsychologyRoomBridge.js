@@ -83,7 +83,7 @@
       if (existing) return { ok: true, id: existing.id, reused: true };
       const now = new Date().toISOString();
       const insight = {
-        id: createId(),
+        id: "aha_psych_insight_" + createId(),
         title: current.text.replace(/\s+/g, " ").slice(0, 100),
         summary: current.text,
         created_at: now,
@@ -119,7 +119,8 @@
   function removePromoted(entry) {
     if (!global.confirm(
       "Fjerne den kopierte teksten fra AHAs ordinære innsiktsarkiv? " +
-      "Det private notatet beholdes. Tidligere analyser eller eventuelle synkroniserte kopier kan ikke trekkes tilbake her."
+      "Det private notatet beholdes, men lenker fra lister og stier kan bli brutt. " +
+      "Tidligere analyser eller eventuelle synkroniserte kopier kan ikke trekkes tilbake her."
     )) return { ok: false, cancelled: true };
     try {
       const chamber = readChamber();
