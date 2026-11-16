@@ -32,7 +32,8 @@ assert.equal(result.detail, "source_missing");
 
 const art = { id: "art-1", owner: "artist-1", title: "Havet", note: "Hemmelig notat", strokes: [{ color: "#101010", points: [{ x: 1, y: 1 }] }] };
 refs.upsert(art);
-const rawMeta = store.get(refs.KEY);
+const rawMeta = store.get(refs.profileKey());
+assert.equal(store.get(refs.KEY), undefined, "Shared legacy title index must not be used for new artwork");
 assert.ok(rawMeta.includes("Havet"));
 assert.ok(!rawMeta.includes("Hemmelig"));
 assert.ok(!rawMeta.includes("strokes"));
@@ -84,6 +85,23 @@ assert.equal(lists.validateListReference({ source: "aha_kunstrommet", type: "art
 graph = map.collectGraphData();
 assert.equal(graph.nodes.some((node) => node.type === "artwork"), false);
 assert.equal(graph.edges.some((edge) => edge.type === "list_contains"), false);
+
+// An older release used one globally shared title-bearing index. Migrate to
+// separate profile-specific keys and clear the old shared key, without losing
+// the links for either local profile.
+store.set(refs.KEY, JSON.stringify([
+  { id: "older-A", owner: "artist-1", title: "Første privat verk",
+    source: "aha_kunstrommet", local_only: true },
+  { id: "older-B", owner: "artist-2", title: "Andre privat verk",
+    source: "aha_kunstrommet", local_only: true }
+]));
+const migratedRefs = refs.load();
+assert.ok(migratedRefs.some((item) => item.id === "older-A"));
+assert.equal(store.get(refs.KEY), undefined, "Migration removes global title-bearing key");
+store.set("aha_profile_id", "artist-2");
+assert.ok(refs.load().some((item) => item.id === "older-B"));
+assert.equal(refs.load().some((item) => item.id === "older-A"), false);
+store.set("aha_profile_id", "artist-1");
 
 const html = read("kunstrommet.html");
 assert.match(html, /kunstrommet-link-collection/);
