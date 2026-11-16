@@ -1,0 +1,54 @@
+/* Kunstrommet – isolated visual surface, respects AHA's shared shell. */
+.aha-kunstrommet { max-width: 1500px; margin-inline: auto; padding: 20px 16px 90px; }
+.kunstrommet-privacy { color: #b8d9c2; font-size: .92rem; }
+.kunstrommet-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(255px, 300px); gap: 18px; align-items: start; margin-top: 18px; }
+.kunstrommet-main, .kunstrommet-sidebar { min-width: 0; }
+.kunstrommet-sidebar { display: grid; gap: 16px; }
+.kunstrommet-sidebar > .aha-panel, .kunstrommet-editor { padding: clamp(16px, 2vw, 26px); }
+.kunstrommet-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.kunstrommet-title-row h2, .kunstrommet-sidebar h2 { margin: 0 0 12px; font-size: 1.25rem; }
+#kunstrommet-save-state { font-size: .78rem; color: #b8d9c2; }
+.kunstrommet-editor > label { display: block; font-weight: 700; margin: 12px 0 5px; }
+.kunstrommet-editor input[type="text"], .kunstrommet-editor textarea {
+  display: block; box-sizing: border-box; width: 100%; padding: 11px 13px;
+  background: #10151d; border: 1px solid #565e69; border-radius: 9px;
+  color: #f7f7fa; font: inherit;
+}
+.kunstrommet-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
+.kunstrommet-toolbar label { display: inline-flex; align-items: center; gap: 8px; font-size: .87rem; }
+.kunstrommet-toolbar input[type="color"] { width: 40px; height: 38px; padding: 2px; background: transparent; border: 1px solid #737f8c; border-radius: 8px; }
+.kunstrommet-toolbar input[type="range"] { width: 100px; accent-color: #f1cc82; }
+.kunstrommet-toolbar output { min-width: 16px; text-align: right; }
+.kunstrommet-toolbar button, .kunstrommet-actions button, #kunstrommet-send-aha, .kunstrommet-file-label,
+.kunstrommet-project button {
+  min-height: 40px; border: 1px solid #666e7b; border-radius: 9px; padding: 8px 12px;
+  background: #252b36; color: #f9f9fb; font: inherit; font-size: .86rem; cursor: pointer;
+}
+.kunstrommet-toolbar button[aria-pressed="true"] { background: #f1cc82; border-color: #f1cc82; color: #1c2027; font-weight: 800; }
+.kunstrommet-paper { border-radius: 10px; background: white; box-shadow: 0 16px 48px rgba(0, 0, 0, .25); border: 6px solid #f3f0e8; overflow: hidden; }
+.kunstrommet-paper canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; touch-action: none; cursor: crosshair; }
+.kunstrommet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
+.kunstrommet-actions .kunstrommet-primary { background: #f1cc82; border-color: #f1cc82; color: #20232c; font-weight: 800; }
+.kunstrommet-file-label { display: inline-flex; align-items: center; }
+.kunstrommet-file-label input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.kunstrommet-file-label:focus-within { outline: 2px solid #f1cc82; outline-offset: 3px; }
+.kunstrommet-hint { color: #aab6c6; font-size: .82rem; line-height: 1.5; }
+.kunstrommet-projects { display: grid; gap: 10px; }
+.kunstrommet-project { display: grid; gap: 5px; padding: 12px; border: 1px solid #555d69; border-radius: 10px; background: rgba(255,255,255,.035); overflow-wrap: anywhere; }
+.kunstrommet-project strong { font-size: .93rem; }
+.kunstrommet-project small { color: #aeb5c2; }
+.kunstrommet-project > div { display: flex; gap: 8px; margin-top: 5px; }
+.kunstrommet-project .kunstrommet-danger { color: #ffb6b6; }
+.kunstrommet-sidebar p { line-height: 1.55; }
+#kunstrommet-send-aha { width: 100%; }
+.kunstrommet-toolbar button:focus-visible, .kunstrommet-actions button:focus-visible, .kunstrommet-project button:focus-visible, #kunstrommet-send-aha:focus-visible { outline: 2px solid #f1cc82; outline-offset: 3px; }
+@media (max-width: 860px) {
+  .kunstrommet-layout { grid-template-columns: 1fr; }
+  .kunstrommet-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .aha-kunstrommet { padding-inline: 10px; }
+  .kunstrommet-sidebar { grid-template-columns: 1fr; }
+  .kunstrommet-toolbar input[type="range"] { width: 72px; }
+  .kunstrommet-toolbar button { min-height: 44px; }
+}
