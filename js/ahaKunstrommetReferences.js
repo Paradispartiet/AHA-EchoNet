@@ -49,7 +49,116 @@
     const all = readAll();
     const next = all.filter((item) => !(item.source === SOURCE && item.owner === activeOwner && item.id === id));
     if (next.length !== all.length) global.localStorage.setItem(KEY, JSON.stringify(next));
+    unlinkArtwork(id);
     return next.length !== all.length;
   }
-  global.AHAKunstrommetReferences = { KEY, SOURCE, owner, load, upsert, remove };
+
+  // AHA's global list store is not profile-private. Keep all art memberships
+  // in a separate local-only, owner-scoped overlay rather than writing artist
+  // titles/identities into aha_lists_v1 or a remote list repository.
+  const MEMBERS_KEY = "aha_kunstrommet_memberships_v1";
+
+  function allMemberships() {
+    try {
+      const entries = JSON.parse(global.localStorage?.getItem(MEMBERS_KEY) || "[]");
+      return Array.isArray(entries) ? entries.filter((item) => item && typeof item === "object").slice(0, 15000) : [];
+    } catch { return []; }
+  }
+
+  function saveMemberships(items) {
+    if (items.length > 15000) throw new Error("For mange lokale kunstverkkoblinger.");
+    global.localStorage.setItem(MEMBERS_KEY, JSON.stringify(items));
+  }
+
+  function memberships() {
+    const active = owner();
+    const visible = new Set(load().map((item) => item.id));
+    return allMemberships().filter((entry) =>
+      entry.owner === active && typeof entry.listId === "string" &&
+      typeof entry.artworkId === "string" && visible.has(entry.artworkId));
+  }
+
+  function addMembership(listId, artworkId) {
+    if (!listId || !artworkId || !load().some((ref) => ref.id === artworkId)) {
+      return { ok: false, reason: "source_missing" };
+    }
+    const active = owner();
+    const entries = allMemberships();
+    if (entries.some((item) => item.owner === active && item.listId === listId && item.artworkId === artworkId)) {
+      return { ok: false, reason: "duplicate" };
+    }
+    entries.push({ owner: active, listId, artworkId, addedAt: new Date().toISOString() });
+    saveMemberships(entries);
+    return { ok: true };
+  }
+
+  function removeMembership(listId, artworkId) {
+    const entries = allMemberships();
+    const next = entries.filter((item) =>
+      !(item.owner === owner() && item.listId === listId && item.artworkId === artworkId));
+    if (entries.length !== next.length) saveMemberships(next);
+    return entries.length !== next.length;
+  }
+
+  function unlinkArtwork(artworkId) {
+    const entries = allMemberships();
+    const next = entries.filter((item) => !(item.owner === owner() && item.artworkId === artworkId));
+    if (entries.length !== next.length) saveMemberships(next);
+    return entries.length - next.length;
+  }
+
+  function overlayLists(rawLists) {
+    const links = memberships();
+    const refs = new Map(load().map((item) => [item.id, item]));
+    return (Array.isArray(rawLists) ? rawLists : []).map((list) => {
+      const copy = { ...list, items: (Array.isArray(list.items) ? list.items : [])
+        .filter((item) => item?.source !== SOURCE) };
+      const added = links.filter((item) => item.listId === list.id).map((link) => {
+        const ref = refs.get(link.artworkId);
+        if (!ref) return null;
+        return {
+          id: "art_" + link.artworkId, title: ref.title, type: "artwork",
+          source: SOURCE, refId: ref.id, addedAt: link.addedAt,
+          meta: { local_only: true, referenced_artwork: true, private_overlay: true }
+        };
+      }).filter(Boolean);
+      copy.items = [...copy.items, ...added];
+      return copy;
+    });
+  }
+
+  // One-time migration for links created by the older version of Kunstrommet:
+  // gather the matching owner from its explicit reference index and move
+  // memberships OUT of AHA's shared list dataset. Do not drop old rows if the
+  // membership write fails. The caller must persist the returned clean lists.
+  function migrateLegacyRows(rawLists) {
+    const rows = Array.isArray(rawLists) ? rawLists : [];
+    const matches = rows.flatMap((list) =>
+      (Array.isArray(list.items) ? list.items : [])
+        .filter((item) => item?.source === SOURCE)
+        .map((item) => ({ listId: list.id, artworkId: item.refId || item.ref_id })));
+    if (!matches.length) return { changed: false, lists: rows };
+    const ownersByArt = new Map(readAll().filter((ref) => ref.source === SOURCE)
+      .map((ref) => [ref.id, ref.owner]));
+    const existing = allMemberships();
+    let changed = false;
+    for (const match of matches) {
+      const linkedOwner = ownersByArt.get(match.artworkId);
+      if (!linkedOwner || !match.listId || !match.artworkId) continue;
+      if (existing.some((item) => item.owner === linkedOwner &&
+        item.listId === match.listId && item.artworkId === match.artworkId)) continue;
+      existing.push({
+        owner: linkedOwner, listId: match.listId, artworkId: match.artworkId,
+        addedAt: new Date().toISOString()
+      });
+      changed = true;
+    }
+    if (changed) saveMemberships(existing);
+    return { changed: true, lists: rows.map((list) => ({
+      ...list, items: (Array.isArray(list.items) ? list.items : [])
+        .filter((item) => item?.source !== SOURCE)
+    })) };
+  }
+
+  global.AHAKunstrommetReferences = { KEY, MEMBERS_KEY, SOURCE, owner, load, upsert, remove, memberships, addMembership, removeMembership, unlinkArtwork, overlayLists, migrateLegacyRows };
 })(window);
