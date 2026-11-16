@@ -163,6 +163,91 @@
     redraw();
   }
 
+  function linkStatus(message) {
+    const target = $("kunstrommet-link-state");
+    if (target) target.textContent = message;
+  }
+
+  function renderCollectionOptions() {
+    const select = $("kunstrommet-collection-select");
+    if (!select) return;
+    const previous = select.value;
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Velg samling";
+    select.appendChild(placeholder);
+    const lists = global.AHALists?.loadLists?.() || [];
+    lists.filter((list) => !list.deletedAt && !list.deleted_at && list.archived !== true).forEach((list) => {
+      const option = document.createElement("option");
+      option.value = list.id;
+      option.textContent = list.title || "Uten tittel";
+      select.appendChild(option);
+    });
+    if (lists.some((list) => list.id === previous && !list.deletedAt && !list.deleted_at)) select.value = previous;
+    if (!lists.length) linkStatus("Du har ingen samlinger ennå. Opprett en under Samlinger i Aha.");
+  }
+
+  async function addCurrentToCollection() {
+    if (!current) return;
+    if (dirty) { linkStatus("Lagre skissen før du legger den i en Aha-samling."); return; }
+    if (global.AHA_CONFIG?.lists?.enableDatabaseSync === true) {
+      linkStatus("Samlingen har aktiv databasesynkronisering. Lokal tilkobling er blokkert for å beskytte kunstverket.");
+      return;
+    }
+    const collectionId = $("kunstrommet-collection-select")?.value || "";
+    if (!collectionId) { linkStatus("Velg en samling først."); return; }
+    const adapter = global.AHAKunstrommetReferences;
+    const lists = global.AHALists;
+    if (!adapter || !lists?.addItemToList) {
+      linkStatus("Ahas lokale samlinger er ikke tilgjengelige akkurat nå."); return;
+    }
+    try {
+      const saved = (await records()).find((item) => item.id === current.id && item.owner === scope());
+      if (!saved) { linkStatus("Skissen må lagres på denne enheten før den kan knyttes til Aha."); return; }
+      // Explicit opt-in creates a title+ID pointer, never pixel data, notes or strokes.
+      const previous = adapter.load().some((item) => item.id === saved.id);
+      adapter.upsert(saved);
+      let result;
+      try {
+        result = lists.addItemToList(collectionId, {
+          title: saved.title || "Uten tittel",
+          source: "aha_kunstrommet",
+          type: "artwork",
+          refId: saved.id,
+          meta: { local_only: true, referenced_artwork: true }
+        });
+      } catch (error) {
+        if (!previous) adapter.remove(saved.id);
+        throw error;
+      }
+      if (!result?.ok && result?.reason !== "duplicate") {
+        if (!previous) adapter.remove(saved.id);
+        linkStatus("Kunne ikke koble skissen: " + (result?.detail || result?.reason || "ukjent feil"));
+        return;
+      }
+      linkStatus(result?.reason === "duplicate"
+        ? "Kunstverket finnes allerede i denne samlingen."
+        : "Kunstverket er knyttet til samlingen. Du finner det også i Ahas tankekart.");
+    } catch (error) {
+      linkStatus("Kobling mislyktes: " + error.message);
+    }
+  }
+
+  async function openLinkedArtwork() {
+    const hash = global.location?.hash || "";
+    if (!hash.startsWith("#art-")) return;
+    let id;
+    try { id = decodeURIComponent(hash.slice(5)); }
+    catch { linkStatus("Ugyldig lenke til kunstverk."); return; }
+    if (!id || id.length > 128) { linkStatus("Ugyldig kunstverkreferanse."); return; }
+    try {
+      const saved = (await records()).find((item) => item.id === id && item.owner === scope());
+      if (saved) { load(saved); await refreshList(); }
+      else linkStatus("Kunstverket finnes ikke på denne enheten eller i denne lokale profilen.");
+    } catch (error) { linkStatus("Kunne ikke åpne kunstverket: " + error.message); }
+  }
+
   function getSnapshot() {
     return {
       ...current,
@@ -177,6 +262,11 @@
     current = getSnapshot();
     await put(current);
     dirty = false;
+    // Refresh only an existing opt-in pointer; saving alone creates no new AHA reference.
+    if (global.AHAKunstrommetReferences?.load?.().some((item) => item.id === current.id)) {
+      try { global.AHAKunstrommetReferences.upsert(current); }
+      catch (error) { linkStatus("Skissen ble lagret, men Aha-referansen kunne ikke oppdateres: " + error.message); }
+    }
     status("Lagret på denne enheten");
     await refreshList();
   }
@@ -287,6 +377,8 @@
           if (!global.confirm("Slette skissen permanent fra denne nettleseren?")) return;
           try {
             await erase(item.id);
+            try { global.AHAKunstrommetReferences?.remove?.(item.id); }
+            catch (error) { linkStatus("Skissen er slettet, men Aha-referansen kunne ikke fjernes: " + error.message); }
             if (current?.id === item.id) { dirty = false; create(); }
             await refreshList();
           } catch (error) { status(error.message); }
@@ -446,6 +538,10 @@
       event.target.value = "";
     });
     $("kunstrommet-send-aha").addEventListener("click", sendTextToAha);
+    $("kunstrommet-link-collection")?.addEventListener("click", addCurrentToCollection);
+    $("kunstrommet-collection-select")?.addEventListener("focus", renderCollectionOptions);
+    renderCollectionOptions();
+    openLinkedArtwork();
     global.addEventListener("beforeunload", (event) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
     refreshList();
   }
