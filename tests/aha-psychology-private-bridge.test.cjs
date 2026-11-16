@@ -66,10 +66,30 @@ consent.checked = true;
 submit({ preventDefault() {} });
 assert.equal(JSON.parse(contents.get(key)).length, 1);
 assert.equal(JSON.parse(contents.get(key))[0].text, expected.text);
+assert.equal(JSON.parse(contents.get(key))[0].source_app, "historygo");
 assert.equal(selected.value, "");
 assert.equal(consent.checked, false);
 assert.ok(!accesses.some((entry) => entry.includes("aha_import_payload_v1")));
 assert.ok(!accesses.some((entry) => entry.includes("hg_psychology_")));
 nodes["aha-psych-delete-all"].handlers.click();
 assert.equal(JSON.parse(contents.get(key)).length, 0);
+
+selected.value = "Egen tekst skrevet i AHA";
+selected.handlers.input();
+consent.checked = true;
+submit({ preventDefault() {} });
+assert.equal(JSON.parse(contents.get(key))[0].source_app, "aha", "manually typed notes must not claim History GO provenance");
+
+const full = Array.from({ length: 30 }, (_, i) => ({
+  ...JSON.parse(contents.get(key))[0],
+  id: "stored-" + i,
+  text: "Historisk notat " + i
+}));
+contents.set(key, JSON.stringify(full));
+selected.value = "Denne skal ikke overskrive noe";
+selected.handlers.input();
+consent.checked = true;
+submit({ preventDefault() {} });
+assert.equal(JSON.parse(contents.get(key)).length, 30, "overfull archive cannot silently discard the oldest note");
+assert.match(nodes["aha-psych-import-status"].textContent, /30 refleksjoner/);
 console.log("aha-psychology-private-bridge.test.cjs passed");
