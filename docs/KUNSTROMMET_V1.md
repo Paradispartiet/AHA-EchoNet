@@ -6,8 +6,9 @@ Status: **utkast til PR, local-only pilot**. Ikke publisert, ikke mobilgodkjent.
 Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologirommet**. Eksisterende Galleri er uendret, og kan fortsatt lagre visuelle referanser. Kunstrommet er for å **skape** egne bilder, ikke å administrere mediereferanser.
 
 ## I denne første versjonen
-- Lerret 1200 × 800, tegning med Pointer Events (mus, berøring, pekepenn), penselfarge, tykkelse og hvitt viskelær.
-- Angre og gjør om (innenfor aktiv arbeidsøkt), navngiving og frie kunstnernotater.
+- Lerret 1200 × 800, tegning med Pointer Events (mus, berøring, pekepenn), penselfarge, hurtigpalett, tykkelse og hvitt viskelær.
+- Angre og gjør om (innenfor aktiv arbeidsøkt) med Ctrl/⌘-snarveier, navngiving og frie kunstnernotater.
+- Inkrementell visning av penselstrøk for å redusere forsinkelser på nettbrett og beskyttelse mot utilsiktet ekstra pekere.
 - Lokal skissebok i IndexedDB med åpne, lagre, slette; per lokal AHA-profilnøkkel, med advarsel før tap av ulagrede endringer.
 - Eksport av PNG og prosjektformatet `aha-kunstrommet-v1` som JSON; import av validerte prosjekter.
 - Direkte navigasjon til AHA Home, tankekart og Galleri.
@@ -22,10 +23,10 @@ Kunstrommet er et eget personlig kunstverksted i Aha, **uavhengig av Psykologiro
 - Ingen EchoNet-deling, publisering, database-sync, KI-bildeanalyse eller automatiske API-kall fra selve verkstedet.
 
 ## Før eventuell merge/lansering
-1. Kjør `node tests/aha-kunstrommet-contract.test.cjs` og komplett `npm test` på PR-commit.
+1. Kjør `node tests/aha-kunstrommet-contract.test.cjs`, `node tests/aha-kunstrommet-interaction.test.cjs`, komplett `npm test` og Playwright for Chromium/iPad WebKit på PR-commit.
 2. Gjennomfør manuell testing på desktop, Android og **fysisk iPhone/iPad Safari**, inkludert penn/berøring, scroll og zoom.
 3. Test IndexedDB-kvoter, sletting av nettleserdata, lagre/åpne, eksport/import på to enheter, avbrutte bevegelser og utilgjengelig lagring.
 4. Kontroller at AHAIngest kun kalles etter eksplisitt knappetrykk og at ingen bilde- eller profilopplysninger utilsiktet sendes.
 5. Behold Kunstrommet og Psykologirommet i separate moduler, datalag og utviklingsløp.
 
-Neste fase: bedre pensler, ekte viskelær, historikk, fargepaletter, inspirasjonsvegg, versjonshistorikk og eksplisitt Aha-objektreferanse til samlinger/stier.
+Neste fase: flere penseltyper, ekte viskelær, inspirasjonsvegg, versjonshistorikk og eksplisitt Aha-objektreferanse til samlinger/stier.
