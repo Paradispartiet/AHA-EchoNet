@@ -24,7 +24,11 @@
   let pushInflight = false;
   let pushPending = false;
   let lastPulledAt = null;
-  let syncDisabled = false;
+  // Preview is for verifying AHA Auth before enabling any personal data sync.
+  // Legacy chamber sync can otherwise pull/overwrite or push on auth-ready.
+  // Fail closed on this exact Cloudflare preview origin only; production on
+  // GitHub Pages retains existing legacy behavior until separately reviewed.
+  let syncDisabled = global.location?.origin === "https://aha-preview.aha-echonet-preview.pages.dev";
 
 
 
