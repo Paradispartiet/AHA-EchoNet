@@ -1,5 +1,8 @@
 # AHA Canonical Production Pilot — current status
 
+> **DRIFTSVARSEL 16.11.2026 – Azure deaktivert ifølge prosjekteier.** Etter en uventet Azure-regning på 1 200 måtte Azure-løsningen deaktiveres. Denne filens eldre beskrivelser av «aktiv production» og toprofil-piloten er **historiske gjennomføringsbevis, ikke bekreftet nåværende drift**. Gjeldende eksakt ressursstatus, fakturering, gjenopprettbarhet og backupsituasjon er ikke undersøkt i Azure. **Ikke reaktiver, redeployer eller start betalte Azure-ressurser automatisk.** Videre AHA-arbeid prioriterer eksisterende Supabase og Cloudflare-preview uten nye faste kostnader. Status føres også i [felles databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md) (DB-05).
+
+
 Status: **AKTIV bounded manual production-pilot i Azure med nøyaktig 2 verifiserte profiler, eksplisitt manuell sync og null automatic/login/background sync. To-profil round-trip closeout er FULLFØRT 2 av 2. Neste gate er stabilitetsobservasjon; profil #3 er fortsatt pauset.**
 
 Dette dokumentet er den operative statuskilden for canonical production-piloten. Eldre arkitektur-/rolloutdokumenter kan beskrive pre-deploy-, pre-activation- eller tidligere closeout-tilstand; ved avvik gjelder denne filen.
