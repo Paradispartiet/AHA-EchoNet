@@ -64,8 +64,9 @@ function loadProfile(storage = makeStorage()) {
 const html = fs.readFileSync('profile.html', 'utf8');
 assert.ok(html.includes('js/ahaProfile.js'), 'profile.html includes js/ahaProfile.js');
 assert.ok(html.includes('lokal statusflate'), 'profile.html states local status/profile boundary');
-assert.ok(html.includes('Ingen profil deles eksternt'), 'profile.html states no external profile sharing');
-assert.ok(html.includes('Ingen EchoNet-identitet er aktivert'), 'profile.html states no EchoNet identity');
+assert.ok(html.includes('Ingen lokal profil deles eksternt automatisk'), 'profile.html states local profile is never shared automatically');
+assert.ok(html.includes('Supabase-innlogging kontrolleres separat'), 'profile.html separates local status from Supabase Auth');
+assert.ok(html.includes('id="aha-check-supabase-profile"'), 'profile.html offers explicit read-only Auth status');
 assert.ok(html.includes('History Go-statusen vises som lokal read-only importstatus'), 'profile.html states History Go read-only status');
 assert.ok(html.includes('AHA Profil skriver ikke tilbake til History Go'), 'profile.html states no History Go write-back');
 
