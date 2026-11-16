@@ -84,3 +84,8 @@
 #kunstrommet-collection-select:focus-visible, #kunstrommet-link-collection:focus-visible {
   outline:2px solid #f1cc82; outline-offset:3px;
 }
+
+.kunstrommet-unlink { margin-top:9px; width:100%; min-height:40px; border:1px solid #8d6c72;
+  border-radius:9px; padding:8px 12px; color:#ffccce; background:#29242b;
+  font:inherit; font-size:.87rem; cursor:pointer; }
+.kunstrommet-unlink:focus-visible { outline:2px solid #f1cc82; outline-offset:3px; }
