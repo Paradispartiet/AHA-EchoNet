@@ -98,7 +98,11 @@
 
         <section class="aha-panel kv2-panel" aria-labelledby="kv2-library-title">
           <h2 id="kv2-library-title">Mine prosjekter</h2>
-          <div id="kv2-projects" class="kv2-projects" aria-live="polite"></div>
+          <label for="kv2-project-search">Finn et kunstverk</label>
+          <input id="kv2-project-search" type="search" autocomplete="off"
+            placeholder="Søk i titler og notater" />
+          <p id="kv2-project-count" class="kv2-tip" role="status" aria-live="polite"></p>
+          <div id="kv2-projects" class="kv2-projects"></div>
         </section>
         <section class="aha-panel kv2-panel" aria-labelledby="kv2-legacy-title">
           <h2 id="kv2-legacy-title">Tidligere skisser</h2>
