@@ -386,6 +386,31 @@
     });
   }
 
+  async function deleteRecord(id) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error("Kunne ikke slette kunstverket."));
+      tx.onabort = () => reject(tx.error || new Error("Sletting ble avbrutt."));
+    });
+  }
+
+  function thumbnail() {
+    try {
+      draw(); // Thumbnail is the visible composite, not just the active layer.
+      const preview = document.createElement("canvas");
+      preview.width = 180;
+      preview.height = 120;
+      preview.getContext("2d").drawImage(canvas, 0, 0, 180, 120);
+      return preview.toDataURL("image/png");
+    } catch (_) {
+      // An image or canvas error must never block saving the editable project.
+      return "";
+    }
+  }
+
   async function getRecords() {
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -406,7 +431,7 @@
       const data = formatRecord();
       const record = {
         ...data, id: project.id, owner: owner(), created_at: project.created_at,
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(), preview: thumbnail(),
         local_only: true, shared: false, analyzed_image: false
       };
       if (JSON.stringify(record).length > MAX_PROJECT_BYTES) {
@@ -523,28 +548,128 @@
     refresh();
   }
 
+  async function duplicateSaved(item) {
+    if (busy || item.owner !== owner()) {
+      status("Prosjektet kan bare kopieres i riktig lokal profil.");
+      return;
+    }
+    busy = true;
+    try {
+      const saved = (await getRecords()).find((record) => record.id === item.id);
+      if (!saved || !Array.isArray(saved.layers)) throw new Error("Fant ikke originalen i skisseboken.");
+      const now = new Date().toISOString();
+      const copy = {
+        format: "aha-kunstrommet-v2", version: 2, width: WIDTH, height: HEIGHT,
+        layers: saved.layers.map((layer) => ({
+          id: uid(), name: String(layer.name || "Lag").slice(0, 70),
+          kind: layer.kind === "image" ? "image" : "paint",
+          visible: layer.visible !== false, locked: layer.locked === true,
+          opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
+          x: Number.isFinite(layer.x) ? layer.x : 0,
+          y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap
+        })),
+        id: uid(), owner: owner(),
+        title: (String(saved.title || "Kunstverk").slice(0, 105) + " – kopi").slice(0, 120),
+        note: String(saved.note || "").slice(0, 4000),
+        preview: typeof saved.preview === "string" ? saved.preview : "",
+        created_at: now, updated_at: now,
+        local_only: true, shared: false, analyzed_image: false
+      };
+      if (JSON.stringify(copy).length > MAX_PROJECT_BYTES) {
+        throw new Error("Kopien er for stor til å lagres lokalt.");
+      }
+      await putRecord(copy);
+      status("Kopi opprettet i skisseboken – originalen er uendret");
+      await renderProjects();
+    } catch (error) { status("Kopiering feilet: " + error.message); }
+    finally { busy = false; }
+  }
+
+  async function deleteSaved(item) {
+    if (busy || item.owner !== owner()) {
+      status("Prosjektet kan bare slettes i riktig lokal profil.");
+      return;
+    }
+    if (!global.confirm("Slette «" + (item.title || "Uten tittel") +
+        "» permanent fra denne nettleseren? Eksporter en prosjektkopi først om du vil beholde det.")) return;
+    if (project?.id === item.id && dirty &&
+        !global.confirm("Dette er også det åpne prosjektet. Forkaste ulagrede endringer?")) return;
+    busy = true;
+    let referencesWarning = "";
+    try {
+      const saved = (await getRecords()).find((record) => record.id === item.id);
+      if (!saved) throw new Error("Kunstverket finnes ikke lenger i skisseboken.");
+      await deleteRecord(item.id);
+      try {
+        // Only local, opt-in metadata. The gallery and old V1 database stay intact.
+        global.AHAKunstrommetReferences?.remove?.(item.id);
+      } catch (error) { referencesWarning = " Noen lokale Aha-lenker kunne ikke ryddes: " + error.message; }
+      if (project?.id === item.id) {
+        newProject();
+      }
+      status("Kunstverket er slettet fra den lokale skisseboken." + referencesWarning);
+      await renderProjects();
+    } catch (error) { status("Sletting feilet: " + error.message); }
+    finally { busy = false; }
+  }
+
   async function renderProjects() {
     const mount = $("kv2-projects");
+    if (!mount) return;
     mount.replaceChildren();
     try {
       const items = (await getRecords()).sort((a, b) =>
         String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
-      const heading = document.createElement("p");
-      heading.textContent = items.length + " lagrede prosjekter på denne enheten";
-      mount.appendChild(heading);
-      items.forEach((item) => {
-        const card = document.createElement("div");
-        card.className = "kv2-project";
+      const search = String($("kv2-project-search")?.value || "").trim().toLocaleLowerCase("no-NO");
+      const found = search ? items.filter((item) =>
+        (String(item.title || "") + " " + String(item.note || ""))
+          .toLocaleLowerCase("no-NO").includes(search)) : items;
+      const visible = found.slice(0, 40);
+      const count = $("kv2-project-count");
+      if (count) count.textContent = !found.length ? (items.length ? "Ingen treff" : "Ingen lagrede verk ennå")
+        : found.length === items.length ? items.length + " lagrede verk"
+        : found.length + " treff av " + items.length + " verk";
+      if (!visible.length) {
+        const empty = document.createElement("p");
+        empty.className = "kv2-tip";
+        empty.textContent = items.length ? "Prøv et annet søkeord." : "Lag ditt første kunstverk på lerretet.";
+        mount.appendChild(empty);
+      }
+      visible.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "kv2-project kv2-project--saved";
+        const details = document.createElement("div");
+        details.className = "kv2-project-info";
         const text = document.createElement("span");
         text.textContent = item.title || "Uten tittel";
-        const open = makeButton("Åpne", async () => {
-          if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
-          busy = true;
-          try { await loadData(item, false, true); }
-          catch (error) { status("Kunne ikke åpne: " + error.message); }
-          finally { busy = false; }
-        });
-        card.append(text, open);
+        const date = document.createElement("small");
+        const parsed = Date.parse(item.updated_at);
+        date.textContent = Number.isFinite(parsed)
+          ? new Date(parsed).toLocaleDateString("no-NO") : "";
+        details.append(text, date);
+        if (typeof item.preview === "string" &&
+            /^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(item.preview)) {
+          const preview = document.createElement("img");
+          preview.className = "kv2-project-preview";
+          preview.alt = "Forhåndsvisning av " + (item.title || "kunstverket");
+          preview.loading = "lazy";
+          preview.src = item.preview;
+          card.appendChild(preview);
+        }
+        const actions = document.createElement("div");
+        actions.className = "kv2-project-actions";
+        actions.append(
+          makeButton("Åpne", async () => {
+            if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
+            busy = true;
+            try { await loadData(item, false, true); }
+            catch (error) { status("Kunne ikke åpne: " + error.message); }
+            finally { busy = false; }
+          }),
+          makeButton("Lag kopi", () => duplicateSaved(item)),
+          makeButton("Slett", () => deleteSaved(item))
+        );
+        card.append(details, actions);
         mount.appendChild(card);
       });
     } catch (error) { status("Skissebok utilgjengelig: " + error.message); }
@@ -630,6 +755,9 @@
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
     $("kv2-save").addEventListener("click", save);
+    $("kv2-project-search")?.addEventListener("input", () => {
+      renderProjects().catch((error) => status("Søk feilet: " + error.message));
+    });
     $("kv2-undo").addEventListener("click", () => historyStep(undoStack, redoStack));
     $("kv2-redo").addEventListener("click", () => historyStep(redoStack, undoStack));
     $("kv2-title").addEventListener("input", changed);
