@@ -115,8 +115,8 @@
     }));
   }
 
-  function checkpoint() {
-    if (busy) return false;
+  function checkpoint(allowBusy) {
+    if (busy && !allowBusy) return false;
     undoStack.push({ layers: snapshot(), selected: selected });
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
@@ -581,7 +581,7 @@
           image.naturalWidth > 16000 || image.naturalHeight > 16000) {
         throw new Error("Bildet har ugyldige eller for store dimensjoner.");
       }
-      checkpoint();
+      checkpoint(true);
       const layer = createLayer(file.name.replace(/\.[^.]*$/, "").slice(0, 60) || "Fotografi", "image");
       const index = project.layers.findIndex((item) => item.id === selected);
       project.layers.splice(index + 1, 0, layer);
