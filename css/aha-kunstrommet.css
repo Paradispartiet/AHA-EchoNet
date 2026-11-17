@@ -99,3 +99,29 @@
 .kunstrommet-inspiration-item button { width:100%; min-height:40px; border:1px solid #687b94; border-radius:8px;
   background:#242e3a; color:#f8fafc; font:inherit; font-size:.85rem; cursor:pointer; }
 .kunstrommet-inspiration-item button:focus-visible { outline:2px solid #f1cc82; outline-offset:3px; }
+
+
+/* Kunstrommet V2: restrained, touch-friendly layer controls. */
+.kunstrommet-layers { display:grid; gap:9px; margin:14px 0; }
+.kunstrommet-layer { display:grid; gap:9px; border:1px solid #536173;
+  border-radius:10px; padding:10px; background:#141c27; }
+.kunstrommet-layer.is-active { border-color:#f1cc82; box-shadow:inset 3px 0 0 #f1cc82; }
+.kunstrommet-layer-header, .kunstrommet-layer-controls {
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.kunstrommet-layer-header .kunstrommet-layer-select {
+  flex:1 1 70px; text-align:left; font-weight:700; overflow-wrap:anywhere; }
+.kunstrommet-layer button, .kunstrommet-layer-actions button {
+  min-height:40px; padding:7px 9px; border-radius:8px;
+  border:1px solid #586577; color:#f9fafb; background:#2b3543; font:inherit; font-size:.8rem; }
+.kunstrommet-layer button[aria-pressed="true"] {
+  background:#f1cc82; border-color:#f1cc82; color:#17202b; }
+.kunstrommet-layer-controls input[type="text"] {
+  min-width:0; flex:1 1 100px; background:#0f1621; border:1px solid #65748b;
+  border-radius:7px; color:#fff; padding:8px; font:inherit; font-size:.82rem; }
+.kunstrommet-layer-controls input[type="range"] { width:90px; accent-color:#f1cc82; }
+.kunstrommet-layer-controls span { font-size:.78rem; color:#cbd5e1; }
+.kunstrommet-layer-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.kunstrommet-layer-actions button { flex:1 1 105px; }
+.kunstrommet-layer-actions button:first-child { background:#39485e; }
+.kunstrommet-layer button:focus-visible, .kunstrommet-layer-actions button:focus-visible,
+.kunstrommet-layer input:focus-visible { outline:2px solid #f1cc82; outline-offset:2px; }
