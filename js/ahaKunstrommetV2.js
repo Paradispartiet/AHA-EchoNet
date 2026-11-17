@@ -411,6 +411,12 @@
       await putRecord(record);
       project.updated_at = record.updated_at;
       dirty = false;
+      // Update only an ALREADY explicitly opted-in Aha reference.
+      // Saving never creates new references or transfers pixels.
+      if (global.AHAKunstrommetReferences?.load?.().some((item) => item.id === record.id)) {
+        try { global.AHAKunstrommetReferences.upsert(record); }
+        catch (error) { console.warn("Kunne ikke oppdatere eksisterende lokal samlingsreferanse.", error); }
+      }
       status("Lagret på denne enheten");
       await renderProjects();
     } catch (error) { status("Lagring feilet: " + error.message); }
@@ -682,6 +688,41 @@
       event.returnValue = "";
     });
   }
+
+  // Stable interface for the gallery/collection bridge: one editor, no second canvas.
+  global.AHAKunstrommetV2 = {
+    format: "aha-kunstrommet-v2",
+    storage: DB_NAME,
+    summary() {
+      if (!project) return null;
+      return {
+        id: project.id, owner: project.owner, created_at: project.created_at,
+        title: $("kv2-title").value.trim().slice(0, 120),
+        note: $("kv2-note").value.trim().slice(0, 4000), dirty
+      };
+    },
+    savedProjects: getRecords,
+    async openSaved(id) {
+      if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return false;
+      const record = (await getRecords()).find((item) => item.id === id);
+      if (!record) return false;
+      busy = true;
+      try { await loadData(record, false, true); return true; }
+      finally { busy = false; }
+    },
+    async openLegacyCopy(record) {
+      if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return false;
+      if (!record || record.owner !== owner() || record.format === "aha-kunstrommet-v2") return false;
+      busy = true;
+      try {
+        await loadData({
+          format: "aha-kunstrommet-v1",
+          title: record.title, note: record.note, strokes: record.strokes
+        }, true, false);
+        return true;
+      } finally { busy = false; }
+    }
+  };
 
   bind();
   newProject();
