@@ -74,6 +74,17 @@
         </section>
       </div>
       <aside class="kunstrommet-sidebar">
+        <section class="aha-panel" aria-labelledby="kunstrommet-layers-title">
+          <p class="eyebrow">Kunstrommet V2 · verksted</p>
+          <h2 id="kunstrommet-layers-title">Lag</h2>
+          <p class="kunstrommet-hint">Tegn på ett lag om gangen. Skjul, lås, endre gjennomsiktighet og flytt lag uten å miste originalstreker.</p>
+          <div id="kunstrommet-layers" class="kunstrommet-layers" role="group" aria-label="Lag i kunstverket"></div>
+          <div class="kunstrommet-layer-actions">
+            <button type="button" id="kunstrommet-layer-add">+ Nytt lag</button>
+            <button type="button" id="kunstrommet-layer-delete">Slett valgt lag</button>
+          </div>
+          <p id="kunstrommet-layer-state" class="kunstrommet-hint" role="status" aria-live="polite"></p>
+        </section>
         <section class="aha-panel" aria-labelledby="kunstrommet-sketchbook-title">
           <p class="eyebrow">Mine arbeider</p>
           <h2 id="kunstrommet-sketchbook-title">Skisseboken</h2>
@@ -124,6 +135,7 @@
   <script src="js/ahaGallery.js"></script>
   <script src="js/ahaKunstrommetReferences.js"></script>
   <script src="js/ahaLists.js"></script>
+  <script src="js/ahaKunstrommetLayers.js"></script>
   <script src="js/ahaKunstrommet.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaGlobalNav.js"></script>
