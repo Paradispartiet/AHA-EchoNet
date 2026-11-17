@@ -58,6 +58,8 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     }));
     expect(saved).toHaveLength(1);
     expect(saved[0].layers).toHaveLength(3);
+    expect(saved[0].preview).toMatch(/^data:image\/png;base64,/);
+    await expect(page.locator("#kv2-projects .kv2-project-preview")).toHaveCount(1);
     expect(saved[0].layers[1].kind).toBe("image");
     expect(saved[0].layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
     expect(saved[0].local_only).toBe(true);
@@ -211,4 +213,43 @@ test("one atelier, explicit Aha collection link stores metadata only", async ({ 
   expect(state.rawLists[0].items).toHaveLength(0);
   expect(state.overlay[0].items).toHaveLength(1);
   expect(state.overlay[0].items[0].source).toBe("aha_kunstrommet");
+});
+
+
+test("one sketchbook restores search, thumbnail, copy and safe local deletion", async ({ page }) => {
+  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.locator("#kv2-title").fill("Kveldsmaleri");
+  await page.locator("#kv2-note").fill("Farger fra parken");
+  await page.locator("#kv2-save").click();
+  await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+  await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
+  await expect(page.locator("#kv2-projects .kv2-project-preview")).toHaveCount(1);
+
+  await page.locator("#kv2-projects .kv2-project--saved").getByRole("button", { name: "Lag kopi" }).click();
+  await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(2);
+  await expect(page.locator("#kv2-project-count")).toContainText("2 lagrede verk");
+  await page.locator("#kv2-project-search").fill("kopi");
+  await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
+  await expect(page.locator("#kv2-projects")).toContainText("Kveldsmaleri – kopi");
+
+  const stored = await page.evaluate(() => new Promise((resolve, reject) => {
+    const req = indexedDB.open("aha_kunstrommet_v2", 1);
+    req.onsuccess = () => {
+      const all = req.result.transaction("projects", "readonly").objectStore("projects").getAll();
+      all.onsuccess = () => resolve(all.result);
+      all.onerror = () => reject(all.error);
+    };
+    req.onerror = () => reject(req.error);
+  }));
+  expect(stored).toHaveLength(2);
+  expect(stored[0].id).not.toEqual(stored[1].id);
+  expect(stored.every((item) => item.owner === "local" && item.shared === false)).toBe(true);
+  expect(stored.every((item) => item.last_source_event_id === undefined)).toBe(true);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#kv2-projects .kv2-project--saved").getByRole("button", { name: "Slett" }).click();
+  await expect(page.locator("#kv2-project-count")).toContainText("Ingen treff");
+  await page.locator("#kv2-project-search").fill("");
+  await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
+  await expect(page.locator("#kv2-projects")).toContainText("Kveldsmaleri");
 });
