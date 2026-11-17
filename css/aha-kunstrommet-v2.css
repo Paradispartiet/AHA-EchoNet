@@ -60,3 +60,14 @@
 .kv2-inspiration button { font-size: .84rem; }
 #kv2-collection-select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #bcc4be; border-radius: 10px; background: #fff; color: #222; }
 #kv2-unlink-aha { grid-column: 1 / -1; }
+
+/* Unified sketchbook – thumbnail, search and simple project actions. */
+#kv2-project-search { width: 100%; box-sizing: border-box; border: 1px solid #bcc4be; border-radius: 10px; padding: 10px 12px; background: #fff; color: #222; }
+.kv2-project--saved { flex-direction: column; align-items: stretch; gap: 8px; padding: 11px; border: 1px solid #d6ded8; border-radius: 12px; background: #fafbf9; }
+.kv2-project-preview { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: contain; background: #fff; border: 1px solid #e0e5e0; border-radius: 8px; }
+.kv2-project-info { display: flex; justify-content: space-between; gap: 8px; overflow-wrap: anywhere; align-items: baseline; }
+.kv2-project-info span { font-weight: 600; }
+.kv2-project-info small { color: #63716c; white-space: nowrap; }
+.kv2-project-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.kv2-project-actions button { flex: 1 0 auto; font-size: .84rem; }
+.kv2-project-actions button:last-child { color: #923c35; border-color: #bb9995; }
