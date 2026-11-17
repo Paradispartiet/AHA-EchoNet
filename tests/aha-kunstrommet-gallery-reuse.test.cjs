@@ -8,9 +8,9 @@ const root = path.resolve(__dirname, "..");
 const gallerySrc = fs.readFileSync(path.join(root, "js/ahaGallery.js"), "utf8");
 const atelierSrc = fs.readFileSync(path.join(root, "js/ahaKunstrommet.js"), "utf8");
 const galleryHtml = fs.readFileSync(path.join(root, "gallery.html"), "utf8");
-const atelierHtml = fs.readFileSync(path.join(root, "kunstrommet.html"), "utf8");
+const atelierHtml = fs.readFileSync(path.join(root, "tests/fixtures/kunstrommet-v1.html"), "utf8");
 
-assert.match(atelierHtml, /<script src="js\/ahaGallery\.js"><\/script>/);
+assert.match(atelierHtml, /<script src="\.\.\/\.\.\/js\/ahaGallery\.js"><\/script>/);
 assert.match(galleryHtml, /href="kunstrommet\.html"/);
 assert.match(atelierHtml, /id="kunstrommet-gallery-inspiration"/);
 assert.match(atelierSrc, /global\.AHAGallery\?\.load\?\.\(\)/);
