@@ -7,109 +7,127 @@
   <link rel="stylesheet" href="css/aha-chat.css" />
   <link rel="stylesheet" href="css/aha-dashboard.css" />
   <link rel="stylesheet" href="css/aha-global-nav.css" />
-  <link rel="stylesheet" href="css/aha-kunstrommet.css" />
+  <link rel="stylesheet" href="css/aha-kunstrommet-v2.css" />
 </head>
 <body class="aha-product-shell">
   <div id="aha-global-nav"></div>
-  <main class="aha-dashboard aha-kunstrommet" id="main">
-    <section class="aha-panel aha-module-shell">
-      <header class="aha-module-shell-header">
-        <div>
-          <p class="eyebrow">Ditt personlige atelier</p>
-          <h1>Kunstrommet</h1>
-          <p class="aha-module-purpose">Tegn, prøv deg frem og ta vare på dine egne kunstverk. Ingen bilder eller notater blir automatisk sendt til Aha.</p>
-          <p class="kunstrommet-privacy">Privat på denne enheten · Ingen automatisk deling eller skybackup</p>
-        </div>
-      </header>
-      <div class="aha-module-actions">
-        <a class="aha-tile-btn" href="index.html">Aha Home</a>
-        <a class="aha-tile-btn" href="mindmap.html">Tankekart</a>
-        <a class="aha-tile-btn" href="gallery.html">Galleri</a>
-        <a class="aha-tile-btn" href="kunstrommet-v2.html">Prøv Kunstrommet V2 (lagredigering)</a>
+  <main class="aha-dashboard kv2" id="main">
+    <header class="aha-panel kv2-heading">
+      <div>
+        <p class="eyebrow">Ditt personlige atelier</p>
+        <h1>Kunstrommet</h1>
+        <p>Et arbeidsrom for bilder, tegning og lag – ikke et teknisk kontrollpanel.</p>
+        <p class="kv2-privacy">Alt arbeid blir på denne enheten. Ingen automatisk deling, bildeanalyse eller skybackup.</p>
       </div>
-    </section>
+      <nav class="kv2-navigation" aria-label="Tilbake til Aha">
+        <a href="index.html">Aha Home</a>
+        <a href="gallery.html">Galleri</a>
+        <a href="mindmap.html">Tankekart</a>
+      </nav>
+    </header>
 
-    <section class="kunstrommet-layout">
-      <div class="kunstrommet-main">
-        <section class="aha-panel kunstrommet-editor" aria-labelledby="kunstrommet-lerret-title">
-          <div class="kunstrommet-title-row">
-            <div><p class="eyebrow">Verksted</p><h2 id="kunstrommet-lerret-title">Lerretet</h2></div>
-            <span id="kunstrommet-save-state" role="status" aria-live="polite">Ny skisse</span>
+    <div class="kv2-workspace">
+      <section class="aha-panel kv2-editor" aria-label="Redigeringsflate">
+        <div class="kv2-titlebar">
+          <h2>Lerretet</h2>
+          <output id="kv2-status" role="status" aria-live="polite">Nytt prosjekt</output>
+        </div>
+
+        <label for="kv2-title">Navn på kunstverket</label>
+        <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
+
+        <div class="kv2-toolbar" role="group" aria-label="Tegne- og redigeringsverktøy">
+          <button id="kv2-brush" type="button" aria-pressed="true">Pensel</button>
+          <button id="kv2-eraser" type="button" aria-pressed="false">Viskelær</button>
+          <button id="kv2-move" type="button" aria-pressed="false">Flytt lag</button>
+          <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
+          <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
+            <output id="kv2-size-value">6</output></label>
+          <button id="kv2-undo" type="button">Angre</button>
+          <button id="kv2-redo" type="button">Gjør om</button>
+        </div>
+
+        <div class="kv2-paper">
+          <canvas id="kv2-canvas" width="1200" height="800"
+            aria-label="Kunstlerret. Tegn eller flytt det valgte laget med mus, finger eller penn.">Nettleseren støtter ikke lerret.</canvas>
+        </div>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Viskelæret fjerner bare innhold på det aktive laget; lagene under bevares. «Flytt lag» lar deg plassere et bilde eller et tegnelag.</p>
+
+        <label for="kv2-note">Arbeidsnotater</label>
+        <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>
+
+        <div class="kv2-actions">
+          <button id="kv2-new" type="button">Nytt prosjekt</button>
+          <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>
+          <label class="kv2-file" for="kv2-photo">Importer foto
+            <input id="kv2-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
+          </label>
+          <button id="kv2-png" type="button">Eksporter bilde (PNG)</button>
+          <button id="kv2-json" type="button">Eksporter redigerbart prosjekt</button>
+          <label class="kv2-file" for="kv2-import">Åpne prosjektfil
+            <input id="kv2-import" type="file" accept=".json,application/json" />
+          </label>
+        </div>
+        <p class="kv2-tip">Lagre lokalt for å åpne igjen med lagene intakte. Eksporter også prosjektfilen som sikkerhetskopi. Du kan importere prosjektfiler fra Kunstrommet V1, men V1 endres ikke.</p>
+      </section>
+
+      <aside class="kv2-sidebar">
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-layer-title">
+          <div class="kv2-titlebar">
+            <h2 id="kv2-layer-title">Lag</h2>
+            <small id="kv2-layer-count"></small>
           </div>
-          <label for="kunstrommet-title">Tittel</label>
-          <input type="text" id="kunstrommet-title" maxlength="120" placeholder="Gi kunstverket et navn" />
-          <div class="kunstrommet-toolbar" role="group" aria-label="Tegneverktøy">
-            <label for="kunstrommet-color">Farge <input id="kunstrommet-color" type="color" value="#22212a" /></label>
-            <label for="kunstrommet-size">Pensel <input id="kunstrommet-size" type="range" min="1" max="48" value="6" /><output id="kunstrommet-size-value">6</output></label>
-            <button type="button" id="kunstrommet-pen" aria-pressed="true">Pensel</button>
-            <button type="button" id="kunstrommet-eraser" aria-pressed="false">Viskelær</button>
-            <button type="button" id="kunstrommet-undo">Angre</button>
-            <button type="button" id="kunstrommet-redo">Gjør om</button>
+          <p class="kv2-tip">Øverste lag i listen ligger foran de andre.</p>
+          <div id="kv2-layers" class="kv2-layers" aria-label="Lagene i kunstverket"></div>
+          <div class="kv2-layer-actions">
+            <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
+            <button type="button" id="kv2-layer-up">Opp</button>
+            <button type="button" id="kv2-layer-down">Ned</button>
+            <button type="button" id="kv2-remove-layer">Fjern</button>
           </div>
-          <div class="kunstrommet-palette" id="kunstrommet-palette" role="group" aria-label="Farger til kunstverket">
-            <span>Fargepalett</span>
-            <button type="button" data-kunstrommet-color="#22212a" style="--swatch:#22212a" aria-label="Velg kullsvart"></button>
-            <button type="button" data-kunstrommet-color="#ffffff" style="--swatch:#ffffff" aria-label="Velg hvit"></button>
-            <button type="button" data-kunstrommet-color="#dd5948" style="--swatch:#dd5948" aria-label="Velg rød"></button>
-            <button type="button" data-kunstrommet-color="#edac55" style="--swatch:#edac55" aria-label="Velg oker"></button>
-            <button type="button" data-kunstrommet-color="#e8d979" style="--swatch:#e8d979" aria-label="Velg gul"></button>
-            <button type="button" data-kunstrommet-color="#4e8862" style="--swatch:#4e8862" aria-label="Velg grønn"></button>
-            <button type="button" data-kunstrommet-color="#4b81ab" style="--swatch:#4b81ab" aria-label="Velg blå"></button>
-            <button type="button" data-kunstrommet-color="#9c70a3" style="--swatch:#9c70a3" aria-label="Velg fiolett"></button>
+          <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
+          <label for="kv2-rename">Gi laget et navn</label>
+          <input type="text" id="kv2-rename" maxlength="70" />
+          <label for="kv2-opacity">Gjennomsiktighet / opasitet</label>
+          <div class="kv2-slider">
+            <input id="kv2-opacity" type="range" min="0" max="100" step="1" value="100" />
+            <output id="kv2-opacity-value">100%</output>
           </div>
-          <div class="kunstrommet-paper">
-            <canvas id="kunstrommet-canvas" width="1200" height="800" aria-label="Tegneflate. Bruk mus, finger eller pekepenn for å tegne.">Nettleseren støtter ikke tegneflaten.</canvas>
-          </div>
-          <label for="kunstrommet-note">Notater om verket</label>
-          <textarea id="kunstrommet-note" rows="3" maxlength="4000" placeholder="Hva tenker du på? Hva inspirerte deg?"></textarea>
-          <div class="kunstrommet-actions">
-            <button type="button" id="kunstrommet-new">Ny skisse</button>
-            <button type="button" id="kunstrommet-save" class="kunstrommet-primary">Lagre skisse</button>
-            <button type="button" id="kunstrommet-png">Eksporter PNG</button>
-            <button type="button" id="kunstrommet-json">Eksporter prosjekt</button>
-            <label class="kunstrommet-file-label" for="kunstrommet-import">Importer prosjekt
-              <input type="file" id="kunstrommet-import" accept=".json,application/json" />
-            </label>
-          </div>
-          <p class="kunstrommet-hint">Tegninger lagres kun i denne nettleseren. Eksporter prosjektet for sikkerhetskopi. Snarveier: Ctrl/⌘ + Z for angre, Ctrl/⌘ + Shift + Z for gjør om.</p>
+          <p class="kv2-tip">◉ / ○ skjuler eller viser et lag. «Låst» beskytter det mot pensel, viskelær og flytting.</p>
         </section>
-      </div>
-      <aside class="kunstrommet-sidebar">
-        <section class="aha-panel" aria-labelledby="kunstrommet-sketchbook-title">
-          <p class="eyebrow">Mine arbeider</p>
-          <h2 id="kunstrommet-sketchbook-title">Skisseboken</h2>
-          <label for="kunstrommet-project-search" class="kunstrommet-search-label">Finn en skisse</label>
-          <input id="kunstrommet-project-search" class="kunstrommet-project-search" type="search" placeholder="Søk i titler og notater" autocomplete="off" />
-          <p id="kunstrommet-project-count" class="kunstrommet-project-count" role="status" aria-live="polite"></p>
-          <div id="kunstrommet-projects" class="kunstrommet-projects"></div>
+
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-library-title">
+          <h2 id="kv2-library-title">Mine prosjekter</h2>
+          <div id="kv2-projects" class="kv2-projects" aria-live="polite"></div>
         </section>
-        <section class="aha-panel" aria-labelledby="kunstrommet-gallery-title">
-          <p class="eyebrow">Hent fra eksisterende Aha Galleri</p>
-          <h2 id="kunstrommet-gallery-title">Inspirasjon fra Galleriet</h2>
-          <p>Galleriet beholder bildene og referansene dine. Her kan du frivillig hente en tittel og beskrivelse inn som notat til skissen din. Ingen bildefiler kopieres.</p>
-          <div id="kunstrommet-gallery-inspiration" class="kunstrommet-inspiration" aria-live="polite"></div>
-          <a href="gallery.html" class="aha-tile-btn">Åpne Aha Galleri</a>
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-legacy-title">
+          <h2 id="kv2-legacy-title">Tidligere skisser</h2>
+          <p class="kv2-tip">Skisser fra den første utgaven vises her, uten at originalene flyttes eller slettes. Velg «Åpne som kopi» for å arbeide videre med lag.</p>
+          <div id="kv2-legacy-projects" class="kv2-projects" aria-live="polite"></div>
         </section>
-        <section class="aha-panel" aria-labelledby="kunstrommet-links-title">
-          <p class="eyebrow">Aha · personlig organisering</p>
-          <h2 id="kunstrommet-links-title">Knytt kunstverket til en samling</h2>
-          <p>Velg en av dine lokale Aha-samlinger. Bare verkets tittel og en referanse lagres i samlingen. Selve tegningen og notatene forblir i Kunstrommet. Du kan fjerne alle samlingskoblingene igjen; dette sletter ikke tekst som er sendt separat til Aha.</p>
-          <label for="kunstrommet-collection-select">Velg samling</label>
-          <select id="kunstrommet-collection-select"><option value="">Velg samling</option></select>
-          <button type="button" id="kunstrommet-link-collection">Legg kunstverket i samlingen</button>
-          <button type="button" id="kunstrommet-unlink-aha" class="kunstrommet-unlink">Fjern kunstverkets samlingskoblinger</button>
-          <p id="kunstrommet-link-state" role="status" aria-live="polite" class="kunstrommet-hint">Lagre kunstverket først. Ingen koblinger opprettes automatisk.</p>
-          <a href="lists.html#collections" class="aha-tile-btn">Åpne samlinger</a>
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-gallery-title">
+          <h2 id="kv2-gallery-title">Inspirasjon fra Galleriet</h2>
+          <p class="kv2-tip">Bruk tittel og beskrivelse som notat hvis du ønsker. Ingen bilder kopieres automatisk.</p>
+          <div id="kv2-gallery-inspiration" class="kv2-projects"></div>
+          <a href="gallery.html">Åpne det eksisterende Galleriet</a>
         </section>
-        <section class="aha-panel" aria-labelledby="kunstrommet-aha-title">
-          <p class="eyebrow">Frivillig tilkobling</p>
-          <h2 id="kunstrommet-aha-title">Ta med ideen til Aha</h2>
-          <p>Send bare tittelen og notatene til Ahas eksisterende innsiktsflyt. Selve bildet forblir lokalt og analyseres ikke.</p>
-          <button id="kunstrommet-send-aha" type="button">Send tekst til Aha</button>
-          <p class="kunstrommet-hint" id="kunstrommet-aha-state" role="status" aria-live="polite">Ingenting sendes uten at du trykker på knappen.</p>
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-aha-title">
+          <h2 id="kv2-aha-title">Knytt til Aha</h2>
+          <p class="kv2-tip">Lagrede kunstverk kan knyttes til en lokal samling. Bare tittel og referanse går til samlingen, aldri bilde eller notater.</p>
+          <label for="kv2-collection-select">Velg samling</label>
+          <select id="kv2-collection-select"><option value="">Velg samling</option></select>
+          <div class="kv2-layer-actions">
+            <button type="button" id="kv2-link-collection">Legg i samlingen</button>
+            <button type="button" id="kv2-unlink-aha">Fjern samlingskoblinger</button>
+          </div>
+          <p class="kv2-tip" role="status" aria-live="polite" id="kv2-link-state">Ingenting knyttes til Aha automatisk.</p>
+          <hr />
+          <p class="kv2-tip">Du kan også velge å sende bare dine egne ord til Ahas innsiktsflyt.</p>
+          <button id="kv2-send-aha" type="button">Send tittel og notat til Aha</button>
+          <p class="kv2-tip" role="status" aria-live="polite" id="kv2-aha-state">Ingen overføring uten ditt valg.</p>
         </section>
       </aside>
-    </section>
+    </div>
   </main>
   <script src="js/ahaModuleApi.js"></script>
   <script src="js/insightsChamber.js"></script>
@@ -125,7 +143,7 @@
   <script src="js/ahaGallery.js"></script>
   <script src="js/ahaKunstrommetReferences.js"></script>
   <script src="js/ahaLists.js"></script>
-  <script src="js/ahaKunstrommet.js"></script>
+  <script src="js/ahaKunstrommetV2.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaGlobalNav.js"></script>
 </body>
