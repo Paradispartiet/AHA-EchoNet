@@ -397,6 +397,10 @@
 
   async function save() {
     if (busy || !project) return;
+    if (project.owner !== owner()) {
+      status("Lokal profil er endret. Åpne prosjektet på nytt i riktig profil før lagring.");
+      return;
+    }
     busy = true;
     try {
       const data = formatRecord();
