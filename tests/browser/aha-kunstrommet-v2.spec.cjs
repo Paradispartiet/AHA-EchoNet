@@ -136,7 +136,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator("#kv2-json").click();
-    expect((await downloadPromise).suggestedFilename()).toMatch(/kvotetest\\.kunstrommet\\.json$/);
+    expect((await downloadPromise).suggestedFilename()).toMatch(/kvotetest\.kunstrommet\.json$/);
 
     await page.evaluate(() => window.restoreKunstrommetPut());
     await page.locator("#kv2-save").click();
