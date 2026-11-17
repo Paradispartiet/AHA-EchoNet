@@ -7,6 +7,7 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const gallerySrc = fs.readFileSync(path.join(root, "js/ahaGallery.js"), "utf8");
 const atelierSrc = fs.readFileSync(path.join(root, "js/ahaKunstrommet.js"), "utf8");
+const layersSrc = fs.readFileSync(path.join(root, "js/ahaKunstrommetLayers.js"), "utf8");
 const galleryHtml = fs.readFileSync(path.join(root, "gallery.html"), "utf8");
 const atelierHtml = fs.readFileSync(path.join(root, "kunstrommet.html"), "utf8");
 
@@ -78,6 +79,7 @@ vm.runInContext(gallerySrc, context, { filename: "ahaGallery.js" });
 assert.ok(win.AHAGallery);
 assert.equal(win.AHAGallery.load()[0].title, "Inspirerende farger");
 const galleryBefore = storage.get("aha_gallery_v1");
+vm.runInContext(layersSrc, context, { filename: "ahaKunstrommetLayers.js" });
 vm.runInContext(atelierSrc, context, { filename: "ahaKunstrommet.js" });
 for (const fn of listeners.get("DOMContentLoaded") || []) fn();
 const mount = getEl("kunstrommet-gallery-inspiration");
