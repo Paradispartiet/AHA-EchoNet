@@ -7,6 +7,10 @@ test("Insta opens the real composer from an empty feed", async ({ page }) => {
   await page.getByRole("button", { name: "+ Ny post" }).click();
   await expect(page.locator("#insta-compose-panel")).toHaveAttribute("open", "");
   await expect(page.locator("#insta-file")).toBeFocused();
+  await page.getByRole("button", { name: "Lukk ny post" }).click();
+  await expect(page.locator("#insta-compose-panel")).not.toHaveAttribute("open", "");
+  await page.getByRole("button", { name: "+ Ny post" }).click();
+  await expect(page.locator("#insta-file")).toBeFocused();
   const count = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_insta_posts_v1") || "[]").length);
   expect(count).toBe(0);
 });
