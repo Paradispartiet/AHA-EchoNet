@@ -24,15 +24,24 @@ test.describe("Kunstrommet V2 – real layer editing", () => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await expect(page.locator(".kunstrommet-layer")).toHaveCount(1);
     await page.locator("#kunstrommet-title").fill("To lag");
-    await page.locator("#kunstrommet-size").fill("24");
+    await page.locator("#kunstrommet-size").evaluate((input) => {
+      input.value = "24";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
 
-    await page.locator("#kunstrommet-color").fill("#ff0000");
+    await page.locator("#kunstrommet-color").evaluate((input) => {
+      input.value = "#ff0000";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await drawStroke(page);
     expect(await sample(page)).toEqual([255, 0, 0]);
 
     await page.locator("#kunstrommet-layer-add").click();
     await expect(page.locator(".kunstrommet-layer")).toHaveCount(2);
-    await page.locator("#kunstrommet-color").fill("#0000ff");
+    await page.locator("#kunstrommet-color").evaluate((input) => {
+      input.value = "#0000ff";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await drawStroke(page);
     expect(await sample(page)).toEqual([0, 0, 255]);
 
