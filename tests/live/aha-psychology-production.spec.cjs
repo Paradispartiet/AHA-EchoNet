@@ -2,7 +2,8 @@ const { test, expect } = require("@playwright/test");
 
 // Production smoke uses only fabricated, non-personal text and isolated browser
 // profiles. No signed-in account, backend writes, model requests or analytics.
-const AHA = "https://aha-echonet.vercel.app";
+// Use the Vercel project-name candidate while checking the public aliases.
+const AHA = "https://aha-echo-net.vercel.app";
 const GH = "https://paradispartiet.github.io";
 const PRIVATE_KEY = "aha_psychology_private_reflections_v1";
 const CHAMBER_KEY = "aha_insight_chamber_v1";
