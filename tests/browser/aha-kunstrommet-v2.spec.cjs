@@ -162,6 +162,7 @@ test("unified Kunstrommet reuses Gallery metadata and opens legacy sketches as c
   await expect(page.locator("#kv2-note")).toHaveValue("");
   await page.locator("#kv2-gallery-inspiration button").click();
   await expect(page.locator("#kv2-note")).toHaveValue(/Et lysende atelier/);
+  page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#kv2-legacy-projects button").click();
   await expect(page.locator("#kv2-title")).toHaveValue("Min gamle tegning");
   await expect(page.locator("#kv2-note")).toHaveValue("Skal ikke slettes");
