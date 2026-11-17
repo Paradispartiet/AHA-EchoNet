@@ -58,6 +58,7 @@ for (const node of graph.nodes) {
   assert.equal(node.meta.read_only, true);
   assert.equal(node.meta.projection_preview, true);
   assert.equal(node.meta.sync_enabled, false);
+  assert.equal(node.href, "", "A V2 preview is not a saved source with an openable module link");
 }
 for (const edge of graph.edges) assert.equal(edge.meta.projection_preview, true);
 assert.equal(writes, 0);

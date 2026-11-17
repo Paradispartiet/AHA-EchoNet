@@ -145,7 +145,7 @@
     asArray(raw.lists).filter((list) => !isUnavailableRecord(list)).forEach((list) => {
       const refId = asText(list?.id, "");
       if (!refId) return;
-      const node = { id: nodeId("list", "aha_lists", refId), title: asText(list?.title, "Liste"), type: "list", source: "aha_lists", refId, href: "lists.html", meta: safetyMeta(list, STORAGE_KEYS.lists) };
+      const node = { id: nodeId("list", "aha_lists", refId), title: asText(list?.title, "Liste"), type: "list", source: "aha_lists", refId, href: `lists.html#list-${encodeURIComponent(refId)}`, meta: safetyMeta(list, STORAGE_KEYS.lists) };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });
@@ -154,14 +154,14 @@
       const refId = asText(list?.id, "");
       if (!refId) return;
       const termCount = asArray(list?.terms || list?.concepts).length;
-      const node = { id: nodeId("concept_list", "aha_concept_lists", refId), title: asText(list?.title, "Begrepsliste"), type: "concept_list", source: "aha_concept_lists", refId, href: "lists.html", meta: safetyMeta(list, STORAGE_KEYS.conceptLists, { termCount }) };
+      const node = { id: nodeId("concept_list", "aha_concept_lists", refId), title: asText(list?.title, "Begrepsliste"), type: "concept_list", source: "aha_concept_lists", refId, href: `lists.html#concept-list-${encodeURIComponent(refId)}`, meta: safetyMeta(list, STORAGE_KEYS.conceptLists, { termCount }) };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
       asArray(list?.terms || list?.concepts).forEach((term, index) => {
         const termTitle = asText(typeof term === "string" ? term : term?.term || term?.title || term?.label, "");
         if (!termTitle) return;
         const termRefId = `${refId}:${asText(term?.id, `term_${index}`)}`;
-        const termNode = { id: nodeId("concept", "aha_concept_lists", termRefId), title: termTitle, type: "concept", source: "aha_concept_lists", refId: termRefId, href: "lists.html", meta: safetyMeta(term, STORAGE_KEYS.conceptLists, { conceptListId: refId, definition: asText(term?.definition, "") }) };
+        const termNode = { id: nodeId("concept", "aha_concept_lists", termRefId), title: termTitle, type: "concept", source: "aha_concept_lists", refId: termRefId, href: `lists.html#concept-list-${encodeURIComponent(refId)}`, meta: safetyMeta(term, STORAGE_KEYS.conceptLists, { conceptListId: refId, definition: asText(term?.definition, "") }) };
         addNode(nodes, nodeIndex, termNode);
         registerRef(termNode);
       });
@@ -170,7 +170,7 @@
     asArray(raw.paths).filter((path) => !isUnavailableRecord(path)).forEach((path) => {
       const refId = asText(path?.id, "");
       if (!refId) return;
-      const node = { id: nodeId("path", "aha_paths", refId), title: asText(path?.title, "Sti"), type: "path", source: "aha_paths", refId, href: "paths.html", meta: safetyMeta(path, STORAGE_KEYS.paths) };
+      const node = { id: nodeId("path", "aha_paths", refId), title: asText(path?.title, "Sti"), type: "path", source: "aha_paths", refId, href: `paths.html#path-${encodeURIComponent(refId)}`, meta: safetyMeta(path, STORAGE_KEYS.paths) };
       addNode(nodes, nodeIndex, node);
       registerRef(node);
     });
@@ -443,7 +443,9 @@
       ...node,
       source: "aha_semantic_v2",
       refId: asText(node?.refId || node?.id, ""),
-      href: node?.type === "concept" ? "lists.html" : "insights.html",
+      // A V2 preview node is not itself a saved Insight or Concept List.
+      // A generic module URL would misleadingly imply it can be opened there.
+      href: "",
       meta: {
         ...(node?.meta && typeof node.meta === "object" ? node.meta : {}),
         source_key: "v2_projection_preview",
@@ -567,9 +569,7 @@
     svg.querySelectorAll("[data-mindmap-node]").forEach((nodeElement) => {
       nodeElement.addEventListener("click", (event) => {
         event.stopPropagation();
-        graphState.selectedNodeId = nodeElement.getAttribute("data-mindmap-node") || "";
-        graphState.view = { x: 0, y: 0, scale: 1 };
-        render();
+        selectMindmapNode(nodeElement.getAttribute("data-mindmap-node") || "");
       });
       nodeElement.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
@@ -699,7 +699,9 @@
               <p class="mindmap-meta"><span class="mindmap-badge">${escapeHtml(TYPE_LABELS[node.type] || node.type)}</span> ${escapeHtml(node.source)}</p>
               <p class="mindmap-meta">refId: ${escapeHtml(node.refId)}</p>
               <p class="mindmap-meta">Inn: ${counts.in} · Ut: ${counts.out}</p>
-              <a href="${escapeHtml(node.href)}">Åpne modul</a>
+              ${node.meta?.projection_preview
+                ? '<span class="module-meta">AI-forhåndsvisning – ikke lagret som eget objekt.</span>'
+                : `<a href="${escapeHtml(node.href)}">Åpne modul</a>`}
             </article>
           `;
         }).join("")
@@ -750,6 +752,45 @@
     `;
   }
 
+  function connectedMindmapNodes(nodeId, nodes = graphState.nodes, edges = graphState.edges) {
+    const byId = new Map(asArray(nodes).map((node) => [node.id, node]));
+    if (!byId.has(nodeId)) return [];
+    return asArray(edges).flatMap((edge) => {
+      if (edge.from !== nodeId && edge.to !== nodeId) return [];
+      const outgoing = edge.from === nodeId;
+      const neighbor = byId.get(outgoing ? edge.to : edge.from);
+      if (!neighbor || neighbor.id === nodeId) return [];
+      return [{
+        id: neighbor.id,
+        title: neighbor.title,
+        type: neighbor.type,
+        direction: outgoing ? "utgående" : "inngående",
+        label: asText(edge.label, asText(edge.type, "Registrert kobling")),
+        edgeType: asText(edge.type, ""),
+        href: neighbor.href
+      }];
+    }).sort((a, b) => a.title.localeCompare(b.title, "no")
+      || a.direction.localeCompare(b.direction, "no")
+      || a.label.localeCompare(b.label, "no"));
+  }
+
+  function selectMindmapNode(id, clearFilters = false) {
+    if (!graphState.nodes.some((node) => node.id === id)) return false;
+    if (clearFilters) {
+      // Related nodes may be outside the current search/type filter. Remove
+      // only view filters, never change the underlying user knowledge.
+      for (const filterId of ["mindmap-node-type", "mindmap-edge-type", "mindmap-search"]) {
+        const field = document.getElementById(filterId);
+        if (field) field.value = filterId === "mindmap-search" ? "" : "all";
+      }
+    }
+    graphState.selectedNodeId = id;
+    graphState.view = { x: 0, y: 0, scale: 1 };
+    render();
+    document.getElementById("mindmap-visual")?.querySelector?.(".mindmap-node.is-selected")?.focus?.();
+    return true;
+  }
+
   function renderDetails(edgeByNode) {
     const panel = document.getElementById("mindmap-details");
     if (!panel) return;
@@ -766,6 +807,14 @@
     }
 
     const counts = edgeByNode.get(selected.id) || { in: 0, out: 0 };
+    const related = connectedMindmapNodes(selected.id);
+    const detailLimit = 24;
+    const relatedItems = related.slice(0, detailLimit).map((neighbor) => `
+      <li><button type="button" class="mindmap-related-action" data-mindmap-related-node="${escapeHtml(neighbor.id)}"
+        aria-label="Vis ${escapeHtml(neighbor.title)} som hovedidé">
+        <strong>${escapeHtml(neighbor.title)}</strong>
+        <span>${escapeHtml(TYPE_LABELS[neighbor.type] || neighbor.type)} · ${escapeHtml(neighbor.direction)} · ${escapeHtml(neighbor.label)}</span>
+      </button></li>`).join("");
     panel.innerHTML = `
       <h3>${escapeHtml(selected.title)}</h3>
       <p><strong>Type:</strong> ${escapeHtml(selected.type)}</p>
@@ -779,7 +828,16 @@
       <p><strong>published_external:</strong> ${escapeHtml(String(selected.meta?.published_external === true))}</p>
       <p><strong>echonet_shared:</strong> ${escapeHtml(String(selected.meta?.echonet_shared === true))}</p>
       <p><strong>sync_enabled:</strong> ${escapeHtml(String(selected.meta?.sync_enabled === true))}</p>
-      <p><a href="${escapeHtml(selected.href)}">Åpne modul</a></p>
+      ${selected.meta?.projection_preview
+        ? '<p class="module-meta">Dette er en AI-forhåndsvisning, ikke et eget lagret objekt. Ingen kildeknapp vises.</p>'
+        : `<p><a href="${escapeHtml(selected.href)}">Åpne i ${selected.type === "path" ? "Stier" : selected.type === "list" || selected.type === "concept_list" || selected.type === "concept" ? "Lister" : "modulen"}</a></p>`}
+      <section class="mindmap-related" aria-label="Registrerte koblinger for valgt node">
+        <h4>Følg koblingene (${related.length})</h4>
+        <p class="module-meta">Bare registrerte koblinger vises. Ingen nye AI-sammenhenger beregnes.</p>
+        ${related.length
+          ? `<ul class="mindmap-related-list">${relatedItems}</ul>${related.length > detailLimit ? `<p class="module-meta">Viser ${detailLimit} av ${related.length} koblinger. Alle finnes i den tekniske nodelisten nedenfor.</p>` : ""}`
+          : '<p>Ingen registrerte koblinger til denne noden.</p>'}
+      </section>
     `;
   }
 
@@ -865,6 +923,11 @@
     document.getElementById("mindmap-node-type")?.addEventListener("change", render);
     document.getElementById("mindmap-edge-type")?.addEventListener("change", render);
     document.getElementById("mindmap-search")?.addEventListener("input", render);
+    document.getElementById("mindmap-details")?.addEventListener("click", (event) => {
+      const button = event.target?.closest?.("[data-mindmap-related-node]");
+      if (!button) return;
+      selectMindmapNode(button.getAttribute("data-mindmap-related-node") || "", true);
+    });
     document.getElementById("mindmap-v2-materialize")?.addEventListener("click", () => {
       const model = global.AHAProjectionRuntimeSourceV2?.build?.();
       const result = global.AHAProjectionMaterializerV2?.materialize?.({
@@ -902,6 +965,8 @@
     isUnavailableRecord,
     summarizeGraphOrigins,
     buildMindmapLayout,
+    connectedMindmapNodes,
+    selectMindmapNode,
     renderVisualMindmap,
     render,
     refresh
