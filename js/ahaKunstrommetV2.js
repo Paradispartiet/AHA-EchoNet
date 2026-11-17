@@ -448,7 +448,14 @@
       }
       status("Lagret på denne enheten");
       await renderProjects();
-    } catch (error) { status("Lagring feilet: " + error.message); }
+    } catch (error) {
+      const isQuotaError = error?.name === "QuotaExceededError" ||
+        error?.name === "NS_ERROR_DOM_QUOTA_REACHED";
+      status(isQuotaError
+        ? "Lagring feilet: Lagringsplassen er full. Eksporter redigerbart prosjekt som sikkerhetskopi før du rydder plass."
+        : "Lagring feilet: " + (error?.message || "Ukjent feil") +
+          " Eksporter redigerbart prosjekt som sikkerhetskopi.");
+    }
     finally { busy = false; }
   }
 
