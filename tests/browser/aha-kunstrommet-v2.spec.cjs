@@ -128,3 +128,86 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     }
   });
 });
+
+
+test("unified Kunstrommet reuses Gallery metadata and opens legacy sketches as copies", async ({ page }) => {
+  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.evaluate(async () => {
+    localStorage.setItem("aha_gallery_v1", JSON.stringify([{
+      id: "source-1", title: "Et lysende atelier", description: "Varme farger og lange skygger",
+      src: "https://example.invalid/never-fetch.jpg", type: "image", local_only: true
+    }]));
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open("aha_kunstrommet_v1", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("projects", { keyPath: "id" });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("projects", "readwrite");
+      tx.objectStore("projects").put({
+        id: "old-sketch-1", owner: "local", title: "Min gamle tegning",
+        note: "Skal ikke slettes", strokes: [{
+          color: "#325588", size: 8, points: [{ x: 300, y: 200 }, { x: 450, y: 300 }]
+        }], local_only: true, shared: false
+      });
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("#kv2-legacy-projects .kv2-project")).toHaveCount(1);
+  await expect(page.locator("#kv2-gallery-inspiration .kv2-inspiration")).toHaveCount(1);
+  await expect(page.locator("#kv2-note")).toHaveValue("");
+  await page.locator("#kv2-gallery-inspiration button").click();
+  await expect(page.locator("#kv2-note")).toContainText("Et lysende atelier");
+  await page.locator("#kv2-legacy-projects button").click();
+  await expect(page.locator("#kv2-title")).toHaveValue("Min gamle tegning");
+  await expect(page.locator("#kv2-note")).toHaveValue("Skal ikke slettes");
+  await expect(page.locator("#kv2-status")).toContainText("kopi");
+  const original = await page.evaluate(() => new Promise((resolve, reject) => {
+    const req = indexedDB.open("aha_kunstrommet_v1", 1);
+    req.onsuccess = () => {
+      const item = req.result.transaction("projects", "readonly").objectStore("projects").get("old-sketch-1");
+      item.onsuccess = () => resolve(item.result);
+      item.onerror = () => reject(item.error);
+    };
+    req.onerror = () => reject(req.error);
+  }));
+  expect(original.note).toBe("Skal ikke slettes");
+  expect(original.strokes).toHaveLength(1);
+  const gallery = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_gallery_v1")));
+  expect(gallery).toHaveLength(1);
+  expect(gallery[0].src).toContain("never-fetch");
+});
+
+test("one atelier, explicit Aha collection link stores metadata only", async ({ page }) => {
+  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => localStorage.setItem("aha_lists_v1", JSON.stringify([{
+    id: "v2-art-ideas", title: "Kunstideer", type: "favorites",
+    local_only: true, sync_enabled: false, published_external: false,
+    echonet_shared: false, items: []
+  }])));
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator("#kv2-title").fill("Lys i fjellet");
+  await page.locator("#kv2-note").fill("Et personlig notat som ikke skal inn i samlingsindeksen.");
+  await page.locator("#kv2-save").click();
+  await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+  await expect(page.locator("#kv2-collection-select")).toContainText("Kunstideer");
+  await page.locator("#kv2-collection-select").selectOption("v2-art-ideas");
+  await page.locator("#kv2-link-collection").click();
+  await expect(page.locator("#kv2-link-state")).toContainText("knyttet til samlingen");
+
+  const state = await page.evaluate(() => ({
+    refs: JSON.parse(localStorage.getItem(window.AHAKunstrommetReferences.profileKey()) || "[]"),
+    rawLists: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"),
+    overlay: window.AHALists.loadLists()
+  }));
+  expect(state.refs).toHaveLength(1);
+  expect(JSON.stringify(state.refs)).not.toContain("personlig notat");
+  expect(JSON.stringify(state.refs)).not.toContain("data:image");
+  expect(state.rawLists[0].items).toHaveLength(0);
+  expect(state.overlay[0].items).toHaveLength(1);
+  expect(state.overlay[0].items[0].source).toBe("aha_kunstrommet");
+});
