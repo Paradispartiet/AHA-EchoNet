@@ -1,0 +1,45 @@
+name: AHA Psychology public production smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/aha-psychology-production-smoke.yml"
+      - "playwright.psychology-live.config.cjs"
+      - "tests/live/aha-psychology-production.spec.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser-smoke:
+    name: Actual Vercel and GitHub Pages (synthetic data only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Diagnose public psychology URLs (GET only)
+        shell: bash
+        run: |
+          for base in "https://aha-echonet.vercel.app" "https://aha-echo-net.vercel.app" "https://paradispartiet.github.io/AHA-EchoNet"; do
+            for path in "/" "/psykologi.html" "/js/ahaPsychologyRoomBridge.js"; do
+              status="$(curl --location --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "${base}${path}" || true)"
+              echo "HTTP ${status:-unreachable} ${base}${path}"
+            done
+          done
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Verify production in isolated browser profiles
+        run: npx playwright test --config=playwright.psychology-live.config.cjs
+      - name: Retain evidence only on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-psychology-production-smoke-evidence
+          path: test-results/
+          if-no-files-found: ignore
