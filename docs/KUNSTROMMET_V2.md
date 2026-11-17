@@ -1,12 +1,12 @@
-# Kunstrommet V2 – første lagbaserte atelier (utkast)
+# Kunstrommet – lagbasert personlig atelier (integrert i Aha)
 
 ## Avgrensning
 
-PR #1050 er nå den **eneste aktive Kunstrommet-PR-en**, direkte mot main. V1-PR #1043 ble lukket som erstattet, ikke merget. Hele V1-grunnlaget finnes i denne PR-en, men brukerne får **bare én redigeringsside**, kunstrommet.html. Den gamle kunstrommet-v2.html videresender til den ene hovedsiden.
+PR #1050 ble **merget til `main` 17. november 2026** (merge-commit `39258a9`). V1-PR #1043 og den alternative, stablede lag-PR-en #1051 er lukket som erstattet uten merge. V1-grunnlaget er bevart, men brukerne får **bare én redigeringsside**, `kunstrommet.html`. Den gamle `kunstrommet-v2.html` videresender til hovedsiden.
 
 V1-databasen beholdes uendret, men eldre skisser kan vises i samme rom og åpnes som nye redigerbare V2-kopier. Samlinger, tankekart og eksisterende Galleri gjenbrukes; ingen ny Galleri-database opprettes. V1-testfixtur finnes bare under tests/fixtures for regresjoner.
 
-V2 er ennå ikke Photoshop og skal ikke markedsføres som produksjonsklar. Målet for første milepæl er tre–fire faktiske lag, fotoimport, flytting, tegning, ekte transparent viskelær, lagrekkefølge, synlighet, låsing, opasitet og gjenåpning av redigerbare prosjekter.
+Kunstrommet er et integrert første lagbasert atelier, **ikke et fullverdig Photoshop-alternativ**. Det støtter inntil åtte lag, fotoimport, flytting, tegning, transparent viskelær, lagrekkefølge, synlighet, låsing, opasitet og gjenåpning av redigerbare prosjekter. Fysisk iPad/Apple Pencil er fortsatt ikke godkjent.
 
 ## Løsning
 
@@ -33,29 +33,29 @@ V2 er ennå ikke Photoshop og skal ikke markedsføres som produksjonsklar. Måle
 - Import av prosjektfiler valideres på format, størrelse og lagantall. Importerte HTML-/SVG-filer eller remote URL-er støttes ikke.
 - Ingen automatisk flytting av V1-skisser, Galleri-publisering eller KI-redigering.
 
-## Release-gates
+## Status for release-kontroller
 
-1. Kjør Playwright-testene for bildeimport, lagtegning, viskelær, angre/gjør om, lagring, gjenåpning og V1-import.
-2. Kjør hele AHA-testpakken mot siste commit, ikke bare isolerte tester.
-3. Test på fysisk iPad Safari med finger og Apple Pencil, inklusive orientering, filvelger, tegnestrek og langvarig lagarbeid.
-4. Kontroller lagringsgrenser/kvotefeil, bildefiler og usynlige/låste lag manuelt.
-5. Behold V2 PR som **draft** og ikke merge/publiser før både V1-portene og V2-portene er bestått.
+- **Bestått ved merge:** Playwright for Chromium og iPad WebKit, Kunstrommet-kontrakttester, AHA Engine, Node, syntaks og AHA launch gate på HEAD `f2e2bea`. Simulert `QuotaExceededError` og eksport/ny lagring er testet automatisk.
+- **GitHub:** PR #1050 er merget til `main` i `39258a9`, etter uttrykkelig beslutning fra prosjekteier. Alle automatiske PR-kontroller var grønne ved merge.
+- **Ikke gjennomført:** fysisk iPad Safari med finger/Apple Pencil, ytelse over tid, reell lagringskvote og manuell kontroll av bildefiler, låste/skjulte lag og eldre skisser på enheten. Disse punktene er åpne etterkontroller, **ikke godkjente tester**.
+- **Avgrensning:** Sammenflettingen innebærer ikke at Kunstrommet er testet på fysisk Apple Pencil eller at lokale prosjekter har skybackup.
 
-## Neste trinn (ikke implementert i denne PR)
+## Videre funksjoner (ikke implementert)
 
-Trykkfølsomme pensler, multitouch pinch-zoom, presise utvalgsverktøy, avanserte masker, ikke-destruktive bildejusteringer, tekst- og vektorlag, store dokumenter, PSD-format og valgfrie Aha-referanser for V2. Bruk eksisterende Aha Galleri – ikke lag et nytt galleri.
+Trykkfølsomme pensler, multitouch pinch-zoom, presise utvalgsverktøy, avanserte masker, ikke-destruktive bildejusteringer, tekst- og vektorlag, store dokumenter og PSD-format. Frivillige Aha-samlingsreferanser finnes allerede i første versjon. Bruk eksisterende Aha Galleri – ikke lag et nytt galleri.
 
 ## Konsolidering (17. november 2026)
 
 - PR #1043: lukket som erstattet, uten merge.
-- PR #1050: eneste aktive Kunstrommet-PR mot main, fortsatt draft.
+- PR #1050: **merget** til `main` 17. november 2026 (`39258a9`).
+- PR #1051: **lukket** som alternativ/stablet implementasjon; beholdt i GitHub-historikken uten merge.
 - Ingen automatisk migrering eller destruktiv oppdatering av eksisterende V1-skisser.
 - Aha/Galleri-tjenestene er felles; bildedata forblir lokalt og bare eksplisitte metadata kan overføres.
-- Både gammel V1-frontend (testfixtur) og ny konsolidert frontend skal dekkes av CI før publisering.
+- V1-regresjonsfixtur og den konsoliderte frontenden ble dekket av CI ved merge; fysisk iPad-kontroll gjenstår.
 
 ## Sluttkontroll på fysisk iPad (ikke gjennomført)
 
-CI dekker Chromium og iPad WebKit-emulering, men det erstatter ikke en fysisk iPad med Apple Pencil. PR #1050 må forbli **draft** inntil følgende protokoll er gjennomført og resultatet er dokumentert i PR-en.
+CI dekker Chromium og iPad WebKit-emulering, men det erstatter ikke en fysisk iPad med Apple Pencil. PR #1050 er allerede merget; følgende protokoll må derfor gjennomføres som **dokumentert etterkontroll** og kan ikke regnes som bestått før den er utført.
 
 - [ ] Åpne `kunstrommet.html` i Safari på fysisk iPad. Bekreft at skjerm, sidepanel og knapper kan brukes både stående og liggende.
 - [ ] Tegn flere strøk med Apple Pencil og finger, inkludert raske og langsomme strøk, og kontroller at scrolling ikke avbryter tegningen.
@@ -69,6 +69,6 @@ CI dekker Chromium og iPad WebKit-emulering, men det erstatter ikke en fysisk iP
 
 ### Registrering
 
-Dokumenter i PR-en: iPad-modell, iPadOS-versjon, Safari-versjon, Apple Pencil-type, dato, testansvarlig, observasjoner og eventuelle feil/skjermbilder. **Ikke kryss av uten faktisk testing.**
+Dokumenter i en oppfølgingskommentar lenket til PR #1050: iPad-modell, iPadOS-versjon, Safari-versjon, Apple Pencil-type, dato, testansvarlig, observasjoner og eventuelle feil/skjermbilder. **Ikke kryss av uten faktisk testing.**
 
 En automatisert Playwright-test simulerer nå `QuotaExceededError`, kontrollerer tydelig sikkerhetskopi-varsel og at lagringen kan forsøkes på nytt. Den erstatter ikke faktisk kontroll av lagringskvote på enheten.
