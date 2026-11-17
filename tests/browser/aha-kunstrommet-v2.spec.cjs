@@ -74,7 +74,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.locator(".kv2-project")).toHaveCount(1);
-    await page.locator(".kv2-project button").click();
+    await page.locator(".kv2-project").getByRole("button", { name: "Åpne", exact: true }).click();
     await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
     await expect(page.locator("#kv2-title")).toHaveValue("Personlig collage");
     await expect(page.locator("#kv2-note")).toHaveValue("Dette bildet forblir lokalt.");
