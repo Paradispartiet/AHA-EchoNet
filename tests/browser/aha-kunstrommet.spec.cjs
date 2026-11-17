@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 
 test.describe("Kunstrommet – personal, local-only atelier", () => {
   test("pointer drawing, manual save, reload and local export/import", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/tests/fixtures/kunstrommet-v1.html", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kunstrommet-canvas");
     await expect(canvas).toBeVisible();
     await expect(page.locator("#kunstrommet-save-state")).toContainText("Ny skisse");
@@ -88,7 +88,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
   });
 
   test("Aha text import is opt-in and drawing never triggers it", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/tests/fixtures/kunstrommet-v1.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kunstrommet-title").fill("Personlig idé");
     await page.locator("#kunstrommet-save").click();
     await expect(page.locator("#kunstrommet-save-state")).toHaveText("Lagret på denne enheten");
@@ -109,7 +109,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
   });
 
   test("visual sketchbook supports copying and searching without Aha transfer", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/tests/fixtures/kunstrommet-v1.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kunstrommet-title").fill("Sommer i Oslo");
     await page.locator("#kunstrommet-note").fill("Farger fra parken");
     await page.locator("#kunstrommet-save").click();
@@ -144,7 +144,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     }
   });
   test("saved artwork links to collection and opens from mindmap without sharing pixels", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/tests/fixtures/kunstrommet-v1.html", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => localStorage.setItem("aha_lists_v1", JSON.stringify([{
       id: "collection-art-test", title: "Mine kunstprosjekter", type: "favorites",
       local_only: true, sync_enabled: false, published_external: false,
@@ -212,11 +212,11 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     expect(artwork.node.href).toBe("kunstrommet.html#art-" + encodeURIComponent(projectId));
 
     await page.goto("/" + artwork.node.href, { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#kunstrommet-title")).toHaveValue("Maleri med rødt");
-    await expect(page.locator("#kunstrommet-note")).toHaveValue("Personlig, ikke delt");
+    await expect(page.locator("#kv2-title")).toHaveValue("Maleri med rødt");
+    await expect(page.locator("#kv2-note")).toHaveValue("Personlig, ikke delt");
     page.once("dialog", (dialog) => dialog.accept());
-    await page.locator("#kunstrommet-unlink-aha").click();
-    await expect(page.locator("#kunstrommet-link-state")).toContainText("Fjernet 1 samlingskobling");
+    await page.locator("#kv2-unlink-aha").click();
+    await expect(page.locator("#kv2-link-state")).toContainText("Fjernet 1 lokale koblinger");
     const revoked = await page.evaluate(() => ({
       refs: JSON.parse(localStorage.getItem(window.AHAKunstrommetReferences.profileKey()) || "[]"),
       memberships: JSON.parse(localStorage.getItem("aha_kunstrommet_memberships_v1") || "[]"),
@@ -235,7 +235,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     page.on("request", (request) => {
       if (request.url().includes("example.invalid/gallery-photo")) requests.push(request.url());
     });
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/tests/fixtures/kunstrommet-v1.html", { waitUntil: "domcontentloaded" });
     const galleryItem = {
       id: "gallery-example", title: "Gamle atelierer",
       description: "Fargeforsøk og arbeidslys",
