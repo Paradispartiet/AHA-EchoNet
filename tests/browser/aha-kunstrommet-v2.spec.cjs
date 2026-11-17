@@ -108,6 +108,42 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect.poll(async () => (await pixel(page))[2]).toBe(166);
   });
 
+  test("storage quota failure offers backup and retry without losing editable work", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-title").fill("Kvotetest");
+    await page.locator("#kv2-note").fill("Dette må kunne reddes uten lagring.");
+
+    // Simulate the browser refusing an IndexedDB write with a quota error.
+    await page.evaluate(() => {
+      const originalPut = IDBObjectStore.prototype.put;
+      Object.defineProperty(IDBObjectStore.prototype, "put", {
+        configurable: true,
+        writable: true,
+        value() { throw new DOMException("Kvoten er brukt opp (test)", "QuotaExceededError"); }
+      });
+      window.restoreKunstrommetPut = () => {
+        Object.defineProperty(IDBObjectStore.prototype, "put", {
+          configurable: true, writable: true, value: originalPut
+        });
+      };
+    });
+
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toContainText("Lagringsplassen er full");
+    await expect(page.locator("#kv2-status")).toContainText("Eksporter redigerbart prosjekt");
+    await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(0);
+    await expect(page.locator("#kv2-note")).toHaveValue("Dette må kunne reddes uten lagring.");
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    expect((await downloadPromise).suggestedFilename()).toMatch(/kvotetest\\.kunstrommet\\.json$/);
+
+    await page.evaluate(() => window.restoreKunstrommetPut());
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
