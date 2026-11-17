@@ -94,6 +94,13 @@ if (!chamberBundle.includes("let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_
   errors.push("Cloudflare preview must disable legacy chamber auto-sync without modifying original source.");
 }
 
+const previewDb = await readFile(path.join(dist, "js/ahaDb.js"), "utf8").catch(() => "");
+if (!previewDb.includes("AHA_CLOUDFLARE_PREVIEW_DATA_API_READ_ONLY") ||
+    !previewDb.includes("AHA_PREVIEW_READ_ONLY") ||
+    !previewDb.includes("if (name === \"rpc\") return () => denyQuery();")) {
+  errors.push("Cloudflare preview must block all Supabase Data API mutations and RPC calls.");
+}
+
 const previewAuth = await readFile(path.join(dist, "js/ahaAuth.js"), "utf8").catch(() => "");
 if (!previewAuth.includes("AHA_CLOUDFLARE_PREVIEW_AUTH_PROFILE_READ_ONLY") ||
     !previewAuth.includes("AHA_CLOUDFLARE_PREVIEW_NO_PROFILE_NAME_WRITE")) {
