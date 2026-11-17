@@ -104,8 +104,8 @@ assert.equal(refs.load().some((item) => item.id === "older-A"), false);
 store.set("aha_profile_id", "artist-1");
 
 const html = read("kunstrommet.html");
-assert.match(html, /kunstrommet-link-collection/);
-assert.match(html, /kunstrommet-collection-select/);
+assert.match(html, /kv2-link-collection/);
+assert.match(html, /kv2-collection-select/);
 assert.match(read("lists.html"), /ahaKunstrommetReferences\.js/);
 assert.match(read("mindmap.html"), /ahaKunstrommetReferences\.js/);
 assert.doesNotMatch(read("js/ahaKunstrommetReferences.js"), /\bfetch\s*\(|\bXMLHttpRequest\b|AHAIngest|EchoNet.*send/i);
