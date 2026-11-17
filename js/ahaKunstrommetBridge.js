@@ -162,6 +162,7 @@
   async function linkArtwork() {
     const active = editor.summary();
     if (!active) return;
+    if (active.owner !== owner()) { linkStatus("Profil er endret. Åpne prosjektet på nytt."); return; }
     if (active.dirty) { linkStatus("Lagre kunstverket før du knytter det til en samling."); return; }
     if (global.AHA_CONFIG?.lists?.enableDatabaseSync === true) {
       linkStatus("Kobling er blokkert fordi synkronisering av samlinger er aktiv."); return;
@@ -221,6 +222,7 @@
     if (!current || (!current.title && !current.note)) {
       ideaStatus("Skriv en tittel eller et notat først."); return;
     }
+    if (current.owner !== owner()) { ideaStatus("Profil er endret. Åpne prosjektet på nytt."); return; }
     const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;
     if (!ingest?.ingest) { ideaStatus("Ahas innsiktsmotor er ikke tilgjengelig."); return; }
     try {
