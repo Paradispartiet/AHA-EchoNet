@@ -213,6 +213,21 @@ test("one atelier, explicit Aha collection link stores metadata only", async ({ 
   expect(state.rawLists[0].items).toHaveLength(0);
   expect(state.overlay[0].items).toHaveLength(1);
   expect(state.overlay[0].items[0].source).toBe("aha_kunstrommet");
+
+  // Removing the artwork must also revoke its local Aha pointer, without altering shared lists.
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.locator("#kv2-projects .kv2-project--saved").getByRole("button", { name: "Slett" }).click();
+  await expect(page.locator("#kv2-project-count")).toContainText("Ingen lagrede verk");
+  const cleaned = await page.evaluate(() => ({
+    refs: window.AHAKunstrommetReferences.load(),
+    memberships: window.AHAKunstrommetReferences.memberships(),
+    raw: JSON.parse(localStorage.getItem("aha_lists_v1") || "[]"),
+    visible: window.AHALists.loadLists()
+  }));
+  expect(cleaned.refs).toHaveLength(0);
+  expect(cleaned.memberships).toHaveLength(0);
+  expect(cleaned.raw[0].items).toHaveLength(0);
+  expect(cleaned.visible[0].items).toHaveLength(0);
 });
 
 
