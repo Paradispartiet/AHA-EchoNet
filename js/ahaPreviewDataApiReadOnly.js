@@ -51,6 +51,31 @@
             typeof next.select === "function"
           ) ? safeQuery(next) : next;
         };
+      },
+      set() {
+        // Exposed PostgREST builder fields such as .method/.body must not be
+        // overwritten to turn an approved GET into a write.
+        return false;
+      }
+    });
+  }
+
+  // A PostgREST client can also be reached by supabase.schema(...) or the
+  // public supabase.rest property. Protect those routes just like .from().
+  function safeRest(rest) {
+    if (!rest || (typeof rest !== "object" && typeof rest !== "function")) return null;
+    return new Proxy(rest, {
+      get(target, name) {
+        if (name === "from") return (table) => safeQuery(target.from(table));
+        if (name === "rpc") return () => denyQuery();
+        if (name === "schema") return (schemaName) => safeRest(target.schema(schemaName));
+        const value = Reflect.get(target, name, target);
+        if (typeof value === "function") return value.bind(target);
+        return value;
+      },
+      set() {
+        // Never allow preview code to replace the guarded methods/properties.
+        return false;
       }
     });
   }
@@ -61,9 +86,14 @@
         if (name === "from") return (table) => safeQuery(target.from(table));
         // RPC functions may mutate database state: deny all until reviewed.
         if (name === "rpc") return () => denyQuery();
+        if (name === "schema") return (schemaName) => safeRest(target.schema(schemaName));
+        if (name === "rest") return safeRest(target.rest);
         const value = Reflect.get(target, name, target);
         if (typeof value === "function") return value.bind(target);
         return value;
+      },
+      set() {
+        return false;
       }
     });
   }
