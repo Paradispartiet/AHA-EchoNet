@@ -1,0 +1,52 @@
+name: AHA Kunstrommet V2 layer checks
+
+on:
+  push:
+    branches:
+      - feature/kunstrommet-v2-lagverksted
+  pull_request:
+    branches:
+      - feature/kunstrommet-personlig-atelier
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  node-layer-tests:
+    name: Deterministic Node regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Run complete AHA Node suite, including V1 and V2
+        run: npm test
+      - name: Syntax check of touched JavaScript
+        run: |
+          node --check js/ahaKunstrommetLayers.js
+          node --check js/ahaKunstrommet.js
+          node --check tests/aha-kunstrommet-v2-layers.test.cjs
+
+  browser-layer-tests:
+    name: Chromium and simulated iPad WebKit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Run Kunstrommet V1 and V2 browser tests offline
+        run: npx playwright test --config=playwright.config.cjs tests/browser/aha-kunstrommet.spec.cjs tests/browser/aha-kunstrommet-v2.spec.cjs
+      - name: Upload failure evidence only
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kunstrommet-v2-browser-failures
+          path: test-results/
+          if-no-files-found: ignore
