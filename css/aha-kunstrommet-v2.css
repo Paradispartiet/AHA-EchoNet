@@ -1,0 +1,73 @@
+/* Kunstrommet V2: calm responsive studio. Scoped to .kv2 to protect V1. */
+.kv2 { max-width: 1520px; margin: 0 auto; }
+.kv2 button, .kv2 input, .kv2 textarea { font: inherit; }
+.kv2 h1, .kv2 h2, .kv2 p { margin-top: 0; }
+.kv2 h2 { font-size: 1.13rem; }
+.kv2-heading { display: flex; justify-content: space-between; gap: 22px; align-items: flex-end; }
+.kv2-privacy { color: #547666; font-size: .91rem; margin-bottom: 0; }
+.kv2-navigation { display: flex; flex-wrap: wrap; gap: 9px; }
+.kv2-navigation a { text-decoration: none; border: 1px solid #c9c9c5; border-radius: 16px; padding: 8px 12px; color: inherit; }
+.kv2-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; margin: 20px 0; align-items: start; }
+.kv2-editor, .kv2-panel { min-width: 0; }
+.kv2-titlebar { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 10px; }
+.kv2-titlebar output { color: #4e7160; font-size: .91rem; }
+.kv2 label { display: block; margin: 13px 0 7px; font-weight: 600; }
+.kv2 input[type="text"], .kv2 textarea { display: block; width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #bcc4be; background: #fff; color: #222; border-radius: 11px; }
+.kv2 button, .kv2-file { cursor: pointer; border-radius: 11px; padding: 9px 12px; background: #f8f8f5; border: 1px solid #b9c1bd; color: #1f2c2b; }
+.kv2 button:hover, .kv2-file:hover { background: #e8eeea; }
+.kv2 button:focus-visible, .kv2 a:focus-visible, .kv2-file:focus-within { outline: 3px solid #4874a8; outline-offset: 3px; }
+.kv2 button[aria-pressed="true"] { background: #304d43; color: #fff; border-color: #304d43; }
+.kv2 button:disabled { cursor: not-allowed; opacity: .48; }
+.kv2-toolbar, .kv2-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 15px; }
+.kv2-toolbar label { display: inline-flex; align-items: center; gap: 6px; margin: 0 4px; font-weight: 500; font-size: .9rem; }
+.kv2-toolbar input[type="color"] { width: 39px; height: 35px; padding: 1px; border: 0; background: transparent; }
+.kv2-toolbar input[type="range"] { width: 110px; }
+.kv2-paper { margin: 16px 0; padding: 13px; border-radius: 16px; background: #dce1de; border: 1px solid #c4cec7; }
+#kv2-canvas { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 4px 24px #3d524b22; border-radius: 2px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.kv2-tip { font-size: .84rem; color: #63716c; line-height: 1.55; margin: 12px 0; }
+.kv2-primary { background: #304d43 !important; border-color: #304d43 !important; color: #fff !important; font-weight: 700 !important; }
+.kv2-actions .kv2-file { display: inline-flex; margin: 0; align-items: center; font-weight: 500; position: relative; }
+.kv2-file input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.kv2-sidebar { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.kv2-layers { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; }
+.kv2-layer { display: grid; grid-template-columns: 40px minmax(0,1fr) 57px; gap: 6px; align-items: stretch; padding: 6px; border: 1px solid #d0d7d1; border-radius: 11px; }
+.kv2-layer.kv2-selected { border-color: #4b7765; background: #ebf2ed; }
+.kv2-layer button { padding: 7px 5px; font-size: .78rem; }
+.kv2-layer-name { text-align: left; overflow-wrap: anywhere; }
+.kv2-layer-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.kv2-layer-actions button:first-child { grid-column: 1/-1; }
+.kv2-slider { display: flex; gap: 12px; align-items: center; }
+.kv2-slider input { flex: 1; min-width: 0; }
+.kv2-projects { display: flex; flex-direction: column; gap: 8px; }
+.kv2-project { display: flex; gap: 9px; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px solid #d5dbd5; }
+.kv2-project span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 1080px) {
+  .kv2-workspace { grid-template-columns: minmax(0, 1fr); }
+  .kv2-sidebar { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 680px) {
+  .kv2-heading, .kv2-sidebar { display: block; }
+  .kv2-sidebar > * { margin-bottom: 16px; }
+  .kv2-workspace { gap: 14px; }
+  .kv2-paper { padding: 6px; }
+  .kv2-toolbar { align-items: stretch; }
+  .kv2-toolbar label { width: 100%; justify-content: space-between; }
+}
+
+/* Single Kunstrommet: small, unobtrusive existing Aha integration panels. */
+.kv2-inspiration { border-top: 1px solid #d5dbd5; padding: 9px 0; }
+.kv2-inspiration strong { display: block; overflow-wrap: anywhere; }
+.kv2-inspiration button { font-size: .84rem; }
+#kv2-collection-select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #bcc4be; border-radius: 10px; background: #fff; color: #222; }
+#kv2-unlink-aha { grid-column: 1 / -1; }
+
+/* Unified sketchbook – thumbnail, search and simple project actions. */
+#kv2-project-search { width: 100%; box-sizing: border-box; border: 1px solid #bcc4be; border-radius: 10px; padding: 10px 12px; background: #fff; color: #222; }
+.kv2-project--saved { flex-direction: column; align-items: stretch; gap: 8px; padding: 11px; border: 1px solid #d6ded8; border-radius: 12px; background: #fafbf9; }
+.kv2-project-preview { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: contain; background: #fff; border: 1px solid #e0e5e0; border-radius: 8px; }
+.kv2-project-info { display: flex; justify-content: space-between; gap: 8px; overflow-wrap: anywhere; align-items: baseline; }
+.kv2-project-info span { font-weight: 600; }
+.kv2-project-info small { color: #63716c; white-space: nowrap; }
+.kv2-project-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.kv2-project-actions button { flex: 1 0 auto; font-size: .84rem; }
+.kv2-project-actions button:last-child { color: #923c35; border-color: #bb9995; }

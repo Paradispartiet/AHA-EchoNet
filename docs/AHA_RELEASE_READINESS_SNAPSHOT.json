@@ -163,6 +163,14 @@
       "boundary": "Lokal-only galleriobjekter har eksplisitt ikke-publisert/EchoNet-ikke-delt metadata, tekstlig AHAIngest-sporbarhet, stabil source-id mot åpenbar re-ingest-duplisering og søk-regresjonstest."
     },
     {
+      "id": "kunstrommet",
+      "title": "Kunstrommet",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Local-only personlig atelier med IndexedDB-skisser, profilfiltrert tittel/referanseindeks, lokal medlemskaps-overlay til Ahas samlinger/tankekart og eksplisitt tekst-only AHAIngest. Ingen private verkstitler/ID i aha_lists_v1, ingen piksler/notater, backend, synk eller deling. Lokal profilnøkkel er ikke sikker tilgangskontroll. Fysisk iOS Safari-test gjenstår."
+    },
+    {
       "id": "notes",
       "title": "Notes",
       "registry_status": "active",
