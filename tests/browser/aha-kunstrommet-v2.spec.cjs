@@ -199,9 +199,17 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-hand")).toHaveAttribute("aria-pressed", "true");
     const scroll = await page.locator("#kv2-canvas").evaluate((canvas) => {
       const paper = document.getElementById("kv2-paper");
-      paper.scrollLeft = 300;
-      paper.scrollTop = 160;
+      // Force a bounded viewport so both scroll axes are testable at all CI sizes.
+      // A normal tall desktop viewport may have no vertical overflow at 200%.
+      paper.style.height = "240px";
+      paper.style.maxHeight = "240px";
+      paper.scrollLeft = 40;
+      paper.scrollTop = 40;
       const start = { left: paper.scrollLeft, top: paper.scrollTop };
+      const overflow = {
+        horizontal: paper.scrollWidth - paper.clientWidth,
+        vertical: paper.scrollHeight - paper.clientHeight
+      };
       const event = {
         bubbles: true, cancelable: true, pointerId: 73, pointerType: "touch",
         button: 0, buttons: 1, clientX: 410, clientY: 310
@@ -213,8 +221,10 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
       canvas.dispatchEvent(new PointerEvent("pointerup", {
         ...event, buttons: 0, clientX: 350, clientY: 260
       }));
-      return { start, end: { left: paper.scrollLeft, top: paper.scrollTop } };
+      return { start, overflow, end: { left: paper.scrollLeft, top: paper.scrollTop } };
     });
+    expect(scroll.overflow.horizontal).toBeGreaterThan(120);
+    expect(scroll.overflow.vertical).toBeGreaterThan(120);
     expect(scroll.end.left).toBeGreaterThan(scroll.start.left);
     expect(scroll.end.top).toBeGreaterThan(scroll.start.top);
     await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
