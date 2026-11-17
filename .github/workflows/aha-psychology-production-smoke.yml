@@ -24,6 +24,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Diagnose public psychology URLs (GET only)
+        shell: bash
+        run: |
+          for base in "https://aha-echonet.vercel.app" "https://aha-echo-net.vercel.app" "https://paradispartiet.github.io/AHA-EchoNet"; do
+            for path in "/" "/psykologi.html" "/js/ahaPsychologyRoomBridge.js"; do
+              status="$(curl --location --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "${base}${path}" || true)"
+              echo "HTTP ${status:-unreachable} ${base}${path}"
+            done
+          done
       - run: npx playwright install --with-deps chromium webkit
       - name: Verify production in isolated browser profiles
         run: npx playwright test --config=playwright.psychology-live.config.cjs
