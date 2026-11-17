@@ -15,6 +15,9 @@
   const MAX_HISTORY = 12;
   const DB_NAME = "aha_kunstrommet_v2";
   const STORE = "projects";
+  const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+  const viewport = $("kv2-paper");
+  let zoomIndex = 2;
   let dbPromise = null;
   let project = null;
   let selected = null;
@@ -227,9 +230,13 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move"].forEach((name) => {
+    ["brush", "eraser", "move", "hand"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
+    canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
+    $("kv2-zoom-value").textContent = Math.round(ZOOM_LEVELS[zoomIndex] * 100) + "%";
+    $("kv2-zoom-out").disabled = zoomIndex === 0;
+    $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
   }
 
@@ -241,13 +248,41 @@
     };
   }
 
+  function penPressure(event) {
+    if (event.pointerType !== "pen") return 1;
+    // Pen pressure is optional; unreported/zero readings use the old fixed-width stroke.
+    const pressure = Number.isFinite(event.pressure) && event.pressure > 0
+      ? event.pressure : 0.5;
+    return clamp(0.35 + clamp(pressure, 0, 1) * 1.3, 0.35, 1.65);
+  }
+
+  function setZoom(nextIndex) {
+    nextIndex = clamp(nextIndex, 0, ZOOM_LEVELS.length - 1);
+    if (zoomIndex === nextIndex) return;
+    // Keep the viewed center approximately stable when the CSS-only zoom changes.
+    // Neither the layer bitmaps nor the fixed 1200x800 PNG export are rescaled.
+    const oldZoom = ZOOM_LEVELS[zoomIndex];
+    const newZoom = ZOOM_LEVELS[nextIndex];
+    const width = viewport.clientWidth || 0;
+    const height = viewport.clientHeight || 0;
+    const centerX = ((viewport.scrollLeft || 0) + width / 2) / oldZoom;
+    const centerY = ((viewport.scrollTop || 0) + height / 2) / oldZoom;
+    zoomIndex = nextIndex;
+    canvas.style.width = Math.round(newZoom * 100) + "%";
+    viewport.scrollLeft = Math.max(0, centerX * newZoom - width / 2);
+    viewport.scrollTop = Math.max(0, centerY * newZoom - height / 2);
+    refresh();
+  }
+
   function drawSegment(context, a, b) {
     const size = Number($("kv2-size").value) || 6;
     context.save();
     context.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
     context.strokeStyle = $("kv2-color").value;
     context.fillStyle = tool === "eraser" ? "#000000" : $("kv2-color").value;
-    context.lineWidth = tool === "eraser" ? size * 2 : size;
+    const first = Number.isFinite(a.pressureFactor) ? a.pressureFactor : 1;
+    const last = b && Number.isFinite(b.pressureFactor) ? b.pressureFactor : first;
+    context.lineWidth = tool === "eraser" ? size * 2 : size * (first + last) / 2;
     context.lineJoin = "round";
     context.lineCap = "round";
     context.beginPath();
@@ -266,18 +301,26 @@
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     const layer = currentLayer();
-    if (!layer || layer.locked || !layer.visible) {
+    if (tool !== "hand" && (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
-    if (!checkpoint()) return;
+    // Moving the viewport is never an artwork edit and must not create undo history.
+    if (tool !== "hand" && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
-    pointerStart = { point: point(event), x: layer.x, y: layer.y };
+    pointerStart = {
+      point: point(event), x: layer?.x || 0, y: layer?.y || 0,
+      clientX: event.clientX, clientY: event.clientY,
+      scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0
+    };
     paintPrevious = null;
-    if (tool !== "move") {
+    if (tool === "brush" || tool === "eraser") {
       const at = point(event);
-      const local = { x: at.x - layer.x, y: at.y - layer.y };
+      const local = {
+        x: at.x - layer.x, y: at.y - layer.y,
+        pressureFactor: penPressure(event)
+      };
       drawSegment(surfaces.get(layer.id).getContext("2d"), local, local);
       paintPrevious = local;
       drawSoon();
@@ -288,6 +331,11 @@
   function move(event) {
     if (pointerId === null || event.pointerId !== pointerId || busy) return;
     event.preventDefault();
+    if (tool === "hand") {
+      viewport.scrollLeft = Math.max(0, pointerStart.scrollLeft + pointerStart.clientX - event.clientX);
+      viewport.scrollTop = Math.max(0, pointerStart.scrollTop + pointerStart.clientY - event.clientY);
+      return;
+    }
     const layer = currentLayer();
     if (!layer) return;
     const at = point(event);
@@ -295,7 +343,10 @@
       layer.x = Math.round(pointerStart.x + at.x - pointerStart.point.x);
       layer.y = Math.round(pointerStart.y + at.y - pointerStart.point.y);
     } else {
-      const local = { x: at.x - layer.x, y: at.y - layer.y };
+      const local = {
+        x: at.x - layer.x, y: at.y - layer.y,
+        pressureFactor: penPressure(event)
+      };
       drawSegment(surfaces.get(layer.id).getContext("2d"), paintPrevious, local);
       paintPrevious = local;
     }
@@ -304,11 +355,14 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
+    const changedArtwork = tool !== "hand";
     pointerId = null;
     pointerStart = null;
     paintPrevious = null;
-    changed();
-    draw();
+    if (changedArtwork) {
+      changed();
+      draw();
+    }
   }
 
   function addLayer(name, kind) {
@@ -786,9 +840,12 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move"].forEach((name) => {
+    ["brush", "eraser", "move", "hand"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
     });
+    $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
+    $("kv2-zoom-out").addEventListener("click", () => setZoom(zoomIndex - 1));
+    $("kv2-zoom-reset").addEventListener("click", () => setZoom(2));
     $("kv2-photo").addEventListener("change", (event) => importPhoto(event.target.files[0]));
     $("kv2-import").addEventListener("change", (event) => importProject(event.target.files[0]));
     $("kv2-json").addEventListener("click", () => {
