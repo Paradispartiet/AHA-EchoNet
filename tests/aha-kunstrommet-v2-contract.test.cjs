@@ -7,7 +7,7 @@ const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const js = fs.readFileSync(path.join(root, "js/ahaKunstrommetV2.js"), "utf8");
-const html = fs.readFileSync(path.join(root, "kunstrommet-v2.html"), "utf8");
+const html = fs.readFileSync(path.join(root, "kunstrommet.html"), "utf8");
 const v1 = fs.readFileSync(path.join(root, "js/ahaKunstrommet.js"), "utf8");
 assert.doesNotThrow(() => new Function(js));
 assert.match(js, /destination-out/);
