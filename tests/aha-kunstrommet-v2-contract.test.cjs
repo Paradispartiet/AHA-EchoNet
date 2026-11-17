@@ -9,6 +9,15 @@ const root = path.resolve(__dirname, "..");
 const js = fs.readFileSync(path.join(root, "js/ahaKunstrommetV2.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "kunstrommet.html"), "utf8");
 const v1 = fs.readFileSync(path.join(root, "js/ahaKunstrommet.js"), "utf8");
+const bridge = fs.readFileSync(path.join(root, "js/ahaKunstrommetBridge.js"), "utf8");
+const redirect = fs.readFileSync(path.join(root, "kunstrommet-v2.html"), "utf8");
+assert.match(html, /src="js\/ahaKunstrommetBridge\.js"/);
+assert.doesNotMatch(html, /src="js\/ahaKunstrommet\.js"/);
+assert.match(redirect, /window\.location\.replace\("kunstrommet\.html"/);
+assert.match(bridge, /aha_kunstrommet_v1/);
+assert.match(bridge, /AHAGallery/);
+assert.match(bridge, /AHAKunstrommetReferences/);
+
 assert.doesNotThrow(() => new Function(js));
 assert.match(js, /destination-out/);
 assert.match(js, /aha_kunstrommet_v2/);
