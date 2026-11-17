@@ -144,6 +144,86 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
   });
 
+  test("Pencil pressure changes brush width without changing mouse or eraser behavior", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "30";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#000000";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const heights = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const rect = canvas.getBoundingClientRect();
+      function dot(x, pressure, pointerType, pointerId) {
+        const event = {
+          bubbles: true, cancelable: true, pointerId, pointerType,
+          button: 0, buttons: 1, pressure, isPrimary: true,
+          clientX: rect.left + rect.width * x / 1200,
+          clientY: rect.top + rect.height * 400 / 800
+        };
+        canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+        canvas.dispatchEvent(new PointerEvent("pointerup", { ...event, buttons: 0, pressure: 0 }));
+      }
+      dot(200, 0.2, "pen", 201);
+      dot(500, 0.9, "pen", 202);
+      dot(800, 0.9, "mouse", 203);
+      const ctx = canvas.getContext("2d");
+      const countInk = (x) => {
+        const data = ctx.getImageData(x, 365, 1, 70).data;
+        let count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] < 100 && data[i + 1] < 100 && data[i + 2] < 100) count++;
+        }
+        return count;
+      };
+      return { light: countInk(200), firm: countInk(500), mouse: countInk(800) };
+    });
+    expect(heights.firm).toBeGreaterThan(heights.light + 10);
+    expect(heights.mouse).toBeGreaterThan(heights.light);
+    expect(heights.mouse).toBeLessThan(heights.firm);
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+  });
+
+  test("zoom and hand-pan change only the view, never the art or edit history", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const original = await page.locator("#kv2-canvas").evaluate((canvas) => canvas.toDataURL("image/png"));
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+    await expect(page.locator("#kv2-canvas")).toHaveCSS("width", /[1-9]/);
+    await page.locator("#kv2-hand").click();
+    await expect(page.locator("#kv2-hand")).toHaveAttribute("aria-pressed", "true");
+    const scroll = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      paper.scrollLeft = 300;
+      paper.scrollTop = 160;
+      const start = { left: paper.scrollLeft, top: paper.scrollTop };
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 73, pointerType: "touch",
+        button: 0, buttons: 1, clientX: 410, clientY: 310
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointermove", {
+        ...event, clientX: 350, clientY: 260
+      }));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, clientX: 350, clientY: 260
+      }));
+      return { start, end: { left: paper.scrollLeft, top: paper.scrollTop } };
+    });
+    expect(scroll.end.left).toBeGreaterThan(scroll.start.left);
+    expect(scroll.end.top).toBeGreaterThan(scroll.start.top);
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+    expect(await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"))).toBe(original);
+    await page.locator("#kv2-zoom-reset").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
