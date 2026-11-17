@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kunstrommet V2 | AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-kunstrommet-v2.css" />
+</head>
+<body class="aha-product-shell">
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard kv2" id="main">
+    <header class="aha-panel kv2-heading">
+      <div>
+        <p class="eyebrow">Ditt personlige atelier · Utviklingsversjon</p>
+        <h1>Kunstrommet V2</h1>
+        <p>Et arbeidsrom for bilder, tegning og lag – ikke et teknisk kontrollpanel.</p>
+        <p class="kv2-privacy">Alt arbeid blir på denne enheten. Ingen automatisk deling, bildeanalyse eller skybackup.</p>
+      </div>
+      <nav class="kv2-navigation" aria-label="Tilbake til Aha">
+        <a href="kunstrommet.html">Kunstrommet V1</a>
+        <a href="gallery.html">Galleri</a>
+        <a href="mindmap.html">Tankekart</a>
+      </nav>
+    </header>
+
+    <div class="kv2-workspace">
+      <section class="aha-panel kv2-editor" aria-label="Redigeringsflate">
+        <div class="kv2-titlebar">
+          <h2>Lerretet</h2>
+          <output id="kv2-status" role="status" aria-live="polite">Nytt prosjekt</output>
+        </div>
+
+        <label for="kv2-title">Navn på kunstverket</label>
+        <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
+
+        <div class="kv2-toolbar" role="group" aria-label="Tegne- og redigeringsverktøy">
+          <button id="kv2-brush" type="button" aria-pressed="true">Pensel</button>
+          <button id="kv2-eraser" type="button" aria-pressed="false">Viskelær</button>
+          <button id="kv2-move" type="button" aria-pressed="false">Flytt lag</button>
+          <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
+          <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
+            <output id="kv2-size-value">6</output></label>
+          <button id="kv2-undo" type="button">Angre</button>
+          <button id="kv2-redo" type="button">Gjør om</button>
+        </div>
+
+        <div class="kv2-paper">
+          <canvas id="kv2-canvas" width="1200" height="800"
+            aria-label="Kunstlerret. Tegn eller flytt det valgte laget med mus, finger eller penn.">Nettleseren støtter ikke lerret.</canvas>
+        </div>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Viskelæret fjerner bare innhold på det aktive laget; lagene under bevares. «Flytt lag» lar deg plassere et bilde eller et tegnelag.</p>
+
+        <label for="kv2-note">Arbeidsnotater</label>
+        <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>
+
+        <div class="kv2-actions">
+          <button id="kv2-new" type="button">Nytt prosjekt</button>
+          <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>
+          <label class="kv2-file" for="kv2-photo">Importer foto
+            <input id="kv2-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
+          </label>
+          <button id="kv2-png" type="button">Eksporter bilde (PNG)</button>
+          <button id="kv2-json" type="button">Eksporter redigerbart prosjekt</button>
+          <label class="kv2-file" for="kv2-import">Åpne prosjektfil
+            <input id="kv2-import" type="file" accept=".json,application/json" />
+          </label>
+        </div>
+        <p class="kv2-tip">Lagre lokalt for å åpne igjen med lagene intakte. Eksporter også prosjektfilen som sikkerhetskopi. Du kan importere prosjektfiler fra Kunstrommet V1, men V1 endres ikke.</p>
+      </section>
+
+      <aside class="kv2-sidebar">
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-layer-title">
+          <div class="kv2-titlebar">
+            <h2 id="kv2-layer-title">Lag</h2>
+            <small id="kv2-layer-count"></small>
+          </div>
+          <p class="kv2-tip">Øverste lag i listen ligger foran de andre.</p>
+          <div id="kv2-layers" class="kv2-layers" aria-label="Lagene i kunstverket"></div>
+          <div class="kv2-layer-actions">
+            <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
+            <button type="button" id="kv2-layer-up">Opp</button>
+            <button type="button" id="kv2-layer-down">Ned</button>
+            <button type="button" id="kv2-remove-layer">Fjern</button>
+          </div>
+          <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
+          <label for="kv2-rename">Gi laget et navn</label>
+          <input type="text" id="kv2-rename" maxlength="70" />
+          <label for="kv2-opacity">Gjennomsiktighet / opasitet</label>
+          <div class="kv2-slider">
+            <input id="kv2-opacity" type="range" min="0" max="100" step="1" value="100" />
+            <output id="kv2-opacity-value">100%</output>
+          </div>
+          <p class="kv2-tip">◉ / ○ skjuler eller viser et lag. «Låst» beskytter det mot pensel, viskelær og flytting.</p>
+        </section>
+
+        <section class="aha-panel kv2-panel" aria-labelledby="kv2-library-title">
+          <h2 id="kv2-library-title">Mine prosjekter</h2>
+          <div id="kv2-projects" class="kv2-projects" aria-live="polite"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script src="js/ahaKunstrommetV2.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
