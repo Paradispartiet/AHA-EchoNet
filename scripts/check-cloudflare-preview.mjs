@@ -97,6 +97,10 @@ if (!chamberBundle.includes("let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_
 const previewDb = await readFile(path.join(dist, "js/ahaDb.js"), "utf8").catch(() => "");
 if (!previewDb.includes("AHA_CLOUDFLARE_PREVIEW_DATA_API_READ_ONLY") ||
     !previewDb.includes("AHA_PREVIEW_READ_ONLY") ||
+    !previewDb.includes('if (name === "schema") return (schemaName) => safeRest(target.schema(schemaName));') ||
+    !previewDb.includes('if (name === "rest") return safeRest(target.rest);') ||
+    !previewDb.includes("function safeRest(rest)") ||
+    !previewDb.includes("PostgREST builder fields such as .method/.body") ||
     !previewDb.includes("if (name === \"rpc\") return () => denyQuery();")) {
   errors.push("Cloudflare preview must block all Supabase Data API mutations and RPC calls.");
 }
