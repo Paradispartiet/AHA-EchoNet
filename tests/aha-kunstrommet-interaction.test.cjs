@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
+const layersSource = fs.readFileSync(path.join(__dirname, "../js/ahaKunstrommetLayers.js"), "utf8");
 const source = fs.readFileSync(path.join(__dirname, "../js/ahaKunstrommet.js"), "utf8");
 const handlers = new Map();
 let filesDownloaded = [];
@@ -98,6 +99,7 @@ const URL = {
   revokeObjectURL(url) { urls.delete(url); }
 };
 
+vm.runInNewContext(layersSource, { window, document, console }, { filename: "ahaKunstrommetLayers.js" });
 vm.runInNewContext(source, { window, document, Blob, URL, console, setTimeout, queueMicrotask }, { filename: "ahaKunstrommet.js" });
 assert.ok(domReady, "DOM initialization should register");
 assert.equal(data.size, 0, "No write on script load");
