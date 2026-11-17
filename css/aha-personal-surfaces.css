@@ -384,24 +384,16 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
   background: rgba(255,255,255,.025);
 }
 
-/* Insta keeps its dedicated feed UI; only the product shell is flattened. */
-.aha-insta-page > .aha-personal-header {
-  margin-bottom: 0;
-}
-
-.aha-insta-page > .insta-profile-section {
-  border-color: rgba(116,173,255,.16);
-  box-shadow: var(--aha-shadow-soft);
-}
-
-.aha-insta-page > .insta-stories-section {
+/* Insta now uses an app profile header and secondary feed panel.
+   Preserve the shared feed surface styling for nested sections. */
+.aha-insta-page .insta-stories-section {
   border: 0;
   background: transparent;
   box-shadow: none;
   padding-inline: 4px;
 }
 
-.aha-insta-page > .insta-feed-section {
+.aha-insta-page .insta-feed-section {
   border: 0;
   background: transparent;
   box-shadow: none;

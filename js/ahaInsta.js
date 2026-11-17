@@ -130,7 +130,9 @@
     return String(value ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
   }
 
   function detectMediaType(src = "") {
@@ -751,7 +753,10 @@
   function getFilteredPosts(posts) {
     const profile = ensureProfile();
     if (currentFeedFilter === "mine") {
-      return posts.filter((post) => getPostOwner(post).username === profile.username);
+      return posts.filter((post) => {
+        const owner = getPostOwner(post);
+        return owner.id === profile.id || owner.username === profile.username;
+      });
     }
 
     if (currentFeedFilter === "following") {
@@ -816,7 +821,10 @@
 
   function renderProfile() {
     const profile = ensureProfile();
-    const postCount = load().filter((post) => !post.deleted_at && getPostOwner(post).username === profile.username).length;
+    const postCount = load().filter((post) => {
+      const owner = getPostOwner(post);
+      return !isUnavailableRecord(post) && (owner.id === profile.id || owner.username === profile.username);
+    }).length;
     const followerCount = loadFollows().filter((entry) => entry.following_username === profile.username).length;
     const followingCount = loadFollows().filter((entry) => entry.follower_id === profile.id).length;
 
@@ -918,7 +926,7 @@
     const likeCount = getLikeCount(post.id);
 
     return `
-      <article class="insta-post">
+      <article class="insta-post" data-insta-post-id="${escapeHtml(post.id)}" tabindex="-1">
         <header class="insta-post-header">
           ${renderAvatar(owner.username, "", "insta-avatar-sm")}
           <div class="insta-post-header-meta">
@@ -1456,11 +1464,41 @@
     </article>`;
   }
 
+  function renderProfileGrid(source) {
+    const mount = document.getElementById("insta-profile-grid");
+    if (!mount) return;
+    const profile = ensureProfile();
+    const posts = (Array.isArray(source) ? source : load())
+      .filter((post) => !isUnavailableRecord(post))
+      .filter((post) => {
+        const owner = getPostOwner(post);
+        return owner.id === profile.id || owner.username === profile.username;
+      })
+      .sort((a, b) => (new Date(b.created_at).getTime() || 0) - (new Date(a.created_at).getTime() || 0));
+
+    if (!posts.length) {
+      mount.innerHTML = '<p class="insta-grid-empty" data-empty-state="profile_no_data">Ingen bilder ennå. Bruk + Ny post for å legge til ditt første bilde.</p>';
+      return;
+    }
+
+    mount.innerHTML = posts.map((post) => {
+      const src = String(post.src || "").trim();
+      const media = !src
+        ? '<span class="insta-grid-no-media">Ingen bilde</span>'
+        : post.content_type === "video"
+          ? `<video src="${escapeHtml(src)}" muted playsinline preload="metadata"></video><span class="insta-grid-video-label">Video</span>`
+          : `<img src="${escapeHtml(src)}" loading="lazy" alt="" />`;
+      const title = String(post.title || post.caption || "Bildepost").trim();
+      return `<button type="button" class="insta-grid-tile" data-insta-open-post="${escapeHtml(post.id)}" aria-label="Se ${escapeHtml(title.slice(0, 90))}">${media}</button>`;
+    }).join("");
+  }
+
   function render(source) {
     const mount = document.getElementById("insta-list");
     if (!mount) return;
 
     const activePosts = (Array.isArray(source) ? source : load()).filter((post) => !isUnavailableRecord(post));
+    renderProfileGrid(activePosts);
     const posts = getFilteredPosts(activePosts);
     if (!posts.length) {
       mount.innerHTML = buildEmptyFeedMarkup(activePosts.length);
@@ -1484,6 +1522,7 @@
     save(entries);
     persistPost(entries[index]);
     render(entries);
+    renderProfile();
     return entries[index];
   }
 
@@ -1565,11 +1604,45 @@
       persistPost(post);
     }
     render(posts);
+    renderProfile();
     return post;
+  }
+
+  function openInstaComposer() {
+    const panel = document.getElementById("insta-compose-panel");
+    if (!panel) return;
+    panel.open = true;
+    document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", "true");
+    document.getElementById("insta-file")?.focus?.();
+    panel.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }
+
+  function openProfilePost(postId) {
+    const panel = document.getElementById("insta-feed-panel");
+    if (panel) panel.open = true;
+    setFeedFilter("mine");
+    const posts = Array.from(document.querySelectorAll(".insta-post[data-insta-post-id]"));
+    const card = posts.find((post) => post.dataset.instaPostId === postId);
+    card?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    card?.focus?.({ preventScroll: true });
   }
 
   function bind() {
     const form = document.getElementById("insta-form");
+    document.getElementById("insta-new-post")?.addEventListener("click", openInstaComposer);
+    document.getElementById("insta-cancel-post")?.addEventListener("click", () => {
+      const panel = document.getElementById("insta-compose-panel");
+      if (panel) panel.open = false;
+      document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", "false");
+      document.getElementById("insta-new-post")?.focus?.();
+    });
+    document.getElementById("insta-compose-panel")?.addEventListener("toggle", (event) => {
+      document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", String(event.target.open));
+    });
+    document.getElementById("insta-profile-grid")?.addEventListener("click", (event) => {
+      const button = event.target instanceof HTMLElement ? event.target.closest("button[data-insta-open-post]") : null;
+      if (button?.dataset.instaOpenPost) openProfilePost(button.dataset.instaOpenPost);
+    });
     const fileInput = document.getElementById("insta-file");
     const linkInput = document.getElementById("insta-src");
     const submit = document.getElementById("insta-submit");
@@ -1624,6 +1697,10 @@
         if (caption) caption.value = "";
         resetSelectedPhoto();
         setFeedFilter("all");
+        const panel = document.getElementById("insta-compose-panel");
+        if (panel) panel.open = false;
+        document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", "false");
+        document.getElementById("insta-profile-grid")?.scrollIntoView?.({ block: "start", behavior: "smooth" });
         updateComposeStatus("Bildet er lagret lokalt på denne iPaden. Ikke publisert eksternt.");
       } catch (error) {
         const quota = error?.name === "QuotaExceededError";
@@ -1639,9 +1716,7 @@
       const target = event.target instanceof HTMLElement ? event.target.closest("button") : null;
       if (!target) return;
       if (target.dataset.instaOpenCompose) {
-        const section = document.getElementById("insta-compose-panel");
-        if (section) section.open = true;
-        document.getElementById("insta-file")?.focus?.();
+        openInstaComposer();
         return;
       }
       if (target.dataset.instaShowAll) {
@@ -1718,6 +1793,9 @@
     saveProfile,
     ensureProfile,
     renderProfile,
+    renderProfileGrid,
+    openInstaComposer,
+    openProfilePost,
     loadLikes,
     saveLikes,
     toggleLike,
