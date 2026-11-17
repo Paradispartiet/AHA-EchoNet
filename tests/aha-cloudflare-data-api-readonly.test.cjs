@@ -23,6 +23,8 @@ const counters = { auth:0, read:0, upsert:0, insert:0, update:0, delete:0, rpc:0
 const row = { id:"fixture-user-1" };
 function queryBuilder(table) {
   const query = {
+    method:"GET",
+    body:null,
     select() { return this; },
     eq() { return this; },
     limit() { return this; },
@@ -37,10 +39,19 @@ function queryBuilder(table) {
   };
   return query;
 }
+function restClient() {
+  return {
+    from: (table) => queryBuilder(table),
+    rpc: () => {counters.rpc++;throw Error("Unexpected scoped RPC");},
+    schema: () => restClient()
+  };
+}
 const client = {
   auth: {async getUser(){counters.auth++;return {data:{user:{id:row.id}},error:null};}},
   from: (table) => queryBuilder(table),
-  rpc: () => {counters.rpc++;throw Error("Unexpected RPC");}
+  rpc: () => {counters.rpc++;throw Error("Unexpected RPC");},
+  schema: () => restClient(),
+  rest: restClient()
 };
 const window = {
   AHA_SUPABASE_URL:"https://fixture.invalid",
@@ -73,6 +84,27 @@ assert.equal(window.AHAPreviewDataApiReadOnly.enabled,true);
   const rpc = await db.getClient().rpc("aha_match_insights",{query_embedding:[]});
   assert.equal(rpc.error.code,"AHA_PREVIEW_READ_ONLY");
 
+  // Guard the alternative PostgREST entry points used by supabase-js.
+  for (const scoped of [
+    db.getClient().schema("public"),
+    db.getClient().rest,
+    db.getClient().rest.schema("public")
+  ]) {
+    const forbiddenWrite=await scoped.from("aha_feed_posts").insert({text:"private synthetic"});
+    assert.equal(forbiddenWrite.error.code,"AHA_PREVIEW_READ_ONLY");
+    const forbiddenRpc=await scoped.rpc("unsafe_mutation", {});
+    assert.equal(forbiddenRpc.error.code,"AHA_PREVIEW_READ_ONLY");
+    const allowedRead=await scoped.from("aha_profiles").select("id").eq("id",row.id).maybeSingle();
+    assert.equal(allowedRead.data.id,row.id);
+  }
+  // An approved read builder must not be editable into a POST before .then().
+  const readBuilder=db.getClient().from("aha_profiles").select("id");
+  assert.equal(Reflect.set(readBuilder,"method","POST"),false);
+  assert.equal(readBuilder.method,"GET");
+  assert.equal(Reflect.set(readBuilder,"body",{text:"private"}),false);
+  assert.equal(readBuilder.body,null);
+  assert.equal(Reflect.set(db.getClient(),"rpc",()=>null),false);
+
   assert.equal(counters.upsert+counters.insert+counters.update+counters.delete+counters.rpc,0,
     "No Supabase data mutation/RPC may be invoked");
   assert.ok(counters.read>0);
@@ -85,5 +117,5 @@ assert.equal(window.AHAPreviewDataApiReadOnly.enabled,true);
   assert.equal(feed.error?.code,"AHA_PREVIEW_READ_ONLY");
   assert.equal(counters.upsert,0,"Feed must not write when signed in");
 
-  console.log("AHA Cloudflare data API read-only regression: PASS; Auth/reads preserved, writes/RPC disabled.");
+  console.log("AHA Cloudflare data API read-only regression: PASS; Auth/reads preserved, writes/RPC/schema/rest bypass disabled.");
 })().catch(error=>{console.error(error);process.exitCode=1;});
