@@ -90,6 +90,20 @@ To ulike og eksplisitt adskilte kontroller er derfor lagt til:
 
 **Tolkning:** `POLICY_PREFLIGHT_OK` betyr kun at de forventede policyuttrykkene *ser ut til* å være installert. En manglende valgfri embeddingtabell må vurderes separat, ikke opprettes automatisk. Katalogkontrollen kan ikke oppdage alle semantiske eller indirekte lekkasjer. **Før første ekte innholdsimport kreves en separat live-test med to godkjente testbrukere fra faktisk browser/API**, bekreftet profilstatus på «Mitt AHA», kontrollert eksport/restore og eksplisitt brukerhandling. Ikke opprett ekstra Supabase-prosjekter eller gjenaktiver Azure.
 
+### Port B.3 – sperr også appinnhold fra Supabase Data API (17.11)
+
+**Årsak:** Sperren i #1049 hindrer automatisk `aha_profiles`-upsert ved innlogging, men `js/ahaFeed.js` forsøker fremdeles å kalle `AHARepository.saveFeedPost` når brukeren legger til et innlegg. `js/ahaSources.js` kan tilsvarende lagre kilder, og `js/ahaEmbeddings.js` bruker Supabase direkte. Dette er **ikke** tilstrekkelig isolert før AHA-prosjektets live RLS og grants er kontrollert.
+
+Cloudflare-preview-bygget legger derfor nå en egen `js/ahaPreviewDataApiReadOnly.js`-beskyttelse **kun inn i den kopierte `js/ahaDb.js`**, slik at alle moduler som bruker `AHADb.getClient()` deler samme grense:
+
+- Supabase Auth `getUser`, `getSession` og vanlig innlogging kan fortsette, og godkjente Data API `SELECT`-spørringer kan fortsatt lese egen profilrad.
+- PostgREST `insert`, `upsert`, `update`, `delete` og alle `rpc`-kall fra denne klienten blir avvist **før nettverksforespørsel** med `AHA_PREVIEW_READ_ONLY`; ingen innholdsrader lastes opp gjennom denne klienten.
+- Appens lokale lagring/Feed/Insta-opplevelse kan fortsette, men må **ikke** omtales som sky-synkronisert. En eksplisitt database-lagringshandling vil returnere kontrollert avslag.
+- CI tester med falsk Supabase-klient at `Auth` og egenprofil-lesing virker, mens alle skrivemåter og Feed-innleggets repository-metode får avslag uten nettverkskall. Byggekontrollen feiler om sperren mangler fra Cloudflare-distribusjonen.
+- Dette påvirker **ikke original** `js/ahaDb.js` på GitHub Pages og oppretter ingen database, Azure-prosess eller betalt tjeneste.
+
+**Begrensning:** Dette er en Data API-sperre for appens `AHADb`-klient, ikke en generell nettverksbrannmur. Direkte HTTP/fetch-kall, Supabase Storage/Edge Functions og eventuelle andre klienter må fortsatt vurderes separat før private data importeres. Viderefør Cloudflare Access og manuell deploy. Ingen live AHA RLS/grants eller backup er bekreftet.
+
 ### Port B.2 – forhindre profilskriving ved Auth i Cloudflare-preview (16.11)
 
 **Oppdaget etter de tidligere grønne innloggingstestene:** `js/ahaAuth.js` kaller `ensureProfile()` under statusoppdatering, og den opprinnelige funksjonen gjør `upsert` av `public.aha_profiles` selv for en allerede innlogget bruker. `js/ahaAuthCallback.js` har også en fallback som gjør `upsert` når Supabase-innloggingen fullføres. Det var dermed **ikke korrekt å beskrive hele Auth-flyten som skrivebeskyttet**, selv om den manuelle profilstesten og legacy chamber-synk er skrivebeskyttede/sperret. Eldre preview-innlogging kan allerede ha opprettet eller oppdatert en profilrad; det er **ikke bekreftet** fra hosted AHA DB-03.
