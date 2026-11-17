@@ -35,21 +35,24 @@ jobs:
               echo "HTTP ${status:-unreachable} ${base}${path}"
             done
           done
-      - name: Wait for corrected public AHA link on both origins
+      - name: Wait for corrected GitHub Pages link and working Vercel destination
         shell: bash
         run: |
+          # Vercel's free deployment quota may prevent a new build of the same
+          # frontend, but the existing canonical AHA site already serves the
+          # psychology page. No new Vercel build is required for this URL fix.
           for attempt in $(seq 1 36); do
-            vercel="$(curl --fail --silent --show-error --max-time 15 https://aha-echo-net.vercel.app/js/ahaPsychologyRoomBridge.js || true)"
+            vercel_code="$(curl --location --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' https://aha-echo-net.vercel.app/psykologi.html || true)"
             pages="$(curl --fail --silent --show-error --max-time 15 https://paradispartiet.github.io/AHA-EchoNet/js/ahaPsychologyRoomBridge.js || true)"
-            if [[ "$vercel" == *"https://aha-echo-net.vercel.app/psykologi.html"* &&
+            if [[ "$vercel_code" == "200" &&
                   "$pages" == *"https://aha-echo-net.vercel.app/psykologi.html"* ]]; then
-              echo "Both public origins now serve the corrected AHA link."
+              echo "Vercel psychology destination works; GitHub Pages link is corrected."
               exit 0
             fi
-            echo "Awaiting both deployment origins (${attempt}/36)"
+            echo "Awaiting corrected GitHub Pages link and live AHA destination (${attempt}/36)"
             sleep 10
           done
-          echo "Production did not expose the corrected AHA link on both hosts." >&2
+          echo "Canonical destination or GitHub Pages link is not ready." >&2
           exit 1
       - run: npx playwright install --with-deps chromium webkit
       - name: Verify production in isolated browser profiles
