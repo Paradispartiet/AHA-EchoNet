@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 
-const AHA_ORIGIN = "https://aha-echonet.vercel.app";
+const AHA_ORIGIN = "https://aha-echo-net.vercel.app";
 const HISTORY_GO_ORIGIN = "https://paradispartiet.github.io";
 const FAKE_ORIGIN = "https://untrusted.example";
 const AHA_FILE = fs.readFileSync("psykologi.html", "utf8");
