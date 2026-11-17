@@ -6,6 +6,7 @@ const vm = require("node:vm");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "kunstrommet.html"), "utf8");
 const js = fs.readFileSync(path.join(root, "js/ahaKunstrommet.js"), "utf8");
+const layersJs = fs.readFileSync(path.join(root, "js/ahaKunstrommetLayers.js"), "utf8");
 const registry = fs.readFileSync(path.join(root, "js/ahaModules.js"), "utf8");
 const nav = fs.readFileSync(path.join(root, "js/ahaGlobalNav.js"), "utf8");
 const matrix = fs.readFileSync(path.join(root, "docs/AHA_MODULE_MATURITY_MATRIX.md"), "utf8");
@@ -37,6 +38,7 @@ const document = {
   addEventListener: (type, callback) => { if (type === "DOMContentLoaded") domReadyHandler = callback; }
 };
 const window = { AHAIngest: { ingest: () => { autoIngestCount++; } } };
+vm.runInNewContext(layersJs, { window, document, console }, { filename: "ahaKunstrommetLayers.js" });
 vm.runInNewContext(js, { window, document, console }, { filename: "ahaKunstrommet.js" });
 assert.ok(domReadyHandler, "Initializer must wait for DOM ready");
 assert.equal(autoIngestCount, 0, "AHA must not ingest without user action");
