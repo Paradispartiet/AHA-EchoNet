@@ -38,7 +38,9 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
     await page.locator("#kv2-add-layer").click();
     await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
-    await page.locator("#kv2-color").fill("#1b58a6");
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#1b58a6"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await stroke(page);
     await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
 
@@ -78,13 +80,19 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
   test("transparent eraser affects only active layer; undo restores pixels", async ({ page }) => {
     await page.goto("/kunstrommet-v2.html", { waitUntil: "domcontentloaded" });
-    await page.locator("#kv2-size").fill("40");
-    await page.locator("#kv2-color").fill("#1b58a6");
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "40"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#1b58a6"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await stroke(page);
     let p = await pixel(page);
     expect(p[2]).toBeGreaterThan(p[0]);
     await page.locator("#kv2-add-layer").click();
-    await page.locator("#kv2-color").fill("#dc3127");
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#dc3127"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await stroke(page);
     p = await pixel(page);
     expect(p[0]).toBeGreaterThan(p[2]);
