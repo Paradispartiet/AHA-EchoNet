@@ -130,7 +130,32 @@
     return asArray(paths);
   }
 
+  function isPrivatePsychologyInsight(refId) {
+    const id = asText(refId, "");
+    if (!id) return false;
+    // Prefix is retained even if a promoted insight was subsequently removed.
+    if (id.startsWith("aha_psych_insight_")) return true;
+    const chamber = loadRawByKey(INSIGHTS_KEY, { insights: [] });
+    return asArray(chamber?.insights).some((insight) => insight?.id === id
+      && insight?.source_app === "aha_psychology_room"
+      && insight?.meta?.manual_promotion === true);
+  }
+
+  function includesPrivatePsychologyInsight(path) {
+    const linkedLists = asArray(loadRawByKey(LISTS_KEY, []));
+    return asArray(path?.steps).some((step) => {
+      if (step?.source === "aha_insights") return isPrivatePsychologyInsight(step.refId || step.ref_id);
+      if (step?.source !== "aha_lists") return false;
+      const list = linkedLists.find((item) => item?.id === (step.refId || step.ref_id));
+      return asArray(list?.items).some((item) => item?.source === "aha_insights"
+        && isPrivatePsychologyInsight(item?.refId || item?.ref_id));
+    });
+  }
+
   async function persistPath(path) {
+    if (includesPrivatePsychologyInsight(path)) {
+      return { ok: false, fallback: "localOnly", psychology_privacy_guard: true };
+    }
     if (["aha_analysis_artifacts_v1", "aha_projection_materializer_v2", "insight_review_path_v1"].includes(path?.meta?.createdBy)) {
       return { ok: false, fallback: "localOnly", generated_artifact_local_only: true };
     }
@@ -204,7 +229,9 @@
     try {
       const savePath = global.AHARepository?.savePath;
       if (!savePath) return null;
-      return await Promise.allSettled(asArray(paths).map((path) => savePath.call(global.AHARepository, path)));
+      return await Promise.allSettled(asArray(paths)
+        .filter((path) => !includesPrivatePsychologyInsight(path))
+        .map((path) => savePath.call(global.AHARepository, path)));
     } catch (error) {
       return { ok: false, error };
     }
