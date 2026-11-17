@@ -94,6 +94,15 @@ if (!chamberBundle.includes("let syncDisabled = true; // AHA_CLOUDFLARE_PREVIEW_
   errors.push("Cloudflare preview must disable legacy chamber auto-sync without modifying original source.");
 }
 
+const previewAuth = await readFile(path.join(dist, "js/ahaAuth.js"), "utf8").catch(() => "");
+if (!previewAuth.includes("AHA_CLOUDFLARE_PREVIEW_AUTH_PROFILE_READ_ONLY") ||
+    !previewAuth.includes("AHA_CLOUDFLARE_PREVIEW_NO_PROFILE_NAME_WRITE")) {
+  errors.push("Cloudflare preview must stop all implicit Supabase Auth profile upserts and profile-name writes.");
+}
+const previewCallback = await readFile(path.join(dist, "js/ahaAuthCallback.js"), "utf8").catch(() => "");
+if (!previewCallback.includes("AHA_CLOUDFLARE_PREVIEW_CALLBACK_READ_ONLY")) {
+  errors.push("Cloudflare Auth callback must not upsert a profile when login completes.");
+}
 
 for (const [filename, identifiers] of Object.entries(criticalPages)) {
   if (!(await exists(filename))) {
