@@ -7,6 +7,8 @@ on:
       - ".github/workflows/aha-psychology-production-smoke.yml"
       - "playwright.psychology-live.config.cjs"
       - "tests/live/aha-psychology-production.spec.cjs"
+      - "js/ahaPsychologyRoomBridge.js"
+      - "psykologi.html"
   workflow_dispatch:
 
 permissions:
@@ -33,6 +35,22 @@ jobs:
               echo "HTTP ${status:-unreachable} ${base}${path}"
             done
           done
+      - name: Wait for corrected public AHA link on both origins
+        shell: bash
+        run: |
+          for attempt in $(seq 1 36); do
+            vercel="$(curl --fail --silent --show-error --max-time 15 https://aha-echo-net.vercel.app/js/ahaPsychologyRoomBridge.js || true)"
+            pages="$(curl --fail --silent --show-error --max-time 15 https://paradispartiet.github.io/AHA-EchoNet/js/ahaPsychologyRoomBridge.js || true)"
+            if [[ "$vercel" == *"https://aha-echo-net.vercel.app/psykologi.html"* &&
+                  "$pages" == *"https://aha-echo-net.vercel.app/psykologi.html"* ]]; then
+              echo "Both public origins now serve the corrected AHA link."
+              exit 0
+            fi
+            echo "Awaiting both deployment origins (${attempt}/36)"
+            sleep 10
+          done
+          echo "Production did not expose the corrected AHA link on both hosts." >&2
+          exit 1
       - run: npx playwright install --with-deps chromium webkit
       - name: Verify production in isolated browser profiles
         run: npx playwright test --config=playwright.psychology-live.config.cjs
