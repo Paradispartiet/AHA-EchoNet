@@ -2,14 +2,16 @@
 
 ## Avgrensning
 
-Denne utviklingsversjonen bygger på head til V1-PR #1043, men ligger i separat gren og separat draft-PR. PR-en skal ha V1-grenen som base frem til V1 eventuelt merges. V1-koden, databasen og eksisterende Aha Galleri forblir uendret. På V1-siden finnes kun en frivillig lenke til V2.
+PR #1050 er nå den **eneste aktive Kunstrommet-PR-en**, direkte mot main. V1-PR #1043 ble lukket som erstattet, ikke merget. Hele V1-grunnlaget finnes i denne PR-en, men brukerne får **bare én redigeringsside**, kunstrommet.html. Den gamle kunstrommet-v2.html videresender til den ene hovedsiden.
+
+V1-databasen beholdes uendret, men eldre skisser kan vises i samme rom og åpnes som nye redigerbare V2-kopier. Samlinger, tankekart og eksisterende Galleri gjenbrukes; ingen ny Galleri-database opprettes. V1-testfixtur finnes bare under tests/fixtures for regresjoner.
 
 V2 er ennå ikke Photoshop og skal ikke markedsføres som produksjonsklar. Målet for første milepæl er tre–fire faktiske lag, fotoimport, flytting, tegning, ekte transparent viskelær, lagrekkefølge, synlighet, låsing, opasitet og gjenåpning av redigerbare prosjekter.
 
 ## Løsning
 
-- Egen side: kunstrommet-v2.html.
-- Egen implementasjon: js/ahaKunstrommetV2.js.
+- Én hovedside: kunstrommet.html; eldre V2-lenke videresendes.
+- Én redigeringsmotor: js/ahaKunstrommetV2.js, med en metadata-basert Aha/legacy-bridge i js/ahaKunstrommetBridge.js.
 - Egen responsiv CSS: css/aha-kunstrommet-v2.css.
 - 1200 × 800 rasterlerret, inntil 8 lokale lag (tegnelag eller importerte JPG/PNG/WebP), maks 12 MB per foto.
 - Separat transparent Canvas for hvert lag; kompositt vises med hvit bakgrunn.
@@ -40,3 +42,11 @@ V2 er ennå ikke Photoshop og skal ikke markedsføres som produksjonsklar. Måle
 ## Neste trinn (ikke implementert i denne PR)
 
 Trykkfølsomme pensler, multitouch pinch-zoom, presise utvalgsverktøy, avanserte masker, ikke-destruktive bildejusteringer, tekst- og vektorlag, store dokumenter, PSD-format og valgfrie Aha-referanser for V2. Bruk eksisterende Aha Galleri – ikke lag et nytt galleri.
+
+## Konsolidering (17. november 2026)
+
+- PR #1043: lukket som erstattet, uten merge.
+- PR #1050: eneste aktive Kunstrommet-PR mot main, fortsatt draft.
+- Ingen automatisk migrering eller destruktiv oppdatering av eksisterende V1-skisser.
+- Aha/Galleri-tjenestene er felles; bildedata forblir lokalt og bare eksplisitte metadata kan overføres.
+- Både gammel V1-frontend (testfixtur) og ny konsolidert frontend skal dekkes av CI før publisering.
