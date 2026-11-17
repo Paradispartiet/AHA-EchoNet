@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const editor = global.AHAKunstrommetV2;
   if (!editor || !$("kv2-canvas")) return;
+  let openedLegacyLink = null; // { sourceId, copyId }, only for deep-linked V1 artworks
 
   function linkStatus(message) {
     const node = $("kv2-link-state");
@@ -205,11 +206,12 @@
     if (global.AHA_CONFIG?.lists?.enableDatabaseSync === true) {
       linkStatus("Koblingene kan ikke endres når databasesynkronisering er aktiv."); return;
     }
+    const sourceId = openedLegacyLink?.copyId === active.id ? openedLegacyLink.sourceId : active.id;
     const refs = global.AHAKunstrommetReferences;
     if (!refs?.unlinkArtwork || !refs?.remove) { linkStatus("Referansearkivet er utilgjengelig."); return; }
     try {
-      const count = refs.unlinkArtwork(active.id);
-      refs.remove(active.id);
+      const count = refs.unlinkArtwork(sourceId);
+      refs.remove(sourceId);
       linkStatus("Fjernet " + count + " lokale koblinger. Kunstverket beholdes.");
     } catch (error) { linkStatus("Kunne ikke fjerne koblinger: " + error.message); }
   }
@@ -246,11 +248,15 @@
     catch (_) { linkStatus("Ugyldig lenke til kunstverk."); return; }
     if (!id || id.length > 128) { linkStatus("Ugyldig lenke til kunstverk."); return; }
     try {
+      openedLegacyLink = null;
       if (await editor.openSaved(id)) return;
       const original = (await legacyRecords()).find((item) => item.id === id);
       if (original) {
         const opened = await editor.openLegacyCopy(original);
-        if (opened) linkStatus("Eldre kunstverk åpnet som redigerbar kopi. Originalen beholdes.");
+        if (opened) {
+          openedLegacyLink = { sourceId: id, copyId: editor.summary()?.id };
+          linkStatus("Eldre kunstverk åpnet som redigerbar kopi. Originalen beholdes.");
+        }
       } else {
         linkStatus("Kunstverket er ikke lagret på denne enheten eller denne lokale profilen.");
       }
