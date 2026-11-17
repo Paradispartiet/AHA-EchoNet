@@ -161,7 +161,7 @@
       if (submit) submit.disabled = true;
       list.textContent = "Dette private arkivet åpnes ikke på GitHub Pages sitt delte domene.";
       const link = document.createElement("a");
-      link.href = "https://aha-echonet.vercel.app/psykologi.html";
+      link.href = "https://aha-echo-net.vercel.app/psykologi.html";
       link.textContent = "Åpne Psykologirommet på AHAs separate adresse";
       list.append(link);
       status.textContent = "Bruk AHA-adressen for å holde Psykologirommet atskilt fra andre GitHub Pages-apper.";
