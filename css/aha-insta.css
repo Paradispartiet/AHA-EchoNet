@@ -56,6 +56,23 @@
   border: 1px solid var(--aha-line);
   border-radius: 16px;
 }
+.insta-composer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.insta-composer-heading h2 { margin: 0; font-size: 1.15rem; }
+.insta-composer-heading button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--aha-text);
+  font-size: 1.7rem;
+  cursor: pointer;
+}
 .insta-profile-shell {
   padding: 0 0 18px;
   border-bottom: 1px solid var(--aha-line);
