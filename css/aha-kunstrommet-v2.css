@@ -53,3 +53,10 @@
   .kv2-toolbar { align-items: stretch; }
   .kv2-toolbar label { width: 100%; justify-content: space-between; }
 }
+
+/* Single Kunstrommet: small, unobtrusive existing Aha integration panels. */
+.kv2-inspiration { border-top: 1px solid #d5dbd5; padding: 9px 0; }
+.kv2-inspiration strong { display: block; overflow-wrap: anywhere; }
+.kv2-inspiration button { font-size: .84rem; }
+#kv2-collection-select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #bcc4be; border-radius: 10px; background: #fff; color: #222; }
+#kv2-unlink-aha { grid-column: 1 / -1; }
