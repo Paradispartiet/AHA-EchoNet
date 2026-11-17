@@ -336,7 +336,26 @@
     return asArray(lists);
   }
 
+  function isPrivatePsychologyInsight(refId) {
+    const id = asText(refId, "");
+    if (!id) return false;
+    // Prefix is retained even if a promoted insight was subsequently removed.
+    if (id.startsWith("aha_psych_insight_")) return true;
+    const chamber = loadRawByKey(INSIGHTS_KEY, { insights: [] });
+    return asArray(chamber?.insights).some((insight) => insight?.id === id
+      && insight?.source_app === "aha_psychology_room"
+      && insight?.meta?.manual_promotion === true);
+  }
+
+  function includesPrivatePsychologyInsight(list) {
+    return asArray(list?.items).some((item) =>
+      item?.source === "aha_insights" && isPrivatePsychologyInsight(item?.refId || item?.ref_id));
+  }
+
   async function persistList(list) {
+    if (includesPrivatePsychologyInsight(list)) {
+      return { ok: false, fallback: "localOnly", psychology_privacy_guard: true };
+    }
     if (list?.meta?.createdBy === "aha_projection_materializer_v2") {
       return { ok: false, fallback: "localOnly", projection_artifact_local_only: true };
     }
@@ -393,7 +412,7 @@
       return { ok: false, fallback: "localOnly", database_sync_disabled: true };
     }
     if (!global.AHARepository?.saveList) return { ok: false, fallback: "localOnly", repository_unavailable: true };
-    return Promise.allSettled(asArray(lists).map((list) => {
+    return Promise.allSettled(asArray(lists).filter((list) => !includesPrivatePsychologyInsight(list)).map((list) => {
       return Promise.resolve().then(() => global.AHARepository.saveList(list));
     }));
   }
