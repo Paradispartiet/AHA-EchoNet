@@ -23,7 +23,7 @@ assert.match(js, /destination-out/);
 assert.match(js, /aha_kunstrommet_v2/);
 assert.doesNotMatch(js, /\bfetch\s*\(|\bXMLHttpRequest\b|\bAHAIngest\b/);
 assert.match(html, /ahaKunstrommetV2\.js/);
-assert.match(html, /kunstrommet\.html/);
+assert.match(html, /<title>Kunstrommet \| AHA<\/title>/); // canonical page, not a link to itself
 assert.match(html, /gallery\.html/);
 assert.match(v1, /aha_kunstrommet_v1/);
 
