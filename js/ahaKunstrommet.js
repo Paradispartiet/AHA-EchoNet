@@ -8,6 +8,8 @@
   const HEIGHT = 800;
   const MAX_STROKES = 3000;
   const MAX_POINTS = 2400;
+  const Layers = global.AHAKunstrommetLayers;
+  if (!Layers) throw new Error("Kunstrommet lagmodul mangler.");
   const $ = (id) => document.getElementById(id);
   const canvas = $("kunstrommet-canvas");
   if (!canvas) return;
@@ -77,8 +79,8 @@
 
   function newRecord() {
     const now = new Date().toISOString();
-    return { id: uid(), owner: scope(), title: "", note: "", strokes: [], created_at: now, updated_at: now,
-      local_only: true, shared: false, analyzed_image: false };
+    return Layers.normalize({ id: uid(), owner: scope(), title: "", note: "", strokes: [],
+      created_at: now, updated_at: now, local_only: true, shared: false, analyzed_image: false });
   }
 
   function status(message) { $("kunstrommet-save-state").textContent = message; }
@@ -113,10 +115,37 @@
     target.stroke();
   }
 
+  function paintComposition(record, target) {
+    const model = Layers.normalize(record || { strokes: [] });
+    // Each layer is rendered in z-order (bottom → top).
+    // The offscreen pass applies opacity to the WHOLE layer, not each stroke.
+    for (const layer of model.layers) {
+      if (!layer.visible || layer.opacity <= 0) continue;
+      const strokes = model.strokes.filter((stroke) => stroke.layerId === layer.id);
+      if (!strokes.length) continue;
+      if (layer.opacity >= 1 || typeof target.drawImage !== "function") {
+        const former = target.globalAlpha ?? 1;
+        if (layer.opacity < 1) target.globalAlpha = layer.opacity; // fallback for fake canvas
+        strokes.forEach((stroke) => drawStroke(stroke, target));
+        target.globalAlpha = former;
+        continue;
+      }
+      const offscreen = document.createElement("canvas");
+      offscreen.width = WIDTH; offscreen.height = HEIGHT;
+      const painter = offscreen.getContext?.("2d");
+      if (!painter) continue;
+      strokes.forEach((stroke) => drawStroke(stroke, painter));
+      const former = target.globalAlpha ?? 1;
+      target.globalAlpha = layer.opacity;
+      target.drawImage(offscreen, 0, 0, WIDTH, HEIGHT);
+      target.globalAlpha = former;
+    }
+  }
+
   function redraw() {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    (current?.strokes || []).forEach((stroke) => drawStroke(stroke));
+    paintComposition(current, ctx);
     if (activeStroke) drawStroke(activeStroke);
   }
 
@@ -128,10 +157,12 @@
 
   function start(event) {
     if (!current || activeStroke || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (!Layers.isEditable(current)) { status("Velg et synlig, ulåst lag med gjennomsiktighet over 0."); return; }
     if (current.strokes.length >= MAX_STROKES) { status("Grense nådd. Eksporter eller start en ny skisse."); return; }
     event.preventDefault();
     const point = pointOf(event);
     activeStroke = {
+      layerId: current.activeLayerId,
       color: tool === "eraser" ? "#ffffff" : $("kunstrommet-color").value,
       size: tool === "eraser" ? Math.max(16, Number($("kunstrommet-size").value) * 2) : Number($("kunstrommet-size").value),
       points: [point]
@@ -161,6 +192,81 @@
     future = [];
     markDirty();
     redraw();
+  }
+
+  function layerStatus(message) {
+    const target = $("kunstrommet-layer-state");
+    if (target) target.textContent = message;
+  }
+
+  function applyLayerEdit(next) {
+    if (!next) { layerStatus("Denne lagendringen er ikke mulig."); return; }
+    current = next;
+    future = [];
+    markDirty();
+    redraw();
+    renderLayersUi();
+  }
+
+  function renderLayersUi() {
+    const mount = $("kunstrommet-layers");
+    if (!mount || !current) return;
+    mount.replaceChildren();
+    // Reverse only the visual list: first row is the topmost layer.
+    [...current.layers].reverse().forEach((layer) => {
+      const row = document.createElement("div");
+      row.className = "kunstrommet-layer";
+      if (layer.id === current.activeLayerId) row.classList.add("is-active");
+      const header = document.createElement("div");
+      header.className = "kunstrommet-layer-header";
+      const choose = button(layer.name, () => {
+        if (activeStroke) return;
+        current = Layers.select(current, layer.id);
+        renderLayersUi();
+      });
+      choose.className = "kunstrommet-layer-select";
+      choose.setAttribute("aria-pressed", String(layer.id === current.activeLayerId));
+      const show = button(layer.visible ? "Skjul" : "Vis", () => applyLayerEdit(Layers.edit(current, layer.id, { visible: !layer.visible })));
+      show.setAttribute("aria-label", (layer.visible ? "Skjul " : "Vis ") + layer.name);
+      const lock = button(layer.locked ? "Lås opp" : "Lås", () => applyLayerEdit(Layers.edit(current, layer.id, { locked: !layer.locked })));
+      lock.setAttribute("aria-label", (layer.locked ? "Lås opp " : "Lås ") + layer.name);
+      header.append(choose, show, lock);
+
+      const controls = document.createElement("div");
+      controls.className = "kunstrommet-layer-controls";
+      const up = button("↑", () => applyLayerEdit(Layers.move(current, layer.id, 1)));
+      up.setAttribute("aria-label", "Flytt " + layer.name + " opp");
+      const down = button("↓", () => applyLayerEdit(Layers.move(current, layer.id, -1)));
+      down.setAttribute("aria-label", "Flytt " + layer.name + " ned");
+      const name = document.createElement("input");
+      name.type = "text"; name.maxLength = 80; name.value = layer.name;
+      name.setAttribute("aria-label", "Gi nytt navn til " + layer.name);
+      name.addEventListener("change", () => applyLayerEdit(Layers.edit(current, layer.id, { name: name.value })));
+      const opacity = document.createElement("input");
+      opacity.type = "range"; opacity.min = "0"; opacity.max = "100"; opacity.step = "5";
+      opacity.value = String(Math.round(layer.opacity * 100));
+      opacity.setAttribute("aria-label", "Gjennomsiktighet for " + layer.name);
+      opacity.addEventListener("change", () => applyLayerEdit(Layers.edit(current, layer.id, { opacity: Number(opacity.value) / 100 })));
+      const value = document.createElement("span");
+      value.textContent = Math.round(layer.opacity * 100) + "%";
+      controls.append(down, up, name, opacity, value);
+      row.append(header, controls);
+      mount.appendChild(row);
+    });
+    layerStatus(current.layers.length + " lag · " + (Layers.active(current)?.name || "Ingen lag") + " valgt.");
+  }
+
+  function addLayer() {
+    if (activeStroke) return;
+    applyLayerEdit(Layers.add(current, "layer_" + uid().replace(/[^a-zA-Z0-9_-]/g, "_")));
+  }
+
+  function deleteLayer() {
+    if (activeStroke) return;
+    const layer = Layers.active(current);
+    if (!layer || current.layers.length === 1) { layerStatus("Minst ett lag må beholdes."); return; }
+    if (!global.confirm("Slette laget «" + layer.name + "» og alle penselstrøk på dette laget?")) return;
+    applyLayerEdit(Layers.remove(current, layer.id));
   }
 
   function renderGalleryInspiration() {
@@ -348,7 +454,10 @@
   }
 
   function load(record) {
-    current = { ...record, strokes: structuredCloneSafe(record.strokes || []) };
+    current = Layers.normalize({
+      ...record, strokes: structuredCloneSafe(record.strokes || []),
+      layers: structuredCloneSafe(record.layers || [])
+    });
     future = [];
     activeStroke = null;
     activePointerId = null;
@@ -360,6 +469,7 @@
       ? "Tekst ble sist sendt til Aha " + new Date(current.last_ingested_at).toLocaleDateString("no-NO") + "."
       : "Ingenting sendes uten at du trykker på knappen.");
     redraw();
+    renderLayersUi();
   }
 
   function structuredCloneSafe(value) { return JSON.parse(JSON.stringify(value)); }
@@ -384,7 +494,7 @@
     painter.fillRect(0, 0, preview.width, preview.height);
     painter.save();
     painter.scale(preview.width / WIDTH, preview.height / HEIGHT);
-    (Array.isArray(item.strokes) ? item.strokes : []).forEach((stroke) => drawStroke(stroke, painter));
+    paintComposition(item, painter);
     painter.restore();
     return preview;
   }
@@ -394,6 +504,8 @@
     copy.title = (String(item.title || "Skisse").slice(0, 105) + " – kopi").slice(0, 120);
     copy.note = String(item.note || "").slice(0, 4000);
     copy.strokes = structuredCloneSafe(item.strokes || []);
+    copy.layers = structuredCloneSafe(Layers.normalize(item).layers);
+    copy.activeLayerId = Layers.normalize(item).activeLayerId;
     // Copies never inherit an Aha source event, ingest timestamp or sharing state.
     await put(copy);
     await refreshList();
@@ -493,8 +605,16 @@
   function exportProject() {
     if (!current) return;
     const record = getSnapshot();
-    const data = { format: "aha-kunstrommet-v1", title: record.title, note: record.note,
-      strokes: record.strokes, created_at: record.created_at };
+    const isLayered = record.layers.length > 1 || record.layers[0].id !== Layers.BASE_ID
+      || record.layers[0].name !== "Lag 1" || record.layers[0].opacity !== 1
+      || !record.layers[0].visible || record.layers[0].locked;
+    const data = isLayered
+      ? { format: "aha-kunstrommet-v2", title: record.title, note: record.note,
+          strokes: record.strokes, layers: record.layers, activeLayerId: record.activeLayerId,
+          created_at: record.created_at }
+      : { format: "aha-kunstrommet-v1", title: record.title, note: record.note,
+          strokes: record.strokes.map(({ layerId, ...stroke }) => stroke),
+          created_at: record.created_at };
     download(new Blob([JSON.stringify(data)], { type: "application/json" }), filename() + ".json");
   }
 
@@ -510,13 +630,22 @@
     if (file.size > 4000000) { status("Prosjektfilen er for stor."); return; }
     try {
       const json = JSON.parse(await file.text());
-      if (json.format !== "aha-kunstrommet-v1" || !validStrokes(json.strokes)) throw new Error("Ukjent eller ugyldig prosjektfil.");
+      if (!["aha-kunstrommet-v1", "aha-kunstrommet-v2"].includes(json.format)
+        || !validStrokes(json.strokes)
+        || (json.format === "aha-kunstrommet-v2"
+          && !Layers.validateImport(json.layers, json.strokes, json.activeLayerId))) {
+        throw new Error("Ukjent eller ugyldig prosjektfil.");
+      }
       const item = newRecord();
       item.title = String(json.title || "").slice(0, 120);
       item.note = String(json.note || "").slice(0, 4000);
-      item.strokes = structuredCloneSafe(json.strokes);
-      await put(item);
-      load(item);
+      const imported = Layers.normalize({
+        ...item, strokes: structuredCloneSafe(json.strokes),
+        layers: json.format === "aha-kunstrommet-v2" ? structuredCloneSafe(json.layers) : [],
+        activeLayerId: json.format === "aha-kunstrommet-v2" ? json.activeLayerId : undefined
+      });
+      await put(imported);
+      load(imported);
       await refreshList();
     } catch (error) { status("Import feilet: " + error.message); }
   }
@@ -587,6 +716,8 @@
     canvas.addEventListener("pointerup", end);
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
+    $("kunstrommet-layer-add")?.addEventListener("click", addLayer);
+    $("kunstrommet-layer-delete")?.addEventListener("click", deleteLayer);
     $("kunstrommet-pen").addEventListener("click", () => setTool("pen"));
     $("kunstrommet-eraser").addEventListener("click", () => setTool("eraser"));
     $("kunstrommet-size").addEventListener("input", () => { $("kunstrommet-size-value").value = $("kunstrommet-size").value; });
