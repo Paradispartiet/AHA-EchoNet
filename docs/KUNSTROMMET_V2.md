@@ -40,9 +40,20 @@ Kunstrommet er et integrert første lagbasert atelier, **ikke et fullverdig Phot
 - **Ikke gjennomført:** fysisk iPad Safari med finger/Apple Pencil, ytelse over tid, reell lagringskvote og manuell kontroll av bildefiler, låste/skjulte lag og eldre skisser på enheten. Disse punktene er åpne etterkontroller, **ikke godkjente tester**.
 - **Avgrensning:** Sammenflettingen innebærer ikke at Kunstrommet er testet på fysisk Apple Pencil eller at lokale prosjekter har skybackup.
 
+## Neste tegneiterasjon – trykk, zoom og hånd (på forbedringsgren)
+
+Dette er videreutvikling av **den samme** `kunstrommet.html`, `js/ahaKunstrommetV2.js` og den eksisterende lokale skisseboken. Ingen ny app, redigeringsmotor, databasemigrering eller endret prosjektformat.
+
+- Penselstreken bruker `PointerEvent.pressure` når nettleseren faktisk rapporterer trykk fra en penn. Lett/hardt trykk gir smalere/bredere strøk; mus, finger og penn uten rapportert trykk bruker standardbredde. Viskelæret beholder sin tidligere bredde.
+- Zoomknappene gir 50 %, 75 %, 100 %, 125 %, 150 %, 200 % og 300 % av visningsstørrelsen. Zoom påvirker bare CSS-visningen og ikke faktiske piksler i lagene eller PNG-/JSON-eksport.
+- «Hånd» panorerer visningsområdet uten å endre kunstverk, angi ulagrede endringer eller lage unødige angretilstander. «Flytt lag» fortsetter å endre det valgte laget.
+- Nettlesertester for pennebreddens variasjon og for visnings-only zoom/hånd er lagt til.
+- **Ikke implementert:** multitouch pinch-to-zoom, trykkfølsomt viskelær, tilt, håndflateregistrering utover nettleserens Pointer Events eller synkronisering.
+- **Må verifiseres på fysisk enhet:** Apple Pencil-trykk, berøring/panorering, langsiktige tegneøkter, Safari-ytelse og faktisk lokal lagringskvote (se issue #1058).
+
 ## Videre funksjoner (ikke implementert)
 
-Trykkfølsomme pensler, multitouch pinch-zoom, presise utvalgsverktøy, avanserte masker, ikke-destruktive bildejusteringer, tekst- og vektorlag, store dokumenter og PSD-format. Frivillige Aha-samlingsreferanser finnes allerede i første versjon. Bruk eksisterende Aha Galleri – ikke lag et nytt galleri.
+Penselteksturer og tilt, multitouch pinch-zoom, presise utvalgsverktøy, avanserte masker, ikke-destruktive bildejusteringer, tekst- og vektorlag, store dokumenter og PSD-format. Frivillige Aha-samlingsreferanser finnes allerede i første versjon. Bruk eksisterende Aha Galleri – ikke lag et nytt galleri.
 
 ## Konsolidering (17. november 2026)
 
