@@ -19,7 +19,7 @@ async function pixel(page) {
 
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
-    await page.goto("/kunstrommet-v2.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
     await page.locator("#kv2-title").fill("Personlig collage");
     await page.locator("#kv2-note").fill("Dette bildet forblir lokalt.");
@@ -79,7 +79,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("transparent eraser affects only active layer; undo restores pixels", async ({ page }) => {
-    await page.goto("/kunstrommet-v2.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "40"; input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -107,7 +107,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
-    await page.goto("/kunstrommet-v2.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
       name: "v1.json", mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify({
