@@ -1630,6 +1630,12 @@
   function bind() {
     const form = document.getElementById("insta-form");
     document.getElementById("insta-new-post")?.addEventListener("click", openInstaComposer);
+    document.getElementById("insta-cancel-post")?.addEventListener("click", () => {
+      const panel = document.getElementById("insta-compose-panel");
+      if (panel) panel.open = false;
+      document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", "false");
+      document.getElementById("insta-new-post")?.focus?.();
+    });
     document.getElementById("insta-compose-panel")?.addEventListener("toggle", (event) => {
       document.getElementById("insta-new-post")?.setAttribute?.("aria-expanded", String(event.target.open));
     });
