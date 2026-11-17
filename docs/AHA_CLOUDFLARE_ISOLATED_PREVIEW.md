@@ -97,7 +97,8 @@ To ulike og eksplisitt adskilte kontroller er derfor lagt til:
 Cloudflare-preview-bygget legger derfor nå en egen `js/ahaPreviewDataApiReadOnly.js`-beskyttelse **kun inn i den kopierte `js/ahaDb.js`**, slik at alle moduler som bruker `AHADb.getClient()` deler samme grense:
 
 - Supabase Auth `getUser`, `getSession` og vanlig innlogging kan fortsette, og godkjente Data API `SELECT`-spørringer kan fortsatt lese egen profilrad.
-- PostgREST `insert`, `upsert`, `update`, `delete` og alle `rpc`-kall fra denne klienten blir avvist **før nettverksforespørsel** med `AHA_PREVIEW_READ_ONLY`; ingen innholdsrader lastes opp gjennom denne klienten.
+- PostgREST `insert`, `upsert`, `update`, `delete` og alle `rpc`-kall fra denne klienten blir avvist **før nettverksforespørsel** med `AHA_PREVIEW_READ_ONLY`; ingen innholdsrader lastes opp gjennom disse metodene.
+- Alternative tilgangsveier `client.schema(...)` og `client.rest` er også sperret for skriving og RPC. En lesespørringsbygger kan ikke gjøres om til en skriveforespørsel ved å overskrive interne `method`/`body`-felter.
 - Appens lokale lagring/Feed/Insta-opplevelse kan fortsette, men må **ikke** omtales som sky-synkronisert. En eksplisitt database-lagringshandling vil returnere kontrollert avslag.
 - CI tester med falsk Supabase-klient at `Auth` og egenprofil-lesing virker, mens alle skrivemåter og Feed-innleggets repository-metode får avslag uten nettverkskall. Byggekontrollen feiler om sperren mangler fra Cloudflare-distribusjonen.
 - Dette påvirker **ikke original** `js/ahaDb.js` på GitHub Pages og oppretter ingen database, Azure-prosess eller betalt tjeneste.
