@@ -1,0 +1,35 @@
+name: AHA ParadisDB read-only view
+on:
+  pull_request:
+    paths:
+      - databaser.html
+      - css/aha-databases.css
+      - js/ahaDatabaseInventory.js
+      - js/ahaModules.js
+      - js/ahaGlobalNav.js
+      - tests/paradisdb-inventory-readonly.test.cjs
+      - .github/workflows/paradisdb-readonly-view.yml
+  push:
+    branches: [main]
+    paths:
+      - databaser.html
+      - css/aha-databases.css
+      - js/ahaDatabaseInventory.js
+      - js/ahaModules.js
+      - js/ahaGlobalNav.js
+      - tests/paradisdb-inventory-readonly.test.cjs
+      - .github/workflows/paradisdb-readonly-view.yml
+permissions:
+  contents: read
+jobs:
+  read-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: node --check js/ahaDatabaseInventory.js
+      - name: Test ParadisDB view without network or database access
+        run: node --test tests/paradisdb-inventory-readonly.test.cjs
