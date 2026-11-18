@@ -1,0 +1,65 @@
+/* ParadisDB read-only status page, styled like the AHA app on phone and iPad. */
+.aha-paradisdb-page {
+  max-width: 1150px;
+  margin-inline: auto;
+  padding: calc(var(--aha-global-header-height, 54px) + 28px) 18px 100px;
+  color: var(--aha-text, #edeef1);
+}
+.aha-paradisdb-page .aha-panel { border-radius: 18px; }
+.aha-paradisdb-hero { padding: clamp(22px, 4vw, 38px); }
+.aha-paradisdb-eyebrow { letter-spacing: .14em; text-transform: uppercase; font-size: .7rem; font-weight: 750; opacity: .64; }
+.aha-paradisdb-hero h1 { font-size: clamp(2rem, 4.5vw, 3.4rem); margin: 8px 0 6px; letter-spacing: -.035em; }
+.aha-paradisdb-hero > p { max-width: 66ch; }
+.aha-paradisdb-limitation { font-size: .86rem; opacity: .76; line-height: 1.6; }
+.aha-paradisdb-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.aha-paradisdb-toolbar a,
+.aha-paradisdb-toolbar button {
+  min-height: 40px; padding: 10px 15px; border-radius: 12px;
+  border: 1px solid rgba(190,200,220,.25); background: rgba(160,170,190,.08);
+  color: inherit; text-decoration: none; font: inherit; font-size: .85rem;
+  cursor: pointer; display: inline-flex; align-items: center;
+}
+.aha-paradisdb-toolbar button:disabled { cursor: progress; opacity: .6; }
+.aha-paradisdb-status { font-size: .82rem; opacity: .72; margin-top: 16px; }
+.aha-paradisdb-status[data-state="error"] { color: #f1a7a7; opacity: 1; }
+.aha-paradisdb-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.aha-paradisdb-stat { padding: 16px; border-radius: 14px; border: 1px solid rgba(190,200,220,.16); background: rgba(160,170,190,.06); }
+.aha-paradisdb-stat strong { font-size: clamp(1.5rem, 3vw, 2rem); display: block; }
+.aha-paradisdb-stat span { display: block; font-size: .78rem; opacity: .7; }
+.aha-paradisdb-section { padding: clamp(18px, 3vw, 28px); margin-top: 14px; }
+.aha-paradisdb-section-header { display: flex; justify-content: space-between; gap: 16px; align-items: end; flex-wrap: wrap; margin-bottom: 15px; }
+.aha-paradisdb-section-header h2 { margin: 0 0 5px; font-size: 1.25rem; }
+.aha-paradisdb-section-header p { margin: 0; font-size: .83rem; opacity: .7; max-width: 62ch; }
+.aha-paradisdb-section-header label { font-size: .76rem; display: grid; gap: 5px; }
+.aha-paradisdb-section-header input { width: min(100%, 260px); min-width: 190px; min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(190,200,220,.3); color: inherit; background: rgba(170,180,200,.08); }
+.aha-paradisdb-resultcount { font-size: .76rem; opacity: .62; margin: 8px 0; }
+.aha-paradisdb-projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.aha-paradisdb-project { border: 1px solid rgba(190,200,220,.16); border-radius: 13px; padding: 15px; background: rgba(160,170,190,.035); min-width: 0; }
+.aha-paradisdb-project[hidden] { display: none; }
+.aha-paradisdb-project h3 { font-size: .97rem; margin: 0 0 4px; }
+.aha-paradisdb-meta { color: inherit; opacity: .64; font-size: .74rem; overflow-wrap: anywhere; }
+.aha-paradisdb-project p { margin: 9px 0 0; font-size: .8rem; line-height: 1.5; }
+.aha-paradisdb-refs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.aha-paradisdb-ref { display: inline-block; padding: 3px 8px; background: rgba(175,185,210,.1); border-radius: 6px; font-size: .7rem; font-weight: 650; }
+.aha-paradisdb-databases { display: grid; gap: 9px; }
+.aha-paradisdb-db { padding: 2px 14px; border: 1px solid rgba(190,200,220,.16); background: rgba(160,170,190,.035); border-radius: 12px; }
+.aha-paradisdb-db summary { cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 14px 0; list-style: none; }
+.aha-paradisdb-db summary::-webkit-details-marker { display: none; }
+.aha-paradisdb-db summary::after { content: "⌄"; margin-left: auto; opacity: .7; }
+.aha-paradisdb-db[open] summary::after { content: "⌃"; }
+.aha-paradisdb-db summary strong { font-size: .86rem; }
+.aha-paradisdb-db summary span { font-size: .77rem; opacity: .68; }
+.aha-paradisdb-db dl { display: grid; grid-template-columns: minmax(108px, 165px) minmax(0, 1fr); column-gap: 14px; row-gap: 10px; border-top: 1px solid rgba(190,200,220,.15); padding-top: 12px; font-size: .8rem; overflow-wrap: anywhere; }
+.aha-paradisdb-db dt { opacity: .62; font-weight: 600; }
+.aha-paradisdb-db dd { margin: 0; line-height: 1.55; }
+.aha-paradisdb-source-note { font-size: .77rem; opacity: .62; padding: 0 8px; margin: 18px 0; max-width: 78ch; }
+@media (max-width: 700px) {
+  .aha-paradisdb-page { padding-inline: 10px; }
+  .aha-paradisdb-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .aha-paradisdb-stat { padding: 11px; }
+  .aha-paradisdb-projects { grid-template-columns: 1fr; }
+  .aha-paradisdb-section-header { align-items: stretch; }
+  .aha-paradisdb-section-header input { width: 100%; }
+  .aha-paradisdb-db dl { grid-template-columns: 1fr; row-gap: 3px; }
+  .aha-paradisdb-db dt:not(:first-child) { margin-top: 8px; }
+}
