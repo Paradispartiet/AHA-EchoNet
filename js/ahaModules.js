@@ -96,6 +96,15 @@
       phase: 1
     },
     {
+      id: "databaser",
+      title: "Databaser",
+      type: "system",
+      status: "active",
+      href: "databaser.html",
+      description: "Read-only prosjekt- og databaseoversikt fra det eksisterende ParadisDB-registeret i GitHub. Ingen databaseinnhold, migrering eller synk aktiveres.",
+      phase: 2
+    },
+    {
       id: "sources",
       title: "Sources",
       type: "system",
