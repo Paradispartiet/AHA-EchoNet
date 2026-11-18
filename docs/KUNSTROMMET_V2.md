@@ -83,3 +83,21 @@ CI dekker Chromium og iPad WebKit-emulering, men det erstatter ikke en fysisk iP
 Dokumenter i en oppfølgingskommentar lenket til PR #1050: iPad-modell, iPadOS-versjon, Safari-versjon, Apple Pencil-type, dato, testansvarlig, observasjoner og eventuelle feil/skjermbilder. **Ikke kryss av uten faktisk testing.**
 
 En automatisert Playwright-test simulerer nå `QuotaExceededError`, kontrollerer tydelig sikkerhetskopi-varsel og at lagringen kan forsøkes på nytt. Den erstatter ikke faktisk kontroll av lagringskvote på enheten.
+
+## Neste etappe – markering, beskjæring og lagtransformering (utkast)
+
+Dette videreutvikler **samme Kunstrommet**, basert på den ferdigtestede PR #1059. Den nye funksjonsgrenen merges ikke før #1059 er godkjent og samordnet. Ingen ny app, database, bildeopplasting til server eller automatisk Aha-overføring.
+
+- **Marker område:** Trekk et rektangel direkte på lerretet. Markeringen er kun en visuell, midlertidig redigeringsramme og lagres ikke i kunstverket. Endrer ikke angrehistorikken eller bildepikslene.
+- **Pensel og viskelær innenfor markeringen:** Strøk klippes til valgt rektangel, med lagets posisjon tatt med i beregningen.
+- **Beskjær valgt lag:** Gjør piksler utenfor markeringen gjennomsiktige **på aktivt lag**, uten å endre øvrige lag eller størrelsen på dokumentet (1200 × 800). Krever synlig, ulåst lag; kan angres.
+- **Eksporter utsnitt:** Oppretter en separat PNG nøyaktig med markeringens bredde og høyde uten å endre prosjektet. Den er basert på den synlige, sammensatte tegningen.
+- **Dupliser lag:** Kopierer RGBA-bitmappen direkte til et nytt, redigerbart lag, uten decode/encode-rundetap. Følger grensen på åtte lag.
+- **Transformer aktivt lag:** Speil vannrett, roter 90°, skaler til 75 % eller 125 % rundt lerretets sentrum. Dette er destruktive rastertransformasjoner med angre/gjør om. Innhold utenfor 1200 × 800 klippes. Låste eller skjulte lag kan ikke transformeres.
+
+### Kontrollkrav for ny etappe
+
+- [ ] Chromium og iPad WebKit: markering av rektangel, eksakt størrelse på utsnittseksport, og tegning bare innenfor markeringen.
+- [ ] Lagisolering: beskjæring av ett lag påvirker aldri piksler i laget under; angre restaurerer.
+- [ ] Test duplisering, transformering, låst lag, import/eksport, gammel V1/V2-kompatibilitet, Aha-samlingsreferanser og full Aha-regresjon.
+- [ ] Manuell iPad/Safari/Apple Pencil-kontroll av gestikk, markering og redigering etter godkjent testgrensesnitt. Ikke marker emulering som fysisk test.
