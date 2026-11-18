@@ -319,6 +319,20 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     });
     await stroke(page);
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    // Observe each source layer at the exact PNG serialization boundary.
+    // Diagnostic only: do not change the saved format or weaken pixel assertions.
+    await page.evaluate(() => {
+      const original = HTMLCanvasElement.prototype.toDataURL;
+      window.__kunstBackupLayerPixels = [];
+      HTMLCanvasElement.prototype.toDataURL = function (...args) {
+        if (this.width === 1200 && this.height === 800 &&
+            this.id !== "kv2-canvas" && args[0] === "image/png") {
+          const pixels = this.getContext("2d").getImageData(0, 0, this.width, this.height).data;
+          window.__kunstBackupLayerPixels.push(new Uint8ClampedArray(pixels));
+        }
+        return original.apply(this, args);
+      };
+    });
     // Compare actual canvas pixels after import. WebKit can encode identical
     // pixels into a different PNG/Base64 stream after a decode/re-encode.
     await page.locator("#kv2-canvas").evaluate((canvas) => {
@@ -352,6 +366,34 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-note")).toHaveValue("To tegnebaserte lag skal beholdes.");
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
     await expect(page.locator("#kv2-status")).toContainText("Importert");
+    // Trigger the same layer snapshot a second time, then compare raw pixels.
+    // Capturing the layers reveals whether the mismatch precedes compositing.
+    const diagnosticDownload = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    await diagnosticDownload;
+    const layerDiagnostics = await page.evaluate(() => {
+      const all = window.__kunstBackupLayerPixels;
+      const count = all.length / 2;
+      return Array.from({ length: count }, (_, layerIndex) => {
+        const before = all[layerIndex];
+        const after = all[layerIndex + count];
+        let differentChannels = 0;
+        let maxChannelDifference = 0;
+        const examples = [];
+        for (let i = 0; i < before.length; i++) {
+          const delta = Math.abs(before[i] - after[i]);
+          if (!delta) continue;
+          differentChannels++;
+          maxChannelDifference = Math.max(maxChannelDifference, delta);
+          if (examples.length < 8) examples.push({
+            x: Math.floor(i / 4) % 1200, y: Math.floor(i / 4 / 1200),
+            channel: i % 4, before: before[i], after: after[i]
+          });
+        }
+        return { layerIndex, differentChannels, maxChannelDifference, examples };
+      });
+    });
+    console.log("Kunstrommet backup layer pixel diagnostics: " + JSON.stringify(layerDiagnostics));
     const pixelDifference = await page.locator("#kv2-canvas").evaluate((canvas) => {
       const previous = window.__kunstBeforeBackup;
       const current = canvas.getContext("2d").getImageData(
