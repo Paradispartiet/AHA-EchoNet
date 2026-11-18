@@ -16,7 +16,7 @@ const tables = ["aha_profiles", "aha_source_events", "aha_imports",
 
 function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
   user = { id: "fake-profile-A" }, authError = null, ownCount = 1,
-  foreignTable = null, failingTable = null } = {}) {
+  foreignTable = null, unownedTable = null, failingTable = null } = {}) {
   const calls = [];
   const actions = {};
   const result = { textContent: "", dataset: {} };
@@ -46,6 +46,12 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
               calls.push({ type: "read", table, mode: "other", field, value });
               assert.equal(field, table === "aha_profiles" ? "id" : "profile_id");
               return Promise.resolve({ count: table === foreignTable ? 1 : 0, error: table === failingTable ? {code:"42501"} : null });
+            },
+            is(field, value) {
+              calls.push({ type: "read", table, mode: "unowned", field, value });
+              assert.equal(field, "profile_id");
+              assert.equal(value, null);
+              return Promise.resolve({ count: table === unownedTable ? 1 : 0, error: table === failingTable ? {code:"42501"} : null });
             }
           };
           return builder;
@@ -68,7 +74,8 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
   assert.equal(good.calls.length, 0, "No automatic fetch at load");
   await good.click();
   assert.equal(good.result.dataset.status, "no_foreign_rows");
-  assert.equal(good.calls.filter(x => x.type === "read").length, 7, "one own positive and six foreign probes");
+  assert.equal(good.calls.filter(x => x.type === "read").length, 12,
+    "one own positive, six foreign and five null-owner probes");
   assert.equal(good.button.disabled, false);
   assert.ok(!good.result.textContent.includes("fake-profile-A"), "Never display user IDs");
 
@@ -76,6 +83,10 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
   await breach.click();
   assert.equal(breach.result.dataset.status, "possible_exposure");
   assert.equal(breach.calls.some(c => c.table === "aha_feed_posts"), false, "Stop at first exposure");
+
+  const unowned = fakeCase({unownedTable:"aha_feed_posts"});
+  await unowned.click();
+  assert.equal(unowned.result.dataset.status, "possible_exposure", "visible unowned rows must fail");
 
   const permission = fakeCase({failingTable:"aha_imports"});
   await permission.click();
