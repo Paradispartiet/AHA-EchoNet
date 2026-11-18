@@ -22,6 +22,7 @@
   let project = null;
   let selected = null;
   let tool = "brush";
+  let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let pointerId = null;
   let pointerStart = null;
   let paintPrevious = null;
@@ -65,6 +66,7 @@
   function newProject() {
     const now = new Date().toISOString();
     surfaces.clear();
+    selection = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
       id: uid(), title: "", note: "", owner: owner(), layers: [base],
@@ -100,6 +102,45 @@
       view.drawImage(bitmap, layer.x, layer.y);
     });
     view.restore();
+  }
+
+  function renderSelection() {
+    const overlay = $("kv2-selection-overlay");
+    if (!overlay) return;
+    const rect = canvas.getBoundingClientRect();
+    const valid = selection && selection.w >= 2 && selection.h >= 2;
+    overlay.hidden = !valid;
+    if (valid) {
+      overlay.style.left = (selection.x * rect.width / WIDTH) + "px";
+      overlay.style.top = (selection.y * rect.height / HEIGHT) + "px";
+      overlay.style.width = (selection.w * rect.width / WIDTH) + "px";
+      overlay.style.height = (selection.h * rect.height / HEIGHT) + "px";
+    }
+    $("kv2-clear-selection").disabled = !selection;
+    $("kv2-crop-layer").disabled = !valid;
+    $("kv2-export-selection").disabled = !valid;
+  }
+
+  function normalizedSelection(a, b) {
+    const x = Math.round(clamp(Math.min(a.x, b.x), 0, WIDTH));
+    const y = Math.round(clamp(Math.min(a.y, b.y), 0, HEIGHT));
+    const right = Math.round(clamp(Math.max(a.x, b.x), 0, WIDTH));
+    const bottom = Math.round(clamp(Math.max(a.y, b.y), 0, HEIGHT));
+    return { x, y, w: right - x, h: bottom - y };
+  }
+
+  function paintOnLayer(layer, a, b) {
+    const context = surfaces.get(layer.id).getContext("2d");
+    if (!selection || selection.w < 2 || selection.h < 2) {
+      drawSegment(context, a, b);
+      return;
+    }
+    context.save();
+    context.beginPath();
+    context.rect(selection.x - layer.x, selection.y - layer.y, selection.w, selection.h);
+    context.clip();
+    drawSegment(context, a, b);
+    context.restore();
   }
 
   function drawSoon() {
@@ -293,7 +334,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -301,6 +342,8 @@
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
+    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
+    renderSelection();
   }
 
   function point(event) {
@@ -364,12 +407,12 @@
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     const layer = currentLayer();
-    if (tool !== "hand" && (!layer || layer.locked || !layer.visible)) {
+    if (tool !== "hand" && tool !== "select" && (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
     // Moving the viewport is never an artwork edit and must not create undo history.
-    if (tool !== "hand" && !checkpoint()) return;
+    if (tool !== "hand" && tool !== "select" && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
     pointerStart = {
@@ -378,13 +421,17 @@
       scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0
     };
     paintPrevious = null;
+    if (tool === "select") {
+      selection = normalizedSelection(pointerStart.point, pointerStart.point);
+      renderSelection();
+    }
     if (tool === "brush" || tool === "eraser") {
       const at = point(event);
       const local = {
         x: at.x - layer.x, y: at.y - layer.y,
         pressureFactor: penPressure(event)
       };
-      drawSegment(surfaces.get(layer.id).getContext("2d"), local, local);
+      paintOnLayer(layer, local, local);
       paintPrevious = local;
       drawSoon();
     }
@@ -399,6 +446,11 @@
       viewport.scrollTop = Math.max(0, pointerStart.scrollTop + pointerStart.clientY - event.clientY);
       return;
     }
+    if (tool === "select") {
+      selection = normalizedSelection(pointerStart.point, point(event));
+      renderSelection();
+      return;
+    }
     const layer = currentLayer();
     if (!layer) return;
     const at = point(event);
@@ -410,7 +462,7 @@
         x: at.x - layer.x, y: at.y - layer.y,
         pressureFactor: penPressure(event)
       };
-      drawSegment(surfaces.get(layer.id).getContext("2d"), paintPrevious, local);
+      paintOnLayer(layer, paintPrevious, local);
       paintPrevious = local;
     }
     drawSoon();
@@ -418,7 +470,12 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
-    const changedArtwork = tool !== "hand";
+    const changedArtwork = tool !== "hand" && tool !== "select";
+    if (tool === "select") {
+      if (selection && (selection.w < 2 || selection.h < 2)) selection = null;
+      renderSelection();
+      status(selection ? "Område markert – arbeid på valgt lag" : "Ingen markering");
+    }
     pointerId = null;
     pointerStart = null;
     paintPrevious = null;
@@ -426,6 +483,95 @@
       changed();
       draw();
     }
+  }
+
+  function editableLayer() {
+    const layer = currentLayer();
+    if (busy || !layer || layer.locked || !layer.visible) {
+      status("Velg et synlig, ulåst lag for å redigere.");
+      return null;
+    }
+    return layer;
+  }
+
+  function cropActiveLayer() {
+    const layer = editableLayer();
+    if (!layer || !selection || selection.w < 2 || selection.h < 2) return;
+    checkpoint();
+    const context = surfaces.get(layer.id).getContext("2d");
+    const image = context.getImageData(0, 0, WIDTH, HEIGHT);
+    const values = image.data;
+    const left = selection.x - layer.x;
+    const top = selection.y - layer.y;
+    const right = left + selection.w;
+    const bottom = top + selection.h;
+    for (let y = 0; y < HEIGHT; y++) {
+      for (let x = 0; x < WIDTH; x++) {
+        if (x >= left && x < right && y >= top && y < bottom) continue;
+        const index = (y * WIDTH + x) * 4;
+        values[index] = values[index + 1] = values[index + 2] = values[index + 3] = 0;
+      }
+    }
+    context.putImageData(image, 0, 0);
+    changed();
+    refresh();
+  }
+
+  function duplicateActiveLayer() {
+    const layer = editableLayer();
+    if (!layer || project.layers.length >= MAX_LAYERS) {
+      status("Det er ikke plass til flere lag.");
+      return;
+    }
+    checkpoint();
+    const clone = createLayer(layer.name + " – kopi", layer.kind);
+    Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity, x: layer.x, y: layer.y });
+    const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
+    surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
+    project.layers.splice(project.layers.indexOf(layer) + 1, 0, clone);
+    selected = clone.id;
+    changed(); refresh();
+  }
+
+  function transformLayer(mode) {
+    const layer = editableLayer();
+    if (!layer) return;
+    const original = surfaces.get(layer.id);
+    const output = imageCanvas();
+    const ctx = output.getContext("2d");
+    const scale = mode === "smaller" ? 0.75 : mode === "larger" ? 1.25 : 1;
+    ctx.save();
+    ctx.translate(WIDTH / 2, HEIGHT / 2);
+    if (mode === "flip") ctx.scale(-1, 1);
+    if (mode === "rotate") ctx.rotate(Math.PI / 2);
+    if (scale !== 1) ctx.scale(scale, scale);
+    ctx.drawImage(original, -WIDTH / 2, -HEIGHT / 2);
+    ctx.restore();
+    checkpoint();
+    surfaces.set(layer.id, output);
+    changed(); refresh();
+  }
+
+  function exportSelection() {
+    if (busy || !selection || selection.w < 2 || selection.h < 2) return;
+    draw();
+    const output = document.createElement("canvas");
+    output.width = selection.w;
+    output.height = selection.h;
+    output.getContext("2d").drawImage(canvas, selection.x, selection.y,
+      selection.w, selection.h, 0, 0, selection.w, selection.h);
+    output.toBlob((blob) => {
+      if (!blob) { status("Kunne ikke eksportere markeringen."); return; }
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename() + "-utsnitt.png";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      global.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      status("Utsnitt eksportert – prosjektet er uendret");
+    }, "image/png");
   }
 
   function addLayer(name, kind) {
@@ -661,6 +807,7 @@
       updated_at: now, local_only: true, shared: false, analyzed_image: false
     };
     surfaces.clear();
+    selection = null;
     layers.forEach((layer, i) => surfaces.set(layer.id, decoded[i]));
     project = next;
     selected = project.layers[project.layers.length - 1].id;
@@ -880,6 +1027,15 @@
     $("kv2-remove-layer").addEventListener("click", removeLayer);
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
+    $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
+    $("kv2-crop-layer").addEventListener("click", cropActiveLayer);
+    $("kv2-export-selection").addEventListener("click", exportSelection);
+    $("kv2-clear-selection").addEventListener("click", () => {
+      selection = null; renderSelection(); status("Markering fjernet");
+    });
+    ["flip", "rotate", "smaller", "larger"].forEach((mode) => {
+      $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
+    });
     $("kv2-save").addEventListener("click", save);
     $("kv2-project-search")?.addEventListener("input", () => {
       renderProjects().catch((error) => status("Søk feilet: " + error.message));
@@ -905,7 +1061,7 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
     });
     $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
