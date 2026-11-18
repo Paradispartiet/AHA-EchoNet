@@ -60,6 +60,7 @@
       items: [
         { moduleId: "profile", label: "Mitt AHA", hint: "Din personlige oversikt" },
         { moduleId: "privacy", label: "Personvern", hint: "Backup, samtykke og lokal kontroll" },
+        { moduleId: "databaser", label: "Databaser", hint: "Hvor prosjektenes databaser ligger og siste kontroll" },
         { moduleId: "historygo", label: "History Go", hint: "Se og styr AHA-importen" }
       ]
     }

@@ -12,12 +12,14 @@ const criticalPages = {
   "feed.html": ["id=\"feed-form\"", "id=\"feed-text\"", "id=\"feed-list\""],
   "insta.html": ["id=\"insta-profile-card\"", "id=\"insta-form\""],
   "auth-callback.html": ["id=\"auth-callback-status\""],
-  "profile.html": ["id=\"aha-check-supabase-profile\"", "id=\"aha-supabase-profile-result\""]
+  "profile.html": ["id=\"aha-check-supabase-profile\"", "id=\"aha-supabase-profile-result\""],
+  "databaser.html": ["id=\"aha-paradisdb-main\"", "id=\"aha-paradisdb-projects\"", "id=\"aha-paradisdb-databases\""]
 };
 const requiredScripts = [
   "js/ahaConfig.js",
   "js/ahaAuth.js",
   "js/ahaProfileSupabaseStatus.js",
+  "js/ahaDatabaseInventory.js",
   "js/ahaFeed.js",
   "js/ahaInsta.js",
   "js/ahaChatInsightPipeline.js"

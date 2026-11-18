@@ -96,6 +96,15 @@
       phase: 1
     },
     {
+      id: "databaser",
+      title: "Databaser",
+      type: "system",
+      status: "active",
+      href: "databaser.html",
+      description: "Read-only prosjekt- og databaseoversikt fra det eksisterende ParadisDB-registeret i GitHub. Ingen databaseinnhold, migrering eller synk aktiveres.",
+      phase: 2
+    },
+    {
       id: "sources",
       title: "Sources",
       type: "system",
@@ -269,6 +278,7 @@
     chat: moduleIcon('<path d="M4 5.5h16v10H9l-5 3v-13Z"/>'),
     insights: moduleIcon('<circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>'),
     sources: moduleIcon('<path d="M5 6h10M5 12h14M5 18h10"/><circle cx="18" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="18" cy="18" r="1.5"/>'),
+    databaser: moduleIcon('<ellipse cx="12" cy="5" rx="7.5" ry="2.5"/><path d="M4.5 5v7c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5V5"/><path d="M4.5 12v7c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-7"/>'),
     lists: moduleIcon('<path d="M8 6h11M8 12h11M8 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>'),
     paths: moduleIcon('<circle cx="5" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="19" cy="15" r="2"/><path d="m6.5 15.5 4-6.5M13.7 8.4l3.6 5.2"/>'),
     mindmap: moduleIcon('<circle cx="12" cy="12" r="2.4"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="m10.2 10.4-3.8-3M13.8 10.4l3.8-3M10.2 13.6l-3.8 3M13.8 13.6l3.8 3"/>'),
@@ -333,6 +343,7 @@
     "insta",
     "insights",
     "sources",
+    "databaser",
     "lists",
     "paths",
     "mindmap",
