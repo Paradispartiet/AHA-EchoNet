@@ -319,7 +319,13 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     });
     await stroke(page);
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
-    const original = await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"));
+    // Compare actual canvas pixels after import. WebKit can encode identical
+    // pixels into a different PNG/Base64 stream after a decode/re-encode.
+    await page.locator("#kv2-canvas").evaluate((canvas) => {
+      window.__kunstBeforeBackup = new Uint8ClampedArray(
+        canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data
+      );
+    });
     await page.locator("#kv2-zoom-in").click();
     await page.locator("#kv2-zoom-in").click();
     await page.locator("#kv2-zoom-in").click();
@@ -346,8 +352,24 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-note")).toHaveValue("To tegnebaserte lag skal beholdes.");
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
     await expect(page.locator("#kv2-status")).toContainText("Importert");
-    const restored = await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"));
-    expect(restored).toBe(original);
+    const pixelDifference = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const previous = window.__kunstBeforeBackup;
+      const current = canvas.getContext("2d").getImageData(
+        0, 0, canvas.width, canvas.height
+      ).data;
+      let differentChannels = 0;
+      let maxChannelDifference = 0;
+      for (let i = 0; i < current.length; i++) {
+        const difference = Math.abs(current[i] - previous[i]);
+        if (difference) differentChannels++;
+        maxChannelDifference = Math.max(maxChannelDifference, difference);
+      }
+      return { differentChannels, maxChannelDifference, totalChannels: current.length };
+    });
+    expect(pixelDifference.totalChannels).toBe(1200 * 800 * 4);
+    expect(pixelDifference).toMatchObject({
+      differentChannels: 0, maxChannelDifference: 0
+    });
 
     await page.locator("#kv2-save").click();
     await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
