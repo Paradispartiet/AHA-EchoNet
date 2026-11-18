@@ -107,6 +107,14 @@
       "boundary": "Read-only audit over source events and insight links; no repair/write actions."
     },
     {
+      "id": "databaser",
+      "title": "Databaser",
+      "registry_status": "active",
+      "maturity": "ready",
+      "release_state": "ready",
+      "boundary": "Read-only status page over existing ParadisDB GitHub inventory with project-to-database cross-links and verified/unknown evidence text. No private contents, SQL, database credentials, migration, Supabase API writes, hosted live checks or automatic sync."
+    },
+    {
       "id": "sync-hub",
       "title": "Sync Hub",
       "registry_status": "planned",
