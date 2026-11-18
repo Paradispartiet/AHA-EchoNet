@@ -109,13 +109,74 @@
     }
   }
 
+  // Canvas PNG decoders on some WebKit builds round semi-transparent
+  // channel values on import. Preserve those exact RGBA values alongside the
+  // standard PNG so that editable layers survive a backup round-trip.
+  function encodeEdgePixels(surface) {
+    const data = surface.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
+    const bytes = new Uint8Array(WIDTH * HEIGHT * 8);
+    let used = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0 || data[i + 3] === 255) continue;
+      const index = i / 4;
+      bytes[used++] = index & 255;
+      bytes[used++] = (index >>> 8) & 255;
+      bytes[used++] = (index >>> 16) & 255;
+      bytes[used++] = (index >>> 24) & 255;
+      bytes[used++] = data[i];
+      bytes[used++] = data[i + 1];
+      bytes[used++] = data[i + 2];
+      bytes[used++] = data[i + 3];
+    }
+    if (!used) return "";
+    let binary = "";
+    for (let i = 0; i < used; i += 32768) {
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + 32768, used)));
+    }
+    return global.btoa(binary);
+  }
+
+  function restoreEdgePixels(surface, encoded) {
+    if (!encoded) return;
+    if (typeof encoded !== "string" || encoded.length > MAX_PROJECT_BYTES ||
+        !/^[a-zA-Z0-9+/]+={0,2}$/.test(encoded)) {
+      throw new Error("Ugyldige eksakte lagpiksler.");
+    }
+    const binary = global.atob(encoded);
+    if (binary.length % 8 !== 0 || binary.length > WIDTH * HEIGHT * 8) {
+      throw new Error("Ugyldig pikselkorreksjon i prosjektet.");
+    }
+    const context = surface.getContext("2d");
+    const image = context.getImageData(0, 0, WIDTH, HEIGHT);
+    const pixels = image.data;
+    let previousIndex = -1;
+    for (let i = 0; i < binary.length; i += 8) {
+      const index = (binary.charCodeAt(i) | (binary.charCodeAt(i + 1) << 8) |
+        (binary.charCodeAt(i + 2) << 16) | (binary.charCodeAt(i + 3) << 24)) >>> 0;
+      if (index <= previousIndex || index >= WIDTH * HEIGHT) {
+        throw new Error("Ugyldig pikselplassering i prosjektet.");
+      }
+      previousIndex = index;
+      const at = index * 4;
+      for (let channel = 0; channel < 4; channel++) {
+        pixels[at + channel] = binary.charCodeAt(i + 4 + channel);
+      }
+    }
+    context.putImageData(image, 0, 0);
+  }
+
   function snapshot() {
-    return project.layers.map((layer) => ({
-      id: layer.id, name: layer.name, kind: layer.kind,
-      visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
-      x: layer.x, y: layer.y,
-      bitmap: surfaces.get(layer.id).toDataURL("image/png")
-    }));
+    return project.layers.map((layer) => {
+      const surface = surfaces.get(layer.id);
+      const pixelFixups = encodeEdgePixels(surface);
+      return {
+        id: layer.id, name: layer.name, kind: layer.kind,
+        visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
+        x: layer.x, y: layer.y,
+        bitmap: surface.toDataURL("image/png"),
+        ...(pixelFixups ? { pixelFixups } : {})
+      };
+    });
   }
 
   function checkpoint(allowBusy) {
@@ -126,7 +187,7 @@
     return true;
   }
 
-  function decodePng(url) {
+  function decodePng(url, pixelFixups) {
     if (typeof url !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(url) ||
         url.length > MAX_PROJECT_BYTES) {
@@ -141,6 +202,8 @@
         }
         const surface = imageCanvas();
         surface.getContext("2d").drawImage(image, 0, 0);
+        try { restoreEdgePixels(surface, pixelFixups); }
+        catch (error) { reject(error); return; }
         resolve(surface);
       };
       image.onerror = () => reject(new Error("Kunne ikke lese et prosjektlag."));
@@ -149,12 +212,12 @@
   }
 
   async function installLayers(layers) {
-    const loaded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap)));
+    const loaded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
     const next = new Map();
     layers.forEach((layer, index) => next.set(layer.id, loaded[index]));
     surfaces.clear();
     next.forEach((value, key) => surfaces.set(key, value));
-    project.layers = layers.map(({ bitmap, ...meta }) => meta);
+    project.layers = layers.map(({ bitmap, pixelFixups, ...meta }) => meta);
   }
 
   async function historyStep(from, to) {
@@ -525,7 +588,8 @@
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
       x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
-      bitmap: input.bitmap
+      bitmap: input.bitmap,
+      ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {})
     };
   }
 
@@ -586,13 +650,13 @@
       throw new Error("Prosjektet er for stort.");
     }
     // Decode all imported images before installing the new document.
-    const decoded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap)));
+    const decoded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
     const now = new Date().toISOString();
     const next = {
       id: sameRecord ? data.id : uid(),
       owner: owner(), title: String(data.title || "").slice(0, 120),
       note: String(data.note || "").slice(0, 4000),
-      layers: layers.map(({ bitmap, ...meta }) => meta),
+      layers: layers.map(({ bitmap, pixelFixups, ...meta }) => meta),
       created_at: sameRecord ? data.created_at : now,
       updated_at: now, local_only: true, shared: false, analyzed_image: false
     };
@@ -627,7 +691,8 @@
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
           x: Number.isFinite(layer.x) ? layer.x : 0,
-          y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap
+          y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
+          ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {})
         })),
         id: uid(), owner: owner(),
         title: (String(saved.title || "Kunstverk").slice(0, 105) + " – kopi").slice(0, 120),
