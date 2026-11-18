@@ -14,7 +14,9 @@
 
   async function countRows(client, table, field, operator, userId) {
     let query = client.from(table).select("id", { count: "exact", head: true });
-    query = operator === "eq" ? query.eq(field, userId) : query.neq(field, userId);
+    if (operator === "eq") query = query.eq(field, userId);
+    else if (operator === "isnull") query = query.is(field, null);
+    else query = query.neq(field, userId);
     const result = await query;
     if (result?.error || !Number.isSafeInteger(result?.count) || result.count < 0) {
       return { ok: false };
@@ -49,6 +51,13 @@
         const result = await countRows(client, table, ownerField, "neq", userId);
         if (!result.ok) return { ok: false, status: "read_error" };
         if (result.count !== 0) return { ok: false, status: "possible_exposure" };
+        // On nullable profile_id columns, an unowned row is also unsafe if
+        // exposed. SQL <> does not match NULL, so probe it separately.
+        if (ownerField === "profile_id") {
+          const unowned = await countRows(client, table, ownerField, "isnull", userId);
+          if (!unowned.ok) return { ok: false, status: "read_error" };
+          if (unowned.count !== 0) return { ok: false, status: "possible_exposure" };
+        }
       }
       // No proof of two-user isolation: this checks one real session only.
       return { ok: true, status: "no_foreign_rows", checked_tables: TABLES.length };
