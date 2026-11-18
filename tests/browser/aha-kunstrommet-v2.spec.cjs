@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const fs = require("node:fs/promises");
 
 async function stroke(page) {
   await page.locator("#kv2-canvas").evaluate((canvas) => {
@@ -300,6 +301,69 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await page.locator("#kv2-undo").click();
     await expect.poll(redAtTarget).toBeGreaterThan(220);
     await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+  });
+
+  test("editable JSON backup restores all layer bitmaps after zoom", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-title").fill("Sikkerhetskopi av atelier");
+    await page.locator("#kv2-note").fill("To tegnebaserte lag skal beholdes.");
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#0b468e";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#e44329";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    const original = await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"));
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+
+    const exportPromise = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = await exportPromise;
+    const json = await fs.readFile(await exported.path(), "utf8");
+    const backup = JSON.parse(json);
+    expect(backup.format).toBe("aha-kunstrommet-v2");
+    expect(backup.layers).toHaveLength(2);
+    expect(backup.note).toBe("To tegnebaserte lag skal beholdes.");
+    expect(backup.layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator("#kv2-new").click();
+    await page.locator("#kv2-import").setInputFiles({
+      name: "backup.kunstrommet.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(json, "utf8")
+    });
+    await expect(page.locator("#kv2-title")).toHaveValue("Sikkerhetskopi av atelier");
+    await expect(page.locator("#kv2-note")).toHaveValue("To tegnebaserte lag skal beholdes.");
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-status")).toContainText("Importert");
+    const restored = await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"));
+    expect(restored).toBe(original);
+
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    const rows = await page.evaluate(() => new Promise((resolve, reject) => {
+      const request = indexedDB.open("aha_kunstrommet_v2", 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const query = request.result.transaction("projects", "readonly")
+          .objectStore("projects").getAll();
+        query.onsuccess = () => resolve(query.result);
+        query.onerror = () => reject(query.error);
+      };
+    }));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].layers).toHaveLength(2);
+    expect(rows[0].layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
   });
 
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
