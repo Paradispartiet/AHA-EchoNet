@@ -110,44 +110,34 @@
     return window.AHA_CONFIG?.feed?.enableDatabaseSync === true;
   }
 
-  async function pushLocalToDatabase(items) {
-    if (!isDatabaseSyncEnabled()) {
-      return { ok: false, fallback: "localStorage", database_sync_disabled: true };
-    }
-    if (!window.AHARepository?.saveFeedPost) return { ok: false, fallback: "localStorage" };
-    const results = [];
-    for (const post of items) {
-      results.push(await window.AHARepository.saveFeedPost(post));
-    }
-    return { ok: results.some((r) => r?.ok), results };
-  }
-
   async function syncFromDatabase() {
     if (!isDatabaseSyncEnabled()) {
       return { ok: false, fallback: "localStorage", database_sync_disabled: true };
     }
-    if (!window.AHARepository?.loadFeedPosts) return { ok: false, fallback: "localStorage" };
-    const local = load();
-    if (local.length) await pushLocalToDatabase(local);
-    const result = await window.AHARepository.loadFeedPosts();
+    // An enabled flag permits an explicitly requested READ only. Never bulk
+    // upload legacy localStorage posts merely because someone signs in.
+    if (!window.AHARepository?.loadFeedPosts || !window.AHAAuth?.getProfileId) {
+      return { ok: false, reason: "not_signed_in" };
+    }
+    const profileId = await window.AHAAuth.getProfileId();
+    if (!profileId) return { ok: false, reason: "not_signed_in" };
+    const result = await window.AHARepository.loadFeedPosts({ profile_id: profileId });
     if (!result?.ok) return result || { ok: false };
     if (!Array.isArray(result.data)) {
-      return { ...result, ok: false, fallback: "localStorage", data: local };
+      return { ...result, ok: false, reason: "invalid_remote_data" };
     }
-    const merged = mergePosts(local, result.data);
-    save(merged);
+    // Defense in depth: reject unexpected cross-profile rows rather than
+    // rendering or caching them. Supabase RLS remains the actual boundary.
+    if (result.data.some((post) => !post || post.profile_id !== profileId)) {
+      return { ok: false, reason: "remote_profile_mismatch" };
+    }
+    // Local posts with no owner are preserved, not attributed to this account.
+    const scopedLocal = load().filter((post) => post?.profile_id === profileId);
+    const merged = mergePosts(scopedLocal, result.data);
+    // Do not cache remote rows in the shared legacy localStorage key: another
+    // login on the same browser must not inherit cloud-only user content.
     render(merged);
-    return { ...result, data: merged, merged: true };
-  }
-
-  function persistPost(post) {
-    if (!isDatabaseSyncEnabled()) return;
-    if (!window.AHARepository?.saveFeedPost) return;
-    window.AHARepository.saveFeedPost(post).then((result) => {
-      if (result?.ok === false && result.error) {
-        console.warn("AHAFeed: database-save feilet", result.error);
-      }
-    });
+    return { ...result, data: merged, merged: true, read_only: true, local_posts_preserved: true };
   }
 
   function escapeHtml(value) {
@@ -196,7 +186,6 @@
       if (index >= 0) {
         posts[index] = post;
         save(posts);
-        persistPost(post);
         render(posts);
       }
     }
@@ -233,7 +222,6 @@
     const posts = load();
     posts.unshift(post);
     save(posts);
-    persistPost(post);
     render(posts);
 
     // Creating a Feed post is local-only. The explicit "Send til AHA" button
@@ -249,7 +237,6 @@
     const deletedAt = new Date().toISOString();
     entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
     save(entries);
-    persistPost(entries[index]);
     render(entries);
     return entries[index];
   }
@@ -276,7 +263,7 @@
     });
 
     render();
-    // Feed er lokal-only som standard. Database-sync krever eksplisitt godkjent config-flag.
+    // Feed er lokal-only. Et godkjent config-flagg gir kun eksplisitte, eieravgrensede lesinger.
   }
 
   window.AHAFeed = { load, save, syncFromDatabase, addPost, ingestPost, deletePost, render, createIngestInput, normalizeText, safePostId };
