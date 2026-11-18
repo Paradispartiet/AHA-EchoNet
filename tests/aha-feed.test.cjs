@@ -104,9 +104,16 @@ function buildContext() {
   const stored = JSON.parse(ctx.localStorage.raw('aha_feed_posts_v1'));
   assert.equal(stored.length, 1, 'valid feed post should be stored in aha_feed_posts_v1');
   assert.equal(stored[0].id, 'unsafe_id', 'stored post should use safe id');
-  assert.equal(stored[0].last_source_event_id, 'source-1', 'stored post should keep AHAIngest source event trace');
+  assert.equal(stored[0].last_source_event_id, undefined, 'new post must not be ingested automatically');
 
-  assert.equal(ctx.__ingestCalls.length, 1, 'valid feed post should be sent to AHAIngest exactly once');
+  assert.equal(ctx.__ingestCalls.length, 0, 'adding a local Feed post must not trigger AHA ingest or embeddings');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'adding a local post must not touch database even if a repository exists');
+
+  const manuallyIngested = await Feed.ingestPost('unsafe_id');
+  assert.equal(manuallyIngested.ok, true, 'explicit Send til AHA action should ingest the post');
+  assert.equal(ctx.__ingestCalls.length, 1, 'manual ingestion must occur exactly once');
+  const storedAfterManualIngest = JSON.parse(ctx.localStorage.raw('aha_feed_posts_v1'));
+  assert.equal(storedAfterManualIngest[0].last_source_event_id, 'source-1', 'manual ingestion must retain source event trace');
   const payload = ctx.__ingestCalls[0];
   assert.equal(payload.source_app, 'aha', 'feed ingest payload should use AHA source app');
   assert.equal(payload.source_type, 'aha_feed_post', 'feed ingest payload should use feed source type');
@@ -140,6 +147,7 @@ function buildContext() {
   enabledCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
   const optedPost = await enabledCtx.AHAFeed.addPost({ id: 'opted_in', text: 'Syntetisk testinnlegg' });
   assert.ok(optedPost, 'opt-in test post should exist locally');
+  assert.equal(enabledCtx.__ingestCalls.length, 0, 'database opt-in must not silently opt into AHA insight processing');
   assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'saveFeedPost'), 'explicit opt-in should enable repository writes');
   const remoteResult = await enabledCtx.AHAFeed.syncFromDatabase();
   assert.equal(remoteResult.ok, true, 'explicit opt-in should permit repository sync');
