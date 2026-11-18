@@ -39,6 +39,11 @@
         <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html?login=1">Gå til innlogging</a>
       </div>
       <p class="aha-module-purpose">En lesbar profilrad betyr ikke at RLS er fulltestet, eller at samtaler og innsikter er lagret i skyen.</p>
+      <div class="aha-tile-actions">
+        <button id="aha-check-data-api-rls" class="aha-tile-btn aha-tile-btn-secondary" type="button">Kontroller privat datatilgang</button>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Eksporter lokale data</a>
+      </div>
+      <p id="aha-data-api-rls-result" class="aha-module-purpose" role="status" aria-live="polite">Ikke kontrollert. Dette er en lesetest, ikke en sikkerhetskopi.</p>
     </section>
 
     <section class="aha-panel aha-profile-activity-panel">
@@ -87,6 +92,7 @@
   <script src="js/ahaConfig.js"></script>
   <script src="js/ahaDb.js"></script>
   <script src="js/ahaProfileSupabaseStatus.js"></script>
+  <script src="js/ahaProfileDataApiRlsCheck.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaConversationInsightSnapshot.js"></script>
   <script src="js/ahaDashboard.js"></script>
