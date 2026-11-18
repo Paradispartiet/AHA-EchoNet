@@ -100,6 +100,26 @@ Supabase Security Advisors melder vurderingspunkter: to `public` SECURITY DEFINE
 
 **Sperrer videre:** to godkjente testkontoer må bevise isolasjon via faktisk Auth/Data API, manuell gjenopprettbar backup må være kontrollert, og eksplisitt samtykke per post samt kontoseparat lokal cache må finnes før data skrives. Hold `enableDatabaseSync` av, behold Cloudflare-pakkesperren, og ikke aktiver offentlig sosial publisering. AHA Staging Supabase er pauset og skal ikke gjenopprettes automatisk. Endringer føres bare i felles databaseregister når status er vedtatt.
 
+### Port C.2 – neste kontroll: privat databasebackup uten nye tjenester
+
+**Avklart 18.11.2026:** AHA DB-03 bruker Supabase Free. Supabase tar ikke automatisk daglige backuper på Free; prosjektets aktive status og en lokal AHA JSON-eksport er **ikke** gjenopprettbar serverbackup. Supabase anbefaler manuell `db dump` og oppbevaring utenfor tjenesten. Prosedyren nedenfor er for en **betrodd lokal datamaskin**, ikke for iPad-nettleseren og **ikke** for GitHub Actions.
+
+1. Før du gjør endringer: eksporter lokal AHA via `privacy.html` fra **hver opprinnelse/enhet** med data; lokal eksport inneholder ikke Supabase-tabeller. Ikke nullstill Safari.
+2. På en betrodd PC/Mac med Supabase CLI og Docker: hent DB-03-tilkobling via AHA Dashboard **Connect**. Hold tilkoblingsstrengen som hemmelig miljøvariabel `AHA_DB_URL` i terminalen, aldri i GitHub, skjermbilder, chat, PR eller logger.
+3. Følg Supabases dokumenterte CLI-dump (utført **lokalt**, uten automatiske Actions-artifacts):
+   ```sh
+   supabase db dump --db-url "$AHA_DB_URL" -f roles.sql --role-only
+   supabase db dump --db-url "$AHA_DB_URL" -f schema.sql
+   supabase db dump --db-url "$AHA_DB_URL" -f data.sql --use-copy --data-only
+   ```
+4. **Kontroller dekning før godkjenning:** det må være med alle nødvendige AHA-skjema, tabeller, rader, policyer, funksjoner og relevante Auth-data. Supabase CLI kan filtrere administrerte skjemaer; en vellykket dumpfil alene er ikke bevis på komplett backup. Storage-objekter krever separat sikring (ingen buckets ved kontrollen 18.11). Ikke glem lokale browser-data som aldri kom til databasen.
+5. Oppbevar filene **privat og kryptert** utenfor GitHub. Verifiser at filene faktisk finnes og kan leses. Gjenopprett bare i et **isolert lokalt testmiljø**; kontroller tabellantall, radtall, RLS og innloggingstilhørende data. Ikke gjenopprett over DB-03 eller opprett betalt Supabase-staging.
+6. Registrer kun aggregert godkjenningsstatus i [felles DATABASE_REGISTER](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md), **aldri** dumper, persondata, DB-passord eller tokens.
+
+**Status nå:** Prosedyren er dokumentert, men **ingen DB-03-dump, privat oppbevaring eller faktisk restore er utført eller verifisert**. Derfor består ikke backup-porten, og sky-skriving/sosial publisering skal være avslått.
+
+Supabase-kilder: [Database Backups](https://supabase.com/docs/guides/platform/backups), [CLI backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore), [Supabase DB dump](https://supabase.com/docs/reference/cli/supabase-db-dump).
+
 ### Port B.3 – sperr også appinnhold fra Supabase Data API (17.11)
 
 **Årsak:** Sperren i #1049 hindrer automatisk `aha_profiles`-upsert ved innlogging, men `js/ahaFeed.js` forsøker fremdeles å kalle `AHARepository.saveFeedPost` når brukeren legger til et innlegg. `js/ahaSources.js` kan tilsvarende lagre kilder, og `js/ahaEmbeddings.js` bruker Supabase direkte. Dette er **ikke** tilstrekkelig isolert før AHA-prosjektets live RLS og grants er kontrollert.
