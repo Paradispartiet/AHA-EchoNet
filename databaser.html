@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Databaser · AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css" />
+  <link rel="stylesheet" href="css/aha-dashboard.css" />
+  <link rel="stylesheet" href="css/aha-global-nav.css" />
+  <link rel="stylesheet" href="css/aha-databases.css" />
+</head>
+<body>
+  <a class="aha-skip-link" href="#aha-paradisdb-main">Hopp til databaser</a>
+  <div id="aha-global-nav"></div>
+  <main id="aha-paradisdb-main" class="aha-dashboard aha-shell-wide aha-paradisdb-page" tabindex="-1">
+    <section class="aha-panel aha-paradisdb-hero">
+      <p class="aha-paradisdb-eyebrow">AHA / ParadisDB</p>
+      <h1>Databaser</h1>
+      <p>Hvor prosjektenes databaser ligger, og hva som faktisk er kontrollert.</p>
+      <p class="aha-paradisdb-limitation">Dette er en lesebasert oversikt fra det felles GitHub-registeret – ikke direkte kontakt med databasene, datamigrering eller bekreftelse på fungerende synkronisering av innhold.</p>
+      <div class="aha-paradisdb-toolbar">
+        <a href="https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md" rel="noopener noreferrer" target="_blank">Åpne hovedregisteret</a>
+        <button type="button" id="aha-paradisdb-refresh">Hent siste registerversjon</button>
+      </div>
+      <p class="aha-paradisdb-status" role="status" aria-live="polite" id="aha-paradisdb-status">Henter databaseregister …</p>
+    </section>
+
+    <section id="aha-paradisdb-content" hidden>
+      <div id="aha-paradisdb-summary" class="aha-paradisdb-summary" aria-label="Nøkkeltall"></div>
+
+      <section class="aha-panel aha-paradisdb-section" aria-labelledby="aha-paradisdb-projects-title">
+        <div class="aha-paradisdb-section-header">
+          <div>
+            <h2 id="aha-paradisdb-projects-title">Prosjekter</h2>
+            <p>Samme database kan høre til flere prosjekter. «Ingen bekreftet» betyr at lagringen fortsatt må kartlegges.</p>
+          </div>
+          <label for="aha-paradisdb-project-search">Finn prosjekt
+            <input type="search" id="aha-paradisdb-project-search" placeholder="Søk på navn eller repo" autocomplete="off" />
+          </label>
+        </div>
+        <p class="aha-paradisdb-resultcount" id="aha-paradisdb-project-count"></p>
+        <div id="aha-paradisdb-projects" class="aha-paradisdb-projects"></div>
+      </section>
+
+      <section class="aha-panel aha-paradisdb-section" aria-labelledby="aha-paradisdb-databases-title">
+        <div class="aha-paradisdb-section-header">
+          <div>
+            <h2 id="aha-paradisdb-databases-title">Registrerte databaser</h2>
+            <p>Åpne en database for å se leverandør, identifikasjon, plassering, dokumenterte kontroller og neste sjekk.</p>
+          </div>
+        </div>
+        <div id="aha-paradisdb-databases" class="aha-paradisdb-databases"></div>
+      </section>
+      <p class="aha-paradisdb-source-note">Kilden oppdateres i Paradispartiets felles register. Registerfilene synkroniseres i GitHub ved endring, men automatisk kontroll av Supabase, Cloudflare og Azure er ikke satt i drift.</p>
+    </section>
+  </main>
+  <script src="js/ahaModules.js"></script>
+  <script src="js/ahaDatabaseInventory.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
