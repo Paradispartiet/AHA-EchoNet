@@ -480,7 +480,6 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-selection-overlay")).toBeVisible();
     await expect(page.locator("#kv2-status")).toContainText("Område markert");
     expect(await page.evaluate(() => document.querySelector("#kv2-title").value)).toBe("");
-    await page.locator("#kv2-export-selection").click();
     const dl = page.waitForEvent("download");
     await page.locator("#kv2-export-selection").click();
     const file = await dl;
