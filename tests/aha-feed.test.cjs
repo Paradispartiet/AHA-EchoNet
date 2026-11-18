@@ -142,17 +142,58 @@ function buildContext() {
   assert.deepEqual(ctx.__repositoryCalls, [], 'local deletion must not write to Supabase by default');
   assert.deepEqual(ctx.__forbiddenCalls, [], 'feed flow should not fetch externally or activate sync/EchoNet');
 
-  // Explicit flag is the only intentional legacy/dev path to database sync.
+  // Explicit opt-in allows only a scoped read, never automatic uploads.
   const enabledCtx = buildContext();
   enabledCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
-  const optedPost = await enabledCtx.AHAFeed.addPost({ id: 'opted_in', text: 'Syntetisk testinnlegg' });
-  assert.ok(optedPost, 'opt-in test post should exist locally');
-  assert.equal(enabledCtx.__ingestCalls.length, 0, 'database opt-in must not silently opt into AHA insight processing');
-  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'saveFeedPost'), 'explicit opt-in should enable repository writes');
+  enabledCtx.AHAAuth = { getProfileId: async () => 'test-profile-A' };
+  enabledCtx.AHARepository.loadFeedPosts = async (options) => {
+    enabledCtx.__repositoryCalls.push({ method: 'loadFeedPosts', profile_id: options.profile_id });
+    return { ok: true, data: [{
+      id: 'remote-A', profile_id: 'test-profile-A', text: 'Kun konto A',
+      created_at: '2026-11-18T11:00:00.000Z'
+    }] };
+  };
+  const oldLocalPost = await enabledCtx.AHAFeed.addPost({ id: 'unscoped-legacy', text: 'Skal aldri autoimporteres' });
+  assert.ok(oldLocalPost);
+  assert.deepEqual(enabledCtx.__repositoryCalls, [], 'opt-in alone must not write a local post');
   const remoteResult = await enabledCtx.AHAFeed.syncFromDatabase();
-  assert.equal(remoteResult.ok, true, 'explicit opt-in should permit repository sync');
-  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'loadFeedPosts'), 'explicit opt-in should permit repository reads');
-  assert.deepEqual(enabledCtx.__forbiddenCalls, [], 'opt-in test must remain synthetic without external fetch');
+  assert.equal(remoteResult.ok, true, 'owner-scoped explicit read should succeed');
+  assert.equal(remoteResult.read_only, true);
+  assert.equal(remoteResult.data.length, 1, 'unscoped local posts may not join an account cloud view');
+  assert.equal(remoteResult.data[0].id, 'remote-A');
+  assert.equal(enabledCtx.__repositoryCalls.length, 1, 'one owner-scoped read, no hidden writes');
+  assert.equal(enabledCtx.__repositoryCalls[0].method, 'loadFeedPosts');
+  assert.equal(enabledCtx.__repositoryCalls[0].profile_id, 'test-profile-A');
+  assert.equal(JSON.parse(enabledCtx.localStorage.raw('aha_feed_posts_v1')).length, 1,
+    'remote posts must not be cached into the legacy shared browser key');
+
+  const maliciousCtx = buildContext();
+  maliciousCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
+  maliciousCtx.AHAAuth = { getProfileId: async () => 'test-profile-B' };
+  maliciousCtx.AHARepository.loadFeedPosts = async () => ({
+    ok: true, data: [{ id: 'remote-A', profile_id: 'test-profile-A', text: 'A only' }]
+  });
+  const mismatch = await maliciousCtx.AHAFeed.syncFromDatabase();
+  assert.equal(mismatch.ok, false, 'unexpected cross-account data must fail closed');
+  assert.equal(mismatch.reason, 'remote_profile_mismatch');
+
+  const anonymousCtx = buildContext();
+  anonymousCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
+  const noAuth = await anonymousCtx.AHAFeed.syncFromDatabase();
+  assert.equal(noAuth.reason, 'not_signed_in', 'flag cannot bypass Auth');
+  assert.deepEqual(anonymousCtx.__repositoryCalls, []);
+  assert.deepEqual(enabledCtx.__forbiddenCalls, [], 'synthetic test must never fetch externally');
+
+  // A user-controlled/remote post ID must never break out of data-* attributes.
+  let rendered = '';
+  enabledCtx.document.getElementById = (id) => id === 'feed-list'
+    ? { set innerHTML(value) { rendered = value; } }
+    : null;
+  enabledCtx.AHAFeed.render([{ id: 'remote" onmouseover="alert(1)', text: 'A record' }]);
+  assert.ok(rendered.includes('data-feed-delete="remote&quot; onmouseover=&quot;alert(1)"'),
+    'remote IDs must be escaped in HTML attributes');
+  assert.equal(rendered.includes('data-feed-delete="remote" onmouseover='), false,
+    'remote IDs must not be able to insert extra event attributes');
 
   console.log('aha-feed tests passed');
 })().catch((err) => {
