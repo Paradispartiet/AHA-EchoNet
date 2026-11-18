@@ -104,7 +104,16 @@
     return Array.from(merged.values()).sort((a, b) => postActionTime(b) - postActionTime(a));
   }
 
+  function isDatabaseSyncEnabled() {
+    // Local posts must never be sent to Supabase just because Auth is active.
+    // Enable only after AHA's hosted RLS/grants and recovery are approved.
+    return window.AHA_CONFIG?.feed?.enableDatabaseSync === true;
+  }
+
   async function pushLocalToDatabase(items) {
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localStorage", database_sync_disabled: true };
+    }
     if (!window.AHARepository?.saveFeedPost) return { ok: false, fallback: "localStorage" };
     const results = [];
     for (const post of items) {
@@ -114,6 +123,9 @@
   }
 
   async function syncFromDatabase() {
+    if (!isDatabaseSyncEnabled()) {
+      return { ok: false, fallback: "localStorage", database_sync_disabled: true };
+    }
     if (!window.AHARepository?.loadFeedPosts) return { ok: false, fallback: "localStorage" };
     const local = load();
     if (local.length) await pushLocalToDatabase(local);
@@ -129,6 +141,7 @@
   }
 
   function persistPost(post) {
+    if (!isDatabaseSyncEnabled()) return;
     if (!window.AHARepository?.saveFeedPost) return;
     window.AHARepository.saveFeedPost(post).then((result) => {
       if (result?.ok === false && result.error) {
@@ -223,7 +236,9 @@
     persistPost(post);
     render(posts);
 
-    await ingestPost(post.id);
+    // Creating a Feed post is local-only. The explicit "Send til AHA" button
+    // is required before creating source events, insights or embeddings.
+    // AHA ingestion may start separate pipelines, so never invoke it silently.
     return load().find((item) => item?.id === post.id) || post;
   }
 
@@ -261,7 +276,7 @@
     });
 
     render();
-    // Feed er lokal-only som standard. Database-sync finnes kun som eksplisitt API for eldre migrering/tester.
+    // Feed er lokal-only som standard. Database-sync krever eksplisitt godkjent config-flag.
   }
 
   window.AHAFeed = { load, save, syncFromDatabase, addPost, ingestPost, deletePost, render, createIngestInput, normalizeText, safePostId };

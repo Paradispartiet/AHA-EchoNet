@@ -26,6 +26,7 @@ function createForbiddenApi(name, calls) {
 function buildContext() {
   const ingestCalls = [];
   const forbiddenCalls = [];
+  const repositoryCalls = [];
   const context = {
     window: null,
     console,
@@ -58,12 +59,25 @@ function buildContext() {
     },
     AHAContracts: {
       createBaseItem: (input) => ({ id: input.id, type: input.type, source: input.source, meta: input.meta })
+    },
+    // A repository is intentionally available even for a locally flagged post.
+    // Writing by default would leak content to Supabase despite local_only metadata.
+    AHARepository: {
+      saveFeedPost: async (post) => {
+        repositoryCalls.push({ method: 'saveFeedPost', id: post.id });
+        return { ok: true, data: post };
+      },
+      loadFeedPosts: async () => {
+        repositoryCalls.push({ method: 'loadFeedPosts' });
+        return { ok: true, data: [] };
+      }
     }
   };
   context.window = context;
   context.HTMLElement = function HTMLElement() {};
   context.__ingestCalls = ingestCalls;
   context.__forbiddenCalls = forbiddenCalls;
+  context.__repositoryCalls = repositoryCalls;
   vm.createContext(context);
   vm.runInContext(feedCode, context, { filename: 'js/ahaFeed.js' });
   return context;
@@ -90,9 +104,16 @@ function buildContext() {
   const stored = JSON.parse(ctx.localStorage.raw('aha_feed_posts_v1'));
   assert.equal(stored.length, 1, 'valid feed post should be stored in aha_feed_posts_v1');
   assert.equal(stored[0].id, 'unsafe_id', 'stored post should use safe id');
-  assert.equal(stored[0].last_source_event_id, 'source-1', 'stored post should keep AHAIngest source event trace');
+  assert.equal(stored[0].last_source_event_id, undefined, 'new post must not be ingested automatically');
 
-  assert.equal(ctx.__ingestCalls.length, 1, 'valid feed post should be sent to AHAIngest exactly once');
+  assert.equal(ctx.__ingestCalls.length, 0, 'adding a local Feed post must not trigger AHA ingest or embeddings');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'adding a local post must not touch database even if a repository exists');
+
+  const manuallyIngested = await Feed.ingestPost('unsafe_id');
+  assert.equal(manuallyIngested.ok, true, 'explicit Send til AHA action should ingest the post');
+  assert.equal(ctx.__ingestCalls.length, 1, 'manual ingestion must occur exactly once');
+  const storedAfterManualIngest = JSON.parse(ctx.localStorage.raw('aha_feed_posts_v1'));
+  assert.equal(storedAfterManualIngest[0].last_source_event_id, 'source-1', 'manual ingestion must retain source event trace');
   const payload = ctx.__ingestCalls[0];
   assert.equal(payload.source_app, 'aha', 'feed ingest payload should use AHA source app');
   assert.equal(payload.source_type, 'aha_feed_post', 'feed ingest payload should use feed source type');
@@ -110,7 +131,28 @@ function buildContext() {
   assert.equal(duplicate.skipped, true, 're-ingest of same post should be skipped when source event exists');
   assert.equal(ctx.__ingestCalls.length, 1, 're-ingest should not create an obvious duplicate ingest event');
 
+  // Default local-only behavior must hold even with Supabase repository connected.
+  assert.deepEqual(ctx.__repositoryCalls, [], 'local-only post and AHA ingest must not write to Supabase by default');
+  const blockedSync = await Feed.syncFromDatabase();
+  assert.equal(blockedSync.database_sync_disabled, true, 'remote sync must be disabled by default');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'syncFromDatabase must not read or write when not explicitly enabled');
+
+  const deleted = Feed.deletePost('unsafe_id');
+  assert.ok(deleted?.deleted_at, 'local delete must retain tombstone');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'local deletion must not write to Supabase by default');
   assert.deepEqual(ctx.__forbiddenCalls, [], 'feed flow should not fetch externally or activate sync/EchoNet');
+
+  // Explicit flag is the only intentional legacy/dev path to database sync.
+  const enabledCtx = buildContext();
+  enabledCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
+  const optedPost = await enabledCtx.AHAFeed.addPost({ id: 'opted_in', text: 'Syntetisk testinnlegg' });
+  assert.ok(optedPost, 'opt-in test post should exist locally');
+  assert.equal(enabledCtx.__ingestCalls.length, 0, 'database opt-in must not silently opt into AHA insight processing');
+  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'saveFeedPost'), 'explicit opt-in should enable repository writes');
+  const remoteResult = await enabledCtx.AHAFeed.syncFromDatabase();
+  assert.equal(remoteResult.ok, true, 'explicit opt-in should permit repository sync');
+  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'loadFeedPosts'), 'explicit opt-in should permit repository reads');
+  assert.deepEqual(enabledCtx.__forbiddenCalls, [], 'opt-in test must remain synthetic without external fetch');
 
   console.log('aha-feed tests passed');
 })().catch((err) => {

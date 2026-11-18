@@ -134,6 +134,26 @@ await replacePreviewOnly("js/ahaAuthCallback.js", [
   }
 ]);
 
+// Lock down ALL PostgREST data writes in the Cloudflare preview copy.
+// Protects AHARepository, Feed, Sources, Embeddings and other callers that
+// access AHADb.getClient(). Auth is intentionally left operational.
+const readOnlyPreviewSource = await readFile(
+  path.join(root, "js/ahaPreviewDataApiReadOnly.js"), "utf8"
+);
+if (!readOnlyPreviewSource.includes("AHA_CLOUDFLARE_PREVIEW_DATA_API_READ_ONLY")) {
+  throw new Error("Cloudflare Data API read-only module is missing its marker.");
+}
+const previewDbPath = path.join(out, "js/ahaDb.js");
+if (!copied.includes("js/ahaDb.js")) {
+  throw new Error("Cloudflare preview missing database client bootstrap.");
+}
+const previewDbSource = await readFile(previewDbPath, "utf8");
+if (!previewDbSource.includes("  global.AHADb = {") ||
+    previewDbSource.includes("AHA_CLOUDFLARE_PREVIEW_DATA_API_READ_ONLY")) {
+  throw new Error("Unexpected Supabase client bootstrap: fail closed.");
+}
+await writeFile(previewDbPath, previewDbSource + "\n" + readOnlyPreviewSource);
+
 const sha = process.env.AHA_BUILD_SHA || process.env.GITHUB_SHA;
 if (sha) {
   if (!/^[a-f0-9]{40}$/i.test(sha)) throw new Error("AHA_BUILD_SHA must be a 40-character commit SHA.");
