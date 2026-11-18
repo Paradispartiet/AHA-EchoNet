@@ -94,6 +94,8 @@ To ulike og eksplisitt adskilte kontroller er derfor lagt til:
 
 **Årsak:** Sperren i #1049 hindrer automatisk `aha_profiles`-upsert ved innlogging, men `js/ahaFeed.js` forsøker fremdeles å kalle `AHARepository.saveFeedPost` når brukeren legger til et innlegg. `js/ahaSources.js` kan tilsvarende lagre kilder, og `js/ahaEmbeddings.js` bruker Supabase direkte. Dette er **ikke** tilstrekkelig isolert før AHA-prosjektets live RLS og grants er kontrollert.
 
+**Oppfølgingsretting 18.11 – Feed er nå lokal som standard også på GitHub Pages:** `js/ahaFeed.js` lagrer opprettelse, sletting og AHA-kildekobling lokalt uten Supabase-kall, selv når `AHARepository` er tilgjengelig og brukeren er logget inn. `persistPost`, `pushLocalToDatabase` og `syncFromDatabase` krever nå et eksplisitt `window.AHA_CONFIG.feed.enableDatabaseSync === true`. Dette flagget skal **ikke** aktiveres før faktisk AHA DB-03 RLS/grants, tobruker-isolasjon, backup/restore og samtykke er godkjent. Tester med syntetisk repository verifiserer både lokal standard og eksplisitt opt-in. Eksisterende lokale innlegg bevares; det skjer ingen automatisk migrering. Den separate Cloudflare Data API-sperren beholdes som ekstra beskyttelse også om flagget senere settes feil.
+
 Cloudflare-preview-bygget legger derfor nå en egen `js/ahaPreviewDataApiReadOnly.js`-beskyttelse **kun inn i den kopierte `js/ahaDb.js`**, slik at alle moduler som bruker `AHADb.getClient()` deler samme grense:
 
 - Supabase Auth `getUser`, `getSession` og vanlig innlogging kan fortsette, og godkjente Data API `SELECT`-spørringer kan fortsatt lese egen profilrad.
