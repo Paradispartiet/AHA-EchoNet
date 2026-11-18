@@ -430,6 +430,38 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(rows[0].layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
   });
 
+  test("invalid exact-pixel metadata rejects import without replacing open artwork", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-title").fill("Original som ikke skal erstattes");
+    await stroke(page);
+    const originalPixel = await pixel(page);
+    const exportPromise = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = JSON.parse(await fs.readFile(await (await exportPromise).path(), "utf8"));
+
+    const invalidCorrections = [
+      Buffer.from([1, 2, 3]).toString("base64"), // truncated RGBA record
+      Buffer.from([
+        0, 0, 0, 0, 1, 2, 3, 128,
+        0, 0, 0, 0, 1, 2, 3, 128
+      ]).toString("base64") // repeated pixel index
+    ];
+    for (const [i, invalid] of invalidCorrections.entries()) {
+      const corrupted = structuredClone(exported);
+      corrupted.layers[0].pixelFixups = invalid;
+      page.once("dialog", (dialog) => dialog.accept());
+      await page.locator("#kv2-import").setInputFiles({
+        name: "corrupt-" + i + ".kunstrommet.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(corrupted), "utf8")
+      });
+      await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+      await expect(page.locator("#kv2-title")).toHaveValue("Original som ikke skal erstattes");
+      await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+      expect(await pixel(page)).toEqual(originalPixel);
+    }
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
