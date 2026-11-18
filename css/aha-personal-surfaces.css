@@ -316,6 +316,8 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
 }
 
 .aha-profile-page .aha-profile-hero-panel,
+.aha-profile-page .aha-profile-account-panel,
+.aha-profile-page .aha-profile-local-panel,
 .aha-profile-page .aha-profile-activity-panel,
 .aha-profile-page .aha-profile-modules-panel {
   grid-column: 1 / -1;
@@ -328,7 +330,7 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
     var(--aha-panel-background);
 }
 
-.aha-profile-hero-panel > .aha-status-stack {
+.aha-profile-local-panel > .aha-status-stack {
   margin-top: 14px;
   padding: 10px 12px;
   border: 1px solid rgba(116,173,255,.16);
@@ -406,6 +408,8 @@ body.aha-product-shell main.aha-profile-page > .aha-panel + .aha-panel {
   }
 
   .aha-profile-page .aha-profile-hero-panel,
+  .aha-profile-page .aha-profile-account-panel,
+  .aha-profile-page .aha-profile-local-panel,
   .aha-profile-page .aha-profile-activity-panel,
   .aha-profile-page .aha-profile-modules-panel {
     grid-column: auto;
