@@ -184,6 +184,17 @@ function buildContext() {
   assert.deepEqual(anonymousCtx.__repositoryCalls, []);
   assert.deepEqual(enabledCtx.__forbiddenCalls, [], 'synthetic test must never fetch externally');
 
+  // A user-controlled/remote post ID must never break out of data-* attributes.
+  let rendered = '';
+  enabledCtx.document.getElementById = (id) => id === 'feed-list'
+    ? { set innerHTML(value) { rendered = value; } }
+    : null;
+  enabledCtx.AHAFeed.render([{ id: 'remote" onmouseover="alert(1)', text: 'A record' }]);
+  assert.ok(rendered.includes('data-feed-delete="remote&quot; onmouseover=&quot;alert(1)"'),
+    'remote IDs must be escaped in HTML attributes');
+  assert.equal(rendered.includes('data-feed-delete="remote" onmouseover='), false,
+    'remote IDs must not be able to insert extra event attributes');
+
   console.log('aha-feed tests passed');
 })().catch((err) => {
   console.error(err);
