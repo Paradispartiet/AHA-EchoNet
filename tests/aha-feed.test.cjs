@@ -26,6 +26,7 @@ function createForbiddenApi(name, calls) {
 function buildContext() {
   const ingestCalls = [];
   const forbiddenCalls = [];
+  const repositoryCalls = [];
   const context = {
     window: null,
     console,
@@ -58,12 +59,25 @@ function buildContext() {
     },
     AHAContracts: {
       createBaseItem: (input) => ({ id: input.id, type: input.type, source: input.source, meta: input.meta })
+    },
+    // A repository is intentionally available even for a locally flagged post.
+    // Writing by default would leak content to Supabase despite local_only metadata.
+    AHARepository: {
+      saveFeedPost: async (post) => {
+        repositoryCalls.push({ method: 'saveFeedPost', id: post.id });
+        return { ok: true, data: post };
+      },
+      loadFeedPosts: async () => {
+        repositoryCalls.push({ method: 'loadFeedPosts' });
+        return { ok: true, data: [] };
+      }
     }
   };
   context.window = context;
   context.HTMLElement = function HTMLElement() {};
   context.__ingestCalls = ingestCalls;
   context.__forbiddenCalls = forbiddenCalls;
+  context.__repositoryCalls = repositoryCalls;
   vm.createContext(context);
   vm.runInContext(feedCode, context, { filename: 'js/ahaFeed.js' });
   return context;
@@ -110,7 +124,27 @@ function buildContext() {
   assert.equal(duplicate.skipped, true, 're-ingest of same post should be skipped when source event exists');
   assert.equal(ctx.__ingestCalls.length, 1, 're-ingest should not create an obvious duplicate ingest event');
 
+  // Default local-only behavior must hold even with Supabase repository connected.
+  assert.deepEqual(ctx.__repositoryCalls, [], 'local-only post and AHA ingest must not write to Supabase by default');
+  const blockedSync = await Feed.syncFromDatabase();
+  assert.equal(blockedSync.database_sync_disabled, true, 'remote sync must be disabled by default');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'syncFromDatabase must not read or write when not explicitly enabled');
+
+  const deleted = Feed.deletePost('unsafe_id');
+  assert.ok(deleted?.deleted_at, 'local delete must retain tombstone');
+  assert.deepEqual(ctx.__repositoryCalls, [], 'local deletion must not write to Supabase by default');
   assert.deepEqual(ctx.__forbiddenCalls, [], 'feed flow should not fetch externally or activate sync/EchoNet');
+
+  // Explicit flag is the only intentional legacy/dev path to database sync.
+  const enabledCtx = buildContext();
+  enabledCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
+  const optedPost = await enabledCtx.AHAFeed.addPost({ id: 'opted_in', text: 'Syntetisk testinnlegg' });
+  assert.ok(optedPost, 'opt-in test post should exist locally');
+  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'saveFeedPost'), 'explicit opt-in should enable repository writes');
+  const remoteResult = await enabledCtx.AHAFeed.syncFromDatabase();
+  assert.equal(remoteResult.ok, true, 'explicit opt-in should permit repository sync');
+  assert.ok(enabledCtx.__repositoryCalls.some((c) => c.method === 'loadFeedPosts'), 'explicit opt-in should permit repository reads');
+  assert.deepEqual(enabledCtx.__forbiddenCalls, [], 'opt-in test must remain synthetic without external fetch');
 
   console.log('aha-feed tests passed');
 })().catch((err) => {
