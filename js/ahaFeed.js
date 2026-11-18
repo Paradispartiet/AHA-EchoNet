@@ -236,7 +236,9 @@
     persistPost(post);
     render(posts);
 
-    await ingestPost(post.id);
+    // Creating a Feed post is local-only. The explicit "Send til AHA" button
+    // is required before creating source events, insights or embeddings.
+    // AHA ingestion may start separate pipelines, so never invoke it silently.
     return load().find((item) => item?.id === post.id) || post;
   }
 
