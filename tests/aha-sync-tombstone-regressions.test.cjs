@@ -167,7 +167,10 @@ async function testNotesSyncRegressions() {
 }
 
 async function testFeedSyncRegressions() {
+  // The app defaults to local-only. This regression explicitly opts into
+  // the synthetic legacy sync path to verify tombstone merge behavior.
   const sandbox = loadModule('js/ahaFeed.js', {
+    config: { feed: { enableDatabaseSync: true } },
     repository: {
       saveFeedPost: async (post) => ({ ok: true, data: post }),
       loadFeedPosts: async () => ({
@@ -196,6 +199,7 @@ async function testFeedSyncRegressions() {
   assert.equal(deleted.updated_at, deleted.deleted_at, 'feed deletePost should set updated_at to deleted_at');
 
   const invalidSandbox = loadModule('js/ahaFeed.js', {
+    config: { feed: { enableDatabaseSync: true } },
     repository: {
       saveFeedPost: async (post) => ({ ok: true, data: post }),
       loadFeedPosts: async () => ({ ok: true, data: { invalid: true } })
