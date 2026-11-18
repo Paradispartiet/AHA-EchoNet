@@ -14,52 +14,22 @@
 <body>
   <div id="aha-global-nav"></div>
   <main class="aha-dashboard insta-page aha-personal-page aha-insta-page">
-    <section class="aha-panel aha-module-shell aha-personal-header">
-      <header class="aha-module-shell-header">
-        <div>
-          <p class="eyebrow">AHA Modul</p>
-          <h1>AHA Insta</h1>
-          <p class="aha-module-purpose">Din personlige bilde- og videofeed i AHA.</p>
-          <p class="aha-personal-trust">Lokal lagring · Ikke publisert eksternt</p>
-        </div>
-      </header>
-      <div class="aha-module-actions">
-        <a class="aha-tile-btn aha-tile-btn-primary" href="index.html">Tilbake til AHA Home</a>
-      </div>
-    </section>
+    <header class="insta-app-topbar">
+      <h1>AHA Insta</h1>
+      <button id="insta-new-post" type="button" aria-controls="insta-compose-panel" aria-expanded="false">+ Ny post</button>
+    </header>
 
-    <section class="aha-panel insta-profile-section" id="insta-profile-section">
-      <h2 class="sr-only">Min profil</h2>
-      <div id="insta-profile-card"></div>
-      <details class="insta-collapsible">
-        <summary>Rediger profil</summary>
-        <div class="module-form">
-          <input id="insta-profile-username" type="text" placeholder="Brukernavn" />
-          <input id="insta-profile-display-name" type="text" placeholder="Visningsnavn" />
-          <textarea id="insta-profile-bio" placeholder="Bio"></textarea>
-          <input id="insta-profile-avatar" type="text" placeholder="Avatar-URL/path" />
-          <button id="insta-profile-save" type="button">Lagre profil</button>
-        </div>
-      </details>
-    </section>
-
-    <section class="aha-panel insta-stories-section">
-      <h2 class="sr-only">Stories</h2>
-      <div id="insta-stories" class="module-list"></div>
-    </section>
-
-    <section class="aha-panel insta-feed-section">
-      <div id="insta-feed-controls"></div>
-      <div id="insta-list" class="module-list"></div>
-    </section>
-
-    <section class="aha-panel">
+    <section class="insta-compose-shell">
       <details id="insta-compose-panel" class="insta-collapsible">
-        <summary>+ Ny post</summary>
+        <summary class="sr-only">Ny bildepost</summary>
+        <div class="insta-composer-heading">
+          <h2>Ny bildepost</h2>
+          <button id="insta-cancel-post" type="button" aria-label="Lukk ny post">×</button>
+        </div>
         <form id="insta-form" class="module-form">
           <label for="insta-file">Bilde fra iPad</label>
           <input id="insta-file" class="insta-photo-input" type="file" accept="image/*,.heic,.heif" aria-describedby="insta-upload-note" />
-          <p id="insta-upload-note" class="module-meta">Velg fra Bilder eller Filer. Bildet tilpasses for privat, lokal lagring på denne enheten.</p>
+          <p id="insta-upload-note" class="module-meta">Velg fra Bilder eller Filer. Bildet lagres privat på denne enheten.</p>
           <div id="insta-photo-preview" class="insta-photo-preview" hidden>
             <img id="insta-preview-image" alt="Valgt bilde før lokal lagring" />
             <button id="insta-clear-file" type="button">Fjern valgt bilde</button>
@@ -76,6 +46,41 @@
         </form>
       </details>
     </section>
+
+    <section class="insta-profile-shell" id="insta-profile-section">
+      <h2 class="sr-only">Min profil</h2>
+      <div id="insta-profile-card"></div>
+      <details class="insta-collapsible insta-profile-edit">
+        <summary>Rediger profil</summary>
+        <div class="module-form">
+          <input id="insta-profile-username" type="text" placeholder="Brukernavn" />
+          <input id="insta-profile-display-name" type="text" placeholder="Visningsnavn" />
+          <textarea id="insta-profile-bio" placeholder="Bio"></textarea>
+          <input id="insta-profile-avatar" type="text" placeholder="Avatar-URL/path" />
+          <button id="insta-profile-save" type="button">Lagre profil</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="insta-grid-section" aria-labelledby="insta-grid-heading">
+      <div class="insta-grid-heading">
+        <h2 id="insta-grid-heading">Dine bilder</h2>
+        <span>Lagret lokalt</span>
+      </div>
+      <div id="insta-profile-grid" class="insta-profile-grid"></div>
+    </section>
+
+    <details id="insta-feed-panel" class="insta-collapsible insta-secondary-panel">
+      <summary>Vis feed og stories</summary>
+      <section class="insta-stories-section">
+        <h2 class="sr-only">Stories</h2>
+        <div id="insta-stories" class="module-list"></div>
+      </section>
+      <section class="insta-feed-section">
+        <div id="insta-feed-controls"></div>
+        <div id="insta-list" class="module-list"></div>
+      </section>
+    </details>
 
     <section class="aha-panel">
       <details class="insta-collapsible">

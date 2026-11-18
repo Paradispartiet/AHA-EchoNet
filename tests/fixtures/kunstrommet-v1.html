@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kunstrommet | AHA</title>
+  <link rel="stylesheet" href="../../css/aha-chat.css" />
+  <link rel="stylesheet" href="../../css/aha-dashboard.css" />
+  <link rel="stylesheet" href="../../css/aha-global-nav.css" />
+  <link rel="stylesheet" href="../../css/aha-kunstrommet.css" />
+</head>
+<body class="aha-product-shell">
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard aha-kunstrommet" id="main">
+    <section class="aha-panel aha-module-shell">
+      <header class="aha-module-shell-header">
+        <div>
+          <p class="eyebrow">Ditt personlige atelier</p>
+          <h1>Kunstrommet</h1>
+          <p class="aha-module-purpose">Tegn, prøv deg frem og ta vare på dine egne kunstverk. Ingen bilder eller notater blir automatisk sendt til Aha.</p>
+          <p class="kunstrommet-privacy">Privat på denne enheten · Ingen automatisk deling eller skybackup</p>
+        </div>
+      </header>
+      <div class="aha-module-actions">
+        <a class="aha-tile-btn" href="../../index.html">Aha Home</a>
+        <a class="aha-tile-btn" href="../../mindmap.html">Tankekart</a>
+        <a class="aha-tile-btn" href="../../gallery.html">Galleri</a>
+      </div>
+    </section>
+
+    <section class="kunstrommet-layout">
+      <div class="kunstrommet-main">
+        <section class="aha-panel kunstrommet-editor" aria-labelledby="kunstrommet-lerret-title">
+          <div class="kunstrommet-title-row">
+            <div><p class="eyebrow">Verksted</p><h2 id="kunstrommet-lerret-title">Lerretet</h2></div>
+            <span id="kunstrommet-save-state" role="status" aria-live="polite">Ny skisse</span>
+          </div>
+          <label for="kunstrommet-title">Tittel</label>
+          <input type="text" id="kunstrommet-title" maxlength="120" placeholder="Gi kunstverket et navn" />
+          <div class="kunstrommet-toolbar" role="group" aria-label="Tegneverktøy">
+            <label for="kunstrommet-color">Farge <input id="kunstrommet-color" type="color" value="#22212a" /></label>
+            <label for="kunstrommet-size">Pensel <input id="kunstrommet-size" type="range" min="1" max="48" value="6" /><output id="kunstrommet-size-value">6</output></label>
+            <button type="button" id="kunstrommet-pen" aria-pressed="true">Pensel</button>
+            <button type="button" id="kunstrommet-eraser" aria-pressed="false">Viskelær</button>
+            <button type="button" id="kunstrommet-undo">Angre</button>
+            <button type="button" id="kunstrommet-redo">Gjør om</button>
+          </div>
+          <div class="kunstrommet-palette" id="kunstrommet-palette" role="group" aria-label="Farger til kunstverket">
+            <span>Fargepalett</span>
+            <button type="button" data-kunstrommet-color="#22212a" style="--swatch:#22212a" aria-label="Velg kullsvart"></button>
+            <button type="button" data-kunstrommet-color="#ffffff" style="--swatch:#ffffff" aria-label="Velg hvit"></button>
+            <button type="button" data-kunstrommet-color="#dd5948" style="--swatch:#dd5948" aria-label="Velg rød"></button>
+            <button type="button" data-kunstrommet-color="#edac55" style="--swatch:#edac55" aria-label="Velg oker"></button>
+            <button type="button" data-kunstrommet-color="#e8d979" style="--swatch:#e8d979" aria-label="Velg gul"></button>
+            <button type="button" data-kunstrommet-color="#4e8862" style="--swatch:#4e8862" aria-label="Velg grønn"></button>
+            <button type="button" data-kunstrommet-color="#4b81ab" style="--swatch:#4b81ab" aria-label="Velg blå"></button>
+            <button type="button" data-kunstrommet-color="#9c70a3" style="--swatch:#9c70a3" aria-label="Velg fiolett"></button>
+          </div>
+          <div class="kunstrommet-paper">
+            <canvas id="kunstrommet-canvas" width="1200" height="800" aria-label="Tegneflate. Bruk mus, finger eller pekepenn for å tegne.">Nettleseren støtter ikke tegneflaten.</canvas>
+          </div>
+          <label for="kunstrommet-note">Notater om verket</label>
+          <textarea id="kunstrommet-note" rows="3" maxlength="4000" placeholder="Hva tenker du på? Hva inspirerte deg?"></textarea>
+          <div class="kunstrommet-actions">
+            <button type="button" id="kunstrommet-new">Ny skisse</button>
+            <button type="button" id="kunstrommet-save" class="kunstrommet-primary">Lagre skisse</button>
+            <button type="button" id="kunstrommet-png">Eksporter PNG</button>
+            <button type="button" id="kunstrommet-json">Eksporter prosjekt</button>
+            <label class="kunstrommet-file-label" for="kunstrommet-import">Importer prosjekt
+              <input type="file" id="kunstrommet-import" accept=".json,application/json" />
+            </label>
+          </div>
+          <p class="kunstrommet-hint">Tegninger lagres kun i denne nettleseren. Eksporter prosjektet for sikkerhetskopi. Snarveier: Ctrl/⌘ + Z for angre, Ctrl/⌘ + Shift + Z for gjør om.</p>
+        </section>
+      </div>
+      <aside class="kunstrommet-sidebar">
+        <section class="aha-panel" aria-labelledby="kunstrommet-sketchbook-title">
+          <p class="eyebrow">Mine arbeider</p>
+          <h2 id="kunstrommet-sketchbook-title">Skisseboken</h2>
+          <label for="kunstrommet-project-search" class="kunstrommet-search-label">Finn en skisse</label>
+          <input id="kunstrommet-project-search" class="kunstrommet-project-search" type="search" placeholder="Søk i titler og notater" autocomplete="off" />
+          <p id="kunstrommet-project-count" class="kunstrommet-project-count" role="status" aria-live="polite"></p>
+          <div id="kunstrommet-projects" class="kunstrommet-projects"></div>
+        </section>
+        <section class="aha-panel" aria-labelledby="kunstrommet-gallery-title">
+          <p class="eyebrow">Hent fra eksisterende Aha Galleri</p>
+          <h2 id="kunstrommet-gallery-title">Inspirasjon fra Galleriet</h2>
+          <p>Galleriet beholder bildene og referansene dine. Her kan du frivillig hente en tittel og beskrivelse inn som notat til skissen din. Ingen bildefiler kopieres.</p>
+          <div id="kunstrommet-gallery-inspiration" class="kunstrommet-inspiration" aria-live="polite"></div>
+          <a href="../../gallery.html" class="aha-tile-btn">Åpne Aha Galleri</a>
+        </section>
+        <section class="aha-panel" aria-labelledby="kunstrommet-links-title">
+          <p class="eyebrow">Aha · personlig organisering</p>
+          <h2 id="kunstrommet-links-title">Knytt kunstverket til en samling</h2>
+          <p>Velg en av dine lokale Aha-samlinger. Bare verkets tittel og en referanse lagres i samlingen. Selve tegningen og notatene forblir i Kunstrommet. Du kan fjerne alle samlingskoblingene igjen; dette sletter ikke tekst som er sendt separat til Aha.</p>
+          <label for="kunstrommet-collection-select">Velg samling</label>
+          <select id="kunstrommet-collection-select"><option value="">Velg samling</option></select>
+          <button type="button" id="kunstrommet-link-collection">Legg kunstverket i samlingen</button>
+          <button type="button" id="kunstrommet-unlink-aha" class="kunstrommet-unlink">Fjern kunstverkets samlingskoblinger</button>
+          <p id="kunstrommet-link-state" role="status" aria-live="polite" class="kunstrommet-hint">Lagre kunstverket først. Ingen koblinger opprettes automatisk.</p>
+          <a href="../../lists.html#collections" class="aha-tile-btn">Åpne samlinger</a>
+        </section>
+        <section class="aha-panel" aria-labelledby="kunstrommet-aha-title">
+          <p class="eyebrow">Frivillig tilkobling</p>
+          <h2 id="kunstrommet-aha-title">Ta med ideen til Aha</h2>
+          <p>Send bare tittelen og notatene til Ahas eksisterende innsiktsflyt. Selve bildet forblir lokalt og analyseres ikke.</p>
+          <button id="kunstrommet-send-aha" type="button">Send tekst til Aha</button>
+          <p class="kunstrommet-hint" id="kunstrommet-aha-state" role="status" aria-live="polite">Ingenting sendes uten at du trykker på knappen.</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+  <script src="../../js/ahaModuleApi.js"></script>
+  <script src="../../js/insightsChamber.js"></script>
+  <script src="../../js/metaInsightsEngine.js"></script>
+  <script src="../../js/theoryClustersLoader.js"></script>
+  <script src="../../js/ahaFieldProfiles.js"></script>
+  <script src="../../js/ahaSources.js"></script>
+  <script src="../../js/emnerLoader.js"></script>
+  <script src="../../js/ahaEmneMatcher.js"></script>
+  <script src="../../js/ahaEmbeddings.js"></script>
+  <script src="../../js/ahaIngest.js"></script>
+  <script src="../../js/ahaContracts.js"></script>
+  <script src="../../js/ahaGallery.js"></script>
+  <script src="../../js/ahaKunstrommetReferences.js"></script>
+  <script src="../../js/ahaLists.js"></script>
+  <script src="../../js/ahaKunstrommet.js"></script>
+  <script src="../../js/ahaModules.js"></script>
+  <script src="../../js/ahaGlobalNav.js"></script>
+</body>
+</html>

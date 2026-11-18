@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 
-const AHA_ORIGIN = "https://aha-echonet.vercel.app";
+const AHA_ORIGIN = "https://aha-echo-net.vercel.app";
 const HISTORY_GO_ORIGIN = "https://paradispartiet.github.io";
 const FAKE_ORIGIN = "https://untrusted.example";
 const AHA_FILE = fs.readFileSync("psykologi.html", "utf8");
@@ -85,6 +85,28 @@ test("cross-origin private preview requires AHA consent and is removable", async
   expect(stored[0].visibility).toBe("local_private");
   await recipient.reload();
   await expect(recipient.locator(".aha-psych-entry")).toHaveCount(1);
+  const chamberKey = "aha_insight_chamber_v1";
+  expect(await recipient.evaluate(key => localStorage.getItem(key), chamberKey)).toBeNull();
+
+  recipient.once("dialog", dialog => dialog.dismiss());
+  await recipient.getByRole("button", { name: "Bruk som AHA-innsikt" }).click();
+  expect(await recipient.evaluate(key => localStorage.getItem(key), chamberKey)).toBeNull();
+
+  recipient.once("dialog", dialog => dialog.accept());
+  await recipient.getByRole("button", { name: "Bruk som AHA-innsikt" }).click();
+  const chamber = await recipient.evaluate(key => JSON.parse(localStorage.getItem(key) || "{}"), chamberKey);
+  expect(chamber.insights).toHaveLength(1);
+  expect(chamber.insights[0].summary).toBe(selectedText);
+  expect(chamber.insights[0].meta.manual_promotion).toBe(true);
+  expect(chamber.insights[0].claim_kind).toBe("personal_reflection");
+  await expect(recipient.getByRole("link", { name: "Åpne i Innsikter" })).toHaveAttribute(
+    "href", "insights.html#insight-" + encodeURIComponent(chamber.insights[0].id)
+  );
+
+  recipient.once("dialog", dialog => dialog.accept());
+  await recipient.getByRole("button", { name: "Fjern AHA-kopien" }).click();
+  expect(await recipient.evaluate(key => JSON.parse(localStorage.getItem(key) || "{}").insights.length, chamberKey)).toBe(0);
+  await expect(recipient.locator(".aha-psych-entry")).toHaveCount(1);
 
   recipient.once("dialog", dialog => dialog.accept());
   await recipient.getByRole("button", { name: "Slett alle fra AHA" }).click();
@@ -100,4 +122,26 @@ test("a different opener origin cannot provide a supposedly trusted text", async
   const recipient = await openRecipientFromSender(context, page);
   await expect(recipient.locator("#aha-psych-selected-text")).toHaveValue("");
   expect(await recipient.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
+});
+
+test("GitHub Pages shared origin refuses private psychology storage", async ({ context, page }) => {
+  await context.route(HISTORY_GO_ORIGIN + "/**", async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/AHA-EchoNet/psykologi.html") {
+      return route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: AHA_FILE });
+    }
+    if (path === "/AHA-EchoNet/js/ahaPsychologyRoomBridge.js") {
+      return route.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: AHA_BRIDGE });
+    }
+    if (path.endsWith(".js")) return route.fulfill({ status: 200, contentType: "text/javascript", body: "" });
+    if (path.endsWith(".css")) return route.fulfill({ status: 200, contentType: "text/css", body: "" });
+    return route.fulfill({ status: 404, body: "" });
+  });
+  await page.goto(HISTORY_GO_ORIGIN + "/AHA-EchoNet/psykologi.html");
+  await expect(page.locator("#aha-psych-selected-text")).toBeDisabled();
+  await expect(page.locator("#aha-psych-saved-list")).toContainText("Dette private arkivet åpnes ikke");
+  await expect(page.getByRole("link", { name: "Åpne Psykologirommet på AHAs separate adresse" }))
+    .toHaveAttribute("href", AHA_ORIGIN + "/psykologi.html");
+  expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"))).toBeNull();
 });

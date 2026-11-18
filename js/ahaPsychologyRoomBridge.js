@@ -4,6 +4,7 @@
   "use strict";
 
   const KEY = "aha_psychology_private_reflections_v1";
+  const CHAMBER_KEY = "aha_insight_chamber_v1";
   const INCOMING_TYPE = "historygo.psychology.selection.v1";
   const READY_TYPE = "aha.psychology.ready.v1";
   const TRUSTED_HISTORY_GO_ORIGINS = Object.freeze(["https://paradispartiet.github.io"]);
@@ -44,6 +45,97 @@
       "aha_psych_" + Date.now() + "_" + Math.random().toString(36).slice(2);
   }
 
+  // Manuell opt-in. Den vanlige innsiktsstrømmen er IKKE samme private arkiv.
+  function readChamber() {
+    const raw = global.localStorage.getItem(CHAMBER_KEY);
+    if (!raw) return { insights: [] };
+    const chamber = JSON.parse(raw);
+    if (!chamber || typeof chamber !== "object" || Array.isArray(chamber) ||
+        !Array.isArray(chamber.insights)) {
+      throw new Error("invalid_insight_chamber");
+    }
+    return chamber;
+  }
+
+  function promotedFromEntry(insights, entry) {
+    return insights.find((item) =>
+      item?.source_app === "aha_psychology_room" &&
+      item?.meta?.manual_promotion === true &&
+      item?.meta?.psychology_reflection_id === entry.id) || null;
+  }
+
+  function readPromoted(entry) {
+    try { return promotedFromEntry(readChamber().insights, entry); }
+    catch { return null; }
+  }
+
+  function promoteToInsights(entry) {
+    const current = readSaved().find((item) => item.id === entry.id && item.text === entry.text);
+    if (!current) return { ok: false, message: "Refleksjonen finnes ikke lenger i det private arkivet." };
+    if (!global.confirm(
+      "Kopiere akkurat denne teksten til AHAs ordinære Innsikter? " +
+      "Da kan andre AHA-funksjoner, inkludert analyser, lese den. " +
+      "Det private originalnotatet forblir separat. Ikke fortsett med sensitiv tekst du vil holde bare i Psykologirommet."
+    )) return { ok: false, cancelled: true };
+    try {
+      const chamber = readChamber();
+      const existing = promotedFromEntry(chamber.insights, current);
+      if (existing) return { ok: true, id: existing.id, reused: true };
+      const now = new Date().toISOString();
+      const insight = {
+        id: "aha_psych_insight_" + createId(),
+        title: current.text.replace(/\s+/g, " ").slice(0, 100),
+        summary: current.text,
+        created_at: now,
+        updated_at: now,
+        source_app: "aha_psychology_room",
+        source_type: "user_selected_reflection",
+        claim_kind: "personal_reflection",
+        status: "draft",
+        uncertainty: "Brukerens egen refleksjon; ikke verifisert, analysert eller en faglig vurdering.",
+        local_only: true,
+        published_external: false,
+        echonet_shared: false,
+        sync_enabled: false,
+        meta: {
+          manual_promotion: true,
+          psychology_reflection_id: current.id,
+          local_only: true,
+          published_external: false,
+          echonet_shared: false,
+          sync_enabled: false
+        }
+      };
+      global.localStorage.setItem(CHAMBER_KEY, JSON.stringify({
+        ...chamber,
+        insights: [...chamber.insights, insight]
+      }));
+      return { ok: true, id: insight.id };
+    } catch {
+      return { ok: false, message: "Kunne ikke lagre i AHAs innsiktsarkiv. Det private notatet er uendret." };
+    }
+  }
+
+  function removePromoted(entry) {
+    if (!global.confirm(
+      "Fjerne den kopierte teksten fra AHAs ordinære innsiktsarkiv? " +
+      "Det private notatet beholdes, men lenker fra lister og stier kan bli brutt. " +
+      "Tidligere analyser eller eventuelle synkroniserte kopier kan ikke trekkes tilbake her."
+    )) return { ok: false, cancelled: true };
+    try {
+      const chamber = readChamber();
+      const existing = promotedFromEntry(chamber.insights, entry);
+      if (!existing) return { ok: false, message: "Fant ingen tilhørende AHA-innsikt." };
+      global.localStorage.setItem(CHAMBER_KEY, JSON.stringify({
+        ...chamber,
+        insights: chamber.insights.filter((item) => item !== existing)
+      }));
+      return { ok: true };
+    } catch {
+      return { ok: false, message: "Kunne ikke fjerne kopien. Det private notatet er uendret." };
+    }
+  }
+
   function announceReady() {
     if (!global.opener) return;
     for (const origin of TRUSTED_HISTORY_GO_ORIGINS) {
@@ -59,6 +151,22 @@
     const list = document.getElementById("aha-psych-saved-list");
     const deleteAll = document.getElementById("aha-psych-delete-all");
     if (!form || !textarea || !consent || !list || !deleteAll) return;
+    // github.io shares browser storage between History GO and other Pages apps.
+    // Refuse sensitive private storage on that shared origin.
+    if (global.location?.hostname === "paradispartiet.github.io") {
+      textarea.disabled = true;
+      consent.disabled = true;
+      deleteAll.disabled = true;
+      const submit = form.querySelector?.('button[type="submit"]');
+      if (submit) submit.disabled = true;
+      list.textContent = "Dette private arkivet åpnes ikke på GitHub Pages sitt delte domene.";
+      const link = document.createElement("a");
+      link.href = "https://aha-echo-net.vercel.app/psykologi.html";
+      link.textContent = "Åpne Psykologirommet på AHAs separate adresse";
+      list.append(link);
+      status.textContent = "Bruk AHA-adressen for å holde Psykologirommet atskilt fra andre GitHub Pages-apper.";
+      return;
+    }
     let previewSource = "aha";
     textarea.addEventListener("input", () => { previewSource = "aha"; });
 
@@ -84,6 +192,10 @@
         button.className = "aha-tile-btn aha-tile-btn-secondary";
         button.textContent = "Slett";
         button.addEventListener("click", () => {
+          if (readPromoted(entry)) {
+            message("Fjern først AHA-kopien i Innsikter. Ellers mister du muligheten til å trekke kopien tilbake herfra.");
+            return;
+          }
           if (!global.confirm("Slette denne refleksjonen fra Mitt AHA?")) return;
           if (!save(readSaved().filter((item) => item.id !== entry.id))) {
             message("Kunne ikke lagre slettingen i denne nettleseren.");
@@ -92,7 +204,43 @@
           render();
           message("Refleksjonen er slettet fra Mitt AHA.");
         });
-        article.append(date, text, button);
+        const actions = document.createElement("div");
+        actions.className = "aha-psych-actions";
+        actions.append(button);
+        const promoted = readPromoted(entry);
+        if (!promoted) {
+          const promote = document.createElement("button");
+          promote.type = "button";
+          promote.className = "aha-tile-btn aha-tile-btn-secondary";
+          promote.textContent = "Bruk som AHA-innsikt";
+          promote.addEventListener("click", () => {
+            const result = promoteToInsights(entry);
+            if (result.ok) {
+              render();
+              message("Valgt tekst er kopiert til Innsikter. Du kan nå legge den i lister, stier og tankekart.");
+            } else if (!result.cancelled) message(result.message);
+          });
+          actions.append(promote);
+        } else {
+          const open = document.createElement("a");
+          open.href = "insights.html#insight-" + encodeURIComponent(promoted.id);
+          open.className = "aha-tile-btn aha-tile-btn-primary";
+          open.textContent = "Åpne i Innsikter";
+          actions.append(open);
+          const retract = document.createElement("button");
+          retract.type = "button";
+          retract.className = "aha-tile-btn aha-tile-btn-secondary";
+          retract.textContent = "Fjern AHA-kopien";
+          retract.addEventListener("click", () => {
+            const result = removePromoted(entry);
+            if (result.ok) {
+              render();
+              message("Kopien er fjernet fra Innsikter. Det private notatet er beholdt.");
+            } else if (!result.cancelled) message(result.message);
+          });
+          actions.append(retract);
+        }
+        article.append(date, text, actions);
         list.append(article);
       }
       deleteAll.disabled = entries.length === 0;
@@ -161,6 +309,10 @@
     });
 
     deleteAll.addEventListener("click", () => {
+      if (readSaved().some((entry) => readPromoted(entry))) {
+        message("Fjern først alle AHA-kopier i Innsikter. Da kan du slette det private arkivet uten å etterlate kopier.");
+        return;
+      }
       if (!global.confirm("Slette alle refleksjonene i dette AHA-rommet?")) return;
       if (!save([])) {
         message("Kunne ikke slette lokale refleksjoner.");

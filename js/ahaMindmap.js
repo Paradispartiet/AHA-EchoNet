@@ -14,6 +14,7 @@
     notes: "aha_notes_v1",
     feed: "aha_feed_posts_v1",
     gallery: "aha_gallery_v1",
+    artworks: "aha_kunstrommet_references_v1",
     insta: "aha_insta_posts_v1",
     groups: "aha_groups_v1"
   };
@@ -30,6 +31,7 @@
     note: "Notat",
     feed_post: "Feed-post",
     gallery_item: "Galleriobjekt",
+    artwork: "Kunstverk",
     insta_post: "Insta-post",
     group: "Gruppe"
   };
@@ -219,6 +221,21 @@
       registerRef(node);
     });
 
+    // Opted-in artwork pointers only. Pixels and private notes remain in IndexedDB.
+    asArray(raw.artworks).filter((artwork) => !isUnavailableRecord(artwork)).forEach((artwork) => {
+      const refId = asText(artwork?.id, "");
+      if (!refId) return;
+      const node = {
+        id: nodeId("artwork", "aha_kunstrommet", refId),
+        title: asText(artwork?.title, "Kunstverk"),
+        type: "artwork", source: "aha_kunstrommet", refId,
+        href: "kunstrommet.html#art-" + encodeURIComponent(refId),
+        meta: safetyMeta(artwork, STORAGE_KEYS.artworks, { linked_manually: true })
+      };
+      addNode(nodes, nodeIndex, node);
+      registerRef(node);
+    });
+
     asArray(raw.insta).filter((post) => !isUnavailableRecord(post)).forEach((post) => {
       const refId = asText(post?.id, "");
       if (!refId) return;
@@ -383,6 +400,7 @@
       + asArray(raw.notes).filter(isUnavailableRecord).length
       + asArray(raw.feed).filter(isUnavailableRecord).length
       + asArray(raw.gallery).filter(isUnavailableRecord).length
+      + asArray(raw.artworks).filter(isUnavailableRecord).length
       + asArray(raw.insta).filter(isUnavailableRecord).length
       + asArray(raw.groups).filter(isUnavailableRecord).length;
   }
@@ -416,13 +434,14 @@
     const raw = {
       insights: loadByKey(STORAGE_KEYS.insights, { insights: [] }),
       sourceEvents: loadByKey(STORAGE_KEYS.sourceEvents, []),
-      lists: loadByKey(STORAGE_KEYS.lists, []),
+      lists: global.AHAKunstrommetReferences?.overlayLists?.(loadByKey(STORAGE_KEYS.lists, [])) || loadByKey(STORAGE_KEYS.lists, []),
       conceptLists: loadByKey(STORAGE_KEYS.conceptLists, []),
       paths: loadByKey(STORAGE_KEYS.paths, []),
       articles: loadByKey(STORAGE_KEYS.articles, []),
       notes: loadByKey(STORAGE_KEYS.notes, []),
       feed: loadByKey(STORAGE_KEYS.feed, []),
       gallery: loadByKey(STORAGE_KEYS.gallery, []),
+      artworks: global.AHAKunstrommetReferences?.load?.() || [],
       insta: loadByKey(STORAGE_KEYS.insta, []),
       groups: loadByKey(STORAGE_KEYS.groups, [])
     };

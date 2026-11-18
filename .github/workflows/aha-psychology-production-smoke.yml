@@ -1,0 +1,66 @@
+name: AHA Psychology public production smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/aha-psychology-production-smoke.yml"
+      - "playwright.psychology-live.config.cjs"
+      - "tests/live/aha-psychology-production.spec.cjs"
+      - "js/ahaPsychologyRoomBridge.js"
+      - "psykologi.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser-smoke:
+    name: Actual Vercel and GitHub Pages (synthetic data only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Diagnose public psychology URLs (GET only)
+        shell: bash
+        run: |
+          for base in "https://aha-echonet.vercel.app" "https://aha-echo-net.vercel.app" "https://paradispartiet.github.io/AHA-EchoNet"; do
+            for path in "/" "/psykologi.html" "/js/ahaPsychologyRoomBridge.js"; do
+              status="$(curl --location --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' "${base}${path}" || true)"
+              echo "HTTP ${status:-unreachable} ${base}${path}"
+            done
+          done
+      - name: Wait for corrected GitHub Pages link and working Vercel destination
+        shell: bash
+        run: |
+          # Vercel's free deployment quota may prevent a new build of the same
+          # frontend, but the existing canonical AHA site already serves the
+          # psychology page. No new Vercel build is required for this URL fix.
+          for attempt in $(seq 1 36); do
+            vercel_code="$(curl --location --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' https://aha-echo-net.vercel.app/psykologi.html || true)"
+            pages="$(curl --fail --silent --show-error --max-time 15 https://paradispartiet.github.io/AHA-EchoNet/js/ahaPsychologyRoomBridge.js || true)"
+            if [[ "$vercel_code" == "200" &&
+                  "$pages" == *"https://aha-echo-net.vercel.app/psykologi.html"* ]]; then
+              echo "Vercel psychology destination works; GitHub Pages link is corrected."
+              exit 0
+            fi
+            echo "Awaiting corrected GitHub Pages link and live AHA destination (${attempt}/36)"
+            sleep 10
+          done
+          echo "Canonical destination or GitHub Pages link is not ready." >&2
+          exit 1
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Verify production in isolated browser profiles
+        run: npx playwright test --config=playwright.psychology-live.config.cjs
+      - name: Retain evidence only on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-psychology-production-smoke-evidence
+          path: test-results/
+          if-no-files-found: ignore

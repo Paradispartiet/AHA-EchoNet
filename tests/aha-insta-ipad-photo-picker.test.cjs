@@ -11,6 +11,9 @@ assert.match(html, /id="insta-file"[^>]*type="file"[^>]*accept="image\/\*/);
 assert.match(html, /id="insta-photo-preview"/);
 assert.match(html, /id="insta-compose-status"/);
 assert.match(html, /id="insta-submit"/);
+assert.match(html, /id="insta-new-post"/);
+assert.match(html, /id="insta-profile-grid"/);
+assert.match(html, /id="insta-feed-panel"/);
 
 class Element {
   constructor() {
@@ -27,6 +30,7 @@ class Element {
   addEventListener(event, callback) { this.listeners[event] = callback; }
   removeAttribute(key) { if (key === "src") this.src = ""; }
   focus() {}
+  setAttribute(name, value) { this[name] = value; }
 }
 
 function fixture(persistentStore) {
@@ -34,7 +38,8 @@ function fixture(persistentStore) {
     "insta-form", "insta-file", "insta-src", "insta-title", "insta-caption",
     "insta-submit", "insta-photo-preview", "insta-preview-image",
     "insta-clear-file", "insta-compose-status", "insta-list",
-    "insta-profile-card", "insta-feed-controls", "insta-stories"
+    "insta-profile-card", "insta-profile-grid", "insta-new-post", "insta-feed-panel",
+    "insta-compose-panel", "insta-feed-controls", "insta-stories"
   ].map(id => [id, new Element()]));
   const localStorage = {
     getItem: key => persistentStore.get(key) ?? null,
@@ -101,15 +106,20 @@ function fixture(persistentStore) {
   assert.ok(!JSON.stringify(posts[0].base || {}).includes("QUhBVEVTVA=="), "Never duplicate the image in base metadata");
   assert.match(status.textContent, /lagret lokalt/);
   assert.equal(elements["insta-photo-preview"].hidden, true);
+  assert.match(elements["insta-profile-grid"].innerHTML, /insta-grid-tile/, "Image is visible in profile grid");
+  assert.match(elements["insta-profile-card"].innerHTML, /<strong>1<\/strong><span>poster<\/span>/);
+  assert.equal(elements["insta-compose-panel"].open, false, "Composer closes after saving");
 
   const refreshed = fixture(storage);
   posts = refreshed.window.AHAInsta.load();
   assert.equal(posts.length, 1, "Image survives reload from localStorage");
   assert.ok(refreshed.elements["insta-list"].innerHTML.includes("data:image/jpeg;base64,"));
+  assert.match(refreshed.elements["insta-profile-grid"].innerHTML, /insta-grid-tile/);
 
   refreshed.window.AHAInsta.deletePost(posts[0].id);
   assert.equal(refreshed.window.AHAInsta.load()[0].deleted_at != null, true);
   assert.ok(!refreshed.elements["insta-list"].innerHTML.includes("data:image/jpeg;base64,"), "Deleted image removed from feed");
+  assert.match(refreshed.elements["insta-profile-grid"].innerHTML, /profile_no_data/, "Delete updates the profile grid");
 
   const rejected = fixture(new Map());
   rejected.elements["insta-file"].files = [{ name: "not-image.pdf", type: "application/pdf", size: 3000 }];
@@ -117,7 +127,7 @@ function fixture(persistentStore) {
   assert.match(rejected.elements["insta-compose-status"].textContent, /Velg et bilde/);
   assert.equal(rejected.elements["insta-photo-preview"].hidden, true);
 
-  console.log("AHA Insta iPad photo picker: select → preview → local save → reload → delete OK; invalid file rejected.");
+  console.log("AHA Insta iPad picker and profile grid: image save → grid → reload → delete OK; invalid file rejected.");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

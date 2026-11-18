@@ -2,10 +2,14 @@ const { test, expect } = require("@playwright/test");
 
 test("Insta opens the real composer from an empty feed", async ({ page }) => {
   await page.goto("/insta.html", { waitUntil: "domcontentloaded" });
-  const empty = page.locator('#insta-list [data-empty-state="no_data"]');
+  const empty = page.locator('#insta-profile-grid [data-empty-state="profile_no_data"]');
   await expect(empty).toBeVisible();
-  await empty.getByRole("button", { name: "Lag første post" }).click();
+  await page.getByRole("button", { name: "+ Ny post" }).click();
   await expect(page.locator("#insta-compose-panel")).toHaveAttribute("open", "");
+  await expect(page.locator("#insta-file")).toBeFocused();
+  await page.getByRole("button", { name: "Lukk ny post" }).click();
+  await expect(page.locator("#insta-compose-panel")).not.toHaveAttribute("open", "");
+  await page.getByRole("button", { name: "+ Ny post" }).click();
   await expect(page.locator("#insta-file")).toBeFocused();
   const count = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_insta_posts_v1") || "[]").length);
   expect(count).toBe(0);
@@ -13,7 +17,7 @@ test("Insta opens the real composer from an empty feed", async ({ page }) => {
 
 test("Insta iPad photo picker saves an actual image locally across reload", async ({ page }) => {
   await page.goto("/insta.html", { waitUntil: "domcontentloaded" });
-  await page.locator("#insta-list").getByRole("button", { name: "Lag første post" }).click();
+  await page.getByRole("button", { name: "+ Ny post" }).click();
   const imagePng = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRk8AAAAASUVORK5CYII=",
     "base64"
@@ -23,15 +27,20 @@ test("Insta iPad photo picker saves an actual image locally across reload", asyn
     expect((await page.locator("#insta-preview-image").getAttribute("src")).startsWith("data:image/jpeg;base64,")).toBe(true);
   await page.locator("#insta-submit").click();
   await expect(page.locator("#insta-compose-status")).toContainText("lagret lokalt");
-  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(1);
+  await expect(page.locator("#insta-profile-grid .insta-grid-tile")).toHaveCount(1);
+  await expect(page.locator("#insta-profile-grid img[src^='data:image/jpeg']")).toBeVisible();
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(1);
+  await expect(page.locator("#insta-profile-grid img[src^='data:image/jpeg']")).toBeVisible();
+  await page.locator("#insta-profile-grid .insta-grid-tile").click();
+  await expect(page.locator("#insta-feed-panel")).toHaveAttribute("open", "");
+  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toBeVisible();
   const posts = await page.evaluate(() => JSON.parse(localStorage.getItem("aha_insta_posts_v1") || "[]"));
   expect(posts).toHaveLength(1);
   expect(posts[0].published_external).toBe(false);
   expect(posts[0].echonet_shared).toBe(false);
   await page.evaluate((id) => window.AHAInsta.deletePost(id), posts[0].id);
-  await expect(page.locator("#insta-list img[src^='data:image/jpeg']")).toHaveCount(0);
+  await expect(page.locator("#insta-profile-grid img[src^='data:image/jpeg']")).toHaveCount(0);
+  await expect(page.locator('#insta-profile-grid [data-empty-state="profile_no_data"]')).toBeVisible();
 });
 
 test("Innsikter differentiates an empty archive from an unmatched search", async ({ page }) => {

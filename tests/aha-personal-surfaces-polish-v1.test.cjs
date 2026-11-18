@@ -13,7 +13,14 @@ const pages = {
 for (const [name, html] of Object.entries(pages)) {
   assert.match(html, /css\/aha-personal-surfaces\.css/, `${name} should load the shared personal surface layer`);
   assert.match(html, /aha-personal-page/, `${name} should opt into the shared personal surface shell`);
-  assert.match(html, /aha-personal-header/, `${name} should use the flattened personal header`);
+  if (name === "insta") {
+    assert.match(html, /class="insta-app-topbar"/, "Insta should use the app-style profile header");
+    assert.match(html, /id="insta-new-post"/, "Insta needs one New post action in the header");
+    assert.match(html, /id="insta-profile-grid"/, "Insta should open to a personal image grid");
+    assert.match(html, /id="insta-feed-panel"/, "The existing feed should remain accessible");
+  } else {
+    assert.match(html, /aha-personal-header/, `${name} should use the flattened personal header`);
+  }
 }
 
 assert.match(pages.profile, /aha-profile-page/, "Mitt AHA should use the profile overview grid");
@@ -47,7 +54,7 @@ assert.match(css, /\.aha-profile-page\s*\{[^}]*grid-template-columns:\s*repeat\(
 assert.match(css, /\.aha-gallery-page #gallery-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s, "Gallery should use a media grid on wider screens");
 assert.match(css, /\.aha-notes-page #notes-list \.module-card > p\s*\{[^}]*white-space:\s*pre-wrap;/s, "Notes should preserve written formatting");
 assert.match(css, /\.aha-feed-page #feed-list \.module-card > p\s*\{[^}]*line-height:\s*1\.6;/s, "Feed posts should have readable text rhythm");
-assert.match(css, /\.aha-insta-page > \.insta-feed-section\s*\{[^}]*background:\s*transparent;/s, "Insta feed shell should be flattened without replacing its dedicated feed UI");
+assert.match(css, /\.aha-insta-page \.insta-feed-section\s*\{[^}]*background:\s*transparent;/s, "Insta feed shell should remain transparent when nested inside the secondary panel");
 assert.match(css, /button\[data-note-delete\],[\s\S]*button\[data-feed-delete\],[\s\S]*button\[data-gallery-delete\]/, "destructive personal-surface actions should share one visual treatment");
 
 for (const jsPath of ["js/ahaNotes.js", "js/ahaFeed.js", "js/ahaGallery.js", "js/ahaInsta.js", "js/ahaProfile.js"]) {
