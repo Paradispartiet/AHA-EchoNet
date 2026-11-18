@@ -234,6 +234,74 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
   });
 
+  test("brush lands at the correct bitmap coordinate after hand-pan and zoom", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    for (let i = 0; i < 3; i++) await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+    await page.locator("#kv2-hand").click();
+
+    const pan = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      paper.style.height = "240px";
+      paper.style.maxHeight = "240px";
+      paper.scrollLeft = 100;
+      paper.scrollTop = 70;
+      const start = { x: paper.scrollLeft, y: paper.scrollTop };
+      const bounds = paper.getBoundingClientRect();
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 107, pointerType: "touch",
+        button: 0, buttons: 1,
+        clientX: bounds.left + paper.clientWidth / 2,
+        clientY: bounds.top + paper.clientHeight / 2
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointermove", {
+        ...event, clientX: event.clientX - 45, clientY: event.clientY - 35
+      }));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, clientX: event.clientX - 45, clientY: event.clientY - 35
+      }));
+      return { start, end: { x: paper.scrollLeft, y: paper.scrollTop } };
+    });
+    expect(pan.end.x).toBeGreaterThan(pan.start.x);
+    expect(pan.end.y).toBeGreaterThan(pan.start.y);
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+
+    await page.locator("#kv2-brush").click();
+    const target = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      const visible = paper.getBoundingClientRect();
+      const bounds = canvas.getBoundingClientRect();
+      // Use the visible center, which remains inside the canvas after scrolling.
+      const clientX = visible.left + paper.clientWidth / 2;
+      const clientY = visible.top + paper.clientHeight / 2;
+      const x = Math.round((clientX - bounds.left) * canvas.width / bounds.width);
+      const y = Math.round((clientY - bounds.top) * canvas.height / bounds.height);
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 108, pointerType: "pen",
+        button: 0, buttons: 1, pressure: 0.6, clientX, clientY
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, pressure: 0
+      }));
+      return { x, y };
+    });
+    expect(target.x).toBeGreaterThan(0);
+    expect(target.x).toBeLessThan(1200);
+    expect(target.y).toBeGreaterThan(0);
+    expect(target.y).toBeLessThan(800);
+    const redAtTarget = () => page.locator("#kv2-canvas").evaluate(
+      (canvas, pos) => canvas.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data[0],
+      target
+    );
+    await expect.poll(redAtTarget).toBeLessThan(100);
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+    await page.locator("#kv2-undo").click();
+    await expect.poll(redAtTarget).toBeGreaterThan(220);
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
