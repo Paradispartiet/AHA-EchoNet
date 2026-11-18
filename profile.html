@@ -21,29 +21,35 @@
           <p class="aha-personal-trust">Dette er en lokal statusflate · Ingen lokal profil deles eksternt automatisk · Supabase-innlogging kontrolleres separat</p>
         </div>
       </header>
+    </section>
+
+    <section class="aha-panel aha-profile-card aha-profile-account-panel" aria-labelledby="aha-supabase-profile-title">
+      <p class="eyebrow">Konto og skylagring</p>
+      <h2 id="aha-supabase-profile-title">Supabase-konto</h2>
+      <p class="aha-module-purpose">Er du logget inn? Sjekk at Supabase bare viser data for din konto. Kontrollen leser ingen innlegg og endrer ingenting.</p>
+      <div class="aha-tile-actions">
+        <button id="aha-check-data-api-rls" class="aha-tile-btn aha-tile-btn-primary" type="button">Kontroller privat datatilgang</button>
+        <button id="aha-check-supabase-profile" class="aha-tile-btn aha-tile-btn-secondary" type="button">Kontroller innlogging</button>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html?login=1">Logg inn</a>
+      </div>
+      <p id="aha-data-api-rls-result" class="aha-module-purpose" role="status" aria-live="polite">Ikke kontrollert. Dette er en lesetest, ikke en sikkerhetskopi.</p>
+      <p id="aha-supabase-profile-result" class="aha-module-purpose" role="status" aria-live="polite">Innloggingen er ikke kontrollert ennå.</p>
+      <p class="aha-module-purpose">Bestått kontroll for én konto betyr ikke at tobrukertest, sikkerhetskopi eller synkronisering er godkjent.</p>
+      <div class="aha-tile-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Eksporter lokale data</a>
+      </div>
+    </section>
+
+    <section class="aha-panel aha-profile-card aha-profile-local-panel" aria-labelledby="aha-profile-local-title">
+      <p class="eyebrow">Bare på denne enheten</p>
+      <h2 id="aha-profile-local-title">Lokal oversikt</h2>
+      <p class="aha-module-purpose">Disse arbeidsobjektene ligger i nettleseren. «Lokal AHA-bruker» er ikke innloggingsstatus.</p>
       <div class="aha-status-stack">
         <strong id="aha-home-profile-name">Lokal AHA-bruker</strong>
         <span id="aha-home-profile-mode">Lokal modus</span>
         <small id="aha-home-last-activity">Ingen aktivitet registrert</small>
       </div>
       <div id="aha-profile-overview" aria-live="polite"></div>
-    </section>
-
-    <section class="aha-panel aha-profile-card" aria-labelledby="aha-supabase-profile-title">
-      <p class="eyebrow">Konto og skylagring</p>
-      <h2 id="aha-supabase-profile-title">Supabase-konto</h2>
-      <p class="aha-module-purpose">Kontroller bare om innloggingen er gyldig og din egen AHA-profilrad er synlig. Sjekken lagrer ikke noe og starter ingen synkronisering.</p>
-      <p id="aha-supabase-profile-result" class="aha-module-purpose" role="status" aria-live="polite">Ikke kontrollert ennå.</p>
-      <div class="aha-tile-actions">
-        <button id="aha-check-supabase-profile" class="aha-tile-btn aha-tile-btn-primary" type="button">Kontroller Supabase-konto</button>
-        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html?login=1">Gå til innlogging</a>
-      </div>
-      <p class="aha-module-purpose">En lesbar profilrad betyr ikke at RLS er fulltestet, eller at samtaler og innsikter er lagret i skyen.</p>
-      <div class="aha-tile-actions">
-        <button id="aha-check-data-api-rls" class="aha-tile-btn aha-tile-btn-secondary" type="button">Kontroller privat datatilgang</button>
-        <a class="aha-tile-btn aha-tile-btn-secondary" href="privacy.html">Eksporter lokale data</a>
-      </div>
-      <p id="aha-data-api-rls-result" class="aha-module-purpose" role="status" aria-live="polite">Ikke kontrollert. Dette er en lesetest, ikke en sikkerhetskopi.</p>
     </section>
 
     <section class="aha-panel aha-profile-activity-panel">
