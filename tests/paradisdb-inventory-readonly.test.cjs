@@ -63,3 +63,51 @@ test("source is read-only metadata from the canonical GitHub file", () => {
   assert.doesNotMatch(source, /\.(?:insert|upsert|update|delete|rpc)\s*\(/);
   assert.doesNotMatch(source, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
 });
+
+
+test("scoped provider feed accepts a matching fresh timestamp, not private data", () => {
+  const snapshot = {
+    schema_version: 1, source: "docs/paradisdb-inventory.json", metadata_only: true,
+    provider_checks: { "DB-03": {
+      provider: "supabase", result: "verified",
+      checked_at: "2026-11-18T13:00:00.000Z", observed_status: "ACTIVE_HEALTHY"
+    } }
+  };
+  assert.equal(api.validateProviderSnapshot(snapshot, fixture()), snapshot);
+  const text = api.describeProviderCheck("DB-03", snapshot, Date.parse("2026-11-18T13:10:00.000Z"));
+  assert.match(text, /Supabase rapporterer ACTIVE_HEALTHY/);
+  assert.match(text, /ikke applikasjonens synk/);
+});
+test("provider feed refuses invented references and bogus health claims", () => {
+  const snapshot = {
+    schema_version: 1, source: "docs/paradisdb-inventory.json", metadata_only: true,
+    provider_checks: { "DB-99": {
+      provider: "supabase", result: "verified",
+      checked_at: "2026-11-18T13:00:00Z", observed_status: "ACTIVE_HEALTHY"
+    } }
+  };
+  assert.throws(() => api.validateProviderSnapshot(snapshot, fixture()), /Ugyldig/);
+  delete snapshot.provider_checks["DB-99"];
+  snapshot.provider_checks["DB-03"] = {
+    provider: "supabase", result: "verified", checked_at: null, observed_status: "ACTIVE_HEALTHY"
+  };
+  assert.throws(() => api.validateProviderSnapshot(snapshot, fixture()), /Ugyldig/);
+});
+test("stale and missing provider observations never display live health", () => {
+  const snapshot = { provider_checks: { "DB-03": {
+    provider: "supabase", result: "verified",
+    checked_at: "2026-11-15T11:00:00Z", observed_status: "ACTIVE_HEALTHY"
+  } } };
+  const stale = api.describeProviderCheck("DB-03", snapshot, Date.parse("2026-11-18T13:00:00Z"));
+  assert.match(stale, /Foreldet/);
+  assert.doesNotMatch(stale, /ACTIVE_HEALTHY/);
+  assert.match(api.describeProviderCheck("DB-03", null), /Ingen automatisk/);
+  snapshot.provider_checks["DB-03"].result = "lookup_failed";
+  assert.match(api.describeProviderCheck("DB-03", snapshot), /ikke bevis på nedetid/);
+});
+test("public provider fetch stays GET-only and uses no browser credentials", () => {
+  assert.match(api.providerStatusUrl, /paradisdb-provider-status\.json$/);
+  assert.match(source, /cache: "no-store"/);
+  assert.match(source, /credentials: "omit"/);
+  assert.doesNotMatch(source, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
+});
