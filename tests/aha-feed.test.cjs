@@ -137,7 +137,7 @@ function buildContext() {
   assert.equal(blockedSync.database_sync_disabled, true, 'remote sync must be disabled by default');
   assert.deepEqual(ctx.__repositoryCalls, [], 'syncFromDatabase must not read or write when not explicitly enabled');
 
-  const deleted = Feed.deletePost('unsafe_id');
+  const deleted = await Feed.deletePost('unsafe_id');
   assert.ok(deleted?.deleted_at, 'local delete must retain tombstone');
   assert.deepEqual(ctx.__repositoryCalls, [], 'local deletion must not write to Supabase by default');
   assert.deepEqual(ctx.__forbiddenCalls, [], 'feed flow should not fetch externally or activate sync/EchoNet');
@@ -145,33 +145,46 @@ function buildContext() {
   // Explicit opt-in allows only a scoped read, never automatic uploads.
   const enabledCtx = buildContext();
   enabledCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
-  enabledCtx.AHAAuth = { getProfileId: async () => 'test-profile-A' };
+  const profileA = '11111111-1111-4111-8111-111111111111';
+  const profileB = '22222222-2222-4222-8222-222222222222';
+  enabledCtx.AHADb = {
+    getConfig: () => ({ url: 'https://wshmybqyksrwkawqleiz.supabase.co' }),
+    getClient: () => ({ auth: { getUser: async () => ({ data: { user: { id: profileA } }, error: null }) } })
+  };
+  enabledCtx.AHAAuth = { getProfileId: async () => profileA };
   enabledCtx.AHARepository.loadFeedPosts = async (options) => {
     enabledCtx.__repositoryCalls.push({ method: 'loadFeedPosts', profile_id: options.profile_id });
     return { ok: true, data: [{
-      id: 'remote-A', profile_id: 'test-profile-A', text: 'Kun konto A',
+      id: 'remote-A', profile_id: profileA, text: 'Kun konto A',
       created_at: '2026-11-18T11:00:00.000Z'
     }] };
   };
-  const oldLocalPost = await enabledCtx.AHAFeed.addPost({ id: 'unscoped-legacy', text: 'Skal aldri autoimporteres' });
+  const oldLocalPost = await enabledCtx.AHAFeed.addPost({ id: 'account-owned-local', text: 'Skal aldri autoimporteres' });
   assert.ok(oldLocalPost);
   assert.deepEqual(enabledCtx.__repositoryCalls, [], 'opt-in alone must not write a local post');
   const remoteResult = await enabledCtx.AHAFeed.syncFromDatabase();
   assert.equal(remoteResult.ok, true, 'owner-scoped explicit read should succeed');
   assert.equal(remoteResult.read_only, true);
-  assert.equal(remoteResult.data.length, 1, 'unscoped local posts may not join an account cloud view');
-  assert.equal(remoteResult.data[0].id, 'remote-A');
+  assert.equal(remoteResult.data.length, 2, 'account-owned local posts can join a read-only cloud view');
+  assert.equal(remoteResult.data.some((item) => item.id === 'remote-A'), true);
   assert.equal(enabledCtx.__repositoryCalls.length, 1, 'one owner-scoped read, no hidden writes');
   assert.equal(enabledCtx.__repositoryCalls[0].method, 'loadFeedPosts');
-  assert.equal(enabledCtx.__repositoryCalls[0].profile_id, 'test-profile-A');
-  assert.equal(JSON.parse(enabledCtx.localStorage.raw('aha_feed_posts_v1')).length, 1,
-    'remote posts must not be cached into the legacy shared browser key');
+  assert.equal(enabledCtx.__repositoryCalls[0].profile_id, profileA);
+  const accountArchive = JSON.parse(enabledCtx.localStorage.raw('aha_feed_accounts_v1'));
+  assert.equal(accountArchive.accounts[profileA].length, 1,
+    'Account-local post must remain in its isolated partition');
+  assert.equal(enabledCtx.localStorage.raw('aha_feed_posts_v1'), null,
+    'Cloud rows and account-owned rows must not be written into the legacy key');
 
   const maliciousCtx = buildContext();
   maliciousCtx.AHA_CONFIG = { feed: { enableDatabaseSync: true } };
-  maliciousCtx.AHAAuth = { getProfileId: async () => 'test-profile-B' };
+  maliciousCtx.AHADb = {
+    getConfig: () => ({ url: 'https://wshmybqyksrwkawqleiz.supabase.co' }),
+    getClient: () => ({ auth: { getUser: async () => ({ data: { user: { id: profileB } }, error: null }) } })
+  };
+  maliciousCtx.AHAAuth = { getProfileId: async () => profileB };
   maliciousCtx.AHARepository.loadFeedPosts = async () => ({
-    ok: true, data: [{ id: 'remote-A', profile_id: 'test-profile-A', text: 'A only' }]
+    ok: true, data: [{ id: 'remote-A', profile_id: profileA, text: 'A only' }]
   });
   const mismatch = await maliciousCtx.AHAFeed.syncFromDatabase();
   assert.equal(mismatch.ok, false, 'unexpected cross-account data must fail closed');
