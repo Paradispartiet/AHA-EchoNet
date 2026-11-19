@@ -40,7 +40,7 @@ Kunstrommet er et integrert første lagbasert atelier, **ikke et fullverdig Phot
 - **Ikke gjennomført:** fysisk iPad Safari med finger/Apple Pencil, ytelse over tid, reell lagringskvote og manuell kontroll av bildefiler, låste/skjulte lag og eldre skisser på enheten. Disse punktene er åpne etterkontroller, **ikke godkjente tester**.
 - **Avgrensning:** Sammenflettingen innebærer ikke at Kunstrommet er testet på fysisk Apple Pencil eller at lokale prosjekter har skybackup.
 
-## Neste tegneiterasjon – trykk, zoom og hånd (på forbedringsgren)
+## Tegneiterasjon – trykk, zoom og hånd (integrert)
 
 Dette er videreutvikling av **den samme** `kunstrommet.html`, `js/ahaKunstrommetV2.js` og den eksisterende lokale skisseboken. Ingen ny app, redigeringsmotor, databasemigrering eller endret prosjektformat.
 
@@ -84,9 +84,9 @@ Dokumenter i en oppfølgingskommentar lenket til PR #1050: iPad-modell, iPadOS-v
 
 En automatisert Playwright-test simulerer nå `QuotaExceededError`, kontrollerer tydelig sikkerhetskopi-varsel og at lagringen kan forsøkes på nytt. Den erstatter ikke faktisk kontroll av lagringskvote på enheten.
 
-## Kunstrommet 3.0 – markering, beskjæring og lagtransformering (integrasjonskontroll)
+## Kunstrommet 3.0 – markering, beskjæring og lagtransformering (integrert)
 
-Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget til `main` 19. november 2026 (merge-commit `e961450`). PR #1063 er nå rettet mot `main`, men skal først bestå samlet integrasjonskontroll. Ingen ny app, database, bildeopplasting til server eller automatisk Aha-overføring.
+Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget til `main` 19. november 2026 (merge-commit `e961450`). PR #1063 ble merget til `main` 19. november 2026 i commit `f16732b`, etter bestått samlet integrasjonskontroll. Ingen ny app, database, bildeopplasting til server eller automatisk Aha-overføring.
 
 - **Marker område:** Trekk et rektangel direkte på lerretet. Markeringen er kun en visuell, midlertidig redigeringsramme og lagres ikke i kunstverket. Endrer ikke angrehistorikken eller bildepikslene.
 - **Pensel og viskelær innenfor markeringen:** Strøk klippes til valgt rektangel, med lagets posisjon tatt med i beregningen.
@@ -100,5 +100,9 @@ Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget t
 - [x] Chromium og iPad WebKit: markering av rektangel, eksakt størrelse på utsnittseksport, og tegning bare innenfor markeringen. 40/40 PASS på `40fe2c0` ([GitHub Actions](https://github.com/Paradispartiet/AHA-EchoNet/actions/runs/44472867479)).
 - [x] Lagisolering: beskjæring av ett lag påvirker aldri piksler i laget under; angre restaurerer (automatisert test PASS).
 - [x] Lokale kontrakttester, duplisering, transformering av også flyttede lag, angre, V1/V2-kompatibilitet, import/eksport og Aha-referanser gjennomført i Kunstrommet-testpakken; AHA Engine PASS på `40fe2c0`.
-- [ ] Samlet Aha-regresjon, Node, syntaks og launch gate på siste integrasjonskandidat mot `main` (kjøres via PR #1063).
+- [x] Samlet Aha-regresjon, Node, syntaks og launch gate bestått på siste integrasjonskandidat til PR #1063: 6/6 arbeidsflyter PASS; Kunstrommet 40/40, Aha 126 PASS og 8 SKIP.
 - [ ] Manuell iPad/Safari/Apple Pencil-kontroll av gestikk, markering og redigering etter godkjent testgrensesnitt. Ikke marker emulering som fysisk test.
+
+## Neste lille utvidelse – fargepipette (PR under utvikling)
+
+«Fargepipette» lar brukeren velge synlig farge fra det sammensatte lerretet, inkludert lagopasitet og hvit bakgrunn. Verktøyet leser én piksel i dokumentkoordinater, setter penselfargen og går tilbake til «Pensel». Det tegner ingenting, oppretter ikke angrehistorikk, endrer ikke lag eller prosjekter og har ingen nettverkskall. En Chromium-/iPad WebKit-test kontrollerer eksakt farge, uendret lerret, angre og hvit bakgrunn. Dette er en egen utviklings-PR og ikke publisert før godkjente kontroller.

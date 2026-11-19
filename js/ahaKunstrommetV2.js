@@ -334,7 +334,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "eyedropper"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -406,6 +406,23 @@
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (tool === "eyedropper") {
+      // Read the visible composition (including opacity and the white paper).
+      // Sampling is view-only: never checkpoint, paint, or change the document.
+      event.preventDefault();
+      draw();
+      const at = point(event);
+      const rgba = view.getImageData(
+        Math.min(WIDTH - 1, Math.floor(at.x)),
+        Math.min(HEIGHT - 1, Math.floor(at.y)), 1, 1
+      ).data;
+      $("kv2-color").value = "#" + Array.from(rgba.slice(0, 3))
+        .map((channel) => channel.toString(16).padStart(2, "0")).join("");
+      tool = "brush";
+      refresh();
+      status("Farge hentet fra lerretet");
+      return;
+    }
     const layer = currentLayer();
     if (tool !== "hand" && tool !== "select" && (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
@@ -1066,7 +1083,7 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "eyedropper"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
     });
     $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
