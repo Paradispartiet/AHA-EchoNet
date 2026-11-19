@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const fs = require("node:fs/promises");
 
 async function stroke(page) {
   await page.locator("#kv2-canvas").evaluate((canvas) => {
@@ -142,6 +143,323 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await page.locator("#kv2-save").click();
     await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
     await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
+  });
+
+  test("Pencil pressure changes brush width without changing mouse or eraser behavior", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "30";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#000000";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const heights = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const rect = canvas.getBoundingClientRect();
+      function dot(x, pressure, pointerType, pointerId) {
+        const event = {
+          bubbles: true, cancelable: true, pointerId, pointerType,
+          button: 0, buttons: 1, pressure, isPrimary: true,
+          clientX: rect.left + rect.width * x / 1200,
+          clientY: rect.top + rect.height * 400 / 800
+        };
+        canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+        canvas.dispatchEvent(new PointerEvent("pointerup", { ...event, buttons: 0, pressure: 0 }));
+      }
+      dot(200, 0.2, "pen", 201);
+      dot(500, 0.9, "pen", 202);
+      dot(800, 0.9, "mouse", 203);
+      const ctx = canvas.getContext("2d");
+      const countInk = (x) => {
+        const data = ctx.getImageData(x, 365, 1, 70).data;
+        let count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] < 100 && data[i + 1] < 100 && data[i + 2] < 100) count++;
+        }
+        return count;
+      };
+      return { light: countInk(200), firm: countInk(500), mouse: countInk(800) };
+    });
+    expect(heights.firm).toBeGreaterThan(heights.light + 10);
+    expect(heights.mouse).toBeGreaterThan(heights.light);
+    expect(heights.mouse).toBeLessThan(heights.firm);
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+  });
+
+  test("zoom and hand-pan change only the view, never the art or edit history", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const original = await page.locator("#kv2-canvas").evaluate((canvas) => canvas.toDataURL("image/png"));
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+    await expect(page.locator("#kv2-canvas")).toHaveCSS("width", /[1-9]/);
+    await page.locator("#kv2-hand").click();
+    await expect(page.locator("#kv2-hand")).toHaveAttribute("aria-pressed", "true");
+    const scroll = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      // Force a bounded viewport so both scroll axes are testable at all CI sizes.
+      // A normal tall desktop viewport may have no vertical overflow at 200%.
+      paper.style.height = "240px";
+      paper.style.maxHeight = "240px";
+      paper.scrollLeft = 40;
+      paper.scrollTop = 40;
+      const start = { left: paper.scrollLeft, top: paper.scrollTop };
+      const overflow = {
+        horizontal: paper.scrollWidth - paper.clientWidth,
+        vertical: paper.scrollHeight - paper.clientHeight
+      };
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 73, pointerType: "touch",
+        button: 0, buttons: 1, clientX: 410, clientY: 310
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointermove", {
+        ...event, clientX: 350, clientY: 260
+      }));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, clientX: 350, clientY: 260
+      }));
+      return { start, overflow, end: { left: paper.scrollLeft, top: paper.scrollTop } };
+    });
+    expect(scroll.overflow.horizontal).toBeGreaterThan(120);
+    expect(scroll.overflow.vertical).toBeGreaterThan(120);
+    expect(scroll.end.left).toBeGreaterThan(scroll.start.left);
+    expect(scroll.end.top).toBeGreaterThan(scroll.start.top);
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+    expect(await page.locator("#kv2-canvas").evaluate((c) => c.toDataURL("image/png"))).toBe(original);
+    await page.locator("#kv2-zoom-reset").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+  });
+
+  test("brush lands at the correct bitmap coordinate after hand-pan and zoom", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    for (let i = 0; i < 3; i++) await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+    await page.locator("#kv2-hand").click();
+
+    const pan = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      paper.style.height = "240px";
+      paper.style.maxHeight = "240px";
+      paper.scrollLeft = 100;
+      paper.scrollTop = 70;
+      const start = { x: paper.scrollLeft, y: paper.scrollTop };
+      const bounds = paper.getBoundingClientRect();
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 107, pointerType: "touch",
+        button: 0, buttons: 1,
+        clientX: bounds.left + paper.clientWidth / 2,
+        clientY: bounds.top + paper.clientHeight / 2
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointermove", {
+        ...event, clientX: event.clientX - 45, clientY: event.clientY - 35
+      }));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, clientX: event.clientX - 45, clientY: event.clientY - 35
+      }));
+      return { start, end: { x: paper.scrollLeft, y: paper.scrollTop } };
+    });
+    expect(pan.end.x).toBeGreaterThan(pan.start.x);
+    expect(pan.end.y).toBeGreaterThan(pan.start.y);
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+
+    await page.locator("#kv2-brush").click();
+    const target = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const paper = document.getElementById("kv2-paper");
+      const visible = paper.getBoundingClientRect();
+      const bounds = canvas.getBoundingClientRect();
+      // Use the visible center, which remains inside the canvas after scrolling.
+      const clientX = visible.left + paper.clientWidth / 2;
+      const clientY = visible.top + paper.clientHeight / 2;
+      const x = Math.round((clientX - bounds.left) * canvas.width / bounds.width);
+      const y = Math.round((clientY - bounds.top) * canvas.height / bounds.height);
+      const event = {
+        bubbles: true, cancelable: true, pointerId: 108, pointerType: "pen",
+        button: 0, buttons: 1, pressure: 0.6, clientX, clientY
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", event));
+      canvas.dispatchEvent(new PointerEvent("pointerup", {
+        ...event, buttons: 0, pressure: 0
+      }));
+      return { x, y };
+    });
+    expect(target.x).toBeGreaterThan(0);
+    expect(target.x).toBeLessThan(1200);
+    expect(target.y).toBeGreaterThan(0);
+    expect(target.y).toBeLessThan(800);
+    const redAtTarget = () => page.locator("#kv2-canvas").evaluate(
+      (canvas, pos) => canvas.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data[0],
+      target
+    );
+    await expect.poll(redAtTarget).toBeLessThan(100);
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+    await page.locator("#kv2-undo").click();
+    await expect.poll(redAtTarget).toBeGreaterThan(220);
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+  });
+
+  test("editable JSON backup restores all layer bitmaps after zoom", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-title").fill("Sikkerhetskopi av atelier");
+    await page.locator("#kv2-note").fill("To tegnebaserte lag skal beholdes.");
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#0b468e";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#e44329";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    // Observe each source layer at the exact PNG serialization boundary.
+    // Diagnostic only: do not change the saved format or weaken pixel assertions.
+    await page.evaluate(() => {
+      const original = HTMLCanvasElement.prototype.toDataURL;
+      window.__kunstBackupLayerPixels = [];
+      HTMLCanvasElement.prototype.toDataURL = function (...args) {
+        if (this.width === 1200 && this.height === 800 &&
+            this.id !== "kv2-canvas" && args[0] === "image/png") {
+          const pixels = this.getContext("2d").getImageData(0, 0, this.width, this.height).data;
+          window.__kunstBackupLayerPixels.push(new Uint8ClampedArray(pixels));
+        }
+        return original.apply(this, args);
+      };
+    });
+    // Compare actual canvas pixels after import. WebKit can encode identical
+    // pixels into a different PNG/Base64 stream after a decode/re-encode.
+    await page.locator("#kv2-canvas").evaluate((canvas) => {
+      window.__kunstBeforeBackup = new Uint8ClampedArray(
+        canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data
+      );
+    });
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await page.locator("#kv2-zoom-in").click();
+    await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
+
+    const exportPromise = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = await exportPromise;
+    const json = await fs.readFile(await exported.path(), "utf8");
+    const backup = JSON.parse(json);
+    expect(backup.format).toBe("aha-kunstrommet-v2");
+    expect(backup.layers).toHaveLength(2);
+    expect(backup.note).toBe("To tegnebaserte lag skal beholdes.");
+    expect(backup.layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator("#kv2-new").click();
+    await page.locator("#kv2-import").setInputFiles({
+      name: "backup.kunstrommet.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(json, "utf8")
+    });
+    await expect(page.locator("#kv2-title")).toHaveValue("Sikkerhetskopi av atelier");
+    await expect(page.locator("#kv2-note")).toHaveValue("To tegnebaserte lag skal beholdes.");
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-status")).toContainText("Importert");
+    // Trigger the same layer snapshot a second time, then compare raw pixels.
+    // Capturing the layers reveals whether the mismatch precedes compositing.
+    const diagnosticDownload = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    await diagnosticDownload;
+    const layerDiagnostics = await page.evaluate(() => {
+      const all = window.__kunstBackupLayerPixels;
+      const count = all.length / 2;
+      return Array.from({ length: count }, (_, layerIndex) => {
+        const before = all[layerIndex];
+        const after = all[layerIndex + count];
+        let differentChannels = 0;
+        let maxChannelDifference = 0;
+        const examples = [];
+        for (let i = 0; i < before.length; i++) {
+          const delta = Math.abs(before[i] - after[i]);
+          if (!delta) continue;
+          differentChannels++;
+          maxChannelDifference = Math.max(maxChannelDifference, delta);
+          if (examples.length < 8) examples.push({
+            x: Math.floor(i / 4) % 1200, y: Math.floor(i / 4 / 1200),
+            channel: i % 4, before: before[i], after: after[i]
+          });
+        }
+        return { layerIndex, differentChannels, maxChannelDifference, examples };
+      });
+    });
+    console.log("Kunstrommet backup layer pixel diagnostics: " + JSON.stringify(layerDiagnostics));
+    const pixelDifference = await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const previous = window.__kunstBeforeBackup;
+      const current = canvas.getContext("2d").getImageData(
+        0, 0, canvas.width, canvas.height
+      ).data;
+      let differentChannels = 0;
+      let maxChannelDifference = 0;
+      for (let i = 0; i < current.length; i++) {
+        const difference = Math.abs(current[i] - previous[i]);
+        if (difference) differentChannels++;
+        maxChannelDifference = Math.max(maxChannelDifference, difference);
+      }
+      return { differentChannels, maxChannelDifference, totalChannels: current.length };
+    });
+    expect(pixelDifference.totalChannels).toBe(1200 * 800 * 4);
+    expect(pixelDifference).toMatchObject({
+      differentChannels: 0, maxChannelDifference: 0
+    });
+
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    const rows = await page.evaluate(() => new Promise((resolve, reject) => {
+      const request = indexedDB.open("aha_kunstrommet_v2", 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const query = request.result.transaction("projects", "readonly")
+          .objectStore("projects").getAll();
+        query.onsuccess = () => resolve(query.result);
+        query.onerror = () => reject(query.error);
+      };
+    }));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].layers).toHaveLength(2);
+    expect(rows[0].layers.every((layer) => layer.bitmap.startsWith("data:image/png;base64,"))).toBe(true);
+  });
+
+  test("invalid exact-pixel metadata rejects import without replacing open artwork", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-title").fill("Original som ikke skal erstattes");
+    await stroke(page);
+    const originalPixel = await pixel(page);
+    const exportPromise = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = JSON.parse(await fs.readFile(await (await exportPromise).path(), "utf8"));
+
+    const invalidCorrections = [
+      Buffer.from([1, 2, 3]).toString("base64"), // truncated RGBA record
+      Buffer.from([
+        0, 0, 0, 0, 1, 2, 3, 128,
+        0, 0, 0, 0, 1, 2, 3, 128
+      ]).toString("base64") // repeated pixel index
+    ];
+    for (const [i, invalid] of invalidCorrections.entries()) {
+      const corrupted = structuredClone(exported);
+      corrupted.layers[0].pixelFixups = invalid;
+      page.once("dialog", (dialog) => dialog.accept());
+      await page.locator("#kv2-import").setInputFiles({
+        name: "corrupt-" + i + ".kunstrommet.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(JSON.stringify(corrupted), "utf8")
+      });
+      await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+      await expect(page.locator("#kv2-title")).toHaveValue("Original som ikke skal erstattes");
+      await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+      expect(await pixel(page)).toEqual(originalPixel);
+    }
   });
 
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {

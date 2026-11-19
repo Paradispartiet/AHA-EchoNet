@@ -45,6 +45,11 @@ const methods = [
 function canvasContext() {
   const ctx = {};
   methods.forEach((name) => { ctx[name] = noop; });
+  // The Node DOM fake must support the real editor's lossless layer path.
+  // Pixel fidelity itself is verified by the separate browser tests.
+  const pixels = new Uint8ClampedArray(1200 * 800 * 4);
+  ctx.getImageData = () => ({ data: new Uint8ClampedArray(pixels) });
+  ctx.putImageData = (image) => pixels.set(image.data);
   return ctx;
 }
 function createNode(tag = "div") {

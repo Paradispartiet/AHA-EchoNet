@@ -22,8 +22,11 @@
 .kv2-toolbar label { display: inline-flex; align-items: center; gap: 6px; margin: 0 4px; font-weight: 500; font-size: .9rem; }
 .kv2-toolbar input[type="color"] { width: 39px; height: 35px; padding: 1px; border: 0; background: transparent; }
 .kv2-toolbar input[type="range"] { width: 110px; }
-.kv2-paper { margin: 16px 0; padding: 13px; border-radius: 16px; background: #dce1de; border: 1px solid #c4cec7; }
-#kv2-canvas { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 4px 24px #3d524b22; border-radius: 2px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.kv2-paper { margin: 16px 0; padding: 13px; border-radius: 16px; background: #dce1de; border: 1px solid #c4cec7; overflow: auto; max-height: min(76vh, 900px); overscroll-behavior: contain; }
+.kv2-paper:focus-visible { outline: 3px solid #4874a8; outline-offset: 3px; }
+.kv2-zoom-controls { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.kv2-zoom-controls output { min-width: 3.4rem; font-weight: 650; text-align: center; font-variant-numeric: tabular-nums; }
+#kv2-canvas { display: block; width: 100%; max-width: none; height: auto; background: #fff; box-shadow: 0 4px 24px #3d524b22; border-radius: 2px; touch-action: none; user-select: none; -webkit-user-select: none; }
 .kv2-tip { font-size: .84rem; color: #63716c; line-height: 1.55; margin: 12px 0; }
 .kv2-primary { background: #304d43 !important; border-color: #304d43 !important; color: #fff !important; font-weight: 700 !important; }
 .kv2-actions .kv2-file { display: inline-flex; margin: 0; align-items: center; font-weight: 500; position: relative; }

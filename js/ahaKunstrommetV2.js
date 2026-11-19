@@ -15,6 +15,9 @@
   const MAX_HISTORY = 12;
   const DB_NAME = "aha_kunstrommet_v2";
   const STORE = "projects";
+  const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+  const viewport = $("kv2-paper");
+  let zoomIndex = 2;
   let dbPromise = null;
   let project = null;
   let selected = null;
@@ -106,13 +109,74 @@
     }
   }
 
+  // Canvas PNG decoders on some WebKit builds round semi-transparent
+  // channel values on import. Preserve those exact RGBA values alongside the
+  // standard PNG so that editable layers survive a backup round-trip.
+  function encodeEdgePixels(surface) {
+    const data = surface.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
+    const bytes = new Uint8Array(WIDTH * HEIGHT * 8);
+    let used = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0 || data[i + 3] === 255) continue;
+      const index = i / 4;
+      bytes[used++] = index & 255;
+      bytes[used++] = (index >>> 8) & 255;
+      bytes[used++] = (index >>> 16) & 255;
+      bytes[used++] = (index >>> 24) & 255;
+      bytes[used++] = data[i];
+      bytes[used++] = data[i + 1];
+      bytes[used++] = data[i + 2];
+      bytes[used++] = data[i + 3];
+    }
+    if (!used) return "";
+    let binary = "";
+    for (let i = 0; i < used; i += 32768) {
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + 32768, used)));
+    }
+    return global.btoa(binary);
+  }
+
+  function restoreEdgePixels(surface, encoded) {
+    if (!encoded) return;
+    if (typeof encoded !== "string" || encoded.length > MAX_PROJECT_BYTES ||
+        !/^[a-zA-Z0-9+/]+={0,2}$/.test(encoded)) {
+      throw new Error("Ugyldige eksakte lagpiksler.");
+    }
+    const binary = global.atob(encoded);
+    if (binary.length % 8 !== 0 || binary.length > WIDTH * HEIGHT * 8) {
+      throw new Error("Ugyldig pikselkorreksjon i prosjektet.");
+    }
+    const context = surface.getContext("2d");
+    const image = context.getImageData(0, 0, WIDTH, HEIGHT);
+    const pixels = image.data;
+    let previousIndex = -1;
+    for (let i = 0; i < binary.length; i += 8) {
+      const index = (binary.charCodeAt(i) | (binary.charCodeAt(i + 1) << 8) |
+        (binary.charCodeAt(i + 2) << 16) | (binary.charCodeAt(i + 3) << 24)) >>> 0;
+      if (index <= previousIndex || index >= WIDTH * HEIGHT) {
+        throw new Error("Ugyldig pikselplassering i prosjektet.");
+      }
+      previousIndex = index;
+      const at = index * 4;
+      for (let channel = 0; channel < 4; channel++) {
+        pixels[at + channel] = binary.charCodeAt(i + 4 + channel);
+      }
+    }
+    context.putImageData(image, 0, 0);
+  }
+
   function snapshot() {
-    return project.layers.map((layer) => ({
-      id: layer.id, name: layer.name, kind: layer.kind,
-      visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
-      x: layer.x, y: layer.y,
-      bitmap: surfaces.get(layer.id).toDataURL("image/png")
-    }));
+    return project.layers.map((layer) => {
+      const surface = surfaces.get(layer.id);
+      const pixelFixups = encodeEdgePixels(surface);
+      return {
+        id: layer.id, name: layer.name, kind: layer.kind,
+        visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
+        x: layer.x, y: layer.y,
+        bitmap: surface.toDataURL("image/png"),
+        ...(pixelFixups ? { pixelFixups } : {})
+      };
+    });
   }
 
   function checkpoint(allowBusy) {
@@ -123,7 +187,7 @@
     return true;
   }
 
-  function decodePng(url) {
+  function decodePng(url, pixelFixups) {
     if (typeof url !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(url) ||
         url.length > MAX_PROJECT_BYTES) {
@@ -138,6 +202,8 @@
         }
         const surface = imageCanvas();
         surface.getContext("2d").drawImage(image, 0, 0);
+        try { restoreEdgePixels(surface, pixelFixups); }
+        catch (error) { reject(error); return; }
         resolve(surface);
       };
       image.onerror = () => reject(new Error("Kunne ikke lese et prosjektlag."));
@@ -146,12 +212,12 @@
   }
 
   async function installLayers(layers) {
-    const loaded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap)));
+    const loaded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
     const next = new Map();
     layers.forEach((layer, index) => next.set(layer.id, loaded[index]));
     surfaces.clear();
     next.forEach((value, key) => surfaces.set(key, value));
-    project.layers = layers.map(({ bitmap, ...meta }) => meta);
+    project.layers = layers.map(({ bitmap, pixelFixups, ...meta }) => meta);
   }
 
   async function historyStep(from, to) {
@@ -227,9 +293,13 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move"].forEach((name) => {
+    ["brush", "eraser", "move", "hand"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
+    canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
+    $("kv2-zoom-value").textContent = Math.round(ZOOM_LEVELS[zoomIndex] * 100) + "%";
+    $("kv2-zoom-out").disabled = zoomIndex === 0;
+    $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
   }
 
@@ -241,13 +311,41 @@
     };
   }
 
+  function penPressure(event) {
+    if (event.pointerType !== "pen") return 1;
+    // Pen pressure is optional; unreported/zero readings use the old fixed-width stroke.
+    const pressure = Number.isFinite(event.pressure) && event.pressure > 0
+      ? event.pressure : 0.5;
+    return clamp(0.35 + clamp(pressure, 0, 1) * 1.3, 0.35, 1.65);
+  }
+
+  function setZoom(nextIndex) {
+    nextIndex = clamp(nextIndex, 0, ZOOM_LEVELS.length - 1);
+    if (zoomIndex === nextIndex) return;
+    // Keep the viewed center approximately stable when the CSS-only zoom changes.
+    // Neither the layer bitmaps nor the fixed 1200x800 PNG export are rescaled.
+    const oldZoom = ZOOM_LEVELS[zoomIndex];
+    const newZoom = ZOOM_LEVELS[nextIndex];
+    const width = viewport.clientWidth || 0;
+    const height = viewport.clientHeight || 0;
+    const centerX = ((viewport.scrollLeft || 0) + width / 2) / oldZoom;
+    const centerY = ((viewport.scrollTop || 0) + height / 2) / oldZoom;
+    zoomIndex = nextIndex;
+    canvas.style.width = Math.round(newZoom * 100) + "%";
+    viewport.scrollLeft = Math.max(0, centerX * newZoom - width / 2);
+    viewport.scrollTop = Math.max(0, centerY * newZoom - height / 2);
+    refresh();
+  }
+
   function drawSegment(context, a, b) {
     const size = Number($("kv2-size").value) || 6;
     context.save();
     context.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
     context.strokeStyle = $("kv2-color").value;
     context.fillStyle = tool === "eraser" ? "#000000" : $("kv2-color").value;
-    context.lineWidth = tool === "eraser" ? size * 2 : size;
+    const first = Number.isFinite(a.pressureFactor) ? a.pressureFactor : 1;
+    const last = b && Number.isFinite(b.pressureFactor) ? b.pressureFactor : first;
+    context.lineWidth = tool === "eraser" ? size * 2 : size * (first + last) / 2;
     context.lineJoin = "round";
     context.lineCap = "round";
     context.beginPath();
@@ -266,18 +364,26 @@
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     const layer = currentLayer();
-    if (!layer || layer.locked || !layer.visible) {
+    if (tool !== "hand" && (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
-    if (!checkpoint()) return;
+    // Moving the viewport is never an artwork edit and must not create undo history.
+    if (tool !== "hand" && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
-    pointerStart = { point: point(event), x: layer.x, y: layer.y };
+    pointerStart = {
+      point: point(event), x: layer?.x || 0, y: layer?.y || 0,
+      clientX: event.clientX, clientY: event.clientY,
+      scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0
+    };
     paintPrevious = null;
-    if (tool !== "move") {
+    if (tool === "brush" || tool === "eraser") {
       const at = point(event);
-      const local = { x: at.x - layer.x, y: at.y - layer.y };
+      const local = {
+        x: at.x - layer.x, y: at.y - layer.y,
+        pressureFactor: penPressure(event)
+      };
       drawSegment(surfaces.get(layer.id).getContext("2d"), local, local);
       paintPrevious = local;
       drawSoon();
@@ -288,6 +394,11 @@
   function move(event) {
     if (pointerId === null || event.pointerId !== pointerId || busy) return;
     event.preventDefault();
+    if (tool === "hand") {
+      viewport.scrollLeft = Math.max(0, pointerStart.scrollLeft + pointerStart.clientX - event.clientX);
+      viewport.scrollTop = Math.max(0, pointerStart.scrollTop + pointerStart.clientY - event.clientY);
+      return;
+    }
     const layer = currentLayer();
     if (!layer) return;
     const at = point(event);
@@ -295,7 +406,10 @@
       layer.x = Math.round(pointerStart.x + at.x - pointerStart.point.x);
       layer.y = Math.round(pointerStart.y + at.y - pointerStart.point.y);
     } else {
-      const local = { x: at.x - layer.x, y: at.y - layer.y };
+      const local = {
+        x: at.x - layer.x, y: at.y - layer.y,
+        pressureFactor: penPressure(event)
+      };
       drawSegment(surfaces.get(layer.id).getContext("2d"), paintPrevious, local);
       paintPrevious = local;
     }
@@ -304,11 +418,14 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
+    const changedArtwork = tool !== "hand";
     pointerId = null;
     pointerStart = null;
     paintPrevious = null;
-    changed();
-    draw();
+    if (changedArtwork) {
+      changed();
+      draw();
+    }
   }
 
   function addLayer(name, kind) {
@@ -471,7 +588,8 @@
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
       x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
-      bitmap: input.bitmap
+      bitmap: input.bitmap,
+      ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {})
     };
   }
 
@@ -532,13 +650,13 @@
       throw new Error("Prosjektet er for stort.");
     }
     // Decode all imported images before installing the new document.
-    const decoded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap)));
+    const decoded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
     const now = new Date().toISOString();
     const next = {
       id: sameRecord ? data.id : uid(),
       owner: owner(), title: String(data.title || "").slice(0, 120),
       note: String(data.note || "").slice(0, 4000),
-      layers: layers.map(({ bitmap, ...meta }) => meta),
+      layers: layers.map(({ bitmap, pixelFixups, ...meta }) => meta),
       created_at: sameRecord ? data.created_at : now,
       updated_at: now, local_only: true, shared: false, analyzed_image: false
     };
@@ -573,7 +691,8 @@
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
           x: Number.isFinite(layer.x) ? layer.x : 0,
-          y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap
+          y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
+          ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {})
         })),
         id: uid(), owner: owner(),
         title: (String(saved.title || "Kunstverk").slice(0, 105) + " – kopi").slice(0, 120),
@@ -786,9 +905,12 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move"].forEach((name) => {
+    ["brush", "eraser", "move", "hand"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
     });
+    $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
+    $("kv2-zoom-out").addEventListener("click", () => setZoom(zoomIndex - 1));
+    $("kv2-zoom-reset").addEventListener("click", () => setZoom(2));
     $("kv2-photo").addEventListener("change", (event) => importPhoto(event.target.files[0]));
     $("kv2-import").addEventListener("change", (event) => importProject(event.target.files[0]));
     $("kv2-json").addEventListener("click", () => {
