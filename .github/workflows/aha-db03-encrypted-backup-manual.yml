@@ -47,6 +47,7 @@ jobs:
           AHA_DB03_DATABASE_URL: ${{ secrets.AHA_DB03_DATABASE_URL }}
           AHA_DB03_AGE_RECIPIENT: ${{ vars.AHA_DB03_AGE_RECIPIENT }}
           AHA_DB03_BACKUP_ENABLED: ${{ vars.AHA_DB03_BACKUP_ENABLED }}
+          AHA_DB03_MANUAL_EXPORT_ACK: 'yes'
         run: bash scripts/aha-db03-backup-github.sh
 
       - name: Upload ONLY ciphertext and nonprivate status
