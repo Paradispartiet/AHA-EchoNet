@@ -17,7 +17,7 @@ const storage = {
 let identity=A, authError=false;
 const listeners = new Map();
 let html="";
-const mount={set innerHTML(v){html=v},set textContent(v){html=v}};
+const mount={set innerHTML(v){html=v},set textContent(v){html=v},addEventListener(){}};
 const status={textContent:""};
 const form={addEventListener(){}};
 const list={addEventListener(){}};
