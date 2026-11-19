@@ -116,6 +116,23 @@ Supabase Security Advisors melder vurderingspunkter: to `public` SECURITY DEFINE
 5. Oppbevar filene **privat og kryptert** utenfor GitHub. Verifiser at filene faktisk finnes og kan leses. Gjenopprett bare i et **isolert lokalt testmiljø**; kontroller tabellantall, radtall, RLS og innloggingstilhørende data. Ikke gjenopprett over DB-03 eller opprett betalt Supabase-staging.
 6. Registrer kun aggregert godkjenningsstatus i [felles DATABASE_REGISTER](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md), **aldri** dumper, persondata, DB-passord eller tokens.
 
+**Ny, sikrere lokal utførelse 19.11 – kode er laget, ikke kjørt på produksjonsdata:** `scripts/aha-db03-backup-encrypted.sh` er et alternativ til de manuelle CLI-kommandoene over. En betrodd PC/Mac må ha **PostgreSQL-klient 17+ (`pg_dump`, `pg_restore`), Node.js, Git og `age`**. Supabase Free har ikke automatisk daglig databasebackup. De vanlige `supabase db dump`-kommandoene **utelater som standard administrerte skjemaer som `auth` og `storage`**; derfor bruker dette alternativet direkte `pg_dump --format=custom` uten standard-skjemafilter. Ingen SQL/data lagres ukryptert på disk: arkivet strømmer rett til `age`-kryptering med brukerens offentlige mottakernøkkel. Verktøyet avviser feil Supabase-prosjekt, PostgreSQL-klient eldre enn 17 og backupmapper inne i et Git-arbeidstre. Verifisering dekrypterer bare i minnet og kontrollerer `pg_restore --list` for `auth.users/identities/sessions`, `public.aha_profiles/feed/insta`, `storage.buckets/objects`, `vault.secrets`, `supabase_migrations.schema_migrations` og `aha_friend_private`-tabeller. En separat manifestfil får `restore_tested: false` og `NOT_APPROVED`. **Arkivlisten beviser ikke lesbare rader eller komplett funksjonell gjenoppretting**.
+
+Kjør bare på en betrodd PC/Mac, **ikke** i nettleser, GitHub Actions, publisert CI eller ChatGPT, og **aldri** legg tilkoblingsstrengen eller private `age`-nøkler i GitHub:
+
+```sh
+# Konfigurer privat age-identitet lokalt; dens offentlige age1-...-nøkkel
+# settes i AHA_BACKUP_RECIPIENT. Ikke bruk et passord i shellhistorikk.
+read -r -s AHA_DB_URL
+export AHA_DB_URL
+export AHA_BACKUP_RECIPIENT='age1-ERSTATT-MED-DIN-OFFENTLIGE-NOKKEL'
+export AHA_BACKUP_IDENTITY="$HOME/.config/age/keys.txt"
+bash scripts/aha-db03-backup-encrypted.sh
+unset AHA_DB_URL PGDATABASE
+```
+
+Dette **kan ikke kjøres av den tilkoblede Supabase-administrasjonskontakten alene**, som ikke har en API-handling for komplett kryptert databaseeksport. Bevis for faktisk backup krever at en autorisert operatør kjører verktøyet med private lokale nøkler. Det må også kontrolleres separat at roller/grants, Storage-filbytes (per kontroll 19.11: **0 buckets**), Vault-nøkler og et isolert restore av Auth, private tabeller og RLS er gjenopprettbare. En lokal AHA JSON-eksport fra hver enhet er fortsatt en **egen** oppgave, siden browserens data ikke ligger i DB-03. Ingen dump må lagres i dette offentlige repositoriet.
+
 **Status nå:** Prosedyren er dokumentert, men **ingen DB-03-dump, privat oppbevaring eller faktisk restore er utført eller verifisert**. Derfor består ikke backup-porten, og sky-skriving/sosial publisering skal være avslått.
 
 Supabase-kilder: [Database Backups](https://supabase.com/docs/guides/platform/backups), [CLI backup/restore](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore), [Supabase DB dump](https://supabase.com/docs/reference/cli/supabase-db-dump).
