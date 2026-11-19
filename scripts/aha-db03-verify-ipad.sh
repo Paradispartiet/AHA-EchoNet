@@ -12,11 +12,16 @@ identity="$3"
 [[ -f "$manifest" && -r "$manifest" ]] || fail 'Manifest not readable'
 [[ -f "$identity" && -r "$identity" ]] || fail 'Private identity not readable on this iPad'
 [[ "${archive##*/}" == AHA-DB03-*.dump.age ]] || fail 'Unexpected archive filename'
-for cmd in age pg_restore sha256sum jq wc sed tr; do
+for cmd in age sha256sum jq wc sed tr; do
   command -v "$cmd" >/dev/null 2>&1 || fail "Missing tool: $cmd"
 done
 
-pg_major="$(pg_restore --version | sed -n 's/.*(PostgreSQL) \([0-9][0-9]*\).*/\1/p')"
+restore_bin="$(command -v pg_restore || true)"
+if [[ -z "$restore_bin" && -x /usr/libexec/postgresql17/pg_restore ]]; then
+  restore_bin=/usr/libexec/postgresql17/pg_restore
+fi
+[[ -n "$restore_bin" ]] || fail 'Missing PostgreSQL 17+ pg_restore client'
+pg_major="$("$restore_bin" --version | sed -n 's/.*(PostgreSQL) \([0-9][0-9]*\).*/\1/p')"
 [[ "$pg_major" =~ ^[0-9]+$ && "$pg_major" -ge 17 ]] || fail 'pg_restore 17+ required'
 jq -e --arg ref "wshmybqyksrwkawqleiz" '
   .project_ref == $ref and
@@ -41,7 +46,7 @@ printf 'AHA DB-03 ciphertext hash and size: OK\n'
 # pipefail makes a truncated/invalid ciphertext or archive fail this check.
 # All decrypted content stays in process pipes and is not printed or persisted.
 if ! age -d -i "$identity" "$archive" 2>/dev/null \
-    | pg_restore --file=/dev/null - 2>/dev/null; then
+    | "$restore_bin" --file=/dev/null - 2>/dev/null; then
   fail 'Decryption or full archive read failed (no plaintext saved)'
 fi
 
