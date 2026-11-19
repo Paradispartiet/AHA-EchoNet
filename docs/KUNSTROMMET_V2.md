@@ -84,9 +84,9 @@ Dokumenter i en oppfølgingskommentar lenket til PR #1050: iPad-modell, iPadOS-v
 
 En automatisert Playwright-test simulerer nå `QuotaExceededError`, kontrollerer tydelig sikkerhetskopi-varsel og at lagringen kan forsøkes på nytt. Den erstatter ikke faktisk kontroll av lagringskvote på enheten.
 
-## Neste etappe – markering, beskjæring og lagtransformering (utkast)
+## Kunstrommet 3.0 – markering, beskjæring og lagtransformering (integrasjonskontroll)
 
-Dette videreutvikler **samme Kunstrommet**, basert på den ferdigtestede PR #1059. Den nye funksjonsgrenen merges ikke før #1059 er godkjent og samordnet. Ingen ny app, database, bildeopplasting til server eller automatisk Aha-overføring.
+Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget til `main` 19. november 2026 (merge-commit `e961450`). PR #1063 er nå rettet mot `main`, men skal først bestå samlet integrasjonskontroll. Ingen ny app, database, bildeopplasting til server eller automatisk Aha-overføring.
 
 - **Marker område:** Trekk et rektangel direkte på lerretet. Markeringen er kun en visuell, midlertidig redigeringsramme og lagres ikke i kunstverket. Endrer ikke angrehistorikken eller bildepikslene.
 - **Pensel og viskelær innenfor markeringen:** Strøk klippes til valgt rektangel, med lagets posisjon tatt med i beregningen.
@@ -97,7 +97,8 @@ Dette videreutvikler **samme Kunstrommet**, basert på den ferdigtestede PR #105
 
 ### Kontrollkrav for ny etappe
 
-- [ ] Chromium og iPad WebKit: markering av rektangel, eksakt størrelse på utsnittseksport, og tegning bare innenfor markeringen.
-- [ ] Lagisolering: beskjæring av ett lag påvirker aldri piksler i laget under; angre restaurerer.
-- [ ] Test duplisering, transformering, låst lag, import/eksport, gammel V1/V2-kompatibilitet, Aha-samlingsreferanser og full Aha-regresjon.
+- [x] Chromium og iPad WebKit: markering av rektangel, eksakt størrelse på utsnittseksport, og tegning bare innenfor markeringen. 40/40 PASS på `40fe2c0` ([GitHub Actions](https://github.com/Paradispartiet/AHA-EchoNet/actions/runs/44472867479)).
+- [x] Lagisolering: beskjæring av ett lag påvirker aldri piksler i laget under; angre restaurerer (automatisert test PASS).
+- [x] Lokale kontrakttester, duplisering, transformering av også flyttede lag, angre, V1/V2-kompatibilitet, import/eksport og Aha-referanser gjennomført i Kunstrommet-testpakken; AHA Engine PASS på `40fe2c0`.
+- [ ] Samlet Aha-regresjon, Node, syntaks og launch gate på siste integrasjonskandidat mot `main` (kjøres via PR #1063).
 - [ ] Manuell iPad/Safari/Apple Pencil-kontroll av gestikk, markering og redigering etter godkjent testgrensesnitt. Ikke marker emulering som fysisk test.
