@@ -58,6 +58,30 @@ archives=("$output"/AHA-DB03-*.dump.age)
 PATH="$scratch/bin:$PATH" bash scripts/aha-db03-verify-ipad.sh \
   "${archives[0]}" "$output/AHA-DB03.manifest.json" "$identity"
 
+# Real negative controls with age: a second synthetic private key must NOT
+# decrypt, and a truncated ciphertext must fail both age and the iPad verifier.
+# All identities are ephemeral fixtures, never an AHA user key or Supabase data.
+wrong_identity="$scratch/wrong-synthetic-identity"
+age-keygen -o "$wrong_identity" 2>/dev/null
+if age -d -i "$wrong_identity" "${archives[0]}" >/dev/null 2>&1; then
+  printf 'FAIL: synthetic ciphertext decrypted with the wrong identity.\n' >&2
+  exit 1
+fi
+
+tampered="$scratch/AHA-DB03-truncated.dump.age"
+cp "${archives[0]}" "$tampered"
+truncate -s -16 "$tampered"
+if age -d -i "$identity" "$tampered" >/dev/null 2>&1; then
+  printf 'FAIL: truncated synthetic ciphertext was accepted by age.\n' >&2
+  exit 1
+fi
+if PATH="$scratch/bin:$PATH" bash scripts/aha-db03-verify-ipad.sh \
+    "$tampered" "$output/AHA-DB03.manifest.json" "$identity" >/dev/null 2>&1; then
+  printf 'FAIL: iPad verifier accepted a truncated synthetic archive.\n' >&2
+  exit 1
+fi
+printf 'Synthetic wrong-key and corrupted-ciphertext rejection: PASS.\n'
+
 "$docker_bin" exec "$container" createdb -U postgres synthetic_restore
 age -d -i "$identity" "${archives[0]}" | "$docker_bin" exec -i "$container" \
   pg_restore -U postgres --exit-on-error --dbname=synthetic_restore
