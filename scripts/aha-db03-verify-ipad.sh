@@ -46,7 +46,7 @@ printf 'AHA DB-03 ciphertext hash and size: OK\n'
 # pipefail makes a truncated/invalid ciphertext or archive fail this check.
 # All decrypted content stays in process pipes and is not printed or persisted.
 if ! age -d -i "$identity" "$archive" 2>/dev/null \
-    | "$restore_bin" --file=/dev/null - 2>/dev/null; then
+    | "$restore_bin" --file=/dev/null 2>/dev/null; then
   fail 'Decryption or full archive read failed (no plaintext saved)'
 fi
 

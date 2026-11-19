@@ -26,7 +26,7 @@ executable("pg_restore", [
   'if [[ "$1" == "--version" ]]; then',
   '  echo "pg_restore (PostgreSQL) $MOCK_PG_MAJOR.2"; exit 0',
   'fi',
-  '[[ "$#" -eq 2 && "$1" == "--file=/dev/null" && "$2" == "-" ]] || exit 41',
+  '[[ "$#" -eq 1 && "$1" == "--file=/dev/null" ]] || exit 41',
   'IFS= read -r first || exit 42',
   '[[ "$first" == "SYNTHETIC-RESTORE-STREAM" ]] || exit 43',
   '[[ "$MOCK_RESTORE_FAIL" != yes ]] || exit 44',
