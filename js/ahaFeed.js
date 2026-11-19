@@ -7,7 +7,7 @@
   const ACCOUNT_KEY = "aha_feed_accounts_v1"; // Device-local account partition, NOT cloud storage.
   const EXPECTED_URL = "https://wshmybqyksrwkawqleiz.supabase.co";
   const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  let activeScope = { mode: "pending", id: null };
+  let activeScope = window.AHADb ? { mode: "pending", id: null } : { mode: "guest", id: null };
   let scopeEpoch = 0;
 
   const FEED_SOURCE_METADATA = Object.freeze({
@@ -75,7 +75,9 @@
   }
 
   function safeReadJson(key, expected) {
-    const raw = localStorage.getItem(key);
+    let raw;
+    try { raw = localStorage.getItem(key); }
+    catch { return { ok: false, reason: "local_storage_unavailable" }; }
     if (raw === null) return { ok: true, data: expected };
     try { return { ok: true, data: JSON.parse(raw) }; }
     catch { return { ok: false, reason: "invalid_local_storage" }; }
@@ -129,7 +131,8 @@
       const state = readAccounts();
       if (!state.ok) return false; // Never overwrite corrupt/unknown local storage.
       const accounts = { ...state.data.accounts, [scope.id]: items };
-      localStorage.setItem(ACCOUNT_KEY, JSON.stringify({ version: 1, accounts }));
+      try { localStorage.setItem(ACCOUNT_KEY, JSON.stringify({ version: 1, accounts })); }
+      catch { return false; }
       return true;
     }
     if (scope.mode === "guest") {
@@ -139,7 +142,8 @@
       // Preserve any historically owner-labeled rows; do not display or
       // discard them when updating anonymous/unassigned rows.
       const assigned = legacy.data.filter((post) => post && post.profile_id);
-      localStorage.setItem(KEY, JSON.stringify([...assigned, ...items]));
+      try { localStorage.setItem(KEY, JSON.stringify([...assigned, ...items])); }
+      catch { return false; }
       return true;
     }
     return false;
