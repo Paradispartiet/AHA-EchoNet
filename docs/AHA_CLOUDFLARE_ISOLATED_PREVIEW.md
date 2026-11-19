@@ -112,6 +112,53 @@ Brukeren har **bare iPad**, ikke PC/Mac. Vi skal derfor ikke gjøre en lokal PC 
 
 Syntetisk test `tests/aha-db03-backup-github-manual.test.cjs` bruker falsk database og falsk krypterer og kontrollerer at jobben er manuelt sperret, at feil prosjekt og manglende bekreftelse avvises, og at bare krypterte filnavn inkluderes i backup-artefakten. **Den tester ikke den faktiske `age`-krypteringen eller ekte Supabase-datakopi.**
 
+### iPad-gjenopprettingsløype for DB-03 (19.11.2026; ikke aktivert)
+
+**Klar kode, ikke kjørt med reelle data.** Dette er den videreførte iPad-prosedyren for den eksisterende GitHub Actions-workflowen over. Den oppretter **ikke** nøkler i GitHub eller i ChatGPT, kjører ikke eksport og opphever ingen sperrer. En kontroll av filformat er heller ikke det samme som vellykket database-restore.
+
+**1. Generer nøkkelen på iPad, utenfor GitHub.** Installer [iSH](https://ish.app/) fra App Store og åpne skallet. Sjekk `cat /etc/alpine-release` først; på en eldre iSH/Alpine-utgave kan PostgreSQL 17-pakken mangle. Bruk bare støttede pakkekilder for den installerte versjonen, ikke bland Alpine-versjoner for å tvinge installasjon.
+
+```sh
+apk update
+apk add age bash jq postgresql17-client curl
+umask 077
+mkdir -p "$HOME/.config/age"
+age-keygen -o "$HOME/.config/age/aha-db03-identity.txt"
+age-keygen -y "$HOME/.config/age/aha-db03-identity.txt"
+```
+
+Den siste kommandoen viser en **offentlig** `age1...`-mottakernøkkel. Bare denne offentlige nøkkelen skal senere settes i GitHub-repository-variable `AHA_DB03_AGE_RECIPIENT`. Filen `aha-db03-identity.txt` inneholder den **private** `AGE-SECRET-KEY-...`-nøkkelen: aldri kopier den til GitHub, chat, skjermbilde eller et ikke-kryptert delt område. Hvis pakkene ikke lar seg installere på iSH-versjonen, stopp; ikke generer nøkkel på en ekstern nettside.
+
+**2. Ta en uavhengig, kryptert nøkkelkopi.** Uten den private nøkkelen er dumpen ubrukelig ved tap av iPad. Lag en passordbeskyttet kopi *på iPad* og flytt bare den krypterte kopien til en separat, privat lagringsplass (for eksempel privat iCloud Drive eller et betrodd kryptert hvelv). Passordet må bevares separat, f.eks. i en passordbehandler; ikke i GitHub eller denne chatten.
+
+```sh
+age -p -o "$HOME/aha-db03-recovery-key.age" "$HOME/.config/age/aha-db03-identity.txt"
+```
+
+Kontroller at den krypterte nøkkelkopien **faktisk er lagret utenfor iSH** før noe reelt eksporteres. Originalidentiteten forblir kun på iPad i det private iSH-filområdet.
+
+**3. Klargjør, men ikke aktiver produksjonseksport ennå.** I AHA GitHub `Settings → Environments`: opprett `aha-db03-backup` og legg `AHA_DB03_DATABASE_URL` som *environment secret* fra riktig Supabase DB-03 Connect (TLS, session pooler 5432). Aldri send tilkoblingsstrengen i chat eller PR. På `Settings → Secrets and variables → Actions → Variables`: legg inn `AHA_DB03_AGE_RECIPIENT` (offentlig) og la `AHA_DB03_BACKUP_ENABLED` være **fraværende/ikke `yes`**. Først ved en senere uttrykkelig godkjenning kan eieren sette den til `yes` og starte manuell `workflow_dispatch` fra `main` med `confirm_export=true`.
+
+**4. Når en godkjent kryptert eksport senere finnes:** Fra Safari på iPad, åpne `Actions → AHA DB-03 encrypted backup → den vellykkede kjøringen → Artifacts`. Last ned zip-filen og pakk den ut i **Filer**. Kopier både `AHA-DB03-*.dump.age` og `AHA-DB03.manifest.json` til en privat, brukeradministrert mappe (f.eks. iCloud Drive, med god Apple-kontosikkerhet); GitHub beholder bare Actions-artifakten i 7 dager. **Bekreft nedlasting og privat kopi før de 7 dagene er gått.** En kryptert dump er fortsatt sensitiv, og GitHub-artifakten i et offentlig repo kan være tilgjengelig for andre.
+
+**5. Lesbarhetskontroll kun på iPad, offline mot databasen.** iSH kan få tilgang til en valgt mappe i Filer. Kontroller at du velger den private mappen som bare inneholder én arkivkopi og manifestet for samme kjøring. Hent verifikasjonsskriptet fra den mergede `main`, ikke fra ukjente kilder:
+
+```sh
+mkdir -p "$HOME/aha-arkiv"
+mount -t ios . "$HOME/aha-arkiv"
+# Velg arkivmappen i Filer når iSH spør.
+curl -fsSLo "$HOME/aha-db03-verify-ipad.sh" \
+  https://raw.githubusercontent.com/Paradispartiet/AHA-EchoNet/main/scripts/aha-db03-verify-ipad.sh
+bash "$HOME/aha-db03-verify-ipad.sh" \
+  "$HOME"/aha-arkiv/AHA-DB03-*.dump.age \
+  "$HOME/aha-arkiv/AHA-DB03.manifest.json" \
+  "$HOME/.config/age/aha-db03-identity.txt"
+```
+
+Skriptet kontrollerer riktig prosjekt/manifest, filstørrelse, SHA-256, dekrypterer lokalt **uten å lagre klartekst**, og lar `pg_restore` lese hele innholdet til `/dev/null`. Det bruker ingen databaseadresse, oppretter ingen database og utfører ingen SQL. Ekte isolert restore, roller/grants, Auth-sesjoner, Vault og eventuelle Storage-filbytes er **ikke verifisert**. Dersom iSH ikke støtter nødvendige pakker eller hele arkivet, regnes denne kontrollen som **ikke bestått**. Ikke slå på automatisk sky-skriving av den grunn.
+
+**Statusport:** `key_on_ipad=false`, `encrypted_key_copy_off_device=false`, `actual_archive=false`, `archive_read_tested=false`, `isolated_restore_tested=false` inntil faktiske brukerbekreftelser og kontrollbevis foreligger. Ikke kall backupen gjenopprettbar eller aktiver AHA cloud write bare på grunnlag av dette oppsettet. Oppdater [felles databaseregister](https://github.com/Paradispartiet/Paradispartiet/blob/main/docs/DATABASE_REGISTER.md) kun ved bekreftet statusendring, ikke opprett et nytt register.
+
 ### Port C.2 – neste kontroll: privat databasebackup uten nye tjenester
 
 **Avklart 18.11.2026:** AHA DB-03 bruker Supabase Free. Supabase tar ikke automatisk daglige backuper på Free; prosjektets aktive status og en lokal AHA JSON-eksport er **ikke** gjenopprettbar serverbackup. Supabase anbefaler manuell `db dump` og oppbevaring utenfor tjenesten. Prosedyren nedenfor er for en **betrodd lokal datamaskin**, ikke for iPad-nettleseren og **ikke** for GitHub Actions.
