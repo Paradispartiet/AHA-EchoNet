@@ -28,6 +28,16 @@
     <section id="aha-paradisdb-content" hidden>
       <div id="aha-paradisdb-summary" class="aha-paradisdb-summary" aria-label="Nøkkeltall"></div>
 
+      <section class="aha-panel aha-paradisdb-section" aria-labelledby="aha-paradisdb-databases-title">
+        <div class="aha-paradisdb-section-header">
+          <div>
+            <h2 id="aha-paradisdb-databases-title">Registrerte databaser</h2>
+            <p>Åpne en database for å se leverandør, identifikasjon, plassering, dokumenterte kontroller og neste sjekk.</p>
+          </div>
+        </div>
+        <div id="aha-paradisdb-databases" class="aha-paradisdb-databases"></div>
+      </section>
+
       <section class="aha-panel aha-paradisdb-section" aria-labelledby="aha-paradisdb-projects-title">
         <div class="aha-paradisdb-section-header">
           <div>
@@ -41,17 +51,7 @@
         <p class="aha-paradisdb-resultcount" id="aha-paradisdb-project-count"></p>
         <div id="aha-paradisdb-projects" class="aha-paradisdb-projects"></div>
       </section>
-
-      <section class="aha-panel aha-paradisdb-section" aria-labelledby="aha-paradisdb-databases-title">
-        <div class="aha-paradisdb-section-header">
-          <div>
-            <h2 id="aha-paradisdb-databases-title">Registrerte databaser</h2>
-            <p>Åpne en database for å se leverandør, identifikasjon, plassering, dokumenterte kontroller og neste sjekk.</p>
-          </div>
-        </div>
-        <div id="aha-paradisdb-databases" class="aha-paradisdb-databases"></div>
-      </section>
-      <p class="aha-paradisdb-source-note">Kilden oppdateres i Paradispartiets felles register. Registerfilene synkroniseres i GitHub ved endring, men automatisk kontroll av Supabase, Cloudflare og Azure er ikke satt i drift.</p>
+      <p class="aha-paradisdb-source-note">Hovedregisteret oppdateres i GitHub. Automatisk leverandørstatus vises per database når en tidsstemplet kontroll finnes; øvrige vises som ikke konfigurert eller ikke kontrollert. Leverandørstatus er ikke en kontroll av faktisk app-synk, brukerdata eller sikkerhetskopier. Azure holdes deaktivert.</p>
     </section>
   </main>
   <script src="js/ahaModules.js"></script>

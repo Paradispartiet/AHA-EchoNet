@@ -151,6 +151,23 @@
     filterProjects();
   }
 
+  function providerSummaryStatus(id, snapshot, now = Date.now()) {
+    const check = snapshot?.provider_checks?.[id];
+    if (!check || check.result === "not_configured" || check.result === "not_supported")
+      return { label: "Ikke kontrollert", state: "unavailable" };
+    if (check.result !== "verified")
+      return { label: "Kontroll mangler", state: "unavailable" };
+    const timestamp = Date.parse(check.checked_at);
+    if (!Number.isFinite(timestamp) || timestamp > now + 5 * 60 * 1000 ||
+        now - timestamp > PROVIDER_MAX_AGE_MS)
+      return { label: "Foreldet", state: "stale" };
+    if (check.provider === "supabase" && check.observed_status === "ACTIVE_HEALTHY")
+      return { label: "Aktiv", state: "active" };
+    if (check.provider === "supabase" && check.observed_status === "INACTIVE")
+      return { label: "Inaktiv", state: "inactive" };
+    return { label: "Kontrollert", state: "checked" };
+  }
+
   function renderDatabases(data, providerSnapshot) {
     const root = global.document.getElementById("aha-paradisdb-databases");
     root.replaceChildren();
@@ -159,6 +176,9 @@
       const summary = el("summary");
       appendText(summary, "strong", "", db.id + " · " + db.system);
       appendText(summary, "span", "", db.provider_environment);
+      const providerState = providerSummaryStatus(db.id, providerSnapshot);
+      const indicator = appendText(summary, "span", "aha-paradisdb-state", providerState.label);
+      indicator.dataset.state = providerState.state;
       details.appendChild(summary);
       const dl = el("dl");
       [
@@ -250,6 +270,7 @@
     validateInventory,
     validateProviderSnapshot,
     describeProviderCheck,
+    providerSummaryStatus,
     summarize
   });
   if (global.document?.readyState === "loading") {
