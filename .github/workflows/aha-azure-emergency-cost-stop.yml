@@ -36,13 +36,37 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Check subscription state without Azure writes
+        id: subscription
+        shell: bash
+        run: |
+          set -euo pipefail
+          state="$(az account show --query state -o tsv)"
+          case "$state" in
+            Enabled)
+              echo "enabled=true" >> "$GITHUB_OUTPUT"
+              ;;
+            Disabled)
+              echo "enabled=false" >> "$GITHUB_OUTPUT"
+              echo "### AHA Azure subscription is disabled" >> "$GITHUB_STEP_SUMMARY"
+              echo "Azure refuses resource writes. No stop, scale or SKU change attempted." >> "$GITHUB_STEP_SUMMARY"
+              echo "This is not a verification of billing or retained data." >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "::error::Unexpected Azure subscription state; refusing resource writes."
+              exit 1
+              ;;
+          esac
+
       - name: Prepare Container Apps CLI
+        if: steps.subscription.outputs.enabled == 'true'
         shell: bash
         run: |
           set -euo pipefail
           az extension add --name containerapp --upgrade --only-show-errors
 
       - name: Verify production resource group exists
+        if: steps.subscription.outputs.enabled == 'true'
         id: rg
         shell: bash
         run: |
@@ -54,7 +78,7 @@ jobs:
           fi
 
       - name: Stop all PostgreSQL Flexible Servers in AHA production
-        if: steps.rg.outputs.exists == 'true'
+        if: steps.subscription.outputs.enabled == 'true' && steps.rg.outputs.exists == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -88,7 +112,7 @@ jobs:
           done
 
       - name: Scale all production Container Apps to zero
-        if: steps.rg.outputs.exists == 'true'
+        if: steps.subscription.outputs.enabled == 'true' && steps.rg.outputs.exists == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -110,7 +134,7 @@ jobs:
           done
 
       - name: Downgrade production Azure Container Registry to Basic
-        if: steps.rg.outputs.exists == 'true'
+        if: steps.subscription.outputs.enabled == 'true' && steps.rg.outputs.exists == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -131,7 +155,7 @@ jobs:
           done
 
       - name: Final cost-stop verification
-        if: steps.rg.outputs.exists == 'true'
+        if: steps.subscription.outputs.enabled == 'true' && steps.rg.outputs.exists == 'true'
         shell: bash
         run: |
           set -euo pipefail
