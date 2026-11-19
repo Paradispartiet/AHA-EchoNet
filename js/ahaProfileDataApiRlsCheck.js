@@ -59,6 +59,11 @@
           if (unowned.count !== 0) return { ok: false, status: "possible_exposure" };
         }
       }
+      // Never accept a successful count sweep for a different logged-in user.
+      const after = await client.auth.getUser();
+      if (after?.error || after?.data?.user?.id !== userId) {
+        return { ok: false, status: "session_changed" };
+      }
       // No proof of two-user isolation: this checks one real session only.
       return { ok: true, status: "no_foreign_rows", checked_tables: TABLES.length };
     } catch {
@@ -76,6 +81,8 @@
     profile_missing: "Innloggingen virker, men egen AHA-profilrad er ikke synlig. Kontrollen er ikke godkjent.",
     read_error: "Databasens lesekontroll feilet. Ikke aktiver synkronisering.",
     possible_exposure: "ADVARSEL: Kontroll fant rader utenfor denne profilen. Ikke aktiver synkronisering; undersøk RLS.",
+    needs_recheck: "Innloggingen er endret. Kontroller privat datatilgang på nytt.",
+    session_changed: "Innloggingen endret seg mens kontrollen kjørte. Resultatet er ikke gyldig. Kjør kontrollen på nytt.",
     no_foreign_rows: "Ingen fremmede rader synlige i 6 tabeller gjennom denne innloggingen. Dette er ikke en full tobrukertest eller backupkontroll."
   });
 
@@ -83,15 +90,30 @@
     const button = global.document?.getElementById("aha-check-data-api-rls");
     const output = global.document?.getElementById("aha-data-api-rls-result");
     if (!button || !output) return;
+    let authRevision = 0;
+    const auth = global.AHADb?.getClient?.()?.auth;
+    if (typeof auth?.onAuthStateChange === "function") {
+      // Supabase can change sessions without reloading the iPad page.
+      // Invalidate old results, but never store or display account identities.
+      auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+          authRevision++;
+          output.textContent = messages.needs_recheck;
+          output.dataset.status = "needs_recheck";
+        }
+      });
+    }
     button.addEventListener("click", async () => {
       if (button.disabled) return;
+      const startingRevision = authRevision;
       button.disabled = true;
       output.textContent = "Kontrollerer bare tilgangsregler (ingen innhold leses) …";
       output.dataset.status = "checking";
       try {
         const result = await check();
-        output.textContent = messages[result.status] || "Ukjent kontrollresultat. Ingen data er endret.";
-        output.dataset.status = result.status || "unknown";
+        const status = startingRevision !== authRevision ? "session_changed" : result.status;
+        output.textContent = messages[status] || "Ukjent kontrollresultat. Ingen data er endret.";
+        output.dataset.status = status || "unknown";
       } catch {
         output.textContent = messages.read_error;
         output.dataset.status = "read_error";

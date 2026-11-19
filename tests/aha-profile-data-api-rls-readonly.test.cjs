@@ -28,8 +28,13 @@ const tables = ["aha_profiles", "aha_source_events", "aha_imports",
 
 function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
   user = { id: "fake-profile-A" }, authError = null, ownCount = 1,
-  foreignTable = null, unownedTable = null, failingTable = null } = {}) {
+  foreignTable = null, unownedTable = null, failingTable = null,
+  nextAuthenticatedUser = null, eventDuringRead = null } = {}) {
   const calls = [];
+  let currentUser = user;
+  let authReads = 0;
+  let authListener = null;
+  let eventDispatched = false;
   const actions = {};
   const result = { textContent: "", dataset: {} };
   const button = { disabled: false, addEventListener(type, callback) { actions[type] = callback; } };
@@ -39,7 +44,18 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
     return null;
   }};
   const client = {
-    auth: { async getUser() { calls.push({ type: "getUser" }); return { data: {user}, error: authError }; } },
+    auth: {
+      async getUser() {
+        calls.push({ type: "getUser" });
+        authReads++;
+        const verifiedUser = authReads === 2 && nextAuthenticatedUser ? nextAuthenticatedUser : currentUser;
+        return { data: {user: verifiedUser}, error: authError };
+      },
+      onAuthStateChange(listener) {
+        authListener = listener;
+        return { data: {subscription: {unsubscribe() {}}} };
+      }
+    },
     from(table) {
       assert.ok(tables.includes(table));
       return {
@@ -56,6 +72,10 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
             },
             neq(field, value) {
               calls.push({ type: "read", table, mode: "other", field, value });
+              if (eventDuringRead && !eventDispatched) {
+                eventDispatched = true;
+                authListener?.(eventDuringRead, null);
+              }
               assert.equal(field, table === "aha_profiles" ? "id" : "profile_id");
               return Promise.resolve({ count: table === foreignTable ? 1 : 0, error: table === failingTable ? {code:"42501"} : null });
             },
@@ -78,7 +98,14 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
   };
   const window = { document: doc, AHADb: { getConfig: () => ({url}), getClient: () => client } };
   vm.runInNewContext(source, { window }, {filename:"ahaProfileDataApiRlsCheck.js"});
-  return { api: window.AHAProfileDataApiRlsCheck, calls, result, button, click: () => actions.click() };
+  return {
+    api: window.AHAProfileDataApiRlsCheck, calls, result, button,
+    click: () => actions.click(),
+    emitAuth(event, nextUser = currentUser) {
+      currentUser = nextUser;
+      authListener?.(event, nextUser ? { user: nextUser } : null);
+    }
+  };
 }
 
 (async () => {
@@ -90,6 +117,20 @@ function fakeCase({ url = "https://wshmybqyksrwkawqleiz.supabase.co",
     "one own positive, six foreign and five null-owner probes");
   assert.equal(good.button.disabled, false);
   assert.ok(!good.result.textContent.includes("fake-profile-A"), "Never display user IDs");
+
+  const stale = fakeCase();
+  await stale.click();
+  stale.emitAuth("SIGNED_OUT", null);
+  assert.equal(stale.result.dataset.status, "needs_recheck",
+    "Never show a previous account's result after logout");
+  const switched = fakeCase({nextAuthenticatedUser:{id:"fake-profile-B"}});
+  await switched.click();
+  assert.equal(switched.result.dataset.status, "session_changed",
+    "Reject a count sweep if getUser changes identities");
+  const inFlight = fakeCase({eventDuringRead:"SIGNED_OUT"});
+  await inFlight.click();
+  assert.equal(inFlight.result.dataset.status, "session_changed",
+    "Reject a previously passing result when the session changes during the request");
 
   const breach = fakeCase({foreignTable:"aha_source_events"});
   await breach.click();
