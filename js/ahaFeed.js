@@ -452,6 +452,16 @@
     const storedInCloud = scope.mode === "account" &&
       (post.meta?.private_cloud_synced === true ||
        (remoteOwnerId === scope.id && remotePosts.some((item) => item.id === id)));
+    if (storedInCloud && !isPrivateCloudWriteEnabled()) {
+      // Existing read-only mode must retain its old, *local-only* delete.
+      // A remote-only row cannot be deleted without cloud-write approval.
+      const localIndex = entries.findIndex((entry) => entry.id === id);
+      if (localIndex < 0) return null;
+      entries[localIndex] = tombstone;
+      if (!writeForScope(entries, scope)) return null;
+      render();
+      return entries[localIndex];
+    }
     if (storedInCloud) {
       // No DELETE grant is required: the approved design uses an owner-scoped
       // UPDATE of deleted_at. Never show success if that write is blocked.
