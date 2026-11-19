@@ -52,6 +52,7 @@
     { key: "aha_notes_v1", label: "AHA Notes", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_gallery_v1", label: "AHA Gallery", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_feed_posts_v1", label: "AHA Feed", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
+    { key: "aha_feed_accounts_v1", label: "AHA Feed kontoavgrensede lokale poster (alle kontoer på enheten)", kind: "object", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_insta_posts_v1", label: "AHA Insta", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_insta_stories_v1", label: "AHA Insta Stories", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
     { key: "aha_insta_import_sessions_v1", label: "AHA Insta importøkter", kind: "array", isAHA: true, isHistoryGo: false, canClear: true },
