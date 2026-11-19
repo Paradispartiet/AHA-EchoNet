@@ -74,3 +74,16 @@
 .kv2-project-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .kv2-project-actions button { flex: 1 0 auto; font-size: .84rem; }
 .kv2-project-actions button:last-child { color: #923c35; border-color: #bb9995; }
+
+/* Selection is only a visual overlay; it must never modify exported artwork. */
+.kv2-stage { position: relative; width: 100%; }
+.kv2-selection-overlay { position: absolute; box-sizing: border-box; z-index: 2;
+  border: 2px dashed #1d6bba; box-shadow: 0 0 0 1px #fff inset, 0 0 0 1px #fff;
+  background: #338fe91b; pointer-events: none; }
+.kv2-selection-overlay[hidden] { display: none; }
+.kv2-selection-tools, .kv2-transform-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 9px 0; }
+.kv2-transform-tools button { flex: 1 1 125px; }
+.kv2-selection-tools button { flex: 1 1 auto; }
+@media (max-width: 680px) {
+  .kv2-transform-tools button, .kv2-selection-tools button { flex: 1 1 45%; }
+}

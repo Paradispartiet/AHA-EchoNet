@@ -462,6 +462,165 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     }
   });
 
+  test("marquee keeps document clean, clips drawing and exports exact cropped PNG", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    await page.locator("#kv2-select").click();
+    await canvas.evaluate((node) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: 101,
+        button: 0, buttons, clientX: b.left + x * b.width,
+        clientY: b.top + y * b.height
+      }));
+      send("pointerdown", .4, .4, 1);
+      send("pointermove", .6, .6, 1);
+      send("pointerup", .6, .6, 0);
+    });
+    await expect(page.locator("#kv2-selection-overlay")).toBeVisible();
+    await expect(page.locator("#kv2-status")).toContainText("Område markert");
+    expect(await page.evaluate(() => document.querySelector("#kv2-title").value)).toBe("");
+    const dl = page.waitForEvent("download");
+    await page.locator("#kv2-export-selection").click();
+    const file = await dl;
+    const png = await fs.readFile(await file.path());
+    expect(png.toString("ascii", 1, 4)).toBe("PNG");
+    expect(png.readUInt32BE(16)).toBe(240);
+    expect(png.readUInt32BE(20)).toBe(160);
+
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#000000"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-size").evaluate((el) => {
+      el.value = "50"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await canvas.evaluate((node) => {
+      const b = node.getBoundingClientRect();
+      const clickAt = (x, y, id) => ["pointerdown", "pointerup"].forEach((type) => {
+        node.dispatchEvent(new PointerEvent(type, {
+          bubbles: true, cancelable: true, pointerType: "mouse", pointerId: id,
+          button: 0, buttons: type === "pointerup" ? 0 : 1,
+          clientX: b.left + x * b.width, clientY: b.top + y * b.height
+        }));
+      });
+      clickAt(.5, .5, 103);
+      clickAt(.75, .75, 104);
+    });
+    const colors = await canvas.evaluate((node) => {
+      const ctx = node.getContext("2d");
+      return {
+        inside: Array.from(ctx.getImageData(600, 400, 1, 1).data),
+        outside: Array.from(ctx.getImageData(900, 600, 1, 1).data)
+      };
+    });
+    expect(colors.inside[0]).toBeLessThan(100);
+    expect(colors.outside.slice(0, 3)).toEqual([255, 255, 255]);
+    await page.locator("#kv2-clear-selection").click();
+    await expect(page.locator("#kv2-selection-overlay")).toBeHidden();
+  });
+
+  test("crop only the selected layer, undo, duplicate and transform", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    await page.locator("#kv2-size").evaluate((el) => {
+      el.value = "60"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const dot = async (x, y, id) => canvas.evaluate((node, args) => {
+      const b = node.getBoundingClientRect();
+      for (const type of ["pointerdown", "pointerup"]) {
+        node.dispatchEvent(new PointerEvent(type, {
+          bubbles: true, cancelable: true, pointerType: "mouse", pointerId: args.id,
+          button: 0, buttons: type === "pointerup" ? 0 : 1,
+          clientX: b.left + args.x * b.width, clientY: b.top + args.y * b.height
+        }));
+      }
+    }, { x, y, id });
+    const readPixel = async (x, y) => canvas.evaluate((node, pos) =>
+      Array.from(node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data),
+    { x, y });
+
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#123abc"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await dot(.75, .75, 201); // blue underlying layer
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#df3125"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await dot(.75, .75, 202);
+    await dot(.5, .5, 203);
+    const before = await readPixel(900, 600);
+    expect(before[0]).toBeGreaterThan(before[2]);
+
+    await page.locator("#kv2-select").click();
+    await canvas.evaluate((node) => {
+      const b = node.getBoundingClientRect();
+      for (const [type, x, y, buttons] of [
+        ["pointerdown", .4, .4, 1], ["pointermove", .6, .6, 1], ["pointerup", .6, .6, 0]
+      ]) node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: 204, button: 0,
+        buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+    });
+    await page.locator("#kv2-crop-layer").click();
+    const cropped = await readPixel(900, 600);
+    expect(cropped[2]).toBeGreaterThan(cropped[0]); // blue layer remains
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await readPixel(900, 600))[0]).toBe(before[0]);
+
+    await page.locator("#kv2-duplicate-layer").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
+    await page.locator("#kv2-clear-selection").click();
+    for (const id of ["kv2-transform-flip", "kv2-transform-rotate",
+      "kv2-transform-smaller", "kv2-transform-larger"]) {
+      await page.locator("#" + id).click();
+      await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+    }
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
+  });
+
+  test("moved layer transforms around the document center and undo preserves its position", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    await page.locator("#kv2-size").evaluate((el) => {
+      el.value = "24";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const drag = async (x0, y0, x1, y1, id) => canvas.evaluate((node, args) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: args.id,
+        button: 0, buttons,
+        clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", args.x0, args.y0, 1);
+      send("pointermove", args.x1, args.y1, 1);
+      send("pointerup", args.x1, args.y1, 0);
+    }, { x0, y0, x1, y1, id });
+    const red = (x, y) => canvas.evaluate((node, pos) =>
+      node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data[0], { x, y });
+
+    // A centered dot moved 100 document pixels to the right.
+    await drag(.5, .5, .5, .5, 301);
+    await page.locator("#kv2-move").click();
+    await drag(.5, .5, .5 + 100 / 1200, .5, 302);
+    expect(await red(700, 400)).toBeLessThan(100);
+    expect(await red(500, 400)).toBe(255);
+
+    // Horizontal flip about document x=600 must move it to x=500.
+    await page.locator("#kv2-transform-flip").click();
+    expect(await red(500, 400)).toBeLessThan(100);
+    expect(await red(700, 400)).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => red(700, 400)).toBeLessThan(100);
+
+    // A 90-degree clockwise rotation maps (700,400) to (600,500).
+    await page.locator("#kv2-transform-rotate").click();
+    expect(await red(600, 500)).toBeLessThan(100);
+    expect(await red(700, 400)).toBe(255);
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
