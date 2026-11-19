@@ -1,0 +1,62 @@
+name: AHA DB-03 encrypted backup (manual, disabled by default)
+
+# No automatic export on push, pull request, or a schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_export:
+        description: I approve exporting an encrypted snapshot of AHA DB-03 to a GitHub Actions artifact
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aha-db03-manual-encrypted-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Encrypt database before artifact upload
+    # Nothing executes unless the owner has explicitly enabled and acknowledged it.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.confirm_export == true &&
+      vars.AHA_DB03_BACKUP_ENABLED == 'yes'
+    runs-on: ubuntu-24.04
+    environment: aha-db03-backup
+    timeout-minutes: 20
+    steps:
+      - name: Checkout locked main workflow
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install age encryption tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
+
+      - name: Encrypt AHA DB-03 using PostgreSQL 17
+        shell: bash
+        env:
+          AHA_DB03_DATABASE_URL: ${{ secrets.AHA_DB03_DATABASE_URL }}
+          AHA_DB03_AGE_RECIPIENT: ${{ vars.AHA_DB03_AGE_RECIPIENT }}
+          AHA_DB03_BACKUP_ENABLED: ${{ vars.AHA_DB03_BACKUP_ENABLED }}
+          AHA_DB03_MANUAL_EXPORT_ACK: 'yes'
+        run: bash scripts/aha-db03-backup-github.sh
+
+      - name: Upload ONLY ciphertext and nonprivate status
+        uses: actions/upload-artifact@v4
+        with:
+          name: aha-db03-encrypted-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/aha-db03-encrypted/*.dump.age
+            ${{ runner.temp }}/aha-db03-encrypted/*.manifest.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
