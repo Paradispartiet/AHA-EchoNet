@@ -112,5 +112,42 @@ async function changed(next,error=false){
  assert.equal(await Feed.addPost({text:"Must not overwrite damaged data"}),null);
  assert.equal(values.get(ARCHIVE),"{invalid local data");
  assert.equal(serverWrites,0,"No implicit Supabase calls, ever");
+
+ // A normal signed-out iPad / offline static browser must retain AHA's
+ // local guest composer without displaying any account-owned cache.
+ for (const kind of ["sdk_missing","session_missing"]) {
+   const guestData = new Map();
+   const guestStorage = {
+     getItem(k){return guestData.has(k)?guestData.get(k):null;},
+     setItem(k,v){guestData.set(k,String(v));},
+     removeItem(k){guestData.delete(k);}
+   };
+   let getUserCalls = 0;
+   const guest = {
+     console, Date, Math, JSON, String, Number, Array, Set,
+     localStorage: guestStorage,
+     document:{readyState:"loading",addEventListener(){},getElementById(){return null;}},
+     addEventListener(){},
+     AHADb:{
+       getConfig:()=>({url:"https://wshmybqyksrwkawqleiz.supabase.co"}),
+       getClient:()=>kind==="sdk_missing" ? null : {
+         auth:{
+           async getSession(){return {data:{session:null},error:null};},
+           async getUser(){getUserCalls++;throw Error("Must not call getUser without a session");}
+         }
+       }
+     }
+   };
+   guest.window=guest;
+   vm.createContext(guest);
+   vm.runInContext(fs.readFileSync("js/ahaFeed.js","utf8"),guest);
+   const saved=await guest.AHAFeed.addPost({id:"guest-post",text:"Offline anonymous"});
+   assert.ok(saved,"Offline / unsigned AHA must allow unassigned local posting");
+   assert.equal(saved.profile_id,undefined,"Never invent an account identity");
+   assert.equal(JSON.parse(guestData.get(LEGACY))[0].text,"Offline anonymous");
+   assert.equal(guestData.has(ARCHIVE),false,"Offline guest may not touch account cache");
+   assert.equal(getUserCalls,0,"Do not verify a nonexistent session with a network call");
+ }
+
  console.log("AHA Feed account partition and preservation tests: PASS");
 })().catch(error=>{console.error(error);process.exitCode=1});

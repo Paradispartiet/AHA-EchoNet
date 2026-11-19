@@ -156,8 +156,19 @@
     if (!bridge) return { mode: "guest", id: null }; // Legacy local-only mode.
     if (bridge.getConfig?.().url !== EXPECTED_URL) return { mode: "blocked", id: null };
     const client = bridge.getClient?.();
-    if (typeof client?.auth?.getUser !== "function") return { mode: "blocked", id: null };
+    // AHA is local-first: when the optional SDK is absent, only the unassigned
+    // guest archive is available. Account-owned rows remain invisible.
+    if (!client) return { mode: "guest", id: null };
+    if (typeof client.auth?.getUser !== "function") return { mode: "blocked", id: null };
     try {
+      // A missing local session is a normal, signed-out browser state. Only use
+      // getSession() to distinguish guest vs signed-in, never to authorize an
+      // account owner. Account identity always comes from server getUser().
+      if (typeof client.auth.getSession === "function") {
+        const session = await client.auth.getSession();
+        if (session?.error) return { mode: "blocked", id: null };
+        if (!session?.data?.session) return { mode: "guest", id: null };
+      }
       const response = await client.auth.getUser();
       if (response?.error) return { mode: "blocked", id: null };
       const id = response?.data?.user?.id;
