@@ -417,8 +417,9 @@
       const result = await window.AHARepository.saveFeedPost(privatePost);
       const confirmed = await verifyScope();
       if (!result?.ok || result.data?.profile_id !== scope.id ||
+          result.data?.id !== privatePost.id ||
           epoch !== scopeEpoch || confirmed.mode !== "account" || confirmed.id !== scope.id) {
-        return null; // No false success, and do not copy rows into a new account.
+        return null; // No false success for another post or account.
       }
       remoteOwnerId = scope.id;
       remotePosts = [privatePost, ...remotePosts.filter((item) => item.id !== privatePost.id)];
@@ -471,6 +472,7 @@
       const result = await window.AHARepository.saveFeedPost(tombstone);
       const confirmed = await verifyScope();
       if (!result?.ok || result.data?.profile_id !== scope.id ||
+          result.data?.id !== tombstone.id || !result.data?.deleted_at ||
           epoch !== scopeEpoch || confirmed.mode !== "account" || confirmed.id !== scope.id) return null;
       remoteOwnerId = scope.id;
       remotePosts = [tombstone, ...remotePosts.filter((item) => item.id !== id)];

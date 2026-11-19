@@ -20,7 +20,8 @@ function storage() {
 }
 const clone = x => JSON.parse(JSON.stringify(x));
 
-function device(userId, { cloudRead = true, cloudWrite = true, failWrite = false } = {}) {
+function device(userId, { cloudRead = true, cloudWrite = true, failWrite = false,
+  forgedAcknowledgement = false, missingTombstoneAcknowledgement = false } = {}) {
   const local = storage();
   const calls = [];
   const context = {
@@ -46,6 +47,11 @@ function device(userId, { cloudRead = true, cloudWrite = true, failWrite = false
         calls.push("save");
         if (!cloudWrite || failWrite) return { ok: false, error: { code: "AHA_PREVIEW_READ_ONLY" } };
         if (post.profile_id !== userId) return { ok: false, error: { code: "42501" } };
+        // Malformed server acknowledgements must never claim a local save.
+        if (forgedAcknowledgement) return { ok: true, data: { ...clone(post), id: "different-post-id" } };
+        if (missingTombstoneAcknowledgement && post.deleted_at) {
+          return { ok: true, data: { ...clone(post), deleted_at: null } };
+        }
         const previous = sharedRows.get(post.id);
         if (previous && previous.profile_id !== userId) return { ok: false, error: { code: "42501" } };
         sharedRows.set(post.id, clone(post));
@@ -93,6 +99,24 @@ function device(userId, { cloudRead = true, cloudWrite = true, failWrite = false
   assert.equal(other.feed.load().length, 0);
   assert.equal(await other.feed.deletePost(p.id), null);
   assert.equal(writes.length, 1);
+
+  const forgedCreate = device(A, { forgedAcknowledgement: true });
+  assert.equal(await forgedCreate.feed.addPost({ id: "forged-new", text: "Rejected acknowledgement" }), null);
+  assert.equal(forgedCreate.feed.load().length, 0, "Wrong returned post ID cannot count as saved");
+  assert.equal(forgedCreate.local.raw.has("aha_feed_accounts_v1"), false);
+  assert.equal(sharedRows.has("forged-new"), false);
+
+  const forgedDelete = device(A, { forgedAcknowledgement: true });
+  await forgedDelete.feed.syncFromDatabase();
+  assert.equal(await forgedDelete.feed.deletePost(p.id), null,
+    "Wrong returned post ID cannot count as deleted");
+  assert.equal(sharedRows.get(p.id).deleted_at, undefined);
+
+  const absentTombstone = device(A, { missingTombstoneAcknowledgement: true });
+  await absentTombstone.feed.syncFromDatabase();
+  assert.equal(await absentTombstone.feed.deletePost(p.id), null,
+    "Missing server deletion marker cannot count as deleted");
+  assert.equal(writes.length, 1, "No synthetic server mutations on rejected acknowledgements");
 
   const deletion = await mobile.feed.deletePost(p.id);
   assert.ok(deletion.deleted_at, "Owner may soft-delete a remotely loaded post");
