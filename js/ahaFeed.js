@@ -9,6 +9,11 @@
   const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let activeScope = window.AHADb ? { mode: "pending", id: null } : { mode: "guest", id: null };
   let scopeEpoch = 0;
+  // Cloud rows live only in memory. Never write downloaded private rows into a
+  // shared legacy browser archive or reuse them after an Auth account switch.
+  let remoteOwnerId = null;
+  let remotePosts = [];
+  let remoteLoaded = false;
 
   const FEED_SOURCE_METADATA = Object.freeze({
     source_app: "aha",
@@ -122,7 +127,13 @@
     return [];
   }
 
-  function load() { return loadForScope(activeScope); }
+  function visibleForScope(scope) {
+    const localPosts = loadForScope(scope);
+    return scope.mode === "account" && remoteOwnerId === scope.id
+      ? mergePosts(localPosts, remotePosts) : localPosts;
+  }
+
+  function load() { return visibleForScope(activeScope); }
 
   function writeForScope(items, scope) {
     if (!Array.isArray(items)) return false;
@@ -192,15 +203,22 @@
   async function refreshScope() {
     const epoch = ++scopeEpoch;
     activeScope = { mode: "pending", id: null };
+    remoteOwnerId = null;
+    remotePosts = [];
+    remoteLoaded = false;
     render(); // Hide old account's rows immediately during login transition.
     const verified = await verifyScope();
     if (epoch !== scopeEpoch) return;
     activeScope = verified;
     render();
+    // Explicitly enabled, owner-scoped READ only; no upload of old local posts.
+    if (verified.mode === "account" && isDatabaseSyncEnabled()) {
+      await syncFromDatabase();
+    }
   }
 
   function postActionTime(post) {
-    const times = [post?.deleted_at, post?.updated_at, post?.created_at]
+    const times = [post?.deleted_at, post?.updated_at, post?.meta?.updated_at, post?.created_at]
       .map((value) => Date.parse(value || ""))
       .filter((value) => Number.isFinite(value));
     return times.length ? Math.max(...times) : 0;
@@ -225,6 +243,13 @@
     // Local posts must never be sent to Supabase just because Auth is active.
     // Enable only after AHA's hosted RLS/grants and recovery are approved.
     return window.AHA_CONFIG?.feed?.enableDatabaseSync === true;
+  }
+
+  function isPrivateCloudWriteEnabled() {
+    // Separate approval from the read flag. Both default to false. RLS is the
+    // real security boundary; the Cloudflare preview write blockade also stays.
+    return isDatabaseSyncEnabled() &&
+      window.AHA_CONFIG?.feed?.enablePrivateCloudWrite === true;
   }
 
   async function syncFromDatabase() {
@@ -256,10 +281,13 @@
     if (epoch !== scopeEpoch || confirmed.mode !== "account" || confirmed.id !== profileId) {
       return { ok: false, reason: "auth_changed" };
     }
-    const merged = mergePosts(loadForScope(scope), result.data);
-    // Remote rows are ephemeral and never cached in localStorage.
+    // Only transient memory receives remote rows, never legacy localStorage.
+    remoteOwnerId = profileId;
+    remotePosts = result.data;
+    remoteLoaded = true;
+    const merged = visibleForScope(scope);
     render(merged);
-    return { ...result, data: merged, merged: true, read_only: true, local_posts_preserved: true };
+    return { ...result, data: merged, merged: true, read_only: !isPrivateCloudWriteEnabled(), local_posts_preserved: true };
   }
 
   function escapeHtml(value) {
@@ -280,7 +308,13 @@
       const old = readLegacy();
       const legacyCount = old.ok ? old.data.filter((post) => post && !post.profile_id).length : 0;
       status.textContent = activeScope.mode === "account"
-        ? "Kontoens innlegg på denne enheten · Ikke synkronisert." +
+        ? (isPrivateCloudWriteEnabled()
+            ? (remoteLoaded && remoteOwnerId === activeScope.id
+                ? "Private AHA-innlegg tilgjengelige på denne kontoen."
+                : "Kontrollerer privat AHA-lagring …")
+            : isDatabaseSyncEnabled()
+              ? "Skylesing aktivert · Nye innlegg lagres fremdeles lokalt."
+              : "Kontoens innlegg på denne enheten · Ikke synkronisert.") +
           (legacyCount ? " " + legacyCount + " eldre lokale innlegg er bevart separat i AHA-eksporten." : "")
         : activeScope.mode === "guest"
           ? "Ufordelte lokale innlegg på denne enheten · Ikke knyttet til en Supabase-konto."
@@ -371,11 +405,36 @@
     if (baseContract) post.base = baseContract;
 
     const posts = loadForScope(scope);
+    if (isPrivateCloudWriteEnabled() && scope.mode === "account") {
+      // One *new*, authenticated post only. Never bulk-import old local archives.
+      const epoch = scopeEpoch;
+      if (typeof window.AHARepository?.saveFeedPost !== "function") return null;
+      const privatePost = {
+        ...post,
+        local_only: false,
+        meta: { ...post.meta, local_only: false, private_cloud_synced: true }
+      };
+      const result = await window.AHARepository.saveFeedPost(privatePost);
+      const confirmed = await verifyScope();
+      if (!result?.ok || result.data?.profile_id !== scope.id ||
+          epoch !== scopeEpoch || confirmed.mode !== "account" || confirmed.id !== scope.id) {
+        return null; // No false success, and do not copy rows into a new account.
+      }
+      remoteOwnerId = scope.id;
+      remotePosts = [privatePost, ...remotePosts.filter((item) => item.id !== privatePost.id)];
+      posts.unshift(privatePost);
+      // The server succeeded; a local cache failure must never imply a failed
+      // server save or prompt a duplicate post to be created.
+      writeForScope(posts, scope);
+      render();
+      return privatePost;
+    }
+
     posts.unshift(post);
     if (!writeForScope(posts, scope)) return null; // No false save success on corruption/quota error.
     render(posts);
 
-    // Creating a Feed post is local-only. No automatic ingest or cloud write.
+    // Default remains local-only: no automatic ingest or cloud write.
     return post;
   }
 
@@ -383,10 +442,39 @@
     const scope = await resolveActionScope();
     if (!scope) return null;
     const entries = loadForScope(scope);
+    const post = visibleForScope(scope).find((entry) => entry.id === id);
+    if (!post || post.deleted_at) return null;
+    const deletedAt = new Date().toISOString();
+    const tombstone = {
+      ...post, deleted_at: deletedAt, updated_at: deletedAt,
+      meta: { ...(post.meta || {}), updated_at: deletedAt }
+    };
+    const storedInCloud = scope.mode === "account" &&
+      (post.meta?.private_cloud_synced === true ||
+       (remoteOwnerId === scope.id && remotePosts.some((item) => item.id === id)));
+    if (storedInCloud) {
+      // No DELETE grant is required: the approved design uses an owner-scoped
+      // UPDATE of deleted_at. Never show success if that write is blocked.
+      if (!isPrivateCloudWriteEnabled() ||
+          typeof window.AHARepository?.saveFeedPost !== "function") return null;
+      const epoch = scopeEpoch;
+      const result = await window.AHARepository.saveFeedPost(tombstone);
+      const confirmed = await verifyScope();
+      if (!result?.ok || result.data?.profile_id !== scope.id ||
+          epoch !== scopeEpoch || confirmed.mode !== "account" || confirmed.id !== scope.id) return null;
+      remoteOwnerId = scope.id;
+      remotePosts = [tombstone, ...remotePosts.filter((item) => item.id !== id)];
+      const localIndex = entries.findIndex((entry) => entry.id === id);
+      if (localIndex >= 0) {
+        entries[localIndex] = tombstone;
+        writeForScope(entries, scope);
+      }
+      render();
+      return tombstone;
+    }
     const index = entries.findIndex((entry) => entry.id === id);
     if (index < 0) return null;
-    const deletedAt = new Date().toISOString();
-    entries[index] = { ...entries[index], deleted_at: deletedAt, updated_at: deletedAt };
+    entries[index] = tombstone;
     if (!writeForScope(entries, scope)) return null;
     render(entries);
     return entries[index];
@@ -395,6 +483,10 @@
   function bind() {
     const form = document.getElementById("feed-form");
     if (!form) return;
+    if (isPrivateCloudWriteEnabled()) {
+      const submitButton = form.querySelector?.('button[type="submit"]');
+      if (submitButton) submitButton.textContent = "Lagre privat i AHA";
+    }
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const text = document.getElementById("feed-text");
