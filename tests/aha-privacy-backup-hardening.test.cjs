@@ -116,6 +116,42 @@ const sources = ["js/ahaPrivacy.js", "js/ahaPrivacyRestore.js", "js/ahaPrivacyPe
   assert.equal(localStorage.getItem("aha_personal_retrieval_index_v1"), null);
 }
 
+{
+  // Account-local Feed partitions are explicitly included in the MEDIA backup
+  // and restored additively without overwriting existing posts from either user.
+  const idA = "11111111-1111-4111-8111-111111111111";
+  const idB = "22222222-2222-4222-8222-222222222222";
+  const accountKey = "aha_feed_accounts_v1";
+  const {window,localStorage} = load(sources,{
+    aha_feed_posts_v1: JSON.stringify([{id:"legacy",text:"Keep unassigned history"}]),
+    [accountKey]: JSON.stringify({version:1,accounts:{
+      [idA]:[{id:"a1",profile_id:idA,text:"Keep local A"}],
+      [idB]:[{id:"b1",profile_id:idB,text:"Keep local B"}]
+    }})
+  });
+  const media = window.AHAPrivacyPersonalAiMemory.buildExportPayload({categories:["media"]});
+  assert.ok(Object.hasOwn(media.data,accountKey),"Account cache must be part of media backup");
+  assert.equal(media.data[accountKey].accounts[idA][0].text,"Keep local A");
+  assert.ok(Object.hasOwn(media.data,"aha_feed_posts_v1"),"Legacy archive must remain exportable");
+  const chatOnly = window.AHAPrivacyPersonalAiMemory.buildExportPayload({categories:["chat"]});
+  assert.equal(Object.hasOwn(chatOnly.data,accountKey),false,"Scoped Feed belongs only to media category");
+  const backup = JSON.stringify({data:{[accountKey]:{
+    version:1,accounts:{
+      [idA]:[{id:"a1",profile_id:idA,text:"Do not overwrite A"},
+             {id:"a2",profile_id:idA,text:"Restore missing A"}],
+      [idB]:[{id:"b2",profile_id:idB,text:"Restore missing B"}]
+    }
+  }}});
+  window.AHAPrivacyPersonalAiMemory.previewRestore(backup);
+  window.AHAPrivacyPersonalAiMemory.applyRestore(backup);
+  const restored=JSON.parse(localStorage.getItem(accountKey));
+  assert.equal(restored.accounts[idA].find(p=>p.id==="a1").text,"Keep local A");
+  assert.equal(restored.accounts[idA].find(p=>p.id==="a2").text,"Restore missing A");
+  assert.equal(restored.accounts[idB].find(p=>p.id==="b1").text,"Keep local B");
+  assert.equal(restored.accounts[idB].find(p=>p.id==="b2").text,"Restore missing B");
+  assert.equal(JSON.parse(localStorage.getItem("aha_feed_posts_v1"))[0].id,"legacy");
+}
+
 function makeElement() {
   const handlers = {};
   return {
