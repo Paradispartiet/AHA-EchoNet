@@ -42,6 +42,7 @@
           <button id="kv2-move" type="button" aria-pressed="false">Flytt lag</button>
           <button id="kv2-hand" type="button" aria-pressed="false">Hånd</button>
           <button id="kv2-select" type="button" aria-pressed="false">Marker område</button>
+          <button id="kv2-eyedropper" type="button" aria-pressed="false">Fargepipette</button>
           <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
           <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
             <output id="kv2-size-value">6</output></label>
@@ -62,7 +63,7 @@
             <div id="kv2-selection-overlay" class="kv2-selection-overlay" aria-hidden="true" hidden></div>
           </div>
         </div>
-        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Viskelæret påvirker bare aktivt lag. «Marker område» lar deg tegne et rektangel som begrenser pensel og viskelær; markeringen endrer ikke selve bildet. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Viskelæret påvirker bare aktivt lag. «Marker område» lar deg tegne et rektangel som begrenser pensel og viskelær; markeringen endrer ikke selve bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
         <div class="kv2-selection-tools" role="group" aria-label="Markering og beskjæring">
           <button id="kv2-clear-selection" type="button" disabled>Fjern markering</button>
           <button id="kv2-crop-layer" type="button" disabled>Beskjær valgt lag til markering</button>

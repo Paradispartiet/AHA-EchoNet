@@ -621,6 +621,52 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(await red(700, 400)).toBe(255);
   });
 
+  test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((node) => {
+      node.value = "#e7493b";
+      node.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    const artworkBefore = await pixel(page);
+    expect(artworkBefore).toEqual([231, 73, 59, 255]);
+    await page.locator("#kv2-color").evaluate((node) => {
+      node.value = "#123456";
+      node.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-eyedropper").click();
+    await expect(page.locator("#kv2-eyedropper")).toHaveAttribute("aria-pressed", "true");
+    await page.locator("#kv2-canvas").evaluate((node) => {
+      const bounds = node.getBoundingClientRect();
+      node.dispatchEvent(new PointerEvent("pointerdown", {
+        bubbles: true, cancelable: true, pointerId: 405, pointerType: "pen",
+        button: 0, buttons: 1,
+        clientX: bounds.left + bounds.width / 2,
+        clientY: bounds.top + bounds.height / 2
+      }));
+    });
+    await expect(page.locator("#kv2-color")).toHaveValue("#e7493b");
+    await expect(page.locator("#kv2-brush")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-status")).toHaveText("Farge hentet fra lerretet");
+    expect(await pixel(page)).toEqual(artworkBefore);
+
+    // One undo must remove the painted dot. The pipette adds no history entry.
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-eyedropper").click();
+    await page.locator("#kv2-canvas").evaluate((node) => {
+      const bounds = node.getBoundingClientRect();
+      node.dispatchEvent(new PointerEvent("pointerdown", {
+        bubbles: true, cancelable: true, pointerId: 406, pointerType: "touch",
+        button: 0, buttons: 1,
+        clientX: bounds.left + bounds.width / 2,
+        clientY: bounds.top + bounds.height / 2
+      }));
+    });
+    await expect(page.locator("#kv2-color")).toHaveValue("#ffffff");
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
