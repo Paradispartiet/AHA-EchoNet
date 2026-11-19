@@ -111,3 +111,25 @@ test("public provider fetch stays GET-only and uses no browser credentials", () 
   assert.match(source, /credentials: "omit"/);
   assert.doesNotMatch(source, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
 });
+
+
+test("database section appears before the long project list", () => {
+  const databases = page.indexOf('aria-labelledby="aha-paradisdb-databases-title"');
+  const projects = page.indexOf('aria-labelledby="aha-paradisdb-projects-title"');
+  assert.ok(databases > 0 && projects > databases);
+  assert.doesNotMatch(page, /automatisk kontroll av Supabase, Cloudflare og Azure er ikke satt i drift/);
+  assert.match(page, /Automatisk leverandørstatus vises per database/);
+});
+test("compact provider indicator is truthful for verified, inactive, stale and absent checks", () => {
+  const now = Date.parse("2026-11-19T08:20:00Z");
+  const snapshot = { provider_checks: {
+    "DB-03": { provider: "supabase", result: "verified", checked_at: "2026-11-19T06:54:34.985Z", observed_status: "ACTIVE_HEALTHY" },
+    "DB-04": { provider: "supabase", result: "verified", checked_at: "2026-11-19T06:54:34.985Z", observed_status: "INACTIVE" }
+  } };
+  assert.equal(api.providerSummaryStatus("DB-03", snapshot, now).label, "Aktiv");
+  assert.equal(api.providerSummaryStatus("DB-04", snapshot, now).label, "Inaktiv");
+  assert.equal(api.providerSummaryStatus("DB-01", snapshot, now).label, "Ikke kontrollert");
+  assert.equal(api.providerSummaryStatus("DB-03", snapshot, now + 72 * 60 * 60 * 1000).label, "Foreldet");
+  snapshot.provider_checks["DB-03"].result = "lookup_failed";
+  assert.equal(api.providerSummaryStatus("DB-03", snapshot, now).label, "Kontroll mangler");
+});
