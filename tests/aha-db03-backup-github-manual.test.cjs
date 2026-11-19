@@ -86,6 +86,10 @@ try{
     {GITHUB_REF:"refs/heads/fake-branch"},
     {AHA_DB03_DATABASE_URL:"postgresql://postgres:fake@db.other.supabase.co:5432/postgres"},
     {AHA_DB03_DATABASE_URL:validUrl.replace(":5432/",":6543/")},
+    {AHA_DB03_DATABASE_URL:validUrl + "?host=db.other.supabase.co"},
+    {AHA_DB03_DATABASE_URL:validUrl + "?sslmode=prefer"},
+    {AHA_DB03_DATABASE_URL:validUrl + "?sslmode=require&sslmode=disable"},
+    {AHA_DB03_DATABASE_URL:validUrl.replace("eu-west-1", "eu-west-2")},
     {AHA_DB03_AGE_RECIPIENT:"not-an-age-recipient"},
     {MOCK_DUMP_FAIL:"yes"}
   ]){

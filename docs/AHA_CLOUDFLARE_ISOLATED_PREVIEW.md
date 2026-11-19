@@ -112,6 +112,8 @@ Brukeren har **bare iPad**, ikke PC/Mac. Vi skal derfor ikke gjøre en lokal PC 
 
 Syntetisk test `tests/aha-db03-backup-github-manual.test.cjs` bruker falsk database og falsk krypterer og kontrollerer at jobben er manuelt sperret, at feil prosjekt og manglende bekreftelse avvises, og at bare krypterte filnavn inkluderes i backup-artefakten. **Den tester ikke den faktiske `age`-krypteringen eller ekte Supabase-datakopi.**
 
+Fra Safari på iPad kan du kjøre [AHA DB-03 backup smoke test](https://github.com/Paradispartiet/AHA-EchoNet/actions/workflows/aha-db03-backup-smoke.yml) med **Run workflow**. Den bruker ekte `age`, en engangsnøkkel for testen og en PostgreSQL 17-container uten nettverk. Den sjekker at en syntetisk rad kan krypteres, leses gjennom iPad-skriptet og gjenopprettes. Testen bruker ingen GitHub-hemmeligheter, kontakter ingen Supabase-database og laster ikke opp en artefakt.
+
 ### iPad-gjenopprettingsløype for DB-03 (19.11.2026; ikke aktivert)
 
 **Klar kode, ikke kjørt med reelle data.** Dette er den videreførte iPad-prosedyren for den eksisterende GitHub Actions-workflowen over. Den oppretter **ikke** nøkler i GitHub eller i ChatGPT, kjører ikke eksport og opphever ingen sperrer. En kontroll av filformat er heller ikke det samme som vellykket database-restore.
@@ -137,7 +139,7 @@ age -p -o "$HOME/aha-db03-recovery-key.age" "$HOME/.config/age/aha-db03-identity
 
 Kontroller at den krypterte nøkkelkopien **faktisk er lagret utenfor iSH** før noe reelt eksporteres. Originalidentiteten forblir kun på iPad i det private iSH-filområdet.
 
-**3. Klargjør, men ikke aktiver produksjonseksport ennå.** I AHA GitHub `Settings → Environments`: opprett `aha-db03-backup` og legg `AHA_DB03_DATABASE_URL` som *environment secret* fra riktig Supabase DB-03 Connect (TLS, session pooler 5432). Aldri send tilkoblingsstrengen i chat eller PR. På `Settings → Secrets and variables → Actions → Variables`: legg inn `AHA_DB03_AGE_RECIPIENT` (offentlig) og la `AHA_DB03_BACKUP_ENABLED` være **fraværende/ikke `yes`**. Først ved en senere uttrykkelig godkjenning kan eieren sette den til `yes` og starte manuell `workflow_dispatch` fra `main` med `confirm_export=true`.
+**3. Klargjør, men ikke aktiver produksjonseksport ennå.** I AHA GitHub `Settings → Environments`: bruk `aha-db03-backup`, begrens miljøet til `main` og legg `AHA_DB03_DATABASE_URL` kun som *environment secret* fra Supabase AHA → **Connect** → **Session pooler** (port 5432). Bruk en tilkoblingsstreng uten query-parametere, eventuelt med bare `?sslmode=require`. Aldri send tilkoblingsstrengen i chat eller PR. På `Settings → Secrets and variables → Actions → Variables`: legg inn `AHA_DB03_AGE_RECIPIENT` (offentlig) og la `AHA_DB03_BACKUP_ENABLED` være **fraværende/ikke `yes`**. Først ved en senere uttrykkelig godkjenning kan eieren sette den til `yes` og starte manuell `workflow_dispatch` fra `main` med `confirm_export=true`.
 
 **4. Når en godkjent kryptert eksport senere finnes:** Fra Safari på iPad, åpne `Actions → AHA DB-03 encrypted backup → den vellykkede kjøringen → Artifacts`. Last ned zip-filen og pakk den ut i **Filer**. Kopier både `AHA-DB03-*.dump.age` og `AHA-DB03.manifest.json` til en privat, brukeradministrert mappe (f.eks. iCloud Drive, med god Apple-kontosikkerhet); GitHub beholder bare Actions-artifakten i 7 dager. **Bekreft nedlasting og privat kopi før de 7 dagene er gått.** En kryptert dump er fortsatt sensitiv, og GitHub-artifakten i et offentlig repo kan være tilgjengelig for andre.
 

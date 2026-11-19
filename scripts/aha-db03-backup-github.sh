@@ -29,12 +29,14 @@ const ref = 'wshmybqyksrwkawqleiz';
 try {
   const uri = new URL(raw);
   const direct = uri.hostname === 'db.' + ref + '.supabase.co' && uri.username === 'postgres';
-  const pooler = uri.hostname.endsWith('.pooler.supabase.com') && uri.username === 'postgres.' + ref;
+  const pooler = /^aws-[0-9]+-eu-west-1\.pooler\.supabase\.com$/.test(uri.hostname) &&
+    uri.username === 'postgres.' + ref;
   const port = uri.port || '5432';
   const valid = ['postgres:', 'postgresql:'].includes(uri.protocol) &&
     (direct || pooler) && port === '5432' && uri.password &&
-    (uri.pathname === '/postgres' || uri.pathname === '/postgres/') &&
-    uri.searchParams.get('sslmode') !== 'disable' &&
+    uri.pathname === '/postgres' && !/[\s#]/.test(raw) && raw.split('@').length === 2 &&
+    // libpq permits URI query options to override the authority and TLS settings.
+    (uri.search === '' || uri.search === '?sslmode=require') &&
     /^age1[ac-hj-np-z02-9]{50,75}$/.test(recipient);
   if (!valid) process.exit(1);
 } catch { process.exit(1); }
