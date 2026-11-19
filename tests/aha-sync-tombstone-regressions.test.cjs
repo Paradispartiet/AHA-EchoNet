@@ -167,16 +167,16 @@ async function testNotesSyncRegressions() {
 }
 
 async function testFeedSyncRegressions() {
-  // Feed no longer uploads old local posts or copies remote rows to the
-  // shared browser key. Tombstone precedence still matters within a single
-  // authenticated profile's explicitly requested, in-memory cloud view.
+  // Feed tombstones compete only within a verified account partition, while
+  // legacy unassigned records stay untouched and remote reads are ephemeral.
+  const owner = '11111111-1111-4111-8111-111111111111';
   const saveCalls = [];
   const sandbox = loadModule('js/ahaFeed.js', {
     config: { feed: { enableDatabaseSync: true } },
     repository: {
       saveFeedPost: async (post) => { saveCalls.push(post); return { ok: true, data: post }; },
       loadFeedPosts: async ({ profile_id }) => {
-        assert.equal(profile_id, 'test-profile-A');
+        assert.equal(profile_id, owner);
         return {
           ok: true,
           data: [
@@ -189,57 +189,74 @@ async function testFeedSyncRegressions() {
       }
     }
   });
-  sandbox.AHAAuth = { getProfileId: async () => 'test-profile-A' };
+  const fakeClient = { auth: { getUser: async () => ({ data: {user:{ id: owner }}, error: null }) } };
+  sandbox.AHADb = {
+    getConfig: () => ({url:'https://wshmybqyksrwkawqleiz.supabase.co'}),
+    getClient: () => fakeClient
+  };
+  sandbox.AHAAuth = { getProfileId: async () => owner };
 
   const Feed = sandbox.AHAFeed;
   assert.ok(Feed, 'AHAFeed should be exported');
-  Feed.save([
-    { id: 'feed_deleted_local', profile_id: 'test-profile-A', text: 'Local deleted feed',
+  await Feed.addPost({ id:'scope_seed', text:'Local scope seed' });
+  assert.equal(Feed.save([
+    { id: 'feed_deleted_local', profile_id: owner, text: 'Local deleted feed',
       created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-10T00:00:00.000Z',
       deleted_at: '2026-01-10T00:00:00.000Z' },
-    { id: 'feed_remote_newer', profile_id: 'test-profile-A', text: 'Local stale feed',
-      created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-03T00:00:00.000Z' },
+    { id: 'feed_remote_newer', profile_id: owner, text: 'Local stale feed',
+      created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-03T00:00:00.000Z' }
+  ]),true,'Owner-scoped local data should save');
+  sandbox.localStorage.setItem('aha_feed_posts_v1',JSON.stringify([
     { id: 'feed_unscoped_legacy', text: 'Never assign to cloud account',
-      created_at: '2026-01-01T00:00:00.000Z' }
-  ]);
-  const beforeCloudRead = sandbox.localStorage.raw('aha_feed_posts_v1');
+      created_at:'2026-01-01T00:00:00.000Z' }
+  ]));
+  const beforeCloudRead = sandbox.localStorage.raw('aha_feed_accounts_v1');
+  const beforeLegacy = sandbox.localStorage.raw('aha_feed_posts_v1');
   const result = await Feed.syncFromDatabase();
   assert.equal(result.ok, true);
-  assert.equal(result.read_only, true, 'cloud view must be read-only until separately approved');
+  assert.equal(result.read_only, true, 'cloud view must remain read-only');
   assert.equal(result.merged, true);
   assert.ok(byId(result.data, 'feed_deleted_local').deleted_at,
-    'newer owner-scoped local feed tombstone beats stale remote active post');
+    'newer owner-scoped local tombstone beats stale remote active post');
   assert.equal(byId(result.data, 'feed_remote_newer').text, 'Remote newer feed',
-    'newer owner-scoped remote post must beat stale local record in the cloud view');
+    'newer owner-scoped remote post beats stale local record');
   assert.equal(byId(result.data, 'feed_unscoped_legacy'), undefined,
-    'unscoped local records must not join a cloud identity');
-  assert.equal(sandbox.localStorage.raw('aha_feed_posts_v1'), beforeCloudRead,
-    'explicit cloud read must not overwrite the shared legacy browser cache');
-  assert.equal(saveCalls.length, 0, 'feed cloud read must never auto-push local posts or tombstones');
+    'unscoped legacy records must not join an account cloud view');
+  assert.equal(sandbox.localStorage.raw('aha_feed_accounts_v1'), beforeCloudRead,
+    'remote reads must not rewrite account-local cache');
+  assert.equal(sandbox.localStorage.raw('aha_feed_posts_v1'), beforeLegacy,
+    'remote reads must never rewrite legacy archive');
+  assert.equal(saveCalls.length, 0, 'Feed cloud read must never auto-upload');
 
-  const deleted = Feed.deletePost('feed_remote_newer');
-  assert.ok(deleted.deleted_at, 'local Feed deletion still sets a tombstone');
+  const deleted = await Feed.deletePost('feed_remote_newer');
+  assert.ok(deleted.deleted_at, 'local Feed deletion retains a tombstone');
   assert.equal(deleted.updated_at, deleted.deleted_at);
-  assert.equal(saveCalls.length, 0, 'local deletion never triggers cloud write');
+  assert.equal(saveCalls.length, 0, 'local deletion never sends a database write');
 
   const invalidSandbox = loadModule('js/ahaFeed.js', {
     config: { feed: { enableDatabaseSync: true } },
     repository: {
-      saveFeedPost: async (post) => { throw Error('no writes allowed in this test'); },
+      saveFeedPost: async () => { throw Error('no writes allowed in this test'); },
       loadFeedPosts: async () => ({ ok: true, data: { invalid: true } })
     }
   });
-  invalidSandbox.AHAAuth = { getProfileId: async () => 'test-profile-A' };
+  invalidSandbox.AHADb = {
+    getConfig: () => ({url:'https://wshmybqyksrwkawqleiz.supabase.co'}),
+    getClient: () => fakeClient
+  };
+  invalidSandbox.AHAAuth = {getProfileId:async()=>owner};
   const invalidFeed = invalidSandbox.AHAFeed;
-  const local = [{ id: 'feed_local_fallback', text: 'Keep me', created_at: '2026-01-01T00:00:00.000Z' }];
-  invalidFeed.save(local);
-  const before = invalidSandbox.localStorage.raw('aha_feed_posts_v1');
+  const local = [{ id: 'feed_local_fallback', profile_id:owner, text: 'Keep me',
+    created_at: '2026-01-01T00:00:00.000Z' }];
+  await invalidFeed.addPost({id:'scope_seed',text:'Local scope seed'});
+  assert.equal(invalidFeed.save(local),true);
+  const before = invalidSandbox.localStorage.raw('aha_feed_accounts_v1');
   const invalid = await invalidFeed.syncFromDatabase();
-  assert.equal(invalid.ok, false, 'invalid feed remote payload must fail safely');
-  assert.equal(invalid.reason, 'invalid_remote_data', 'malformed remote data must fail closed');
-  assert.equal(invalidSandbox.localStorage.raw('aha_feed_posts_v1'), before,
-    'malformed remote results must not rewrite localStorage');
-  assert.deepEqual(invalidFeed.load(), local, 'local feed posts must remain untouched after invalid remote data');
+  assert.equal(invalid.ok, false, 'invalid remote payload must fail safely');
+  assert.equal(invalid.reason, 'invalid_remote_data', 'malformed remote data fails closed');
+  assert.equal(invalidSandbox.localStorage.raw('aha_feed_accounts_v1'), before,
+    'malformed remote results must not rewrite local account archive');
+  assert.deepEqual(invalidFeed.load(), local, 'account-local posts preserved after invalid remote');
 }
 
 async function testGallerySyncRegressions() {

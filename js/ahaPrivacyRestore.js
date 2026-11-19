@@ -15,6 +15,7 @@
     "aha_notes_v1": "array",
     "aha_gallery_v1": "array",
     "aha_feed_posts_v1": "array",
+    "aha_feed_accounts_v1": "object",
     "aha_insta_posts_v1": "array",
     "aha_insta_stories_v1": "array",
     "aha_insta_import_sessions_v1": "array",
