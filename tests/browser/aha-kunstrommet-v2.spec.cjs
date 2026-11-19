@@ -580,6 +580,47 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
   });
 
+  test("moved layer transforms around the document center and undo preserves its position", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    await page.locator("#kv2-size").evaluate((el) => {
+      el.value = "24";
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const drag = async (x0, y0, x1, y1, id) => canvas.evaluate((node, args) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: args.id,
+        button: 0, buttons,
+        clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", args.x0, args.y0, 1);
+      send("pointermove", args.x1, args.y1, 1);
+      send("pointerup", args.x1, args.y1, 0);
+    }, { x0, y0, x1, y1, id });
+    const red = (x, y) => canvas.evaluate((node, pos) =>
+      node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data[0], { x, y });
+
+    // A centered dot moved 100 document pixels to the right.
+    await drag(.5, .5, .5, .5, 301);
+    await page.locator("#kv2-move").click();
+    await drag(.5, .5, .5 + 100 / 1200, .5, 302);
+    expect(await red(700, 400)).toBeLessThan(100);
+    expect(await red(500, 400)).toBe(255);
+
+    // Horizontal flip about document x=600 must move it to x=500.
+    await page.locator("#kv2-transform-flip").click();
+    expect(await red(500, 400)).toBeLessThan(100);
+    expect(await red(700, 400)).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => red(700, 400)).toBeLessThan(100);
+
+    // A 90-degree clockwise rotation maps (700,400) to (600,500).
+    await page.locator("#kv2-transform-rotate").click();
+    expect(await red(600, 500)).toBeLessThan(100);
+    expect(await red(700, 400)).toBe(255);
+  });
+
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({

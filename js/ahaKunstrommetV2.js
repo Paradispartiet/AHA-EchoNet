@@ -541,10 +541,15 @@
     const ctx = output.getContext("2d");
     const scale = mode === "smaller" ? 0.75 : mode === "larger" ? 1.25 : 1;
     ctx.save();
+    // Layers are drawn at (layer.x, layer.y). Transform in document space,
+    // then convert back to local bitmap coordinates before compositing.
+    // Without this, a moved layer flips/rotates around the wrong pivot.
+    ctx.translate(-layer.x, -layer.y);
     ctx.translate(WIDTH / 2, HEIGHT / 2);
     if (mode === "flip") ctx.scale(-1, 1);
     if (mode === "rotate") ctx.rotate(Math.PI / 2);
     if (scale !== 1) ctx.scale(scale, scale);
+    ctx.translate(layer.x, layer.y);
     ctx.drawImage(original, -WIDTH / 2, -HEIGHT / 2);
     ctx.restore();
     checkpoint();
