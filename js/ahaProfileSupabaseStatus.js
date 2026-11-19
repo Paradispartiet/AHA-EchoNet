@@ -40,6 +40,12 @@
         .eq("id", auth.data.user.id)
         .maybeSingle();
       if (error) return { ok: true, status: "profile_error" };
+      // The session may change while a read is in flight. Never confirm a
+      // profile from the former account after a logout or account switch.
+      const after = await connected.client.auth.getUser();
+      if (after?.error || after?.data?.user?.id !== auth.data.user.id) {
+        return { ok: false, status: "session_changed" };
+      }
       return { ok: true, status: data?.id === auth.data.user.id ? "profile_found" : "profile_missing" };
     } catch {
       return { ok: true, status: "profile_error" };
@@ -51,6 +57,8 @@
     unavailable: "Supabase er ikke tilgjengelig her. Sjekk nettilgang og prøv igjen.",
     auth_error: "Supabase kunne ikke bekrefte innloggingen nå. Prøv igjen senere.",
     signed_out: "Ingen aktiv Supabase-innlogging på denne adressen. Logg inn fra AHA Home.",
+    needs_recheck: "Innloggingen er endret. Kontroller Supabase-kontoen på nytt.",
+    session_changed: "Innloggingen endret seg under kontrollen. Kontroller på nytt.",
     profile_found: "Supabase-innlogging bekreftet. Din AHA-profilrad er lesbar. Privat synk og andre brukeres tilgang er ikke testet.",
     profile_missing: "Supabase-innlogging bekreftet, men din AHA-profilrad ble ikke funnet eller er ikke synlig. Ingen data er endret.",
     profile_error: "Supabase-innlogging bekreftet, men profilraden kunne ikke leses. Vi må kontrollere tabelltilgang og RLS før synk."
@@ -61,14 +69,28 @@
     const output = global.document?.getElementById("aha-supabase-profile-result");
     if (!button || !output) return;
 
+    let authRevision = 0;
+    const auth = global.AHADb?.getClient?.()?.auth;
+    if (typeof auth?.onAuthStateChange === "function") {
+      auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+          authRevision++;
+          output.textContent = messages.needs_recheck;
+          output.dataset.status = "needs_recheck";
+        }
+      });
+    }
+
     button.addEventListener("click", async () => {
       if (button.disabled) return;
+      const startingRevision = authRevision;
       button.disabled = true;
       output.textContent = "Kontrollerer innlogging og egen profilrad …";
       try {
         const result = await check();
-        output.textContent = messages[result.status] || "Ukjent kontrollresultat. Ingen data er endret.";
-        output.dataset.status = result.status || "unknown";
+        const status = startingRevision !== authRevision ? "session_changed" : result.status;
+        output.textContent = messages[status] || "Ukjent kontrollresultat. Ingen data er endret.";
+        output.dataset.status = status || "unknown";
       } catch {
         output.textContent = "Kontrollen kunne ikke fullføres. Ingen data er endret.";
         output.dataset.status = "error";
