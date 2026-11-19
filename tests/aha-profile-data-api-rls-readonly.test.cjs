@@ -10,6 +10,18 @@ const html = fs.readFileSync("profile.html", "utf8");
 assert.ok(html.includes('id="aha-check-data-api-rls"'));
 assert.ok(html.includes('id="aha-data-api-rls-result"'));
 assert.ok(html.includes('js/ahaProfileDataApiRlsCheck.js'));
+const mainOpen = html.indexOf('<main class="aha-dashboard');
+const account = html.indexOf('class="aha-panel aha-profile-card aha-profile-account-panel"');
+const local = html.indexOf('class="aha-panel aha-profile-card aha-profile-local-panel"');
+assert.ok(mainOpen >= 0 && account > mainOpen && local > account,
+  "Supabase account controls must appear above local overview on iPad");
+assert.ok(html.indexOf('id="aha-check-data-api-rls"') < html.indexOf('id="aha-profile-overview"'),
+  "Read-only account check must be visible before the long local overview");
+for (const id of ["aha-check-data-api-rls", "aha-check-supabase-profile",
+                  "aha-profile-overview", "aha-home-profile-mode"]) {
+  assert.equal(html.split('id="' + id + '"').length - 1, 1,
+    "Keep exactly one existing UI mount: " + id);
+}
 
 const tables = ["aha_profiles", "aha_source_events", "aha_imports",
   "aha_insight_embeddings", "aha_feed_posts", "aha_insta_posts"];
