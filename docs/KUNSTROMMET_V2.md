@@ -122,3 +122,12 @@ Nettlesertestene bekrefter at originalens PNG-bitmap bevares, at kopien bare vis
 Operasjonen krever en gyldig markering, et synlig og ulåst aktivt lag, minst én synlig piksel i markeringen og kapasitet under åtte-lagsgrensen. Ved tom markering endres ikke prosjektet eller angrehistorikken. Klippingen er ett angre-/gjør om-steg og støttes av eksisterende lokal lagring og redigerbar JSON-eksport. V1 og Galleri berøres ikke.
 
 **Påkrevd verifisering før merge:** målrettede Playwright-tester i Chromium og iPad WebKit for transparente hull i kildelaget, uendret innhold utenfor markeringen, lagposisjon etter flytting, kopi kontra klipp, angre/gjør om, lås og åtte lag. Kontroller også samlet AHA-regresjon og nødvendige lokale kontrakter. Ingen ny fysisk iPad-verifisering påstås: #1058 forblir åpen.
+
+
+## Lagmasker – ikke-destruktiv redigering (utviklingskandidat)
+
+Et eksisterende lag kan nå få en **egen maske**. Masken er et redigerbart alfalag som starter helt synlig, uavhengig av selve lagets pikseldata. Når «Rediger maske» er aktivt, skjuler **Viskelær** deler av bildet ved å redusere maskens alfa; **Pensel** viser delene igjen. «Rediger maske» kan slås av for å male direkte på lagets originalbilde. «Skru av maske» viser originalen uten å slette masken, og «Fjern maske» tar bort masken, men bevarer bildets originalpiksler. Arbeid på skjulte/låste lag blokkeres.
+
+Masken ligger i samme dokumentkoordinater som lagets bitmap og følger laget ved flytting, duplisering og transformering. Ved kopiering og klipping av en markering følger en **selvstendig kopi av masken** med til det nye laget. Alle maskeoperasjoner er angrebare. Eksisterende `aha-kunstrommet-v2`-prosjekter uten masker forblir gyldige; lag med masker har de **valgfrie** feltene `maskBitmap`, `maskEnabled` og eventuelt `maskPixelFixups`. Lokale prosjektkopier, JSON-backup, gjenåpning og PNG/utklipp bruker samme system som før. V1/Galleri, databasetabell og sky er urørt.
+
+Automatiserte nettlesertester (Chromium og iPad WebKit) skal kontrollere uendret originalbitmap etter maskering, vis/skjul/angre/gjør om, lokal gjenåpning, sikkerhetskopi, flyttet og duplisert lag, masketransformering, ødelagt maskefil (avvis import uten datatap) og gammel prosjektkompatibilitet. Den fysiske iPad/Safari/Apple Pencil-kontrollen er fortsatt åpen i [#1058](https://github.com/Paradispartiet/AHA-EchoNet/issues/1058). Denne funksjonen skal ikke merkes fysisk godkjent ut fra simulatoren.

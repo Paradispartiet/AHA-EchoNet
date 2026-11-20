@@ -87,3 +87,10 @@
 @media (max-width: 680px) {
   .kv2-transform-tools button, .kv2-selection-tools button { flex: 1 1 45%; }
 }
+
+/* Non-destructive layer masks: a compact control group in the existing layer sidebar. */
+.kv2-mask-panel { border: 1px solid #d0dcd3; border-radius: 12px; padding: 12px; margin: 14px 0; background: #f8faf8; }
+.kv2-mask-panel h3 { margin: 0 0 6px; font-size: 1rem; }
+.kv2-mask-panel .kv2-tip { margin: 7px 0; }
+.kv2-mask-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 10px 0; }
+.kv2-mask-tools button { font-size: .82rem; min-width: 0; }

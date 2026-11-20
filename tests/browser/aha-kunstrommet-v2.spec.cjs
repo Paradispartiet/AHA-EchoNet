@@ -676,6 +676,151 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(saved.layers).toHaveLength(2);
   });
 
+  test("non-destructive layer mask hides and restores original pixels, with undo and saved backup", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((node) => {
+      node.value = "#d34539"; node.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    const readJson = async () => {
+      const pending = page.waitForEvent("download");
+      await page.locator("#kv2-json").click();
+      return JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+    };
+    const original = await readJson();
+    expect((await pixel(page)).slice(0, 3)).toEqual([211, 69, 57]);
+    await expect(page.locator("#kv2-mask-edit")).toBeDisabled();
+    await page.locator("#kv2-mask-add").click();
+    await expect(page.locator("#kv2-mask-edit")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-mask-status")).toContainText("Du redigerer masken");
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+
+    await stroke(page); // erase the mask's opacity, not the artwork's pixels
+    expect((await pixel(page)).slice(0, 3)).toEqual([255, 255, 255]);
+    const masked = await readJson();
+    expect(masked.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(masked.layers[0].maskBitmap).toMatch(/^data:image\/png;base64,/);
+    expect(masked.layers[0].maskEnabled).toBe(true);
+    await page.locator("#kv2-mask-toggle").click();
+    expect((await pixel(page)).slice(0, 3)).toEqual([211, 69, 57]);
+    await expect(page.locator("#kv2-mask-status")).toContainText("av");
+    await page.locator("#kv2-mask-toggle").click();
+    expect((await pixel(page)).slice(0, 3)).toEqual([255, 255, 255]);
+
+    await page.locator("#kv2-mask-edit").click();
+    await expect(page.locator("#kv2-mask-edit")).toHaveAttribute("aria-pressed", "true");
+    await page.locator("#kv2-brush").click();
+    await stroke(page); // white brush reveals content hidden by the mask
+    expect((await pixel(page)).slice(0, 3)).toEqual([211, 69, 57]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pixel(page))[0]).toBe(255);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async () => (await pixel(page))[0]).toBe(211);
+
+    // The mask is independently editable after local save, reload and JSON import.
+    await page.locator("#kv2-title").fill("Maske i atelieret");
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-projects .kv2-project--saved")
+      .getByRole("button", { name: "Åpne", exact: true }).click();
+    await expect(page.locator("#kv2-title")).toHaveValue("Maske i atelieret");
+    await expect(page.locator("#kv2-mask-status")).toContainText("Lagmaske: på");
+    expect((await pixel(page)).slice(0, 3)).toEqual([211, 69, 57]);
+    const restored = await readJson();
+    expect(restored.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(restored.layers[0].maskBitmap).toMatch(/^data:image\/png;base64,/);
+  });
+
+  test("layer masks stay attached after move, duplicate and transform, without modifying image bitmap", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const drag = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id,
+        button: 0, buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const red = (x, y) => canvas.evaluate((node, pos) =>
+      node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data[0], { x, y });
+    const saved = async () => {
+      const pending = page.waitForEvent("download");
+      await page.locator("#kv2-json").click();
+      return JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+    };
+    await drag({ x0: .5, y0: .5, x1: .5, y1: .5, id: 901 });
+    const original = await saved();
+    await page.locator("#kv2-mask-add").click();
+    await drag({ x0: .5, y0: .5, x1: .5, y1: .5, id: 902 });
+    expect(await red(600, 400)).toBe(255);
+    await page.locator("#kv2-move").click();
+    await drag({ x0: .5, y0: .5, x1: .5 + 100 / 1200, y1: .5, id: 903 });
+    const moved = await saved();
+    expect(moved.layers[0].x).toBe(100);
+    expect(moved.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(await red(700, 400)).toBe(255);
+    await page.locator("#kv2-mask-toggle").click();
+    expect(await red(700, 400)).toBeLessThan(100);
+    await page.locator("#kv2-mask-toggle").click();
+    await page.locator("#kv2-duplicate-layer").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    const copied = await saved();
+    expect(copied.layers[1].maskBitmap).toMatch(/^data:image\/png;base64,/);
+    expect(copied.layers[1].bitmap).toBe(moved.layers[0].bitmap);
+    await page.locator("#kv2-layers .kv2-layer").last().locator("button").first().click();
+    expect(await red(700, 400)).toBe(255); // duplicate still obeys mask
+    await page.locator("#kv2-mask-toggle").click(); // unmask the selected duplicate
+    expect(await red(700, 400)).toBeLessThan(100);
+    await page.locator("#kv2-mask-toggle").click();
+
+    // Test rotation of bitmap and mask as one linked pair.
+    await page.locator("#kv2-transform-rotate").click();
+    const rotated = await saved();
+    expect(rotated.layers[1].maskBitmap).toMatch(/^data:image\/png;base64,/);
+    expect(rotated.layers[0].bitmap).toBe(moved.layers[0].bitmap);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    expect(await red(700, 400)).toBe(255);
+  });
+
+  test("invalid imported layer mask never replaces the active artwork; removal reveals originals", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await stroke(page);
+    await page.locator("#kv2-mask-add").click();
+    await stroke(page);
+    const colorBefore = await pixel(page);
+    expect(colorBefore.slice(0, 3)).toEqual([255, 255, 255]);
+    const pending = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+    expect(exported.layers[0].maskBitmap).toMatch(/^data:image\/png;base64,/);
+    const corrupted = structuredClone(exported);
+    corrupted.layers[0].maskBitmap = "data:image/png;base64,not-really-png";
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.locator("#kv2-import").setInputFiles({
+      name: "invalid-mask.kunstrommet.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(corrupted), "utf8")
+    });
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    expect(await pixel(page)).toEqual(colorBefore);
+    await expect(page.locator("#kv2-mask-status")).toContainText("Lagmaske: på");
+    await page.locator("#kv2-mask-remove").click();
+    await expect(page.locator("#kv2-mask-status")).toContainText("Ingen maske");
+    expect((await pixel(page)).slice(0, 3)).not.toEqual([255, 255, 255]);
+    const backup = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const without = JSON.parse(await fs.readFile(await (await backup).path(), "utf8"));
+    expect(without.layers[0].maskBitmap).toBeUndefined();
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-mask-status")).toContainText("Lagmaske: på");
+    expect((await pixel(page)).slice(0, 3)).toEqual([255, 255, 255]);
+  });
+
   test("cut selection extracts pixels without touching other areas; undo and redo restore layers", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
