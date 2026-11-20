@@ -972,6 +972,109 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(await red(700, 400)).toBe(255);
   });
 
+  test("fill selection uses brush color on active layer and one undo step", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const drag = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id, button: 0,
+        buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const setColor = (value) => page.locator("#kv2-color").evaluate((el, value) => {
+      el.value = value; el.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+    const px = (x, y) => canvas.evaluate((node, pos) =>
+      Array.from(node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data), { x, y });
+
+    await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
+    await setColor("#b21e32");
+    await drag({x0: .5, y0: .5, x1: .5, y1: .5, id: 801});
+    expect(await px(600, 400)).toEqual([178, 30, 50, 255]);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-select").click();
+    await drag({x0: .4, y0: .4, x1: .6, y1: .6, id: 802});
+    await expect(page.locator("#kv2-fill-selection")).toBeEnabled();
+    await setColor("#237ab4");
+    await page.locator("#kv2-fill-selection").click();
+    expect(await px(600, 400)).toEqual([35, 122, 180, 255]);
+    expect(await px(900, 600)).toEqual([255, 255, 255, 255]);
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => px(600, 400)).toEqual([178, 30, 50, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => px(600, 400)).toEqual([35, 122, 180, 255]);
+    // Hiding the filled layer reveals the untouched original underneath.
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect(await px(600, 400)).toEqual([178, 30, 50, 255]);
+  });
+
+  test("fill selection uses moved layer coordinates and respects locking", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const drag = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id, button: 0,
+        buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const px = (x, y) => canvas.evaluate((node, pos) =>
+      Array.from(node.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data), { x, y });
+    await drag({x0: .5, y0: .5, x1: .5, y1: .5, id: 811});
+    await page.locator("#kv2-move").click();
+    await drag({x0: .5, y0: .5, x1: .5 + 100 / 1200, y1: .5, id: 812});
+    expect((await px(700, 400))[0]).toBeLessThan(100);
+    expect(await px(600, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-select").click();
+    await drag({x0: 650 / 1200, y0: .45, x1: 750 / 1200, y1: .55, id: 813});
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").nth(2).click();
+    await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").nth(2).click();
+    await expect(page.locator("#kv2-fill-selection")).toBeEnabled();
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#318f51"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-fill-selection").click();
+    expect(await px(700, 400)).toEqual([49, 143, 81, 255]);
+    expect(await px(600, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await px(700, 400))[0]).toBeLessThan(100);
+  });
+
+  test("fill selection is protected while editing a layer mask", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const select = async () => canvas.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: 896, button: 0,
+        buttons, clientX: box.left + x * box.width, clientY: box.top + y * box.height
+      }));
+      send("pointerdown", .3, .3, 1);
+      send("pointermove", .7, .7, 1);
+      send("pointerup", .7, .7, 0);
+    });
+    await page.locator("#kv2-select").click();
+    await select();
+    await expect(page.locator("#kv2-fill-selection")).toBeEnabled();
+    await page.locator("#kv2-mask-add").click();
+    await expect(page.locator("#kv2-mask-edit")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
+    await page.locator("#kv2-mask-edit").click();
+    await expect(page.locator("#kv2-fill-selection")).toBeEnabled();
+    await page.locator("#kv2-fill-selection").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+  });
+
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {

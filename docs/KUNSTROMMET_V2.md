@@ -131,3 +131,12 @@ Et eksisterende lag kan nå få en **egen maske**. Masken er et redigerbart alfa
 Masken ligger i samme dokumentkoordinater som lagets bitmap og følger laget ved flytting, duplisering og transformering. Ved kopiering og klipping av en markering følger en **selvstendig kopi av masken** med til det nye laget. Alle maskeoperasjoner er angrebare. Eksisterende `aha-kunstrommet-v2`-prosjekter uten masker forblir gyldige; lag med masker har de **valgfrie** feltene `maskBitmap`, `maskEnabled` og eventuelt `maskPixelFixups`. Lokale prosjektkopier, JSON-backup, gjenåpning og PNG/utklipp bruker samme system som før. V1/Galleri, databasetabell og sky er urørt.
 
 Automatiserte nettlesertester (Chromium og iPad WebKit) skal kontrollere uendret originalbitmap etter maskering, vis/skjul/angre/gjør om, lokal gjenåpning, sikkerhetskopi, flyttet og duplisert lag, masketransformering, ødelagt maskefil (avvis import uten datatap) og gammel prosjektkompatibilitet. Den fysiske iPad/Safari/Apple Pencil-kontrollen er fortsatt åpen i [#1058](https://github.com/Paradispartiet/AHA-EchoNet/issues/1058). Denne funksjonen skal ikke merkes fysisk godkjent ut fra simulatoren.
+
+
+## Fyll markering med farge
+
+Fyll en eksisterende rektangelmarkering med penselfargen på **aktivt, synlig og ulåst bildelag**. Bare rektangelet fylles, og bildet/lagene utenfor markeringen endres ikke. Laglokale koordinater sikrer at markeringen også fungerer etter at et lag er flyttet. Fylling utenfor det valgte lagets bitmap utfører ingen redigering og legger ikke til et angrepunkt. Operasjonen er ett angre-/gjør om-steg.
+
+Når **lagmasken redigeres**, er bildefylling deaktivert for å unngå utilsiktede endringer i originalpikslene. Avslutt maskeredigering før fylling. Dette er en *fyll markering*-funksjon, ikke en flatebasert malingsbøtte eller maskefyll. Ingen ny app, database, prosjektformat, nettverk eller endring i Galleri.
+
+Målrettede tester kontrollerer korrekt farge, uendret innhold utenfor utvalget og i andre lag, flyttet lag, låst lag, angre/gjør om og sperre under maskeredigering. Disse kjøres i både Chromium og iPad WebKit. Fysisk iPad/Apple Pencil-kontroll står fortsatt åpen i #1058.
