@@ -324,7 +324,10 @@
       changed();
       refresh();
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
-    finally { busy = false; }
+    finally {
+      busy = false;
+      updateMaskControls();
+    }
   }
 
   function makeButton(label, action, aria) {
@@ -686,7 +689,8 @@
     surfaces.get(extracted.id).getContext("2d").putImageData(pixels, x, y);
     if (masks.has(layer.id)) {
       const maskCopy = imageCanvas();
-      maskCopy.getContext("2d").drawImage(masks.get(layer.id), 0, 0);
+      const sourceMask = masks.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
+      maskCopy.getContext("2d").putImageData(sourceMask, 0, 0);
       masks.set(extracted.id, maskCopy);
       extracted.maskEnabled = layer.maskEnabled !== false;
     }
@@ -713,7 +717,8 @@
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
     if (masks.has(layer.id)) {
       const maskCopy = imageCanvas();
-      maskCopy.getContext("2d").drawImage(masks.get(layer.id), 0, 0);
+      const sourceMask = masks.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
+      maskCopy.getContext("2d").putImageData(sourceMask, 0, 0);
       masks.set(clone.id, maskCopy);
       clone.maskEnabled = layer.maskEnabled !== false;
     }
