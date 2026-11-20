@@ -16,12 +16,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout exact main revision
         uses: actions/checkout@v6
@@ -40,6 +37,16 @@ jobs:
         with:
           path: .
 
+  deploy:
+    # A separate job ensures the artifact is registered before deploy-pages
+    # queries its metadata. Do not re-upload in a deploy retry.
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy exact artifact
         id: deployment
         uses: actions/deploy-pages@v4
