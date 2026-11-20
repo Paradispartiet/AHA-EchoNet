@@ -75,7 +75,7 @@ security invoker
 -- Empty path: all non-pg_catalog references in this function are schema-qualified.
 -- The pgvector extension is currently installed in public on AHA DB-03.
 set search_path = ''
-as $
+as $$
   select
     e.id,
     e.subject_id,
