@@ -42,6 +42,7 @@
           <button id="kv2-move" type="button" aria-pressed="false">Flytt lag</button>
           <button id="kv2-hand" type="button" aria-pressed="false">Hånd</button>
           <button id="kv2-select" type="button" aria-pressed="false">Marker område</button>
+          <button id="kv2-lasso" type="button" aria-pressed="false">Frihåndsmarkering (lasso)</button>
           <button id="kv2-eyedropper" type="button" aria-pressed="false">Fargepipette</button>
           <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
           <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
@@ -61,9 +62,11 @@
             <canvas id="kv2-canvas" width="1200" height="800"
               aria-label="Kunstlerret. Tegn, marker et område eller flytt det valgte laget med mus, finger eller penn.">Nettleseren støtter ikke lerret.</canvas>
             <div id="kv2-selection-overlay" class="kv2-selection-overlay" aria-hidden="true" hidden></div>
+            <svg id="kv2-lasso-overlay" class="kv2-lasso-overlay" viewBox="0 0 1200 800"
+              preserveAspectRatio="none" aria-hidden="true" hidden><path id="kv2-lasso-path"></path></svg>
           </div>
         </div>
-        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lar deg tegne et rektangel som begrenser pensel og viskelær; markeringen endrer ikke selve bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lager et rektangel; «Frihåndsmarkering (lasso)» lager en lukket form med mus, finger eller penn. Begge begrenser pensel og viskelær uten å endre bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
         <div class="kv2-selection-tools" role="group" aria-label="Markering og beskjæring">
           <button id="kv2-clear-selection" type="button" disabled>Fjern markering</button>
           <button id="kv2-crop-layer" type="button" disabled>Beskjær valgt lag til markering</button>
@@ -72,7 +75,7 @@
           <button id="kv2-fill-selection" type="button" disabled>Fyll markering med farge</button>
           <button id="kv2-export-selection" type="button" disabled>Eksporter utsnitt (PNG)</button>
         </div>
-        <p class="kv2-tip">Beskjæring fjerner piksler utenfor markeringen <strong>bare i det aktive laget</strong>. Lerretet forblir 1200 × 800; bruk eksport av utsnitt for en egen PNG med markeringens størrelse. «Kopier markering til nytt lag» oppretter et nytt, flyttbart lag og beholder originalen. «Klipp markering til nytt lag» flytter de markerte pikslene til et nytt lag og gjør akkurat det området gjennomsiktig i originalen. Begge krever et synlig, ulåst lag, og begge kan angres. «Fyll markering med farge» fyller bare den markerte flaten på det valgte bildelaget med penselfargen, ikke masken eller andre lag. Avslutt maskeredigering før fylling. Beskjæring, fylling og transformering kan også angres.</p>
+        <p class="kv2-tip">Beskjæring fjerner piksler utenfor markeringen <strong>bare i det aktive laget</strong>. Lerretet forblir 1200 × 800; bruk eksport av utsnitt for en egen PNG med markeringens størrelse. «Kopier markering til nytt lag» oppretter et nytt, flyttbart lag og beholder originalen. «Klipp markering til nytt lag» flytter de markerte pikslene til et nytt lag og gjør akkurat det området gjennomsiktig i originalen. Begge krever et synlig, ulåst lag, og begge kan angres. «Fyll markering med farge» fyller bare den markerte flaten på det valgte bildelaget med penselfargen, ikke masken eller andre lag. Avslutt maskeredigering før fylling. Rektangel og lasso kan begge brukes til kopiering, klipping, beskjæring, fargefylling og eksport. Utenfor lassoformen er eksportert PNG gjennomsiktig. Beskjæring, fylling og transformering kan også angres.</p>
 
         <label for="kv2-note">Arbeidsnotater</label>
         <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>

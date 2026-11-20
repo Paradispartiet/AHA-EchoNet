@@ -124,13 +124,86 @@
     view.restore();
   }
 
+
+  // A lasso is a transient polygon in document coordinates; the project format is unchanged.
+  function lassoActive() { return selection?.type === "lasso"; }
+  function polygonArea(points) {
+    let twice = 0;
+    points.forEach((p, i) => {
+      const q = points[(i + 1) % points.length];
+      twice += p.x * q.y - q.x * p.y;
+    });
+    return Math.abs(twice) / 2;
+  }
+  function validSelection() {
+    return !!selection && selection.w >= 2 && selection.h >= 2 &&
+      (!lassoActive() || (selection.points.length >= 3 && polygonArea(selection.points) >= 6));
+  }
+  function addLassoPoint(p) {
+    if (!lassoActive() || selection.points.length >= 2048) return;
+    const prev = selection.points[selection.points.length - 1];
+    if (Math.hypot(p.x - prev.x, p.y - prev.y) < 1.5) return;
+    selection.points.push(p);
+    let minX = WIDTH, minY = HEIGHT, maxX = 0, maxY = 0;
+    selection.points.forEach((at) => {
+      minX = Math.min(minX, at.x); minY = Math.min(minY, at.y);
+      maxX = Math.max(maxX, at.x); maxY = Math.max(maxY, at.y);
+    });
+    selection.x = Math.floor(minX); selection.y = Math.floor(minY);
+    selection.w = Math.ceil(maxX) - selection.x;
+    selection.h = Math.ceil(maxY) - selection.y;
+  }
+  function selectionPath(ctx, xOffset, yOffset) {
+    ctx.beginPath();
+    if (!lassoActive()) {
+      ctx.rect(selection.x - xOffset, selection.y - yOffset, selection.w, selection.h);
+      return;
+    }
+    selection.points.forEach((p, i) => {
+      if (!i) ctx.moveTo(p.x - xOffset, p.y - yOffset);
+      else ctx.lineTo(p.x - xOffset, p.y - yOffset);
+    });
+    ctx.closePath();
+  }
+  // Ordered scanline spans: exact pixel-center classification, O(height * vertices + pixels).
+  function selectedSpans(y) {
+    if (!lassoActive()) return y >= selection.y && y < selection.y + selection.h
+      ? [[selection.x, selection.x + selection.w]] : [];
+    const points = selection.points, crossing = [];
+    for (let i = 0; i < points.length; i++) {
+      const a = points[i], b = points[(i + 1) % points.length];
+      if ((a.y <= y && y < b.y) || (b.y <= y && y < a.y)) {
+        crossing.push(a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y));
+      }
+    }
+    crossing.sort((a, b) => a - b);
+    const spans = [];
+    for (let i = 0; i + 1 < crossing.length; i += 2) {
+      const left = Math.ceil(crossing[i] - 0.5);
+      const right = Math.ceil(crossing[i + 1] - 0.5);
+      if (right > left) spans.push([left, right]);
+    }
+    return spans;
+  }
+  function insideSpans(x, spans) {
+    return spans.some(([left, right]) => x >= left && x < right);
+  }
+
   function renderSelection() {
     const overlay = $("kv2-selection-overlay");
     if (!overlay) return;
     const rect = canvas.getBoundingClientRect();
-    const valid = selection && selection.w >= 2 && selection.h >= 2;
-    overlay.hidden = !valid;
-    if (valid) {
+    const valid = validSelection();
+    const lasso = lassoActive();
+    overlay.hidden = !valid || lasso;
+    const lassoOverlay = $("kv2-lasso-overlay");
+    lassoOverlay.hidden = !lasso || selection.points.length < 2;
+    if (lasso) {
+      const path = selection.points.map((p, i) =>
+        (i ? "L" : "M") + p.x.toFixed(2) + " " + p.y.toFixed(2)).join(" ");
+      $("kv2-lasso-path").setAttribute("d", path + (valid ? " Z" : ""));
+    }
+    if (valid && !lasso) {
       overlay.style.left = (selection.x * rect.width / WIDTH) + "px";
       overlay.style.top = (selection.y * rect.height / HEIGHT) + "px";
       overlay.style.width = (selection.w * rect.width / WIDTH) + "px";
@@ -163,8 +236,7 @@
       return;
     }
     context.save();
-    context.beginPath();
-    context.rect(selection.x - layer.x, selection.y - layer.y, selection.w, selection.h);
+    selectionPath(context, layer.x, layer.y);
     context.clip();
     drawSegment(context, a, b, !!targetMask);
     context.restore();
@@ -406,7 +478,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "eyedropper"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -496,12 +568,13 @@
       return;
     }
     const layer = currentLayer();
-    if (tool !== "hand" && tool !== "select" && (!layer || layer.locked || !layer.visible)) {
+    if (tool !== "hand" && tool !== "select" && tool !== "lasso" &&
+        (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
     // Moving the viewport is never an artwork edit and must not create undo history.
-    if (tool !== "hand" && tool !== "select" && !checkpoint()) return;
+    if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
     pointerStart = {
@@ -512,6 +585,11 @@
     paintPrevious = null;
     if (tool === "select") {
       selection = normalizedSelection(pointerStart.point, pointerStart.point);
+      renderSelection();
+    } else if (tool === "lasso") {
+      const p = pointerStart.point;
+      selection = { type: "lasso", points: [p], x: Math.floor(p.x),
+        y: Math.floor(p.y), w: 0, h: 0 };
       renderSelection();
     }
     if (tool === "brush" || tool === "eraser") {
@@ -540,6 +618,11 @@
       renderSelection();
       return;
     }
+    if (tool === "lasso") {
+      addLassoPoint(point(event));
+      renderSelection();
+      return;
+    }
     const layer = currentLayer();
     if (!layer) return;
     const at = point(event);
@@ -559,11 +642,14 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
-    const changedArtwork = tool !== "hand" && tool !== "select";
-    if (tool === "select") {
-      if (selection && (selection.w < 2 || selection.h < 2)) selection = null;
+    const changedArtwork = tool !== "hand" && tool !== "select" && tool !== "lasso";
+    if (tool === "select" || tool === "lasso") {
+      if (tool === "lasso" && event?.clientX != null) addLassoPoint(point(event));
+      if (!validSelection()) selection = null;
       renderSelection();
-      status(selection ? "Område markert – arbeid på valgt lag" : "Ingen markering");
+      status(selection ? (lassoActive()
+        ? "Frihåndsområde markert – arbeid på valgt lag"
+        : "Område markert – arbeid på valgt lag") : "Ingen markering");
     }
     pointerId = null;
     pointerStart = null;
@@ -662,6 +748,8 @@
     context.globalAlpha = 1;
     context.globalCompositeOperation = "source-over";
     context.fillStyle = $("kv2-color").value;
+    selectionPath(context, layer.x, layer.y);
+    context.clip();
     context.fillRect(x0, y0, x1 - x0, y1 - y0);
     context.restore();
     changed();
@@ -680,8 +768,11 @@
     const right = left + selection.w;
     const bottom = top + selection.h;
     for (let y = 0; y < HEIGHT; y++) {
+      const spans = lassoActive() ? selectedSpans(y + layer.y + 0.5) : null;
       for (let x = 0; x < WIDTH; x++) {
-        if (x >= left && x < right && y >= top && y < bottom) continue;
+        const keep = spans ? insideSpans(x + layer.x, spans)
+          : x >= left && x < right && y >= top && y < bottom;
+        if (keep) continue;
         const index = (y * WIDTH + x) * 4;
         values[index] = values[index + 1] = values[index + 2] = values[index + 3] = 0;
       }
@@ -705,6 +796,19 @@
     const y = selection.y - layer.y;
     const context = surfaces.get(layer.id).getContext("2d");
     const pixels = context.getImageData(x, y, selection.w, selection.h);
+    const maskedCut = lassoActive() && removeFromSource
+      ? context.getImageData(x, y, selection.w, selection.h) : null;
+    if (lassoActive()) {
+      for (let row = 0; row < selection.h; row++) {
+        const spans = selectedSpans(selection.y + row + 0.5);
+        for (let col = 0; col < selection.w; col++) {
+          const index = (row * selection.w + col) * 4;
+          if (insideSpans(selection.x + col, spans)) {
+            if (maskedCut) maskedCut.data.fill(0, index, index + 4);
+          } else pixels.data.fill(0, index, index + 4);
+        }
+      }
+    }
     let hasPixels = false;
     for (let i = 3; i < pixels.data.length; i += 4) {
       if (pixels.data[i] !== 0) { hasPixels = true; break; }
@@ -724,7 +828,8 @@
       masks.set(extracted.id, maskCopy);
       extracted.maskEnabled = layer.maskEnabled !== false;
     }
-    if (removeFromSource) context.clearRect(x, y, selection.w, selection.h);
+    if (maskedCut) context.putImageData(maskedCut, x, y);
+    else if (removeFromSource) context.clearRect(x, y, selection.w, selection.h);
     project.layers.splice(project.layers.indexOf(layer) + 1, 0, extracted);
     selected = extracted.id;
     changed();
@@ -802,8 +907,15 @@
     const output = document.createElement("canvas");
     output.width = selection.w;
     output.height = selection.h;
-    output.getContext("2d").drawImage(canvas, selection.x, selection.y,
+    const outputContext = output.getContext("2d");
+    outputContext.save();
+    if (lassoActive()) {
+      selectionPath(outputContext, selection.x, selection.y);
+      outputContext.clip();
+    }
+    outputContext.drawImage(canvas, selection.x, selection.y,
       selection.w, selection.h, 0, 0, selection.w, selection.h);
+    outputContext.restore();
     output.toBlob((blob) => {
       if (!blob) { status("Kunne ikke eksportere markeringen."); return; }
       const url = URL.createObjectURL(blob);
@@ -1338,7 +1450,7 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "eyedropper"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
     });
     $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));

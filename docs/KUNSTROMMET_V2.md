@@ -140,3 +140,9 @@ Fyll en eksisterende rektangelmarkering med penselfargen på **aktivt, synlig og
 Når **lagmasken redigeres**, er bildefylling deaktivert for å unngå utilsiktede endringer i originalpikslene. Avslutt maskeredigering før fylling. Dette er en *fyll markering*-funksjon, ikke en flatebasert malingsbøtte eller maskefyll. Ingen ny app, database, prosjektformat, nettverk eller endring i Galleri.
 
 Målrettede tester kontrollerer korrekt farge, uendret innhold utenfor utvalget og i andre lag, flyttet lag, låst lag, angre/gjør om og sperre under maskeredigering. Disse kjøres i både Chromium og iPad WebKit. Fysisk iPad/Apple Pencil-kontroll står fortsatt åpen i #1058.
+
+
+## Frihåndsmarkering (lasso)
+«Frihåndsmarkering (lasso)» tegner en lukket polygon med mus, finger eller penn. Konturen blir ikke en del av kunstverket. Markeringen er midlertidig og deles ikke med AHA, og eldre prosjektfiler fungerer uendret. Punktantallet er begrenset til 2048; svært små former forkastes.
+
+Lasso bruker dokumentkoordinater ved zoom og flyttede lag. Pensel, viskelær og lagmaskepensel klippes etter formen. Fargefylling og beskjæring bruker polygonet. Kopier/Klipp markering til nytt lag bruker eksakte skannlinjegrenser: piksler utenfor polygonet blir aldri kopiert eller slettet, heller ikke innenfor omsluttende rektangel. Eksport av utsnitt gir gjennomsiktig PNG utenfor polygonet. Operasjoner beholder eksisterende angre/gjør om, lagring og laggrensen på åtte lag. Ingen ny database, nettverk, app eller Galleri-endring. Fysisk iPad og Apple Pencil gjenstår i #1058.
