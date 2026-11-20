@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "supabase/migrations/**"
+      - "supabase/psychology-encrypted-vault.sql"
+      - "supabase/tests/aha_psychology_encrypted_vault_rls.sql"
       - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
       - "scripts/aha-postgresql-staging-rehearsal.sh"
       - "tests/aha-postgresql-staging-rehearsal.test.cjs"
@@ -16,6 +18,8 @@ on:
       - main
     paths:
       - "supabase/migrations/**"
+      - "supabase/psychology-encrypted-vault.sql"
+      - "supabase/tests/aha_psychology_encrypted_vault_rls.sql"
       - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
       - "scripts/aha-postgresql-staging-rehearsal.sh"
       - "tests/aha-postgresql-staging-rehearsal.test.cjs"
@@ -66,3 +70,6 @@ jobs:
 
       - name: Run clean canonical PostgreSQL rehearsal
         run: bash scripts/aha-postgresql-staging-rehearsal.sh
+
+      - name: Check opt-in encrypted vault tenant isolation in PostgreSQL 16
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/aha_psychology_encrypted_vault_rls.sql
