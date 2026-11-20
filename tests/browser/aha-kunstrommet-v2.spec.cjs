@@ -708,7 +708,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect((await pixel(page)).slice(0, 3)).toEqual([255, 255, 255]);
 
     await page.locator("#kv2-mask-edit").click();
-    await page.locator("#kv2-mask-edit").click();
+    await expect(page.locator("#kv2-mask-edit")).toHaveAttribute("aria-pressed", "true");
     await page.locator("#kv2-brush").click();
     await stroke(page); // white brush reveals content hidden by the mask
     expect((await pixel(page)).slice(0, 3)).toEqual([211, 69, 57]);
