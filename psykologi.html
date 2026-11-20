@@ -41,6 +41,9 @@
         med Tankeverksted-notater og Mitt indre kart. Filen blir ikke lagret på AHA-kontoen, og
         eksisterende lokale notater blir ikke automatisk sendt til AHA. Oppbevar fil og passord
         på et trygt sted, separat fra hverandre.</p>
+      <div id="aha-psych-vault-entry" class="aha-module-actions" hidden>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="psykologi-vault.html">Kryptert kontohvelv (frivillig)</a>
+      </div>
     </section>
 
     <section class="aha-panel" aria-labelledby="aha-psych-share-heading">
@@ -67,6 +70,12 @@
       <div class="aha-psych-actions"><button id="aha-psych-delete-all" class="aha-tile-btn aha-tile-btn-secondary" type="button">Slett alle fra AHA</button></div>
     </section>
   </main>
+  <script src="js/ahaPsychologyVaultConfig.js"></script>
+  <script>
+    if (window.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true) {
+      document.getElementById("aha-psych-vault-entry").hidden = false;
+    }
+  </script>
   <script src="js/ahaPsychologyRoomBridge.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaGlobalNav.js"></script>
