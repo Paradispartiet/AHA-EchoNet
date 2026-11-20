@@ -71,7 +71,7 @@
     const now = new Date().toISOString();
     surfaces.clear();
     masks.clear();
-    maskEditing = false;
+    leaveMaskEdit();
     selection = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
@@ -236,17 +236,18 @@
     return project.layers.map((layer) => {
       const surface = surfaces.get(layer.id);
       const pixelFixups = encodeEdgePixels(surface);
+      const mask = masks.get(layer.id);
+      const maskPixelFixups = mask ? encodeEdgePixels(mask) : "";
       return {
         id: layer.id, name: layer.name, kind: layer.kind,
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         x: layer.x, y: layer.y,
         bitmap: surface.toDataURL("image/png"),
         ...(pixelFixups ? { pixelFixups } : {}),
-        ...(masks.has(layer.id) ? {
-          maskBitmap: masks.get(layer.id).toDataURL("image/png"),
+        ...(mask ? {
+          maskBitmap: mask.toDataURL("image/png"),
           maskEnabled: layer.maskEnabled !== false,
-          ...(encodeEdgePixels(masks.get(layer.id))
-            ? { maskPixelFixups: encodeEdgePixels(masks.get(layer.id)) } : {})
+          ...(maskPixelFixups ? { maskPixelFixups } : {})
         } : {})
       };
     });
@@ -319,7 +320,7 @@
       if (to.length > MAX_HISTORY) to.shift();
       selected = project.layers.some((layer) => layer.id === target.selected)
         ? target.selected : project.layers[project.layers.length - 1].id;
-      maskEditing = maskEditing && masks.has(selected);
+      if (!masks.has(selected) || currentLayer()?.maskEnabled === false) leaveMaskEdit();
       changed();
       refresh();
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
@@ -342,8 +343,8 @@
       const row = document.createElement("div");
       row.className = "kv2-layer" + (selected === layer.id ? " kv2-selected" : "");
       const choose = makeButton(layer.name + (masks.has(layer.id) ? " · maske" : ""), () => {
+        leaveMaskEdit();
         selected = layer.id;
-        maskEditing = false;
         renderLayerList();
         updateLayerControls();
         renderSelection();
@@ -384,9 +385,9 @@
     const layer = currentLayer();
     const hasMask = !!layer && masks.has(layer.id);
     const editable = !!layer && layer.visible && !layer.locked && !busy;
-    if (!hasMask) maskEditing = false;
+    if (!hasMask || layer?.maskEnabled === false) leaveMaskEdit();
     $("kv2-mask-add").disabled = !editable || hasMask;
-    $("kv2-mask-edit").disabled = !editable || !hasMask;
+    $("kv2-mask-edit").disabled = !editable || !hasMask || layer.maskEnabled === false;
     $("kv2-mask-edit").setAttribute("aria-pressed", String(hasMask && maskEditing));
     $("kv2-mask-toggle").disabled = !hasMask || busy;
     $("kv2-mask-toggle").textContent = layer?.maskEnabled === false ? "Aktiver maske" : "Skru av maske";
@@ -569,6 +570,12 @@
     }
   }
 
+  function leaveMaskEdit() {
+    // A mask eraser must never silently become a destructive image eraser.
+    if (maskEditing && (tool === "brush" || tool === "eraser")) tool = "hand";
+    maskEditing = false;
+  }
+
   function addLayerMask() {
     const layer = editableLayer();
     if (!layer || masks.has(layer.id)) return;
@@ -588,8 +595,12 @@
   function toggleMaskEdit() {
     const layer = currentLayer();
     if (busy || !layer || !layer.visible || layer.locked || !masks.has(layer.id)) return;
-    maskEditing = !maskEditing;
-    if (maskEditing && tool !== "brush" && tool !== "eraser") tool = "eraser";
+    if (maskEditing) {
+      leaveMaskEdit();
+    } else {
+      maskEditing = true;
+      tool = "eraser";
+    }
     refresh();
     status(maskEditing ? "Rediger maske: Viskelær skjuler, Pensel viser." : "Redigerer lagets originalpiksler.");
   }
@@ -599,7 +610,7 @@
     if (busy || !layer || !masks.has(layer.id)) return;
     if (!checkpoint()) return;
     layer.maskEnabled = layer.maskEnabled === false;
-    if (!layer.maskEnabled) maskEditing = false;
+    if (!layer.maskEnabled) leaveMaskEdit();
     changed();
     refresh();
   }
@@ -610,7 +621,7 @@
     if (!checkpoint()) return;
     masks.delete(layer.id);
     delete layer.maskEnabled;
-    maskEditing = false;
+    leaveMaskEdit();
     changed();
     refresh();
   }
@@ -807,7 +818,7 @@
     const index = project.layers.findIndex((layer) => layer.id === selected);
     surfaces.delete(selected);
     masks.delete(selected);
-    maskEditing = false;
+    leaveMaskEdit();
     project.layers.splice(index, 1);
     selected = project.layers[Math.min(index, project.layers.length - 1)].id;
     changed(); refresh();
