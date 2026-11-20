@@ -580,6 +580,102 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-layer-count")).toContainText("3 av 8 lag");
   });
 
+  test("copy selection creates an independent layer, leaves the original and supports undo", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const pointer = (a) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const fire = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id,
+        button: 0, buttons, clientX: b.left + x * b.width,
+        clientY: b.top + y * b.height
+      }));
+      fire("pointerdown", v.x0, v.y0, 1);
+      fire("pointermove", v.x1, v.y1, 1);
+      fire("pointerup", v.x1, v.y1, 0);
+    }, a);
+    const read = (x, y) => canvas.evaluate((node, at) =>
+      Array.from(node.getContext("2d").getImageData(at.x, at.y, 1, 1).data), { x, y });
+    const color = async (value) => page.locator("#kv2-color").evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+    const record = async () => {
+      const waiting = page.waitForEvent("download");
+      await page.locator("#kv2-json").click();
+      return JSON.parse(await fs.readFile(await (await waiting).path(), "utf8"));
+    };
+
+    await color("#a12b3c");
+    await pointer({ x0: .5, y0: .5, x1: .5, y1: .5, id: 701 });
+    await color("#2d8aeb");
+    await pointer({ x0: .75, y0: .75, x1: .75, y1: .75, id: 702 });
+    const original = await record();
+    await expect(page.locator("#kv2-copy-selection")).toBeDisabled();
+
+    await page.locator("#kv2-select").click();
+    await pointer({ x0: .4, y0: .4, x1: .6, y1: .6, id: 703 });
+    await expect(page.locator("#kv2-copy-selection")).toBeEnabled();
+    await page.locator("#kv2-copy-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-active-layer")).toContainText("utsnitt");
+    const copied = await record();
+    expect(copied.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(copied.layers[1].x).toBe(0);
+    expect(copied.layers[1].y).toBe(0);
+
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    expect((await read(600, 400)).slice(0, 3)).toEqual([161, 43, 60]);
+    expect((await read(900, 600)).slice(0, 3)).toEqual([45, 138, 235]);
+    await page.locator("#kv2-redo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+
+    // Hide the untouched source layer; only pixels inside the selection remain.
+    await page.locator("#kv2-layers .kv2-layer").last().locator("button").first().click();
+    expect((await read(600, 400)).slice(0, 3)).toEqual([161, 43, 60]);
+    expect((await read(900, 600)).slice(0, 3)).toEqual([255, 255, 255]);
+
+    // The limit applies to copies as well as to manually added layers.
+    for (let i = 0; i < 6; i++) await page.locator("#kv2-add-layer").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("8 av 8 lag");
+    await expect(page.locator("#kv2-copy-selection")).toBeDisabled();
+  });
+
+  test("copy selection from a moved layer preserves its document position", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const drag = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id,
+        button: 0, buttons, clientX: b.left + x * b.width,
+        clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const pixelRed = (x, y) => canvas.evaluate((node, at) =>
+      node.getContext("2d").getImageData(at.x, at.y, 1, 1).data[0], { x, y });
+    await drag({ x0: .5, y0: .5, x1: .5, y1: .5, id: 711 });
+    await page.locator("#kv2-move").click();
+    await drag({ x0: .5, y0: .5, x1: .5 + 100 / 1200, y1: .5, id: 712 });
+    expect(await pixelRed(700, 400)).toBeLessThan(100);
+    await page.locator("#kv2-select").click();
+    await drag({ x0: 650 / 1200, y0: .45, x1: 750 / 1200, y1: .55, id: 713 });
+    await page.locator("#kv2-copy-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await page.locator("#kv2-layers .kv2-layer").last().locator("button").first().click();
+    expect(await pixelRed(700, 400)).toBeLessThan(100);
+    expect(await pixelRed(600, 400)).toBe(255);
+    const waiting = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const saved = JSON.parse(await fs.readFile(await (await waiting).path(), "utf8"));
+    expect(saved.layers.map((layer) => layer.x)).toEqual([100, 100]);
+    expect(saved.layers).toHaveLength(2);
+  });
+
   test("moved layer transforms around the document center and undo preserves its position", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");

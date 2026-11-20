@@ -106,3 +106,10 @@ Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget t
 ## Neste lille utvidelse – fargepipette (PR under utvikling)
 
 «Fargepipette» lar brukeren velge synlig farge fra det sammensatte lerretet, inkludert lagopasitet og hvit bakgrunn. Verktøyet leser én piksel i dokumentkoordinater, setter penselfargen og går tilbake til «Pensel». Det tegner ingenting, oppretter ikke angrehistorikk, endrer ikke lag eller prosjekter og har ingen nettverkskall. En Chromium-/iPad WebKit-test kontrollerer eksakt farge, uendret lerret, angre og hvit bakgrunn. Dette er en egen utviklings-PR og ikke publisert før godkjente kontroller.
+
+
+## Kopier markering til nytt lag (utviklingskandidat)
+
+Kopier pikslene fra **det valgte, synlige og ulåste laget** innenfor et markert rektangel til et nytt, separat redigerbart lag direkte over kildelaget. Originalens piksler blir ikke endret; det nye laget får kildelagets posisjon og opasitet og bare de markerte RGBA-pikslene. Dette fungerer også når kildelaget er flyttet. En tom markering oppretter ikke et lag. Laggrensen på åtte opprettholdes, og operasjonen kan angres og gjøres om. Den oppretter ingen nettverkskall eller endringer i V1/Galleri.
+
+Nye nettlesertester skal bekrefte at originalens PNG-bitmap er identisk etter kopiering, at det nye laget kun viser markerte piksler når originalen skjules, at angre/gjør om er korrekt, at flyttede lag bevarer dokumentplassering og at knappen deaktiveres ved åtte lag. Fysisk iPad/Safari/Apple Pencil-verifisering må fortsatt skje separat i sak #1058.
