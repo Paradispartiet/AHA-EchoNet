@@ -103,13 +103,22 @@ Dette videreutvikler **samme Kunstrommet**, basert på PR #1059 som ble merget t
 - [x] Samlet Aha-regresjon, Node, syntaks og launch gate bestått på siste integrasjonskandidat til PR #1063: 6/6 arbeidsflyter PASS; Kunstrommet 40/40, Aha 126 PASS og 8 SKIP.
 - [ ] Manuell iPad/Safari/Apple Pencil-kontroll av gestikk, markering og redigering etter godkjent testgrensesnitt. Ikke marker emulering som fysisk test.
 
-## Neste lille utvidelse – fargepipette (PR under utvikling)
+## Fargepipette (publisert – PR #1071)
 
-«Fargepipette» lar brukeren velge synlig farge fra det sammensatte lerretet, inkludert lagopasitet og hvit bakgrunn. Verktøyet leser én piksel i dokumentkoordinater, setter penselfargen og går tilbake til «Pensel». Det tegner ingenting, oppretter ikke angrehistorikk, endrer ikke lag eller prosjekter og har ingen nettverkskall. En Chromium-/iPad WebKit-test kontrollerer eksakt farge, uendret lerret, angre og hvit bakgrunn. Dette er en egen utviklings-PR og ikke publisert før godkjente kontroller.
+«Fargepipette» lar brukeren velge synlig farge fra det sammensatte lerretet, inkludert lagopasitet og hvit bakgrunn. Verktøyet leser én piksel i dokumentkoordinater, setter penselfargen og går tilbake til «Pensel». Det tegner ingenting, oppretter ikke angrehistorikk, endrer ikke lag eller prosjekter og har ingen nettverkskall. En Chromium-/iPad WebKit-test kontrollerer eksakt farge, uendret lerret, angre og hvit bakgrunn. Funksjonen er merget og publisert i PR #1071. Automatisk kontroll i Chromium og iPad WebKit er bestått; fysisk Apple Pencil-kontroll er fortsatt åpen i #1058.
 
 
-## Kopier markering til nytt lag (utviklingskandidat)
+## Kopier markering til nytt lag (publisert – PR #1075)
 
 Kopier pikslene fra **det valgte, synlige og ulåste laget** innenfor et markert rektangel til et nytt, separat redigerbart lag direkte over kildelaget. Originalens piksler blir ikke endret; det nye laget får kildelagets posisjon og opasitet og bare de markerte RGBA-pikslene. Dette fungerer også når kildelaget er flyttet. En tom markering oppretter ikke et lag. Laggrensen på åtte opprettholdes, og operasjonen kan angres og gjøres om. Den oppretter ingen nettverkskall eller endringer i V1/Galleri.
 
-Nye nettlesertester skal bekrefte at originalens PNG-bitmap er identisk etter kopiering, at det nye laget kun viser markerte piksler når originalen skjules, at angre/gjør om er korrekt, at flyttede lag bevarer dokumentplassering og at knappen deaktiveres ved åtte lag. Fysisk iPad/Safari/Apple Pencil-verifisering må fortsatt skje separat i sak #1058.
+Nettlesertestene bekrefter at originalens PNG-bitmap bevares, at kopien bare viser markerte piksler, at angre/gjør om virker, at flyttede lag beholder dokumentposisjonen og at åtte-lagsgrensen håndheves. PR #1075 er merget (`4c4d2e1`); seks etter-merge-workflows, inkludert GitHub Pages, bestod. Fysisk iPad/Safari/Apple Pencil-verifisering må fortsatt skje i sak #1058.
+
+
+## Klipp markering til nytt lag (ny utviklingskandidat)
+
+«Klipp markering til nytt lag» flytter markerte RGBA-piksler **fra det aktive laget** til et nytt, separat redigerbart lag rett over kilden. Det markerte området blir gjennomsiktig i kildelaget; utenfor markeringen bevares alle kildens piksler eksakt. Alle andre lag blir uendret. Det nye laget får samme posisjon og opasitet som kilden. Både ordinære og tidligere flyttede lag støttes, uten PNG-omkoding.
+
+Operasjonen krever en gyldig markering, et synlig og ulåst aktivt lag, minst én synlig piksel i markeringen og kapasitet under åtte-lagsgrensen. Ved tom markering endres ikke prosjektet eller angrehistorikken. Klippingen er ett angre-/gjør om-steg og støttes av eksisterende lokal lagring og redigerbar JSON-eksport. V1 og Galleri berøres ikke.
+
+**Påkrevd verifisering før merge:** målrettede Playwright-tester i Chromium og iPad WebKit for transparente hull i kildelaget, uendret innhold utenfor markeringen, lagposisjon etter flytting, kopi kontra klipp, angre/gjør om, lås og åtte lag. Kontroller også samlet AHA-regresjon og nødvendige lokale kontrakter. Ingen ny fysisk iPad-verifisering påstås: #1058 forblir åpen.
