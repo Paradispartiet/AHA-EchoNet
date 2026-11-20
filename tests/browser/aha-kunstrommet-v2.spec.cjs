@@ -676,6 +676,116 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(saved.layers).toHaveLength(2);
   });
 
+  test("cut selection extracts pixels without touching other areas; undo and redo restore layers", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const pointer = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id,
+        button: 0, buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const color = (value) => page.locator("#kv2-color").evaluate((node, value) => {
+      node.value = value;
+      node.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+    const pixelAt = (x, y) => canvas.evaluate((node, at) =>
+      Array.from(node.getContext("2d").getImageData(at.x, at.y, 1, 1).data), { x, y });
+    const projectJson = async () => {
+      const pending = page.waitForEvent("download");
+      await page.locator("#kv2-json").click();
+      return JSON.parse(await fs.readFile(await (await pending).path(), "utf8"));
+    };
+
+    await color("#b52b43");
+    await pointer({ x0: .5, y0: .5, x1: .5, y1: .5, id: 801 });
+    await color("#3679dd");
+    await pointer({ x0: .75, y0: .75, x1: .75, y1: .75, id: 802 });
+    const original = await projectJson();
+    await page.locator("#kv2-select").click();
+    await pointer({ x0: .4, y0: .4, x1: .6, y1: .6, id: 803 });
+    await expect(page.locator("#kv2-cut-selection")).toBeEnabled();
+    await page.locator("#kv2-cut-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-active-layer")).toContainText("klippet");
+
+    const cut = await projectJson();
+    expect(cut.layers).toHaveLength(2);
+    expect(cut.layers[0].bitmap).not.toBe(original.layers[0].bitmap);
+    expect(cut.layers[0].x).toBe(0);
+    expect(cut.layers[1].x).toBe(0);
+    // The complete composition still looks identical after moving the pixels.
+    expect((await pixelAt(600, 400)).slice(0, 3)).toEqual([181, 43, 67]);
+    expect((await pixelAt(900, 600)).slice(0, 3)).toEqual([54, 121, 221]);
+
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    expect((await projectJson()).layers[0].bitmap).toBe(original.layers[0].bitmap);
+    await page.locator("#kv2-redo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    // Hide the extracted layer: the original now has a transparent hole,
+    // but the unaffected dot outside the marquee remains.
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect((await pixelAt(600, 400)).slice(0, 3)).toEqual([255, 255, 255]);
+    expect((await pixelAt(900, 600)).slice(0, 3)).toEqual([54, 121, 221]);
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect((await pixelAt(600, 400)).slice(0, 3)).toEqual([181, 43, 67]);
+  });
+
+  test("cut handles moved layers, empty selections, locking, and the eight-layer limit", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const canvas = page.locator("#kv2-canvas");
+    const drag = (v) => canvas.evaluate((node, v) => {
+      const b = node.getBoundingClientRect();
+      const send = (type, x, y, buttons) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: v.id,
+        button: 0, buttons, clientX: b.left + x * b.width, clientY: b.top + y * b.height
+      }));
+      send("pointerdown", v.x0, v.y0, 1);
+      send("pointermove", v.x1, v.y1, 1);
+      send("pointerup", v.x1, v.y1, 0);
+    }, v);
+    const red = (x, y) => canvas.evaluate((node, at) =>
+      node.getContext("2d").getImageData(at.x, at.y, 1, 1).data[0], { x, y });
+
+    await drag({ x0: .5, y0: .5, x1: .5, y1: .5, id: 811 });
+    await page.locator("#kv2-move").click();
+    await drag({ x0: .5, y0: .5, x1: .5 + 100 / 1200, y1: .5, id: 812 });
+    expect(await red(700, 400)).toBeLessThan(100);
+    await page.locator("#kv2-select").click();
+    await drag({ x0: 650 / 1200, y0: .45, x1: 750 / 1200, y1: .55, id: 813 });
+    await page.locator("#kv2-cut-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    const waiting = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const saved = JSON.parse(await fs.readFile(await (await waiting).path(), "utf8"));
+    expect(saved.layers.map((item) => item.x)).toEqual([100, 100]);
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect(await red(700, 400)).toBe(255); // source pixel was cleared
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect(await red(700, 400)).toBeLessThan(100);
+
+    const source = page.locator("#kv2-layers .kv2-layer").last();
+    await source.locator(".kv2-layer-name").click();
+    await source.getByRole("button", { name: /^Lås / }).click();
+    await expect(page.locator("#kv2-cut-selection")).toBeDisabled();
+    await expect(page.locator("#kv2-copy-selection")).toBeDisabled();
+    await page.locator("#kv2-layers .kv2-layer").last().getByRole("button", { name: /^Lås opp / }).click();
+
+    // No remaining source pixels in the marked area, so no empty layer.
+    await page.locator("#kv2-cut-selection").click();
+    await expect(page.locator("#kv2-status")).toContainText("Ingen piksler");
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    for (let i = 0; i < 6; i++) await page.locator("#kv2-add-layer").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("8 av 8 lag");
+    await expect(page.locator("#kv2-cut-selection")).toBeDisabled();
+    await expect(page.locator("#kv2-copy-selection")).toBeDisabled();
+  });
+
   test("moved layer transforms around the document center and undo preserves its position", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
