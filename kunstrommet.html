@@ -63,7 +63,7 @@
             <div id="kv2-selection-overlay" class="kv2-selection-overlay" aria-hidden="true" hidden></div>
           </div>
         </div>
-        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Viskelæret påvirker bare aktivt lag. «Marker område» lar deg tegne et rektangel som begrenser pensel og viskelær; markeringen endrer ikke selve bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lar deg tegne et rektangel som begrenser pensel og viskelær; markeringen endrer ikke selve bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
         <div class="kv2-selection-tools" role="group" aria-label="Markering og beskjæring">
           <button id="kv2-clear-selection" type="button" disabled>Fjern markering</button>
           <button id="kv2-crop-layer" type="button" disabled>Beskjær valgt lag til markering</button>
@@ -115,6 +115,17 @@
             <output id="kv2-opacity-value">100%</output>
           </div>
           <p class="kv2-tip">◉ / ○ skjuler eller viser et lag. «Låst» beskytter det mot pensel, viskelær, beskjæring og transformering.</p>
+          <div class="kv2-mask-panel" role="group" aria-label="Lagmaske for aktivt lag">
+            <h3>Lagmaske</h3>
+            <p id="kv2-mask-status" class="kv2-tip" role="status" aria-live="polite">Ingen maske på valgt lag</p>
+            <div class="kv2-mask-tools">
+              <button id="kv2-mask-add" type="button">Legg til maske</button>
+              <button id="kv2-mask-edit" type="button" aria-pressed="false" disabled>Rediger maske</button>
+              <button id="kv2-mask-toggle" type="button" disabled>Skru av maske</button>
+              <button id="kv2-mask-remove" type="button" disabled>Fjern maske</button>
+            </div>
+            <p class="kv2-tip">Trykk «Rediger maske». Bruk <strong>Viskelær</strong> for å skjule og <strong>Pensel</strong> for å hente innholdet tilbake. Bildets originale piksler beholdes. Velg «Rediger maske» igjen for å male på bildet. Masken følger laget ved flytting, kopiering og transformering, og lagres i prosjektfilen.</p>
+          </div>
           <div class="kv2-transform-tools" role="group" aria-label="Transformer aktivt lag">
             <button id="kv2-transform-flip" type="button">Speil vannrett</button>
             <button id="kv2-transform-rotate" type="button">Roter 90°</button>
