@@ -124,8 +124,19 @@ Operasjonen krever en gyldig markering, et synlig og ulåst aktivt lag, minst é
 **Påkrevd verifisering før merge:** målrettede Playwright-tester i Chromium og iPad WebKit for transparente hull i kildelaget, uendret innhold utenfor markeringen, lagposisjon etter flytting, kopi kontra klipp, angre/gjør om, lås og åtte lag. Kontroller også samlet AHA-regresjon og nødvendige lokale kontrakter. Ingen ny fysisk iPad-verifisering påstås: #1058 forblir åpen.
 
 
-## Fyll markering med farge (utviklingskandidat)
+## Lagmasker – ikke-destruktiv redigering (utviklingskandidat)
 
-Den eksisterende rektangelmarkeringen kan fylles med valgt penselfarge **bare på aktivt, synlig og ulåst lag**. Det kreves en gyldig markering; ingen fargelegging av hele lerretet ved feiltrykk. Fyllingen beregnes i lagets lokale koordinater slik at det også fungerer på flyttede lag, klippes til lagets 1200 × 800-bitmap, påvirker ingen andre lag og kan angres/gjøres om i ett steg. Ingen skyfunksjoner, ny lagringsstruktur eller endring i Galleri.
+Et eksisterende lag kan nå få en **egen maske**. Masken er et redigerbart alfalag som starter helt synlig, uavhengig av selve lagets pikseldata. Når «Rediger maske» er aktivt, skjuler **Viskelær** deler av bildet ved å redusere maskens alfa; **Pensel** viser delene igjen. «Rediger maske» kan slås av for å male direkte på lagets originalbilde. «Skru av maske» viser originalen uten å slette masken, og «Fjern maske» tar bort masken, men bevarer bildets originalpiksler. Arbeid på skjulte/låste lag blokkeres.
 
-To målrettede Playwright-tester dekker riktig farge, uendret innhold utenfor markeringen og på andre lag, enkelt angresteg, flyttet lag samt sperre for låst lag. Fysisk iPad/Safari/Apple Pencil-test er fortsatt åpen i #1058; automatisert WebKit er ikke fysisk enhetstest.
+Masken ligger i samme dokumentkoordinater som lagets bitmap og følger laget ved flytting, duplisering og transformering. Ved kopiering og klipping av en markering følger en **selvstendig kopi av masken** med til det nye laget. Alle maskeoperasjoner er angrebare. Eksisterende `aha-kunstrommet-v2`-prosjekter uten masker forblir gyldige; lag med masker har de **valgfrie** feltene `maskBitmap`, `maskEnabled` og eventuelt `maskPixelFixups`. Lokale prosjektkopier, JSON-backup, gjenåpning og PNG/utklipp bruker samme system som før. V1/Galleri, databasetabell og sky er urørt.
+
+Automatiserte nettlesertester (Chromium og iPad WebKit) skal kontrollere uendret originalbitmap etter maskering, vis/skjul/angre/gjør om, lokal gjenåpning, sikkerhetskopi, flyttet og duplisert lag, masketransformering, ødelagt maskefil (avvis import uten datatap) og gammel prosjektkompatibilitet. Den fysiske iPad/Safari/Apple Pencil-kontrollen er fortsatt åpen i [#1058](https://github.com/Paradispartiet/AHA-EchoNet/issues/1058). Denne funksjonen skal ikke merkes fysisk godkjent ut fra simulatoren.
+
+
+## Fyll markering med farge
+
+Fyll en eksisterende rektangelmarkering med penselfargen på **aktivt, synlig og ulåst bildelag**. Bare rektangelet fylles, og bildet/lagene utenfor markeringen endres ikke. Laglokale koordinater sikrer at markeringen også fungerer etter at et lag er flyttet. Fylling utenfor det valgte lagets bitmap utfører ingen redigering og legger ikke til et angrepunkt. Operasjonen er ett angre-/gjør om-steg.
+
+Når **lagmasken redigeres**, er bildefylling deaktivert for å unngå utilsiktede endringer i originalpikslene. Avslutt maskeredigering før fylling. Dette er en *fyll markering*-funksjon, ikke en flatebasert malingsbøtte eller maskefyll. Ingen ny app, database, prosjektformat, nettverk eller endring i Galleri.
+
+Målrettede tester kontrollerer korrekt farge, uendret innhold utenfor utvalget og i andre lag, flyttet lag, låst lag, angre/gjør om og sperre under maskeredigering. Disse kjøres i både Chromium og iPad WebKit. Fysisk iPad/Apple Pencil-kontroll står fortsatt åpen i #1058.
