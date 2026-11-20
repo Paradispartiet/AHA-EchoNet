@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kryptert kontohvelv – Psykologirommet | AHA</title>
+  <link rel="stylesheet" href="css/aha-chat.css">
+  <link rel="stylesheet" href="css/aha-dashboard.css">
+  <link rel="stylesheet" href="css/aha-global-nav.css">
+  <style>
+    [hidden] { display: none !important; }
+    .psych-vault-shell { max-width: 820px; margin: 0 auto; }
+    .psych-vault-shell .aha-panel { margin-bottom: 18px; }
+    .psych-vault-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .psych-vault-form { display: grid; gap: 12px; max-width: 620px; }
+    .psych-vault-form input[type=file] { display: block; width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #7d97a8; border-radius: 10px; }
+    .psych-vault-form label { display: flex; align-items: flex-start; gap: 10px; }
+    .psych-vault-form input[type=checkbox] { margin-top: 4px; }
+    #aha-psych-vault-download a { display: inline-block; padding: 12px; min-height: 44px; box-sizing: border-box; }
+    #aha-psych-vault-status { min-height: 30px; overflow-wrap: anywhere; }
+    .psych-vault-shell button { min-height: 44px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="aha-global-nav"></div>
+  <main class="aha-dashboard aha-shell-reading psych-vault-shell">
+    <section class="aha-panel">
+      <p class="eyebrow">Mitt AHA · Psykologirommet</p>
+      <h1>Kryptert kontohvelv</h1>
+      <p>Dette er en separat tjeneste for å oppbevare <strong>en allerede kryptert sikkerhetskopifil</strong>.
+        AHA skal ikke motta passord eller ukrypterte Tankeverksted-notater.</p>
+      <p>Du oppretter filen i <a href="https://paradispartiet.github.io/History-Go/?room=psychology">Psykologirommet</a>
+        under «Min oversikt». Filen kan senere lastes ned herfra og gjenopprettes i et
+        <strong>tomt</strong> lokalt Psykologirom-arkiv med det samme passordet.</p>
+      <div class="psych-vault-actions">
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="psykologi.html">Tilbake til Psykologirommet i AHA</a>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="index.html#login">AHA-innlogging</a>
+      </div>
+      <p><strong>Avgrensning:</strong> Kontotilhørighet, filstørrelse og opplastingstid er synlige for lagringstjenesten.
+        Selve filinnholdet er kryptert. Filen synkroniseres ikke automatisk, og inngår ikke i AHAs
+        tankekart, innsikter, AI-analyse eller vanlige synkronisering.</p>
+      <p id="aha-psych-vault-status" role="status" aria-live="polite"></p>
+    </section>
+    <section id="aha-psych-vault-panel" class="aha-panel" hidden>
+      <h2>Mine krypterte kontofiler</h2>
+      <p>Det er plass til <strong>én</strong> kryptert fil per konto. Ny opplasting kan ikke overskrive en
+        tidligere fil. Last ned den gamle og slett den manuelt dersom du vil erstatte den.</p>
+      <div class="psych-vault-actions">
+        <button type="button" id="aha-psych-vault-check" class="aha-tile-btn aha-tile-btn-secondary">Sjekk kontokopien</button>
+        <button type="button" id="aha-psych-vault-download-button" class="aha-tile-btn aha-tile-btn-primary">Hent kryptert fil</button>
+        <button type="button" id="aha-psych-vault-delete" class="aha-tile-btn aha-tile-btn-secondary">Slett kontokopi</button>
+      </div>
+      <div id="aha-psych-vault-download"></div>
+      <hr>
+      <h3>Last opp en kryptert fil</h3>
+      <form id="aha-psych-vault-upload" class="psych-vault-form">
+        <input type="file" name="encrypted_file" accept=".json,application/json" aria-label="Kryptert sikkerhetskopi fra Psykologirommet" required>
+        <label><input type="checkbox" name="consent" required>
+          <span>Jeg har selv laget en kryptert sikkerhetskopi i Psykologirommet og ønsker å lagre
+          akkurat denne filen på AHA-kontoen. Ingen automatisk synkronisering.</span></label>
+        <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lagre kryptert fil på kontoen</button>
+      </form>
+      <p>Hvis du mister passordet, kan ingen i AHA gjenopprette innholdet. Oppbevar også en egen
+        sikkerhetskopi et trygt sted.</p>
+    </section>
+  </main>
+  <script src="js/ahaPsychologyVaultConfig.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/ahaConfig.js"></script>
+  <script src="js/ahaDb.js"></script>
+  <script src="js/ahaPsychologyEncryptedVault.js"></script>
+  <script src="js/ahaPsychologyEncryptedVaultPage.js"></script>
+  <script src="js/ahaGlobalNav.js"></script>
+</body>
+</html>
