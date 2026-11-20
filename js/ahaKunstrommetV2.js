@@ -118,7 +118,11 @@
     }
     $("kv2-clear-selection").disabled = !selection;
     $("kv2-crop-layer").disabled = !valid;
-    $("kv2-copy-selection").disabled = !valid || project.layers.length >= MAX_LAYERS;
+    const active = currentLayer();
+    const canExtract = valid && !busy && active && active.visible && !active.locked &&
+      project.layers.length < MAX_LAYERS;
+    $("kv2-copy-selection").disabled = !canExtract;
+    $("kv2-cut-selection").disabled = !canExtract;
     $("kv2-export-selection").disabled = !valid;
   }
 
@@ -535,20 +539,20 @@
     refresh();
   }
 
-  function copySelectionToLayer() {
+  function extractSelectionToLayer(removeFromSource) {
     const layer = editableLayer();
     if (!layer || !selection || selection.w < 2 || selection.h < 2) return;
     if (project.layers.length >= MAX_LAYERS) {
       status("Du kan bruke inntil " + MAX_LAYERS + " lag i denne versjonen.");
       return;
     }
-    // The selection is in document coordinates; the original layer bitmap
-    // is in layer-local coordinates. Sampling locally preserves exact RGBA
-    // pixels even after the original layer has been moved.
+    // Marquee coordinates are in document space; layer pixels are local.
+    // Read raw RGBA before clearing the source, preserving semi-transparent
+    // pixels and exact positioning even when the source layer has moved.
     const x = selection.x - layer.x;
     const y = selection.y - layer.y;
-    const pixels = surfaces.get(layer.id).getContext("2d")
-      .getImageData(x, y, selection.w, selection.h);
+    const context = surfaces.get(layer.id).getContext("2d");
+    const pixels = context.getImageData(x, y, selection.w, selection.h);
     let hasPixels = false;
     for (let i = 3; i < pixels.data.length; i += 4) {
       if (pixels.data[i] !== 0) { hasPixels = true; break; }
@@ -558,14 +562,18 @@
       return;
     }
     if (!checkpoint()) return;
-    const copy = createLayer(layer.name + " – utsnitt", layer.kind);
-    Object.assign(copy, { x: layer.x, y: layer.y, opacity: layer.opacity });
-    surfaces.get(copy.id).getContext("2d").putImageData(pixels, x, y);
-    project.layers.splice(project.layers.indexOf(layer) + 1, 0, copy);
-    selected = copy.id;
+    const extracted = createLayer(layer.name + (removeFromSource ? " – klippet" : " – utsnitt"), layer.kind);
+    Object.assign(extracted, { x: layer.x, y: layer.y, opacity: layer.opacity });
+    surfaces.get(extracted.id).getContext("2d").putImageData(pixels, x, y);
+    if (removeFromSource) context.clearRect(x, y, selection.w, selection.h);
+    project.layers.splice(project.layers.indexOf(layer) + 1, 0, extracted);
+    selected = extracted.id;
     changed();
     refresh();
   }
+
+  function copySelectionToLayer() { extractSelectionToLayer(false); }
+  function cutSelectionToLayer() { extractSelectionToLayer(true); }
 
   function duplicateActiveLayer() {
     const layer = editableLayer();
@@ -1085,6 +1093,7 @@
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
     $("kv2-crop-layer").addEventListener("click", cropActiveLayer);
     $("kv2-copy-selection").addEventListener("click", copySelectionToLayer);
+    $("kv2-cut-selection").addEventListener("click", cutSelectionToLayer);
     $("kv2-export-selection").addEventListener("click", exportSelection);
     $("kv2-clear-selection").addEventListener("click", () => {
       selection = null; renderSelection(); status("Markering fjernet");
