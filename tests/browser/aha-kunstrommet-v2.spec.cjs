@@ -1219,6 +1219,74 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(result.inside).toBe(255);
   });
 
+
+  test("brush presets and palette change the active brush without creating an edit", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#kv2-brush-preset")).toHaveValue("normal");
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+    await page.locator("#kv2-brush-preset").selectOption("blyant");
+    await page.locator("#kv2-hand").click();
+    await page.locator("#kv2-swatch-himmel").click();
+    await expect(page.locator("#kv2-color")).toHaveValue("#4a83bf");
+    await expect(page.locator("#kv2-brush")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-swatch-himmel")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-swatch-blekk")).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+    await page.locator("#kv2-brush-preset").selectOption("tusj");
+    await stroke(page);
+    expect(await pixel(page)).toEqual([74, 131, 191, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => pixel(page)).toEqual([74, 131, 191, 255]);
+    await page.locator("#kv2-color").evaluate((input) => {
+      input.value = "#123abc"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await expect(page.locator(".kv2-swatch[aria-pressed='true']")).toHaveCount(0);
+  });
+
+  test("pencil, ink and translucent glaze have different size and opacity", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "20"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-brush-preset").selectOption("blyant");
+    await stroke(page);
+    const nearby = (x, y) => page.locator("#kv2-canvas").evaluate((canvas, p) =>
+      Array.from(canvas.getContext("2d").getImageData(p.x, p.y, 1, 1).data), { x, y });
+    expect(await nearby(612, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await page.locator("#kv2-brush-preset").selectOption("tusj");
+    await stroke(page);
+    expect(await nearby(612, 400)).toEqual([35, 36, 44, 255]);
+    await page.locator("#kv2-undo").click();
+    await page.locator("#kv2-brush-preset").selectOption("lasur");
+    await stroke(page);
+    const glaze = await pixel(page);
+    expect(glaze[0]).toBeGreaterThan(100);
+    expect(glaze[0]).toBeLessThan(255);
+    expect(glaze[3]).toBe(255);
+  });
+
+  test("brush preset does not weaken erasing or restoring a non-destructive mask", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "35"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-brush-preset").selectOption("tusj");
+    await stroke(page);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-brush-preset").selectOption("lasur");
+    // Changing a preset selects the brush; select mask eraser explicitly.
+    await page.locator("#kv2-eraser").click();
+    await stroke(page);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+  });
+
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {
