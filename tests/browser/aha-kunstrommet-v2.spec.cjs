@@ -18,6 +18,43 @@ async function pixel(page) {
     Array.from(node.getContext("2d").getImageData(600, 400, 1, 1).data));
 }
 
+
+async function traceLasso(page, points, id = 970) {
+  await page.locator("#kv2-canvas").evaluate((canvas, data) => {
+    const rect = canvas.getBoundingClientRect();
+    const send = (type, p) => canvas.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, cancelable: true, pointerType: "pen", pointerId: data.id,
+      button: 0, buttons: type === "pointerup" ? 0 : 1,
+      clientX: rect.left + p[0] * rect.width / 1200,
+      clientY: rect.top + p[1] * rect.height / 800
+    }));
+    send("pointerdown", data.points[0]);
+    for (const p of data.points.slice(1)) send("pointermove", p);
+    send("pointerup", data.points[data.points.length - 1]);
+  }, { points, id });
+}
+async function pxAt(page, x, y) {
+  return page.locator("#kv2-canvas").evaluate((canvas, pos) =>
+    Array.from(canvas.getContext("2d").getImageData(pos.x, pos.y, 1, 1).data), { x, y });
+}
+async function jsonBackup(page) {
+  const ready = page.waitForEvent("download");
+  await page.locator("#kv2-json").click();
+  return JSON.parse(await fs.readFile(await (await ready).path(), "utf8"));
+}
+async function pngLayersAt(page, layers, x, y) {
+  return page.evaluate(async ({ layers, x, y }) => {
+    const result = [];
+    for (const layer of layers) {
+      const image = new Image(); image.src = layer.bitmap; await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200; canvas.height = 800;
+      const ctx = canvas.getContext("2d"); ctx.drawImage(image, 0, 0);
+      result.push(Array.from(ctx.getImageData(x, y, 1, 1).data));
+    }
+    return result;
+  }, { layers, x, y });
+}
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
@@ -1073,6 +1110,113 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-fill-selection")).toBeEnabled();
     await page.locator("#kv2-fill-selection").click();
     await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+  });
+
+
+  test("lasso fill and undo respect the polygon, not its bounding box", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#3c75ac"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-lasso").click();
+    await traceLasso(page, [[200, 150], [950, 150], [600, 690], [200, 150]]);
+    await expect(page.locator("#kv2-lasso-overlay")).toBeVisible();
+    await expect(page.locator("#kv2-selection-overlay")).toBeHidden();
+    await page.locator("#kv2-fill-selection").click();
+    expect(await pxAt(page, 600, 300)).toEqual([60, 117, 172, 255]);
+    expect(await pxAt(page, 300, 600)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pxAt(page, 600, 300)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => pxAt(page, 600, 300)).toEqual([60, 117, 172, 255]);
+    await page.locator("#kv2-select").click();
+    await page.locator("#kv2-clear-selection").click();
+    await expect(page.locator("#kv2-lasso-overlay")).toBeHidden();
+    await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
+  });
+
+  test("lasso copy and cut preserve outside pixels and undo works", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#ce5423"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-select").click();
+    await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const b = canvas.getBoundingClientRect();
+      const event = (type, x, y) => canvas.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "mouse", pointerId: 984, button: 0,
+        buttons: type === "pointerup" ? 0 : 1,
+        clientX: b.left + x * b.width / 1200, clientY: b.top + y * b.height / 800
+      }));
+      event("pointerdown", 200, 150); event("pointermove", 950, 690);
+      event("pointerup", 950, 690);
+    });
+    await page.locator("#kv2-fill-selection").click();
+    await page.locator("#kv2-lasso").click();
+    await traceLasso(page, [[200, 150], [950, 150], [600, 690], [200, 150]], 985);
+    await page.locator("#kv2-copy-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    let image = await jsonBackup(page);
+    expect((await pngLayersAt(page, image.layers, 300, 600))[1][3]).toBe(0);
+    expect((await pngLayersAt(page, image.layers, 600, 300))[1]).toEqual([206, 84, 35, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    await page.locator("#kv2-cut-selection").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    image = await jsonBackup(page);
+    expect((await pngLayersAt(page, image.layers, 600, 300))[0][3]).toBe(0);
+    expect((await pngLayersAt(page, image.layers, 300, 600))[0]).toEqual([206, 84, 35, 255]);
+    expect((await pngLayersAt(page, image.layers, 600, 300))[1]).toEqual([206, 84, 35, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+  });
+
+  test("lasso rejects tiny areas, clips brush and mask, and PNG corners are transparent", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-lasso").click();
+    await traceLasso(page, [[300, 300], [301, 301], [301, 300]], 986);
+    await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
+    await expect(page.locator("#kv2-status")).toHaveText("Ingen markering");
+    await traceLasso(page, [[200, 150], [950, 150], [600, 690], [200, 150]], 987);
+    await page.locator("#kv2-color").evaluate((el) => {
+      el.value = "#bd391f"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.locator("#kv2-size").evaluate((el) => {
+      el.value = "60"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const tap = async (x, y, id) => page.locator("#kv2-canvas").evaluate((canvas, pos) => {
+      const b = canvas.getBoundingClientRect();
+      const send = (type) => canvas.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "pen", pointerId: pos.id,
+        button: 0, buttons: type === "pointerup" ? 0 : 1, pressure: .5,
+        clientX: b.left + pos.x * b.width / 1200,
+        clientY: b.top + pos.y * b.height / 800
+      }));
+      send("pointerdown"); send("pointerup");
+    }, { x, y, id });
+    await tap(600, 300, 988);
+    await tap(300, 600, 989);
+    expect(await pxAt(page, 600, 300)).toEqual([189, 57, 31, 255]);
+    expect(await pxAt(page, 300, 600)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-mask-add").click();
+    await tap(600, 300, 990);
+    expect(await pxAt(page, 600, 300)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-mask-edit").click();
+    const pending = page.waitForEvent("download");
+    await page.locator("#kv2-export-selection").click();
+    const data = await fs.readFile(await (await pending).path());
+    const result = await page.evaluate(async (b64) => {
+      const img = new Image(); img.src = "data:image/png;base64," + b64;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width; canvas.height = img.height;
+      const context = canvas.getContext("2d"); context.drawImage(img, 0, 0);
+      const alpha = (x, y) => context.getImageData(x, y, 1, 1).data[3];
+      return { w: img.width, corner: alpha(5, img.height - 5), inside: alpha(500, 50) };
+    }, data.toString("base64"));
+    expect(result.w).toBeGreaterThan(700);
+    expect(result.corner).toBe(0);
+    expect(result.inside).toBe(255);
   });
 
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {

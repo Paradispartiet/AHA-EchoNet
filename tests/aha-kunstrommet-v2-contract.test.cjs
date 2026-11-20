@@ -64,6 +64,15 @@ function createNode(tag = "div") {
     appendChild(item) { this.children.push(item); },
     replaceChildren(...items) { this.children = items; },
     setAttribute(name, value) { this.attributes[name] = value; },
+    removeAttribute(name) { delete this.attributes[name]; },
+    toggleAttribute(name, force) {
+      // SVG supports reflected attributes, unlike the earlier bare fake DOM.
+      const active = force === undefined
+        ? !Object.prototype.hasOwnProperty.call(this.attributes, name) : !!force;
+      if (active) this.setAttribute(name, "");
+      else this.removeAttribute(name);
+      return active;
+    },
     getBoundingClientRect() { return { left: 0, top: 0, width: 1200, height: 800 }; },
     getContext() { return this.context || (this.context = canvasContext()); },
     toDataURL() { return "data:image/png;base64,QUJDRA=="; },
