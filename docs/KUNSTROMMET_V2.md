@@ -122,3 +122,10 @@ Nettlesertestene bekrefter at originalens PNG-bitmap bevares, at kopien bare vis
 Operasjonen krever en gyldig markering, et synlig og ulåst aktivt lag, minst én synlig piksel i markeringen og kapasitet under åtte-lagsgrensen. Ved tom markering endres ikke prosjektet eller angrehistorikken. Klippingen er ett angre-/gjør om-steg og støttes av eksisterende lokal lagring og redigerbar JSON-eksport. V1 og Galleri berøres ikke.
 
 **Påkrevd verifisering før merge:** målrettede Playwright-tester i Chromium og iPad WebKit for transparente hull i kildelaget, uendret innhold utenfor markeringen, lagposisjon etter flytting, kopi kontra klipp, angre/gjør om, lås og åtte lag. Kontroller også samlet AHA-regresjon og nødvendige lokale kontrakter. Ingen ny fysisk iPad-verifisering påstås: #1058 forblir åpen.
+
+
+## Fyll markering med farge (utviklingskandidat)
+
+Den eksisterende rektangelmarkeringen kan fylles med valgt penselfarge **bare på aktivt, synlig og ulåst lag**. Det kreves en gyldig markering; ingen fargelegging av hele lerretet ved feiltrykk. Fyllingen beregnes i lagets lokale koordinater slik at det også fungerer på flyttede lag, klippes til lagets 1200 × 800-bitmap, påvirker ingen andre lag og kan angres/gjøres om i ett steg. Ingen skyfunksjoner, ny lagringsstruktur eller endring i Galleri.
+
+To målrettede Playwright-tester dekker riktig farge, uendret innhold utenfor markeringen og på andre lag, enkelt angresteg, flyttet lag samt sperre for låst lag. Fysisk iPad/Safari/Apple Pencil-test er fortsatt åpen i #1058; automatisert WebKit er ikke fysisk enhetstest.

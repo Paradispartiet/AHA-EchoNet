@@ -123,6 +123,7 @@
       project.layers.length < MAX_LAYERS;
     $("kv2-copy-selection").disabled = !canExtract;
     $("kv2-cut-selection").disabled = !canExtract;
+    $("kv2-fill-selection").disabled = !(valid && active && active.visible && !active.locked);
     $("kv2-export-selection").disabled = !valid;
   }
 
@@ -515,6 +516,32 @@
       return null;
     }
     return layer;
+  }
+
+  function fillSelection() {
+    const layer = editableLayer();
+    if (!layer || !selection || selection.w < 2 || selection.h < 2) return;
+    // The marquee is in document coordinates, while raster layer pixels
+    // are local. Intersect the two rectangles so moved layers behave
+    // correctly and an off-canvas selection never adds an undo entry.
+    const x0 = Math.max(0, selection.x - layer.x);
+    const y0 = Math.max(0, selection.y - layer.y);
+    const x1 = Math.min(WIDTH, selection.x + selection.w - layer.x);
+    const y1 = Math.min(HEIGHT, selection.y + selection.h - layer.y);
+    if (x1 <= x0 || y1 <= y0) {
+      status("Markeringen er utenfor valgt lag.");
+      return;
+    }
+    if (!checkpoint()) return;
+    const context = surfaces.get(layer.id).getContext("2d");
+    context.save();
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = $("kv2-color").value;
+    context.fillRect(x0, y0, x1 - x0, y1 - y0);
+    context.restore();
+    changed();
+    refresh();
   }
 
   function cropActiveLayer() {
@@ -1095,6 +1122,7 @@
     $("kv2-crop-layer").addEventListener("click", cropActiveLayer);
     $("kv2-copy-selection").addEventListener("click", copySelectionToLayer);
     $("kv2-cut-selection").addEventListener("click", cutSelectionToLayer);
+    $("kv2-fill-selection").addEventListener("click", fillSelection);
     $("kv2-export-selection").addEventListener("click", exportSelection);
     $("kv2-clear-selection").addEventListener("click", () => {
       selection = null; renderSelection(); status("Markering fjernet");
