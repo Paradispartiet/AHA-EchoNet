@@ -32,6 +32,10 @@
   let undoStack = [];
   let redoStack = [];
   const surfaces = new Map();
+  // Masks are separate, editable alpha images; a layer's original bitmap stays intact.
+  const masks = new Map();
+  let maskEditing = false;
+  const maskedComposite = imageCanvas();
 
   function uid() {
     return global.crypto && global.crypto.randomUUID
@@ -66,6 +70,8 @@
   function newProject() {
     const now = new Date().toISOString();
     surfaces.clear();
+    masks.clear();
+    maskEditing = false;
     selection = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
@@ -99,7 +105,21 @@
       const bitmap = surfaces.get(layer.id);
       if (!bitmap) return;
       view.globalAlpha = layer.opacity;
-      view.drawImage(bitmap, layer.x, layer.y);
+      const mask = layer.maskEnabled !== false && masks.get(layer.id);
+      if (!mask) {
+        view.drawImage(bitmap, layer.x, layer.y);
+      } else {
+        const context = maskedComposite.getContext("2d");
+        context.save();
+        context.globalAlpha = 1;
+        context.globalCompositeOperation = "source-over";
+        context.clearRect(0, 0, WIDTH, HEIGHT);
+        context.drawImage(bitmap, 0, 0);
+        context.globalCompositeOperation = "destination-in";
+        context.drawImage(mask, 0, 0);
+        context.restore();
+        view.drawImage(maskedComposite, layer.x, layer.y);
+      }
     });
     view.restore();
   }
@@ -135,16 +155,17 @@
   }
 
   function paintOnLayer(layer, a, b) {
-    const context = surfaces.get(layer.id).getContext("2d");
+    const targetMask = maskEditing ? masks.get(layer.id) : null;
+    const context = (targetMask || surfaces.get(layer.id)).getContext("2d");
     if (!selection || selection.w < 2 || selection.h < 2) {
-      drawSegment(context, a, b);
+      drawSegment(context, a, b, !!targetMask);
       return;
     }
     context.save();
     context.beginPath();
     context.rect(selection.x - layer.x, selection.y - layer.y, selection.w, selection.h);
     context.clip();
-    drawSegment(context, a, b);
+    drawSegment(context, a, b, !!targetMask);
     context.restore();
   }
 
@@ -220,7 +241,13 @@
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         x: layer.x, y: layer.y,
         bitmap: surface.toDataURL("image/png"),
-        ...(pixelFixups ? { pixelFixups } : {})
+        ...(pixelFixups ? { pixelFixups } : {}),
+        ...(masks.has(layer.id) ? {
+          maskBitmap: masks.get(layer.id).toDataURL("image/png"),
+          maskEnabled: layer.maskEnabled !== false,
+          ...(encodeEdgePixels(masks.get(layer.id))
+            ? { maskPixelFixups: encodeEdgePixels(masks.get(layer.id)) } : {})
+        } : {})
       };
     });
   }
@@ -257,13 +284,27 @@
     });
   }
 
-  async function installLayers(layers) {
-    const loaded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
-    const next = new Map();
-    layers.forEach((layer, index) => next.set(layer.id, loaded[index]));
+  async function decodeLayerBitmaps(layers) {
+    // Decode all layer and mask data before mutating the open project.
+    return Promise.all(layers.map(async (layer) => ({
+      bitmap: await decodePng(layer.bitmap, layer.pixelFixups),
+      mask: layer.maskBitmap ? await decodePng(layer.maskBitmap, layer.maskPixelFixups) : null
+    })));
+  }
+
+  function installDecodedLayers(layers, decoded) {
     surfaces.clear();
-    next.forEach((value, key) => surfaces.set(key, value));
-    project.layers = layers.map(({ bitmap, pixelFixups, ...meta }) => meta);
+    masks.clear();
+    layers.forEach((layer, index) => {
+      surfaces.set(layer.id, decoded[index].bitmap);
+      if (decoded[index].mask) masks.set(layer.id, decoded[index].mask);
+    });
+    project.layers = layers.map(({ bitmap, pixelFixups, maskBitmap, maskPixelFixups, ...meta }) => meta);
+  }
+
+  async function installLayers(layers) {
+    const decoded = await decodeLayerBitmaps(layers);
+    installDecodedLayers(layers, decoded);
   }
 
   async function historyStep(from, to) {
@@ -278,6 +319,7 @@
       if (to.length > MAX_HISTORY) to.shift();
       selected = project.layers.some((layer) => layer.id === target.selected)
         ? target.selected : project.layers[project.layers.length - 1].id;
+      maskEditing = maskEditing && masks.has(selected);
       changed();
       refresh();
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
@@ -299,8 +341,9 @@
     project.layers.slice().reverse().forEach((layer) => {
       const row = document.createElement("div");
       row.className = "kv2-layer" + (selected === layer.id ? " kv2-selected" : "");
-      const choose = makeButton(layer.name, () => {
+      const choose = makeButton(layer.name + (masks.has(layer.id) ? " · maske" : ""), () => {
         selected = layer.id;
+        maskEditing = false;
         renderLayerList();
         updateLayerControls();
         renderSelection();
@@ -334,6 +377,24 @@
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
     $("kv2-remove-layer").disabled = project.layers.length <= 1;
+    updateMaskControls();
+  }
+
+  function updateMaskControls() {
+    const layer = currentLayer();
+    const hasMask = !!layer && masks.has(layer.id);
+    const editable = !!layer && layer.visible && !layer.locked && !busy;
+    if (!hasMask) maskEditing = false;
+    $("kv2-mask-add").disabled = !editable || hasMask;
+    $("kv2-mask-edit").disabled = !editable || !hasMask;
+    $("kv2-mask-edit").setAttribute("aria-pressed", String(hasMask && maskEditing));
+    $("kv2-mask-toggle").disabled = !hasMask || busy;
+    $("kv2-mask-toggle").textContent = layer?.maskEnabled === false ? "Aktiver maske" : "Skru av maske";
+    $("kv2-mask-remove").disabled = !editable || !hasMask;
+    $("kv2-mask-status").textContent = !hasMask
+      ? "Ingen maske på valgt lag"
+      : "Lagmaske: " + (layer.maskEnabled === false ? "av" : "på") +
+        (maskEditing ? " · Du redigerer masken" : " · Du redigerer bildet");
   }
 
   function refresh() {
@@ -386,12 +447,12 @@
     refresh();
   }
 
-  function drawSegment(context, a, b) {
+  function drawSegment(context, a, b, onMask) {
     const size = Number($("kv2-size").value) || 6;
     context.save();
     context.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
-    context.strokeStyle = $("kv2-color").value;
-    context.fillStyle = tool === "eraser" ? "#000000" : $("kv2-color").value;
+    context.strokeStyle = onMask ? "#ffffff" : $("kv2-color").value;
+    context.fillStyle = tool === "eraser" ? "#000000" : onMask ? "#ffffff" : $("kv2-color").value;
     const first = Number.isFinite(a.pressureFactor) ? a.pressureFactor : 1;
     const last = b && Number.isFinite(b.pressureFactor) ? b.pressureFactor : first;
     context.lineWidth = tool === "eraser" ? size * 2 : size * (first + last) / 2;
@@ -508,6 +569,52 @@
     }
   }
 
+  function addLayerMask() {
+    const layer = editableLayer();
+    if (!layer || masks.has(layer.id)) return;
+    if (!checkpoint()) return;
+    const mask = imageCanvas();
+    const context = mask.getContext("2d");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    masks.set(layer.id, mask);
+    layer.maskEnabled = true;
+    maskEditing = true;
+    tool = "eraser"; // Viskelær skjuler i masken; pensel viser innholdet igjen.
+    changed();
+    refresh();
+  }
+
+  function toggleMaskEdit() {
+    const layer = currentLayer();
+    if (busy || !layer || !layer.visible || layer.locked || !masks.has(layer.id)) return;
+    maskEditing = !maskEditing;
+    if (maskEditing && tool !== "brush" && tool !== "eraser") tool = "eraser";
+    refresh();
+    status(maskEditing ? "Rediger maske: Viskelær skjuler, Pensel viser." : "Redigerer lagets originalpiksler.");
+  }
+
+  function toggleLayerMask() {
+    const layer = currentLayer();
+    if (busy || !layer || !masks.has(layer.id)) return;
+    if (!checkpoint()) return;
+    layer.maskEnabled = layer.maskEnabled === false;
+    if (!layer.maskEnabled) maskEditing = false;
+    changed();
+    refresh();
+  }
+
+  function removeLayerMask() {
+    const layer = editableLayer();
+    if (!layer || !masks.has(layer.id)) return;
+    if (!checkpoint()) return;
+    masks.delete(layer.id);
+    delete layer.maskEnabled;
+    maskEditing = false;
+    changed();
+    refresh();
+  }
+
   function editableLayer() {
     const layer = currentLayer();
     if (busy || !layer || layer.locked || !layer.visible) {
@@ -566,6 +673,12 @@
     const extracted = createLayer(layer.name + (removeFromSource ? " – klippet" : " – utsnitt"), layer.kind);
     Object.assign(extracted, { x: layer.x, y: layer.y, opacity: layer.opacity });
     surfaces.get(extracted.id).getContext("2d").putImageData(pixels, x, y);
+    if (masks.has(layer.id)) {
+      const maskCopy = imageCanvas();
+      maskCopy.getContext("2d").drawImage(masks.get(layer.id), 0, 0);
+      masks.set(extracted.id, maskCopy);
+      extracted.maskEnabled = layer.maskEnabled !== false;
+    }
     if (removeFromSource) context.clearRect(x, y, selection.w, selection.h);
     project.layers.splice(project.layers.indexOf(layer) + 1, 0, extracted);
     selected = extracted.id;
@@ -587,6 +700,12 @@
     Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity, x: layer.x, y: layer.y });
     const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
+    if (masks.has(layer.id)) {
+      const maskCopy = imageCanvas();
+      maskCopy.getContext("2d").drawImage(masks.get(layer.id), 0, 0);
+      masks.set(clone.id, maskCopy);
+      clone.maskEnabled = layer.maskEnabled !== false;
+    }
     project.layers.splice(project.layers.indexOf(layer) + 1, 0, clone);
     selected = clone.id;
     changed(); refresh();
@@ -611,8 +730,23 @@
     ctx.translate(layer.x, layer.y);
     ctx.drawImage(original, -WIDTH / 2, -HEIGHT / 2);
     ctx.restore();
+    let transformedMask = null;
+    if (masks.has(layer.id)) {
+      transformedMask = imageCanvas();
+      const mc = transformedMask.getContext("2d");
+      mc.save();
+      mc.translate(-layer.x, -layer.y);
+      mc.translate(WIDTH / 2, HEIGHT / 2);
+      if (mode === "flip") mc.scale(-1, 1);
+      if (mode === "rotate") mc.rotate(Math.PI / 2);
+      if (scale !== 1) mc.scale(scale, scale);
+      mc.translate(layer.x, layer.y);
+      mc.drawImage(masks.get(layer.id), -WIDTH / 2, -HEIGHT / 2);
+      mc.restore();
+    }
     checkpoint();
     surfaces.set(layer.id, output);
+    if (transformedMask) masks.set(layer.id, transformedMask);
     changed(); refresh();
   }
 
@@ -672,6 +806,8 @@
     checkpoint();
     const index = project.layers.findIndex((layer) => layer.id === selected);
     surfaces.delete(selected);
+    masks.delete(selected);
+    maskEditing = false;
     project.layers.splice(index, 1);
     selected = project.layers[Math.min(index, project.layers.length - 1)].id;
     changed(); refresh();
@@ -786,6 +922,15 @@
     finally { busy = false; }
   }
 
+  function validateMaskBitmap(value) {
+    if (typeof value !== "string" ||
+        !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(value) ||
+        value.length > MAX_PROJECT_BYTES) {
+      throw new Error("Ugyldig lagmaske i prosjektfilen.");
+    }
+    return value;
+  }
+
   function validateLayer(input) {
     if (!input || typeof input !== "object" || typeof input.bitmap !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(input.bitmap)) {
@@ -799,7 +944,12 @@
       x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
       bitmap: input.bitmap,
-      ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {})
+      ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {}),
+      ...(Object.prototype.hasOwnProperty.call(input, "maskBitmap") ? {
+        maskBitmap: validateMaskBitmap(input.maskBitmap),
+        maskEnabled: input.maskEnabled !== false,
+        ...(typeof input.maskPixelFixups === "string" ? { maskPixelFixups: input.maskPixelFixups } : {})
+      } : {})
     };
   }
 
@@ -860,19 +1010,24 @@
       throw new Error("Prosjektet er for stort.");
     }
     // Decode all imported images before installing the new document.
-    const decoded = await Promise.all(layers.map((layer) => decodePng(layer.bitmap, layer.pixelFixups)));
+    const decoded = await decodeLayerBitmaps(layers);
     const now = new Date().toISOString();
     const next = {
       id: sameRecord ? data.id : uid(),
       owner: owner(), title: String(data.title || "").slice(0, 120),
       note: String(data.note || "").slice(0, 4000),
-      layers: layers.map(({ bitmap, pixelFixups, ...meta }) => meta),
+      layers: layers.map(({ bitmap, pixelFixups, maskBitmap, maskPixelFixups, ...meta }) => meta),
       created_at: sameRecord ? data.created_at : now,
       updated_at: now, local_only: true, shared: false, analyzed_image: false
     };
     surfaces.clear();
+    masks.clear();
     selection = null;
-    layers.forEach((layer, i) => surfaces.set(layer.id, decoded[i]));
+    maskEditing = false;
+    layers.forEach((layer, i) => {
+      surfaces.set(layer.id, decoded[i].bitmap);
+      if (decoded[i].mask) masks.set(layer.id, decoded[i].mask);
+    });
     project = next;
     selected = project.layers[project.layers.length - 1].id;
     $("kv2-title").value = project.title;
@@ -903,7 +1058,12 @@
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
           x: Number.isFinite(layer.x) ? layer.x : 0,
           y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
-          ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {})
+          ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {}),
+          ...(typeof layer.maskBitmap === "string" ? {
+            maskBitmap: layer.maskBitmap,
+            maskEnabled: layer.maskEnabled !== false,
+            ...(typeof layer.maskPixelFixups === "string" ? { maskPixelFixups: layer.maskPixelFixups } : {})
+          } : {})
         })),
         id: uid(), owner: owner(),
         title: (String(saved.title || "Kunstverk").slice(0, 105) + " – kopi").slice(0, 120),
@@ -1092,6 +1252,10 @@
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
+    $("kv2-mask-add").addEventListener("click", addLayerMask);
+    $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
+    $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
+    $("kv2-mask-remove").addEventListener("click", removeLayerMask);
     $("kv2-crop-layer").addEventListener("click", cropActiveLayer);
     $("kv2-copy-selection").addEventListener("click", copySelectionToLayer);
     $("kv2-cut-selection").addEventListener("click", cutSelectionToLayer);
