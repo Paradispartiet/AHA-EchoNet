@@ -16,6 +16,27 @@
   const DB_NAME = "aha_kunstrommet_v2";
   const STORE = "projects";
   const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+
+  // Presets affect drawing only; no project-format or database migration.
+  const BRUSH_PRESETS = Object.freeze({
+    normal: { width: 1, opacity: 1 },
+    blyant: { width: 0.5, opacity: 1 },
+    tusj: { width: 1.6, opacity: 1 },
+    lasur: { width: 2, opacity: 0.35 }
+  });
+  const PALETTE = Object.freeze([
+    ["blekk", "#23242c"], ["skog", "#2c6557"],
+    ["himmel", "#4a83bf"], ["korall", "#d15c4d"],
+    ["oker", "#be8e3d"], ["lavendel", "#846eac"],
+    ["krem", "#f4e8d3"], ["hvit", "#ffffff"]
+  ]);
+  function refreshPalette() {
+    const color = $("kv2-color").value.toLowerCase();
+    PALETTE.forEach(([name, value]) => {
+      $("kv2-swatch-" + name).setAttribute("aria-pressed", String(value === color));
+    });
+  }
+
   const viewport = $("kv2-paper");
   let zoomIndex = 2;
   let dbPromise = null;
@@ -484,6 +505,7 @@
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
+    refreshPalette();
     $("kv2-zoom-value").textContent = Math.round(ZOOM_LEVELS[zoomIndex] * 100) + "%";
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
@@ -528,13 +550,18 @@
 
   function drawSegment(context, a, b, onMask) {
     const size = Number($("kv2-size").value) || 6;
+    // Eraser and white mask-restoring strokes always retain original, opaque
+    // behavior. Only ordinary bitmap brush strokes use the chosen preset.
+    const chosen = BRUSH_PRESETS[$("kv2-brush-preset").value] || BRUSH_PRESETS.normal;
+    const preset = tool === "brush" && !onMask ? chosen : BRUSH_PRESETS.normal;
     context.save();
     context.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
+    context.globalAlpha = preset.opacity;
     context.strokeStyle = onMask ? "#ffffff" : $("kv2-color").value;
     context.fillStyle = tool === "eraser" ? "#000000" : onMask ? "#ffffff" : $("kv2-color").value;
     const first = Number.isFinite(a.pressureFactor) ? a.pressureFactor : 1;
     const last = b && Number.isFinite(b.pressureFactor) ? b.pressureFactor : first;
-    context.lineWidth = tool === "eraser" ? size * 2 : size * (first + last) / 2;
+    context.lineWidth = tool === "eraser" ? size * 2 : size * (first + last) / 2 * preset.width;
     context.lineJoin = "round";
     context.lineCap = "round";
     context.beginPath();
@@ -1436,6 +1463,17 @@
     $("kv2-title").addEventListener("input", changed);
     $("kv2-note").addEventListener("input", changed);
     $("kv2-color").addEventListener("input", () => { tool = "brush"; refresh(); });
+    $("kv2-brush-preset").addEventListener("change", () => {
+      // Changing brush settings doesn't create an art edit or undo step.
+      tool = "brush"; refresh();
+    });
+    PALETTE.forEach(([name, color]) => {
+      $("kv2-swatch-" + name).addEventListener("click", () => {
+        $("kv2-color").value = color;
+        tool = "brush";
+        refresh();
+      });
+    });
     $("kv2-size").addEventListener("input", () => { $("kv2-size-value").textContent = $("kv2-size").value; });
     $("kv2-rename").addEventListener("change", () => {
       const layer = currentLayer();

@@ -146,3 +146,12 @@ Målrettede tester kontrollerer korrekt farge, uendret innhold utenfor utvalget 
 «Frihåndsmarkering (lasso)» tegner en lukket polygon med mus, finger eller penn. Konturen blir ikke en del av kunstverket. Markeringen er midlertidig og deles ikke med AHA, og eldre prosjektfiler fungerer uendret. Punktantallet er begrenset til 2048; svært små former forkastes.
 
 Lasso bruker dokumentkoordinater ved zoom og flyttede lag. Pensel, viskelær og lagmaskepensel klippes etter formen. Fargefylling og beskjæring bruker polygonet. Kopier/Klipp markering til nytt lag bruker eksakte skannlinjegrenser: piksler utenfor polygonet blir aldri kopiert eller slettet, heller ikke innenfor omsluttende rektangel. Eksport av utsnitt gir gjennomsiktig PNG utenfor polygonet. Operasjoner beholder eksisterende angre/gjør om, lagring og laggrensen på åtte lag. Ingen ny database, nettverk, app eller Galleri-endring. Fysisk iPad og Apple Pencil gjenstår i #1058.
+
+
+## Penseltyper og hurtigpalett
+
+Den samme penselmotoren har fire tegneinnstillinger: **Vanlig** (opasitet 100 %, standard bredde), **Blyant** (50 % bredde, opasitet 100 %), **Tusj** (160 % bredde, opasitet 100 %) og **Lasur** (200 % bredde, opasitet 35 %). Størrelsesglideren og Apple Pencil-trykket fungerer fortsatt. Opasitet gjelder bare maling på bildet: viskelær og pensel på lagmasken beholder sin fulle effekt, så eksisterende masker ikke får uventet gjennomsiktighet.
+
+Hurtigpaletten tilbyr åtte navngitte farger og oppdaterer den vanlige fargevelgeren. Andre farger kan fortsatt velges fritt. Å velge pensel eller farge oppretter ikke angrepunkter, endrer ikke kunstverket, overfører ikke data og lagres ikke som nye prosjektfelter. Når man begynner å tegne, blir pikslene fortsatt redigert og lagret via den eksisterende lokale lagmotoren. Masker, lasso, Galleri, V1, sikkerhetskopier og eksisterende prosjektfiler er uendret.
+
+Tre nye Playwright-scenarier tester penselvalg og angre/gjør om, ulik bredde/opasitet, samt at maskemaling og viskelær ikke påvirkes av penselinnstillingen, i både Chromium og simulert iPad WebKit. Fysisk iPad/Apple Pencil-kontroll ligger fortsatt i #1058.

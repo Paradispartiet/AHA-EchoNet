@@ -101,3 +101,20 @@
 .kv2-lasso-overlay path { fill: #338fe91b; stroke: #1d6bba; stroke-width: 2;
   stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .kv2-lasso-overlay[hidden] { display: none; }
+
+/* Compact, accessible brush settings and eight local-only color shortcuts. */
+.kv2-toolbar select { font: inherit; color: #1f2c2b; background: #fff;
+  border: 1px solid #b9c1bd; border-radius: 9px; padding: 7px 9px; }
+.kv2-toolbar select:focus-visible { outline: 3px solid #4874a8; outline-offset: 2px; }
+.kv2-palette { display: inline-flex; flex-wrap: wrap; gap: 6px;
+  align-items: center; padding: 3px; }
+.kv2-toolbar .kv2-swatch { width: 31px; height: 31px; padding: 2px;
+  border-radius: 50%; background: var(--kv2-swatch);
+  border: 2px solid #9caaa2; box-shadow: 0 0 0 2px #fff inset; }
+.kv2-toolbar .kv2-swatch[aria-pressed="true"] {
+  background: var(--kv2-swatch); color: inherit;
+  outline: 2px solid #304d43; outline-offset: 2px; border-color: #fff; }
+@media (max-width: 680px) {
+  .kv2-palette { width: 100%; }
+  .kv2-toolbar .kv2-swatch { width: 36px; height: 36px; }
+}
