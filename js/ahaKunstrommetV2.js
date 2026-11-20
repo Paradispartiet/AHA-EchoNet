@@ -197,7 +197,9 @@
     const lasso = lassoActive();
     overlay.hidden = !valid || lasso;
     const lassoOverlay = $("kv2-lasso-overlay");
-    lassoOverlay.hidden = !lasso || selection.points.length < 2;
+    // SVGElement.hidden is not consistently reflected into the HTML hidden attribute.
+    // Explicitly toggle the attribute for both Chromium and iPad WebKit.
+    lassoOverlay.toggleAttribute("hidden", !lasso || selection.points.length < 2);
     if (lasso) {
       const path = selection.points.map((p, i) =>
         (i ? "L" : "M") + p.x.toFixed(2) + " " + p.y.toFixed(2)).join(" ");
