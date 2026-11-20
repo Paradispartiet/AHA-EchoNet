@@ -119,7 +119,7 @@
     $("kv2-clear-selection").disabled = !selection;
     $("kv2-crop-layer").disabled = !valid;
     const active = currentLayer();
-    const canExtract = valid && !busy && active && active.visible && !active.locked &&
+    const canExtract = valid && active && active.visible && !active.locked &&
       project.layers.length < MAX_LAYERS;
     $("kv2-copy-selection").disabled = !canExtract;
     $("kv2-cut-selection").disabled = !canExtract;
@@ -303,6 +303,7 @@
         selected = layer.id;
         renderLayerList();
         updateLayerControls();
+        renderSelection();
       }, "Velg " + layer.name);
       choose.className = "kv2-layer-name";
       choose.setAttribute("aria-pressed", String(selected === layer.id));
