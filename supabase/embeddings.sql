@@ -55,7 +55,7 @@ create policy "aha_insight_embeddings_delete_own"
 -- Bruker security invoker så RLS gjelder; profil-filteret er
 -- defensivt og dobbelt-låst gjennom auth.uid().
 create or replace function public.aha_match_insights(
-  query_embedding vector(1024),
+  query_embedding public.vector(1024),
   match_count int default 10,
   similarity_threshold float default 0.5,
   filter_subject_id text default null,
@@ -72,19 +72,22 @@ returns table (
 language sql
 stable
 security invoker
-as $$
+-- Empty path: all non-pg_catalog references in this function are schema-qualified.
+-- The pgvector extension is currently installed in public on AHA DB-03.
+set search_path = ''
+as $
   select
     e.id,
     e.subject_id,
     e.theme_id,
     e.summary,
-    1 - (e.embedding <=> query_embedding) as similarity,
+    1 - (e.embedding OPERATOR(public.<=>) query_embedding) as similarity,
     e.created_at
   from public.aha_insight_embeddings e
   where e.profile_id = auth.uid()
     and (filter_subject_id is null or e.subject_id = filter_subject_id)
     and (filter_theme_id is null or e.theme_id = filter_theme_id)
-    and 1 - (e.embedding <=> query_embedding) >= similarity_threshold
-  order by e.embedding <=> query_embedding asc
+    and 1 - (e.embedding OPERATOR(public.<=>) query_embedding) >= similarity_threshold
+  order by e.embedding OPERATOR(public.<=>) query_embedding asc
   limit greatest(match_count, 1);
 $$;
