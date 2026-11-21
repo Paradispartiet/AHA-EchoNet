@@ -138,6 +138,27 @@
             <option value="screen">Skjerm – lysere</option>
           </select>
           <p class="kv2-tip">Blandingsmodus påvirker bare hvordan dette laget vises over lagene under. Originalpikslene endres ikke. Valget kan angres og lagres.</p>
+
+          <fieldset class="kv2-adjustments" aria-label="Ikke-destruktive bildejusteringer">
+            <legend>Bildejustering på aktivt lag</legend>
+            <label for="kv2-adjust-brightness">Lysstyrke</label>
+            <div class="kv2-slider">
+              <input id="kv2-adjust-brightness" type="range" min="50" max="150" step="1" value="100" />
+              <output id="kv2-adjust-brightness-value" for="kv2-adjust-brightness">100%</output>
+            </div>
+            <label for="kv2-adjust-contrast">Kontrast</label>
+            <div class="kv2-slider">
+              <input id="kv2-adjust-contrast" type="range" min="50" max="150" step="1" value="100" />
+              <output id="kv2-adjust-contrast-value" for="kv2-adjust-contrast">100%</output>
+            </div>
+            <label for="kv2-adjust-saturation">Fargemetning</label>
+            <div class="kv2-slider">
+              <input id="kv2-adjust-saturation" type="range" min="0" max="200" step="1" value="100" />
+              <output id="kv2-adjust-saturation-value" for="kv2-adjust-saturation">100%</output>
+            </div>
+            <button type="button" id="kv2-adjust-reset" disabled>Nullstill bildejusteringene</button>
+            <p class="kv2-tip">Slipp glideren for å anvende justeringen. Originalbildet og lagmasken beholdes. Hver endring kan angres.</p>
+          </fieldset>
           <label for="kv2-opacity">Gjennomsiktighet / opasitet</label>
           <div class="kv2-slider">
             <input id="kv2-opacity" type="range" min="0" max="100" step="1" value="100" />

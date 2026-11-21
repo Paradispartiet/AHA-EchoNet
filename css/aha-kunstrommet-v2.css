@@ -125,3 +125,13 @@
   background: #fff; color: #1f2c2b; font: inherit; }
 #kv2-blend-mode:focus-visible { outline: 3px solid #4874a8; outline-offset: 2px; }
 #kv2-blend-mode:disabled { opacity: .55; }
+
+/* Adjustment sliders stay in the existing layer sidebar, also on small iPads. */
+.kv2-adjustments { box-sizing: border-box; min-width: 0; padding: 12px;
+  margin: 14px 0; border: 1px solid #d0dcd3; border-radius: 12px; background: #fafbf9; }
+.kv2-adjustments legend { padding: 0 5px; font-weight: 650; font-size: .94rem; }
+.kv2-adjustments label { margin-top: 9px; }
+.kv2-adjustments .kv2-slider { gap: 10px; }
+.kv2-adjustments input[type="range"] { width: 100%; min-width: 0; }
+.kv2-adjustments output { min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+.kv2-adjustments button { margin-top: 12px; font-size: .86rem; width: 100%; }
