@@ -48,6 +48,7 @@
           <button id="kv2-ellipse" type="button" aria-pressed="false">Ellipse</button>
           <button id="kv2-line" type="button" aria-pressed="false">Linje</button>
           <button id="kv2-arrow" type="button" aria-pressed="false">Pil</button>
+          <button id="kv2-text" type="button" aria-pressed="false">Tekst</button>
           <label for="kv2-shape-style">Form
             <select id="kv2-shape-style" aria-label="Fyll eller omriss">
               <option value="fill">Fylt</option>
@@ -85,6 +86,31 @@
           </div>
         </div>
 
+        <div class="kv2-text-panel" id="kv2-text-panel" role="group" aria-label="Tekst på bilde" hidden>
+          <label for="kv2-text-content">Tekst (inntil fem linjer)</label>
+          <textarea id="kv2-text-content" rows="2" maxlength="280" placeholder="Skriv en tittel eller en kort bildetekst"></textarea>
+          <div class="kv2-text-options">
+            <label for="kv2-text-font">Skrifttype
+              <select id="kv2-text-font">
+                <option value="sans">Sans-serif</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Monospace</option>
+              </select>
+            </label>
+            <label for="kv2-text-size">Skriftstørrelse
+              <input id="kv2-text-size" type="number" min="14" max="120" step="1" value="48" />
+            </label>
+            <label class="kv2-text-bold-label" for="kv2-text-bold">
+              <input id="kv2-text-bold" type="checkbox" /> Fet
+            </label>
+          </div>
+          <p class="kv2-tip">Skriv tekst og trykk på lerretet for å velge plassering. Teksten vises som forhåndsvisning til du bekrefter. Den blir bildepiksler på et eget lag og kan flyttes, men selve bokstavene kan ikke redigeres etter bekreftelse uten å angre.</p>
+          <div class="kv2-text-actions">
+            <button id="kv2-text-commit" type="button" disabled>Legg tekst på lag</button>
+            <button id="kv2-text-cancel" type="button">Avbryt plassering</button>
+          </div>
+        </div>
+
         <div class="kv2-paper" id="kv2-paper" tabindex="0" aria-label="Lerretets visningsområde">
           <div class="kv2-stage">
             <canvas id="kv2-canvas" width="1200" height="800"
@@ -94,9 +120,11 @@
               preserveAspectRatio="none" aria-hidden="true" hidden><path id="kv2-lasso-path"></path></svg>
             <svg id="kv2-shape-overlay" class="kv2-shape-overlay" viewBox="0 0 1200 800"
               preserveAspectRatio="none" aria-hidden="true" hidden><path id="kv2-shape-path"></path></svg>
+            <svg id="kv2-text-overlay" class="kv2-text-overlay" viewBox="0 0 1200 800"
+              preserveAspectRatio="none" aria-hidden="true" hidden><text id="kv2-text-preview"></text></svg>
           </div>
         </div>
-        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Velg mellom vanlig pensel, en tynn blyant, bred tusj og halvtransparent lasur. Hurtigpaletten gir åtte farger; fargevelgeren lar deg velge andre farger. Verktøyvalg og farge endrer ikke bildet før du tegner. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lager et rektangel; «Frihåndsmarkering (lasso)» lager en lukket form med mus, finger eller penn. Begge begrenser pensel og viskelær uten å endre bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Rektangel» og «Ellipse» tegner fylte figurer eller omriss på valgt bildelag. «Linje» og «Pil» tegner rette streker med tykkelsen fra Størrelse; pilspissen peker mot slutten av dragbevegelsen. Dra og slipp for å tegne; Escape avbryter før endringen er lagret. En aktiv markering begrenser figuren, og omrissbredden følger Størrelse. Avslutt maskeredigering før bruk. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
+        <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Velg mellom vanlig pensel, en tynn blyant, bred tusj og halvtransparent lasur. Hurtigpaletten gir åtte farger; fargevelgeren lar deg velge andre farger. Verktøyvalg og farge endrer ikke bildet før du tegner. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lager et rektangel; «Frihåndsmarkering (lasso)» lager en lukket form med mus, finger eller penn. Begge begrenser pensel og viskelær uten å endre bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Rektangel» og «Ellipse» tegner fylte figurer eller omriss på valgt bildelag. «Linje» og «Pil» tegner rette streker med tykkelsen fra Størrelse; pilspissen peker mot slutten av dragbevegelsen. «Tekst» gir et eget tekstpanel med skrifttype, størrelse og fet skrift. Trykk på lerretet for plassering og bekreft for å lage et eget bildepiksellag som kan flyttes og angres. Dra og slipp for å tegne; Escape avbryter før endringen er lagret. En aktiv markering begrenser figuren, og omrissbredden følger Størrelse. Avslutt maskeredigering før bruk. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
         <div class="kv2-selection-tools" role="group" aria-label="Markering og beskjæring">
           <button id="kv2-clear-selection" type="button" disabled>Fjern markering</button>
           <button id="kv2-crop-layer" type="button" disabled>Beskjær valgt lag til markering</button>
