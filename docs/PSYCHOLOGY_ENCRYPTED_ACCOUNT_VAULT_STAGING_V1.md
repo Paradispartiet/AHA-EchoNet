@@ -88,3 +88,45 @@ kryptofillagring, ikke vanlig AHA-sync eller automatisk synkronisering.
 
 **Ingen SQL deployes fra en GitHub-PR**, og å merge denne koden aktiverer
 ikke kontohvelvet så lenge flagget er `false`.
+
+## Separat AHA-origin og Supabase Auth PKCE (21. november 2026)
+
+Første publisering av PR #1097 (Psykologirommets filflyt) er grønn.
+Hvelvet er fortsatt avslått og nekter tilgang på `paradispartiet.github.io`,
+som er en delt origin med History-Go.
+
+**Avdekket feil:** `js/ahaConfig.js` valgte tidligere GitHub Pages som
+innloggings-callback også når AHA ble åpnet fra
+`https://aha-echo-net.vercel.app`. PKCE-verifieren er lagret per
+nettleser-origin og kan ikke hentes av et annet nettsted.
+
+**Fail-closed-rettelse:** Vercel-innlogging er sperret som standard.
+`AHAAuth.signInWithEmail` og `AHAAuth.signInWithProvider` avslår
+forsøkene lokalt med `auth_callback_not_verified`, uten OTP-/OAuth-
+forespørsel, inntil begge vilkårene er oppfylt:
+
+1. Operatøren har verifisert at Vercel-siden virkelig serverer
+   `/auth-callback.html`, og at **den eksakte adressen**
+   `https://aha-echo-net.vercel.app/auth-callback.html` er oppført under
+   Supabase-prosjektet **AHA → Authentication → URL Configuration → Redirect URLs**.
+   Staging-prosjektet må få separat konfigurering før test med egne kontoer.
+2. Etter at dette er kontrollert, settes eksplisitt
+   `window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED = true`
+   **før** `js/ahaConfig.js` kjøres på den eksakte Vercel-origin.
+   Ikke sett flagget via en bred wildcard-regel, og ikke anta at URL-en er
+   tillatt ut fra en grønn GitHub Actions-kjøring.
+
+Med flagget aktivert velges Vercel som **både** AHA-appadresse og
+`auth-callback.html` for e-post-OTP og OAuth. En overstyrt returadresse
+som peker tilbake til GitHub Pages blir fortsatt avvist. GitHub Pages og
+eksakt Cloudflare-preview beholder tidligere ruter. Featureflagget
+godkjenner ikke brukeren og er ikke en autorisasjonsgrense; tillatte
+returer håndheves av Supabase Auth, filtilgang av database-RLS.
+
+**Fortsatt uverifisert:** Dette er en offline kode- og kontrakttest.
+Ingen kobling har her kunnet lese den faktiske Redirect URLs-allowlisten.
+Det er ikke testet med ekte PKCE-sesjoner, og AHA Staging har ingen ekte
+testkontoer. Selv om innloggingen senere verifiseres, må kryptert konto-
+lagring fortsatt forbli avslått inntil oppfølgende integrasjonstest med
+to ikke-privilegerte testbrukere og fysisk iPad er bestått.
+Se GitHub issue #1099 for akseptansekriteriene.
