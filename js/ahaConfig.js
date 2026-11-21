@@ -11,9 +11,25 @@
   const githubApp = "https://paradispartiet.github.io/AHA-EchoNet/";
   const githubCallback = "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
   const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
+  const vercelOrigin = "https://aha-echo-net.vercel.app";
   const isExactPreview = window.location?.origin === previewOrigin;
-  window.AHA_APP_URL = window.AHA_APP_URL || (isExactPreview ? previewOrigin + "/" : githubApp);
-  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || (isExactPreview ? previewOrigin + "/auth-callback.html" : githubCallback);
+  const isExactVercel = window.location?.origin === vercelOrigin;
+
+  // Vercel must never redirect a PKCE login back to GitHub Pages: session
+  // state and code verifiers are origin-bound. Supabase must first list the
+  // exact Vercel callback under Auth > URL Configuration > Redirect URLs.
+  // This explicit opt-in is OFF by default until that external check passes.
+  // It is not an authorization boundary: Supabase enforces allowed redirects.
+  const vercelCallbackApproved = isExactVercel &&
+    window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true;
+  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = isExactVercel && !vercelCallbackApproved;
+
+  const appUrl = isExactPreview ? previewOrigin + "/" :
+    vercelCallbackApproved ? vercelOrigin + "/" : githubApp;
+  const callbackUrl = isExactPreview ? previewOrigin + "/auth-callback.html" :
+    vercelCallbackApproved ? vercelOrigin + "/auth-callback.html" : githubCallback;
+  window.AHA_APP_URL = window.AHA_APP_URL || appUrl;
+  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || callbackUrl;
   window.AHA_AUTH_REDIRECT_URL = window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL;
 })();
 window.AHA_SUPABASE_URL = window.AHA_SUPABASE_URL || "https://wshmybqyksrwkawqleiz.supabase.co";
