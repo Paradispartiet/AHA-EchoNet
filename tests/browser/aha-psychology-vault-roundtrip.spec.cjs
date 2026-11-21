@@ -212,6 +212,12 @@ test("shared GitHub Pages origin rejects account access even with vault flag ena
   expect(result).toBe("not_activated");
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(realBackendRequests).toEqual([]);
+
+  // The entry page must not advertise an account vault that this shared
+  // GitHub Pages origin is forbidden to operate.
+  await page.goto(sharedOrigin + "psykologi.html", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#aha-psych-vault-entry")).toBeHidden();
+  expect(realBackendRequests).toEqual([]);
 });
 
 test("manual upload, account isolation, download, decrypt and delete in Chromium/iPad", async ({ page }) => {
