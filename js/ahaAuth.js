@@ -30,6 +30,14 @@
   }
 
   function getRedirectUrl() {
+    // Never initiate PKCE on Vercel with a callback on GitHub Pages. This
+    // gate is OFF until the exact same-origin callback is in Supabase's Auth
+    // Redirect URLs allowlist and has been verified end-to-end.
+    if (global.location?.origin === "https://aha-echo-net.vercel.app") {
+      const expected = "https://aha-echo-net.vercel.app/auth-callback.html";
+      if (global.AHA_VERCEL_AUTH_LOGIN_BLOCKED !== false ||
+          global.AHA_AUTH_REDIRECT_URL !== expected) return "";
+    }
     return String(
       global.AHA_AUTH_REDIRECT_URL ||
       global.AHA_APP_URL ||
@@ -192,12 +200,14 @@
   }
 
   async function signInWithEmail(email) {
+    const redirectUrl = getRedirectUrl();
+    if (!redirectUrl) return { ok: false, reason: "auth_callback_not_verified" };
     const client = getClient();
     if (!client) return { ok: false, reason: "not_configured" };
 
     const { data, error } = await client.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: getRedirectUrl() }
+      options: { emailRedirectTo: redirectUrl }
     });
 
     if (error) return { ok: false, error };
@@ -205,16 +215,17 @@
   }
 
   async function signInWithProvider(provider) {
-    const client = getClient();
-    if (!client) return { ok: false, reason: "not_configured" };
-
     const cleanProvider = String(provider || "").trim().toLowerCase();
     if (!cleanProvider) return { ok: false, reason: "missing_provider" };
+    const redirectUrl = getRedirectUrl();
+    if (!redirectUrl) return { ok: false, reason: "auth_callback_not_verified" };
+    const client = getClient();
+    if (!client) return { ok: false, reason: "not_configured" };
 
     const { data, error } = await client.auth.signInWithOAuth({
       provider: cleanProvider,
       options: {
-        redirectTo: getRedirectUrl(),
+        redirectTo: redirectUrl,
         queryParams: cleanProvider === "google" ? { prompt: "select_account" } : undefined
       }
     });

@@ -4,16 +4,33 @@
 
 // The preview uses its own origin, and Supabase PKCE stores the verifier per origin.
 // A callback to GitHub Pages cannot complete a login started on Cloudflare Pages.
-// Only the exact, Access-protected AHA preview origin is eligible here.
-// Do not publish this routing change until the exact callback is allowlisted
-// under AHA's Supabase project: Authentication > URL Configuration.
+// The exact Access-protected preview uses its own callback. Vercel may do so
+// only after its exact redirect has been verified in Supabase Auth settings.
+// Default Vercel sign-in stays blocked; ordinary GitHub Pages Auth is unchanged.
 (function configureAhaAuthOrigin() {
   const githubApp = "https://paradispartiet.github.io/AHA-EchoNet/";
   const githubCallback = "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
   const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
+  const vercelOrigin = "https://aha-echo-net.vercel.app";
   const isExactPreview = window.location?.origin === previewOrigin;
-  window.AHA_APP_URL = window.AHA_APP_URL || (isExactPreview ? previewOrigin + "/" : githubApp);
-  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || (isExactPreview ? previewOrigin + "/auth-callback.html" : githubCallback);
+  const isExactVercel = window.location?.origin === vercelOrigin;
+
+  // Vercel must never redirect a PKCE login back to GitHub Pages: session
+  // state and code verifiers are origin-bound. Supabase must first list the
+  // exact Vercel callback under Auth > URL Configuration > Redirect URLs.
+  // This explicit opt-in is OFF by default until that external check passes.
+  // It is not an authorization boundary: Supabase enforces allowed redirects.
+  const vercelCallbackApproved = isExactVercel &&
+    window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true;
+  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = isExactVercel && !vercelCallbackApproved;
+
+  // Keep Vercel navigation on Vercel even when sign-in is not yet enabled.
+  const appUrl = isExactPreview ? previewOrigin + "/" :
+    isExactVercel ? vercelOrigin + "/" : githubApp;
+  const callbackUrl = isExactPreview ? previewOrigin + "/auth-callback.html" :
+    vercelCallbackApproved ? vercelOrigin + "/auth-callback.html" : githubCallback;
+  window.AHA_APP_URL = window.AHA_APP_URL || appUrl;
+  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || callbackUrl;
   window.AHA_AUTH_REDIRECT_URL = window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL;
 })();
 window.AHA_SUPABASE_URL = window.AHA_SUPABASE_URL || "https://wshmybqyksrwkawqleiz.supabase.co";
