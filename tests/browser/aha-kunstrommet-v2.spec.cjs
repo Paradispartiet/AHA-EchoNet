@@ -1287,6 +1287,103 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(await pixel(page)).toEqual([35, 36, 44, 255]);
   });
 
+
+  test("layer blend modes are non-destructive and undo/redo with expected composite colors", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const center = () => pixel(page);
+    const set = async (color) => page.locator("#kv2-color").evaluate((input, value) => {
+      input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, color);
+    await set("#808080"); await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await stroke(page);
+    expect((await center()).slice(0, 3)).toEqual([128, 128, 128]);
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    await expect(page.locator("#kv2-status")).toHaveText("Ulagrede endringer");
+    const dark = await center();
+    for (const value of dark.slice(0, 3)) expect(value).toBeGreaterThanOrEqual(63);
+    for (const value of dark.slice(0, 3)) expect(value).toBeLessThanOrEqual(65);
+    await page.locator("#kv2-blend-mode").selectOption("screen");
+    const light = await center();
+    for (const value of light.slice(0, 3)) expect(value).toBeGreaterThanOrEqual(190);
+    for (const value of light.slice(0, 3)) expect(value).toBeLessThanOrEqual(193);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => page.locator("#kv2-blend-mode").inputValue()).toBe("multiply");
+    await expect.poll(async () => (await center())[0]).toBeLessThan(70);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => page.locator("#kv2-blend-mode").inputValue()).toBe("screen");
+    await expect.poll(async () => (await center())[0]).toBeGreaterThan(190);
+    // The underlying image remains unchanged when we hide the blended layer.
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").first().click();
+    expect((await center()).slice(0, 3)).toEqual([128, 128, 128]);
+  });
+
+  test("blend modes survive editable export and import; unknown modes fall back to normal", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await stroke(page);
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    const d = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const exported = JSON.parse(await fs.readFile(await (await d).path(), "utf8"));
+    expect(exported.layers.map((layer) => layer.blendMode)).toEqual(["normal", "multiply"]);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "two-layers.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(exported))
+    });
+    await expect(page.locator("#kv2-blend-mode")).toHaveValue("multiply");
+    const backupAgain = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const roundTrip = JSON.parse(await fs.readFile(await (await backupAgain).path(), "utf8"));
+    expect(roundTrip.layers.map((layer) => layer.blendMode)).toEqual(["normal", "multiply"]);
+    // Missing mode (old backups) and unsupported operation both import safely.
+    delete exported.layers[0].blendMode;
+    exported.layers[1].blendMode = "destination-out";
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "legacy.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(exported))
+    });
+    await expect(page.locator("#kv2-blend-mode")).toHaveValue("normal");
+    const legacyDownload = page.waitForEvent("download");
+    await page.locator("#kv2-json").click();
+    const legacy = JSON.parse(await fs.readFile(await (await legacyDownload).path(), "utf8"));
+    expect(legacy.layers.every((layer) => layer.blendMode === "normal")).toBe(true);
+  });
+
+  test("blended masked layer restores the underlying image; duplication retains mode", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const color = (value) => page.locator("#kv2-color").evaluate((input, value) => {
+      input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+    await color("#204080"); await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await color("#c08040"); await stroke(page);
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    const blended = await pixel(page);
+    expect(blended[0]).toBeLessThan(40);
+    expect(blended[1]).toBeLessThan(50);
+    await page.locator("#kv2-mask-add").click();
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+    await stroke(page);
+    expect(await pixel(page)).toEqual([32, 64, 128, 255]);
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    const remasked = await pixel(page);
+    expect(remasked.slice(0, 3)).toEqual(blended.slice(0, 3));
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-duplicate-layer").click();
+    await expect(page.locator("#kv2-blend-mode")).toHaveValue("multiply");
+    const d = page.waitForEvent("download"); await page.locator("#kv2-json").click();
+    const backup = JSON.parse(await fs.readFile(await (await d).path(), "utf8"));
+    expect(backup.layers.map((layer) => layer.blendMode)).toEqual(["normal", "multiply", "multiply"]);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-blend-mode")).toHaveValue("multiply");
+  });
+
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {

@@ -131,6 +131,13 @@
           <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
           <label for="kv2-rename">Gi laget et navn</label>
           <input type="text" id="kv2-rename" maxlength="70" />
+          <label for="kv2-blend-mode">Blandingsmodus for laget</label>
+          <select id="kv2-blend-mode" aria-label="Blandingsmodus for aktivt lag">
+            <option value="normal">Normal</option>
+            <option value="multiply">Multipliser – mørkere</option>
+            <option value="screen">Skjerm – lysere</option>
+          </select>
+          <p class="kv2-tip">Blandingsmodus påvirker bare hvordan dette laget vises over lagene under. Originalpikslene endres ikke. Valget kan angres og lagres.</p>
           <label for="kv2-opacity">Gjennomsiktighet / opasitet</label>
           <div class="kv2-slider">
             <input id="kv2-opacity" type="range" min="0" max="100" step="1" value="100" />

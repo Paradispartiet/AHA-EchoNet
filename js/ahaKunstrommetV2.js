@@ -10,6 +10,7 @@
   const WIDTH = 1200;
   const HEIGHT = 800;
   const MAX_LAYERS = 8;
+  const BLEND_MODES = new Set(["normal", "multiply", "screen"]);
   const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
   const MAX_PROJECT_BYTES = 36 * 1024 * 1024;
   const MAX_HISTORY = 12;
@@ -82,7 +83,7 @@
     const layer = {
       id: uid(), name: String(name || "Nytt lag").slice(0, 70),
       kind: kind || "paint", visible: true, locked: false,
-      opacity: 1, x: 0, y: 0
+      opacity: 1, blendMode: "normal", x: 0, y: 0
     };
     surfaces.set(layer.id, imageCanvas());
     return layer;
@@ -126,6 +127,10 @@
       const bitmap = surfaces.get(layer.id);
       if (!bitmap) return;
       view.globalAlpha = layer.opacity;
+      // Composite into the document after mask application; don't blend
+      // the mask bitmap itself, and don't modify any layer's source pixels.
+      view.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
+        layer.blendMode !== "normal" ? layer.blendMode : "source-over";
       const mask = layer.maskEnabled !== false && masks.get(layer.id);
       if (!mask) {
         view.drawImage(bitmap, layer.x, layer.y);
@@ -337,6 +342,7 @@
       return {
         id: layer.id, name: layer.name, kind: layer.kind,
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
+        blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         x: layer.x, y: layer.y,
         bitmap: surface.toDataURL("image/png"),
         ...(pixelFixups ? { pixelFixups } : {}),
@@ -473,6 +479,8 @@
     const layer = currentLayer();
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
+    $("kv2-blend-mode").value = layer?.blendMode || "normal";
+    $("kv2-blend-mode").disabled = !layer || busy;
     $("kv2-rename").value = layer ? layer.name : "";
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
@@ -848,7 +856,9 @@
     }
     if (!checkpoint()) return;
     const extracted = createLayer(layer.name + (removeFromSource ? " – klippet" : " – utsnitt"), layer.kind);
-    Object.assign(extracted, { x: layer.x, y: layer.y, opacity: layer.opacity });
+    Object.assign(extracted, {
+      x: layer.x, y: layer.y, opacity: layer.opacity, blendMode: layer.blendMode || "normal"
+    });
     surfaces.get(extracted.id).getContext("2d").putImageData(pixels, x, y);
     if (masks.has(layer.id)) {
       const maskCopy = imageCanvas();
@@ -876,7 +886,8 @@
     }
     checkpoint();
     const clone = createLayer(layer.name + " – kopi", layer.kind);
-    Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity, x: layer.x, y: layer.y });
+    Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity,
+      blendMode: layer.blendMode || "normal", x: layer.x, y: layer.y });
     const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
     if (masks.has(layer.id)) {
@@ -1128,6 +1139,8 @@
       kind: input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
+      // Older projects default to normal; unknown or unsafe modes are ignored.
+      blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
       bitmap: input.bitmap,
@@ -1481,6 +1494,16 @@
       const next = $("kv2-rename").value.trim().slice(0, 70);
       if (!next || next === layer.name) return;
       checkpoint(); layer.name = next; changed(); refresh();
+    });
+    $("kv2-blend-mode").addEventListener("change", () => {
+      const layer = currentLayer();
+      if (!layer || busy) return;
+      const next = $("kv2-blend-mode").value;
+      if (!BLEND_MODES.has(next) || (layer.blendMode || "normal") === next) return;
+      if (!checkpoint()) return;
+      layer.blendMode = next;
+      changed();
+      refresh();
     });
     $("kv2-opacity").addEventListener("change", () => {
       const layer = currentLayer();
