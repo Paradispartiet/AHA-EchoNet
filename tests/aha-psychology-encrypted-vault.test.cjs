@@ -77,6 +77,17 @@ async function run() {
   await assert.rejects(vault.upload(env, { client: mockClient(UUID_A) }), /not_activated/);
   assert.equal(accesses, 0);
 
+  // Never use the account vault on the GitHub Pages origin shared by
+  // History-Go and AHA, even if someone turns on the frontend feature flag.
+  global.location = { hostname: "paradispartiet.github.io" };
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = true;
+  assert.equal(vault.enabled(), false);
+  await assert.rejects(vault.status({ client: mockClient(UUID_A) }), /not_activated/);
+  assert.equal(accesses, 0, "shared origin must not access Supabase");
+  global.location = { hostname: "aha-echo-net.vercel.app" };
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false;
+  assert.equal(vault.enabled(), false);
+
   global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = true;
   assert.equal(vault.validateEncryptedFile(env).bytes, Buffer.byteLength(env));
   assert.throws(() => vault.validateEncryptedFile(JSON.stringify({ ...JSON.parse(env), note: "private text" })), /invalid_file/,
@@ -115,6 +126,8 @@ async function run() {
   assert.match(flags, /AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED\s*=\s*false/);
   assert.match(page, /js\/ahaPsychologyVaultConfig\.js/);
   assert.match(page, /id="aha-psych-vault-panel"[^>]+hidden/);
+  assert.match(page, /id="aha-psych-vault-shared-origin"[^>]+hidden/);
+  assert.match(page, /https:\/\/aha-echo-net\.vercel\.app\/psykologi\.html/);
   assert.doesNotMatch(page, /name="password"|type="password"/);
   assert.doesNotMatch(code, /fetch\(|XMLHttpRequest|postMessage|AHARepository|sync_enabled/);
 
