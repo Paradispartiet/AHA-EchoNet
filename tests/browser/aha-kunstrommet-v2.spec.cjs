@@ -63,6 +63,23 @@ async function changeAdjustment(page, name, value) {
     control.dispatchEvent(new Event("change", { bubbles: true }));
   }, value);
 }
+
+async function shapePointer(page, type, x, y, id = 881) {
+  await page.locator("#kv2-canvas").evaluate((canvas, d) => {
+    const r = canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new PointerEvent(d.type, {
+      bubbles: true, cancelable: true, pointerId: d.id, pointerType: "pen",
+      button: 0, buttons: /up|cancel/.test(d.type) ? 0 : 1, pressure: .5,
+      clientX: r.left + d.x * r.width / 1200,
+      clientY: r.top + d.y * r.height / 800
+    }));
+  }, { type, x, y, id });
+}
+async function shapeDrag(page, start, end, id = 881) {
+  await shapePointer(page, "pointerdown", start[0], start[1], id);
+  await shapePointer(page, "pointermove", end[0], end[1], id);
+  await shapePointer(page, "pointerup", end[0], end[1], id);
+}
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
@@ -1510,6 +1527,88 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
       { brightness: 125, contrast: 100, saturation: 75 },
       { brightness: 125, contrast: 100, saturation: 75 }
     ]);
+  });
+
+
+  test("rectangle preview is invisible in the artwork until pointerup, then a single undo step", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-rectangle").click();
+    await expect(page.locator("#kv2-rectangle")).toHaveAttribute("aria-pressed", "true");
+    await shapePointer(page, "pointerdown", 400, 300);
+    await shapePointer(page, "pointermove", 700, 500);
+    await expect(page.locator("#kv2-shape-overlay")).not.toHaveAttribute("hidden");
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
+    await shapePointer(page, "pointerup", 700, 500);
+    await expect(page.locator("#kv2-shape-overlay")).toHaveAttribute("hidden");
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => pixel(page)).toEqual([35, 36, 44, 255]);
+    const backup = await jsonBackup(page);
+    expect(backup.layers).toHaveLength(1);
+    expect(backup.layers[0].bitmap).toMatch(/^data:image\/png;base64,/);
+  });
+
+  test("ellipse outline is hollow and its thickness follows the size setting", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-ellipse").click();
+    await page.locator("#kv2-shape-style").selectOption("outline");
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "20"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await shapeDrag(page, [480, 280], [720, 520], 882);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    expect((await pxAt(page, 480, 400))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 600, 280))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 500, 300))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 480, 400))[0]).toBe(255);
+  });
+
+  test("a selection clips a rectangle after moving the active layer", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-move").click();
+    await shapeDrag(page, [600, 400], [620, 410], 883);
+    await page.locator("#kv2-select").click();
+    await shapeDrag(page, [520, 340], [660, 460], 884);
+    await page.locator("#kv2-rectangle").click();
+    await shapeDrag(page, [440, 280], [740, 520], 885);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    expect(await pxAt(page, 480, 400)).toEqual([255, 255, 255, 255]);
+    expect(await pxAt(page, 700, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await expect(page.locator("#kv2-clear-selection")).toBeEnabled();
+  });
+
+  test("Escape, cancelled pointer, locked layers and mask editing protect against accidental shapes", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-rectangle").click();
+    await shapePointer(page, "pointerdown", 400, 300, 886);
+    await shapePointer(page, "pointermove", 700, 500, 886);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#kv2-shape-overlay")).toHaveAttribute("hidden");
+    await expect(page.locator("#kv2-status")).toHaveText("Figur avbrutt – ingen endringer");
+    await shapePointer(page, "pointerup", 700, 500, 886);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await shapePointer(page, "pointerdown", 400, 300, 887);
+    await shapePointer(page, "pointermove", 700, 500, 887);
+    await shapePointer(page, "pointercancel", 700, 500, 887);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").last().click();
+    await shapeDrag(page, [400, 300], [700, 500], 888);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-layers .kv2-layer").first().locator("button").last().click();
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-rectangle").click();
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-status")).toHaveText("Avslutt maskeredigering før du tegner figurer.");
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-rectangle").click();
+    await shapeDrag(page, [400, 300], [700, 500], 889);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
   });
 
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {

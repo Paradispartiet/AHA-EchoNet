@@ -175,3 +175,12 @@ Gliderens tall oppdateres under bevegelsen, og bildet oppdateres når glideren s
 Prosjektformatet er uendret `aha-kunstrommet-v2` med et **valgfritt** `adjustments`-metadataobjekt for hvert lag. Gamle prosjekter uten felt får alle verdier 100 %. Import godtar bare endelige tall, avrunder og begrenser dem til glidernes grenser. Manipulerte/ugyldige verdier faller tilbake til nøytral og kan ikke bli injisert i Canvas-filterstrenger. Angre/gjør om, lokal IndexedDB-lagring, prosjektkopi og import holder verdiene. Ingen nettverk, ny app, delt redigeringsflate eller endring av Galleri.
 
 Tre nye nettleserscenarier i Chromium og emulert iPad WebKit kontrollerer komposisjonsfarger, uendrede originalpiksler, særskilte angresteg, nullstilling, metning, sikker import, gamle prosjekter, lokal gjenåpning, lagmasker, duplisering og markert utsnitt. Fysisk Apple Pencil/iPad-kontroll er fremdeles åpen i #1058.
+
+
+## Rektangel og ellipse på eksisterende lag
+
+**Rektangel** og **Ellipse** er verktøy i det samme lokale kunstlerretet. Formene kan være **fylt** eller tegnes som **omriss**, der omrissbredde styres av den vanlige Størrelse-glideren. Tegning skjer ved å dra med mus, finger eller penn og slippe ved ønsket størrelse. En SVG-forhåndsvisning følger pekeren og kan avbrytes med Escape eller `pointercancel`. Forhåndsvisningen skrives aldri i originalpikslene, prosjektkopien eller PNG-eksporten.
+
+Først ved et gyldig slipp lages **ett angresteg**, og figuren tegnes som rasterpiksler på aktivt, synlig, ulåst bildelag. En pågående rektangel- eller lassomarkering klipper figuren i dokumentkoordinater, selv når laget er flyttet. Under redigering av lagmaske må brukeren avslutte maskeredigering før formverktøy kan velges. Ingen endring av V2-prosjektformat, Galleri, IndexedDB, lagmasker eller bildejusteringer.
+
+Fire nettlesertester (Chromium og simulert iPad WebKit) dekker forhåndsvisning uten pikselendring, angre/gjør om, ellipseomriss, penselstørrelse, markering på flyttet lag, Escape, avbrutt peker, låst lag og maskesikker redigering. Fysisk Apple Pencil/iPad-testing ligger fortsatt i #1058.
