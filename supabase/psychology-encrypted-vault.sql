@@ -13,11 +13,23 @@ create table if not exists public.aha_psychology_encrypted_backups (
   encrypted_file text not null
     check (octet_length(encrypted_file) between 100 and 12582912),
   created_at timestamptz not null default now(),
+  -- Enforce the same eight-field-only ciphertext envelope as the browser.
+  -- A direct Data API call must not smuggle plaintext into extra JSON keys.
+  -- Structural checks do not prove that the ciphertext itself is secure.
   constraint aha_psych_backup_envelope_check check (
-    encrypted_file::jsonb ->> 'format' = 'history-go-psychology-encrypted-backup-v1'
-    and encrypted_file::jsonb ->> 'cipher' = 'AES-256-GCM'
-    and encrypted_file::jsonb ->> 'kdf' = 'PBKDF2-SHA256'
-    and encrypted_file::jsonb ->> 'version' = '1'
+    jsonb_typeof(encrypted_file::jsonb) = 'object'
+    and (encrypted_file::jsonb ?& array['format','version','kdf','iterations','cipher','salt','iv','data'])
+    and (encrypted_file::jsonb - array['format','version','kdf','iterations','cipher','salt','iv','data']) = '{}'::jsonb
+    and (encrypted_file::jsonb ->> 'format') = 'history-go-psychology-encrypted-backup-v1'
+    and (encrypted_file::jsonb ->> 'cipher') = 'AES-256-GCM'
+    and (encrypted_file::jsonb ->> 'kdf') = 'PBKDF2-SHA256'
+    and (encrypted_file::jsonb -> 'version') = '1'::jsonb
+    and (encrypted_file::jsonb -> 'iterations') = '310000'::jsonb
+    and (encrypted_file::jsonb ->> 'salt') ~ '^[A-Za-z0-9+/]{22}==$'
+    and (encrypted_file::jsonb ->> 'iv') ~ '^[A-Za-z0-9+/]{16}$'
+    and length(encrypted_file::jsonb ->> 'data') >= 24
+    and mod(length(encrypted_file::jsonb ->> 'data'), 4) = 0
+    and (encrypted_file::jsonb ->> 'data') ~ '^[A-Za-z0-9+/]+={0,2}$'
   )
 );
 

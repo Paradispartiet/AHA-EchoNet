@@ -1,5 +1,20 @@
 # Psykologirommet – separat kryptert kontohvelv (staging v1)
 
+**Staging-kontroll 21. november 2026:** Supabase-prosjektet `AHA Staging`
+(`sstuzwppsheivczyqrim`) er aktivt igjen. Den separate tabellen er
+installert der med streng kontroll av de åtte tillatte krypteringsfeltene.
+Test direkte mot faktisk PostgreSQL 17.6 med `SET LOCAL ROLE authenticated`
+og to midlertidige `auth.uid()`-verdier besto: kun egne rader, ingen
+oppdatering eller overskriving, avviste ukrypterte ekstranøkler og anonyme
+lesere. Transaksjonen ble rullet tilbake; ingen testbrukere eller filer
+ble beholdt. Dette **er ikke** det samme som en full test med ekte JWT
+gjennom Supabase Data API og to reelle innlogginger.
+
+**Produksjon:** Prosjektet `AHA` (`wshmybqyksrwkawqleiz`) er
+**ikke** endret og kontohvelvet er fortsatt deaktivert med funksjonsbryter
+`false`. Ikke flytt staging-testdata eller slå på bryteren som følge av
+resultatet alene.
+
 **Status: IKKE AKTIVERT.** AHA-kontoen bruker fortsatt ikke fjernlagring av
 Psykologirommets private notater. Denne endringen er en testbar, separat
 kryptofillagring, ikke vanlig AHA-sync eller automatisk synkronisering.
