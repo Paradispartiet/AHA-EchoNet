@@ -58,6 +58,14 @@
   }
 
   function start() {
+    // The GitHub Pages hostname is shared with History-Go. Refuse account
+    // operations there and point the user to AHA's separate origin instead.
+    if (global.location?.hostname === "paradispartiet.github.io") {
+      const notice = id("aha-psych-vault-shared-origin");
+      if (notice) notice.hidden = false;
+      status("Kontohvelvet er sperret på GitHub Pages sitt delte domene.");
+      return;
+    }
     if (!vault || !vault.enabled()) {
       status(messages.not_activated);
       return;
