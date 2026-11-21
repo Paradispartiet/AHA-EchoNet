@@ -4,9 +4,9 @@
 
 // The preview uses its own origin, and Supabase PKCE stores the verifier per origin.
 // A callback to GitHub Pages cannot complete a login started on Cloudflare Pages.
-// Only the exact, Access-protected AHA preview origin is eligible here.
-// Do not publish this routing change until the exact callback is allowlisted
-// under AHA's Supabase project: Authentication > URL Configuration.
+// The exact Access-protected preview uses its own callback. Vercel may do so
+// only after its exact redirect has been verified in Supabase Auth settings.
+// Default Vercel sign-in stays blocked; ordinary GitHub Pages Auth is unchanged.
 (function configureAhaAuthOrigin() {
   const githubApp = "https://paradispartiet.github.io/AHA-EchoNet/";
   const githubCallback = "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
@@ -24,8 +24,9 @@
     window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true;
   window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = isExactVercel && !vercelCallbackApproved;
 
+  // Keep Vercel navigation on Vercel even when sign-in is not yet enabled.
   const appUrl = isExactPreview ? previewOrigin + "/" :
-    vercelCallbackApproved ? vercelOrigin + "/" : githubApp;
+    isExactVercel ? vercelOrigin + "/" : githubApp;
   const callbackUrl = isExactPreview ? previewOrigin + "/auth-callback.html" :
     vercelCallbackApproved ? vercelOrigin + "/auth-callback.html" : githubCallback;
   window.AHA_APP_URL = window.AHA_APP_URL || appUrl;
