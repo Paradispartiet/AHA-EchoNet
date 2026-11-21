@@ -3,6 +3,8 @@
 // Never points this test at the production Supabase project.
 const { test, expect } = require("@playwright/test");
 const { webcrypto } = require("node:crypto");
+const fs = require("node:fs");
+const nodePath = require("node:path");
 
 const ACCOUNT_A = "a1111111-1111-4111-8111-111111111111";
 const ACCOUNT_B = "b2222222-2222-4222-8222-222222222222";
@@ -170,6 +172,46 @@ test("encrypted vault is OFF by default and performs no account access", async (
   await expect(page.locator("#aha-psych-vault-status")).toContainText("ikke aktivert");
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(callsToSupabase).toEqual([]);
+});
+
+test("shared GitHub Pages origin rejects account access even with vault flag enabled", async ({ page }) => {
+  const sharedOrigin = "https://paradispartiet.github.io/AHA-EchoNet/";
+  const sourceRoot = nodePath.resolve(__dirname, "../..");
+  // Serve the precise current repository files at the GitHub Pages origin:
+  // all HTTP requests are intercepted and no live GitHub Pages is contacted.
+  await page.route(sharedOrigin + "**", async route => {
+    const relative = new URL(route.request().url()).pathname.slice("/AHA-EchoNet/".length);
+    if (!relative || relative.includes("..")) {
+      return route.fulfill({ status: 404, body: "" });
+    }
+    let body;
+    try { body = fs.readFileSync(nodePath.join(sourceRoot, relative)); }
+    catch { return route.fulfill({ status: 404, body: "" }); }
+    const contentType = relative.endsWith(".html") ? "text/html; charset=utf-8" :
+      relative.endsWith(".js") ? "text/javascript; charset=utf-8" :
+      relative.endsWith(".css") ? "text/css; charset=utf-8" :
+      "application/octet-stream";
+    return route.fulfill({ status: 200, body, contentType });
+  });
+  await replaceRemoteSdkWithFake(page, true);
+  const realBackendRequests = [];
+  page.on("request", request => {
+    if (request.url().includes(".supabase.co")) realBackendRequests.push(request.url());
+  });
+  await page.goto(sharedOrigin + "psykologi-vault.html", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#aha-psych-vault-panel")).toBeHidden();
+  await expect(page.locator("#aha-psych-vault-shared-origin")).toBeVisible();
+  await expect(page.locator("#aha-psych-vault-status")).toContainText("sperret");
+  await expect(page.locator("#aha-psych-vault-shared-origin a")).toHaveAttribute(
+    "href", "https://aha-echo-net.vercel.app/psykologi.html"
+  );
+  const result = await page.evaluate(async () => {
+    try { await window.AHAPsychologyEncryptedVault.status(); return "unexpected_access"; }
+    catch (e) { return e.code; }
+  });
+  expect(result).toBe("not_activated");
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
+  expect(realBackendRequests).toEqual([]);
 });
 
 test("manual upload, account isolation, download, decrypt and delete in Chromium/iPad", async ({ page }) => {
