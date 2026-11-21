@@ -119,6 +119,14 @@ async function run() {
   assert.doesNotMatch(code, /fetch\(|XMLHttpRequest|postMessage|AHARepository|sync_enabled/);
 
   // Contract tests supplement, but DO NOT replace, a real PostgreSQL RLS test.
+  assert.match(sql, /encrypted_file::jsonb \?& array\[/i,
+    "server must demand every required encrypted envelope property");
+  assert.match(sql, /encrypted_file::jsonb - array\[/i,
+    "server must reject any extra plaintext envelope properties");
+  assert.match(sql, /encrypted_file::jsonb -> 'iterations'\) = '310000'::jsonb/i,
+    "server must reject unexpected password derivation parameters");
+  assert.match(sql, /encrypted_file::jsonb ->> 'salt'\) ~ /i,
+    "server must enforce salt encoding");
   assert.match(sql, /alter table public\.aha_psychology_encrypted_backups force row level security/i);
   assert.match(sql, /for select to authenticated using \(user_id = \(select auth\.uid\(\)\)\)/i);
   assert.match(sql, /for insert to authenticated with check \(user_id = \(select auth\.uid\(\)\)\)/i);
