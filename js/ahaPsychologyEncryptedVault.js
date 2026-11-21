@@ -14,8 +14,17 @@
     return Object.assign(new Error(reason), { code: reason });
   }
 
+  // History-Go and AHA share the paradispartiet.github.io origin. Do not
+  // permit Psychology vault account actions on that shared browser origin,
+  // even if a deploy accidentally enables the feature flag there.
+  // This is defence in depth; the Supabase RLS policies enforce ownership.
+  function onSharedHistoryGoOrigin() {
+    return global.location?.hostname === "paradispartiet.github.io";
+  }
+
   function enabled() {
-    return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true;
+    return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true &&
+      !onSharedHistoryGoOrigin();
   }
 
   function checkEnabled() {
