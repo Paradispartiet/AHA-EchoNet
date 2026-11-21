@@ -96,6 +96,7 @@
   let selected = null;
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
+  let shapeDraft = null; // Transient SVG-only preview until pointerup.
   let pointerId = null;
   let pointerStart = null;
   let paintPrevious = null;
@@ -151,6 +152,7 @@
     adjustedBitmaps.clear();
     leaveMaskEdit();
     selection = null;
+    shapeDraft = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
       id: uid(), title: "", note: "", owner: owner(), layers: [base],
@@ -312,6 +314,62 @@
     const right = Math.round(clamp(Math.max(a.x, b.x), 0, WIDTH));
     const bottom = Math.round(clamp(Math.max(a.y, b.y), 0, HEIGHT));
     return { x, y, w: right - x, h: bottom - y };
+  }
+
+
+  function isShapeTool() { return tool === "rectangle" || tool === "ellipse"; }
+
+  function shapeGeometry(context, box, offsetX, offsetY, kind) {
+    const x = box.x - offsetX, y = box.y - offsetY;
+    context.beginPath();
+    if (kind === "rectangle") context.rect(x, y, box.w, box.h);
+    else context.ellipse(x + box.w / 2, y + box.h / 2,
+      box.w / 2, box.h / 2, 0, 0, Math.PI * 2);
+  }
+
+  function renderShapePreview() {
+    const svg = $("kv2-shape-overlay"), path = $("kv2-shape-path");
+    const b = shapeDraft ? normalizedSelection(shapeDraft.start, shapeDraft.end) : null;
+    const visible = !!b && b.w >= 2 && b.h >= 2;
+    svg.toggleAttribute("hidden", !visible);
+    if (!visible) { path.setAttribute("d", ""); return; }
+    const x = b.x, y = b.y, w = b.w, h = b.h;
+    const outline = shapeDraft.kind === "rectangle"
+      ? "M " + x + " " + y + " h " + w + " v " + h + " h " + (-w) + " Z"
+      : "M " + (x + w) + " " + (y + h / 2) +
+        " A " + (w / 2) + " " + (h / 2) + " 0 1 0 " + x + " " + (y + h / 2) +
+        " A " + (w / 2) + " " + (h / 2) + " 0 1 0 " + (x + w) + " " + (y + h / 2) + " Z";
+    const filled = $("kv2-shape-style").value === "fill";
+    path.setAttribute("d", outline);
+    path.setAttribute("stroke", $("kv2-color").value);
+    path.setAttribute("stroke-width", filled ? "1" : String(Number($("kv2-size").value) || 6));
+    path.setAttribute("fill", filled ? $("kv2-color").value : "none");
+    path.setAttribute("fill-opacity", filled ? "0.3" : "1");
+  }
+
+  function commitShape() {
+    const layer = currentLayer();
+    if (!shapeDraft || !layer || layer.locked || !layer.visible || busy || maskEditing) return false;
+    const box = normalizedSelection(shapeDraft.start, shapeDraft.end);
+    if (box.w < 2 || box.h < 2 || !checkpoint()) return false;
+    const context = surfaces.get(layer.id).getContext("2d");
+    context.save();
+    context.globalCompositeOperation = "source-over";
+    context.globalAlpha = 1;
+    context.fillStyle = $("kv2-color").value;
+    context.strokeStyle = $("kv2-color").value;
+    context.lineWidth = Number($("kv2-size").value) || 6;
+    context.lineJoin = "round";
+    if (validSelection()) {
+      selectionPath(context, layer.x, layer.y);
+      context.clip();
+    }
+    shapeGeometry(context, box, layer.x, layer.y, shapeDraft.kind);
+    if ($("kv2-shape-style").value === "fill") context.fill();
+    else context.stroke();
+    context.restore();
+    changed();
+    return true;
   }
 
   function paintOnLayer(layer, a, b) {
@@ -581,7 +639,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -592,6 +650,7 @@
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
     $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
     renderSelection();
+    renderShapePreview();
   }
 
   function point(event) {
@@ -683,7 +742,7 @@
       return;
     }
     // Moving the viewport is never an artwork edit and must not create undo history.
-    if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !checkpoint()) return;
+    if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !isShapeTool() && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
     pointerStart = {
@@ -692,6 +751,15 @@
       scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0
     };
     paintPrevious = null;
+    if (isShapeTool()) {
+      if (maskEditing) {
+        pointerId = null; pointerStart = null;
+        status("Avslutt maskeredigering før du tegner figurer.");
+        return;
+      }
+      shapeDraft = { kind: tool, start: pointerStart.point, end: pointerStart.point };
+      renderShapePreview();
+    }
     if (tool === "select") {
       selection = normalizedSelection(pointerStart.point, pointerStart.point);
       renderSelection();
@@ -720,6 +788,11 @@
     if (tool === "hand") {
       viewport.scrollLeft = Math.max(0, pointerStart.scrollLeft + pointerStart.clientX - event.clientX);
       viewport.scrollTop = Math.max(0, pointerStart.scrollTop + pointerStart.clientY - event.clientY);
+      return;
+    }
+    if (isShapeTool()) {
+      if (shapeDraft) shapeDraft.end = point(event);
+      renderShapePreview();
       return;
     }
     if (tool === "select") {
@@ -751,6 +824,18 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
+    if (isShapeTool()) {
+      const complete = event.type === "pointerup" && !!shapeDraft;
+      if (complete && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        shapeDraft.end = point(event);
+      }
+      const painted = complete && commitShape();
+      shapeDraft = null;
+      pointerId = null; pointerStart = null; paintPrevious = null;
+      renderShapePreview();
+      if (painted) { draw(); status("Figur lagt til på valgt lag"); }
+      return;
+    }
     const changedArtwork = tool !== "hand" && tool !== "select" && tool !== "lasso";
     if (tool === "select" || tool === "lasso") {
       if (tool === "lasso" && event?.clientX != null) addLassoPoint(point(event));
@@ -1300,6 +1385,7 @@
     masks.clear();
     adjustedBitmaps.clear();
     selection = null;
+    shapeDraft = null;
     maskEditing = false;
     layers.forEach((layer, i) => {
       surfaces.set(layer.id, decoded[i].bitmap);
@@ -1619,9 +1705,18 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper"].forEach((name) => {
-      $("kv2-" + name).addEventListener("click", () => { tool = name; refresh(); });
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse"].forEach((name) => {
+      $("kv2-" + name).addEventListener("click", () => {
+        if ((name === "rectangle" || name === "ellipse") && maskEditing) {
+          status("Avslutt maskeredigering før du tegner figurer.");
+          return;
+        }
+        shapeDraft = null;
+        tool = name;
+        refresh();
+      });
     });
+    $("kv2-shape-style").addEventListener("change", renderShapePreview);
     $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
     $("kv2-zoom-out").addEventListener("click", () => setZoom(zoomIndex - 1));
     $("kv2-zoom-reset").addEventListener("click", () => setZoom(2));
@@ -1652,6 +1747,17 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && shapeDraft) {
+        event.preventDefault();
+        const captured = pointerId;
+        shapeDraft = null; pointerId = null; pointerStart = null; paintPrevious = null;
+        renderShapePreview();
+        if (captured !== null && canvas.hasPointerCapture?.(captured)) {
+          canvas.releasePointerCapture(captured);
+        }
+        status("Figur avbrutt – ingen endringer");
+        return;
+      }
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z" ||
           /^(input|textarea)$/i.test(document.activeElement?.tagName || "")) return;
       event.preventDefault();
