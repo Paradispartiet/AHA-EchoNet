@@ -80,6 +80,17 @@ async function shapeDrag(page, start, end, id = 881) {
   await shapePointer(page, "pointermove", end[0], end[1], id);
   await shapePointer(page, "pointerup", end[0], end[1], id);
 }
+
+async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
+  return page.locator("#kv2-canvas").evaluate((canvas, box) => {
+    const rgba = canvas.getContext("2d").getImageData(box.x, box.y, box.w, box.h).data;
+    let ink = 0;
+    for (let i = 0; i < rgba.length; i += 4) {
+      if (rgba[i] < 180 || rgba[i + 1] < 180 || rgba[i + 2] < 180) ink++;
+    }
+    return ink;
+  }, { x, y, w, h });
+}
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
@@ -1677,6 +1688,96 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await page.locator("#kv2-arrow").click();
     await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#kv2-status")).toHaveText("Avslutt maskeredigering før du tegner figurer.");
+  });
+
+
+  test("text preview is local-only and one confirmation adds a movable raster layer in one undo step", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await expect(page.locator("#kv2-text-panel")).toBeVisible();
+    await page.locator("#kv2-text-content").fill("Kunstrommet");
+    await shapePointer(page, "pointerdown", 150, 180, 975);
+    await expect(page.locator("#kv2-text-overlay")).not.toHaveAttribute("hidden");
+    await expect(page.locator("#kv2-text-preview tspan")).toHaveText("Kunstrommet");
+    expect(await textInk(page, 100, 120, 500, 130)).toBe(0);
+    await expect(page.locator("#kv2-status")).not.toHaveText("Ulagrede endringer");
+    await page.locator("#kv2-text-commit").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-move")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-text-panel")).toBeHidden();
+    expect(await textInk(page, 100, 120, 500, 130)).toBeGreaterThan(100);
+    const backup = await jsonBackup(page);
+    expect(backup.layers).toHaveLength(2);
+    expect(backup.layers[1].name).toContain("Tekst");
+    expect(backup.layers[1].kind).toBe("paint");
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => page.locator("#kv2-layer-count").textContent()).toContain("1 av 8 lag");
+    expect(await textInk(page, 100, 120, 500, 130)).toBe(0);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => textInk(page, 100, 120, 500, 130)).toBeGreaterThan(100);
+  });
+
+  test("multiline typography supports font family, size, bold and palette without leaving text tool", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await page.locator("#kv2-text-content").fill("AHA\nKunst");
+    await page.locator("#kv2-text-font").selectOption("serif");
+    await page.locator("#kv2-text-size").fill("64");
+    await page.locator("#kv2-text-bold").check();
+    await page.locator("#kv2-swatch-korall").click();
+    await expect(page.locator("#kv2-text")).toHaveAttribute("aria-pressed", "true");
+    await shapePointer(page, "pointerdown", 140, 150, 976);
+    await expect(page.locator("#kv2-text-preview tspan")).toHaveCount(2);
+    await expect(page.locator("#kv2-text-preview")).toHaveAttribute("font-family", "Georgia, serif");
+    await expect(page.locator("#kv2-text-preview")).toHaveAttribute("font-weight", "700");
+    await expect(page.locator("#kv2-text-preview")).toHaveAttribute("fill", "#d15c4d");
+    expect(await textInk(page, 100, 120, 500, 230)).toBe(0);
+    await page.locator("#kv2-text-commit").click();
+    expect(await textInk(page, 100, 120, 500, 230)).toBeGreaterThan(150);
+    const backup = await jsonBackup(page);
+    expect(backup.layers).toHaveLength(2);
+    expect(backup.layers[1].name).toContain("AHA Kunst");
+  });
+
+  test("empty, too wide and six-line text are rejected; cancel makes no edit", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await shapePointer(page, "pointerdown", 200, 200, 977);
+    await expect(page.locator("#kv2-text-commit")).toBeDisabled();
+    await expect(page.locator("#kv2-text-warning")).toContainText("Skriv tekst");
+    await page.locator("#kv2-text-content").fill("En\nTo\nTre\nFire\nFem\nSeks");
+    await expect(page.locator("#kv2-text-commit")).toBeDisabled();
+    await expect(page.locator("#kv2-text-warning")).toContainText("fem");
+    await page.locator("#kv2-text-content").fill("W".repeat(190));
+    await expect(page.locator("#kv2-text-commit")).toBeDisabled();
+    await expect(page.locator("#kv2-text-warning")).toContainText("for bred");
+    await page.locator("#kv2-text-content").fill("En kort tittel");
+    await expect(page.locator("#kv2-text-commit")).toBeEnabled();
+    await page.locator("#kv2-text-cancel").click();
+    await expect(page.locator("#kv2-text-overlay")).toHaveAttribute("hidden");
+    await expect(page.locator("#kv2-text-commit")).toBeDisabled();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    expect(await textInk(page)).toBe(0);
+    await expect(page.locator("#kv2-status")).toHaveText("Tekstplassering avbrutt – ingen endringer.");
+  });
+
+  test("text cannot be placed during mask editing and an Escape key cancels only preview", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-text").click();
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-status")).toHaveText("Avslutt maskeredigering før du tegner figurer.");
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-text").click();
+    await page.locator("#kv2-text-content").fill("Et bilde");
+    await shapePointer(page, "pointerdown", 160, 180, 978);
+    await expect(page.locator("#kv2-text-overlay")).not.toHaveAttribute("hidden");
+    await page.locator("#kv2-paper").focus();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#kv2-text-overlay")).toHaveAttribute("hidden");
+    await expect(page.locator("#kv2-status")).toHaveText("Tekstplassering avbrutt – ingen endringer.");
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    expect(await textInk(page)).toBe(0);
   });
 
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {

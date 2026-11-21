@@ -193,3 +193,12 @@ Det samme formpanelet inneholder **Linje** og **Pil**. Begge bruker fargevelgere
 Begge verktøyene bruker Kunstrommets eksisterende, ikke-destruktive SVG-forhåndsvisning, som aldri inkluderes i et lag, PNG eller JSON før `pointerup`. Tegning av en gyldig linje/pil gir **ett angresteg**; et kort trykk uten lengde, Escape, `pointercancel` og låste/skjulte lag endrer ikke bildet. Aktiv rektangel- eller lassomarkering begrenser både strek og pilspiss på et flyttet lag. Under redigering av lagmaske er verktøyene sperret. Prosjektformat, lokal lagring, bildejusteringer og Galleri er uendret.
 
 Tre nettleserscenarier i Chromium og emulert iPad WebKit verifiserer forhåndsvisning, vannrett/diagonal linje, omvendt pilretning og pilspiss, angre/gjør om, markering på flyttet lag og maskesikkerhet. Test på fysisk iPad/Apple Pencil er fortsatt åpen i #1058.
+
+
+## Tekstverktøy – første etappe
+
+Det eksisterende atelieret har et **Tekst**-verktøy med inntil fem linjer (maksimalt 280 tegn), tre lokale/systembaserte skrifttypevalg (sans-serif, serif, monospace), størrelse fra 14 til 120 px, fet skrift og den eksisterende fargevelgeren/hurtigpaletten. Skriv teksten i panelet, trykk på lerretet for plassering og velg **Legg tekst på lag**. En midlertidig SVG-forhåndsvisning (inkludert linjeskift og fontvalg) vises uten å påvirke bildets RGBA eller fil-/prosjektlagring før bekreftelse. Tom tekst, over fem linjer og tekst som ikke får plass i dokumentet avvises uten å opprette et angresteg.
+
+Ved bekreftelse skapes et nytt, separat rasterlag over det aktive laget i **ett angresteg**. Eksisterende flytt, lagopasitet, blandingsmodus, justeringer, angre/gjør om, lokale prosjektfiler og eksport fungerer uten formatendring. Dette er *rastertekst*: plassering kan endres via Flytt lag, mens bokstavinnhold ikke lenger kan redigeres direkte etter bekreftelse (angre for å forsøke på nytt). Denne begrensningen vises tydelig i panelet. Tekstposisjon og SVG-forhåndsvisning lagres aldri i V2-prosjektet før bekreftelse. Trykk Escape eller Avbryt plassering for å fjerne forhåndsvisningen.
+
+Tekstplassering er sperret mens brukeren redigerer lagmaske, og egne rastertekstlag begrenses av den eksisterende grensen på åtte lag. Ingen automatisk tekstanalyse, AI-kall eller skyopplasting. Fysisk iPad/Apple Pencil-test registreres fortsatt i #1058.

@@ -97,6 +97,12 @@
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let shapeDraft = null; // Transient SVG-only preview until pointerup.
+  let textAnchor = null; // Local document coordinates; never persisted before commit.
+  const TEXT_FONTS = Object.freeze({
+    sans: "Arial, sans-serif", serif: "Georgia, serif",
+    mono: "Courier New, monospace"
+  });
+  const textMetrics = imageCanvas().getContext("2d");
   let pointerId = null;
   let pointerStart = null;
   let paintPrevious = null;
@@ -153,6 +159,7 @@
     leaveMaskEdit();
     selection = null;
     shapeDraft = null;
+    textAnchor = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
       id: uid(), title: "", note: "", owner: owner(), layers: [base],
@@ -316,6 +323,82 @@
     return { x, y, w: right - x, h: bottom - y };
   }
 
+
+
+  function textLayout() {
+    const raw = $("kv2-text-content").value.replace(/\r\n?/g, "\n");
+    if (!raw.trim()) return { error: "Skriv tekst før du legger den til." };
+    const lines = raw.split("\n");
+    if (lines.length > 5) return { error: "Bruk høyst fem tekstlinjer." };
+    const fontSize = clamp(Math.round(Number($("kv2-text-size").value) || 48), 14, 120);
+    const family = TEXT_FONTS[$("kv2-text-font").value] || TEXT_FONTS.sans;
+    const bold = $("kv2-text-bold").checked;
+    const font = (bold ? "bold " : "") + fontSize + "px " + family;
+    textMetrics.font = font;
+    const width = Math.max(...lines.map(line => textMetrics.measureText(line).width));
+    const lineHeight = Math.ceil(fontSize * 1.25), height = lineHeight * lines.length;
+    if (width > WIDTH - 24) return { error: "Tekstlinjen er for bred. Del teksten over flere linjer eller velg mindre størrelse." };
+    if (height > HEIGHT - 24) return { error: "Teksten er for høy. Bruk færre linjer eller mindre skrift." };
+    // Keep the entire raster text inside the 1200×800 document after a tap.
+    const left = textAnchor ? clamp(Math.round(textAnchor.x), 12, Math.max(12, Math.floor(WIDTH - width - 12))) : 12;
+    const top = textAnchor ? clamp(Math.round(textAnchor.y), 12, Math.max(12, HEIGHT - height - 12)) : 12;
+    return { lines, font, family, fontSize, lineHeight, left, top, bold, width, height };
+  }
+
+  function renderTextPreview() {
+    const overlay = $("kv2-text-overlay"), label = $("kv2-text-preview");
+    const layout = tool === "text" && textAnchor ? textLayout() : null;
+    const visible = !!layout && !layout.error;
+    $("kv2-text-warning").textContent = tool === "text" && layout?.error ? layout.error : "";
+    overlay.toggleAttribute("hidden", !visible);
+    label.replaceChildren();
+    if (visible) {
+      label.setAttribute("font-family", layout.family);
+      label.setAttribute("font-size", String(layout.fontSize));
+      label.setAttribute("font-weight", layout.bold ? "700" : "400");
+      label.setAttribute("fill", $("kv2-color").value);
+      layout.lines.forEach((line, index) => {
+        const span = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+        span.setAttribute("x", String(layout.left));
+        span.setAttribute("y", String(layout.top + index * layout.lineHeight + layout.fontSize));
+        span.textContent = line;
+        label.appendChild(span);
+      });
+    }
+    $("kv2-text-commit").disabled = busy || !project || maskEditing || !textAnchor ||
+      project.layers.length >= MAX_LAYERS || !visible;
+  }
+
+  function commitText() {
+    if (busy || !project || maskEditing || project.layers.length >= MAX_LAYERS) {
+      status("Avslutt maskeredigering eller frigjør et lag før du legger til tekst.");
+      return;
+    }
+    if (!textAnchor) { status("Trykk på lerretet der teksten skal begynne."); return; }
+    const layout = textLayout();
+    if (layout.error) { status(layout.error); return; }
+    if (!checkpoint()) return;
+    const text = layout.lines.join(" ").trim();
+    const layer = createLayer("Tekst · " + text.slice(0, 55), "paint");
+    const pos = project.layers.findIndex(item => item.id === selected);
+    project.layers.splice(pos + 1, 0, layer);
+    const context = surfaces.get(layer.id).getContext("2d");
+    context.save();
+    context.font = layout.font;
+    context.textBaseline = "top";
+    context.fillStyle = $("kv2-color").value;
+    context.globalAlpha = 1;
+    layout.lines.forEach((line, index) => {
+      context.fillText(line, layout.left, layout.top + index * layout.lineHeight);
+    });
+    context.restore();
+    selected = layer.id;
+    textAnchor = null;
+    tool = "move";
+    changed();
+    refresh();
+    status("Tekst lagt på eget lag. Flytt laget for å plassere det videre.");
+  }
 
   function isShapeTool() {
     return ["rectangle", "ellipse", "line", "arrow"].includes(tool);
@@ -689,7 +772,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "text"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -702,6 +785,8 @@
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
+    $("kv2-text-panel").hidden = tool !== "text";
+    renderTextPreview();
   }
 
   function point(event) {
@@ -769,6 +854,14 @@
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
+    if (tool === "text") {
+      event.preventDefault();
+      if (maskEditing) { status("Avslutt maskeredigering før du legger til tekst."); return; }
+      textAnchor = point(event);
+      renderTextPreview();
+      status("Tekstposisjon valgt. Trykk «Legg tekst på lag» når du er fornøyd.");
+      return;
+    }
     if (tool === "eyedropper") {
       // Read the visible composition (including opacity and the white paper).
       // Sampling is view-only: never checkpoint, paint, or change the document.
@@ -1437,6 +1530,7 @@
     adjustedBitmaps.clear();
     selection = null;
     shapeDraft = null;
+    textAnchor = null;
     maskEditing = false;
     layers.forEach((layer, i) => {
       surfaces.set(layer.id, decoded[i].bitmap);
@@ -1689,7 +1783,10 @@
     $("kv2-redo").addEventListener("click", () => historyStep(redoStack, undoStack));
     $("kv2-title").addEventListener("input", changed);
     $("kv2-note").addEventListener("input", changed);
-    $("kv2-color").addEventListener("input", () => { tool = "brush"; refresh(); });
+    $("kv2-color").addEventListener("input", () => {
+      if (tool !== "text") tool = "brush";
+      refresh();
+    });
     $("kv2-brush-preset").addEventListener("change", () => {
       // Changing brush settings doesn't create an art edit or undo step.
       tool = "brush"; refresh();
@@ -1697,7 +1794,7 @@
     PALETTE.forEach(([name, color]) => {
       $("kv2-swatch-" + name).addEventListener("click", () => {
         $("kv2-color").value = color;
-        tool = "brush";
+        if (tool !== "text") tool = "brush";
         refresh();
       });
     });
@@ -1756,18 +1853,29 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "text"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
-        if (["rectangle", "ellipse", "line", "arrow"].includes(name) && maskEditing) {
+        if (["rectangle", "ellipse", "line", "arrow", "text"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
           return;
         }
         shapeDraft = null;
+        if (name !== "text") textAnchor = null;
         tool = name;
         refresh();
       });
     });
     $("kv2-shape-style").addEventListener("change", renderShapePreview);
+    ["kv2-text-content", "kv2-text-size", "kv2-text-font", "kv2-text-bold"].forEach(id => {
+      $(id).addEventListener("input", renderTextPreview);
+      $(id).addEventListener("change", renderTextPreview);
+    });
+    $("kv2-text-commit").addEventListener("click", commitText);
+    $("kv2-text-cancel").addEventListener("click", () => {
+      textAnchor = null;
+      renderTextPreview();
+      status("Tekstplassering avbrutt – ingen endringer.");
+    });
     $("kv2-zoom-in").addEventListener("click", () => setZoom(zoomIndex + 1));
     $("kv2-zoom-out").addEventListener("click", () => setZoom(zoomIndex - 1));
     $("kv2-zoom-reset").addEventListener("click", () => setZoom(2));
@@ -1798,6 +1906,14 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && tool === "text" && textAnchor &&
+          !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || "")) {
+        event.preventDefault();
+        textAnchor = null;
+        renderTextPreview();
+        status("Tekstplassering avbrutt – ingen endringer.");
+        return;
+      }
       if (event.key === "Escape" && shapeDraft) {
         event.preventDefault();
         const captured = pointerId;
