@@ -170,3 +170,5 @@
   .kv2-text-panel { padding: 10px; }
   .kv2-text-actions button { flex: 1 1 42%; }
 }
+
+#kv2-text-warning:not(:empty) { color: #9b4130; font-weight: 600; margin: 0; }

@@ -349,6 +349,7 @@
     const overlay = $("kv2-text-overlay"), label = $("kv2-text-preview");
     const layout = tool === "text" && textAnchor ? textLayout() : null;
     const visible = !!layout && !layout.error;
+    $("kv2-text-warning").textContent = tool === "text" && layout?.error ? layout.error : "";
     overlay.toggleAttribute("hidden", !visible);
     label.replaceChildren();
     if (visible) {
