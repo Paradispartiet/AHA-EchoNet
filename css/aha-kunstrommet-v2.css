@@ -118,3 +118,10 @@
   .kv2-palette { width: 100%; }
   .kv2-toolbar .kv2-swatch { width: 36px; height: 36px; }
 }
+
+/* Layer blend mode: same local controls and accessible focus treatment. */
+#kv2-blend-mode { display: block; box-sizing: border-box; width: 100%;
+  padding: 10px 12px; border: 1px solid #bcc4be; border-radius: 10px;
+  background: #fff; color: #1f2c2b; font: inherit; }
+#kv2-blend-mode:focus-visible { outline: 3px solid #4874a8; outline-offset: 2px; }
+#kv2-blend-mode:disabled { opacity: .55; }

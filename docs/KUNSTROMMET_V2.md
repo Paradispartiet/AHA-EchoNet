@@ -155,3 +155,12 @@ Den samme penselmotoren har fire tegneinnstillinger: **Vanlig** (opasitet 100 %,
 Hurtigpaletten tilbyr åtte navngitte farger og oppdaterer den vanlige fargevelgeren. Andre farger kan fortsatt velges fritt. Å velge pensel eller farge oppretter ikke angrepunkter, endrer ikke kunstverket, overfører ikke data og lagres ikke som nye prosjektfelter. Når man begynner å tegne, blir pikslene fortsatt redigert og lagret via den eksisterende lokale lagmotoren. Masker, lasso, Galleri, V1, sikkerhetskopier og eksisterende prosjektfiler er uendret.
 
 Tre nye Playwright-scenarier tester penselvalg og angre/gjør om, ulik bredde/opasitet, samt at maskemaling og viskelær ikke påvirkes av penselinnstillingen, i både Chromium og simulert iPad WebKit. Fysisk iPad/Apple Pencil-kontroll ligger fortsatt i #1058.
+
+
+## Blandingsmoduser for lag
+
+Aktivt lag har tre valg i lagpanelet: **Normal**, **Multipliser (mørkere)** og **Skjerm (lysere)**. Blend beregnes under visning og PNG-eksport ved sammensetting av lagene; lagets originale RGBA-piksler og eventuelle ikke-destruktive masker forblir uendret. Lagets opasitet, synlighet, flytting, rekkefølge, lasso, maske og transformering fungerer videre. En maskert bitmap blandes først etter at masken er påført. Endring av blandingsmodus er ett angre-/gjør om-steg.
+
+Feltet `blendMode` er en valgfri metadatautvidelse innenfor **eksisterende** prosjektformat `aha-kunstrommet-v2`, uten nytt IndexedDB-skjema. Gamle prosjektfiler uten feltet åpnes som Normal. Import lar bare `normal`, `multiply` og `screen` slippe gjennom; ukjente verdier faller tilbake til Normal. Lagduplisering og kopier/klipp viderefører modus, og eksport, import, angre og lokal lagring beholder den. Ingen nettverkstilgang, automatisk deling eller endringer i Galleri/psykologirommet.
+
+Nettlesertestene i Chromium og emulert iPad WebKit kontrollerer komposisjonsfarger for mørkere/lysere modus, uendrede originalpiksler, angre/gjør om, sikker import av ugyldige verdier, gamle prosjektfiler, masker og duplisering. Fysisk iPad/Apple Pencil verifiseres separat i #1058.
