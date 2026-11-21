@@ -184,3 +184,12 @@ Tre nye nettleserscenarier i Chromium og emulert iPad WebKit kontrollerer kompos
 Først ved et gyldig slipp lages **ett angresteg**, og figuren tegnes som rasterpiksler på aktivt, synlig, ulåst bildelag. En pågående rektangel- eller lassomarkering klipper figuren i dokumentkoordinater, selv når laget er flyttet. Under redigering av lagmaske må brukeren avslutte maskeredigering før formverktøy kan velges. Ingen endring av V2-prosjektformat, Galleri, IndexedDB, lagmasker eller bildejusteringer.
 
 Fire nettlesertester (Chromium og simulert iPad WebKit) dekker forhåndsvisning uten pikselendring, angre/gjør om, ellipseomriss, penselstørrelse, markering på flyttet lag, Escape, avbrutt peker, låst lag og maskesikker redigering. Fysisk Apple Pencil/iPad-testing ligger fortsatt i #1058.
+
+
+## Linje- og pilverktøy
+
+Det samme formpanelet inneholder **Linje** og **Pil**. Begge bruker fargevelgeren og den eksisterende `Størrelse`-glideren til strekens tykkelse. Linjen har runde ender; pilen har en fylt spiss som peker **mot slutten av dragbevegelsen**, også når brukeren drar mot venstre eller oppover. Pilspissen tilpasses streklengden, med en begrenset størrelse på små og store piler. «Fylt/Omriss»-valget deaktiveres når linje eller pil er valgt, fordi disse alltid bruker strek.
+
+Begge verktøyene bruker Kunstrommets eksisterende, ikke-destruktive SVG-forhåndsvisning, som aldri inkluderes i et lag, PNG eller JSON før `pointerup`. Tegning av en gyldig linje/pil gir **ett angresteg**; et kort trykk uten lengde, Escape, `pointercancel` og låste/skjulte lag endrer ikke bildet. Aktiv rektangel- eller lassomarkering begrenser både strek og pilspiss på et flyttet lag. Under redigering av lagmaske er verktøyene sperret. Prosjektformat, lokal lagring, bildejusteringer og Galleri er uendret.
+
+Tre nettleserscenarier i Chromium og emulert iPad WebKit verifiserer forhåndsvisning, vannrett/diagonal linje, omvendt pilretning og pilspiss, angre/gjør om, markering på flyttet lag og maskesikkerhet. Test på fysisk iPad/Apple Pencil er fortsatt åpen i #1058.

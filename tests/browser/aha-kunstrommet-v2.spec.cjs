@@ -1611,6 +1611,69 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(await pixel(page)).toEqual([35, 36, 44, 255]);
   });
 
+
+  test("horizontal and diagonal lines use one undo step, with no pixels before pointerup", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-line").click();
+    await expect(page.locator("#kv2-line")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-shape-style")).toBeDisabled();
+    await shapePointer(page, "pointerdown", 450, 400, 940);
+    await shapePointer(page, "pointermove", 750, 400, 940);
+    await expect(page.locator("#kv2-shape-overlay")).not.toHaveAttribute("hidden");
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await shapePointer(page, "pointerup", 750, 400, 940);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    expect(await pxAt(page, 600, 450)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => pixel(page)).toEqual([35, 36, 44, 255]);
+    await shapeDrag(page, [500, 350], [700, 550], 941);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    const saved = await jsonBackup(page);
+    expect(saved.layers).toHaveLength(1);
+    expect(saved.layers[0].bitmap).toMatch(/^data:image\/png;base64,/);
+  });
+
+  test("reversed arrow points to the drag endpoint and preserves the source layer on undo", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-arrow").click();
+    await page.locator("#kv2-size").evaluate((input) => {
+      input.value = "12"; input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await shapePointer(page, "pointerdown", 750, 400, 942);
+    await shapePointer(page, "pointermove", 450, 400, 942);
+    await expect(page.locator("#kv2-shape-path")).toHaveAttribute("d", /M 750 400 L 450 400/);
+    await shapePointer(page, "pointerup", 450, 400, 942);
+    expect(await pxAt(page, 450, 400)).toEqual([35, 36, 44, 255]);
+    expect((await pxAt(page, 476, 414))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 476, 386))[0]).toBeLessThan(100);
+    expect(await pxAt(page, 450, 450)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => pxAt(page, 600, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async () => pxAt(page, 600, 400)).toEqual([35, 36, 44, 255]);
+  });
+
+  test("selected region clips arrow head and shaft on a translated layer", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-move").click();
+    await shapeDrag(page, [600, 400], [620, 410], 943);
+    await page.locator("#kv2-select").click();
+    await shapeDrag(page, [540, 365], [660, 435], 944);
+    await page.locator("#kv2-arrow").click();
+    await shapeDrag(page, [450, 400], [740, 400], 945);
+    expect(await pixel(page)).toEqual([35, 36, 44, 255]);
+    expect(await pxAt(page, 500, 400)).toEqual([255, 255, 255, 255]);
+    expect(await pxAt(page, 700, 400)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-arrow").click();
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#kv2-status")).toHaveText("Avslutt maskeredigering før du tegner figurer.");
+  });
+
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {

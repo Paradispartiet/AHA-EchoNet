@@ -317,8 +317,29 @@
   }
 
 
-  function isShapeTool() { return tool === "rectangle" || tool === "ellipse"; }
-
+  function isShapeTool() {
+    return ["rectangle", "ellipse", "line", "arrow"].includes(tool);
+  }
+  function isLinearShape(kind) { return kind === "line" || kind === "arrow"; }
+  function shapeValid(draft) {
+    if (!draft) return false;
+    if (isLinearShape(draft.kind)) {
+      return Math.hypot(draft.end.x - draft.start.x, draft.end.y - draft.start.y) >= 3;
+    }
+    const bounds = normalizedSelection(draft.start, draft.end);
+    return bounds.w >= 2 && bounds.h >= 2;
+  }
+  function arrowTip(start, end, width) {
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 3) return null;
+    const length = Math.min(len * 0.45, Math.max(10, Math.min(42, width * 3)));
+    const wing = length * 0.48, ux = dx / len, uy = dy / len;
+    return [
+      { x: end.x - ux * length - uy * wing, y: end.y - uy * length + ux * wing },
+      { x: end.x - ux * length + uy * wing, y: end.y - uy * length - ux * wing }
+    ];
+  }
   function shapeGeometry(context, box, offsetX, offsetY, kind) {
     const x = box.x - offsetX, y = box.y - offsetY;
     context.beginPath();
@@ -326,32 +347,42 @@
     else context.ellipse(x + box.w / 2, y + box.h / 2,
       box.w / 2, box.h / 2, 0, 0, Math.PI * 2);
   }
-
   function renderShapePreview() {
     const svg = $("kv2-shape-overlay"), path = $("kv2-shape-path");
-    const b = shapeDraft ? normalizedSelection(shapeDraft.start, shapeDraft.end) : null;
-    const visible = !!b && b.w >= 2 && b.h >= 2;
+    const visible = shapeValid(shapeDraft);
     svg.toggleAttribute("hidden", !visible);
     if (!visible) { path.setAttribute("d", ""); return; }
-    const x = b.x, y = b.y, w = b.w, h = b.h;
-    const outline = shapeDraft.kind === "rectangle"
-      ? "M " + x + " " + y + " h " + w + " v " + h + " h " + (-w) + " Z"
-      : "M " + (x + w) + " " + (y + h / 2) +
+    const draft = shapeDraft, b = normalizedSelection(draft.start, draft.end);
+    let outline;
+    if (isLinearShape(draft.kind)) {
+      // Direction matters for arrows: never normalize the two endpoints.
+      const a = draft.start, z = draft.end;
+      outline = "M " + a.x + " " + a.y + " L " + z.x + " " + z.y;
+      if (draft.kind === "arrow") {
+        const tips = arrowTip(a, z, Number($("kv2-size").value) || 6);
+        outline += " M " + tips[0].x + " " + tips[0].y +
+          " L " + z.x + " " + z.y + " L " + tips[1].x + " " + tips[1].y;
+      }
+    } else if (draft.kind === "rectangle") {
+      outline = "M " + b.x + " " + b.y + " h " + b.w +
+        " v " + b.h + " h " + (-b.w) + " Z";
+    } else {
+      const x = b.x, y = b.y, w = b.w, h = b.h;
+      outline = "M " + (x + w) + " " + (y + h / 2) +
         " A " + (w / 2) + " " + (h / 2) + " 0 1 0 " + x + " " + (y + h / 2) +
         " A " + (w / 2) + " " + (h / 2) + " 0 1 0 " + (x + w) + " " + (y + h / 2) + " Z";
-    const filled = $("kv2-shape-style").value === "fill";
+    }
+    const filled = !isLinearShape(draft.kind) && $("kv2-shape-style").value === "fill";
     path.setAttribute("d", outline);
     path.setAttribute("stroke", $("kv2-color").value);
     path.setAttribute("stroke-width", filled ? "1" : String(Number($("kv2-size").value) || 6));
     path.setAttribute("fill", filled ? $("kv2-color").value : "none");
     path.setAttribute("fill-opacity", filled ? "0.3" : "1");
   }
-
   function commitShape() {
     const layer = currentLayer();
-    if (!shapeDraft || !layer || layer.locked || !layer.visible || busy || maskEditing) return false;
-    const box = normalizedSelection(shapeDraft.start, shapeDraft.end);
-    if (box.w < 2 || box.h < 2 || !checkpoint()) return false;
+    if (!shapeValid(shapeDraft) || !layer || layer.locked || !layer.visible || busy || maskEditing ||
+        !checkpoint()) return false;
     const context = surfaces.get(layer.id).getContext("2d");
     context.save();
     context.globalCompositeOperation = "source-over";
@@ -360,13 +391,32 @@
     context.strokeStyle = $("kv2-color").value;
     context.lineWidth = Number($("kv2-size").value) || 6;
     context.lineJoin = "round";
+    context.lineCap = "round";
     if (validSelection()) {
       selectionPath(context, layer.x, layer.y);
       context.clip();
     }
-    shapeGeometry(context, box, layer.x, layer.y, shapeDraft.kind);
-    if ($("kv2-shape-style").value === "fill") context.fill();
-    else context.stroke();
+    if (isLinearShape(shapeDraft.kind)) {
+      const a = shapeDraft.start, b = shapeDraft.end;
+      context.beginPath();
+      context.moveTo(a.x - layer.x, a.y - layer.y);
+      context.lineTo(b.x - layer.x, b.y - layer.y);
+      context.stroke();
+      if (shapeDraft.kind === "arrow") {
+        const tips = arrowTip(a, b, context.lineWidth);
+        context.beginPath();
+        context.moveTo(b.x - layer.x, b.y - layer.y);
+        context.lineTo(tips[0].x - layer.x, tips[0].y - layer.y);
+        context.lineTo(tips[1].x - layer.x, tips[1].y - layer.y);
+        context.closePath();
+        context.fill();
+      }
+    } else {
+      const bounds = normalizedSelection(shapeDraft.start, shapeDraft.end);
+      shapeGeometry(context, bounds, layer.x, layer.y, shapeDraft.kind);
+      if ($("kv2-shape-style").value === "fill") context.fill();
+      else context.stroke();
+    }
     context.restore();
     changed();
     return true;
@@ -639,7 +689,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -650,6 +700,7 @@
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
     $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
     renderSelection();
+    $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
   }
 
@@ -1705,9 +1756,9 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
-        if ((name === "rectangle" || name === "ellipse") && maskEditing) {
+        if (["rectangle", "ellipse", "line", "arrow"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
           return;
         }

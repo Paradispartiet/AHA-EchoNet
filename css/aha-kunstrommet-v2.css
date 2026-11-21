@@ -142,3 +142,6 @@
 .kv2-shape-overlay path { stroke-linejoin: round; stroke-dasharray: 6 4;
   vector-effect: non-scaling-stroke; }
 .kv2-shape-overlay[hidden] { display: none; }
+
+/* Line and arrow use the shared stroke thickness, not fill/outline mode. */
+#kv2-shape-style:disabled { opacity: .55; cursor: not-allowed; }
