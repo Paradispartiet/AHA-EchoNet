@@ -5,6 +5,7 @@ const vm = require("node:vm");
 const code = fs.readFileSync("js/ahaPsychologyEncryptedVault.js", "utf8");
 const sql = fs.readFileSync("supabase/psychology-encrypted-vault.sql", "utf8");
 const page = fs.readFileSync("psykologi-vault.html", "utf8");
+const entryPage = fs.readFileSync("psykologi.html", "utf8");
 const flags = fs.readFileSync("js/ahaPsychologyVaultConfig.js", "utf8");
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 const UUID_B = "22222222-2222-4222-8222-222222222222";
@@ -77,6 +78,17 @@ async function run() {
   await assert.rejects(vault.upload(env, { client: mockClient(UUID_A) }), /not_activated/);
   assert.equal(accesses, 0);
 
+  // Never use the account vault on the GitHub Pages origin shared by
+  // History-Go and AHA, even if someone turns on the frontend feature flag.
+  global.location = { hostname: "paradispartiet.github.io" };
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = true;
+  assert.equal(vault.enabled(), false);
+  await assert.rejects(vault.status({ client: mockClient(UUID_A) }), /not_activated/);
+  assert.equal(accesses, 0, "shared origin must not access Supabase");
+  global.location = { hostname: "aha-echo-net.vercel.app" };
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false;
+  assert.equal(vault.enabled(), false);
+
   global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = true;
   assert.equal(vault.validateEncryptedFile(env).bytes, Buffer.byteLength(env));
   assert.throws(() => vault.validateEncryptedFile(JSON.stringify({ ...JSON.parse(env), note: "private text" })), /invalid_file/,
@@ -115,6 +127,10 @@ async function run() {
   assert.match(flags, /AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED\s*=\s*false/);
   assert.match(page, /js\/ahaPsychologyVaultConfig\.js/);
   assert.match(page, /id="aha-psych-vault-panel"[^>]+hidden/);
+  assert.match(page, /id="aha-psych-vault-shared-origin"[^>]+hidden/);
+  assert.match(entryPage, /#aha-psych-vault-entry\[hidden\]\s*\{\s*display:\s*none\s*!important;/,
+    "inactive vault entry must remain visually hidden against shared flex styles");
+  assert.match(page, /https:\/\/aha-echo-net\.vercel\.app\/psykologi\.html/);
   assert.doesNotMatch(page, /name="password"|type="password"/);
   assert.doesNotMatch(code, /fetch\(|XMLHttpRequest|postMessage|AHARepository|sync_enabled/);
 
