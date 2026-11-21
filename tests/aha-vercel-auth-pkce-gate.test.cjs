@@ -58,6 +58,7 @@ async function run() {
 
   const blocked = isolatedAuth(VERCEL);
   assert.equal(blocked.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, true);
+  assert.equal(blocked.window.AHA_APP_URL, VERCEL + "/", "Vercel navigation must not jump to the shared origin");
   assert.equal(blocked.window.AHAAuth.getRedirectUrl(), "");
   assert.deepEqual(
     JSON.parse(JSON.stringify(await blocked.window.AHAAuth.signInWithEmail("fixture@example.test"))),
