@@ -1646,8 +1646,9 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-shape-path")).toHaveAttribute("d", /M 750 400 L 450 400/);
     await shapePointer(page, "pointerup", 450, 400, 942);
     expect(await pxAt(page, 450, 400)).toEqual([35, 36, 44, 255]);
-    expect((await pxAt(page, 476, 414))[0]).toBeLessThan(100);
-    expect((await pxAt(page, 476, 386))[0]).toBeLessThan(100);
+    // Both samples sit inside the filled, left-pointing arrowhead.
+    expect((await pxAt(page, 478, 408))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 478, 392))[0]).toBeLessThan(100);
     expect(await pxAt(page, 450, 450)).toEqual([255, 255, 255, 255]);
     await page.locator("#kv2-undo").click();
     await expect.poll(async () => pxAt(page, 600, 400)).toEqual([255, 255, 255, 255]);
