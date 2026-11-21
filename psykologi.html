@@ -10,6 +10,9 @@
   <style>
     .aha-psych-page { max-width: 880px; margin: 0 auto; }
     .aha-psych-page .aha-panel { margin-bottom: 1rem; }
+    /* The shared AHA stylesheet declares display:flex on module actions.
+       Ensure hidden stays authoritative until the opt-in vault is activated. */
+    #aha-psych-vault-entry[hidden] { display: none !important; }
     .aha-psych-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
     .aha-psych-form { display: grid; gap: .8rem; }
     .aha-psych-form textarea { display: block; width: 100%; box-sizing: border-box; min-height: 8rem; padding: .85rem; border: 1px solid #8b99a6; border-radius: .65rem; background: var(--aha-surface, #fff); color: var(--aha-text, #222); font: inherit; }
