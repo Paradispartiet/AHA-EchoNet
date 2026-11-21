@@ -5,6 +5,7 @@ const vm = require("node:vm");
 const code = fs.readFileSync("js/ahaPsychologyEncryptedVault.js", "utf8");
 const sql = fs.readFileSync("supabase/psychology-encrypted-vault.sql", "utf8");
 const page = fs.readFileSync("psykologi-vault.html", "utf8");
+const entryPage = fs.readFileSync("psykologi.html", "utf8");
 const flags = fs.readFileSync("js/ahaPsychologyVaultConfig.js", "utf8");
 const UUID_A = "11111111-1111-4111-8111-111111111111";
 const UUID_B = "22222222-2222-4222-8222-222222222222";
@@ -127,6 +128,8 @@ async function run() {
   assert.match(page, /js\/ahaPsychologyVaultConfig\.js/);
   assert.match(page, /id="aha-psych-vault-panel"[^>]+hidden/);
   assert.match(page, /id="aha-psych-vault-shared-origin"[^>]+hidden/);
+  assert.match(entryPage, /#aha-psych-vault-entry\[hidden\]\s*\{\s*display:\s*none\s*!important;/,
+    "inactive vault entry must remain visually hidden against shared flex styles");
   assert.match(page, /https:\/\/aha-echo-net\.vercel\.app\/psykologi\.html/);
   assert.doesNotMatch(page, /name="password"|type="password"/);
   assert.doesNotMatch(code, /fetch\(|XMLHttpRequest|postMessage|AHARepository|sync_enabled/);
