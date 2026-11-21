@@ -55,6 +55,14 @@ async function pngLayersAt(page, layers, x, y) {
     return result;
   }, { layers, x, y });
 }
+
+async function changeAdjustment(page, name, value) {
+  await page.locator("#kv2-adjust-" + name).evaluate((control, n) => {
+    control.value = String(n);
+    control.dispatchEvent(new Event("input", { bubbles: true }));
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+}
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
@@ -1382,6 +1390,126 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await page.locator("#kv2-undo").click();
     await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
     await expect(page.locator("#kv2-blend-mode")).toHaveValue("multiply");
+  });
+
+
+  test("brightness and contrast edit appearance but not source pixels, with distinct undo steps", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((c) => {
+      c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    const before = await jsonBackup(page);
+    expect((await pixel(page))[0]).toBe(128);
+    await changeAdjustment(page, "brightness", 140);
+    await expect(page.locator("#kv2-adjust-brightness-value")).toHaveText("140%");
+    const bright = (await pixel(page))[0];
+    expect(bright).toBeGreaterThan(165);
+    expect(bright).toBeLessThan(195);
+    await changeAdjustment(page, "contrast", 140);
+    const contrasted = (await pixel(page))[0];
+    expect(contrasted).toBeGreaterThan(bright + 8);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => page.locator("#kv2-adjust-contrast").inputValue()).toBe("100");
+    await expect.poll(async () => (await pixel(page))[0]).toBe(bright);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(() => page.locator("#kv2-adjust-contrast").inputValue()).toBe("140");
+    await expect.poll(async () => (await pixel(page))[0]).toBe(contrasted);
+    const after = await jsonBackup(page);
+    expect(after.layers[0].bitmap).toBe(before.layers[0].bitmap);
+    expect(after.layers[0].adjustments).toEqual({ brightness: 140, contrast: 140, saturation: 100 });
+    await page.locator("#kv2-adjust-reset").click();
+    await expect(page.locator("#kv2-adjust-reset")).toBeDisabled();
+    expect((await pixel(page))[0]).toBe(128);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(() => page.locator("#kv2-adjust-brightness").inputValue()).toBe("140");
+    await expect.poll(() => page.locator("#kv2-adjust-contrast").inputValue()).toBe("140");
+  });
+
+  test("saturation is per layer, survives local save and editable export, and imports old/malformed settings safely", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((c) => {
+      c.value = "#9c6030"; c.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await changeAdjustment(page, "saturation", 0);
+    const gray = await pixel(page);
+    expect(Math.max(...gray.slice(0, 3)) - Math.min(...gray.slice(0, 3))).toBeLessThanOrEqual(2);
+    await changeAdjustment(page, "saturation", 200);
+    const vivid = await pixel(page);
+    expect(Math.max(...vivid.slice(0, 3)) - Math.min(...vivid.slice(0, 3))).toBeGreaterThan(70);
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-projects .kv2-project--saved").getByRole("button", { name: "Åpne" }).click();
+    await expect(page.locator("#kv2-adjust-saturation")).toHaveValue("200");
+    const copy = await jsonBackup(page);
+    expect(copy.layers[0].adjustments.saturation).toBe(200);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const invalid = structuredClone(copy);
+    invalid.layers[0].adjustments = { brightness: "150", contrast: Infinity, saturation: 900 };
+    await page.locator("#kv2-import").setInputFiles({
+      name: "invalid-settings.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(invalid))
+    });
+    await expect(page.locator("#kv2-adjust-brightness")).toHaveValue("100");
+    await expect(page.locator("#kv2-adjust-contrast")).toHaveValue("100");
+    await expect(page.locator("#kv2-adjust-saturation")).toHaveValue("200");
+    const old = structuredClone(copy);
+    delete old.layers[0].adjustments;
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "old-project.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(old))
+    });
+    await expect(page.locator("#kv2-adjust-saturation")).toHaveValue("100");
+    expect((await pixel(page)).slice(0, 3)).toEqual([156, 96, 48]);
+  });
+
+  test("layer adjustments follow duplicate and selection extraction, while masks stay non-destructive", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate((c) => {
+      c.value = "#4080c0"; c.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await stroke(page);
+    await changeAdjustment(page, "brightness", 125);
+    await changeAdjustment(page, "saturation", 75);
+    const adjusted = await pixel(page);
+    await page.locator("#kv2-mask-add").click();
+    await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
+    await stroke(page);
+    expect(await pixel(page)).toEqual([255, 255, 255, 255]);
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    expect(await pixel(page)).toEqual(adjusted);
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-duplicate-layer").click();
+    await expect(page.locator("#kv2-adjust-brightness")).toHaveValue("125");
+    await expect(page.locator("#kv2-adjust-saturation")).toHaveValue("75");
+    let backup = await jsonBackup(page);
+    expect(backup.layers.map((layer) => layer.adjustments.brightness)).toEqual([125, 125]);
+    expect(backup.layers.every((layer) => typeof layer.maskBitmap === "string")).toBe(true);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+    await page.locator("#kv2-select").click();
+    await page.locator("#kv2-canvas").evaluate((canvas) => {
+      const b = canvas.getBoundingClientRect();
+      const send = (type, x, y) => canvas.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 784, pointerType: "mouse",
+        button: 0, buttons: type === "pointerup" ? 0 : 1,
+        clientX: b.left + x * b.width / 1200,
+        clientY: b.top + y * b.height / 800
+      }));
+      send("pointerdown", 560, 360); send("pointermove", 640, 440);
+      send("pointerup", 640, 440);
+    });
+    await page.locator("#kv2-copy-selection").click();
+    backup = await jsonBackup(page);
+    expect(backup.layers).toHaveLength(2);
+    expect(backup.layers.map((layer) => layer.adjustments)).toEqual([
+      { brightness: 125, contrast: 100, saturation: 75 },
+      { brightness: 125, contrast: 100, saturation: 75 }
+    ]);
   });
 
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {

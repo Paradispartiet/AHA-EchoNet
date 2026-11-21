@@ -11,6 +11,31 @@
   const HEIGHT = 800;
   const MAX_LAYERS = 8;
   const BLEND_MODES = new Set(["normal", "multiply", "screen"]);
+
+  // Optional adjustment metadata in the existing V2 project format.
+  // Values are bounded before composing CSS Canvas filters from them.
+  const ADJUSTMENT_LIMITS = Object.freeze({
+    brightness: [50, 150], contrast: [50, 150], saturation: [0, 200]
+  });
+  function safeAdjustments(value) {
+    const from = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const result = {};
+    Object.keys(ADJUSTMENT_LIMITS).forEach((key) => {
+      const n = Number.isFinite(from[key]) ? Math.round(from[key]) : 100;
+      const [lo, hi] = ADJUSTMENT_LIMITS[key];
+      result[key] = clamp(n, lo, hi);
+    });
+    return result;
+  }
+  function adjustmentFilter(layer) {
+    const a = safeAdjustments(layer.adjustments);
+    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) {
+      return "none";
+    }
+    return "brightness(" + a.brightness + "%) contrast(" + a.contrast +
+      "%) saturate(" + a.saturation + "%)";
+  }
+
   const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
   const MAX_PROJECT_BYTES = 36 * 1024 * 1024;
   const MAX_HISTORY = 12;
@@ -83,7 +108,7 @@
     const layer = {
       id: uid(), name: String(name || "Nytt lag").slice(0, 70),
       kind: kind || "paint", visible: true, locked: false,
-      opacity: 1, blendMode: "normal", x: 0, y: 0
+      opacity: 1, blendMode: "normal", adjustments: safeAdjustments(null), x: 0, y: 0
     };
     surfaces.set(layer.id, imageCanvas());
     return layer;
@@ -131,6 +156,9 @@
       // the mask bitmap itself, and don't modify any layer's source pixels.
       view.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
         layer.blendMode !== "normal" ? layer.blendMode : "source-over";
+      // Adjust each layer only when rendering its masked source. The original
+      // bitmap and the mask remain untouched for undo and local backups.
+      view.filter = adjustmentFilter(layer);
       const mask = layer.maskEnabled !== false && masks.get(layer.id);
       if (!mask) {
         view.drawImage(bitmap, layer.x, layer.y);
@@ -343,6 +371,7 @@
         id: layer.id, name: layer.name, kind: layer.kind,
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
+        adjustments: safeAdjustments(layer.adjustments),
         x: layer.x, y: layer.y,
         bitmap: surface.toDataURL("image/png"),
         ...(pixelFixups ? { pixelFixups } : {}),
@@ -481,6 +510,14 @@
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
     $("kv2-blend-mode").disabled = !layer || busy;
+    const adjustments = safeAdjustments(layer?.adjustments);
+    Object.keys(ADJUSTMENT_LIMITS).forEach((name) => {
+      $("kv2-adjust-" + name).value = adjustments[name];
+      $("kv2-adjust-" + name).disabled = !layer || layer.locked || busy;
+      $("kv2-adjust-" + name + "-value").textContent = adjustments[name] + "%";
+    });
+    $("kv2-adjust-reset").disabled = !layer || layer.locked || busy ||
+      Object.values(adjustments).every((value) => value === 100);
     $("kv2-rename").value = layer ? layer.name : "";
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
@@ -857,7 +894,8 @@
     if (!checkpoint()) return;
     const extracted = createLayer(layer.name + (removeFromSource ? " – klippet" : " – utsnitt"), layer.kind);
     Object.assign(extracted, {
-      x: layer.x, y: layer.y, opacity: layer.opacity, blendMode: layer.blendMode || "normal"
+      x: layer.x, y: layer.y, opacity: layer.opacity, blendMode: layer.blendMode || "normal",
+      adjustments: safeAdjustments(layer.adjustments)
     });
     surfaces.get(extracted.id).getContext("2d").putImageData(pixels, x, y);
     if (masks.has(layer.id)) {
@@ -887,7 +925,8 @@
     checkpoint();
     const clone = createLayer(layer.name + " – kopi", layer.kind);
     Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity,
-      blendMode: layer.blendMode || "normal", x: layer.x, y: layer.y });
+      blendMode: layer.blendMode || "normal", adjustments: safeAdjustments(layer.adjustments),
+      x: layer.x, y: layer.y });
     const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
     if (masks.has(layer.id)) {
@@ -1141,6 +1180,7 @@
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
       // Older projects default to normal; unknown or unsafe modes are ignored.
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
+      adjustments: safeAdjustments(input.adjustments),
       x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
       bitmap: input.bitmap,
@@ -1494,6 +1534,35 @@
       const next = $("kv2-rename").value.trim().slice(0, 70);
       if (!next || next === layer.name) return;
       checkpoint(); layer.name = next; changed(); refresh();
+    });
+    Object.keys(ADJUSTMENT_LIMITS).forEach((name) => {
+      const control = $("kv2-adjust-" + name);
+      control.addEventListener("input", () => {
+        // Always show the value while dragging; commit only on release so
+        // every slider adjustment creates exactly one undo checkpoint.
+        $("kv2-adjust-" + name + "-value").textContent = control.value + "%";
+      });
+      control.addEventListener("change", () => {
+        const layer = currentLayer();
+        if (!layer || layer.locked || busy) return;
+        const [lo, hi] = ADJUSTMENT_LIMITS[name];
+        const next = clamp(Math.round(Number(control.value)), lo, hi);
+        const current = safeAdjustments(layer.adjustments);
+        if (!Number.isFinite(next) || current[name] === next) return;
+        if (!checkpoint()) return;
+        layer.adjustments = { ...current, [name]: next };
+        changed();
+        refresh();
+      });
+    });
+    $("kv2-adjust-reset").addEventListener("click", () => {
+      const layer = currentLayer();
+      if (!layer || layer.locked || busy) return;
+      const current = safeAdjustments(layer.adjustments);
+      if (Object.values(current).every((value) => value === 100)) return;
+      if (!checkpoint()) return;
+      layer.adjustments = safeAdjustments(null);
+      changed(); refresh();
     });
     $("kv2-blend-mode").addEventListener("change", () => {
       const layer = currentLayer();

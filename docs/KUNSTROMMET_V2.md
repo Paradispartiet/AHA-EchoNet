@@ -164,3 +164,14 @@ Aktivt lag har tre valg i lagpanelet: **Normal**, **Multipliser (mørkere)** og 
 Feltet `blendMode` er en valgfri metadatautvidelse innenfor **eksisterende** prosjektformat `aha-kunstrommet-v2`, uten nytt IndexedDB-skjema. Gamle prosjektfiler uten feltet åpnes som Normal. Import lar bare `normal`, `multiply` og `screen` slippe gjennom; ukjente verdier faller tilbake til Normal. Lagduplisering og kopier/klipp viderefører modus, og eksport, import, angre og lokal lagring beholder den. Ingen nettverkstilgang, automatisk deling eller endringer i Galleri/psykologirommet.
 
 Nettlesertestene i Chromium og emulert iPad WebKit kontrollerer komposisjonsfarger for mørkere/lysere modus, uendrede originalpiksler, angre/gjør om, sikker import av ugyldige verdier, gamle prosjektfiler, masker og duplisering. Fysisk iPad/Apple Pencil verifiseres separat i #1058.
+
+
+## Ikke-destruktive bildejusteringer – lys, kontrast og metning
+
+Det eksisterende lagpanelet har glidere for **Lysstyrke** (50–150 %), **Kontrast** (50–150 %) og **Fargemetning** (0–200 %), med nøytralverdi 100 %. Justeringene er **per lag** og gjøres som Canvas-bildefilter ved tegning av komposisjonen, *etter* at den eksisterende ikke-destruktive lagmasken er påført. Originale RGBA-bitmap, lagmasker og pikselkorreksjoner endres ikke. Blandingsmodus og opasitet fungerer fortsatt, og PNG-eksporten ser den samme komposisjonen som lerretet.
+
+Gliderens tall oppdateres under bevegelsen, og bildet oppdateres når glideren slippes. Hver endring skaper ett angresteg. «Nullstill bildejusteringene» gjenoppretter alle tre verdiene til 100 % i ett angresteg. Låste lag kan ikke justeres; skjulte lag beholder verdiene. Duplisering, lasso-kopiering og klipping viderefører selvstendige kopier av justeringene.
+
+Prosjektformatet er uendret `aha-kunstrommet-v2` med et **valgfritt** `adjustments`-metadataobjekt for hvert lag. Gamle prosjekter uten felt får alle verdier 100 %. Import godtar bare endelige tall, avrunder og begrenser dem til glidernes grenser. Manipulerte/ugyldige verdier faller tilbake til nøytral og kan ikke bli injisert i Canvas-filterstrenger. Angre/gjør om, lokal IndexedDB-lagring, prosjektkopi og import holder verdiene. Ingen nettverk, ny app, delt redigeringsflate eller endring av Galleri.
+
+Tre nye nettleserscenarier i Chromium og emulert iPad WebKit kontrollerer komposisjonsfarger, uendrede originalpiksler, særskilte angresteg, nullstilling, metning, sikker import, gamle prosjekter, lokal gjenåpning, lagmasker, duplisering og markert utsnitt. Fysisk Apple Pencil/iPad-kontroll er fremdeles åpen i #1058.
