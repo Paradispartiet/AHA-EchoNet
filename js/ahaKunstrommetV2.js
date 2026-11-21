@@ -27,13 +27,39 @@
     });
     return result;
   }
-  function adjustmentFilter(layer) {
+  // Safari/WebKit does not reliably support CanvasRenderingContext2D.filter.
+  // Compute a deterministic, non-destructive RGBA preview in ordinary pixels
+  // and cache it until either the bitmap or its adjustment values change.
+  const adjustedBitmaps = new Map();
+  let bitmapRevision = 0;
+  function adjustedBitmap(layer, source) {
     const a = safeAdjustments(layer.adjustments);
-    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) {
-      return "none";
+    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) return source;
+    const key = [a.brightness, a.contrast, a.saturation].join(":");
+    const cached = adjustedBitmaps.get(layer.id);
+    if (cached && cached.source === source && cached.revision === bitmapRevision &&
+        cached.key === key) return cached.canvas;
+    const image = source.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
+    const pixels = image.data;
+    const brightness = a.brightness / 100;
+    const contrast = a.contrast / 100;
+    const saturation = a.saturation / 100;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] === 0) continue;
+      // Apply brightness, then contrast, then saturation consistently on all
+      // supported browsers. Keep the original alpha channel exactly intact.
+      const r = (pixels[i] * brightness - 128) * contrast + 128;
+      const g = (pixels[i + 1] * brightness - 128) * contrast + 128;
+      const b = (pixels[i + 2] * brightness - 128) * contrast + 128;
+      const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      pixels[i] = gray + (r - gray) * saturation;
+      pixels[i + 1] = gray + (g - gray) * saturation;
+      pixels[i + 2] = gray + (b - gray) * saturation;
     }
-    return "brightness(" + a.brightness + "%) contrast(" + a.contrast +
-      "%) saturate(" + a.saturation + "%)";
+    const result = imageCanvas();
+    result.getContext("2d").putImageData(image, 0, 0);
+    adjustedBitmaps.set(layer.id, { source, key, revision: bitmapRevision, canvas: result });
+    return result;
   }
 
   const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
@@ -95,7 +121,11 @@
   }
 
   function status(message) { $("kv2-status").textContent = message; }
-  function changed() { dirty = true; status("Ulagrede endringer"); }
+  function changed() {
+    bitmapRevision++;
+    dirty = true;
+    status("Ulagrede endringer");
+  }
   function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
   function imageCanvas() {
     const result = document.createElement("canvas");
@@ -118,6 +148,7 @@
     const now = new Date().toISOString();
     surfaces.clear();
     masks.clear();
+    adjustedBitmaps.clear();
     leaveMaskEdit();
     selection = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
@@ -156,19 +187,18 @@
       // the mask bitmap itself, and don't modify any layer's source pixels.
       view.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
         layer.blendMode !== "normal" ? layer.blendMode : "source-over";
-      // Adjust each layer only when rendering its masked source. The original
-      // bitmap and the mask remain untouched for undo and local backups.
-      view.filter = adjustmentFilter(layer);
+      // Filter the source non-destructively before its mask and blend mode.
+      const adjusted = adjustedBitmap(layer, bitmap);
       const mask = layer.maskEnabled !== false && masks.get(layer.id);
       if (!mask) {
-        view.drawImage(bitmap, layer.x, layer.y);
+        view.drawImage(adjusted, layer.x, layer.y);
       } else {
         const context = maskedComposite.getContext("2d");
         context.save();
         context.globalAlpha = 1;
         context.globalCompositeOperation = "source-over";
         context.clearRect(0, 0, WIDTH, HEIGHT);
-        context.drawImage(bitmap, 0, 0);
+        context.drawImage(adjusted, 0, 0);
         context.globalCompositeOperation = "destination-in";
         context.drawImage(mask, 0, 0);
         context.restore();
@@ -285,6 +315,8 @@
   }
 
   function paintOnLayer(layer, a, b) {
+    // Live strokes must invalidate cached adjusted rasters before redraw.
+    bitmapRevision++;
     const targetMask = maskEditing ? masks.get(layer.id) : null;
     const context = (targetMask || surfaces.get(layer.id)).getContext("2d");
     if (!selection || selection.w < 2 || selection.h < 2) {
@@ -427,6 +459,7 @@
   function installDecodedLayers(layers, decoded) {
     surfaces.clear();
     masks.clear();
+    adjustedBitmaps.clear();
     layers.forEach((layer, index) => {
       surfaces.set(layer.id, decoded[index].bitmap);
       if (decoded[index].mask) masks.set(layer.id, decoded[index].mask);
@@ -457,7 +490,9 @@
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
     finally {
       busy = false;
-      updateMaskControls();
+      // refresh() ran while busy was true, so restore disabled sliders and
+      // reset control after undo/redo completes.
+      updateLayerControls();
     }
   }
 
@@ -1044,6 +1079,7 @@
     const index = project.layers.findIndex((layer) => layer.id === selected);
     surfaces.delete(selected);
     masks.delete(selected);
+    adjustedBitmaps.delete(selected);
     leaveMaskEdit();
     project.layers.splice(index, 1);
     selected = project.layers[Math.min(index, project.layers.length - 1)].id;
@@ -1262,6 +1298,7 @@
     };
     surfaces.clear();
     masks.clear();
+    adjustedBitmaps.clear();
     selection = null;
     maskEditing = false;
     layers.forEach((layer, i) => {

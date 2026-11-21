@@ -168,7 +168,7 @@ Nettlesertestene i Chromium og emulert iPad WebKit kontrollerer komposisjonsfarg
 
 ## Ikke-destruktive bildejusteringer – lys, kontrast og metning
 
-Det eksisterende lagpanelet har glidere for **Lysstyrke** (50–150 %), **Kontrast** (50–150 %) og **Fargemetning** (0–200 %), med nøytralverdi 100 %. Justeringene er **per lag** og gjøres som Canvas-bildefilter ved tegning av komposisjonen, *etter* at den eksisterende ikke-destruktive lagmasken er påført. Originale RGBA-bitmap, lagmasker og pikselkorreksjoner endres ikke. Blandingsmodus og opasitet fungerer fortsatt, og PNG-eksporten ser den samme komposisjonen som lerretet.
+Det eksisterende lagpanelet har glidere for **Lysstyrke** (50–150 %), **Kontrast** (50–150 %) og **Fargemetning** (0–200 %), med nøytralverdi 100 %. Justeringene er **per lag** og gjøres som en deterministisk RGBA-visningskopi før den eksisterende ikke-destruktive lagmasken legges over. Dette er kompatibelt med både Chromium og iPad WebKit, som ikke alltid støtter Canvas 2D `filter`. Visningskopier mellomlagres og ugyldiggjøres når bitmap eller innstillinger endres. Originalpikslene påvirkes ikke. Originale RGBA-bitmap, lagmasker og pikselkorreksjoner endres ikke. Blandingsmodus og opasitet fungerer fortsatt, og PNG-eksporten ser den samme komposisjonen som lerretet.
 
 Gliderens tall oppdateres under bevegelsen, og bildet oppdateres når glideren slippes. Hver endring skaper ett angresteg. «Nullstill bildejusteringene» gjenoppretter alle tre verdiene til 100 % i ett angresteg. Låste lag kan ikke justeres; skjulte lag beholder verdiene. Duplisering, lasso-kopiering og klipping viderefører selvstendige kopier av justeringene.
 
