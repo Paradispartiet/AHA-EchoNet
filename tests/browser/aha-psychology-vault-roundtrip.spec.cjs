@@ -172,6 +172,12 @@ test("encrypted vault is OFF by default and performs no account access", async (
   await expect(page.locator("#aha-psych-vault-status")).toContainText("ikke aktivert");
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(callsToSupabase).toEqual([]);
+
+  // The entry must not be visible with the default (disabled) flag.
+  // A general flex rule used to defeat the HTML hidden attribute here.
+  await page.goto("/psykologi.html", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#aha-psych-vault-entry")).toBeHidden();
+  expect(callsToSupabase).toEqual([]);
 });
 
 test("shared GitHub Pages origin rejects account access even with vault flag enabled", async ({ page }) => {
