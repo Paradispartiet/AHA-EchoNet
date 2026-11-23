@@ -230,3 +230,16 @@
 .insight-evidence-quotes li + li { margin-top: 11px; }
 .insight-evidence-quotes blockquote { border-left: 2px solid var(--aha-color-cyan, #65d9c6); margin: 4px 0; padding-left: 10px; overflow-wrap: anywhere; }
 .insight-evidence-quotes small { color: var(--aha-muted); }
+
+/* Present source, proposal, limits and action without suggesting an AI verdict. */
+.insight-journey { display: grid; gap: 10px; margin: 12px 0; }
+.insight-journey-part { border-left: 2px solid var(--aha-line); padding: 3px 0 4px 12px; }
+.insight-journey-part h4 { margin: 0 0 5px; font-size: .86rem; color: var(--aha-text); }
+.insight-journey-part p { margin: 0; color: var(--aha-muted); line-height: 1.55; overflow-wrap: anywhere; }
+.insight-journey-part .insight-card-summary { color: var(--aha-text); }
+.insight-journey-part .insight-journey-relevance { margin-top: 7px; font-size: .87rem; }
+.insight-journey-part small { display: block; margin-top: 5px; color: var(--aha-muted); }
+.insight-journey-topic { margin: 8px 0; font-size: .83rem; color: var(--aha-muted); }
+.insight-technical-details { margin-top: 8px; font-size: .8rem; color: var(--aha-muted); }
+.insight-technical-details summary { cursor: pointer; min-height: 32px; }
+.insight-technical-details p { overflow-wrap: anywhere; }

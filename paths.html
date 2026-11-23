@@ -13,13 +13,13 @@
   <div id="aha-global-nav"></div>
   <main class="aha-dashboard aha-shell-reading">
     <section class="aha-panel aha-module-shell" aria-labelledby="paths-module-title">
-      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA kunnskapsstruktur</p><h1 id="paths-module-title">Kunnskapsstier</h1><p class="aha-module-purpose">Bygg narrative forløp og læringsreiser i tydelige trinn. Hvert steg kan forklare hva det betyr, hvorfor det følger, og hva du skal sitte igjen med.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Kunnskapsstier: Unknown"><span>Unknown</span></span></header>
-      <div class="aha-module-actions" aria-label="Paths actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a><button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button><a class="aha-tile-btn" href="index.html">Tilbake til AHA Home</a></div>
+      <header class="aha-module-shell-header"><div><p class="eyebrow">AHA kunnskapsstruktur</p><h1 id="paths-module-title">Kunnskapsstier</h1><p class="aha-module-purpose">Samle en undersøkelse eller læringsreise i konkrete steg. Se hva som kommer nå, hvorfor det er relevant, og hvor langt du har kommet.</p></div><span id="aha-module-health" class="aha-module-health-badge aha-module-health-unknown" role="status" aria-label="Status for kunnskapsstier"><span>Status sjekkes</span></span></header>
+      <div class="aha-module-actions" aria-label="Paths actions"><a class="aha-tile-btn aha-tile-btn-primary" href="#paths-create">Lag sti</a><button id="paths-refresh" class="aha-tile-btn" type="button">Oppdater</button><a class="aha-tile-btn" href="index.html">Tilbake til forsiden</a></div>
     </section>
     <section id="v2-path-preview-shell" class="aha-panel aha-v2-path-shell" aria-labelledby="v2-path-preview-title" hidden>
       <div class="aha-v2-path-heading">
-        <div><p class="eyebrow">AHA V2 · skrivebeskyttet forslag</p><h2 id="v2-path-preview-title">AHA foreslår fra denne analysen</h2><p>Hver sti går fra orientering via påstand og belegg, spenning og usikkerhet til syntese og neste undersøkelse. Forslagene er ikke lagret.</p></div>
-        <span class="aha-v2-path-preview-badge">Preview</span>
+        <div><p class="eyebrow">Forslag fra analyse · ikke lagret</p><h2 id="v2-path-preview-title">AHA foreslår fra denne analysen</h2><p>Hver sti går fra orientering via påstand og belegg, spenning og usikkerhet til syntese og neste undersøkelse. Forslagene er ikke lagret.</p></div>
+        <span class="aha-v2-path-preview-badge">Forslag</span>
       </div>
       <div id="v2-path-previews" class="aha-v2-path-preview-grid" aria-live="polite"></div>
     </section>
@@ -30,9 +30,9 @@
         <label for="path-mode">Form</label><select id="path-mode"><option value="learning">Læringssti</option><option value="narrative">Narrativ sti</option><option value="process">Arbeidsforløp</option></select>
         <label for="path-type">Tema/type</label><select id="path-type"><option value="learning">læring</option><option value="process">prosess</option><option value="project">prosjekt</option><option value="habit">vane</option><option value="reading">lesing</option><option value="historygo">historisk forløp</option><option value="publishing">publisering</option></select>
         <label for="path-description">Innledning</label><textarea id="path-description" rows="3" placeholder="Hva handler reisen eller fortellingen om?"></textarea>
-        <label for="path-goal">Mål</label><textarea id="path-goal" rows="2" placeholder="Hvor skal stien føre brukeren?"></textarea>
-        <label for="path-learning-outcome">Læringsutbytte</label><textarea id="path-learning-outcome" rows="2" placeholder="Hva skal brukeren forstå eller kunne etterpå?"></textarea>
-        <label for="path-tags">Tags (komma-separert)</label><input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
+        <label for="path-goal">Mål</label><textarea id="path-goal" rows="2" placeholder="Hva vil du oppnå med denne stien?"></textarea>
+        <label for="path-learning-outcome">Læringsutbytte</label><textarea id="path-learning-outcome" rows="2" placeholder="Hva ønsker du å forstå eller kunne etterpå?"></textarea>
+        <label for="path-tags">Stikkord (skill med komma)</label><input id="path-tags" type="text" placeholder="læring, fokus, skriv" />
         <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lag sti</button>
       </form>
     </section>
