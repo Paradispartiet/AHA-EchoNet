@@ -509,7 +509,7 @@
 
   function renderMetaInsightSection(metaInsight, fullMeta) {
     const emptyText = "AHA har foreløpig lite materiale å lese mønstre fra. Start en samtale, lag et notat eller importer fra History Go.";
-    const header = `<h4>Hva AHA ser nå</h4>`;
+    const header = `<h4>Mulige mønstre i materialet</h4><p class="aha-reflection-disclaimer">Dette bygger på lagrede Aha-opplysninger. Det er forslag til refleksjon, ikke en vurdering av deg eller bekreftede konklusjoner.</p>`;
 
     if (!metaInsight) {
       return `<section class="aha-meta-profile-section aha-meta-insight-section">${header}<p class="aha-afterwork-empty">${escapeHtml(emptyText)}</p></section>`;
@@ -547,7 +547,7 @@
       ? `<ul class="aha-meta-mini-list">${patterns.map((p) => `<li>${escapeHtml(String(p.label || ""))} <small>${escapeHtml(String(p.explanation || ""))}</small></li>`).join("")}</ul>`
       : "";
     const tensionMarkup = tension
-      ? `<p class="aha-meta-insight-row"><strong>Sterkeste spenning:</strong> ${escapeHtml(String(tension.source || ""))}${tension.target ? " ↔ " + escapeHtml(String(tension.target)) : ""}</p>`
+      ? `<p class="aha-meta-insight-row"><strong>Mulig spenning:</strong> ${escapeHtml(String(tension.source || ""))}${tension.target ? " ↔ " + escapeHtml(String(tension.target)) : ""}</p>`
       : "";
     const recentMarkup = recentConcepts.length
       ? `<div class="aha-meta-chip-list">${recentConcepts.map((item) => `<span class="aha-meta-chip">${escapeHtml(String(item.key || ""))} ×${escapeHtml(String(item.count || 0))}</span>`).join("")}</div>`
@@ -574,8 +574,10 @@
     return `<section class="aha-meta-profile-section aha-meta-insight-section">
       ${header}
       <p class="aha-meta-insight-summary">${escapeHtml(metaInsight.summary || "")}</p>
-      <p class="aha-meta-insight-row"><strong>Beredskap:</strong> ${escapeHtml(String(readiness.level || "ukjent"))} (${escapeHtml(String(readiness.score || 0))}/100)</p>
-      <p class="aha-meta-insight-row"><strong>Læringsmodus:</strong> ${escapeHtml(String(metaInsight.learning_mode || "ukjent"))}</p>
+      <p class="aha-meta-insight-row"><strong>Mulig arbeidsmønster i materialet:</strong> ${escapeHtml(String(metaInsight.learning_mode || "ikke angitt"))}</p>
+      <details class="aha-reflection-tech"><summary>Om det tekniske grunnlaget</summary>
+        <p>Intern beredskapsindikator: ${escapeHtml(String(readiness.level || "ukjent"))} (${escapeHtml(String(readiness.score ?? "ikke beregnet"))}/100). Dette er ikke en score for intelligens, refleksjonsevne eller sannheten i innsiktene.</p>
+      </details>
       ${themesMarkup ? `<div class="aha-meta-insight-row"><strong>Temaer</strong>${themesMarkup}</div>` : ""}
       ${conceptsMarkup ? `<div class="aha-meta-insight-row"><strong>Begreper</strong>${conceptsMarkup}</div>` : ""}
       ${patternsMarkup ? `<div class="aha-meta-insight-row"><strong>Mønstre</strong>${patternsMarkup}</div>` : ""}
@@ -583,11 +585,11 @@
       ${recentMarkup ? `<div class="aha-meta-insight-row"><strong>Nylig fokus</strong>${recentMarkup}</div>` : ""}
       ${emergingMarkup ? `<div class="aha-meta-insight-row"><strong>Nytt i materialet</strong>${emergingMarkup}</div>` : ""}
       ${resurfacedMarkup ? `<div class="aha-meta-insight-row"><strong>Eldre tanker som er relevante nå</strong>${resurfacedMarkup}</div>` : ""}
-      ${bridgesMarkup ? `<div class="aha-meta-insight-row"><strong>Sterke, sjeldne koblinger</strong>${bridgesMarkup}</div>` : ""}
-      ${underexploredMarkup ? `<div class="aha-meta-insight-row"><strong>Underutforskede begreper</strong>${underexploredMarkup}</div>` : ""}
+      ${bridgesMarkup ? `<div class="aha-meta-insight-row"><strong>Mulige koblinger</strong>${bridgesMarkup}</div>` : ""}
+      ${underexploredMarkup ? `<div class="aha-meta-insight-row"><strong>Begreper å se nærmere på</strong>${underexploredMarkup}</div>` : ""}
       ${questionsMarkup ? `<div class="aha-meta-insight-row"><strong>Spørsmål å tenke videre på</strong>${questionsMarkup}</div>` : ""}
       ${nextActionsMarkup ? `<div class="aha-meta-insight-row"><strong>Neste gode steg</strong>${nextActionsMarkup}</div>` : ""}
-      <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-confirm-insight">Bekreft med AHA</button>
+      <button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="meta-confirm-insight">Ta med som spørsmål i Chat</button>
     </section>`;
   }
 
@@ -639,7 +641,7 @@
         metaProfileEl.innerHTML = `<div class="aha-meta-profile-grid">${metaInsightSection}</div>`;
       } else {
         const chips = (items, action, kind) => items.length ? `<div class="aha-meta-chip-list">${items.map((item, index) => `<div class="aha-meta-chip-row"><span class="aha-meta-chip">${escapeHtml(item.label)} ×${escapeHtml(String(item.count || 0))}</span><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary" data-action="${escapeHtml(action)}" data-index="${index}"${kind ? ` data-kind="${escapeHtml(kind)}"` : ""}>Bygg videre</button></div>`).join("")}</div>` : `<p class="aha-afterwork-empty">Ingen data ennå.</p>`;
-        const tensions = meta.topTensions.length ? `<ul class="aha-meta-line-list">${meta.topTensions.map((item, index) => `<li><div>${escapeHtml(item.source)} ↔ ${escapeHtml(item.target)} · styrke ${escapeHtml(String(item.strength || 0))}</div><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary aha-meta-line-action" data-action="meta-build-tension" data-index="${index}">Bygg videre</button></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen tydelige spenninger ennå.</p>`;
+        const tensions = meta.topTensions.length ? `<ul class="aha-meta-line-list">${meta.topTensions.map((item, index) => `<li><div>${escapeHtml(item.source)} ↔ ${escapeHtml(item.target)} · mulig sammenheng</div><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary aha-meta-line-action" data-action="meta-build-tension" data-index="${index}">Bygg videre</button></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen tydelige spenninger ennå.</p>`;
         const subjects = meta.topSubjectLinks.length ? `<ul class="aha-meta-mini-list">${meta.topSubjectLinks.map((item, index) => `<li><div>${escapeHtml(item.label)} <small>×${escapeHtml(String(item.count || 0))}</small></div><button type="button" class="aha-meta-action aha-tile-btn aha-tile-btn-secondary aha-meta-line-action" data-action="meta-build-subject" data-index="${index}">Bygg videre</button></li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen fagkoblinger ennå.</p>`;
         const recent = meta.recentAfterwork.length ? `<ul class="aha-meta-mini-list">${meta.recentAfterwork.map((item) => `<li><strong>${escapeHtml(item.createdAt || "Ukjent dato")}</strong> · ${escapeHtml(item.title || item.preview || "AHA etterarbeid")}</li>`).join("")}</ul>` : `<p class="aha-afterwork-empty">Ingen lagrede etterarbeid ennå.</p>`;
 

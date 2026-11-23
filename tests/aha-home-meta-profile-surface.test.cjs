@@ -114,8 +114,8 @@ for (const text of [
   'Nylig fokus',
   'Nytt i materialet',
   'Eldre tanker som er relevante nå',
-  'Sterke, sjeldne koblinger',
-  'Underutforskede begreper',
+  'Mulige koblinger',
+  'Begreper å se nærmere på',
   'Spørsmål å tenke videre på',
   'Neste gode steg',
   'makt',
@@ -128,7 +128,7 @@ for (const text of [
   assert.ok(metaEl.innerHTML.includes(text), `meta-profilen mangler: ${text}`);
 }
 
-assert.ok(metaEl.innerHTML.includes('meta-confirm-insight'), 'eksisterende Bekreft med AHA-handling skal bevares');
+assert.ok(metaEl.innerHTML.includes('meta-confirm-insight'), 'eksisterende brukerinitiert Chat-prompt-handling skal bevares');
 assert.match(source, /MetaInsightsEngine/);
 assert.match(source, /fullMeta\?\.temporal/);
 assert.match(source, /recommendations\.resurface_insights/);
