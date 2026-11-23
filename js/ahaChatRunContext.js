@@ -391,7 +391,12 @@
         ui.setProcessing(true, savingEnabled ? "AHA lager svar og etterarbeid …" : "AHA lager svar uten å lagre nye innsikter …");
         const agent = await analysis.askAgent(analysisInputText, { memoryContext, personalContext });
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
-        const reply = String(agent?.reply || "").trim() || "AHA-agenten returnerte tomt svar.";
+        const reply = String(agent?.reply || "").trim();
+        if (agent?.ok === false || !reply) {
+          const error = new Error("empty_agent_reply");
+          error.code = "empty_agent_reply";
+          throw error;
+        }
         const analysisText = analysis.cleanArticleText(analysisInputText);
         // Preserve headings and section boundaries for long-source focus. The
         // cleaned prose remains the canonical analysis input below, but it can
@@ -465,6 +470,14 @@
           global.console.warn("Auto-output feilet", autoErr);
         }
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
+        // A successful Chat answer does not prove that the separate semantic
+        // AI synthesis succeeded. Expose a safe per-run warning, never reuse
+        // details from another analysis or forward provider diagnostics.
+        const synthesisTrace = global.AHAChatInsightPipeline?.getRuntimeTraceForRun?.(analysisRun.analysisRunId);
+        if (String(synthesisTrace?.analysis_run_id || "") === String(analysisRun.analysisRunId)
+          && String(synthesisTrace?.status || "").startsWith("blocked_")) {
+          ui.setStatusNote("Chat svarte, men AI-innsiktsanalysen ble blokkert. Nye liste- og stiforslag krever godkjente AI-innsikter.");
+        }
         if (savingEnabled) {
           try {
             const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, {
@@ -503,28 +516,33 @@
       } catch (err) {
         global.console.warn("AHA-agent utilgjengelig", err);
         if (!analysis.isActiveAnalysisRun(analysisRun)) return null;
+        const safeCode = String(err?.code || err?.message || "");
+        const userError = safeCode === "openai_quota_exhausted"
+          ? "AHA kan ikke bruke AI akkurat nå: OpenAI API-kvote eller kreditt er oppbrukt. Kontroller fakturering og forbruksgrenser for API-prosjektet."
+          : safeCode === "openai_rate_limited"
+            ? "AHA sin AI-tjeneste har nådd en midlertidig bruksgrense. Prøv igjen senere."
+            : safeCode === "missing_openai_api_key"
+              ? "AHA mangler OpenAI API-nøkkel på serveren. Kontroller serverkonfigurasjonen."
+              : safeCode === "empty_agent_reply"
+                ? "AHA sin AI-tjeneste returnerte ikke et gyldig svar. Ingen ny AI-analyse ble opprettet."
+                : "AHA-agenten er ikke tilgjengelig akkurat nå.";
         if (savingEnabled) {
-          global.AHAChatPersistence?.appendAssistantMessage?.("AHA-agenten er ikke tilgjengelig akkurat nå.", {
+          global.AHAChatPersistence?.appendAssistantMessage?.(userError, {
             source: "aha_chat",
             threadId: config.threadId,
             tags: ["status"]
           });
         }
+        // A failed Chat model call must not generate or persist synthetic
+        // "AI afterwork" from an empty assistant reply. Keep the user message
+        // and the classified failure, but clear the active product preview.
+        // Independent source-bound synthesis has its own quality gate.
+        analysis.clearActiveAnalysisState(
+          analysisRun,
+          "AI-svaret mislyktes. Ingen nytt etterarbeid ble opprettet fra dette forsøket."
+        );
         ui.renderChatMemoryStatus();
-        ui.appendChat("aha", "AHA-agenten er ikke tilgjengelig akkurat nå.");
-        try {
-          await analysis.renderAutoOutputs(cleanText, "", { subjectMatches: [], persist: savingEnabled, analysisRun });
-        } catch (autoErr) {
-          global.console.warn("Auto-output feilet", autoErr);
-        }
-        if (savingEnabled && analysis.isActiveAnalysisRun(analysisRun)) {
-          try {
-            const afterworkResult = analysis.ensureAfterworkForLatestAnalysis(cleanText, { subjectMatches: [], ...analysisRun });
-            if (afterworkResult?.entry) analysis.updateAnalysisRun?.({ afterwork: afterworkResult.entry }, analysisRun);
-          } catch (afterErr) {
-            global.console.warn("Auto-etterarbeid feilet", afterErr);
-          }
-        }
+        ui.appendChat("aha", userError);
         return { type: "agent_error", error: err, memoryContext, personalContext, answerPackage, savingEnabled, memoryUseEnabled };
       } finally {
         if (analysis.isActiveAnalysisRun(analysisRun)) {

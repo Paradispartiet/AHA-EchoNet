@@ -38,7 +38,7 @@ const submissionSource = fs.readFileSync('js/ahaChatRunContext.js','utf8');
 assert.match(chatSource, /isAhaSavingEnabled,/i, 'chat must inject the save-new-insights control into submission runtime');
 assert.match(submissionSource, /const savingEnabled = input\.isAhaSavingEnabled\(\);[\s\S]*global\.AHAChatPersistence\?\.appendUserMessage/, 'user chat persistence must respect the save-new-insights toggle');
 assert.match(submissionSource, /const persistedAssistantMessage = savingEnabled[\s\S]*global\.AHAChatPersistence\?\.appendAssistantMessage/, 'assistant chat persistence must respect the save-new-insights toggle');
-assert.match(submissionSource, /if \(savingEnabled\) \{[\s\S]*global\.AHAChatPersistence\?\.appendAssistantMessage\?\.\("AHA-agenten er ikke tilgjengelig akkurat nå\."/, 'assistant error persistence must respect the save-new-insights toggle');
+assert.match(submissionSource, /if \(savingEnabled\) \{[\s\S]*global\.AHAChatPersistence\?\.appendAssistantMessage\?\.\(userError,/, 'assistant error persistence must respect the save-new-insights toggle');
 assert.ok(fs.readFileSync('js/ahaProductIntegration.js','utf8').includes('chatPersistenceAvailable'));
 assert.ok(fs.readFileSync('js/ahaPersonalAiControl.js','utf8').includes('chatPersistence'));
 assert.ok(fs.readFileSync('js/metaInsightsAgent.js','utf8').includes('chatPersistencePack'));

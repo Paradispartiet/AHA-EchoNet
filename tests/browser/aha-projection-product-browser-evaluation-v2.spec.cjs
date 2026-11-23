@@ -303,7 +303,18 @@ test("27-case offline Chat browser matrix preserves source identity and closed w
   page.on("console", (message) => diagnostics.push(`console:${message.type()}:${message.text()}`));
   page.on("pageerror", (error) => diagnostics.push(`pageerror:${error.message}`));
   page.on("requestfailed", (request) => diagnostics.push(`requestfailed:${request.url()}:${request.failure()?.errorText || "unknown"}`));
+  // Offline corpus validates source binding and product structure only.
+  // A deterministic success stub must replace the Chat transport, because a
+  // *failed* AI request correctly produces no synthetic afterwork or bundle.
+  // This is not a live model-quality or AI-availability test.
   await page.route("https://aha-agent-7a3y.onrender.com/**", (route) => route.abort("connectionfailed"));
+  await page.route("https://aha-agent-7a3y.onrender.com/api/aha-agent/chat", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, reply: "Offline testrespons; ingen AI-modell ble kalt.", model: "offline-fixture" })
+    })
+  );
   let evaluation;
   try {
     evaluation = await runEvaluation(page);

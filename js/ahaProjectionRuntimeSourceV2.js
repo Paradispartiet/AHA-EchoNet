@@ -318,8 +318,26 @@
       : product === "path" ? arr(model?.surfaces?.paths).length
         : arr(model?.surfaces?.mindmap?.nodes).length;
     if (ready && count > 0) return { status: "ready", reason: "Kvalitetsgodkjent og kildeforankret forslag er tilgjengelig.", candidate_count: count };
-    const candidateCount = arr(snap?.analysis_bundle_v2?.semantic_document?.candidate_insight_ids).length;
-    if (snap?.analysis_bundle_v2 && candidateCount === 0) {
+    const bundle = snap?.analysis_bundle_v2;
+    const gate = object(bundle?.semantic_document?.synthesis_gate);
+    const gateStatus = text(gate.status).toLowerCase();
+    const runtimeStatus = text(bundle?.runtime?.status).toLowerCase();
+    if (bundle && (gate.authoritative !== true || !gateStatus || gateStatus === "not_run")) {
+      const unavailable = runtimeStatus.startsWith("blocked_") || runtimeStatus === "unavailable";
+      return {
+        status: "needs_evidence",
+        label: unavailable ? "AI-analyse utilgjengelig" : "AI-analyse ikke fullført",
+        reason: unavailable
+          ? "AI-syntesen ble blokkert eller var utilgjengelig. Ingen liste eller sti ble vurdert som irrelevant."
+          : "Innsiktsmotoren ble ikke fullført. Relevansen til dette produktet er derfor ikke vurdert.",
+        candidate_count: 0
+      };
+    }
+    if (bundle && gateStatus === "blocked") {
+      return { status: "needs_evidence", label: "Ingen godkjent AI-innsikt", reason: "AI-syntesen ble vurdert, men ingen innsikt bestod kvalitetssperren. Ingen liste eller sti ble opprettet.", candidate_count: 0 };
+    }
+    const candidateCount = arr(bundle?.semantic_document?.candidate_insight_ids).length;
+    if (bundle && candidateCount === 0) {
       return { status: "not_relevant", reason: "Analysen fant ingen semantisk kandidat som gjør dette produktet relevant for teksten.", candidate_count: 0 };
     }
     const quality = model?.artifact_quality;
@@ -353,7 +371,7 @@
     const source = snap || snapshot({ ignoreRequest: true });
     return Object.fromEntries(Object.keys(PRODUCTS).map((product) => {
       const state = rawProductState(product, model, source);
-      return [product, { ...state, label: STATUS_LABELS[state.status], href: productUrl(product, model) }];
+      return [product, { ...state, label: state.label || STATUS_LABELS[state.status], href: state.status === "ready" ? productUrl(product, model) : null }];
     }));
   }
 

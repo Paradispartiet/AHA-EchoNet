@@ -6,6 +6,7 @@ const code = fs.readFileSync('js/ahaChatRunContext.js', 'utf8');
 const events = [];
 const subjectInputs = [];
 const renderedSubjectMatches = [];
+let synthesisTrace = null;
 const context = {
   window: null,
   console,
@@ -18,6 +19,7 @@ const context = {
     attachAnswerEvaluation: () => events.push('attach-evaluation')
   },
   AHALinkReader: { hasUrls: () => false },
+  AHAChatInsightPipeline: { getRuntimeTraceForRun: () => synthesisTrace },
   AHAChatProviderLoader: { QUALITY_REPAIR_V2: { focusLongSource: (value) => value.length > 7600 ? `FOKUSERT:${value.slice(0, 7000)}` : value } },
   AHASubjectEngine: { matchText: async (value) => {
     subjectInputs.push(value);
@@ -44,7 +46,7 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     getFieldId: () => 'field_test',
     handleUserMessage: () => 1,
     ingestUserMessageWithCandidates: (_text, candidates) => { events.push(`ingest-candidates:${candidates.length}`); return candidates.length; },
-    generateAnalysisInsightCandidates: async () => [{
+    generateAnalysisInsightCandidates: async () => synthesisTrace ? [] : [{
       title: 'Analysebundet kandidat',
       summary: 'En analysebundet kandidat følger aktiv kilde inn i den semantiske pakken.',
       evidence_quotes: ['Analyser dette'],
@@ -97,8 +99,8 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     renderAutoOutputs: async (_text, _reply, options) => {
       events.push('render-auto-output');
       renderedSubjectMatches.push(options.subjectMatches);
-      assert.equal(options.insightCandidatesV2.length, 1);
-      assert.equal(options.insightCandidatesV2[0].candidate_type, 'ai');
+      assert.equal(options.insightCandidatesV2.length, synthesisTrace ? 0 : 1);
+      if (!synthesisTrace) assert.equal(options.insightCandidatesV2[0].candidate_type, 'ai');
     },
     ensureAfterworkForLatestAnalysis: () => events.push('ensure-afterwork')
   },
@@ -106,7 +108,7 @@ const runtime = context.AHAChatRunContext.createSubmissionRuntime({
     renderChatMemoryStatus: () => events.push('render-chat-memory'),
     appendChat: (role, text) => { events.push(`chat:${role}:${text}`); return {}; },
     setProcessing: (active) => events.push(`processing:${active}`),
-    setStatusNote: () => {}
+    setStatusNote: (note) => events.push('status:' + note)
   }
 });
 
@@ -143,6 +145,20 @@ assert.equal(typeof runtime.submitAhaChatMessage, 'function');
   assert.ok(subjectInputs.at(-1).length < longSource.length, 'subject matching must not receive the entire oversized source');
   assert.deepEqual(renderedSubjectMatches.at(-1), [{ subject_id: 'litteratur', title: 'Litteratur', score: 14 }],
     'the primary Chat path must pass canonical subject-level matches rather than raw chapter matches');
+
+  events.length = 0;
+  synthesisTrace = { analysis_run_id: 'run_1', status: 'blocked_synthesis_http' };
+  const blockedSynthesis = await runtime.submitAhaChatMessage('Samtalen virker, men innsiktsanalysen er blokkert.');
+  assert.equal(blockedSynthesis.type, 'agent_reply', 'Chat itself may succeed while synthesis fails');
+  assert(events.some((entry) => entry.includes('AI-innsiktsanalysen ble blokkert')),
+    'The user must see the distinct semantic synthesis failure after a valid Chat answer');
+  assert(events.includes('render-auto-output'), 'Source-bound failure diagnostics remain available');
+
+  events.length = 0;
+  synthesisTrace = { analysis_run_id: 'different_run', status: 'blocked_synthesis_http' };
+  await runtime.submitAhaChatMessage('En annen analyse har feil i sin tidligere syntese.');
+  assert(!events.some((entry) => entry.includes('AI-innsiktsanalysen ble blokkert')),
+    'Never display the status of a different analysis run');
 
   console.log('aha-chat-submission-runtime passed');
 })().catch((err) => {
