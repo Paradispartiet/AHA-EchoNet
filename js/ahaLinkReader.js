@@ -60,14 +60,17 @@
     const publisher = compact(source.publisher, source.domain || "ukjent kilde");
     const accessStatus = compact(result?.access_status, "metadata_only");
     const full = accessStatus === "full";
+    const aiCompleted = result?.ai_analysis_status === "completed";
     const referenceOnly = context?.reference_only === true;
-    const safeSourceSummary = full
-      ? `Kilde lest transient: ${title}. AHA brukte tilgjengelig artikkeltekst midlertidig til analyse, men rå artikkeltekst er ikke lagret. Kilde: ${publisher}. Status: ${accessStatus}.`
-      : `Kilde registrert fra metadata: ${title}. Full artikkeltekst var ikke tilgjengelig for AHA. Kilde: ${publisher}. Status: ${accessStatus}.`;
+    const safeSourceSummary = full && aiCompleted
+      ? `Kilde lest transient: ${title}. AHA brukte tilgjengelig artikkeltekst midlertidig til AI-analyse, men rå artikkeltekst er ikke lagret. Kilde: ${publisher}. Status: ${accessStatus}.`
+      : full
+        ? `Kilde lest transient: ${title}. AI-analysen ble ikke fullført; kun kildeinformasjon er tilgjengelig. Rå artikkeltekst er ikke lagret. Kilde: ${publisher}.`
+        : `Kilde registrert fra metadata: ${title}. Full artikkeltekst var ikke tilgjengelig for AHA. Kilde: ${publisher}. Status: ${accessStatus}.`;
     return {
       source_type: "web_article",
       source_app: "aha_link_reader",
-      content_type: referenceOnly ? "article_reference" : (full ? "transient_article_analysis" : "article_metadata"),
+      content_type: referenceOnly ? "article_reference" : (full && aiCompleted ? "transient_article_analysis" : (full ? "article_reference" : "article_metadata")),
       title,
       text: safeSourceSummary,
       user_created: false,
@@ -89,8 +92,9 @@
         source_kind: "user_pasted_url",
         raw_article_stored: false,
         transient_fulltext_read: full,
-        source_event_only: referenceOnly || !full,
-        semantic_insight_eligible: full && !referenceOnly,
+        source_event_only: referenceOnly || !full || !aiCompleted,
+        ai_analysis_status: compact(result?.ai_analysis_status, "not_run"),
+        semantic_insight_eligible: full && aiCompleted && !referenceOnly,
         reference_only: referenceOnly,
         approvalState: "suggested",
         visibility: "local_only",
@@ -126,6 +130,7 @@
       publisher: compact(source.publisher, source.domain || "ukjent kilde").slice(0, 120),
       domain: compact(source.domain).slice(0, 120),
       access_status: accessStatus,
+      ai_analysis_status: compact(data.ai_analysis_status, "not_run"),
       short_summary: compact(analysis.short_summary).slice(0, 700),
       main_points: safeList(analysis.main_points, 8, 320),
       actors: safeList(analysis.actors, 10, 120),
@@ -190,7 +195,8 @@
     if (!res.ok || data?.ok === false) throw new Error(data?.error || `HTTP ${res.status}`);
     const sourcePayload = buildSafeSourcePayload(data, Object.assign({}, context || {}, { url }));
     const full = compact(data.access_status, "metadata_only") === "full";
-    const candidates = full && context?.reference_only !== true ? safeCandidates(data.candidates) : [];
+    const candidates = full && data.ai_analysis_status === "completed" && context?.reference_only !== true
+      ? safeCandidates(data.candidates) : [];
     const safeAnalysis = buildSafeArticleAnalysis(data, url, candidates);
     setLatestArticleAnalysis(safeAnalysis);
     const ingest = global.AHAModuleApi?.resolve?.("ingest", "AHAIngest", { version: 1 }) || global.AHAIngest;
@@ -223,7 +229,8 @@
     }));
     const first = lastLinkReadResults.find((item) => item.ok) || lastLinkReadResults[0];
     if (!first || !first.ok) renderLinkStatus("Lenkeanalyse feilet – AHA lagret ikke rå artikkeltekst.");
-    else if (first.access_status === "full") renderLinkStatus(`Kilde lest: ${first.source?.publisher || first.source?.domain || "kilde"}. Full tekst ble brukt midlertidig til analyse, men rå artikkeltekst er ikke lagret. ${first.candidate_count} innsikter lagt i Utforsk det AHA fant.`);
+    else if (first.access_status === "full" && first.analysis?.ai_analysis_status !== "completed") renderLinkStatus("Kilde lest, men AI-analysen ble ikke fullført. Ingen nye AI-innsikter ble opprettet fra lenken.");
+    else if (first.access_status === "full") renderLinkStatus(`Kilde lest: ${first.source?.publisher || first.source?.domain || "kilde"}. Full tekst ble brukt midlertidig til analyse, men rå artikkeltekst er ikke lagret. ${first.candidate_count} innsikter foreslått for vurdering.`);
     else if (first.access_status === "paywall" || first.access_status === "blocked") renderLinkStatus("Kilden krever innlogging eller er blokkert.");
     else renderLinkStatus("Kun metadata tilgjengelig – full artikkel kunne ikke leses.");
     return lastLinkReadResults;
