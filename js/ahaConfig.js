@@ -2,36 +2,41 @@
 // Runtime configuration for AHA-EchoNet.
 // Public Supabase frontend config only. Do not put database passwords or service-role keys here.
 
-// The preview uses its own origin, and Supabase PKCE stores the verifier per origin.
-// A callback to GitHub Pages cannot complete a login started on Cloudflare Pages.
-// The exact Access-protected preview uses its own callback. Vercel may do so
-// only after its exact redirect has been verified in Supabase Auth settings.
-// Default Vercel sign-in stays blocked; ordinary GitHub Pages Auth is unchanged.
+// PKCE verifiers are browser-origin-bound. This installation is currently
+// approved only for the existing GitHub Pages AHA origin and the exact
+// Cloudflare preview origin. No independent Vercel hostname is yet verified.
+// Fail closed on every other origin, including any *.vercel.app domain,
+// regardless of earlier AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED flags.
+// Enabling a new AHA origin requires an explicit follow-up code review,
+// Supabase Auth exact Redirect URLs approval and an end-to-end test.
 (function configureAhaAuthOrigin() {
-  const githubApp = "https://paradispartiet.github.io/AHA-EchoNet/";
-  const githubCallback = "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html";
+  const githubOrigin = "https://paradispartiet.github.io";
+  const githubApp = githubOrigin + "/AHA-EchoNet/";
+  const githubCallback = githubApp + "auth-callback.html";
   const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
-  const vercelOrigin = "https://aha-echo-net.vercel.app";
-  const isExactPreview = window.location?.origin === previewOrigin;
-  const isExactVercel = window.location?.origin === vercelOrigin;
+  const origin = String(window.location?.origin || "");
+  const isGithub = origin === githubOrigin;
+  const isExactPreview = origin === previewOrigin;
+  const authOriginVerified = isGithub || isExactPreview;
 
-  // Vercel must never redirect a PKCE login back to GitHub Pages: session
-  // state and code verifiers are origin-bound. Supabase must first list the
-  // exact Vercel callback under Auth > URL Configuration > Redirect URLs.
-  // This explicit opt-in is OFF by default until that external check passes.
-  // It is not an authorization boundary: Supabase enforces allowed redirects.
-  const vercelCallbackApproved = isExactVercel &&
-    window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true;
-  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = isExactVercel && !vercelCallbackApproved;
+  window.AHA_AUTH_ORIGIN_BLOCKED = !authOriginVerified;
+  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = !authOriginVerified &&
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
 
-  // Keep Vercel navigation on Vercel even when sign-in is not yet enabled.
-  const appUrl = isExactPreview ? previewOrigin + "/" :
-    isExactVercel ? vercelOrigin + "/" : githubApp;
-  const callbackUrl = isExactPreview ? previewOrigin + "/auth-callback.html" :
-    vercelCallbackApproved ? vercelOrigin + "/auth-callback.html" : githubCallback;
+  // Keep navigation on the same origin where it began, even while login
+  // is blocked. Never redirect an unverified host back to GitHub Pages.
+  const localApp = /^https?:\/\/[^/]+$/.test(origin) ? origin + "/" : githubApp;
+  const appUrl = isGithub ? githubApp : localApp;
+  const callbackUrl = isGithub ? githubCallback :
+    isExactPreview ? previewOrigin + "/auth-callback.html" : "";
+
   window.AHA_APP_URL = window.AHA_APP_URL || appUrl;
-  window.AHA_AUTH_CALLBACK_URL = window.AHA_AUTH_CALLBACK_URL || callbackUrl;
-  window.AHA_AUTH_REDIRECT_URL = window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL;
+  // An external override must not convert an unverified browser origin into
+  // a working login. AHAAuth independently enforces exact callback equality.
+  window.AHA_AUTH_CALLBACK_URL = authOriginVerified ?
+    (window.AHA_AUTH_CALLBACK_URL || callbackUrl) : "";
+  window.AHA_AUTH_REDIRECT_URL = authOriginVerified ?
+    (window.AHA_AUTH_REDIRECT_URL || window.AHA_AUTH_CALLBACK_URL) : "";
 })();
 window.AHA_SUPABASE_URL = window.AHA_SUPABASE_URL || "https://wshmybqyksrwkawqleiz.supabase.co";
 window.AHA_SUPABASE_PUBLISHABLE_KEY = window.AHA_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_fgfxuPJBpZ9CFcYufBBgjg_8YEmi13m";
