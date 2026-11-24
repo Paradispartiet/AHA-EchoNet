@@ -1718,12 +1718,34 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect.poll(() => textInk(page, 100, 120, 500, 130)).toBeGreaterThan(100);
   });
 
+  test("focused textarea confirmation preserves button identity and commits on first click", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await page.locator("#kv2-text-content").fill("Første trykk");
+    await shapePointer(page, "pointerdown", 150, 180, 981);
+    const commit = page.locator("#kv2-text-commit");
+    await expect(commit).toBeEnabled();
+    const stable = await page.evaluate(() => {
+      const button = document.getElementById("kv2-text-commit");
+      const node = button.firstChild;
+      const input = document.getElementById("kv2-text-content");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      return node === button.firstChild;
+    });
+    expect(stable).toBe(true);
+    await commit.click({ timeout: 10000 });
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
+  });
+
   test("editable text survives backup, cancel, update, undo, duplicate and explicit rasterization", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await page.locator("#kv2-text-content").fill("Før");
     await shapePointer(page, "pointerdown", 150, 180, 979);
     await page.locator("#kv2-text-commit").click();
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
     const original = await jsonBackup(page);
     await page.locator("#kv2-text-edit").click();
     await expect(page.locator("#kv2-text-content")).toHaveValue("Før");
@@ -1762,6 +1784,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await page.locator("#kv2-text-content").fill("Bevar teksten");
     await shapePointer(page, "pointerdown", 150, 180, 980);
     await page.locator("#kv2-text-commit").click();
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
     const saved = await jsonBackup(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({

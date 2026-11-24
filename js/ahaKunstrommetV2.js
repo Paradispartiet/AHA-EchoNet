@@ -354,11 +354,20 @@
     const layout = tool === "text" && textAnchor ? textLayout() : null;
     const valid = !!layout && !layout.error;
     const visible = valid && !editing;
-    $("kv2-text-commit").textContent = editing ? "Oppdater tekstlag" : "Legg tekst på lag";
-    $("kv2-text-hint").textContent = editing
+    // WebKit may fire a textarea change event while the confirmation button
+    // is being pressed. Do not replace its text node or relayout the panel
+    // during that pointer sequence when the visible state has not changed.
+    const commit = $("kv2-text-commit");
+    const hint = $("kv2-text-hint");
+    const warning = $("kv2-text-warning");
+    const caption = editing ? "Oppdater tekstlag" : "Legg tekst på lag";
+    const tip = editing
       ? "Endre teksten her. Lerretet oppdateres først når du bekrefter."
-      : "Skriv tekst og trykk på lerretet for å velge plassering.";
-    $("kv2-text-warning").textContent = tool === "text" && layout?.error ? layout.error : "";
+      : "Skriv tekst og trykk på lerretet for å velge plassering. Teksten kan redigeres etterpå.";
+    const message = tool === "text" && layout?.error ? layout.error : "";
+    if (commit.textContent !== caption) commit.textContent = caption;
+    if (hint.textContent !== tip) hint.textContent = tip;
+    if (warning.textContent !== message) warning.textContent = message;
     overlay.toggleAttribute("hidden", !visible);
     label.replaceChildren();
     if (visible) {
@@ -374,8 +383,9 @@
         label.appendChild(span);
       });
     }
-    $("kv2-text-commit").disabled = busy || !project || maskEditing || !textAnchor ||
+    const disabled = busy || !project || maskEditing || !textAnchor ||
       (editing ? currentLayer().locked || !currentLayer().visible : project.layers.length >= MAX_LAYERS) || !valid;
+    if (commit.disabled !== disabled) commit.disabled = disabled;
   }
 
   function clearTextDraft() {
@@ -1958,8 +1968,9 @@
     });
     $("kv2-shape-style").addEventListener("change", renderShapePreview);
     ["kv2-text-content", "kv2-text-size", "kv2-text-font", "kv2-text-bold"].forEach(id => {
+      // input already covers typing, number changes, font selection and bold.
+      // A second render on blur can interrupt WebKit's click on confirmation.
       $(id).addEventListener("input", renderTextPreview);
-      $(id).addEventListener("change", renderTextPreview);
     });
     $("kv2-text-edit").addEventListener("click", editTextLayer);
     $("kv2-text-rasterize").addEventListener("click", rasterizeTextLayer);
