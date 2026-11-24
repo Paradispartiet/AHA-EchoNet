@@ -140,8 +140,9 @@ test("GitHub Pages shared origin refuses private psychology storage", async ({ c
   await page.goto(HISTORY_GO_ORIGIN + "/AHA-EchoNet/psykologi.html");
   await expect(page.locator("#aha-psych-selected-text")).toBeDisabled();
   await expect(page.locator("#aha-psych-saved-list")).toContainText("Dette private arkivet åpnes ikke");
-  await expect(page.getByRole("link", { name: "Åpne Psykologirommet på AHAs separate adresse" }))
-    .toHaveAttribute("href", AHA_ORIGIN + "/psykologi.html");
+  await expect(page.getByRole("link", { name: "Åpne Psykologirommet i History-Go" }))
+    .toHaveAttribute("href", HISTORY_GO_ORIGIN + "/History-Go/?room=psychology");
+  await expect(page.locator("#aha-psych-import-status")).toContainText("Separat AHA-adresse er ikke bekreftet");
   expect(await page.evaluate(key => localStorage.getItem(key), STORAGE_KEY)).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"))).toBeNull();
 });

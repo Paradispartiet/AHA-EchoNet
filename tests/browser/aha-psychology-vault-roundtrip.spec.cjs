@@ -209,7 +209,7 @@ test("shared GitHub Pages origin rejects account access even with vault flag ena
   await expect(page.locator("#aha-psych-vault-shared-origin")).toBeVisible();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("sperret");
   await expect(page.locator("#aha-psych-vault-shared-origin a")).toHaveAttribute(
-    "href", "https://aha-echo-net.vercel.app/psykologi.html"
+    "href", "https://paradispartiet.github.io/History-Go/?room=psychology"
   );
   const result = await page.evaluate(async () => {
     try { await window.AHAPsychologyEncryptedVault.status(); return "unexpected_access"; }

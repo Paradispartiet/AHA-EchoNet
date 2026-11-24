@@ -161,10 +161,12 @@
       if (submit) submit.disabled = true;
       list.textContent = "Dette private arkivet åpnes ikke på GitHub Pages sitt delte domene.";
       const link = document.createElement("a");
-      link.href = "https://aha-echo-net.vercel.app/psykologi.html";
-      link.textContent = "Åpne Psykologirommet på AHAs separate adresse";
+      // No verified separate AHA deployment currently serves this room:
+      // do not send private users to an unowned or stale Vercel hostname.
+      link.href = "https://paradispartiet.github.io/History-Go/?room=psychology";
+      link.textContent = "Åpne Psykologirommet i History-Go";
       list.append(link);
-      status.textContent = "Bruk AHA-adressen for å holde Psykologirommet atskilt fra andre GitHub Pages-apper.";
+      status.textContent = "Separat AHA-adresse er ikke bekreftet. Bruk Psykologirommets manuelle krypterte filbackup; ikke lagre private AHA-notater på det delte domenet.";
       return;
     }
     let previewSource = "aha";
