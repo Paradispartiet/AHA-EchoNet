@@ -105,7 +105,7 @@
             </label>
           </div>
           <p id="kv2-text-warning" class="kv2-tip" role="status" aria-live="polite"></p>
-          <p class="kv2-tip">Skriv tekst og trykk på lerretet for å velge plassering. Teksten vises som forhåndsvisning til du bekrefter. Den blir bildepiksler på et eget lag og kan flyttes, men selve bokstavene kan ikke redigeres etter bekreftelse uten å angre.</p>
+          <p id="kv2-text-hint" class="kv2-tip">Skriv tekst og trykk på lerretet for å velge plassering. Teksten vises som forhåndsvisning til du bekrefter. Den blir bildepiksler på et eget lag og kan flyttes, men selve bokstavene kan ikke redigeres etter bekreftelse uten å angre.</p>
           <div class="kv2-text-actions">
             <button id="kv2-text-commit" type="button" disabled>Legg tekst på lag</button>
             <button id="kv2-text-cancel" type="button">Avbryt plassering</button>
@@ -170,6 +170,10 @@
             <button type="button" id="kv2-duplicate-layer">Dupliser lag</button>
           </div>
           <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
+          <div class="kv2-text-actions">
+            <button id="kv2-text-edit" type="button" disabled>Rediger tekstlag</button>
+            <button id="kv2-text-rasterize" type="button" disabled>Gjør tekst om til piksler</button>
+          </div>
           <label for="kv2-rename">Gi laget et navn</label>
           <input type="text" id="kv2-rename" maxlength="70" />
           <label for="kv2-blend-mode">Blandingsmodus for laget</label>

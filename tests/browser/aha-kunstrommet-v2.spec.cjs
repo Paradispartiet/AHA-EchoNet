@@ -1691,7 +1691,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
-  test("text preview is local-only and one confirmation adds a movable raster layer in one undo step", async ({ page }) => {
+  test("text preview is local-only and one confirmation adds a movable editable text layer in one undo step", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await expect(page.locator("#kv2-text-panel")).toBeVisible();
@@ -1710,11 +1710,50 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect(backup.layers).toHaveLength(2);
     expect(backup.layers[1].name).toContain("Tekst");
     expect(backup.layers[1].kind).toBe("paint");
+    expect(backup.layers[1].textData.content).toBe("Kunstrommet");
     await page.locator("#kv2-undo").click();
     await expect.poll(() => page.locator("#kv2-layer-count").textContent()).toContain("1 av 8 lag");
     expect(await textInk(page, 100, 120, 500, 130)).toBe(0);
     await page.locator("#kv2-redo").click();
     await expect.poll(() => textInk(page, 100, 120, 500, 130)).toBeGreaterThan(100);
+  });
+
+  test("editable text survives backup, cancel, update, undo, duplicate and explicit rasterization", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await page.locator("#kv2-text-content").fill("Før");
+    await shapePointer(page, "pointerdown", 150, 180, 979);
+    await page.locator("#kv2-text-commit").click();
+    const original = await jsonBackup(page);
+    await page.locator("#kv2-text-edit").click();
+    await expect(page.locator("#kv2-text-content")).toHaveValue("Før");
+    await page.locator("#kv2-text-content").fill("Avbryt");
+    await page.locator("#kv2-text-cancel").click();
+    expect((await jsonBackup(page)).layers[1].textData.content).toBe("Før");
+    await page.locator("#kv2-text-edit").click();
+    await page.locator("#kv2-text-content").fill("Etter");
+    await page.locator("#kv2-text-size").fill("64");
+    await page.locator("#kv2-text-commit").click();
+    const updated = await jsonBackup(page);
+    expect(updated.layers).toHaveLength(2);
+    expect(updated.layers[1].textData).toMatchObject({ content: "Etter", size: 64 });
+    expect(updated.layers[1].bitmap).not.toBe(original.layers[1].bitmap);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
+    expect((await jsonBackup(page)).layers[1].textData.content).toBe("Før");
+    await page.locator("#kv2-redo").click();
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
+    expect((await jsonBackup(page)).layers[1].textData.content).toBe("Etter");
+    await page.locator("#kv2-duplicate-layer").click();
+    expect((await jsonBackup(page)).layers[2].textData.content).toBe("Etter");
+    await page.locator("#kv2-text-rasterize").click();
+    const raster = await jsonBackup(page);
+    expect(raster.layers[2].textData).toBeUndefined();
+    expect(raster.layers[1].textData.content).toBe("Etter");
+    expect(raster.layers[2].bitmap).toBe(raster.layers[1].bitmap);
+    await page.locator("#kv2-undo").click();
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
+    expect((await jsonBackup(page)).layers[2].textData.content).toBe("Etter");
   });
 
   test("multiline typography supports font family, size, bold and palette without leaving text tool", async ({ page }) => {
