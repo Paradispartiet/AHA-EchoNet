@@ -1756,6 +1756,37 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     expect((await jsonBackup(page)).layers[2].textData.content).toBe("Etter");
   });
 
+  test("text metadata is restored from project files and old raster projects remain compatible", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-text").click();
+    await page.locator("#kv2-text-content").fill("Bevar teksten");
+    await shapePointer(page, "pointerdown", 150, 180, 980);
+    await page.locator("#kv2-text-commit").click();
+    const saved = await jsonBackup(page);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "tekst.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(saved))
+    });
+    await expect(page.locator("#kv2-text-edit")).toBeEnabled();
+    await page.locator("#kv2-text-edit").click();
+    await expect(page.locator("#kv2-text-content")).toHaveValue("Bevar teksten");
+    await page.locator("#kv2-text-cancel").click();
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    await expect(page.locator("#kv2-status")).toContainText("Gjør tekstlaget om til piksler");
+    expect((await jsonBackup(page)).layers[1].textData.content).toBe("Bevar teksten");
+    delete saved.layers[1].textData;
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "gammel-tekst.kunstrommet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(saved))
+    });
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+    await expect(page.locator("#kv2-text-edit")).toBeDisabled();
+    expect(await textInk(page, 100, 120, 500, 130)).toBeGreaterThan(100);
+  });
+
   test("multiline typography supports font family, size, bold and palette without leaving text tool", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();

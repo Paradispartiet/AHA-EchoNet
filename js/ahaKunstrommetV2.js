@@ -518,7 +518,7 @@
   }
   function commitShape() {
     const layer = currentLayer();
-    if (!shapeValid(shapeDraft) || !layer || layer.locked || !layer.visible || busy || maskEditing ||
+    if (!shapeValid(shapeDraft) || !layer || layer.textData || layer.locked || !layer.visible || busy || maskEditing ||
         !checkpoint()) return false;
     const context = surfaces.get(layer.id).getContext("2d");
     context.save();
@@ -1760,7 +1760,7 @@
             busy = true;
             try { await loadData(item, false, true); }
             catch (error) { status("Kunne ikke åpne: " + error.message); }
-            finally { busy = false; }
+            finally { busy = false; updateLayerControls(); renderTextPreview(); }
           }),
           makeButton("Lag kopi", () => duplicateSaved(item)),
           makeButton("Slett", () => deleteSaved(item))
@@ -1838,7 +1838,7 @@
       if (dirty && !global.confirm("Forkaste ulagrede endringer og åpne det importerte prosjektet?")) return;
       await loadData(data, isV1, false);
     } catch (error) { status("Import feilet: " + error.message); }
-    finally { busy = false; $("kv2-import").value = ""; }
+    finally { busy = false; $("kv2-import").value = ""; updateLayerControls(); renderTextPreview(); }
   }
 
   function bind() {
@@ -2049,7 +2049,7 @@
       if (!record) return false;
       busy = true;
       try { await loadData(record, false, true); return true; }
-      finally { busy = false; }
+      finally { busy = false; updateLayerControls(); renderTextPreview(); }
     },
     async openLegacyCopy(record) {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return false;
@@ -2061,7 +2061,7 @@
           title: record.title, note: record.note, strokes: record.strokes
         }, true, false);
         return true;
-      } finally { busy = false; }
+      } finally { busy = false; updateLayerControls(); renderTextPreview(); }
     }
   };
 
