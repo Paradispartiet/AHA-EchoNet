@@ -89,44 +89,45 @@ kryptofillagring, ikke vanlig AHA-sync eller automatisk synkronisering.
 **Ingen SQL deployes fra en GitHub-PR**, og å merge denne koden aktiverer
 ikke kontohvelvet så lenge flagget er `false`.
 
-## Separat AHA-origin og Supabase Auth PKCE (21. november 2026)
+## Separat AHA-origin: Vercel-prosjekt verifisert 24. november 2026
 
-Første publisering av PR #1097 (Psykologirommets filflyt) er grønn.
-Hvelvet er fortsatt avslått og nekter tilgang på `paradispartiet.github.io`,
-som er en delt origin med History-Go.
+**IKKE AKTIVER HVELV ELLER VERCEL-INNLOGGING.** Verifikasjon direkte via
+den tilkoblede Vercel-kontoen viste at den godkjente teamressursen
+`aha-echonets-projects` har prosjektet `aha-echonet`, med registrert
+adresse `https://aha-echonet.vercel.app`. Den sist registrerte
+produksjonspubliseringen er fra **5. desember 2025 (Oslo-tid)**, commit
+`27c8121`, med Git-tilknytning `AHA-EchoNet/AHA-EchoNet`. Dette er ikke
+det nåværende utviklingsrepoet `Paradispartiet/AHA-EchoNet`.
 
-**Avdekket feil:** `js/ahaConfig.js` valgte tidligere GitHub Pages som
-innloggings-callback også når AHA ble åpnet fra
-`https://aha-echo-net.vercel.app`. PKCE-verifieren er lagret per
-nettleser-origin og kan ikke hentes av et annet nettsted.
+**Viktig korreksjon:** Adressen `https://aha-echo-net.vercel.app` som
+ble brukt i PR #1101 og de opprinnelige navigasjonslenkene, er **ikke**
+registrert på det tilkoblede teamet. Den må ikke allowlistes i Supabase,
+brukes som autoritativ AHA-innloggingsadresse eller anbefales til brukere.
+Domenets eventuelle eier er ikke fastslått.
 
-**Fail-closed-rettelse:** Vercel-innlogging er sperret som standard.
-`AHAAuth.signInWithEmail` og `AHAAuth.signInWithProvider` avslår
-forsøkene lokalt med `auth_callback_not_verified`, uten OTP-/OAuth-
-forespørsel, inntil begge vilkårene er oppfylt:
+PR #1101 innførte en PKCE-sperre og et avslått opt-in-flagg for den
+tidligere antatte adressen. Denne er ingen bekreftet ferdig innlogging,
+og flagget `AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED` må **ikke**
+slås på basert på tidligere dokumentasjon. Den eksisterende
+GitHub Pages-innloggingen er ikke endret. Konto-filbackup er fortsatt
+deaktivert med `AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false`.
 
-1. Operatøren har verifisert at Vercel-siden virkelig serverer
-   `/auth-callback.html`, og at **den eksakte adressen**
-   `https://aha-echo-net.vercel.app/auth-callback.html` er oppført under
-   Supabase-prosjektet **AHA → Authentication → URL Configuration → Redirect URLs**.
-   Staging-prosjektet må få separat konfigurering før test med egne kontoer.
-2. Etter at dette er kontrollert, settes eksplisitt
-   `window.AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED = true`
-   **før** `js/ahaConfig.js` kjøres på den eksakte Vercel-origin.
-   Ikke sett flagget via en bred wildcard-regel, og ikke anta at URL-en er
-   tillatt ut fra en grønn GitHub Actions-kjøring.
+Etter kontrollen ble brukerrettede lenker til den ubekreftede adressen
+fjernet i PR #1104. De viser bare veien tilbake til det eksisterende
+Psykologirommet i History-Go og manuell kryptert lokal filbackup.
+Dette er ikke det samme som en ferdig isolert AHA-origin.
 
-Med flagget aktivert velges Vercel som **både** AHA-appadresse og
-`auth-callback.html` for e-post-OTP og OAuth. En overstyrt returadresse
-som peker tilbake til GitHub Pages blir fortsatt avvist. GitHub Pages og
-eksakt Cloudflare-preview beholder tidligere ruter. Featureflagget
-godkjenner ikke brukeren og er ikke en autorisasjonsgrense; tillatte
-returer håndheves av Supabase Auth, filtilgang av database-RLS.
+**Før eventuell aktivering:**
+1. Bestem hvilken **separat og verifisert** nettadresse som skal være
+   AHA sin nye privat-origin, og verifiser at den er knyttet til riktig
+   GitHub-repo og nåværende kode. Ikke flytt gammel Vercel-produksjon
+   eller kopier databaser uten egen godkjent plan.
+2. Konfigurer samme host for app, login og `auth-callback.html`;
+   kontroller eksakt tillatt redirect under riktig Supabase Auth-prosjekt.
+   Ikke bruk brede wildcards eller den ubekreftede adressen.
+3. Verifiser ekte PKCE med to separate testidentiteter, JWT-basert RLS
+   i staging, korrekt kryptert filopplasting, nedlasting og gjenoppretting.
+4. Kontroller personvern, sletting, drift og fysisk iPad før en separat
+   beslutning om produksjonsmigrasjon og aktivering.
 
-**Fortsatt uverifisert:** Dette er en offline kode- og kontrakttest.
-Ingen kobling har her kunnet lese den faktiske Redirect URLs-allowlisten.
-Det er ikke testet med ekte PKCE-sesjoner, og AHA Staging har ingen ekte
-testkontoer. Selv om innloggingen senere verifiseres, må kryptert konto-
-lagring fortsatt forbli avslått inntil oppfølgende integrasjonstest med
-to ikke-privilegerte testbrukere og fysisk iPad er bestått.
-Se GitHub issue #1099 for akseptansekriteriene.
+Se issue #1099 for utestående infrastruktur og sikkerhetskrav.
