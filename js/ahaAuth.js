@@ -30,19 +30,19 @@
   }
 
   function getRedirectUrl() {
-    // Never initiate PKCE on Vercel with a callback on GitHub Pages. This
-    // gate is OFF until the exact same-origin callback is in Supabase's Auth
-    // Redirect URLs allowlist and has been verified end-to-end.
-    if (global.location?.origin === "https://aha-echo-net.vercel.app") {
-      const expected = "https://aha-echo-net.vercel.app/auth-callback.html";
-      if (global.AHA_VERCEL_AUTH_LOGIN_BLOCKED !== false ||
-          global.AHA_AUTH_REDIRECT_URL !== expected) return "";
-    }
-    return String(
-      global.AHA_AUTH_REDIRECT_URL ||
-      global.AHA_APP_URL ||
-      "https://paradispartiet.github.io/AHA-EchoNet/"
-    ).trim();
+    // Only already-approved, exact AHA origins may initiate PKCE. All Vercel
+    // origins are currently unverified, including the historical hostname.
+    // Do not trust a front-end flag or a manually supplied redirect override.
+    const origin = String(global.location?.origin || "");
+    const expected = origin === "https://paradispartiet.github.io"
+      ? "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html"
+      : origin === "https://aha-preview.aha-echonet-preview.pages.dev"
+        ? origin + "/auth-callback.html"
+        : "";
+    const configured = String(global.AHA_AUTH_REDIRECT_URL || "").trim();
+    if (!expected || global.AHA_AUTH_ORIGIN_BLOCKED === true ||
+        configured !== expected) return "";
+    return expected;
   }
 
   function hasAuthParams() {
