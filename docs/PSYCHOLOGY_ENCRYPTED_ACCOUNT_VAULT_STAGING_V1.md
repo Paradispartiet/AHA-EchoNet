@@ -162,3 +162,32 @@ Applications → Installed GitHub Apps → Vercel → Configure* og gi tilgang
 til akkurat dette repositoriet. Om Vercel-appen er installert via feil
 GitHub-bruker, må riktig konto knyttes under Vercel-teamets Git-innstillinger.
 Ikke flytt eller overskriv gammel produksjon uten separat beslutning.
+
+## 25. november 2026 – Vercel-produksjonens callback er allowlistet
+
+Vercel-teamet `mats-grans-projects`, prosjektet `aha-echo-net`, domenet
+`https://aha-echo-net.vercel.app` og Git-integrasjonen
+`Paradispartiet/AHA-EchoNet` er bekreftet via prosjektvisningen.
+AHA produksjon i Supabase viser **fem Redirect URLs**, inklusive den nye
+**eksakte** `https://aha-echo-net.vercel.app/auth-callback.html`, i tillegg
+til tre GitHub Pages-adresser og Cloudflare-preview-callbacken.
+`Site URL` er uendret. Bruk ikke wildcard for Vercel-preview.
+
+En avgrenset Auth-endring åpner PKCE-initiering på denne **ene** Vercel-
+origin, med samme-origin callback. GitHub Pages og eksakt Cloudflare-
+preview er fortsatt godkjent; legacy `aha-echonet.vercel.app` og alle
+andre preview- og lookalike-adresser blokkeres.
+
+Denne godkjenningen betyr **ikke** at en ekte PKCE-innlogging er testet:
+HTTP-henting av den aktive callbacken var ikke mulig i utviklingsmiljøet.
+Før vi omtaler Vercel-innloggingen som ende-til-ende-verifisert, må vi
+bekrefte i en faktisk iPad-/nettleserøkt at brukeren mottar redirect og
+at innloggingssesjonen opprettes på samme domene uten å kopiere tokens.
+Test bare med egen AHA-konto eller kontrollert testkonto; ikke del
+innloggingslenker med engangskoder, tokens eller passord i sakslogger.
+
+**Psykologirommets kontohvelv forblir deaktivert** og kan ikke få
+produksjonsdata: `AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false` og
+`aha_psychology_encrypted_backups` finnes bare i separat AHA Staging.
+Gjeninnføring av selvvalgt tekstoverføring til AHA fra History-Go skjer
+ikke automatisk ved at innloggingen blir tilgjengelig. Se issue #1099.
