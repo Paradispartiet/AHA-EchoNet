@@ -116,6 +116,33 @@
         <p><strong>Ikke slett eksisterende notater for å gjøre plass.</strong> Gjenoppretting krever et tomt lokalt arkiv og overskriver ikke et eksisterende. Behold egen kryptert fil og passord separat. AHA kan ikke bekrefte at filen er lagret på enheten eller at gjenopprettingen har lykkes.</p>
         <p>Å åpne veiviseren eller History Go overfører ikke filen, passordet eller kontokopien automatisk.</p>
       </details>
+      <details id="aha-psych-vault-history">
+        <summary>Aktivitet i denne økten</summary>
+        <p>Viser bekreftede handlinger på kontokopien i denne nettleserfanen. Ingen varig historikk lagres; listen tømmes ved kontobytte eller når siden forlates.</p>
+        <p id="aha-psych-vault-history-empty">Ingen bekreftede handlinger ennå.</p>
+        <ol id="aha-psych-vault-history-list"></ol>
+      </details>
+      <details id="aha-psych-vault-compare">
+        <summary>Sammenlign egen kryptert fil med kontokopien</summary>
+        <p>Velg en fil du allerede har på enheten. Ved sammenligning hentes den aktive kontokopien på nytt. Den valgte filen sendes ikke til AHA, og ingen av filene dekrypteres.</p>
+        <form id="aha-psych-vault-compare-form" class="psych-vault-form">
+          <input type="file" accept=".json,application/json" aria-label="Lokal kryptert fil til sammenligning" required>
+          <button type="submit" class="aha-tile-btn aha-tile-btn-secondary">Sammenlign filene</button>
+        </form>
+        <p id="aha-psych-vault-compare-result" role="status" aria-live="polite">Ingen sammenligning utført.</p>
+        <p>Ulike krypterte filer kan inneholde samme notater. En lik fil bekrefter ikke at passordet virker eller at notatene er oppdaterte.</p>
+      </details>
+      <details id="aha-psych-vault-replace-guide">
+        <summary>Bytt kontokopi på en tryggere måte</summary>
+        <ol>
+          <li>Lag en ny kryptert fil i History Go. Behold passordet.</li>
+          <li>Hent den gamle kontokopien og lagre den separat på enheten. Kontroller selv at du har filen og passordet.</li>
+          <li>Sammenlign om ønskelig den gamle lokale filen med kontokopien. Ikke slett den eneste fungerende kopien.</li>
+          <li>Hvis du velger å slette den gamle kontokopien, bruk den separate sletteknappen og kontroller kvitteringen.</li>
+          <li>Sjekk kontokopien på nytt, og last opp den nye filen manuelt. Behold begge lokale filer til du vet at den nye virker.</li>
+        </ol>
+        <p>Bytte er ikke atomisk: opplasting kan bli avvist etter sletting, for eksempel ved kvote eller stengt opplasting. Veiviseren utfører ingen sletting eller opplasting. Det er fortsatt bare én aktiv kontokopi.</p>
+      </details>
       <hr>
       <h3>Last opp en kryptert fil</h3>
       <form id="aha-psych-vault-upload" class="psych-vault-form">
