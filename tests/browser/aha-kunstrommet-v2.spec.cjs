@@ -92,6 +92,75 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const old=await jsonBackup(page);
+    const dims=()=>page.locator("#kv2-canvas").evaluate(c=>[c.width,c.height]);
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-preset").selectOption("800x1200");
+    await page.locator("#kv2-new-sized").click();
+    expect(await dims()).toEqual([800,1200]);
+    await stroke(page);
+    await expect.poll(async()=>(await pxAt(page,400,600))[0]).toBeLessThan(80);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,400,600))[0]).toBe(255);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async()=>(await pxAt(page,400,600))[0]).toBeLessThan(80);
+    await page.locator("#kv2-mask-add").click();
+    await stroke(page);
+    await expect.poll(async()=>(await pxAt(page,400,600))[0]).toBe(255);
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator(".kv2-guide-panel summary").click();
+    await page.locator("#kv2-guide-mode").selectOption("thirds");
+    await expect(page.locator("#kv2-composition-guides")).toHaveAttribute("viewBox","0 0 800 1200");
+    const sizes=await page.evaluate(()=>["kv2-canvas","kv2-composition-guides"].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [r.width,r.height];}));
+    expect(Math.abs(sizes[0][1]-sizes[1][1])).toBeLessThan(2);
+    const portrait=await jsonBackup(page);
+    expect([portrait.width,portrait.height]).toEqual([800,1200]);
+    expect(portrait.layers[0].maskBitmap).toBeTruthy();
+    const pending=page.waitForEvent("download");await page.locator("#kv2-png").click();
+    const png=await fs.readFile(await (await pending).path());
+    expect([png.readUInt32BE(16),png.readUInt32BE(20)]).toEqual([800,1200]);
+    page.on("dialog",d=>d.accept());
+    const load=async(data)=>page.locator("#kv2-import").setInputFiles({name:"project.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await load(old);await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    expect(await dims()).toEqual([1200,800]);
+    await load(portrait);await expect.poll(dims).toEqual([800,1200]);
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    const restored=await jsonBackup(page);
+    expect(restored.layers.map(({id,...layer})=>layer)).toEqual(portrait.layers.map(({id,...layer})=>layer));
+    await load({...portrait,width:1600,height:1600});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    expect(await dims()).toEqual([800,1200]);
+    await load({...portrait,width:1200,height:800});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    expect(await dims()).toEqual([800,1200]);
+    await page.locator("#kv2-title").fill("Portrettformat");
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await page.reload();
+    await page.locator("#kv2-projects .kv2-project--saved").getByRole("button",{name:"Åpne",exact:true}).click();
+    await expect.poll(dims).toEqual([800,1200]);
+    expect((await jsonBackup(page)).layers[0].maskBitmap).toBeTruthy();
+  });
+
+  test("invalid new canvas dimensions leave current document intact",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await stroke(page);
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-width").fill("1600");
+    await page.locator("#kv2-canvas-height").fill("1600");
+    await page.locator("#kv2-new-sized").click();
+    await expect(page.locator("#kv2-status")).toContainText("Ugyldig lerret");
+    expect((await pxAt(page,600,400))[0]).toBeLessThan(80);
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-canvas-width").fill("640");
+    await page.locator("#kv2-canvas-height").fill("960");
+    await page.locator("#kv2-new-sized").click();
+    expect(await page.locator("#kv2-canvas").evaluate(c=>[c.width,c.height])).toEqual([640,960]);
+    expect((await pxAt(page,320,480))[0]).toBe(255);
+  });
+
   test("perspective ruler locks the first direction and never exports its guide",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-guide-panel summary").click();

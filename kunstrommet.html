@@ -321,7 +321,7 @@
         </div>
         <details class="kv2-fold kv2-workspace-help">
           <summary>Veiledning for markering og beskjæring</summary>
-        <p class="kv2-tip">Beskjæring fjerner piksler utenfor markeringen <strong>bare i det aktive laget</strong>. Lerretet forblir 1200 × 800; bruk eksport av utsnitt for en egen PNG med markeringens størrelse. «Kopier markering til nytt lag» oppretter et nytt, flyttbart lag og beholder originalen. «Klipp markering til nytt lag» flytter de markerte pikslene til et nytt lag og gjør akkurat det området gjennomsiktig i originalen. Begge krever et synlig, ulåst lag, og begge kan angres. «Fyll markering med farge» fyller bare den markerte flaten på det valgte bildelaget med penselfargen, ikke masken eller andre lag. Avslutt maskeredigering før fylling. Rektangel og lasso kan begge brukes til kopiering, klipping, beskjæring, fargefylling og eksport. Utenfor lassoformen er eksportert PNG gjennomsiktig. Beskjæring, fylling og transformering kan også angres.</p>
+        <p class="kv2-tip">Beskjæring fjerner piksler utenfor markeringen <strong>bare i det aktive laget</strong>. Lerretet beholder sine opprinnelige mål; bruk eksport av utsnitt for en egen PNG med markeringens størrelse. «Kopier markering til nytt lag» oppretter et nytt, flyttbart lag og beholder originalen. «Klipp markering til nytt lag» flytter de markerte pikslene til et nytt lag og gjør akkurat det området gjennomsiktig i originalen. Begge krever et synlig, ulåst lag, og begge kan angres. «Fyll markering med farge» fyller bare den markerte flaten på det valgte bildelaget med penselfargen, ikke masken eller andre lag. Avslutt maskeredigering før fylling. Rektangel og lasso kan begge brukes til kopiering, klipping, beskjæring, fargefylling og eksport. Utenfor lassoformen er eksportert PNG gjennomsiktig. Beskjæring, fylling og transformering kan også angres.</p>
         </details>
 
         <div class="kv2-document-notes">
@@ -329,6 +329,24 @@
           <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>
         </div>
 
+        <details class="kv2-fold kv2-size-panel">
+          <summary>Lerretsformat · <span id="kv2-canvas-dimensions">1200 × 800 px</span></summary>
+          <label for="kv2-canvas-preset">Format for nytt prosjekt</label>
+          <select id="kv2-canvas-preset">
+            <option value="1200x800">Landskap 1200 × 800</option>
+            <option value="800x1200">Portrett 800 × 1200</option>
+            <option value="1200x1200">Kvadrat 1200 × 1200</option>
+            <option value="1600x900">Bredformat 1600 × 900</option>
+            <option value="900x1600">Stående 900 × 1600</option>
+            <option value="custom">Egendefinert</option>
+          </select>
+          <div class="kv2-size-inputs">
+            <label>Bredde (px)<input id="kv2-canvas-width" type="number" min="320" max="1600" step="1" value="1200"/></label>
+            <label>Høyde (px)<input id="kv2-canvas-height" type="number" min="320" max="1600" step="1" value="800"/></label>
+          </div>
+          <button id="kv2-new-sized" type="button">Nytt prosjekt med valgt format</button>
+          <p class="kv2-tip">Oppretter et nytt, tomt lerret. Lagrede kunstverk beholder sine mål. 320–1600 px per side, maks 1 440 000 piksler. Eksisterende prosjekt skaleres ikke.</p>
+        </details>
         <div class="kv2-actions">
           <button id="kv2-new" type="button">Nytt prosjekt</button>
           <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>

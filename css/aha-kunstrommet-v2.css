@@ -258,3 +258,7 @@
 #kv2-perspective-lock-overlay {position:absolute;top:0;left:0;width:100%;height:auto;aspect-ratio:3 / 2;z-index:4;pointer-events:none;overflow:hidden;}
 #kv2-perspective-lock-overlay[hidden]{display:none;}
 #kv2-perspective-lock-line{fill:none;stroke:#cc701c;stroke-width:2;vector-effect:non-scaling-stroke;stroke-dasharray:6 3;}
+
+.kv2-size-panel select{font:inherit;max-width:100%;padding:8px;border:1px solid #b9c1bd;border-radius:8px;background:white;}
+.kv2-size-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.kv2-size-inputs input{width:100%;min-width:0;box-sizing:border-box;}
