@@ -190,3 +190,8 @@
 #kv2-snap-guides { position: absolute; top: 0; left: 0; z-index: 4; pointer-events: none; }
 #kv2-snap-guides[hidden] { display: none; }
 #kv2-snap-guides line { stroke: #cf267d; stroke-width: 1.5; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+
+/* Move-only layer multi-selection, independent of the active editing layer. */
+.kv2-layer { grid-template-columns: 40px minmax(0,1fr) 57px 30px; }
+.kv2-move-together { width: 22px; height: 22px; align-self: center; justify-self: center; accent-color: #304d43; }
+.kv2-group-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: .82rem; }

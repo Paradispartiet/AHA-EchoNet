@@ -92,6 +92,29 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("multi-layer move preserves relative positions, locks and one-step undo", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [300, 200], [300, 200], 1001);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page, [600, 300], [600, 300], 1002);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page, [900, 500], [900, 500], 1003);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    await page.locator(".kv2-layer").nth(1).getByRole("button", { name: /^Lås / }).click();
+    await expect(page.locator(".kv2-layer").nth(1).locator(".kv2-move-together")).toBeDisabled();
+    await expect(page.locator("#kv2-move-count")).toHaveText("2 lag ved Flytt lag");
+    await page.locator("#kv2-move").click();
+    const before = await jsonBackup(page);
+    await shapeDrag(page, [900, 500], [950, 530], 1004);
+    const after = await jsonBackup(page);
+    expect(after.layers.map(l => [l.x, l.y])).toEqual([[50, 30], [0, 0], [50, 30]]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 900, 500))[0]).toBeLessThan(100);
+    expect((await jsonBackup(page)).layers.map(l => [l.x, l.y])).toEqual(before.layers.map(l => [l.x, l.y]));
+    await page.locator("#kv2-clear-move-group").click();
+    await expect(page.locator("#kv2-move-count")).toHaveText("1 lag ved Flytt lag");
+  });
+
   test("optional magnetic guides snap content to canvas center and undo without guide pixels", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 995);

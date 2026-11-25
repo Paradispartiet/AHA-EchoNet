@@ -94,6 +94,7 @@
   let dbPromise = null;
   let project = null;
   let selected = null;
+  const moveTogether = new Set(); // Transient selection, not project metadata.
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let shapeDraft = null; // Transient SVG-only preview until pointerup.
@@ -155,6 +156,7 @@
   }
 
   function newProject() {
+    moveTogether.clear();
     const now = new Date().toISOString();
     surfaces.clear();
     masks.clear();
@@ -787,6 +789,9 @@
 
   function renderLayerList() {
     const mount = $("kv2-layers");
+    for (const id of moveTogether) {
+      if (!project.layers.some(layer => layer.id === id && layer.visible && !layer.locked)) moveTogether.delete(id);
+    }
     mount.replaceChildren();
     project.layers.slice().reverse().forEach((layer) => {
       const row = document.createElement("div");
@@ -811,11 +816,31 @@
         layer.locked = !layer.locked;
         changed(); refresh();
       }, (layer.locked ? "Lås opp " : "Lås ") + layer.name);
-      row.append(visibility, choose, lock);
+      const include = document.createElement("input");
+      include.type = "checkbox";
+      include.className = "kv2-move-together";
+      include.setAttribute("aria-label", "Flytt sammen med aktivt lag: " + layer.name);
+      include.checked = moveTogether.has(layer.id);
+      include.disabled = busy || !layer.visible || layer.locked;
+      include.addEventListener("change", () => {
+        if (busy || pointerId !== null) { include.checked = moveTogether.has(layer.id); return; }
+        if (include.checked) moveTogether.add(layer.id);
+        else moveTogether.delete(layer.id);
+        updateMoveCount();
+      });
+      row.append(visibility, choose, lock, include);
       mount.appendChild(row);
     });
     const active = currentLayer();
     $("kv2-active-layer").textContent = active ? active.name : "Ingen lag";
+    updateMoveCount();
+  }
+
+  function updateMoveCount() {
+    const count = project.layers.filter(layer => layer.visible && !layer.locked &&
+      (layer.id === selected || moveTogether.has(layer.id))).length;
+    $("kv2-move-count").textContent = count + " lag ved Flytt lag";
+    $("kv2-clear-move-group").disabled = moveTogether.size === 0;
   }
 
   function updateLayerControls() {
@@ -960,10 +985,24 @@
     return right > left && bottom > top ? { left, right, top, bottom } : null;
   }
 
-  function snapTargets(active) {
+  function groupSnapBounds(moving, active) {
+    let result = null;
+    for (const layer of moving) {
+      const b = snapBounds(layer);
+      if (!b) continue;
+      const dx = layer.x - active.x, dy = layer.y - active.y;
+      const p = { left: b.left + dx, right: b.right + dx, top: b.top + dy, bottom: b.bottom + dy };
+      result = result ? { left: Math.min(result.left, p.left), right: Math.max(result.right, p.right),
+        top: Math.min(result.top, p.top), bottom: Math.max(result.bottom, p.bottom) } : p;
+    }
+    return result;
+  }
+
+  function snapTargets(moving) {
+    const movingIds = new Set(moving.map(layer => layer.id));
     const x = [WIDTH / 2, 0, WIDTH], y = [HEIGHT / 2, 0, HEIGHT];
     for (const layer of project.layers) {
-      if (layer.id === active.id || !layer.visible || layer.opacity <= 0) continue;
+      if (movingIds.has(layer.id) || !layer.visible || layer.opacity <= 0) continue;
       const b = snapBounds(layer);
       if (!b) continue;
       x.push(layer.x + (b.left + b.right) / 2, layer.x + b.left, layer.x + b.right);
@@ -1046,12 +1085,15 @@
     if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !isShapeTool() && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
+    const moving = tool === "move" && layer ? project.layers.filter(item =>
+      item.visible && !item.locked && (item.id === layer.id || moveTogether.has(item.id))) : [];
     pointerStart = {
       point: point(event), x: layer?.x || 0, y: layer?.y || 0,
       clientX: event.clientX, clientY: event.clientY,
       scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0,
-      snapBounds: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapBounds(layer) : null,
-      snapTargets: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapTargets(layer) : null
+      moving: moving.map(item => ({ id: item.id, x: item.x, y: item.y })),
+      snapBounds: moving.length && $("kv2-snap-enabled").checked ? groupSnapBounds(moving, layer) : null,
+      snapTargets: moving.length && $("kv2-snap-enabled").checked ? snapTargets(moving) : null
     };
     paintPrevious = null;
     if (isShapeTool()) {
@@ -1125,8 +1167,14 @@
         if (sy) y += sy.delta;
         showSnapGuides(sx?.target ?? null, sy?.target ?? null);
       } else showSnapGuides();
-      layer.x = Math.round(x);
-      layer.y = Math.round(y);
+      const dx = Math.round(x) - pointerStart.x, dy = Math.round(y) - pointerStart.y;
+      for (const start of pointerStart.moving) {
+        const item = project.layers.find(candidate => candidate.id === start.id);
+        if (item && item.visible && !item.locked) {
+          item.x = start.x + dx;
+          item.y = start.y + dy;
+        }
+      }
     } else {
       const local = {
         x: at.x - layer.x, y: at.y - layer.y,
@@ -1929,6 +1977,7 @@
       surfaces.set(layer.id, decoded[i].bitmap);
       if (decoded[i].mask) masks.set(layer.id, decoded[i].mask);
     });
+    moveTogether.clear();
     project = next;
     selected = project.layers[project.layers.length - 1].id;
     $("kv2-title").value = project.title;
@@ -2147,6 +2196,11 @@
     $("kv2-new").addEventListener("click", () => {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
       newProject();
+    });
+    $("kv2-clear-move-group").addEventListener("click", () => {
+      if (busy || pointerId !== null) return;
+      moveTogether.clear();
+      renderLayerList();
     });
     $("kv2-add-layer").addEventListener("click", () => addLayer("Lag " + (project.layers.length + 1), "paint"));
     $("kv2-remove-layer").addEventListener("click", removeLayer);

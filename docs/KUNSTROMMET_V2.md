@@ -222,3 +222,8 @@ Fri transformering viser også en separat komposisjonskopi på lerretet med hjø
 ## Magnetiske hjelpelinjer – første trinn (4.3)
 
 Valget **Fest til lerret og lag** er av som standard og gjelder bare Flytt lag. Under drag kan ytterkant eller sentrum av lagets opprinnelige, ikke-gjennomsiktige pikselinnhold feste seg til lerretets kanter eller midtlinjer innenfor åtte CSS-piksler. Rosa, stiplede hjelpelinjer viser treffet og skjules ved avsluttet drag. Alt-tasten gir midlertidig fri flytting med mus. Lagmasker endrer ikke grensene som brukes; tomme lag festes ikke. Ingen ny prosjektmetadata eller eksportinnhold. Angre bruker det eksisterende flyttesteget. Synlige, ikke-tomme lag med opasitet over null gir også magnetiske kanter og sentre; låste lag kan være referanser. Grensene beregnes én gang per drag, skjulte lag utelates, og det nærmeste treffet velges uavhengig på hver akse. Fysisk iPad-verifikasjon gjenstår.
+
+
+## Flervalg ved lagflytting (4.4, første trinn)
+
+Aktivt lag redigeres fortsatt individuelt. Avkryssing av ekstra synlige, ulåste lag i listen gjør at **Flytt lag** flytter dem sammen med aktivt lag, uten endring av relative avstander. Skjulte og låste lag utelates. Magnetisk justering bruker felles yttergrense og utelater gruppens egne lag som referanser. Ett drag gir ett angresteg; PNG- og JSON-format er uendret. Flervalg er midlertidig, tømmes ved nytt/åpnet prosjekt eller med Fjern flervalg. Navngitte, varige grupper og felles rotasjon/skalering er ikke implementert ennå.
