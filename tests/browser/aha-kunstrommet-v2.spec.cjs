@@ -92,6 +92,44 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("clipping limits the upper raster to the lower alpha without altering source pixels",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const clip=page.locator("#kv2-clip-toggle");
+    await expect(clip).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1961);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[300,300],[300,300],1962);
+    await shapeDrag(page,[900,500],[900,500],1963);
+    const original=await jsonBackup(page);
+    const red=await pxAt(page,900,500);
+    expect(red[0]).toBeGreaterThan(red[1]);
+    await clip.click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    expect((await pxAt(page,300,300))[0]).toBeGreaterThan((await pxAt(page,300,300))[1]);
+    const clipped=await jsonBackup(page);
+    expect(clipped.layers[1].clipToBelow).toBe(true);
+    expect(clipped.layers.map(({clipToBelow,...layer})=>layer)).toEqual(original.layers);
+    await expect(page.locator("#kv2-merge-down")).toBeDisabled();
+    await page.getByRole("button",{name:"Skjul Lag 1 · Tegning",exact:true}).click();
+    expect(await pxAt(page,300,300)).toEqual([255,255,255,255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,300,300))[1]).toBeLessThan(200);
+    await page.locator("#kv2-undo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","false");
+    expect(await pxAt(page,900,500)).toEqual(red);
+    await page.locator("#kv2-redo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-import").setInputFiles({name:"clip.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(clipped))});
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    await clip.click();
+    expect(await pxAt(page,900,500)).toEqual(red);
+  });
+
   test("raster merge down preserves composition and restores original layers on undo",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const merge=page.locator("#kv2-merge-down"), count=page.locator("#kv2-layer-count");

@@ -368,6 +368,8 @@
   const masks = new Map();
   let maskEditing = false;
   const maskedComposite = imageCanvas();
+  // Allocate clipping scratch surfaces only when a visible clipping pair is drawn.
+  let clipStencil = null, clipContent = null;
 
   function uid() {
     return global.crypto && global.crypto.randomUUID
@@ -400,6 +402,7 @@
     cancelFreeTransform();
     if(width!==WIDTH||height!==HEIGHT){
       WIDTH=width;HEIGHT=height;
+      clipStencil = null; clipContent = null;
       [canvas,maskedComposite,...["kv2-text-edit-preview","kv2-brush-live","kv2-gradient-live","kv2-transform-live","kv2-free-preview"].map($)].forEach(node=>{
         node.width=WIDTH;node.height=HEIGHT;
       });
@@ -533,6 +536,63 @@
     target.putImageData(image, 0, 0);
   }
 
+  function clippingBase(layer) {
+    if (!project || !layer || layer.kind === "adjustment") return null;
+    const index = project.layers.indexOf(layer);
+    const base = project.layers[index - 1];
+    return base && base.kind !== "adjustment" && !base.clipToBelow ? base : null;
+  }
+
+  function previewFor(preview, layer) {
+    return Array.isArray(preview) ? preview.find(item => item.id === layer.id)
+      : preview?.id === layer.id ? preview : null;
+  }
+
+  // Draw one raster into its document position; caller sets opacity and blend.
+  function drawRaster(target, layer, activePreview) {
+    const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
+    if (!bitmap) return;
+    const adjusted = adjustedBitmap(layer, bitmap);
+    const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
+    if (!mask) { target.drawImage(adjusted, layer.x, layer.y); return; }
+    const context = maskedComposite.getContext("2d");
+    context.save();
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+    context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.drawImage(adjusted, 0, 0);
+    context.globalCompositeOperation = "destination-in";
+    context.drawImage(mask, 0, 0);
+    context.restore();
+    target.drawImage(maskedComposite, layer.x, layer.y);
+  }
+
+  function drawClippedRaster(target, layer, preview) {
+    const base = clippingBase(layer);
+    // Fail closed if the immediately lower raster is hidden or invalid.
+    if (!base || !base.visible || base.opacity <= 0) return;
+    if (!clipStencil) clipStencil = imageCanvas();
+    if (!clipContent) clipContent = imageCanvas();
+    const stencil = clipStencil.getContext("2d"), content = clipContent.getContext("2d");
+    if (!stencil || !content) return;
+    stencil.save();
+    stencil.globalAlpha = 1;
+    stencil.globalCompositeOperation = "source-over";
+    stencil.clearRect(0, 0, WIDTH, HEIGHT);
+    stencil.globalAlpha = base.opacity;
+    drawRaster(stencil, base, previewFor(preview, base));
+    stencil.restore();
+    content.save();
+    content.globalAlpha = 1;
+    content.globalCompositeOperation = "source-over";
+    content.clearRect(0, 0, WIDTH, HEIGHT);
+    drawRaster(content, layer, previewFor(preview, layer));
+    content.globalCompositeOperation = "destination-in";
+    content.drawImage(clipStencil, 0, 0);
+    content.restore();
+    target.drawImage(clipContent, 0, 0);
+  }
+
   function drawComposition(target, preview = null) {
     target.save();
     target.globalAlpha = 1;
@@ -541,43 +601,21 @@
     target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
-      const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
+      const activePreview = previewFor(preview, layer);
       if (layer.kind === "adjustment") {
         applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
         return;
       }
-      const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
-      if (!bitmap) return;
       target.globalAlpha = layer.opacity;
-      // Composite into the document after mask application; don't blend
-      // the mask bitmap itself, and don't modify any layer's source pixels.
-      // Reset first: browsers ignore unsupported assignments, so a prior layer
-      // must never leak its blend mode into the next layer.
       target.globalCompositeOperation = "source-over";
       if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") {
         target.globalCompositeOperation = layer.blendMode;
       }
-      // Filter the source non-destructively before its mask and blend mode.
-      const adjusted = adjustedBitmap(layer, bitmap);
-      const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
-      if (!mask) {
-        target.drawImage(adjusted, layer.x, layer.y);
-      } else {
-        const context = maskedComposite.getContext("2d");
-        context.save();
-        context.globalAlpha = 1;
-        context.globalCompositeOperation = "source-over";
-        context.clearRect(0, 0, WIDTH, HEIGHT);
-        context.drawImage(adjusted, 0, 0);
-        context.globalCompositeOperation = "destination-in";
-        context.drawImage(mask, 0, 0);
-        context.restore();
-        target.drawImage(maskedComposite, layer.x, layer.y);
-      }
+      if (layer.clipToBelow) drawClippedRaster(target, layer, preview);
+      else drawRaster(target, layer, activePreview);
     });
     target.restore();
   }
-
 
   // A lasso is a transient polygon in document coordinates; the project format is unchanged.
   function lassoActive() { return selection?.type === "lasso"; }
@@ -1096,6 +1134,7 @@
         id: layer.id, name: layer.name, kind: layer.kind,
         ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
+        ...(layer.clipToBelow === true && layer.kind !== "adjustment" ? { clipToBelow: true } : {}),
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         adjustments: safeAdjustments(layer.adjustments),
         ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels), curves: safeCurves(layer.curves) } : {}),
@@ -1217,7 +1256,7 @@
     project.layers.slice().reverse().forEach((layer) => {
       const row = document.createElement("div");
       row.className = "kv2-layer" + (selected === layer.id ? " kv2-selected" : "");
-      const choose = makeButton(layer.name + (layer.kind === "adjustment" ? " · justering" : "") + (masks.has(layer.id) ? " · maske" : ""), () => {
+      const choose = makeButton(layer.name + (layer.kind === "adjustment" ? " · justering" : "") + (masks.has(layer.id) ? " · maske" : "") + (layer.clipToBelow ? " · klippet" : ""), () => {
         leaveMaskEdit();
         selected = layer.id;
         clearTextDraft();
@@ -1390,7 +1429,7 @@
     $("kv2-merge-down").disabled = !mergePair;
     $("kv2-merge-down-note").textContent = mergePair
       ? "Slår sammen med laget under. Angre kan gjenopprette originalene i denne økten."
-      : "Velg to tilstøtende, synlige og ulåste rasterlag med normal blanding, full opasitet, samme gruppe, uten masker, justeringer eller forskyvning.";
+      : "Velg to tilstøtende, synlige og ulåste rasterlag med normal blanding, full opasitet, samme gruppe, uten masker, justeringer eller forskyvning. Fjern eventuelle klippemasker før sammenslåing.";
     const textEditable = !!layer?.textData && layer.visible && !layer.locked && !busy && !maskEditing;
     $("kv2-text-edit").disabled = !textEditable;
     $("kv2-text-rasterize").disabled = !textEditable;
@@ -1402,6 +1441,15 @@
     const hasMask = !!layer && masks.has(layer.id);
     const editable = !!layer && layer.visible && !layer.locked && !busy;
     if (!hasMask || layer?.maskEnabled === false) leaveMaskEdit();
+    const base = clippingBase(layer);
+    const clip = $("kv2-clip-toggle");
+    clip.disabled = !editable || pointerId !== null || maskEditing || layer?.kind === "adjustment" ||
+      (!layer?.clipToBelow && (!base || project.layers[project.layers.indexOf(layer)+1]?.clipToBelow));
+    clip.setAttribute("aria-pressed", String(layer?.clipToBelow === true));
+    clip.textContent = layer?.clipToBelow ? "Fjern klippemaske" : "Klipp til laget under";
+    $("kv2-clip-status").textContent = layer?.clipToBelow
+      ? (base && base.visible ? "Klippet til: " + base.name : "Klippet innhold er skjult – laget under er skjult eller ugyldig.")
+      : "Klippemasken følger laget direkte under. Endret lagrekkefølge kan endre klippeformen.";
     $("kv2-mask-add").disabled = !editable || hasMask;
     $("kv2-mask-edit").disabled = !editable || !hasMask || layer.maskEnabled === false;
     $("kv2-mask-edit").setAttribute("aria-pressed", String(hasMask && maskEditing));
@@ -1597,7 +1645,7 @@
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
-    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
+    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS || !!currentLayer()?.clipToBelow;
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
@@ -2398,6 +2446,18 @@
     maskEditing = false;
   }
 
+  function toggleClipping() {
+    const layer = currentLayer();
+    if (busy || pointerId !== null || maskEditing || !layer || !layer.visible || layer.locked ||
+        layer.kind === "adjustment") return;
+    if (!layer.clipToBelow && (!clippingBase(layer) ||
+        project.layers[project.layers.indexOf(layer)+1]?.clipToBelow)) return;
+    if (!checkpoint()) return;
+    if (layer.clipToBelow) delete layer.clipToBelow;
+    else layer.clipToBelow = true;
+    changed(); refresh();
+  }
+
   function addLayerMask() {
     const layer = editableLayer();
     if (!layer || masks.has(layer.id)) return;
@@ -2588,6 +2648,10 @@
 
   function duplicateActiveLayer() {
     const layer = editableLayer();
+    if (layer?.clipToBelow) {
+      status("Fjern klippemasken før du dupliserer laget.");
+      return;
+    }
     if (!layer || project.layers.length >= MAX_LAYERS) {
       status("Det er ikke plass til flere lag.");
       return;
@@ -2940,7 +3004,7 @@
     if (!project || busy || pointerId !== null || maskEditing || freeTransform || textEditId || textAnchor || shapeDraft) return null;
     const upper = currentLayer();
     const index = project.layers.indexOf(upper);
-    if (index < 1) return null;
+    if (index < 1 || project.layers.some(layer => layer.clipToBelow)) return null;
     const lower = project.layers[index - 1];
     const eligible = layer => layer && ["paint", "image"].includes(layer.kind) &&
       layer.visible && !layer.locked && !layer.textData && layer.opacity === 1 &&
@@ -3144,6 +3208,7 @@
       kind: input.kind === "adjustment" ? "adjustment" : input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
+      ...(input.clipToBelow === true && input.kind !== "adjustment" ? { clipToBelow: true } : {}),
       // Older projects default to normal; unknown or unsafe modes are ignored.
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       adjustments: safeAdjustments(input.adjustments),
@@ -3275,6 +3340,7 @@
           ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels), curves: safeCurves(layer.curves) } : {}),
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
+          ...(layer.clipToBelow === true && layer.kind !== "adjustment" ? { clipToBelow: true } : {}),
           blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
           x: Number.isFinite(layer.x) ? layer.x : 0,
           y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
@@ -3556,6 +3622,7 @@
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
     $("kv2-merge-down").addEventListener("click", mergeRasterDown);
+    $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
