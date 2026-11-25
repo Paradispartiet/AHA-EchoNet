@@ -81,6 +81,12 @@
             <label for="kv2-brush-opacity">Strøkets opasitet</label><div class="kv2-slider"><input id="kv2-brush-opacity" type="range" min="0" max="100" value="100"/><output id="kv2-brush-opacity-value">100%</output></div>
             <label for="kv2-brush-flow">Flyt per avtrykk</label><div class="kv2-slider"><input id="kv2-brush-flow" type="range" min="1" max="100" value="35"/><output id="kv2-brush-flow-value">35%</output></div>
             <label for="kv2-brush-spacing">Avstand mellom avtrykk</label><div class="kv2-slider"><input id="kv2-brush-spacing" type="range" min="5" max="100" value="20"/><output id="kv2-brush-spacing-value">20%</output></div>
+            <label for="kv2-brush-texture">Penseltekstur</label>
+            <select id="kv2-brush-texture">
+              <option value="round">Jevn rund</option><option value="charcoal">Kull</option><option value="chalk">Kritt</option>
+              <option value="watercolor">Akvarellstruktur</option><option value="dry">Tørrpensel</option>
+            </select>
+            <label for="kv2-brush-texture-strength">Teksturstyrke</label><div class="kv2-slider"><input id="kv2-brush-texture-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-texture-strength-value">70%</output></div>
             <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
             <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
             <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>

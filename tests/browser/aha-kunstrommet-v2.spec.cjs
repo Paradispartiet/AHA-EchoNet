@@ -1473,6 +1473,42 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("procedural texture dabs vary alpha and survive named brush reload", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-brush-pressure-width").uncheck();
+    for (const [name,v] of [["hardness",100],["flow",100],["texture-strength",100]]) {
+      await page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},v);
+    }
+    const sample=()=>page.locator("#kv2-canvas").evaluate(c=>{
+      const p=c.getContext("2d").getImageData(590,390,20,20).data;
+      const shades=[]; for(let i=0;i<p.length;i+=4) shades.push(p[i]);
+      return {min:Math.min(...shades),max:Math.max(...shades)};
+    });
+    await stroke(page);
+    const round=await sample();
+    expect(round.max-round.min).toBeLessThan(3);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    for(const mode of ["charcoal","chalk","watercolor","dry"]) {
+      await page.locator("#kv2-brush-texture").selectOption(mode);
+      await stroke(page);
+      const textured=await sample();
+      expect(textured.max-textured.min,mode).toBeGreaterThan(35);
+      await page.locator("#kv2-undo").click();
+      await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    }
+    await page.locator("#kv2-brush-name").fill("Tørrpensel");
+    await page.locator("#kv2-brush-library-save").click();
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-library").selectOption("Tørrpensel");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-texture")).toHaveValue("dry");
+    await expect(page.locator("#kv2-brush-texture-strength")).toHaveValue("100");
+  });
+
   test("brush library exports settings only and merges imports without overwriting", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");

@@ -1293,11 +1293,15 @@
       color: $("kv2-color").value, hardness: pct("hardness", 50),
       opacity: pct("opacity", 100), flow: pct("flow", 35, 1),
       spacing: pct("spacing", 20, 5), pressureWidth: $("kv2-brush-pressure-width").checked,
-      pressureFlow: $("kv2-brush-pressure-flow").checked };
+      pressureFlow: $("kv2-brush-pressure-flow").checked,
+      texture: safeBrushTexture($("kv2-brush-texture").value),
+      textureStrength: pct("texture-strength", 70) };
   }
 
+  const BRUSH_TEXTURES = ["round","charcoal","chalk","watercolor","dry"];
+  function safeBrushTexture(value) { return BRUSH_TEXTURES.includes(value) ? value : "round"; }
   const BRUSH_LIBRARY_LIMIT = 30;
-  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false});
+  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7});
   function safeBrushSettings(value) {
     const input = value && typeof value === "object" ? value : {};
     const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
@@ -1306,7 +1310,8 @@
       hardness:number("hardness",0,1), opacity:number("opacity",0,1),
       flow:number("flow",.01,1), spacing:number("spacing",.05,1),
       pressureWidth:typeof input.pressureWidth === "boolean" ? input.pressureWidth : true,
-      pressureFlow:input.pressureFlow === true};
+      pressureFlow:input.pressureFlow === true,
+      texture:safeBrushTexture(input.texture), textureStrength:number("textureStrength",0,1)};
   }
   function brushLibraryKey() {
     return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
@@ -1386,6 +1391,9 @@
     });
     $("kv2-brush-pressure-width").checked=settings.pressureWidth;
     $("kv2-brush-pressure-flow").checked=settings.pressureFlow;
+    $("kv2-brush-texture").value=settings.texture;
+    $("kv2-brush-texture-strength").value=Math.round(settings.textureStrength*100);
+    $("kv2-brush-texture-strength-value").textContent=Math.round(settings.textureStrength*100)+"%";
     tool="brush"; refresh();
   }
   function loadOwnBrush() {
@@ -1436,7 +1444,9 @@
             typeof s !== "object" || Array.isArray(s) ||
             !["size","hardness","opacity","flow","spacing"].every(k=>Number.isFinite(s[k])) ||
             typeof s.color !== "string" || !/^#[0-9a-f]{6}$/i.test(s.color) ||
-            typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean") {
+            typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean" ||
+            (s.texture !== undefined && !BRUSH_TEXTURES.includes(s.texture)) ||
+            (s.textureStrength !== undefined && !Number.isFinite(s.textureStrength))) {
           throw new Error("Penselfilen har ugyldige eller gjentatte pensler.");
         }
         names.add(name);
@@ -1469,6 +1479,36 @@
       pressure, width: penPressure(event), pen: event.pointerType === "pen" };
   }
 
+  // Small deterministic alpha stamps; generated locally, no image downloads.
+  function textureNoise(x,y,seed) {
+    let n = Math.imul(x+1,374761393) ^ Math.imul(y+1,668265263) ^ Math.imul(seed+1,1274126177);
+    n = Math.imul(n ^ (n >>> 13),1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function textureStamp(settings, seed) {
+    const stamp = document.createElement("canvas");
+    const size = 64;
+    stamp.width=size; stamp.height=size;
+    const ctx=stamp.getContext("2d"), image=ctx.createImageData(size,size);
+    const rgb=[1,3,5].map(i=>parseInt(settings.color.slice(i,i+2),16));
+    for(let y=0;y<size;y++) for(let x=0;x<size;x++) {
+      const u=(x+.5-size/2)/(size/2), v=(y+.5-size/2)/(size/2);
+      const r=Math.hypot(u,v);
+      if(r>=1) continue;
+      const envelope=settings.hardness>=.999 ? 1 : clamp((1-r)/(1-settings.hardness),0,1);
+      const fine=textureNoise(x,y,seed), coarse=textureNoise(Math.floor(x/5),Math.floor(y/5),seed);
+      let grain=1;
+      if(settings.texture==="charcoal") grain=fine<.28 ? .06 : .25+.75*coarse;
+      else if(settings.texture==="chalk") grain=fine<.45 ? .04 : .65+.35*coarse;
+      else if(settings.texture==="watercolor") grain=clamp(.18+.52*coarse+.22*fine+.4*Math.pow(r,3),0,1);
+      else if(settings.texture==="dry") grain=textureNoise(0,y,seed)<.5 ? .025 : .4+.6*fine;
+      const alpha=envelope*(1-settings.textureStrength+settings.textureStrength*grain);
+      const i=(y*size+x)*4;
+      image.data[i]=rgb[0];image.data[i+1]=rgb[1];image.data[i+2]=rgb[2];image.data[i+3]=Math.round(alpha*255);
+    }
+    ctx.putImageData(image,0,0);
+    return stamp;
+  }
   function brushDab(stroke, at) {
     const { settings: s, layer } = stroke;
     const ctx = stroke.ink.getContext("2d");
@@ -1478,6 +1518,11 @@
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = flow;
     if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
+    if (stroke.stamps) {
+      const stamp=stroke.stamps[stroke.dabIndex++ % stroke.stamps.length];
+      ctx.drawImage(stamp,at.x-radius,at.y-radius,radius*2,radius*2);
+      ctx.restore(); return;
+    }
     if (s.hardness >= .999) ctx.fillStyle = s.color;
     else {
       const gradient = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, radius);
@@ -1494,7 +1539,9 @@
     const settings = brushSettings(), first = advancedPoint(event, layer);
     advancedStroke = { layer, source: surfaces.get(layer.id), settings,
       ink: imageCanvas(), composite: imageCanvas(), previous: first,
-      spacing: Math.max(.5, settings.size * settings.spacing), remaining: 0 };
+      spacing: Math.max(.5, settings.size * settings.spacing), remaining: 0,
+      dabIndex:0, stamps:settings.texture !== "round" && settings.textureStrength>0
+        ? Array.from({length:4},(_,seed)=>textureStamp(settings,seed)) : null };
     brushDab(advancedStroke, first);
     advancedStroke.remaining = advancedStroke.spacing;
     drawSoon();
@@ -2941,7 +2988,7 @@
       if (tool !== "text") tool = "brush";
       refresh();
     });
-    ["hardness","opacity","flow","spacing"].forEach(name => {
+    ["hardness","opacity","flow","spacing","texture-strength"].forEach(name => {
       const control = $("kv2-brush-" + name);
       control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
     });

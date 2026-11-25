@@ -277,3 +277,8 @@ Opptil 30 navngitte avanserte pensler per lokal AHA-profil med størrelse, farge
 ### Penselbibliotekets sikkerhetskopi
 
 Eksportformat `aha-kunstrommet-brushes` versjon 1 inneholder bare navngitte penselinnstillinger, ingen profil-ID eller kunstverk. JSON-import på maks 40 000 byte validerer alle oppføringer før lagring. Eksisterende navn hoppes over; dersom nye pensler ikke får plass innen grensen 30, avbrytes hele importen. Profilbytte under filinnlesing avbryter. Ingen skysynkronisering. Test dekker eksport, kollisjon, gyldig/ugyldig import og uendrede originaler.
+
+
+## Teksturpensler
+
+Fire lokale, prosedyregenererte teksturer: kull, kritt, akvarellstruktur og tørrpensel. Avtrykkene bruker deterministiske 64×64 alfamasker med fire varianter per strøk, farget med aktiv farge, kombinert med hardhet, flyt, trykk og strøkopasitet. Teksturstyrke 0 % gir tidligere rundpensel, 100 % full kornstruktur. Ingen eksterne bilder eller nye nettverkskall. Penselbiblioteket bevarer valgfri tekstur og styrke; eldre versjon-1 filer uten feltene får rundpensel. Dette er stiliserte rasterteksturer, ikke fysisk simulering av pigment, væske eller papir. Nettlesertest dekker pikselvariasjon og lagring. Fysisk iPad-ytelse gjenstår.
