@@ -1386,6 +1386,11 @@
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
     $("kv2-remove-layer").disabled = project.layers.length <= 1;
+    const mergePair = mergeRasterPair();
+    $("kv2-merge-down").disabled = !mergePair;
+    $("kv2-merge-down-note").textContent = mergePair
+      ? "Slår sammen med laget under. Angre kan gjenopprette originalene i denne økten."
+      : "Velg to tilstøtende, synlige og ulåste rasterlag med normal blanding, full opasitet, samme gruppe, uten masker, justeringer eller forskyvning.";
     const textEditable = !!layer?.textData && layer.visible && !layer.locked && !busy && !maskEditing;
     $("kv2-text-edit").disabled = !textEditable;
     $("kv2-text-rasterize").disabled = !textEditable;
@@ -2929,6 +2934,55 @@
     refresh();
   }
 
+  // Only merge a conservative subset of raster pairs. No destructive baking of
+  // editable metadata or off-document pixels, and no white paper in the output.
+  function mergeRasterPair() {
+    if (!project || busy || pointerId !== null || maskEditing || freeTransform || textEditId || textAnchor || shapeDraft) return null;
+    const upper = currentLayer();
+    const index = project.layers.indexOf(upper);
+    if (index < 1) return null;
+    const lower = project.layers[index - 1];
+    const eligible = layer => layer && ["paint", "image"].includes(layer.kind) &&
+      layer.visible && !layer.locked && !layer.textData && layer.opacity === 1 &&
+      (layer.blendMode || "normal") === "normal" && layer.x === 0 && layer.y === 0 &&
+      !masks.has(layer.id) && surfaces.has(layer.id) &&
+      Object.values(safeAdjustments(layer.adjustments)).every(value => value === 100);
+    return eligible(lower) && eligible(upper) &&
+      safeGroupName(lower.groupName) === safeGroupName(upper.groupName)
+      ? { upper, lower, index } : null;
+  }
+
+  function mergeRasterDown() {
+    const pair = mergeRasterPair();
+    if (!pair) { status("Disse lagene kan ikke slås sammen ennå."); return; }
+    if (!global.confirm("Slå sammen de to lagene? Du kan angre i denne økten, men ikke etter at prosjektet er lukket. Eksporter en kopi først hvis du vil beholde originalene.")) return;
+    const { upper, lower, index } = pair;
+    let result;
+    try {
+      result = imageCanvas();
+      const context = result.getContext("2d");
+      if (!context) throw new Error("Mangler lerret.");
+      context.drawImage(surfaces.get(lower.id), 0, 0);
+      context.drawImage(surfaces.get(upper.id), 0, 0);
+      if (!checkpoint()) return;
+    } catch (_) {
+      status("Sammenslåing mislyktes – originalene er uendret.");
+      return;
+    }
+    surfaces.set(lower.id, result);
+    surfaces.delete(upper.id);
+    adjustedBitmaps.delete(lower.id);
+    adjustedBitmaps.delete(upper.id);
+    lower.kind = "paint";
+    project.layers.splice(index, 1);
+    selected = lower.id;
+    moveTogether.clear();
+    clearTextDraft();
+    changed();
+    refresh();
+    status("Lagene er slått sammen – Angre gjenoppretter originalene.");
+  }
+
   function removeLayer() {
     if (busy || project.layers.length <= 1) return;
     checkpoint();
@@ -3501,6 +3555,7 @@
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
+    $("kv2-merge-down").addEventListener("click", mergeRasterDown);
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
