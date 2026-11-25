@@ -322,3 +322,8 @@ Visningslag med rutenett, tredelingsregel, midtlinjer, ett- og topunktsperspekti
 ### 6.0-forberedelse: symmetritegning
 
 Vertikal, horisontal og kombinert speiling med flyttbare akser (10–90 %). Vanlig pensel, viskelær, maskestrøk og avanserte penselavtrykk kopieres på aktivt lag i dokumentkoordinater. Avansert motor speiler også tekstur, vinkel, spredning og helning. Identiske sentre/segmenter på aksen avdupliseres; delvis overlapp kan bygge opp farge. Markering klipper hver kopi i dokumentkoordinater. Innstillingene fryses per strøk, og alle kopier inngår i samme angrehandling. Avansert avbrutt strøk blir ikke lagret. Separat akselinje følger zoom og eksporteres aldri. Symmetri er en midlertidig verktøyinnstilling, ikke prosjektmetadata. Figurer, tekst, gradienter og lagflytting speiles ikke. To nettlesertester dekker fireveis speiling, viskelær, undo/redo, avbrutt avansert strøk, flyttbar akse, markering og zoom. Fysisk Apple Pencil-verifikasjon gjenstår.
+
+
+### Radiell symmetri
+
+Mandalamodus med 3–12 jevnt fordelte rotasjoner (inkludert originalstrøket) rundt et flyttbart sentrum. Bruker samme symmetrimotor for vanlig/avansert pensel, viskelær og masker; hele avtrykket roteres, ikke bare posisjonen. Sektorlinjer er visuelle og følger zoom. Identiske sentre/segmenter avdupliseres; overlapp kan bygge opp farge. Innstillinger fryses per strøk. Ingen prosjektformatendring. Nettlesertest dekker seks rotasjoner, flyttbart sentrum, fireveis rotasjon av flat pensel og angre. Tolv er valgt som foreløpig øvre grense av hensyn til ytelse; fysisk iPad-testing gjenstår.
