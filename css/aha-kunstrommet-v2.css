@@ -190,3 +190,14 @@
 #kv2-snap-guides { position: absolute; top: 0; left: 0; z-index: 4; pointer-events: none; }
 #kv2-snap-guides[hidden] { display: none; }
 #kv2-snap-guides line { stroke: #cf267d; stroke-width: 1.5; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+
+/* Move-only layer multi-selection, independent of the active editing layer. */
+.kv2-layer { grid-template-columns: 40px minmax(0,1fr) 57px 30px; }
+.kv2-move-together { width: 22px; height: 22px; align-self: center; justify-self: center; accent-color: #304d43; }
+.kv2-group-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: .82rem; }
+
+.kv2-group-label { grid-column: 2 / -1; color: #547666; overflow-wrap: anywhere; }
+.kv2-named-groups { margin: 12px 0; padding: 10px; border: 1px solid #d0d7d1; border-radius: 11px; display: grid; gap: 6px; }
+.kv2-named-groups select { min-width: 0; max-width: 100%; font: inherit; padding: 7px; border-radius: 8px; border: 1px solid #bcc4be; }
+.kv2-group-buttons { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+.kv2-group-buttons button { font-size: .82rem; padding: 6px; }

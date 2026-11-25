@@ -182,7 +182,28 @@
             <small id="kv2-layer-count"></small>
           </div>
           <p class="kv2-tip">Øverste lag i listen ligger foran de andre.</p>
+          <p class="kv2-tip">Merk av ekstra lag i listen for å flytte dem sammen med aktivt lag. Andre verktøy virker fortsatt bare på aktivt lag.</p>
           <div id="kv2-layers" class="kv2-layers" aria-label="Lagene i kunstverket"></div>
+          <div class="kv2-group-controls">
+            <output id="kv2-move-count" aria-live="polite">1 lag ved Flytt lag</output>
+            <button id="kv2-clear-move-group" type="button" disabled>Fjern flervalg</button>
+            <button id="kv2-transform-group" type="button" disabled>Transformer flervalg</button>
+          </div>
+          <div class="kv2-named-groups" role="group" aria-label="Navngitte laggrupper">
+            <label for="kv2-group-name">Gruppenavn</label>
+            <input id="kv2-group-name" type="text" maxlength="50" placeholder="For eksempel Landskap" />
+            <button id="kv2-group-save" type="button" disabled>Opprett gruppe fra flervalg</button>
+            <label for="kv2-group-select">Laggrupper</label>
+            <select id="kv2-group-select"><option value="">Velg laggruppe</option></select>
+            <div class="kv2-group-buttons">
+              <button id="kv2-group-select-action" type="button" disabled>Velg for flytting</button>
+              <button id="kv2-group-dissolve-action" type="button" disabled>Løs opp</button>
+              <button id="kv2-group-hide-action" type="button" disabled>Skjul alle</button>
+              <button id="kv2-group-show-action" type="button" disabled>Vis alle</button>
+              <button id="kv2-group-lock-action" type="button" disabled>Lås alle</button>
+              <button id="kv2-group-unlock-action" type="button" disabled>Lås opp alle</button>
+            </div>
+          </div>
           <div class="kv2-layer-actions">
             <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
             <button type="button" id="kv2-layer-up">Opp</button>
@@ -257,7 +278,8 @@
             <label for="kv2-free-y">Høyde (%)</label>
             <input id="kv2-free-y" type="number" min="10" max="300" step="1" value="100" />
             <label><input id="kv2-free-ratio" type="checkbox" checked /> Bevar proporsjoner</label>
-            <p class="kv2-tip">Dra i håndtakene på lerretet, eller bruk tallfeltene. Det oransje sentrumspunktet kan flyttes. Bare aktivt lag og eventuell maske endres ved bekreftelse.</p>
+            <p id="kv2-free-target" class="kv2-tip">Bare aktivt lag transformeres.</p>
+            <p class="kv2-tip">Dra i håndtakene på lerretet, eller bruk tallfeltene. Det oransje sentrumspunktet kan flyttes. Valgte lag og deres masker endres først ved bekreftelse. Innhold utenfor lagets bitmapgrenser kan klippes.</p>
             <canvas id="kv2-free-preview" width="1200" height="800" aria-label="Forhåndsvisning av transformering"></canvas>
             <p id="kv2-free-warning" class="kv2-tip" role="status"></p>
             <div class="kv2-transform-tools">

@@ -222,3 +222,18 @@ Fri transformering viser også en separat komposisjonskopi på lerretet med hjø
 ## Magnetiske hjelpelinjer – første trinn (4.3)
 
 Valget **Fest til lerret og lag** er av som standard og gjelder bare Flytt lag. Under drag kan ytterkant eller sentrum av lagets opprinnelige, ikke-gjennomsiktige pikselinnhold feste seg til lerretets kanter eller midtlinjer innenfor åtte CSS-piksler. Rosa, stiplede hjelpelinjer viser treffet og skjules ved avsluttet drag. Alt-tasten gir midlertidig fri flytting med mus. Lagmasker endrer ikke grensene som brukes; tomme lag festes ikke. Ingen ny prosjektmetadata eller eksportinnhold. Angre bruker det eksisterende flyttesteget. Synlige, ikke-tomme lag med opasitet over null gir også magnetiske kanter og sentre; låste lag kan være referanser. Grensene beregnes én gang per drag, skjulte lag utelates, og det nærmeste treffet velges uavhengig på hver akse. Fysisk iPad-verifikasjon gjenstår.
+
+
+## Flervalg ved lagflytting (4.4, første trinn)
+
+Aktivt lag redigeres fortsatt individuelt. Avkryssing av ekstra synlige, ulåste lag i listen gjør at **Flytt lag** flytter dem sammen med aktivt lag, uten endring av relative avstander. Skjulte og låste lag utelates. Magnetisk justering bruker felles yttergrense og utelater gruppens egne lag som referanser. Ett drag gir ett angresteg; PNG- og JSON-format er uendret. Flervalg er midlertidig, tømmes ved nytt/åpnet prosjekt eller med Fjern flervalg. Navngitte, varige grupper og felles rotasjon/skalering er ikke implementert ennå.
+
+
+## Navngitte laggrupper (4.4, andre trinn)
+
+Opprett en gruppe av minst to synlige, ulåste lag via flervalget og et unikt navn (maks 50 tegn). Hvert lag har høyst ett gruppenavn; eksisterende grupper må løses opp før omgruppering. Velg gruppen fra listen for samlet flytting av synlige, ulåste medlemmer. Skjul/vis/lås/lås opp alle medlemmer med eksplisitte knapper; dette endrer de individuelle flaggene og kan angres i ett steg. Løs opp fjerner bare medlemskap. Gruppene er valgfri lagmetadata i eksisterende V2-format, bevares i lokal lagring, JSON, skissebokk kopi og angrehistorikk. Eldre filer uten metadata åpnes som før. Felles rotasjon/skalering, hierarkiske grupper og fysisk iPad-verifikasjon gjenstår.
+
+
+## Samlet fri transformering (4.4, tredje trinn)
+
+**Transformer flervalg** åpner eksisterende transformasjonsverktøy for minst to synlige, ulåste rasterlag. Felles ramme omfatter de valgte lagenes gripeområder og sentrum kan flyttes. Forhåndsvisning, rotasjon og uavhengig/proporsjonal skalering bruker samme dokumentmatrise på hver originalbitmap og eventuell maske. Bekreft gir ett angresteg for hele flervalget; avbryt beholder originalene. Vanlig Fri transformering gjelder fortsatt bare aktivt lag. Redigerbare tekstlag må rasteriseres eksplisitt. Som ved enkeltlag kan piksler utenfor det enkelte lagets bitmapgrenser klippes. Fysisk iPad og automatisk verifikasjon gjenstår.
