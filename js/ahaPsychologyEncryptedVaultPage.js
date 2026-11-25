@@ -52,7 +52,7 @@
     clearDownload();
     const form = id("aha-psych-vault-upload");
     form?.reset();
-    if (vault.pilotEnabled() && form) form.hidden = true;
+    if (form) form.hidden = true;
     status(messages.account_changed);
   }
 
@@ -120,7 +120,7 @@
     panel.hidden = false;
     const pilot = vault.pilotEnabled();
     const uploadForm = id("aha-psych-vault-upload");
-    if (pilot && uploadForm) uploadForm.hidden = true;
+    if (uploadForm) uploadForm.hidden = true;
     if (pilot) id("aha-psych-vault-pilot-notice").hidden = false;
     // Supabase auth callbacks must stay synchronous. Ignore token refreshes
     // for the same identity; invalidate pending results on sign-out/switch.
@@ -132,15 +132,15 @@
     });
     global.addEventListener("pagehide", resetAccount);
     status(pilot ? "Begrenset pilot. Trykk Sjekk kontokopien for å kontrollere tilgang." :
-      "Innlogging kreves. Ingen fil blir lastet opp automatisk.");
+      "Trykk Sjekk kontokopien før opplasting. Ingen fil blir lastet opp automatisk.");
 
     id("aha-psych-vault-check")?.addEventListener("click", () => run(async (options, current) => {
       clearDownload();
-      if (pilot && uploadForm) uploadForm.hidden = true;
+      if (uploadForm) uploadForm.hidden = true;
       const data = await vault.status(options);
       const canUpload = !pilot || await vault.pilotAccess(options);
       if (!await current()) return;
-      if (pilot && uploadForm) uploadForm.hidden = !canUpload;
+      if (uploadForm) uploadForm.hidden = !canUpload;
       status((data.exists ?
         "En kryptert fil ligger på kontoen. Du kan laste den ned eller slette den." :
         "Ingen kryptert fil er lagret på kontoen.") +
@@ -151,6 +151,10 @@
     id("aha-psych-vault-upload")?.addEventListener("submit", event => {
       event.preventDefault();
       const form = event.currentTarget;
+      if (form.hidden || !activeUserId) {
+        status(messages.account_changed);
+        return;
+      }
       const file = form.querySelector('input[type="file"]')?.files?.[0];
       const consented = form.querySelector('input[name="consent"]')?.checked === true;
       run(async (options, current) => {
