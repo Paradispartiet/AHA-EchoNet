@@ -92,6 +92,98 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("clipping limits the upper raster to the lower alpha without altering source pixels",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const clip=page.locator("#kv2-clip-toggle");
+    await expect(clip).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1961);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[300,300],[300,300],1962);
+    await shapeDrag(page,[900,500],[900,500],1963);
+    const original=await jsonBackup(page);
+    const red=await pxAt(page,900,500);
+    expect(red[0]).toBeGreaterThan(red[1]);
+    await clip.click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    expect((await pxAt(page,300,300))[0]).toBeGreaterThan((await pxAt(page,300,300))[1]);
+    const clipped=await jsonBackup(page);
+    expect(clipped.layers[1].clipToBelow).toBe(true);
+    expect(clipped.layers.map(({clipToBelow,...layer})=>layer)).toEqual(original.layers);
+    await expect(page.locator("#kv2-merge-down")).toBeDisabled();
+    await page.getByRole("button",{name:"Skjul Lag 1 · Tegning",exact:true}).click();
+    expect(await pxAt(page,300,300)).toEqual([255,255,255,255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,300,300))[1]).toBeLessThan(200);
+    await page.locator("#kv2-undo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","false");
+    expect(await pxAt(page,900,500)).toEqual(red);
+    await page.locator("#kv2-redo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-import").setInputFiles({name:"clip.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(clipped))});
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    await clip.click();
+    expect(await pxAt(page,900,500)).toEqual(red);
+  });
+
+  test("raster merge down preserves composition and restores original layers on undo",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const merge=page.locator("#kv2-merge-down"), count=page.locator("#kv2-layer-count");
+    await expect(merge).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1941);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[900,500],[900,500],1942);
+    await expect(merge).toBeEnabled();
+    const original=await jsonBackup(page);
+    const points=[[300,300],[900,500],[600,400]];
+    const colors=async()=>Promise.all(points.map(([x,y])=>pxAt(page,x,y)));
+    const before=await colors();
+    expect(before[0][0]).toBeLessThan(80);
+    expect(before[1][0]).toBeGreaterThan(before[1][1]);
+    page.once("dialog",d=>d.dismiss());
+    await merge.click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    page.once("dialog",d=>d.accept());
+    await merge.click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect(await colors()).toEqual(before);
+    const combined=await jsonBackup(page);
+    expect(combined.layers[0].id).toBe(original.layers[0].id);
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-undo").click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    await page.locator("#kv2-redo").click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(combined.layers);
+    expect(await colors()).toEqual(before);
+  });
+
+  test("raster merge blocks unsupported opacity, blend and masks",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-add-layer").click();
+    const merge=page.locator("#kv2-merge-down");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="100";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-blend-mode").selectOption("normal");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    await expect(merge).toBeDisabled();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+  });
+
   test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const old=await jsonBackup(page);
