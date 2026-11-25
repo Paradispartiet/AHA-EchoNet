@@ -285,9 +285,12 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  const overview = page.locator("#aha-psych-vault-overview");
+  await expect(overview).toContainText("Ikke sjekket");
   await expect(page.locator("#aha-psych-vault-upload")).toBeHidden();
   await page.locator("#aha-psych-vault-check").click();
   await expect(page.locator("#aha-psych-vault-upload")).toBeVisible();
+  await expect(overview).toContainText("Ingen kontokopi synlig");
 
   // Reproduce the physical iPad consent-label regression: shared input
   // styling must not consume the entire width of the label.
@@ -333,6 +336,11 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(stored.envelope).not.toContain(SECRET_SENTINEL);
   expect(stored.envelope).not.toContain(PASSWORD);
 
+  await expect(overview).toContainText("byte");
+  await page.locator("#aha-psych-vault-check").click();
+  await expect(overview).toContainText("UTC");
+  await expect(overview).toContainText("Filstørrelse: ikke hentet");
+
   // One slot per account: refuse a duplicate rather than overwriting.
   await input.setInputFiles({
     name: "duplicate.json", mimeType: "application/json",
@@ -355,6 +363,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await expect(input).toHaveValue("");
   await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).not.toBeChecked();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Kontoen er endret");
+  await expect(overview).toContainText("Ikke sjekket");
 
   // A second session cannot view or retrieve the first session's copy.
   await page.locator("#aha-psych-vault-check").click();
@@ -370,6 +379,8 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
     return await window.__vaultLastDownloadedBlob.text();
   });
   expect(downloaded).toBe(backup.text);
+  await expect(overview).toContainText("UTC");
+  await expect(overview).toContainText("byte");
   expect(await decryptSyntheticBackup(downloaded)).toEqual(backup.content);
 
   // Wrong password and tampering must still be detected by AES-GCM, not AHA.
@@ -382,6 +393,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Slettingen kunne ikke bekreftes");
+  await expect(overview).toContainText("Ikke sjekket");
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
   await page.evaluate(() => { window.__vaultSyntheticDeleteNoop = false; });
   page.once("dialog", dialog => dialog.accept());
@@ -390,6 +402,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
     "kontokopien er slettet og fraværet kontrollert"
   );
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
+  await expect(overview).toContainText("Ingen kontokopi synlig");
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Ingen sletting ble bekreftet");
