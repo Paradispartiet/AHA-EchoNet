@@ -257,3 +257,8 @@ Justeringslag får svartpunkt 0–254, hvitpunkt 1–255 (alltid større enn sva
 ### RGB-fargekurver
 
 Justeringslag har fire separate kurver (RGB, rød, grønn, blå), med fem faste inngangspunkter 0/64/128/192/255 og redigerbare utgangsverdier 0–255. Grafen følger valgte kanalens glidere; mellom punktene brukes lineær interpolasjon. Felles RGB-kurve anvendes etter nivåer, før hver kanal sin kurve, deretter maske og opasitet. Hver kurve kan nullstilles separat, og alle ved samlet nullstilling. Valgfri `curves`-metadata begrenses ved import og bevares ved lagring/duplisering/angre. Ingen endring i rasteroriginaler. Fri plassering av inngangspunkter og glatte splinekurver er ikke del av denne første versjonen.
+
+
+## Gradientverktøy (4.8)
+
+Lineær eller radial gradient med aktiv startfarge og egen sluttfarge eller gjennomsiktig slutt, reversering, og dokumentkoordinater som tar hensyn til lagets posisjon. Dra for å vise en retningslinje/radius, slipp for å male på valgt rasterlag i ett angresteg; pointercancel og Escape kasserer utkastet. Rektangel/lasso avgrenser effekten. Bruk nytt rasterlag for å bevare originalen. I maskemodus erstattes maskens alfa innen markeringen med synlig–skjult gradient (eller reversert), også for justeringslag; rasteroriginalen endres ikke. Ingen ny prosjektmetadata. Foreløpig vises bare retningslinjen, ikke ferdig gradient under draing. Fysisk iPad og nettlesertester gjenstår.

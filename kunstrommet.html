@@ -50,6 +50,17 @@
           <button id="kv2-line" type="button" aria-pressed="false">Linje</button>
           <button id="kv2-arrow" type="button" aria-pressed="false">Pil</button>
           <button id="kv2-text" type="button" aria-pressed="false">Tekst</button>
+          <button id="kv2-gradient" type="button" aria-pressed="false">Gradient</button>
+          <div id="kv2-gradient-panel" hidden>
+            <label for="kv2-gradient-type">Gradienttype</label>
+            <select id="kv2-gradient-type"><option value="linear">Lineær</option><option value="radial">Radial</option></select>
+            <label for="kv2-gradient-end">Sluttpunkt</label>
+            <select id="kv2-gradient-end"><option value="color">Farge</option><option value="transparent">Gjennomsiktig</option></select>
+            <label for="kv2-gradient-color">Sluttfarge</label>
+            <input id="kv2-gradient-color" type="color" value="#ffffff"/>
+            <label><input id="kv2-gradient-reverse" type="checkbox"/> Reverser gradient</label>
+            <p id="kv2-gradient-mask-note" class="kv2-tip"></p>
+          </div>
           <label for="kv2-shape-style">Form
             <select id="kv2-shape-style" aria-label="Fyll eller omriss">
               <option value="fill">Fylt</option>

@@ -1541,6 +1541,52 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("gradient supports linear and radial raster fill, selection and cancellation", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-color").evaluate(c=>{c.value="#000000";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-gradient").click();
+    const before=await jsonBackup(page);
+    await shapePointer(page,"pointerdown",200,400,1201);
+    await shapePointer(page,"pointermove",1000,400,1201);
+    await expect(page.locator("#kv2-shape-overlay")).toBeVisible();
+    await shapePointer(page,"pointercancel",1000,400,1201);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await shapeDrag(page,[200,400],[1000,400],1202);
+    expect((await pxAt(page,100,400))[0]).toBe(0);
+    expect(Math.abs((await pxAt(page,600,400))[0]-128)).toBeLessThanOrEqual(2);
+    expect((await pxAt(page,1100,400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pxAt(page,100,400))[0]).toBe(255);
+    await page.locator("#kv2-select").click();
+    await shapeDrag(page,[300,200],[900,600],1203);
+    await page.locator("#kv2-gradient").click();
+    await page.locator("#kv2-gradient-type").selectOption("radial");
+    await shapeDrag(page,[600,400],[800,400],1204);
+    expect((await pxAt(page,600,400))[0]).toBeLessThan(3);
+    expect((await pxAt(page,700,400))[0]).toBeGreaterThan(120);
+    expect((await pxAt(page,100,400))[0]).toBe(255);
+  });
+
+  test("gradient mask reveals the original gradually without altering its bitmap", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-color").evaluate(c=>{c.value="#000000";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-gradient").click();
+    await page.locator("#kv2-gradient-color").fill("#000000");
+    await shapeDrag(page,[200,400],[1000,400],1205);
+    const before=await jsonBackup(page);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-gradient").click();
+    await shapeDrag(page,[200,400],[1000,400],1206);
+    expect((await pxAt(page,100,400))[0]).toBe(0);
+    expect(Math.abs((await pxAt(page,600,400))[0]-128)).toBeLessThanOrEqual(3);
+    expect((await pxAt(page,1100,400))[0]).toBe(255);
+    const after=await jsonBackup(page);
+    expect(after.layers[0].bitmap).toBe(before.layers[0].bitmap);
+    expect(after.layers[0].maskBitmap).toBeTruthy();
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pxAt(page,1100,400))[0]).toBe(0);
+  });
+
   test("master and channel curves compose independently and survive backup", async ({ page }) => {
     await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
     await page.locator("#kv2-color").evaluate(c => {c.value="#808080";c.dispatchEvent(new Event("input",{bubbles:true}));});
