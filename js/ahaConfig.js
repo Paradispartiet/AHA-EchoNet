@@ -2,7 +2,7 @@
 // Runtime configuration for AHA-EchoNet.
 // Public Supabase frontend config only. Do not put database passwords or service-role keys here.
 
-// PKCE verifiers are browser-origin-bound. The three *exact* origins below
+// PKCE verifiers are browser-origin-bound. The *exact* origins below
 // have dedicated callbacks. AHA Vercel was verified in the correct Vercel
 // project (mats-grans-projects/aha-echo-net) and its exact callback URL was
 // added to AHA production Supabase Auth Redirect URLs on 2026-11-25.
@@ -11,12 +11,13 @@
 // replace Supabase's redirect allowlist or real browser sign-in tests.
 (function configureAhaAuthOrigin() {
   const githubOrigin = "https://paradispartiet.github.io";
-  const githubApp = githubOrigin + "/AHA-EchoNet/";
+  const transferredGithubOrigin = "https://aha-echonet.github.io";
+  const origin = String(window.location?.origin || "");
+  const isGithub = origin === githubOrigin || origin === transferredGithubOrigin;
+  const githubApp = (isGithub ? origin : githubOrigin) + "/AHA-EchoNet/";
   const githubCallback = githubApp + "auth-callback.html";
   const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
   const vercelOrigin = "https://aha-echo-net.vercel.app";
-  const origin = String(window.location?.origin || "");
-  const isGithub = origin === githubOrigin;
   const isExactPreview = origin === previewOrigin;
   const isExactVercel = origin === vercelOrigin;
   const authOriginVerified = isGithub || isExactPreview || isExactVercel;
@@ -55,7 +56,9 @@ window.AHA_CONFIG = window.AHA_CONFIG || {};
 window.AHA_CONFIG.musicProviders = window.AHA_CONFIG.musicProviders || {};
 window.AHA_CONFIG.musicProviders.spotify = window.AHA_CONFIG.musicProviders.spotify || {
   clientId: "",
-  redirectUri: "https://paradispartiet.github.io/AHA-EchoNet/music.html",
+  redirectUri: window.location?.origin === "https://aha-echonet.github.io"
+    ? "https://aha-echonet.github.io/AHA-EchoNet/music.html"
+    : "https://paradispartiet.github.io/AHA-EchoNet/music.html",
   scopes: [
     "playlist-read-private",
     "playlist-read-collaborative",
