@@ -135,17 +135,21 @@
         <details class="kv2-fold kv2-symmetry-panel">
           <summary>Symmetritegning</summary>
           <label for="kv2-symmetry-mode">Speil pensel og viskelær</label>
-          <select id="kv2-symmetry-mode"><option value="off">Av</option><option value="vertical">Venstre / høyre</option><option value="horizontal">Over / under</option><option value="both">Fireveis</option></select>
+          <select id="kv2-symmetry-mode"><option value="off">Av</option><option value="vertical">Venstre / høyre</option><option value="horizontal">Over / under</option><option value="both">Fireveis</option><option value="radial">Radiell (mandala)</option></select>
           <div id="kv2-symmetry-x-control" hidden>
-            <label for="kv2-symmetry-x">Vertikal akse fra venstre</label>
+            <label for="kv2-symmetry-x">Vertikal akse / sentrum fra venstre</label>
             <div class="kv2-slider"><input id="kv2-symmetry-x" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-x-value">50%</output></div>
           </div>
           <div id="kv2-symmetry-y-control" hidden>
-            <label for="kv2-symmetry-y">Horisontal akse fra toppen</label>
+            <label for="kv2-symmetry-y">Horisontal akse / sentrum fra toppen</label>
             <div class="kv2-slider"><input id="kv2-symmetry-y" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-y-value">50%</output></div>
           </div>
+          <div id="kv2-symmetry-count-control" hidden>
+            <label for="kv2-symmetry-count">Antall radielle gjentakelser (inkludert originalen)</label>
+            <div class="kv2-slider"><input id="kv2-symmetry-count" type="range" min="3" max="12" value="6"/><output id="kv2-symmetry-count-value">6</output></div>
+          </div>
           <button id="kv2-symmetry-reset" type="button">Slå av og nullstill</button>
-          <p class="kv2-tip">Pensel, viskelær og maskestrøk speiles på aktivt lag. Markering begrenser alle kopier; overlapping kan bygge opp farge. Akseendringer gjelder fra neste strøk. Figurer, tekst og gradienter speiles ikke.</p>
+          <p class="kv2-tip">Pensel, viskelær og maskestrøk speiles eller roteres på aktivt lag. Radiell modus gjentar strøket rundt et flyttbart sentrum. Markering begrenser alle kopier; overlapping kan bygge opp farge. Akseendringer gjelder fra neste strøk. Figurer, tekst og gradienter speiles ikke.</p>
         </details>
         <div class="kv2-text-panel" id="kv2-text-panel" role="group" aria-label="Tekst på bilde" hidden>
           <label for="kv2-text-content">Tekst (inntil fem linjer)</label>

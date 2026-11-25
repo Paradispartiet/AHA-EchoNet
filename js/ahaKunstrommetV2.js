@@ -983,10 +983,10 @@
     const targetMask = maskEditing ? masks.get(layer.id) : null;
     const context = (targetMask || surfaces.get(layer.id)).getContext("2d");
     const symmetry=pointerStart?.symmetry;
-    for(const [sx,sy] of symmetryCopies(symmetry,layer,a,b||a)){
+    for(const [sx,sy,angle] of symmetryCopies(symmetry,layer,a,b||a)){
       context.save();
       if(validSelection()){selectionPath(context,layer.x,layer.y);context.clip();}
-      reflectContext(context,symmetry,layer,sx,sy);
+      reflectContext(context,symmetry,layer,sx,sy,angle);
       drawSegment(context,a,b,!!targetMask);
       context.restore();
     }
@@ -1382,37 +1382,57 @@
   function symmetrySettings() {
     const mode=$("kv2-symmetry-mode").value;
     return {mode,x:WIDTH*clamp(Number($("kv2-symmetry-x").value)||0,10,90)/100,
-      y:HEIGHT*clamp(Number($("kv2-symmetry-y").value)||0,10,90)/100};
+      y:HEIGHT*clamp(Number($("kv2-symmetry-y").value)||0,10,90)/100,
+      count:clamp(Math.round(Number($("kv2-symmetry-count").value)||6),3,12)};
   }
   function symmetryCopies(settings,layer,a,b=a) {
-    const copies=[[1,1]];
+    const copies=[[1,1,0]];
     if(!settings||settings.mode==="off") return copies;
-    if(settings.mode==="vertical"||settings.mode==="both") copies.push([-1,1]);
-    if(settings.mode==="horizontal"||settings.mode==="both") copies.push([1,-1]);
-    if(settings.mode==="both") copies.push([-1,-1]);
-    const seen=new Set();
-    return copies.filter(([sx,sy])=>{
-      const reflect=p=>[sx===1?p.x:2*(settings.x-layer.x)-p.x,sy===1?p.y:2*(settings.y-layer.y)-p.y];
-      const key=[...reflect(a),...reflect(b)].map(n=>Math.round(n*1000)).join(",");
+    if(settings.mode==="vertical"||settings.mode==="both") copies.push([-1,1,0]);
+    if(settings.mode==="horizontal"||settings.mode==="both") copies.push([1,-1,0]);
+    if(settings.mode==="both") copies.push([-1,-1,0]);
+    if(settings.mode==="radial"){
+      for(let i=1;i<settings.count;i++)copies.push([1,1,i*2*Math.PI/settings.count]);
+    }
+    const cx=settings.x-layer.x,cy=settings.y-layer.y,seen=new Set();
+    return copies.filter(([sx,sy,angle])=>{
+      const cos=Math.cos(angle),sin=Math.sin(angle);
+      const transform=p=>{
+        const x=(p.x-cx)*sx,y=(p.y-cy)*sy;
+        return [cx+x*cos-y*sin,cy+x*sin+y*cos];
+      };
+      const key=[...transform(a),...transform(b)].map(n=>Math.round(n*1000)).join(",");
       if(seen.has(key))return false;seen.add(key);return true;
     });
   }
-  function reflectContext(ctx,settings,layer,sx,sy) {
-    if(sx===1&&sy===1)return;
-    ctx.translate(sx===-1?2*(settings.x-layer.x):0,sy===-1?2*(settings.y-layer.y):0);
-    ctx.scale(sx,sy);
+  function reflectContext(ctx,settings,layer,sx,sy,angle=0) {
+    if(sx===1&&sy===1&&angle===0)return;
+    const cx=settings.x-layer.x,cy=settings.y-layer.y;
+    ctx.translate(cx,cy);ctx.rotate(angle);ctx.scale(sx,sy);ctx.translate(-cx,-cy);
   }
   function renderSymmetry() {
     const s=pointerStart?.symmetry||symmetrySettings();
     const vertical=s.mode==="vertical"||s.mode==="both",horizontal=s.mode==="horizontal"||s.mode==="both";
+    const radial=s.mode==="radial";
     const svg=$("kv2-symmetry-overlay");
-    svg.toggleAttribute("hidden",!vertical&&!horizontal);
+    svg.toggleAttribute("hidden",!vertical&&!horizontal&&!radial);
     svg.style.width=Math.round(ZOOM_LEVELS[zoomIndex]*100)+"%";
-    $("kv2-symmetry-lines").setAttribute("d",(vertical?"M "+s.x+" 0 L "+s.x+" "+HEIGHT:"")+(horizontal?" M 0 "+s.y+" L "+WIDTH+" "+s.y:""));
+    let path=(vertical?"M "+s.x+" 0 L "+s.x+" "+HEIGHT:"")+(horizontal?" M 0 "+s.y+" L "+WIDTH+" "+s.y:"");
+    if(radial){
+      const length=Math.hypot(WIDTH,HEIGHT);
+      for(let i=0;i<s.count;i++){
+        const a=i*2*Math.PI/s.count;
+        path+=" M "+s.x+" "+s.y+" L "+(s.x+Math.cos(a)*length)+" "+(s.y+Math.sin(a)*length);
+      }
+      path+=" M "+(s.x-7)+" "+s.y+" L "+(s.x+7)+" "+s.y+" M "+s.x+" "+(s.y-7)+" L "+s.x+" "+(s.y+7);
+    }
+    $("kv2-symmetry-lines").setAttribute("d",path.trim());
     $("kv2-symmetry-x-value").textContent=Math.round(s.x/WIDTH*100)+"%";
     $("kv2-symmetry-y-value").textContent=Math.round(s.y/HEIGHT*100)+"%";
-    $("kv2-symmetry-x-control").hidden=!vertical;
-    $("kv2-symmetry-y-control").hidden=!horizontal;
+    $("kv2-symmetry-count-value").textContent=String(s.count);
+    $("kv2-symmetry-x-control").hidden=!vertical&&!radial;
+    $("kv2-symmetry-y-control").hidden=!horizontal&&!radial;
+    $("kv2-symmetry-count-control").hidden=!radial;
   }
 
   function renderCompositionGuides() {
@@ -1875,14 +1895,14 @@
     const rotation=(s.angle+(textureNoise(index,41,0)*2-1)*180*s.rotationJitter)*Math.PI/180+direction;
     // A tilted nib spreads along its projected axis, with a lighter deposit.
     const tiltStretch=1+1.5*tilt;
-    for(const [sx,sy] of symmetryCopies(stroke.symmetry,layer,{x,y})){
+    for(const [sx,sy,angle] of symmetryCopies(stroke.symmetry,layer,{x,y})){
       ctx.save();
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = flow*(1-.35*tilt);
       // Clip each copy in document coordinates, then reflect the entire tip
       // including scatter, nib angle, tilt and texture.
       if (!stroke.sample && validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
-      reflectContext(ctx,stroke.symmetry,layer,sx,sy);
+      reflectContext(ctx,stroke.symmetry,layer,sx,sy,angle);
       ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(tiltStretch,s.aspect);
       if (stroke.stamps) {
         const stamp=stroke.stamps[index % stroke.stamps.length];
@@ -3308,10 +3328,10 @@
   function bind() {
     $("kv2-guide-mode").addEventListener("change",renderCompositionGuides);
     $("kv2-symmetry-mode").addEventListener("change",renderSymmetry);
-    ["x","y"].forEach(name=>$("kv2-symmetry-"+name).addEventListener("input",renderSymmetry));
+    ["x","y","count"].forEach(name=>$("kv2-symmetry-"+name).addEventListener("input",renderSymmetry));
     $("kv2-symmetry-reset").addEventListener("click",()=>{
       $("kv2-symmetry-mode").value="off";
-      $("kv2-symmetry-x").value="50";$("kv2-symmetry-y").value="50";renderSymmetry();
+      $("kv2-symmetry-x").value="50";$("kv2-symmetry-y").value="50";$("kv2-symmetry-count").value="6";renderSymmetry();
     });
     ["horizon","point","left","right","opacity"].forEach(name=>{
       $("kv2-guide-"+name).addEventListener("input",renderCompositionGuides);

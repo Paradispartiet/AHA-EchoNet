@@ -92,6 +92,37 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("radial symmetry rotates strokes around a movable center and remains a single undo",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-symmetry-panel summary").click();
+    await page.locator("#kv2-symmetry-mode").selectOption("radial");
+    const set=async(id,v)=>page.locator("#kv2-symmetry-"+id).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},v);
+    await set("count",6);await set("x",40);await set("y",50);
+    await expect(page.locator("#kv2-symmetry-count-value")).toHaveText("6");
+    await expect(page.locator("#kv2-symmetry-overlay")).toBeVisible();
+    await page.locator("#kv2-size").evaluate(c=>{c.value="20";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    const positions=Array.from({length:6},(_,i)=>[Math.round(480+180*Math.cos(i*Math.PI/3)),Math.round(400+180*Math.sin(i*Math.PI/3))]);
+    await shapeDrag(page,[660,400],[660,400],1611);
+    for(const [x,y] of positions)await expect.poll(async()=>(await pxAt(page,x,y))[0]).toBeLessThan(80);
+    expect((await pxAt(page,480,400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    for(const [x,y] of positions)await expect.poll(async()=>(await pxAt(page,x,y))[0]).toBe(255);
+    await set("count",4);
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-pressure-width").uncheck();
+    await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    for(const [name,value] of [["hardness",100],["flow",100],["aspect",20]])await page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
+    await shapeDrag(page,[660,400],[660,400],1612);
+    expect((await pxAt(page,680,400))[0]).toBeLessThan(80);
+    expect((await pxAt(page,660,420))[0]).toBe(255);
+    expect((await pxAt(page,480,600))[0]).toBeLessThan(80);
+    expect((await pxAt(page,500,580))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,480,600))[0]).toBe(255);
+    await page.locator("#kv2-symmetry-reset").click();
+    await expect(page.locator("#kv2-symmetry-overlay")).toBeHidden();
+  });
+
   test("four-way symmetry mirrors ordinary and advanced brush strokes with one undo",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-symmetry-panel summary").click();
