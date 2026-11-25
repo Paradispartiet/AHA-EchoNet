@@ -21,7 +21,7 @@ const env = JSON.stringify({
 
 let accesses = 0;
 const cloud = new Map();
-function mockClient(uid) {
+function mockClient(uid, faults = {}) {
   const session = { data: { session: uid ? { user: { id: uid } } : null }, error: null };
   return {
     auth: { async getSession() { accesses++; return session; } },
@@ -36,6 +36,8 @@ function mockClient(uid) {
               assert.equal(column, "user_id");
               return {
                 async maybeSingle() {
+                  if (faults.readError) return { data: null, error: { code: "XX000" } };
+                  if (faults.malformedRead) return { error: null };
                   if (id !== uid) return { data: null, error: null };
                   const value = cloud.get(id);
                   return { data: value ? { created_at: value.created_at,
@@ -54,11 +56,19 @@ function mockClient(uid) {
         },
         delete() {
           return {
-            async eq(column, id) {
+            eq(column, id) {
               assert.equal(column, "user_id");
-              if (id !== uid) return { error: { code: "42501" } };
-              cloud.delete(id);
-              return { error: null };
+              return {
+                async select(columns) {
+                  assert.equal(columns, "user_id", "deletion must not return ciphertext");
+                  if (id !== uid || faults.deleteError) return { data: null, error: { code: "42501" } };
+                  if (faults.noDelete) return { data: [], error: null };
+                  if (faults.wrongReceipt) return { data: [{ user_id: UUID_B }], error: null };
+                  if (faults.falseReceipt) return { data: [{ user_id: id }], error: null };
+                  const removed = cloud.delete(id);
+                  return { data: removed ? [{ user_id: id }] : [], error: null };
+                }
+              };
             }
           };
         }
@@ -139,8 +149,21 @@ async function run() {
   assert.equal(cloud.get(UUID_A).text, env);
   await assert.rejects(vault.remove(alice), /confirmation_required/);
   assert.equal(cloud.size, 1);
+  for (const fault of ["noDelete", "wrongReceipt", "falseReceipt", "deleteError"]) {
+    await assert.rejects(vault.remove({ client: mockClient(UUID_A, { [fault]: true }), confirmed: true }),
+      /deletion_unconfirmed/);
+    assert.equal(cloud.get(UUID_A).text, env, "failed deletion must not be reported as success");
+  }
+  for (const fault of ["readError", "malformedRead"]) {
+    await assert.rejects(vault.remove({ client: mockClient(UUID_A, { [fault]: true }), confirmed: true }),
+      /deletion_unconfirmed/);
+    assert.equal(cloud.has(UUID_A), false, "a deleted row is not enough without successful readback");
+    assert.equal((await vault.upload(env, alice)).stored, true);
+  }
   assert.equal((await vault.remove({ ...alice, confirmed: true })).removed, true);
   assert.equal(cloud.size, 0);
+  assert.equal((await vault.remove({ ...alice, confirmed: true })).removed, false,
+    "an already empty account must not produce a deletion receipt");
   assert.equal(await vault.upload(env, bob).then(x => x.stored), true);
   assert.equal((await vault.status(alice)).exists, false);
   assert.equal((await vault.download(bob)).text, env);

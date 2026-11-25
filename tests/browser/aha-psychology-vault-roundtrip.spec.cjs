@@ -146,14 +146,19 @@ async function replaceRemoteSdkWithFake(page, enabled) {
               },
               delete() {
                 return {
-                  async eq(field, userId) {
-                    window.__vaultSyntheticRequests.push("delete");
-                    if (field !== "user_id" ||
-                        userId !== window.__vaultSyntheticAccount) {
-                      return { error: { code: "42501" } };
-                    }
-                    window.__vaultSyntheticRows.delete(userId);
-                    return { error: null };
+                  eq(field, userId) {
+                    return {
+                      async select(columns) {
+                        window.__vaultSyntheticRequests.push("delete");
+                        if (field !== "user_id" || columns !== "user_id" ||
+                            userId !== window.__vaultSyntheticAccount) {
+                          return { data: null, error: { code: "42501" } };
+                        }
+                        if (window.__vaultSyntheticDeleteNoop) return { data: [], error: null };
+                        const removed = window.__vaultSyntheticRows.delete(userId);
+                        return { data: removed ? [{ user_id: userId }] : [], error: null };
+                      }
+                    };
                   }
                 };
               }
@@ -372,12 +377,22 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   altered.data = "AAAA" + altered.data.slice(4);
   await expect(decryptSyntheticBackup(JSON.stringify(altered))).rejects.toThrow();
 
+  // A successful HTTP response with zero affected rows is not a receipt.
+  await page.evaluate(() => { window.__vaultSyntheticDeleteNoop = true; });
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator("#aha-psych-vault-delete").click();
+  await expect(page.locator("#aha-psych-vault-status")).toContainText("Slettingen kunne ikke bekreftes");
+  expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
+  await page.evaluate(() => { window.__vaultSyntheticDeleteNoop = false; });
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText(
-    "kontokopien er slettet"
+    "kontokopien er slettet og fraværet kontrollert"
   );
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
+  page.once("dialog", dialog => dialog.accept());
+  await page.locator("#aha-psych-vault-delete").click();
+  await expect(page.locator("#aha-psych-vault-status")).toContainText("Ingen sletting ble bekreftet");
   expect(await page.locator("#aha-psych-vault-download a").count()).toBe(0);
   expect(await page.evaluate(() => localStorage.getItem("hg_psychology_workbench_v1"))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem("aha_insight_chamber_v1"))).toBeNull();

@@ -141,10 +141,30 @@
   async function remove(options = {}) {
     if (options.confirmed !== true) throw error("confirmation_required");
     const { client, userId } = await authenticated(options);
-    const { error: dbError } = await client.from(TABLE)
-      .delete().eq("user_id", userId);
-    if (dbError) throw error("vault_unavailable");
-    return { removed: true };
+    const bound = { ...options, client, expectedUserId: userId };
+    // An HTTP success alone does not prove a row was deleted: RLS can
+    // legitimately return zero affected rows. Request only the row ID,
+    // never the encrypted payload, and check absence with a fresh read.
+    let receipt;
+    try {
+      receipt = await client.from(TABLE)
+        .delete().eq("user_id", userId).select("user_id");
+    } catch { throw error("deletion_unconfirmed"); }
+    if (receipt?.error || !Array.isArray(receipt?.data) ||
+        receipt.data.length > 1 ||
+        (receipt.data.length === 1 && receipt.data[0]?.user_id !== userId)) {
+      throw error("deletion_unconfirmed");
+    }
+    await authenticated(bound);
+    let check;
+    try {
+      check = await client.from(TABLE)
+        .select("created_at").eq("user_id", userId).maybeSingle();
+    } catch { throw error("deletion_unconfirmed"); }
+    await authenticated(bound);
+    if (check?.error || check?.data !== null) throw error("deletion_unconfirmed");
+    // Empty on readback with zero deleted rows is not a deletion receipt.
+    return { removed: receipt.data.length === 1 };
   }
 
   global.AHAPsychologyEncryptedVault = Object.freeze({

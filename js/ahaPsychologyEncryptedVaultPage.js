@@ -21,6 +21,7 @@
     already_exists: "Det ligger allerede en kryptert fil på kontoen. Last den ned før du eventuelt sletter den.",
     no_backup: "Det finnes ingen kryptert sikkerhetskopi på kontoen.",
     confirmation_required: "Bekreft sletting før du fortsetter.",
+    deletion_unconfirmed: "Slettingen kunne ikke bekreftes. Sjekk kontokopien på nytt. Lokale notater og filer er ikke berørt.",
     vault_unavailable: "Kontohvelvet er ikke tilgjengelig. Ingen opplasting er bekreftet."
   };
 
@@ -187,10 +188,12 @@
     id("aha-psych-vault-delete")?.addEventListener("click", () => run(async (options, current) => {
       if (!global.confirm("Slette den krypterte kopien fra AHA-kontoen? Last den ned først om du vil beholde den.")) return;
       if (!await current()) return;
-      await vault.remove({ ...options, confirmed: true });
-      if (!await current()) return;
       clearDownload();
-      status("Den krypterte kontokopien er slettet. Lokale notater er ikke berørt.");
+      const result = await vault.remove({ ...options, confirmed: true });
+      if (!await current()) return;
+      status(result.removed
+        ? "Den krypterte kontokopien er slettet og fraværet kontrollert i databasen. Lokale notater er ikke berørt."
+        : "Ingen kontokopi er synlig på kontoen. Ingen sletting ble bekreftet. Lokale notater er ikke berørt.");
     }));
   }
 
