@@ -237,3 +237,8 @@ Opprett en gruppe av minst to synlige, ulåste lag via flervalget og et unikt na
 ## Samlet fri transformering (4.4, tredje trinn)
 
 **Transformer flervalg** åpner eksisterende transformasjonsverktøy for minst to synlige, ulåste rasterlag. Felles ramme omfatter de valgte lagenes gripeområder og sentrum kan flyttes. Forhåndsvisning, rotasjon og uavhengig/proporsjonal skalering bruker samme dokumentmatrise på hver originalbitmap og eventuell maske. Bekreft gir ett angresteg for hele flervalget; avbryt beholder originalene. Vanlig Fri transformering gjelder fortsatt bare aktivt lag. Redigerbare tekstlag må rasteriseres eksplisitt. Som ved enkeltlag kan piksler utenfor det enkelte lagets bitmapgrenser klippes. Fysisk iPad og automatisk verifikasjon gjenstår.
+
+
+## Justeringslag (4.6, første trinn)
+
+Et eget lag av typen `adjustment` justerer den synlige komposisjonen under sin plass i lagstabelen, inkludert det hvite papiret. Lysstyrke, kontrast og metning (inkludert svart-hvitt ved 0 %) kan endres uten å skrive til underliggende bitmaps. Opasitet blander effekten med originalkomposisjonen, og lagmaskens alfa avgrenser effekten. Lag over justeringslaget påvirkes ikke. Laget kan skjules, flyttes i lagrekkefølgen, dupliseres, angres og lagres lokalt/JSON. Ingen ny database. Laget har fast dokumentposisjon og kan ikke males direkte på eller transformeres som rasterlag; bruk masken. Eldre prosjektfiler åpnes som før, men eldre appversjoner vil ikke gjengi den nye lagtypen riktig. Fargetemperatur og fysisk iPad-test gjenstår.

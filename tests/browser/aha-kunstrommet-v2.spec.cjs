@@ -1541,6 +1541,35 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("adjustment layers affect lower layers, support masks and survive editable backup", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
+    await stroke(page);
+    const original = await jsonBackup(page);
+    await page.locator("#kv2-add-adjustment").click();
+    await expect(page.locator("#kv2-adjust-scope")).toContainText("alle synlige lag under");
+    await page.locator("#kv2-adjust-brightness").evaluate(c => { c.value = "50"; c.dispatchEvent(new Event("change", { bubbles: true })); });
+    await expect.poll(async () => (await pixel(page))[0]).toBe(64);
+    await page.locator("#kv2-opacity").evaluate(c => { c.value = "50"; c.dispatchEvent(new Event("change", { bubbles: true })); });
+    expect((await pixel(page))[0]).toBe(96);
+    const adjusted = await jsonBackup(page);
+    expect(adjusted.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(adjusted.layers[1].kind).toBe("adjustment");
+    await page.locator("#kv2-mask-add").click();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBe(128);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pixel(page))[0]).toBe(96);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBe(128);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({ name: "adjustment.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(adjusted)) });
+    await expect(page.locator("#kv2-adjust-scope")).toContainText("alle synlige lag under");
+    expect((await pixel(page))[0]).toBe(96);
+  });
+
   test("advanced blend modes compose expected grayscale colors and retain editable originals", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const set = (color) => page.locator("#kv2-color").evaluate((input, value) => {

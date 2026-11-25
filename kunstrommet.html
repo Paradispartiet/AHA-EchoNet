@@ -206,6 +206,7 @@
           </div>
           <div class="kv2-layer-actions">
             <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
+            <button type="button" id="kv2-add-adjustment">+ Justeringslag</button>
             <button type="button" id="kv2-layer-up">Opp</button>
             <button type="button" id="kv2-layer-down">Ned</button>
             <button type="button" id="kv2-remove-layer">Fjern</button>
@@ -251,6 +252,7 @@
 
           <fieldset class="kv2-adjustments" aria-label="Ikke-destruktive bildejusteringer">
             <legend>Bildejustering på aktivt lag</legend>
+            <p id="kv2-adjust-scope" class="kv2-tip">Bildejusteringer påvirker bare aktivt lag.</p>
             <label for="kv2-adjust-brightness">Lysstyrke</label>
             <div class="kv2-slider">
               <input id="kv2-adjust-brightness" type="range" min="50" max="150" step="1" value="100" />

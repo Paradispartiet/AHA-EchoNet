@@ -200,6 +200,30 @@
     drawComposition(view);
   }
 
+  // An adjustment layer modifies only the composite accumulated below it.
+  // Its own opacity and optional mask mix the original and adjusted RGB.
+  function applyAdjustmentLayer(target, layer) {
+    const a = safeAdjustments(layer.adjustments);
+    if (layer.opacity <= 0 || (a.brightness === 100 && a.contrast === 100 && a.saturation === 100)) return;
+    const image = target.getImageData(0, 0, WIDTH, HEIGHT);
+    const p = image.data;
+    const mask = layer.maskEnabled !== false && masks.get(layer.id);
+    const alpha = mask ? mask.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data : null;
+    const brightness = a.brightness / 100, contrast = a.contrast / 100, saturation = a.saturation / 100;
+    for (let i = 0; i < p.length; i += 4) {
+      const amount = layer.opacity * (alpha ? alpha[i + 3] / 255 : 1);
+      if (!amount || !p[i + 3]) continue;
+      const r = (p[i] * brightness - 128) * contrast + 128;
+      const g = (p[i + 1] * brightness - 128) * contrast + 128;
+      const b = (p[i + 2] * brightness - 128) * contrast + 128;
+      const gray = .2126 * r + .7152 * g + .0722 * b;
+      p[i] += (clamp(gray + (r - gray) * saturation, 0, 255) - p[i]) * amount;
+      p[i + 1] += (clamp(gray + (g - gray) * saturation, 0, 255) - p[i + 1]) * amount;
+      p[i + 2] += (clamp(gray + (b - gray) * saturation, 0, 255) - p[i + 2]) * amount;
+    }
+    target.putImageData(image, 0, 0);
+  }
+
   function drawComposition(target, preview = null) {
     target.save();
     target.globalAlpha = 1;
@@ -208,6 +232,7 @@
     target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
+      if (layer.kind === "adjustment") { applyAdjustmentLayer(target, layer); return; }
       const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
       const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
       if (!bitmap) return;
@@ -810,7 +835,7 @@
     project.layers.slice().reverse().forEach((layer) => {
       const row = document.createElement("div");
       row.className = "kv2-layer" + (selected === layer.id ? " kv2-selected" : "");
-      const choose = makeButton(layer.name + (masks.has(layer.id) ? " · maske" : ""), () => {
+      const choose = makeButton(layer.name + (layer.kind === "adjustment" ? " · justering" : "") + (masks.has(layer.id) ? " · maske" : ""), () => {
         leaveMaskEdit();
         selected = layer.id;
         clearTextDraft();
@@ -835,7 +860,7 @@
       include.className = "kv2-move-together";
       include.setAttribute("aria-label", "Flytt sammen med aktivt lag: " + layer.name);
       include.checked = moveTogether.has(layer.id);
-      include.disabled = !layer.visible || layer.locked;
+      include.disabled = layer.kind === "adjustment" || !layer.visible || layer.locked;
       include.addEventListener("change", () => {
         if (busy || pointerId !== null) { include.checked = moveTogether.has(layer.id); return; }
         cancelFreeTransform();
@@ -858,7 +883,7 @@
   }
 
   function updateMoveCount() {
-    const count = project.layers.filter(layer => layer.visible && !layer.locked &&
+    const count = project.layers.filter(layer => layer.kind !== "adjustment" && layer.visible && !layer.locked &&
       (layer.id === selected || moveTogether.has(layer.id))).length;
     $("kv2-move-count").textContent = count + " lag ved Flytt lag";
     $("kv2-clear-move-group").disabled = moveTogether.size === 0;
@@ -890,7 +915,7 @@
     const members = project.layers.filter(layer => name && layer.groupName === name);
     if (!members.length) return;
     if (action === "select") {
-      const movable = members.filter(layer => layer.visible && !layer.locked);
+      const movable = members.filter(layer => layer.kind !== "adjustment" && layer.visible && !layer.locked);
       if (!movable.length) { status("Gruppen har ingen synlige, ulåste lag."); return; }
       leaveMaskEdit();
       clearTextDraft();
@@ -915,7 +940,7 @@
   function saveNamedGroup() {
     if (busy || pointerId !== null) return;
     const name = safeGroupName($("kv2-group-name").value);
-    const members = project.layers.filter(layer => layer.visible && !layer.locked &&
+    const members = project.layers.filter(layer => layer.kind !== "adjustment" && layer.visible && !layer.locked &&
       (layer.id === selected || moveTogether.has(layer.id)));
     if (!name || members.length < 2) { status("Skriv gruppenavn og velg minst to lag."); return; }
     if (project.layers.some(layer => layer.groupName === name && !members.includes(layer))) {
@@ -935,11 +960,14 @@
 
   function updateLayerControls() {
     const layer = currentLayer();
-    $("kv2-transform-free").disabled = !layer || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
+    $("kv2-transform-free").disabled = !layer || layer.kind === "adjustment" || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
-    $("kv2-blend-mode").disabled = !layer || busy;
+    $("kv2-blend-mode").disabled = !layer || layer.kind === "adjustment" || busy;
+    $("kv2-adjust-scope").textContent = layer?.kind === "adjustment"
+      ? "Justeringslag: påvirker alle synlige lag under, inkludert papiret. Opasitet styrer effekten."
+      : "Bildejusteringer påvirker bare aktivt lag.";
     const adjustments = safeAdjustments(layer?.adjustments);
     Object.keys(ADJUSTMENT_LIMITS).forEach((name) => {
       $("kv2-adjust-" + name).value = adjustments[name];
@@ -1167,6 +1195,11 @@
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
+    if (layer?.kind === "adjustment" && (tool === "move" || isShapeTool() ||
+        (!maskEditing && (tool === "brush" || tool === "eraser")))) {
+      status("Justeringslag har ingen tegnbare piksler. Rediger justeringene eller lagmasken.");
+      return;
+    }
     if (layer?.textData && !maskEditing && (tool === "brush" || tool === "eraser" || isShapeTool())) {
       status("Gjør tekstlaget om til piksler før du tegner direkte på det.");
       return;
@@ -1176,7 +1209,7 @@
     event.preventDefault();
     pointerId = event.pointerId;
     const moving = tool === "move" && layer ? project.layers.filter(item =>
-      item.visible && !item.locked && (item.id === layer.id || moveTogether.has(item.id))) : [];
+      item.kind !== "adjustment" && item.visible && !item.locked && (item.id === layer.id || moveTogether.has(item.id))) : [];
     pointerStart = {
       point: point(event), x: layer?.x || 0, y: layer?.y || 0,
       clientX: event.clientX, clientY: event.clientY,
@@ -1375,6 +1408,10 @@
   }
 
   function requiresRaster(layer) {
+    if (layer?.kind === "adjustment") {
+      status("Justeringslag har ingen rasterpiksler å redigere.");
+      return true;
+    }
     if (!layer?.textData) return false;
     status("Gjør tekstlaget om til piksler før denne redigeringen.");
     return true;
@@ -1445,7 +1482,7 @@
       status("Du kan bruke inntil " + MAX_LAYERS + " lag i denne versjonen.");
       return;
     }
-    if (removeFromSource && requiresRaster(layer)) return;
+    if (layer.kind === "adjustment" || (removeFromSource && requiresRaster(layer))) return;
     // Marquee coordinates are in document space; layer pixels are local.
     // Read raw RGBA before clearing the source, preserving semi-transparent
     // pixels and exact positioning even when the source layer has moved.
@@ -1584,7 +1621,7 @@
         pointerId !== null) return null;
     return freeTransform.ids.every(id => {
       const item = project.layers.find(candidate => candidate.id === id);
-      return item && item.visible && !item.locked && !item.textData;
+      return item && item.kind !== "adjustment" && item.visible && !item.locked && !item.textData;
     }) ? layer : null;
   }
 
@@ -1745,6 +1782,9 @@
     const members = group === true ? project.layers.filter(item =>
       item.visible && !item.locked && (item.id === layer.id || moveTogether.has(item.id))) : [layer];
     if (group === true && members.length < 2) { status("Velg minst to synlige, ulåste lag."); return; }
+    if (members.some(item => item.kind === "adjustment")) {
+      status("Justeringslag kan ikke transformeres som rasterlag."); return;
+    }
     if (members.some(item => item.textData)) {
       status("Gjør alle valgte tekstlag om til piksler før gruppetransformering."); return;
     }
@@ -1989,19 +2029,19 @@
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(input.bitmap)) {
       throw new Error("Prosjektet har ugyldige lag.");
     }
-    const textData = validateTextData(input.textData);
+    const textData = input.kind === "adjustment" ? null : validateTextData(input.textData);
     return {
       ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
       ...(safeGroupName(input.groupName) ? { groupName: safeGroupName(input.groupName) } : {}),
-      kind: input.kind === "image" ? "image" : "paint",
+      kind: input.kind === "adjustment" ? "adjustment" : input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
       // Older projects default to normal; unknown or unsafe modes are ignored.
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       adjustments: safeAdjustments(input.adjustments),
-      x: clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
-      y: clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
+      x: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
+      y: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
       bitmap: input.bitmap,
       ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {}),
       ...(Object.prototype.hasOwnProperty.call(input, "maskBitmap") ? {
@@ -2117,7 +2157,8 @@
         layers: saved.layers.map((layer) => ({
           id: uid(), name: String(layer.name || "Lag").slice(0, 70),
           ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
-          kind: layer.kind === "image" ? "image" : "paint",
+          kind: layer.kind === "adjustment" ? "adjustment" : layer.kind === "image" ? "image" : "paint",
+          adjustments: safeAdjustments(layer.adjustments),
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
           blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
@@ -2324,6 +2365,16 @@
       renderLayerList();
     });
     $("kv2-add-layer").addEventListener("click", () => addLayer("Lag " + (project.layers.length + 1), "paint"));
+    $("kv2-add-adjustment").addEventListener("click", () => {
+      if (busy || pointerId !== null) return;
+      leaveMaskEdit();
+      if (addLayer("Justeringslag", "adjustment")) {
+        tool = "hand";
+        moveTogether.clear();
+        refresh();
+        status("Justeringslag opprettet – bruk bildejusteringene i lagpanelet.");
+      }
+    });
     $("kv2-remove-layer").addEventListener("click", removeLayer);
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
@@ -2421,6 +2472,7 @@
     $("kv2-blend-mode").addEventListener("change", () => {
       const layer = currentLayer();
       if (!layer || busy) return;
+      if (layer.kind === "adjustment") return;
       const next = $("kv2-blend-mode").value;
       if (!BLEND_MODES.has(next) || (layer.blendMode || "normal") === next) return;
       if (!checkpoint()) return;
