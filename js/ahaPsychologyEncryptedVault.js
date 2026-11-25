@@ -121,6 +121,9 @@
     const { error: dbError } = await client.from(TABLE)
       .insert({ user_id: userId, encrypted_file: file.text });
     if (dbError?.code === "23505") throw error("already_exists");
+    if (dbError?.code === "P0001" && dbError.message === "vault_quota_or_uploads_closed") {
+      throw error("quota_or_uploads_closed");
+    }
     if (pilotEnabled() && dbError?.code === "42501") throw error("pilot_required");
     if (dbError) throw error("vault_unavailable");
     return { stored: true, bytes: file.bytes };
