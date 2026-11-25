@@ -1,5 +1,24 @@
 # Psykologirommet – separat kryptert kontohvelv (staging v1)
 
+## Gjeldende status 25. november 2026 (erstatter eldre domeneadvarsler nedenfor)
+
+- #1109: eksakt AHA-origin `https://aha-echo-net.vercel.app` godkjent for PKCE; brukeren har bekreftet retur etter innlogging.
+- #1111/#1112: merget; Vercel success på `c98c62b`, Chromium/iPad WebKit, Node og PostgreSQL 16-rehearsal grønne før merge.
+- Brukeren rapporterer vellykket kjøring av oppdatert SQL fra `c98c62b` i AHA Staging og true på RLS-katalogkontrollen. Dette er ikke en ny uavhengig kontroll av faktiske JWT-er, policies eller grants. Brukeren oppgir at tidligere test fungerer; ikke gjenta innlogging uten konkret grunn.
+- History-Go #7519: merget, gjenoppretting sjekker tomt arkiv også etter dekryptering; publisering ikke uavhengig verifisert.
+- **Produksjonshvelv fortsatt AV.** Ingen produksjons-SQL er bekreftet kjørt. Den gamle Vercel-hosten uten bindestrek er ikke godkjent.
+
+## Operatørens produksjonsport
+
+Før offentlig aktivering må driftsansvarlig bekrefte dokumentert autentisert staging-isolasjon (ekte JWT, ikke bare katalogflagg), gjenoppretting med syntetisk fil på fysisk iPad, faktisk plan/region/lagringsbudsjett, behandlingsgrunnlag og personverninformasjon, sletterutine og retensjon for databasekopier. Ikke bruk ekte refleksjoner som testdata. Ikke lov at sletting fra aktiv tabell fjerner historiske backupkopier umiddelbart. Se https://supabase.com/docs/guides/platform/backups for plannivåer og backupordning; faktiske innstillinger i AHA er ikke verifisert.
+
+Kostnadsramme: én fil per konto, maksimalt 12 MiB, ingen polling eller automatisk sync. Kontroller tilgjengelig databaseplass inkludert TOAST, indekser, WAL og øvrige AHA-data; én fil per konto er ikke en samlet kvote. Ikke endre abonnement automatisk.
+
+Etter separat godkjenning: gjennomgå produksjonsprosjektets tabellstatus, kjør den versjonerte SQL-filen kun med godkjent produksjonsendring, verifiser RLS, eksakte tre policies og effektive minimumsrettigheter før aktivering. Ingen stagingdata kopieres. En frontend-bryter er ikke en API-sperre; ved behov for reell nedstenging må backend-tilgang sperres også. Planlegg hvordan eksisterende brukere skal kunne hente/slette egne kopier ved en eventuell stans; ikke dropp tabellen som rollback.
+
+Til slutt en separat PR for aktivering og kontrollert produksjonsprøve med syntetisk fil. Ikke aktiver automatisk som følge av dette dokumentet. Se #1099 for evidens og beslutningslogg.
+
+
 **Staging-kontroll 21. november 2026:** Supabase-prosjektet `AHA Staging`
 (`sstuzwppsheivczyqrim`) er aktivt igjen. Den separate tabellen er
 installert der med streng kontroll av de åtte tillatte krypteringsfeltene.
