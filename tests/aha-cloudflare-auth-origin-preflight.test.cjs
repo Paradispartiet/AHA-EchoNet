@@ -35,7 +35,9 @@ for (const origin of [
   "https://example.invalid"
 ]) {
   const c = config(origin);
-  assert.equal(c.AHA_AUTH_CALLBACK_URL, githubCallback, "Unexpected preview callback for " + origin);
+  assert.equal(c.AHA_AUTH_ORIGIN_BLOCKED, true, "Unknown origin must be blocked: " + origin);
+  assert.equal(c.AHA_AUTH_CALLBACK_URL, "", "No callback for unverified origin: " + origin);
+  assert.equal(c.AHA_AUTH_REDIRECT_URL, "", "No cross-origin PKCE redirect: " + origin);
 }
 const alreadyConfigured = config(previewOrigin, {
   AHA_APP_URL: "https://example.test/",

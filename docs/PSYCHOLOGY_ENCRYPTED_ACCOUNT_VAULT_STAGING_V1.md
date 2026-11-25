@@ -131,3 +131,34 @@ Dette er ikke det samme som en ferdig isolert AHA-origin.
    beslutning om produksjonsmigrasjon og aktivering.
 
 Se issue #1099 for utestående infrastruktur og sikkerhetskrav.
+
+## Oppfølging: Vercels GitHub-tilgang mangler (24. november 2026)
+
+Ved forsøk på å opprette et **eget**, tilgangsbeskyttet testprosjekt
+for `Paradispartiet/AHA-EchoNet` på Vercel-teamet
+`aha-echonets-projects`, returnerte Vercel `400 repo_not_found`.
+GitHub-områdene kunne heller ikke leses via Vercels git-integrasjon
+(`401 github_response_error`). Dette beviser ikke at repositoriet mangler;
+Vercels GitHub App må få eksplisitt tilgang til riktig GitHub-eier og
+repositorium. **Ingen nytt Vercel-prosjekt ble opprettet.** Det gamle,
+foreldede Vercel-prosjektet ble ikke endret.
+
+Som ekstra forsvar har AHA nå en generell PKCE-sperre mot **alle** andre
+nettleser-origin enn de to tidligere brukte, eksakte adressene:
+`https://paradispartiet.github.io` og
+`https://aha-preview.aha-echonet-preview.pages.dev`. De beholder sin
+respektive `auth-callback.html`. Denne koden er en fail-closed
+klientkontroll, ikke bevis på en Supabase Redirect URL-allowlist.
+Alle Vercel-adresser, inklusive `aha-echonet.vercel.app`, den feilaktige
+`aha-echo-net.vercel.app` og et mulig nytt prosjektdomene, nekter OTP og
+OAuth uten kontakt med innloggingstjenesten. Tidligere front-end-flagg
+`AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED` kan ikke overstyre
+sperren. En faktisk godkjent ny origin krever **ny gjennomgått kodeendring**,
+verifisert Supabase Auth-konfigurasjon og ekte to-konto-testing.
+
+For å gi Vercel GitHub-tilgang uten å åpne hele kontoen: logg inn i
+GitHub som eier `Paradispartiet/AHA-EchoNet`, åpne *Settings →
+Applications → Installed GitHub Apps → Vercel → Configure* og gi tilgang
+til akkurat dette repositoriet. Om Vercel-appen er installert via feil
+GitHub-bruker, må riktig konto knyttes under Vercel-teamets Git-innstillinger.
+Ikke flytt eller overskriv gammel produksjon uten separat beslutning.

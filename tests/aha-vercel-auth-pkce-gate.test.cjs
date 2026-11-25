@@ -1,4 +1,4 @@
-// Read-only PKCE origin preflight. No network and no real Supabase sessions.
+// Fail-closed PKCE origin preflight. Synthetic clients only; no email/network.
 "use strict";
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -7,31 +7,26 @@ const vm = require("node:vm");
 const configSrc = fs.readFileSync("js/ahaConfig.js", "utf8");
 const authSrc = fs.readFileSync("js/ahaAuth.js", "utf8");
 const GH = "https://paradispartiet.github.io";
-const VERCEL = "https://aha-echo-net.vercel.app";
 const PREVIEW = "https://aha-preview.aha-echonet-preview.pages.dev";
 const GH_CALLBACK = GH + "/AHA-EchoNet/auth-callback.html";
-const VERCEL_CALLBACK = VERCEL + "/auth-callback.html";
+const PREVIEW_CALLBACK = PREVIEW + "/auth-callback.html";
 
-function isolatedAuth(origin, { allowVercel = false, redirectOverride = "" } = {}) {
+function fixture(origin, { oldVercelOptIn = false, redirectOverride = "" } = {}) {
   const calls = { client: 0, otp: 0, oauth: 0, requests: [] };
-  const client = {
-    auth: {
-      async signInWithOtp(request) {
-        calls.otp++;
-        calls.requests.push(request);
-        return { data: { ok: true }, error: null };
-      },
-      async signInWithOAuth(request) {
-        calls.oauth++;
-        calls.requests.push(request);
-        return { data: { ok: true }, error: null };
-      }
+  const client = { auth: {
+    async signInWithOtp(request) {
+      calls.otp++; calls.requests.push(request);
+      return { data: { ok: true }, error: null };
+    },
+    async signInWithOAuth(request) {
+      calls.oauth++; calls.requests.push(request);
+      return { data: { ok: true }, error: null };
     }
-  };
+  }};
   const window = {
     location: { origin, pathname: "/", search: "", hash: "" },
     AHA_CONFIG: {},
-    AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED: allowVercel,
+    AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED: oldVercelOptIn,
     AHADb: { getClient() { calls.client++; return client; } }
   };
   if (redirectOverride) window.AHA_AUTH_REDIRECT_URL = redirectOverride;
@@ -40,74 +35,66 @@ function isolatedAuth(origin, { allowVercel = false, redirectOverride = "" } = {
   vm.runInNewContext(authSrc, {
     window, document, console,
     URLSearchParams, setTimeout, clearTimeout,
-    localStorage: {getItem(){return null;},setItem(){},removeItem(){}},
+    localStorage: { getItem(){return null;}, setItem(){}, removeItem(){} },
     CustomEvent: class {}
   }, { filename: "ahaAuth.js" });
   return { window, calls };
 }
 
 async function run() {
-  const gh = isolatedAuth(GH);
-  assert.equal(gh.window.AHAAuth.getRedirectUrl(), GH_CALLBACK);
-  assert.equal(gh.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, false);
-  assert.equal((await gh.window.AHAAuth.signInWithEmail("fixture@example.test")).ok, true);
-  assert.equal(gh.calls.requests[0].options.emailRedirectTo, GH_CALLBACK);
-
-  const preview = isolatedAuth(PREVIEW);
-  assert.equal(preview.window.AHAAuth.getRedirectUrl(), PREVIEW + "/auth-callback.html");
-
-  const blocked = isolatedAuth(VERCEL);
-  assert.equal(blocked.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, true);
-  assert.equal(blocked.window.AHA_APP_URL, VERCEL + "/", "Vercel navigation must not jump to the shared origin");
-  assert.equal(blocked.window.AHAAuth.getRedirectUrl(), "");
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(await blocked.window.AHAAuth.signInWithEmail("fixture@example.test"))),
-    { ok: false, reason: "auth_callback_not_verified" }
-  );
-  assert.equal((await blocked.window.AHAAuth.signInWithProvider("google")).reason,
-    "auth_callback_not_verified");
-  assert.equal(blocked.calls.client, 0, "Vercel must not request a client or start Auth before allowlisting");
-  assert.equal(blocked.calls.otp, 0);
-  assert.equal(blocked.calls.oauth, 0);
-
-  const verified = isolatedAuth(VERCEL, {allowVercel:true});
-  assert.equal(verified.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, false);
-  assert.equal(verified.window.AHA_APP_URL, VERCEL + "/");
-  assert.equal(verified.window.AHA_AUTH_CALLBACK_URL, VERCEL_CALLBACK);
-  assert.equal(verified.window.AHAAuth.getRedirectUrl(), VERCEL_CALLBACK);
-  assert.equal((await verified.window.AHAAuth.signInWithEmail("fixture@example.test")).ok, true);
-  assert.equal((await verified.window.AHAAuth.signInWithProvider("google")).ok, true);
-  assert.equal(verified.calls.requests[0].options.emailRedirectTo, VERCEL_CALLBACK);
-  assert.equal(verified.calls.requests[1].options.redirectTo, VERCEL_CALLBACK);
-  assert.equal(verified.calls.otp, 1);
-  assert.equal(verified.calls.oauth, 1);
-
-  const wrongOverride = isolatedAuth(VERCEL, {
-    allowVercel:true, redirectOverride:GH_CALLBACK
-  });
-  assert.equal(wrongOverride.window.AHAAuth.getRedirectUrl(), "");
-  assert.equal((await wrongOverride.window.AHAAuth.signInWithProvider("google")).reason,
-    "auth_callback_not_verified");
-  assert.equal(wrongOverride.calls.client, 0);
-
-  const notApprovedEvenWithRedirect = isolatedAuth(VERCEL, {
-    redirectOverride:VERCEL_CALLBACK
-  });
-  assert.equal(notApprovedEvenWithRedirect.window.AHAAuth.getRedirectUrl(), "");
-  assert.equal(notApprovedEvenWithRedirect.calls.client, 0);
-
-  for (const origin of [
-    "http://aha-echo-net.vercel.app",
-    "https://aha-echo-net.vercel.app.evil.example",
-    "https://different-preview.vercel.app"
-  ]) {
-    const untrusted = isolatedAuth(origin, { allowVercel: true });
-    assert.notEqual(untrusted.window.AHA_AUTH_CALLBACK_URL, VERCEL_CALLBACK,
-      "Only exact approved Vercel origin may use the dedicated callback");
+  for (const [origin, callback] of [[GH, GH_CALLBACK], [PREVIEW, PREVIEW_CALLBACK]]) {
+    const good = fixture(origin);
+    assert.equal(good.window.AHA_AUTH_ORIGIN_BLOCKED, false);
+    assert.equal(good.window.AHAAuth.getRedirectUrl(), callback);
+    assert.equal((await good.window.AHAAuth.signInWithEmail("fixture@example.test")).ok, true);
+    assert.equal((await good.window.AHAAuth.signInWithProvider("google")).ok, true);
+    assert.equal(good.calls.otp, 1);
+    assert.equal(good.calls.oauth, 1);
+    assert.equal(good.calls.requests[0].options.emailRedirectTo, callback);
+    assert.equal(good.calls.requests[1].options.redirectTo, callback);
   }
-  assert.match(configSrc, /AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true/);
+
+  // Even on an approved origin, an inconsistent or remote redirect must fail.
+  const wrongGH = fixture(GH, { redirectOverride: PREVIEW_CALLBACK });
+  assert.equal(wrongGH.window.AHAAuth.getRedirectUrl(), "");
+  assert.equal((await wrongGH.window.AHAAuth.signInWithEmail("fixture@example.test")).reason,
+    "auth_callback_not_verified");
+  assert.equal(wrongGH.calls.client, 0);
+
+  // These are all unverified. The previously configured Vercel opt-in
+  // flag is intentionally ignored, including on the old incorrect domain.
+  const forbidden = [
+    "https://aha-echo-net.vercel.app",
+    "https://aha-echonet.vercel.app",
+    "https://aha-echonet-isolert.vercel.app",
+    "https://different-preview.vercel.app",
+    "http://aha-echonet.vercel.app",
+    "https://aha-echonet.vercel.app.evil.example",
+    "https://new-aha.example",
+    "https://paradispartiet.github.io.evil.example",
+    "http://localhost:3000"
+  ];
+  for (const origin of forbidden) {
+    for (const oldVercelOptIn of [false, true]) {
+      const blocked = fixture(origin, { oldVercelOptIn, redirectOverride: GH_CALLBACK });
+      assert.equal(blocked.window.AHA_AUTH_ORIGIN_BLOCKED, true, origin);
+      assert.equal(blocked.window.AHAAuth.getRedirectUrl(), "", origin);
+      assert.equal(blocked.window.AHA_AUTH_CALLBACK_URL, "", origin);
+      assert.equal(blocked.window.AHA_AUTH_REDIRECT_URL, "", origin);
+      assert.equal(blocked.window.AHA_APP_URL, origin + "/", "navigation must remain same-origin");
+      const email = await blocked.window.AHAAuth.signInWithEmail("fixture@example.test");
+      const google = await blocked.window.AHAAuth.signInWithProvider("google");
+      assert.equal(email.reason, "auth_callback_not_verified");
+      assert.equal(google.reason, "auth_callback_not_verified");
+      assert.equal(blocked.calls.client, 0, "unverified origin cannot fetch auth client");
+      assert.equal(blocked.calls.otp, 0, "no email may be sent");
+      assert.equal(blocked.calls.oauth, 0, "no external login redirects");
+    }
+  }
   assert.match(authSrc, /auth_callback_not_verified/);
+  assert.match(configSrc, /AHA_AUTH_ORIGIN_BLOCKED/);
+  assert.doesNotMatch(configSrc, /const vercelOrigin\s*=|AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true/);
   assert.doesNotMatch(configSrc, /service_role|secret_key/i);
-  console.log("AHA Vercel PKCE origin gate: PASS (offline; real Supabase allowlist and login remain unverified)");
+  console.log("AHA PKCE exact-origin gate: only existing GitHub Pages + preview allowed; all Vercel/unknown origins blocked PASS");
 }
-run().catch(error => {console.error(error); process.exitCode = 1;});
+run().catch(error => { console.error(error); process.exitCode = 1; });
