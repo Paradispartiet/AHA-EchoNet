@@ -246,6 +246,8 @@
     $("kv2-color-palette-save").disabled=!data||!colorDraft.length;
     $("kv2-color-palette-load").disabled=!selected;
     $("kv2-color-palette-delete").disabled=!selected;
+    $("kv2-color-export").disabled=!data||!data.palettes.length;
+    $("kv2-color-import").disabled=!data;
     colorMessage(data?data.palettes.length+" av "+PALETTE_LIMIT+" egne paletter · "+colorDraft.length+" av "+COLOR_LIMIT+" farger i utkast.":"Lokal lagring kunne ikke leses. Eksisterende data er ikke overskrevet.");
   }
   function addPaletteColors(colors) {
@@ -284,6 +286,45 @@
         $("kv2-color-palette-name").value=item.name;renderColorLibrary(item.name);
       }
     }catch(_){colorMessage("Kunne ikke lese paletten.");}
+  }
+
+  function exportColorPalettes() {
+    if(busy||pointerId!==null)return;
+    try{
+      const palettes=readColors().palettes.map(p=>({name:p.name,colors:p.colors.slice()}));
+      if(!palettes.length)return;
+      download("mine-fargepaletter.kunstrommet.json",
+        JSON.stringify({format:"aha-kunstrommet-palettes",version:1,palettes},null,2),"application/json");
+      colorMessage("Eksporterte "+palettes.length+" paletter. Nylige farger og kontodata følger ikke med.");
+    }catch(_){colorMessage("Kunne ikke eksportere palettene.");}
+  }
+  async function importColorPalettes(file) {
+    const input=$("kv2-color-import");
+    if(!file||busy||pointerId!==null){input.value="";return;}
+    const key=colorLibraryKey();
+    try{
+      if(file.size>30000)throw new Error("Palettfilen er for stor.");
+      const data=JSON.parse(await file.text());
+      if(data?.format!=="aha-kunstrommet-palettes"||data.version!==1||
+        !Array.isArray(data.palettes)||data.palettes.length>PALETTE_LIMIT)throw new Error("Ugyldig palettfil.");
+      const names=new Set();
+      const incoming=data.palettes.map(p=>{
+        const name=typeof p?.name==="string"?p.name.trim():"";
+        if(!name||name.length>50||names.has(name)||!Array.isArray(p.colors)||!p.colors.length||
+          p.colors.length>COLOR_LIMIT||!p.colors.every(validColor))throw new Error("Ugyldig palett.");
+        const colors=p.colors.map(c=>c.toLowerCase());
+        if(new Set(colors).size!==colors.length)throw new Error("Paletten inneholder duplikatfarger.");
+        names.add(name);return {name,colors};
+      });
+      if(key!==colorLibraryKey()||busy||pointerId!==null)throw new Error("Profil eller redigering er endret. Prøv igjen.");
+      const current=readColors(),used=new Set(current.palettes.map(p=>p.name));
+      const added=incoming.filter(p=>!used.has(p.name));
+      if(current.palettes.length+added.length>PALETTE_LIMIT)throw new Error("Ikke nok plass. Ingen paletter ble importert.");
+      if(added.length&& !storeColors({...current,palettes:[...current.palettes,...added]}))return;
+      renderColorLibrary(added[0]?.name);
+      colorMessage("Importerte "+added.length+" paletter. Hoppet over "+(incoming.length-added.length)+" eksisterende navn.");
+    }catch(error){colorMessage("Import avbrutt: "+error.message);}
+    finally{input.value="";}
   }
 
   const viewport = $("kv2-paper");
@@ -3258,6 +3299,8 @@
     $("kv2-color-palette-save").addEventListener("click",saveColorPalette);
     $("kv2-color-palette-load").addEventListener("click",()=>loadColorPalette());
     $("kv2-color-palette-delete").addEventListener("click",()=>loadColorPalette(true));
+    $("kv2-color-export").addEventListener("click",exportColorPalettes);
+    $("kv2-color-import").addEventListener("change",event=>importColorPalettes(event.target.files[0]));
     $("kv2-color").addEventListener("change",()=>{rememberColor($("kv2-color").value);renderColorLibrary();});
     $("kv2-color").addEventListener("input", () => {
       if (tool !== "text") tool = "brush";

@@ -1473,6 +1473,33 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("palette files export only named colors and merge safely",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-color").fill("#112233");
+    await page.locator("#kv2-color-add").click();
+    await page.locator("#kv2-color-palette-name").fill("Original");
+    await page.locator("#kv2-color-palette-save").click();
+    const pending=page.waitForEvent("download");
+    await page.locator("#kv2-color-export").click();
+    const file=JSON.parse(await fs.readFile(await (await pending).path(),"utf8"));
+    expect(file).toEqual({format:"aha-kunstrommet-palettes",version:1,palettes:[{name:"Original",colors:["#112233"]}]});
+    const before=await jsonBackup(page);
+    const importFile=data=>page.locator("#kv2-color-import").setInputFiles({name:"paletter.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await importFile({...file,palettes:[{name:"Original",colors:["#ffffff"]},{name:"Hav",colors:["#0077AA","#224466"]}]});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Importerte 1 paletter");
+    await page.locator("#kv2-color-library-select").selectOption("Original");
+    await expect(page.locator("#kv2-color-saved")).toContainText("#112233");
+    await page.locator("#kv2-color-library-select").selectOption("Hav");
+    await expect(page.locator("#kv2-color-saved")).toContainText("#0077aa");
+    await importFile({...file,palettes:[{name:"Ny",colors:["#abcdef"]},{name:"Ugyldig",colors:["red"]}]});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Import avbrutt");
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(3);
+    await importFile({...file,palettes:Array.from({length:19},(_,i)=>({name:"Palett "+i,colors:["#123456"]}))});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Ikke nok plass");
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(3);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
   test("color library remembers chosen colors and named harmonies without changing art",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-a"));
