@@ -1541,6 +1541,65 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("adjustment layer tone controls retain color balance in backup and reset together", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
+    await stroke(page);
+    const original = await jsonBackup(page);
+    await expect(page.locator("#kv2-tone-controls")).toBeHidden();
+    await page.locator("#kv2-add-adjustment").click();
+    const set = (name, value) => page.locator("#kv2-tone-" + name).evaluate((c, value) => {
+      c.value = String(value); c.dispatchEvent(new Event("change", { bubbles: true }));
+    }, value);
+    await set("temperature", 50);
+    expect((await pixel(page)).slice(0, 3)).toEqual([144, 128, 112]);
+    await set("tint", 50);
+    const tinted = (await pixel(page)).slice(0, 3);
+    expect(tinted).toEqual([152, 112, 120]);
+    await set("exposure", -100);
+    expect((await pixel(page)).slice(0, 3)).toEqual([76, 56, 60]);
+    const backup = await jsonBackup(page);
+    expect(backup.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(backup.layers[1].toneAdjustments).toEqual({ exposure: -100, temperature: 50, tint: 50 });
+    await page.locator("#kv2-adjust-reset").click();
+    expect((await pixel(page)).slice(0, 3)).toEqual([128, 128, 128]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pixel(page)).slice(0, 3)).toEqual([76, 56, 60]);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({ name: "tone.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(backup)) });
+    await expect(page.locator("#kv2-tone-exposure")).toHaveValue("-100");
+    expect((await pixel(page)).slice(0, 3)).toEqual([76, 56, 60]);
+  });
+
+  test("adjustment layers affect lower layers, support masks and survive editable backup", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
+    await stroke(page);
+    const original = await jsonBackup(page);
+    await page.locator("#kv2-add-adjustment").click();
+    await expect(page.locator("#kv2-adjust-scope")).toContainText("alle synlige lag under");
+    await page.locator("#kv2-adjust-brightness").evaluate(c => { c.value = "50"; c.dispatchEvent(new Event("change", { bubbles: true })); });
+    await expect.poll(async () => (await pixel(page))[0]).toBe(64);
+    await page.locator("#kv2-opacity").evaluate(c => { c.value = "50"; c.dispatchEvent(new Event("change", { bubbles: true })); });
+    expect((await pixel(page))[0]).toBe(96);
+    const adjusted = await jsonBackup(page);
+    expect(adjusted.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(adjusted.layers[1].kind).toBe("adjustment");
+    await page.locator("#kv2-mask-add").click();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBe(128);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pixel(page))[0]).toBe(96);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-brush").click();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBe(128);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({ name: "adjustment.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(adjusted)) });
+    await expect(page.locator("#kv2-adjust-scope")).toContainText("alle synlige lag under");
+    expect((await pixel(page))[0]).toBe(96);
+  });
+
   test("advanced blend modes compose expected grayscale colors and retain editable originals", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const set = (color) => page.locator("#kv2-color").evaluate((input, value) => {
