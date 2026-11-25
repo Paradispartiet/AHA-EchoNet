@@ -97,6 +97,7 @@
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let shapeDraft = null; // Transient SVG-only preview until pointerup.
+  let textEditId = null;
   let textAnchor = null; // Local document coordinates; never persisted before commit.
   const TEXT_FONTS = Object.freeze({
     sans: "Arial, sans-serif", serif: "Georgia, serif",
@@ -160,6 +161,7 @@
     selection = null;
     shapeDraft = null;
     textAnchor = null;
+    textEditId = null;
     const base = createLayer("Lag 1 · Tegning", "paint");
     project = {
       id: uid(), title: "", note: "", owner: owner(), layers: [base],
@@ -327,6 +329,7 @@
 
   function textLayout() {
     const raw = $("kv2-text-content").value.replace(/\r\n?/g, "\n");
+    if (raw.length > 280) return { error: "Bruk høyst 280 tegn." };
     if (!raw.trim()) return { error: "Skriv tekst før du legger den til." };
     const lines = raw.split("\n");
     if (lines.length > 5) return { error: "Bruk høyst fem tekstlinjer." };
@@ -347,9 +350,24 @@
 
   function renderTextPreview() {
     const overlay = $("kv2-text-overlay"), label = $("kv2-text-preview");
+    const editing = textEditId && currentLayer()?.id === textEditId && currentLayer()?.textData;
     const layout = tool === "text" && textAnchor ? textLayout() : null;
-    const visible = !!layout && !layout.error;
-    $("kv2-text-warning").textContent = tool === "text" && layout?.error ? layout.error : "";
+    const valid = !!layout && !layout.error;
+    const visible = valid && !editing;
+    // WebKit may fire a textarea change event while the confirmation button
+    // is being pressed. Do not replace its text node or relayout the panel
+    // during that pointer sequence when the visible state has not changed.
+    const commit = $("kv2-text-commit");
+    const hint = $("kv2-text-hint");
+    const warning = $("kv2-text-warning");
+    const caption = editing ? "Oppdater tekstlag" : "Legg tekst på lag";
+    const tip = editing
+      ? "Endre teksten her. Lerretet oppdateres først når du bekrefter."
+      : "Skriv tekst og trykk på lerretet for å velge plassering. Teksten kan redigeres etterpå.";
+    const message = tool === "text" && layout?.error ? layout.error : "";
+    if (commit.textContent !== caption) commit.textContent = caption;
+    if (hint.textContent !== tip) hint.textContent = tip;
+    if (warning.textContent !== message) warning.textContent = message;
     overlay.toggleAttribute("hidden", !visible);
     label.replaceChildren();
     if (visible) {
@@ -365,13 +383,50 @@
         label.appendChild(span);
       });
     }
-    $("kv2-text-commit").disabled = busy || !project || maskEditing || !textAnchor ||
-      project.layers.length >= MAX_LAYERS || !visible;
+    const disabled = busy || !project || maskEditing || !textAnchor ||
+      (editing ? currentLayer().locked || !currentLayer().visible : project.layers.length >= MAX_LAYERS) || !valid;
+    if (commit.disabled !== disabled) commit.disabled = disabled;
+  }
+
+  function clearTextDraft() {
+    textAnchor = null;
+    textEditId = null;
+  }
+
+  function editTextLayer() {
+    const layer = currentLayer();
+    if (busy || maskEditing || !layer?.textData || layer.locked || !layer.visible) return;
+    const data = layer.textData;
+    textEditId = layer.id;
+    textAnchor = { x: data.left, y: data.top };
+    $("kv2-text-content").value = data.content;
+    $("kv2-text-font").value = data.family;
+    $("kv2-text-size").value = data.size;
+    $("kv2-text-bold").checked = data.bold;
+    $("kv2-color").value = data.color;
+    tool = "text";
+    refresh();
+    status("Rediger tekstlaget og bekreft når du er ferdig.");
+  }
+
+  function rasterizeTextLayer() {
+    const layer = currentLayer();
+    if (busy || maskEditing || !layer?.textData || layer.locked || !layer.visible) return;
+    if (!checkpoint()) return;
+    delete layer.textData;
+    clearTextDraft();
+    tool = "move";
+    changed();
+    refresh();
+    status("Teksten er gjort om til piksler. Angre for å få tilbake redigerbar tekst.");
   }
 
   function commitText() {
-    if (busy || !project || maskEditing || project.layers.length >= MAX_LAYERS) {
-      status("Avslutt maskeredigering eller frigjør et lag før du legger til tekst.");
+    const existing = textEditId ? currentLayer() : null;
+    if (busy || !project || maskEditing || (textEditId
+      ? !existing?.textData || existing.id !== textEditId || existing.locked || !existing.visible
+      : project.layers.length >= MAX_LAYERS)) {
+      status("Avslutt maskeredigering eller velg et tilgjengelig lag.");
       return;
     }
     if (!textAnchor) { status("Trykk på lerretet der teksten skal begynne."); return; }
@@ -379,25 +434,34 @@
     if (layout.error) { status(layout.error); return; }
     if (!checkpoint()) return;
     const text = layout.lines.join(" ").trim();
-    const layer = createLayer("Tekst · " + text.slice(0, 55), "paint");
-    const pos = project.layers.findIndex(item => item.id === selected);
-    project.layers.splice(pos + 1, 0, layer);
+    const layer = existing || createLayer("Tekst · " + text.slice(0, 55), "paint");
+    if (!existing) {
+      const pos = project.layers.findIndex(item => item.id === selected);
+      project.layers.splice(pos + 1, 0, layer);
+    }
+    layer.textData = {
+      content: layout.lines.join("\n"),
+      family: $("kv2-text-font").value,
+      size: layout.fontSize, bold: layout.bold,
+      color: $("kv2-color").value, left: layout.left, top: layout.top
+    };
     const context = surfaces.get(layer.id).getContext("2d");
+    context.clearRect(0, 0, WIDTH, HEIGHT);
     context.save();
     context.font = layout.font;
     context.textBaseline = "top";
-    context.fillStyle = $("kv2-color").value;
+    context.fillStyle = layer.textData.color;
     context.globalAlpha = 1;
     layout.lines.forEach((line, index) => {
       context.fillText(line, layout.left, layout.top + index * layout.lineHeight);
     });
     context.restore();
     selected = layer.id;
-    textAnchor = null;
+    clearTextDraft();
     tool = "move";
     changed();
     refresh();
-    status("Tekst lagt på eget lag. Flytt laget for å plassere det videre.");
+    status(existing ? "Tekstlaget er oppdatert." : "Tekst lagt på eget lag. Flytt laget for å plassere det videre.");
   }
 
   function isShapeTool() {
@@ -464,7 +528,7 @@
   }
   function commitShape() {
     const layer = currentLayer();
-    if (!shapeValid(shapeDraft) || !layer || layer.locked || !layer.visible || busy || maskEditing ||
+    if (!shapeValid(shapeDraft) || !layer || layer.textData || layer.locked || !layer.visible || busy || maskEditing ||
         !checkpoint()) return false;
     const context = surfaces.get(layer.id).getContext("2d");
     context.save();
@@ -596,6 +660,7 @@
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         adjustments: safeAdjustments(layer.adjustments),
         x: layer.x, y: layer.y,
+        ...(layer.textData ? { textData: { ...layer.textData } } : {}),
         bitmap: surface.toDataURL("image/png"),
         ...(pixelFixups ? { pixelFixups } : {}),
         ...(mask ? {
@@ -670,6 +735,7 @@
     const previous = { layers: snapshot(), selected: selected };
     try {
       await installLayers(target.layers);
+      clearTextDraft();
       from.pop();
       to.push(previous);
       if (to.length > MAX_HISTORY) to.shift();
@@ -684,6 +750,7 @@
       // refresh() ran while busy was true, so restore disabled sliders and
       // reset control after undo/redo completes.
       updateLayerControls();
+      renderTextPreview();
     }
   }
 
@@ -705,9 +772,8 @@
       const choose = makeButton(layer.name + (masks.has(layer.id) ? " · maske" : ""), () => {
         leaveMaskEdit();
         selected = layer.id;
-        renderLayerList();
-        updateLayerControls();
-        renderSelection();
+        clearTextDraft();
+        refresh();
       }, "Velg " + layer.name);
       choose.className = "kv2-layer-name";
       choose.setAttribute("aria-pressed", String(selected === layer.id));
@@ -748,6 +814,9 @@
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
     $("kv2-remove-layer").disabled = project.layers.length <= 1;
+    const textEditable = !!layer?.textData && layer.visible && !layer.locked && !busy && !maskEditing;
+    $("kv2-text-edit").disabled = !textEditable;
+    $("kv2-text-rasterize").disabled = !textEditable;
     updateMaskControls();
   }
 
@@ -769,6 +838,8 @@
   }
 
   function refresh() {
+    if (textEditId && (tool !== "text" || currentLayer()?.id !== textEditId ||
+        !currentLayer()?.textData || currentLayer().locked || !currentLayer().visible || maskEditing)) clearTextDraft();
     draw();
     renderLayerList();
     updateLayerControls();
@@ -857,6 +928,7 @@
     if (tool === "text") {
       event.preventDefault();
       if (maskEditing) { status("Avslutt maskeredigering før du legger til tekst."); return; }
+      if (textEditId) { status("Bekreft teksten først; flytt deretter laget med Flytt."); return; }
       textAnchor = point(event);
       renderTextPreview();
       status("Tekstposisjon valgt. Trykk «Legg tekst på lag» når du er fornøyd.");
@@ -883,6 +955,10 @@
     if (tool !== "hand" && tool !== "select" && tool !== "lasso" &&
         (!layer || layer.locked || !layer.visible)) {
       status("Velg et synlig, ulåst lag før du arbeider.");
+      return;
+    }
+    if (layer?.textData && !maskEditing && (tool === "brush" || tool === "eraser" || isShapeTool())) {
+      status("Gjør tekstlaget om til piksler før du tegner direkte på det.");
       return;
     }
     // Moving the viewport is never an artwork edit and must not create undo history.
@@ -1063,12 +1139,19 @@
     return layer;
   }
 
+  function requiresRaster(layer) {
+    if (!layer?.textData) return false;
+    status("Gjør tekstlaget om til piksler før denne redigeringen.");
+    return true;
+  }
+
   function fillSelection() {
     const layer = editableLayer();
     if (!layer || maskEditing || !selection || selection.w < 2 || selection.h < 2) {
       if (maskEditing) status("Avslutt maskeredigering før du fyller bildelaget.");
       return;
     }
+    if (requiresRaster(layer)) return;
     // The marquee is in document coordinates, while raster layer pixels
     // are local. Intersect the two rectangles so moved layers behave
     // correctly and an off-canvas selection never adds an undo entry.
@@ -1096,7 +1179,7 @@
 
   function cropActiveLayer() {
     const layer = editableLayer();
-    if (!layer || !selection || selection.w < 2 || selection.h < 2) return;
+    if (!layer || !selection || selection.w < 2 || selection.h < 2 || requiresRaster(layer)) return;
     checkpoint();
     const context = surfaces.get(layer.id).getContext("2d");
     const image = context.getImageData(0, 0, WIDTH, HEIGHT);
@@ -1127,6 +1210,7 @@
       status("Du kan bruke inntil " + MAX_LAYERS + " lag i denne versjonen.");
       return;
     }
+    if (removeFromSource && requiresRaster(layer)) return;
     // Marquee coordinates are in document space; layer pixels are local.
     // Read raw RGBA before clearing the source, preserving semi-transparent
     // pixels and exact positioning even when the source layer has moved.
@@ -1191,6 +1275,7 @@
     Object.assign(clone, { visible: layer.visible, locked: false, opacity: layer.opacity,
       blendMode: layer.blendMode || "normal", adjustments: safeAdjustments(layer.adjustments),
       x: layer.x, y: layer.y });
+    if (layer.textData) clone.textData = { ...layer.textData };
     const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
     if (masks.has(layer.id)) {
@@ -1207,7 +1292,7 @@
 
   function transformLayer(mode) {
     const layer = editableLayer();
-    if (!layer) return;
+    if (!layer || requiresRaster(layer)) return;
     const original = surfaces.get(layer.id);
     const output = imageCanvas();
     const ctx = output.getContext("2d");
@@ -1433,12 +1518,28 @@
     return value;
   }
 
+  // Keep the raster fallback for older files. Only accept bounded, plain text metadata.
+  function validateTextData(value) {
+    if (!value || typeof value !== "object" || typeof value.content !== "string" ||
+        !value.content.trim() || value.content.length > 280 || value.content.split("\n").length > 5 ||
+        !Object.prototype.hasOwnProperty.call(TEXT_FONTS, value.family) ||
+        !Number.isInteger(value.size) || value.size < 14 || value.size > 120 ||
+        typeof value.bold !== "boolean" || typeof value.color !== "string" ||
+        !/^#[a-fA-F0-9]{6}$/.test(value.color) ||
+        !Number.isInteger(value.left) || value.left < 0 || value.left >= WIDTH ||
+        !Number.isInteger(value.top) || value.top < 0 || value.top >= HEIGHT) return null;
+    return { content: value.content, family: value.family, size: value.size, bold: value.bold,
+      color: value.color, left: value.left, top: value.top };
+  }
+
   function validateLayer(input) {
     if (!input || typeof input !== "object" || typeof input.bitmap !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(input.bitmap)) {
       throw new Error("Prosjektet har ugyldige lag.");
     }
+    const textData = validateTextData(input.textData);
     return {
+      ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
       kind: input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
@@ -1530,7 +1631,7 @@
     adjustedBitmaps.clear();
     selection = null;
     shapeDraft = null;
-    textAnchor = null;
+    clearTextDraft();
     maskEditing = false;
     layers.forEach((layer, i) => {
       surfaces.set(layer.id, decoded[i].bitmap);
@@ -1669,7 +1770,7 @@
             busy = true;
             try { await loadData(item, false, true); }
             catch (error) { status("Kunne ikke åpne: " + error.message); }
-            finally { busy = false; }
+            finally { busy = false; updateLayerControls(); renderTextPreview(); }
           }),
           makeButton("Lag kopi", () => duplicateSaved(item)),
           makeButton("Slett", () => deleteSaved(item))
@@ -1747,7 +1848,7 @@
       if (dirty && !global.confirm("Forkaste ulagrede endringer og åpne det importerte prosjektet?")) return;
       await loadData(data, isV1, false);
     } catch (error) { status("Import feilet: " + error.message); }
-    finally { busy = false; $("kv2-import").value = ""; }
+    finally { busy = false; $("kv2-import").value = ""; updateLayerControls(); renderTextPreview(); }
   }
 
   function bind() {
@@ -1860,19 +1961,22 @@
           return;
         }
         shapeDraft = null;
-        if (name !== "text") textAnchor = null;
+        clearTextDraft();
         tool = name;
         refresh();
       });
     });
     $("kv2-shape-style").addEventListener("change", renderShapePreview);
     ["kv2-text-content", "kv2-text-size", "kv2-text-font", "kv2-text-bold"].forEach(id => {
+      // input already covers typing, number changes, font selection and bold.
+      // A second render on blur can interrupt WebKit's click on confirmation.
       $(id).addEventListener("input", renderTextPreview);
-      $(id).addEventListener("change", renderTextPreview);
     });
+    $("kv2-text-edit").addEventListener("click", editTextLayer);
+    $("kv2-text-rasterize").addEventListener("click", rasterizeTextLayer);
     $("kv2-text-commit").addEventListener("click", commitText);
     $("kv2-text-cancel").addEventListener("click", () => {
-      textAnchor = null;
+      clearTextDraft();
       renderTextPreview();
       status("Tekstplassering avbrutt – ingen endringer.");
     });
@@ -1909,7 +2013,7 @@
       if (event.key === "Escape" && tool === "text" && textAnchor &&
           !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || "")) {
         event.preventDefault();
-        textAnchor = null;
+        clearTextDraft();
         renderTextPreview();
         status("Tekstplassering avbrutt – ingen endringer.");
         return;
@@ -1956,7 +2060,7 @@
       if (!record) return false;
       busy = true;
       try { await loadData(record, false, true); return true; }
-      finally { busy = false; }
+      finally { busy = false; updateLayerControls(); renderTextPreview(); }
     },
     async openLegacyCopy(record) {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return false;
@@ -1968,7 +2072,7 @@
           title: record.title, note: record.note, strokes: record.strokes
         }, true, false);
         return true;
-      } finally { busy = false; }
+      } finally { busy = false; updateLayerControls(); renderTextPreview(); }
     }
   };
 

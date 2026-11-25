@@ -202,3 +202,8 @@ Det eksisterende atelieret har et **Tekst**-verktøy med inntil fem linjer (maks
 Ved bekreftelse skapes et nytt, separat rasterlag over det aktive laget i **ett angresteg**. Eksisterende flytt, lagopasitet, blandingsmodus, justeringer, angre/gjør om, lokale prosjektfiler og eksport fungerer uten formatendring. Dette er *rastertekst*: plassering kan endres via Flytt lag, mens bokstavinnhold ikke lenger kan redigeres direkte etter bekreftelse (angre for å forsøke på nytt). Denne begrensningen vises tydelig i panelet. Tekstposisjon og SVG-forhåndsvisning lagres aldri i V2-prosjektet før bekreftelse. Trykk Escape eller Avbryt plassering for å fjerne forhåndsvisningen.
 
 Tekstplassering er sperret mens brukeren redigerer lagmaske, og egne rastertekstlag begrenses av den eksisterende grensen på åtte lag. Ingen automatisk tekstanalyse, AI-kall eller skyopplasting. Fysisk iPad/Apple Pencil-test registreres fortsatt i #1058.
+
+
+## Redigerbare tekstlag
+
+Nye tekstlag beholder en avgrenset tekstbeskrivelse sammen med PNG-pikslene i prosjektformat V2. Velg laget og bruk **Rediger tekstlag** for å endre tekst, font, størrelse, fet skrift og farge uten å endre andre lag. Endringer vises på lerretet ved bekreftelse, og avbryt endrer ingen piksler. Flytting, maske, justeringer, duplisering og angre/gjør om beholder teksten. Tegning, fyll, beskjæring, klipp og geometrisk transform krever først **Gjør tekst om til piksler** (angrebart). Tidligere rastertekst forblir rastertekst; det er ikke mulig å gjenskape opprinnelige bokstaver fra gamle piksler. Eksport beholder pikselbildet også for eldre lesere av prosjektformatet.
