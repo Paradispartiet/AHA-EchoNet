@@ -1473,6 +1473,32 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("studio brush samples use the real dab engine without editing art", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const before=await jsonBackup(page);
+    const sample=()=>page.locator("#kv2-active-brush-sample").evaluate(c=>c.toDataURL());
+    await expect.poll(async()=>page.locator("#kv2-studio-sample-ink").evaluate(c=>{
+      const p=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
+      return p.some((n,i)=>i%4===3&&n>0);
+    })).toBe(true);
+    const old=await sample();
+    await page.locator("#kv2-color").fill("#aabbcc");
+    await page.locator("#kv2-studio-brush-charcoal").click();
+    await expect(page.locator("#kv2-brush-texture")).toHaveValue("charcoal");
+    await expect(page.locator("#kv2-brush-tilt-enabled")).toBeChecked();
+    await expect(page.locator("#kv2-color")).toHaveValue("#aabbcc");
+    await expect.poll(sample).not.toBe(old);
+    await page.locator("#kv2-brush-library-save").click();
+    await expect(page.locator("#kv2-saved-brush-sample")).toBeVisible();
+    await page.locator("#kv2-studio-brush-calligraphy").click();
+    await expect(page.locator("#kv2-brush-aspect")).toHaveValue("22");
+    await expect(page.locator("#kv2-brush-angle")).toHaveValue("40");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-texture")).toHaveValue("charcoal");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
   test("studio focus and folding settings preserve artwork and make canvas accessible", async ({page}) => {
     await page.setViewportSize({width:1366,height:900});
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});

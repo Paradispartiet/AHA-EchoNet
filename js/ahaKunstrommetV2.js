@@ -1239,7 +1239,7 @@
     renderShapePreview();
     $("kv2-brush-advanced").hidden = !advancedBrushEnabled();
     $("kv2-brush-settings-jump").hidden = !advancedBrushEnabled();
-    if (advancedBrushEnabled()) renderBrushLibrary();
+    if (advancedBrushEnabled()) { renderBrushLibrary(); queueBrushSamples(); }
     $("kv2-gradient-panel").hidden = tool !== "gradient";
     $("kv2-gradient-mask-note").textContent = maskEditing
       ? "Maskemodus: synlig til skjult, eller motsatt ved Reverser. Fargene ignoreres."
@@ -1308,6 +1308,9 @@
   function safeBrushTexture(value) { return BRUSH_TEXTURES.includes(value) ? value : "round"; }
   const BRUSH_LIBRARY_LIMIT = 30;
   const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7, aspect:1, angle:0, scatter:0, rotationJitter:0, followDirection:false, tiltStrength:.7, tiltEnabled:false});
+  const STUDIO_BRUSHES = [{"id":"ink","name":"Illustrasjonspenn","settings":{"size":12,"hardness":0.95,"flow":1,"spacing":0.1}},{"id":"graphite","name":"Grafitt","settings":{"size":9,"hardness":0.55,"flow":0.5,"texture":"charcoal","textureStrength":0.6,"tiltEnabled":true}},{"id":"charcoal","name":"Kull","settings":{"size":28,"hardness":0.3,"flow":0.5,"texture":"charcoal","textureStrength":1,"tiltEnabled":true}},{"id":"chalk","name":"Kritt","settings":{"size":24,"hardness":0.65,"flow":0.6,"texture":"chalk","textureStrength":0.9,"scatter":0.12}},{"id":"wash","name":"Akvarellstruktur","settings":{"size":40,"hardness":0.05,"opacity":0.45,"flow":0.25,"texture":"watercolor","textureStrength":0.85}},{"id":"dry","name":"Tørrpensel","settings":{"size":30,"hardness":0.75,"flow":0.55,"texture":"dry","textureStrength":1,"aspect":0.6,"followDirection":true}},{"id":"shade","name":"Myk skygge","settings":{"size":45,"hardness":0,"opacity":0.6,"flow":0.12,"spacing":0.12}},{"id":"calligraphy","name":"Kalligrafi","settings":{"size":22,"hardness":1,"flow":1,"aspect":0.22,"angle":40,"spacing":0.1}}];
+  const brushSampleKeys = new WeakMap();
+  let brushSamplePending = false;
   function safeBrushSettings(value) {
     const input = value && typeof value === "object" ? value : {};
     const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
@@ -1323,6 +1326,59 @@
       followDirection:input.followDirection === true,
       tiltStrength:number("tiltStrength",0,1), tiltEnabled:input.tiltEnabled === true};
   }
+  // Use the same dab renderer as artwork, on tiny isolated canvases.
+  // Samples deliberately use neutral pressure and no tilt or artwork selection.
+  function renderBrushSample(canvas, value) {
+    if (!canvas || typeof canvas.getContext !== "function") return;
+    const settings = safeBrushSettings(value);
+    const key = JSON.stringify(settings);
+    if (brushSampleKeys.get(canvas) === key) return;
+    const ctx=canvas.getContext("2d");
+    if (!ctx) return;
+    const ink=document.createElement("canvas");
+    ink.width=canvas.width; ink.height=canvas.height;
+    const sampleSettings={...settings,size:Math.min(settings.size,28)};
+    const stroke={settings:sampleSettings,ink,layer:null,dabIndex:0,sample:true,
+      stamps:sampleSettings.texture!=="round"&&sampleSettings.textureStrength>0
+        ? Array.from({length:4},(_,seed)=>textureStamp(sampleSettings,seed)):null};
+    const margin=28, length=Math.max(1,canvas.width-2*margin);
+    const spacing=Math.max(.5,sampleSettings.size*sampleSettings.spacing);
+    for(let d=0;d<=length;d+=spacing) {
+      const t=d/length, phase=t*Math.PI*2;
+      brushDab(stroke,{x:margin+d,y:canvas.height/2+Math.sin(phase)*7,
+        width:1,pressure:.5,pen:false,direction:Math.atan2(Math.cos(phase)*14*Math.PI,length)});
+    }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save();ctx.globalAlpha=settings.opacity;ctx.drawImage(ink,0,0);ctx.restore();
+    brushSampleKeys.set(canvas,key);
+  }
+
+  function refreshBrushSamples() {
+    if (!advancedBrushEnabled()) return;
+    const current=brushSettings();
+    renderBrushSample($("kv2-active-brush-sample"),current);
+    for(const item of STUDIO_BRUSHES) {
+      renderBrushSample($("kv2-studio-sample-"+item.id),{...BRUSH_DEFAULTS,...item.settings,color:current.color});
+    }
+    let selectedBrush=null;
+    try { selectedBrush=readBrushLibrary().find(item=>item.name===$("kv2-brush-library").value); } catch (_) {}
+    $("kv2-saved-brush-sample").hidden=!selectedBrush;
+    if (selectedBrush) renderBrushSample($("kv2-saved-brush-sample"),selectedBrush.settings);
+  }
+  function queueBrushSamples() {
+    if (brushSamplePending || !advancedBrushEnabled()) return;
+    brushSamplePending=true;
+    global.requestAnimationFrame(()=>{brushSamplePending=false;refreshBrushSamples();});
+  }
+  function chooseStudioBrush(id) {
+    if (busy || pointerId!==null || !advancedBrushEnabled()) return;
+    const item=STUDIO_BRUSHES.find(item=>item.id===id);
+    if (!item) return;
+    applyBrushSettings({...BRUSH_DEFAULTS,...item.settings,color:$("kv2-color").value});
+    $("kv2-brush-name").value=item.name;
+    brushLibraryMessage("Pensel valgt: "+item.name+". Lagre som egen pensel om ønskelig.");
+  }
+
   function brushLibraryKey() {
     return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
   }
@@ -1371,6 +1427,7 @@
     try {
       global.localStorage.setItem(brushLibraryKey(), JSON.stringify(entries));
       renderBrushLibrary(preferred);
+      queueBrushSamples();
       brushLibraryMessage(message);
     } catch (_) { brushLibraryMessage("Kunne ikke lagre penselbiblioteket. Kontroller lokal lagring."); }
   }
@@ -1572,7 +1629,7 @@
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = flow*(1-.35*tilt);
     // Clip in document coordinates before translating or rotating the tip.
-    if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
+    if (!stroke.sample && validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
     ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(tiltStretch,s.aspect);
     if (stroke.stamps) {
       const stamp=stroke.stamps[index % stroke.stamps.length];
@@ -3080,7 +3137,18 @@
     $("kv2-brush-angle").addEventListener("input", () => {
       $("kv2-brush-angle-value").textContent=$("kv2-brush-angle").value+"°";
     });
-    $("kv2-brush-library").addEventListener("change", () => renderBrushLibrary());
+    STUDIO_BRUSHES.forEach(item=>{
+      $("kv2-studio-brush-"+item.id).addEventListener("click",()=>chooseStudioBrush(item.id));
+    });
+    ["hardness","opacity","flow","spacing","texture-strength","aspect","angle","scatter","rotation-jitter","tilt-strength"].forEach(name=>{
+      $("kv2-brush-"+name).addEventListener("input",queueBrushSamples);
+    });
+    ["texture","pressure-width","pressure-flow","follow-direction","tilt-enabled"].forEach(name=>{
+      $("kv2-brush-"+name).addEventListener("change",queueBrushSamples);
+    });
+    $("kv2-size").addEventListener("input",queueBrushSamples);
+    $("kv2-color").addEventListener("input",queueBrushSamples);
+    $("kv2-brush-library").addEventListener("change", () => {renderBrushLibrary();queueBrushSamples();});
     $("kv2-brush-library-save").addEventListener("click", saveOwnBrush);
     $("kv2-brush-library-load").addEventListener("click", loadOwnBrush);
     $("kv2-brush-library-delete").addEventListener("click", deleteOwnBrush);

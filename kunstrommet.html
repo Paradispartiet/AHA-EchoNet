@@ -167,6 +167,21 @@
         </div>
         <div id="kv2-brush-advanced" class="kv2-brush-inspector" hidden>
             <div class="kv2-titlebar"><h2>Avansert pensel</h2><button id="kv2-back-to-canvas" type="button">Tilbake til lerretet</button></div>
+            <div class="kv2-active-sample"><strong>Aktiv pensel</strong><canvas id="kv2-active-brush-sample" width="180" height="64" aria-label="Strøkprøve for aktiv pensel"></canvas></div>
+            <details class="kv2-fold" open>
+              <summary>Atelierets pensler</summary>
+              <div class="kv2-studio-brushes">
+                <button id="kv2-studio-brush-ink" type="button"><canvas id="kv2-studio-sample-ink" width="180" height="64" aria-hidden="true"></canvas><span>Illustrasjonspenn</span></button>
+                <button id="kv2-studio-brush-graphite" type="button"><canvas id="kv2-studio-sample-graphite" width="180" height="64" aria-hidden="true"></canvas><span>Grafitt</span></button>
+                <button id="kv2-studio-brush-charcoal" type="button"><canvas id="kv2-studio-sample-charcoal" width="180" height="64" aria-hidden="true"></canvas><span>Kull</span></button>
+                <button id="kv2-studio-brush-chalk" type="button"><canvas id="kv2-studio-sample-chalk" width="180" height="64" aria-hidden="true"></canvas><span>Kritt</span></button>
+                <button id="kv2-studio-brush-wash" type="button"><canvas id="kv2-studio-sample-wash" width="180" height="64" aria-hidden="true"></canvas><span>Akvarellstruktur</span></button>
+                <button id="kv2-studio-brush-dry" type="button"><canvas id="kv2-studio-sample-dry" width="180" height="64" aria-hidden="true"></canvas><span>Tørrpensel</span></button>
+                <button id="kv2-studio-brush-shade" type="button"><canvas id="kv2-studio-sample-shade" width="180" height="64" aria-hidden="true"></canvas><span>Myk skygge</span></button>
+                <button id="kv2-studio-brush-calligraphy" type="button"><canvas id="kv2-studio-sample-calligraphy" width="180" height="64" aria-hidden="true"></canvas><span>Kalligrafi</span></button>
+              </div>
+              <p class="kv2-tip">Velg en ferdig pensel. Aktiv farge beholdes. Strøkprøver er skalert og viser nøytralt trykk, uten helning.</p>
+            </details>
             <details id="kv2-brush-settings-detail" class="kv2-fold" open>
               <summary>Form, tekstur, flyt og pennetrykk</summary>
               <div class="kv2-brush-parameter-grid">
@@ -199,6 +214,7 @@
               <legend>Personlig penselbibliotek</legend>
               <label for="kv2-brush-library">Lagrede pensler</label>
               <select id="kv2-brush-library"><option value="">Velg egen pensel</option></select>
+              <canvas id="kv2-saved-brush-sample" width="180" height="64" aria-label="Strøkprøve for valgt lagret pensel" hidden></canvas>
               <button id="kv2-brush-library-load" type="button" disabled>Bruk pensel</button>
               <label for="kv2-brush-name">Penselnavn</label>
               <input id="kv2-brush-name" type="text" maxlength="50" placeholder="F.eks. Myk skygge"/>

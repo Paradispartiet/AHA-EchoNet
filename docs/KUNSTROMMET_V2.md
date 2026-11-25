@@ -297,3 +297,8 @@ Valgfri helningsstyring med følsomhet 0–100 %. Pointer Events tiltX/tiltY omr
 ## Atelierets arbeidsflate (5.0-forberedelse)
 
 Fokusmodus er et reversibelt visningsvalg: skjuler introduksjon, sidepanel, tittel/notater og lange hjelpetekster, utvider lerretet og beholder tegneverktøy, angre, zoom og prosjektlagring. Gå tilbake til hele atelieret for lag og prosjekter. Avansert penselinspektør ligger etter lerretet, med snarvei fra verktøylinjen og tilbakeknapp. Sammenleggbare grupper for penselparametre, penselbibliotek, laggrupper, bildejustering og hjelpetekster. Ingen prosjektmetadata, raster eller historikk endres. Fokusmodus endres ikke midt i en aktiv pekerbevegelse eller fri transformering. Nettlesertest ved desktop- og iPad-lignende størrelse; fysisk iPad gjenstår.
+
+
+### Atelierets penselutvalg
+
+Åtte ferdige redigerbare penseloppsett: illustrasjonspenn, grafitt, kull, kritt, akvarellstruktur, tørrpensel, myk skygge og kalligrafi. Valg bevarer aktiv farge og fyller inn et forslag til navn; ingen lagring før brukeren velger Lagre. Strøkprøver for ferdige, aktive og valgte lagrede pensler bruker samme avtrykksmotor på små separate canvases, med nøytralt trykk, ingen helning, ingen markering og skalert størrelse (maks 28 px). Prøvene oppdateres ved endringer og caches etter innstillinger. Ingen endring av kunstverk, prosjektformat, angrehistorikk eller synkronisering. Automatisert test dekker strøkprøver, penselvalg, fargebevaring og uendrede rastere.
