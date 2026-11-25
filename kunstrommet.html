@@ -73,8 +73,18 @@
               <option value="blyant">Blyant</option>
               <option value="tusj">Tusj</option>
               <option value="lasur">Lasur</option>
+              <option value="advanced">Avansert pensel</option>
             </select>
           </label>
+          <div id="kv2-brush-advanced" hidden>
+            <label for="kv2-brush-hardness">Hardhet</label><div class="kv2-slider"><input id="kv2-brush-hardness" type="range" min="0" max="100" value="50"/><output id="kv2-brush-hardness-value">50%</output></div>
+            <label for="kv2-brush-opacity">Strøkets opasitet</label><div class="kv2-slider"><input id="kv2-brush-opacity" type="range" min="0" max="100" value="100"/><output id="kv2-brush-opacity-value">100%</output></div>
+            <label for="kv2-brush-flow">Flyt per avtrykk</label><div class="kv2-slider"><input id="kv2-brush-flow" type="range" min="1" max="100" value="35"/><output id="kv2-brush-flow-value">35%</output></div>
+            <label for="kv2-brush-spacing">Avstand mellom avtrykk</label><div class="kv2-slider"><input id="kv2-brush-spacing" type="range" min="5" max="100" value="20"/><output id="kv2-brush-spacing-value">20%</output></div>
+            <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
+            <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
+            <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>
+          </div>
           <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
           <div class="kv2-palette" role="group" aria-label="Hurtigpalett">
             <button type="button" class="kv2-swatch" id="kv2-swatch-blekk" style="--kv2-swatch:#23242c" aria-label="Blekk" aria-pressed="true"></button>
@@ -129,6 +139,7 @@
             <canvas id="kv2-canvas" width="1200" height="800"
               aria-label="Kunstlerret. Tegn, marker et område eller flytt det valgte laget med mus, finger eller penn.">Nettleseren støtter ikke lerret.</canvas>
             <canvas id="kv2-text-edit-preview" class="kv2-text-overlay" width="1200" height="800" aria-hidden="true" hidden></canvas>
+            <canvas id="kv2-brush-live" width="1200" height="800" aria-hidden="true" hidden></canvas>
             <canvas id="kv2-gradient-live" width="1200" height="800" aria-hidden="true" hidden></canvas>
             <canvas id="kv2-transform-live" width="1200" height="800" aria-hidden="true" hidden></canvas>
             <svg id="kv2-transform-overlay" viewBox="0 0 1200 800" preserveAspectRatio="none" aria-hidden="true" hidden>
