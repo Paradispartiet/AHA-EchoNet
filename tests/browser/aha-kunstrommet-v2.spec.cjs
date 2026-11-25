@@ -92,6 +92,34 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("named layer groups preserve membership in backup and support undoable group controls", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [300, 200], [300, 200], 1005);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page, [700, 400], [700, 400], 1006);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    await page.locator("#kv2-group-name").fill("Landskap");
+    await page.locator("#kv2-group-save").click();
+    const grouped = await jsonBackup(page);
+    expect(grouped.layers.map(l => l.groupName)).toEqual(["Landskap", "Landskap"]);
+    await page.locator("#kv2-group-lock-action").click();
+    expect((await jsonBackup(page)).layers.every(l => l.locked)).toBe(true);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await jsonBackup(page)).layers.every(l => !l.locked)).toBe(true);
+    await page.locator("#kv2-group-select").selectOption("Landskap");
+    await page.locator("#kv2-group-hide-action").click();
+    expect((await jsonBackup(page)).layers.every(l => !l.visible)).toBe(true);
+    await page.locator("#kv2-group-show-action").click();
+    await page.locator("#kv2-group-select-action").click();
+    await expect(page.locator("#kv2-move-count")).toHaveText("2 lag ved Flytt lag");
+    page.once("dialog", dialog => dialog.accept());
+    await page.locator("#kv2-import").setInputFiles({ name: "group.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(grouped)) });
+    await expect(page.locator("#kv2-group-select option")).toHaveCount(2);
+    await page.locator("#kv2-group-select").selectOption("Landskap");
+    await page.locator("#kv2-group-dissolve-action").click();
+    expect((await jsonBackup(page)).layers.every(l => !l.groupName)).toBe(true);
+  });
+
   test("multi-layer move preserves relative positions, locks and one-step undo", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [300, 200], [300, 200], 1001);

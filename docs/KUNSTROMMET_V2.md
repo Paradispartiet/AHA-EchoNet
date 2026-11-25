@@ -227,3 +227,8 @@ Valget **Fest til lerret og lag** er av som standard og gjelder bare Flytt lag. 
 ## Flervalg ved lagflytting (4.4, første trinn)
 
 Aktivt lag redigeres fortsatt individuelt. Avkryssing av ekstra synlige, ulåste lag i listen gjør at **Flytt lag** flytter dem sammen med aktivt lag, uten endring av relative avstander. Skjulte og låste lag utelates. Magnetisk justering bruker felles yttergrense og utelater gruppens egne lag som referanser. Ett drag gir ett angresteg; PNG- og JSON-format er uendret. Flervalg er midlertidig, tømmes ved nytt/åpnet prosjekt eller med Fjern flervalg. Navngitte, varige grupper og felles rotasjon/skalering er ikke implementert ennå.
+
+
+## Navngitte laggrupper (4.4, andre trinn)
+
+Opprett en gruppe av minst to synlige, ulåste lag via flervalget og et unikt navn (maks 50 tegn). Hvert lag har høyst ett gruppenavn; eksisterende grupper må løses opp før omgruppering. Velg gruppen fra listen for samlet flytting av synlige, ulåste medlemmer. Skjul/vis/lås/lås opp alle medlemmer med eksplisitte knapper; dette endrer de individuelle flaggene og kan angres i ett steg. Løs opp fjerner bare medlemskap. Gruppene er valgfri lagmetadata i eksisterende V2-format, bevares i lokal lagring, JSON, skissebokk kopi og angrehistorikk. Eldre filer uten metadata åpnes som før. Felles rotasjon/skalering, hierarkiske grupper og fysisk iPad-verifikasjon gjenstår.

@@ -188,6 +188,21 @@
             <output id="kv2-move-count" aria-live="polite">1 lag ved Flytt lag</output>
             <button id="kv2-clear-move-group" type="button" disabled>Fjern flervalg</button>
           </div>
+          <div class="kv2-named-groups" role="group" aria-label="Navngitte laggrupper">
+            <label for="kv2-group-name">Gruppenavn</label>
+            <input id="kv2-group-name" type="text" maxlength="50" placeholder="For eksempel Landskap" />
+            <button id="kv2-group-save" type="button" disabled>Opprett gruppe fra flervalg</button>
+            <label for="kv2-group-select">Laggrupper</label>
+            <select id="kv2-group-select"><option value="">Velg laggruppe</option></select>
+            <div class="kv2-group-buttons">
+              <button id="kv2-group-select-action" type="button" disabled>Velg for flytting</button>
+              <button id="kv2-group-dissolve-action" type="button" disabled>Løs opp</button>
+              <button id="kv2-group-hide-action" type="button" disabled>Skjul alle</button>
+              <button id="kv2-group-show-action" type="button" disabled>Vis alle</button>
+              <button id="kv2-group-lock-action" type="button" disabled>Lås alle</button>
+              <button id="kv2-group-unlock-action" type="button" disabled>Lås opp alle</button>
+            </div>
+          </div>
           <div class="kv2-layer-actions">
             <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
             <button type="button" id="kv2-layer-up">Opp</button>

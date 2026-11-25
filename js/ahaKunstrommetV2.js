@@ -145,6 +145,10 @@
     return result;
   }
 
+  function safeGroupName(value) {
+    return typeof value === "string" ? value.trim().slice(0, 50) : "";
+  }
+
   function createLayer(name, kind) {
     const layer = {
       id: uid(), name: String(name || "Nytt lag").slice(0, 70),
@@ -679,6 +683,7 @@
       const maskPixelFixups = mask ? encodeEdgePixels(mask) : "";
       return {
         id: layer.id, name: layer.name, kind: layer.kind,
+        ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         adjustments: safeAdjustments(layer.adjustments),
@@ -821,7 +826,7 @@
       include.className = "kv2-move-together";
       include.setAttribute("aria-label", "Flytt sammen med aktivt lag: " + layer.name);
       include.checked = moveTogether.has(layer.id);
-      include.disabled = busy || !layer.visible || layer.locked;
+      include.disabled = !layer.visible || layer.locked;
       include.addEventListener("change", () => {
         if (busy || pointerId !== null) { include.checked = moveTogether.has(layer.id); return; }
         if (include.checked) moveTogether.add(layer.id);
@@ -829,6 +834,12 @@
         updateMoveCount();
       });
       row.append(visibility, choose, lock, include);
+      if (safeGroupName(layer.groupName)) {
+        const label = document.createElement("small");
+        label.className = "kv2-group-label";
+        label.textContent = "Gruppe: " + layer.groupName;
+        row.appendChild(label);
+      }
       mount.appendChild(row);
     });
     const active = currentLayer();
@@ -841,6 +852,69 @@
       (layer.id === selected || moveTogether.has(layer.id))).length;
     $("kv2-move-count").textContent = count + " lag ved Flytt lag";
     $("kv2-clear-move-group").disabled = moveTogether.size === 0;
+    $("kv2-group-save").disabled = count < 2;
+    renderNamedGroups();
+  }
+
+  function renderNamedGroups() {
+    const control = $("kv2-group-select");
+    const previous = control.value;
+    control.replaceChildren(new Option("Velg laggruppe", ""));
+    const names = [...new Set(project.layers.map(layer => safeGroupName(layer.groupName)).filter(Boolean))];
+    names.forEach(name => control.add(new Option(name, name)));
+    if (names.includes(previous)) control.value = previous;
+    ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
+      $("kv2-group-" + action + "-action").disabled = !control.value;
+    });
+  }
+
+  function groupAction(action) {
+    if (busy || pointerId !== null) return;
+    const name = $("kv2-group-select").value;
+    const members = project.layers.filter(layer => name && layer.groupName === name);
+    if (!members.length) return;
+    if (action === "select") {
+      const movable = members.filter(layer => layer.visible && !layer.locked);
+      if (!movable.length) { status("Gruppen har ingen synlige, ulåste lag."); return; }
+      leaveMaskEdit();
+      clearTextDraft();
+      selected = movable[movable.length - 1].id;
+      moveTogether.clear();
+      movable.forEach(layer => { if (layer.id !== selected) moveTogether.add(layer.id); });
+      tool = "move";
+      refresh();
+      status("Valgt laggruppe: " + name);
+      return;
+    }
+    if (!checkpoint()) return;
+    members.forEach(layer => {
+      if (action === "dissolve") delete layer.groupName;
+      else if (action === "hide" || action === "show") layer.visible = action === "show";
+      else if (action === "lock" || action === "unlock") layer.locked = action === "lock";
+    });
+    if (!currentLayer()?.visible || currentLayer()?.locked) leaveMaskEdit();
+    changed(); refresh();
+  }
+
+  function saveNamedGroup() {
+    if (busy || pointerId !== null) return;
+    const name = safeGroupName($("kv2-group-name").value);
+    const members = project.layers.filter(layer => layer.visible && !layer.locked &&
+      (layer.id === selected || moveTogether.has(layer.id)));
+    if (!name || members.length < 2) { status("Skriv gruppenavn og velg minst to lag."); return; }
+    if (project.layers.some(layer => layer.groupName === name && !members.includes(layer))) {
+      status("Gruppenavnet finnes allerede. Velg et annet navn."); return;
+    }
+    if (members.some(layer => layer.groupName && layer.groupName !== name)) {
+      status("Løs opp eksisterende grupper før du omgrupperer disse lagene."); return;
+    }
+    if (!checkpoint()) return;
+    members.forEach(layer => { layer.groupName = name; });
+    $("kv2-group-name").value = "";
+    changed(); refresh();
+    $("kv2-group-select").value = name;
+    renderNamedGroups();
+    status("Laggruppe opprettet: " + name);
   }
 
   function updateLayerControls() {
@@ -1881,6 +1955,7 @@
     return {
       ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
+      ...(safeGroupName(input.groupName) ? { groupName: safeGroupName(input.groupName) } : {}),
       kind: input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
@@ -2003,6 +2078,7 @@
         format: "aha-kunstrommet-v2", version: 2, width: WIDTH, height: HEIGHT,
         layers: saved.layers.map((layer) => ({
           id: uid(), name: String(layer.name || "Lag").slice(0, 70),
+          ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
           kind: layer.kind === "image" ? "image" : "paint",
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
@@ -2196,6 +2272,11 @@
     $("kv2-new").addEventListener("click", () => {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
       newProject();
+    });
+    $("kv2-group-save").addEventListener("click", saveNamedGroup);
+    $("kv2-group-select").addEventListener("change", renderNamedGroups);
+    ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
+      $("kv2-group-" + action + "-action").addEventListener("click", () => groupAction(action));
     });
     $("kv2-clear-move-group").addEventListener("click", () => {
       if (busy || pointerId !== null) return;
