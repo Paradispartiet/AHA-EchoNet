@@ -7,8 +7,16 @@
   const view = canvas.getContext("2d");
   if (!view) return;
 
-  const WIDTH = 1200;
-  const HEIGHT = 800;
+  const DEFAULT_WIDTH = 1200, DEFAULT_HEIGHT = 800;
+  const MAX_CANVAS_SIDE = 1600, MAX_CANVAS_PIXELS = 1440000;
+  let WIDTH = DEFAULT_WIDTH, HEIGHT = DEFAULT_HEIGHT;
+  function validCanvasSize(width,height) {
+    return Number.isInteger(width)&&Number.isInteger(height)&&width>=320&&height>=320&&
+      width<=MAX_CANVAS_SIDE&&height<=MAX_CANVAS_SIDE&&width*height<=MAX_CANVAS_PIXELS;
+  }
+  function requireCanvasSize(width,height) {
+    if(!validCanvasSize(width,height))throw new Error("Lerretet må være 320–1600 piksler per side, maksimalt 1 440 000 piksler.");
+  }
   const MAX_LAYERS = 8;
   // Only standard artistic blend modes; never permit destructive Porter-Duff operations.
   const BLEND_MODES = new Set([
@@ -379,11 +387,33 @@
     status("Ulagrede endringer");
   }
   function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
-  function imageCanvas() {
+  function imageCanvas(width=WIDTH,height=HEIGHT) {
     const result = document.createElement("canvas");
-    result.width = WIDTH;
-    result.height = HEIGHT;
+    result.width = width;
+    result.height = height;
     return result;
+  }
+
+  // Dimensions only change when a fresh project or fully decoded document is installed.
+  function installCanvasSize(width,height) {
+    requireCanvasSize(width,height);
+    cancelFreeTransform();
+    if(width!==WIDTH||height!==HEIGHT){
+      WIDTH=width;HEIGHT=height;
+      [canvas,maskedComposite,...["kv2-text-edit-preview","kv2-brush-live","kv2-gradient-live","kv2-transform-live","kv2-free-preview"].map($)].forEach(node=>{
+        node.width=WIDTH;node.height=HEIGHT;
+      });
+      ["kv2-transform-overlay","kv2-symmetry-overlay","kv2-perspective-lock-overlay","kv2-composition-guides","kv2-snap-guides","kv2-lasso-overlay","kv2-shape-overlay","kv2-text-overlay"].forEach(id=>{
+        const node=$(id);
+        node.setAttribute("viewBox","0 0 "+WIDTH+" "+HEIGHT);
+        node.style.aspectRatio=WIDTH+" / "+HEIGHT;
+      });
+      $("kv2-snap-x").setAttribute("y2",String(HEIGHT));
+      $("kv2-snap-y").setAttribute("x2",String(WIDTH));
+      zoomIndex=ZOOM_LEVELS.indexOf(1);canvas.style.width="100%";
+      viewport.scrollLeft=0;viewport.scrollTop=0;
+    }
+    $("kv2-canvas-dimensions").textContent=WIDTH+" × "+HEIGHT+" px";
   }
 
   function safeGroupName(value) {
@@ -400,7 +430,8 @@
     return layer;
   }
 
-  function newProject() {
+  function newProject(width=DEFAULT_WIDTH,height=DEFAULT_HEIGHT) {
+    installCanvasSize(width,height);
     moveTogether.clear();
     const now = new Date().toISOString();
     surfaces.clear();
@@ -670,7 +701,7 @@
     const lineHeight = Math.ceil(fontSize * 1.25), height = lineHeight * lines.length;
     if (width > WIDTH - 24) return { error: "Tekstlinjen er for bred. Del teksten over flere linjer eller velg mindre størrelse." };
     if (height > HEIGHT - 24) return { error: "Teksten er for høy. Bruk færre linjer eller mindre skrift." };
-    // Keep the entire raster text inside the 1200×800 document after a tap.
+    // Keep the entire raster text inside the current document after a tap.
     const left = textAnchor ? clamp(Math.round(textAnchor.x), 12, Math.max(12, Math.floor(WIDTH - width - 12))) : 12;
     const top = textAnchor ? clamp(Math.round(textAnchor.y), 12, Math.max(12, HEIGHT - height - 12)) : 12;
     return { lines, font, family, fontSize, lineHeight, left, top, bold, width, height };
@@ -1003,8 +1034,8 @@
   // channel values on import. Preserve those exact RGBA values alongside the
   // standard PNG so that editable layers survive a backup round-trip.
   function encodeEdgePixels(surface) {
-    const data = surface.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
-    const bytes = new Uint8Array(WIDTH * HEIGHT * 8);
+    const data = surface.getContext("2d").getImageData(0, 0, surface.width, surface.height).data;
+    const bytes = new Uint8Array(surface.width * surface.height * 8);
     let used = 0;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0 || data[i + 3] === 255) continue;
@@ -1033,17 +1064,17 @@
       throw new Error("Ugyldige eksakte lagpiksler.");
     }
     const binary = global.atob(encoded);
-    if (binary.length % 8 !== 0 || binary.length > WIDTH * HEIGHT * 8) {
+    if (binary.length % 8 !== 0 || binary.length > surface.width * surface.height * 8) {
       throw new Error("Ugyldig pikselkorreksjon i prosjektet.");
     }
     const context = surface.getContext("2d");
-    const image = context.getImageData(0, 0, WIDTH, HEIGHT);
+    const image = context.getImageData(0, 0, surface.width, surface.height);
     const pixels = image.data;
     let previousIndex = -1;
     for (let i = 0; i < binary.length; i += 8) {
       const index = (binary.charCodeAt(i) | (binary.charCodeAt(i + 1) << 8) |
         (binary.charCodeAt(i + 2) << 16) | (binary.charCodeAt(i + 3) << 24)) >>> 0;
-      if (index <= previousIndex || index >= WIDTH * HEIGHT) {
+      if (index <= previousIndex || index >= surface.width * surface.height) {
         throw new Error("Ugyldig pikselplassering i prosjektet.");
       }
       previousIndex = index;
@@ -1090,7 +1121,7 @@
     return true;
   }
 
-  function decodePng(url, pixelFixups) {
+  function decodePng(url, pixelFixups,width=WIDTH,height=HEIGHT) {
     if (typeof url !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(url) ||
         url.length > MAX_PROJECT_BYTES) {
@@ -1099,11 +1130,11 @@
     return new Promise((resolve, reject) => {
       const image = new Image();
       image.onload = () => {
-        if (image.width !== WIDTH || image.height !== HEIGHT) {
+        if (image.width !== width || image.height !== height) {
           reject(new Error("Prosjektlaget har feil størrelse."));
           return;
         }
-        const surface = imageCanvas();
+        const surface = imageCanvas(width,height);
         surface.getContext("2d").drawImage(image, 0, 0);
         try { restoreEdgePixels(surface, pixelFixups); }
         catch (error) { reject(error); return; }
@@ -1114,11 +1145,11 @@
     });
   }
 
-  async function decodeLayerBitmaps(layers) {
+  async function decodeLayerBitmaps(layers,width=WIDTH,height=HEIGHT) {
     // Decode all layer and mask data before mutating the open project.
     return Promise.all(layers.map(async (layer) => ({
-      bitmap: await decodePng(layer.bitmap, layer.pixelFixups),
-      mask: layer.maskBitmap ? await decodePng(layer.maskBitmap, layer.maskPixelFixups) : null
+      bitmap: await decodePng(layer.bitmap, layer.pixelFixups,width,height),
+      mask: layer.maskBitmap ? await decodePng(layer.maskBitmap, layer.maskPixelFixups,width,height) : null
     })));
   }
 
@@ -2964,7 +2995,10 @@
       const preview = document.createElement("canvas");
       preview.width = 180;
       preview.height = 120;
-      preview.getContext("2d").drawImage(canvas, 0, 0, 180, 120);
+      const ratio=Math.min(180/WIDTH,120/HEIGHT),w=WIDTH*ratio,h=HEIGHT*ratio;
+      const ctx=preview.getContext("2d");
+      ctx.fillStyle="#ffffff";ctx.fillRect(0,0,180,120);
+      ctx.drawImage(canvas,(180-w)/2,(120-h)/2,w,h);
       return preview.toDataURL("image/png");
     } catch (_) {
       // An image or canvas error must never block saving the editable project.
@@ -3030,25 +3064,25 @@
   }
 
   // Keep the raster fallback for older files. Only accept bounded, plain text metadata.
-  function validateTextData(value) {
+  function validateTextData(value,width=WIDTH,height=HEIGHT) {
     if (!value || typeof value !== "object" || typeof value.content !== "string" ||
         !value.content.trim() || value.content.length > 280 || value.content.split("\n").length > 5 ||
         !Object.prototype.hasOwnProperty.call(TEXT_FONTS, value.family) ||
         !Number.isInteger(value.size) || value.size < 14 || value.size > 120 ||
         typeof value.bold !== "boolean" || typeof value.color !== "string" ||
         !/^#[a-fA-F0-9]{6}$/.test(value.color) ||
-        !Number.isInteger(value.left) || value.left < 0 || value.left >= WIDTH ||
-        !Number.isInteger(value.top) || value.top < 0 || value.top >= HEIGHT) return null;
+        !Number.isInteger(value.left) || value.left < 0 || value.left >= width ||
+        !Number.isInteger(value.top) || value.top < 0 || value.top >= height) return null;
     return { content: value.content, family: value.family, size: value.size, bold: value.bold,
       color: value.color, left: value.left, top: value.top };
   }
 
-  function validateLayer(input) {
+  function validateLayer(input,width=WIDTH,height=HEIGHT) {
     if (!input || typeof input !== "object" || typeof input.bitmap !== "string" ||
         !/^data:image\/png;base64,[a-zA-Z0-9+/=]+$/.test(input.bitmap)) {
       throw new Error("Prosjektet har ugyldige lag.");
     }
-    const textData = input.kind === "adjustment" ? null : validateTextData(input.textData);
+    const textData = input.kind === "adjustment" ? null : validateTextData(input.textData,width,height);
     return {
       ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
@@ -3060,8 +3094,8 @@
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       adjustments: safeAdjustments(input.adjustments),
       ...(input.kind === "adjustment" ? { toneAdjustments: safeTone(input.toneAdjustments), levels: safeLevels(input.levels), curves: safeCurves(input.curves) } : {}),
-      x: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
-      y: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
+      x: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -width * 2, width * 2),
+      y: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -height * 2, height * 2),
       bitmap: input.bitmap,
       ...(typeof input.pixelFixups === "string" ? { pixelFixups: input.pixelFixups } : {}),
       ...(Object.prototype.hasOwnProperty.call(input, "maskBitmap") ? {
@@ -3076,8 +3110,10 @@
     if (!Array.isArray(data.strokes) || data.strokes.length > 3000) {
       throw new Error("V1-prosjektet har ugyldige penselstrøk.");
     }
-    const layer = createLayer("Importert V1-tegning", "paint");
-    const context = surfaces.get(layer.id).getContext("2d");
+    // A legacy conversion must not allocate in or mutate the currently open project.
+    const layer={id:uid(),name:"Importert V1-tegning",kind:"paint",visible:true,locked:false,opacity:1,blendMode:"normal",adjustments:safeAdjustments(null),x:0,y:0};
+    const surface=imageCanvas(DEFAULT_WIDTH,DEFAULT_HEIGHT);
+    const context=surface.getContext("2d");
     data.strokes.forEach((stroke) => {
       if (!stroke || !/^#[a-fA-F0-9]{6}$/.test(stroke.color) ||
           !Number.isFinite(stroke.size) || stroke.size < 1 || stroke.size > 200 ||
@@ -3086,7 +3122,7 @@
       }
       const points = stroke.points.map((p) => {
         if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) ||
-            p.x < 0 || p.x > WIDTH || p.y < 0 || p.y > HEIGHT) {
+            p.x < 0 || p.x > DEFAULT_WIDTH || p.y < 0 || p.y > DEFAULT_HEIGHT) {
           throw new Error("V1-prosjektet har koordinater utenfor lerretet.");
         }
         return p;
@@ -3109,27 +3145,28 @@
       }
       context.restore();
     });
-    return [{ ...layer, bitmap: surfaces.get(layer.id).toDataURL("image/png") }];
+    return [{ ...layer, bitmap: surface.toDataURL("image/png") }];
   }
 
   async function loadData(data, isV1, sameRecord) {
     if (!data || typeof data !== "object") throw new Error("Ugyldig prosjekt.");
     let layers;
+    const width=isV1?DEFAULT_WIDTH:data.width,height=isV1?DEFAULT_HEIGHT:data.height;
+    requireCanvasSize(width,height);
     if (isV1) {
       layers = convertV1(data);
     } else {
-      if (data.format !== "aha-kunstrommet-v2" || data.width !== WIDTH ||
-          data.height !== HEIGHT || !Array.isArray(data.layers) ||
+      if (data.format !== "aha-kunstrommet-v2" || !Array.isArray(data.layers) ||
           !data.layers.length || data.layers.length > MAX_LAYERS) {
         throw new Error("Ukjent eller ugyldig prosjektformat.");
       }
-      layers = data.layers.map(validateLayer);
+      layers = data.layers.map(layer=>validateLayer(layer,width,height));
     }
     if (JSON.stringify(layers).length > MAX_PROJECT_BYTES) {
       throw new Error("Prosjektet er for stort.");
     }
     // Decode all imported images before installing the new document.
-    const decoded = await decodeLayerBitmaps(layers);
+    const decoded = await decodeLayerBitmaps(layers,width,height);
     const now = new Date().toISOString();
     const next = {
       id: sameRecord ? data.id : uid(),
@@ -3139,6 +3176,7 @@
       created_at: sameRecord ? data.created_at : now,
       updated_at: now, local_only: true, shared: false, analyzed_image: false
     };
+    installCanvasSize(width,height);
     surfaces.clear();
     masks.clear();
     adjustedBitmaps.clear();
@@ -3171,9 +3209,10 @@
     try {
       const saved = (await getRecords()).find((record) => record.id === item.id);
       if (!saved || !Array.isArray(saved.layers)) throw new Error("Fant ikke originalen i skisseboken.");
+      requireCanvasSize(saved.width,saved.height);
       const now = new Date().toISOString();
       const copy = {
-        format: "aha-kunstrommet-v2", version: 2, width: WIDTH, height: HEIGHT,
+        format: "aha-kunstrommet-v2", version: 2, width: saved.width, height: saved.height,
         layers: saved.layers.map((layer) => ({
           id: uid(), name: String(layer.name || "Lag").slice(0, 70),
           ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
@@ -3185,6 +3224,7 @@
           blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
           x: Number.isFinite(layer.x) ? layer.x : 0,
           y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
+          ...(validateTextData(layer.textData,saved.width,saved.height)?{textData:{...validateTextData(layer.textData,saved.width,saved.height)}}:{}),
           ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {}),
           ...(typeof layer.maskBitmap === "string" ? {
             maskBitmap: layer.maskBitmap,
@@ -3357,7 +3397,7 @@
   }
 
   async function importProject(file) {
-    if (busy || !file) return;
+    if (busy || pointerId!==null || !file) return;
     if (file.size > MAX_PROJECT_BYTES) { status("Prosjektfilen er for stor."); return; }
     busy = true;
     try {
@@ -3416,8 +3456,24 @@
       $("kv2-paper").focus?.({preventScroll:true});
     });
     $("kv2-new").addEventListener("click", () => {
-      if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
+      if (busy || pointerId!==null || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
       newProject();
+    });
+    $("kv2-canvas-preset").addEventListener("change",()=>{
+      const value=$("kv2-canvas-preset").value;
+      if(value==="custom")return;
+      const [w,h]=value.split("x").map(Number);
+      if(validCanvasSize(w,h)){$("kv2-canvas-width").value=String(w);$("kv2-canvas-height").value=String(h);}
+    });
+    ["width","height"].forEach(side=>$("kv2-canvas-"+side).addEventListener("input",()=>{
+      $("kv2-canvas-preset").value="custom";
+    }));
+    $("kv2-new-sized").addEventListener("click",()=>{
+      if(busy||pointerId!==null)return;
+      const w=Number($("kv2-canvas-width").value),h=Number($("kv2-canvas-height").value);
+      if(!validCanvasSize(w,h)){status("Ugyldig lerret: velg 320–1600 px per side og maks 1 440 000 piksler.");return;}
+      if(dirty&&!global.confirm("Forkaste endringer som ikke er lagret?"))return;
+      newProject(w,h);
     });
     $("kv2-group-save").addEventListener("click", saveNamedGroup);
     $("kv2-group-select").addEventListener("change", renderNamedGroups);
