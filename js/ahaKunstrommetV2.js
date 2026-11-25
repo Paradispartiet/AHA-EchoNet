@@ -1336,7 +1336,7 @@
     try { entries = readBrushLibrary(); }
     catch (_) {
       select.replaceChildren();
-      ["save","load","delete"].forEach(action => { $("kv2-brush-library-" + action).disabled = true; });
+      ["save","load","delete","export","import"].forEach(action => { $("kv2-brush-library-" + action).disabled = true; });
       brushLibraryMessage("Kunne ikke lese lokale pensler. Eksisterende data er ikke overskrevet.");
       return;
     }
@@ -1346,6 +1346,8 @@
     select.replaceChildren(option("Velg egen pensel",""),...entries.map(item=>option(item.name,item.name)));
     select.value=entries.some(item=>item.name===previous) ? previous : "";
     $("kv2-brush-library-save").disabled = false;
+    $("kv2-brush-library-export").disabled = !entries.length;
+    $("kv2-brush-library-import").disabled = false;
     $("kv2-brush-library-load").disabled = !select.value;
     $("kv2-brush-library-delete").disabled = !select.value;
     brushLibraryMessage(entries.length + " av " + BRUSH_LIBRARY_LIMIT + " egne pensler på denne enheten.");
@@ -1404,6 +1406,60 @@
       if (!entries.some(item=>item.name===name) || !global.confirm("Slett penselen «" + name + "»?")) return;
       writeBrushLibrary(entries.filter(item=>item.name!==name),"","Pensel slettet: " + name);
     } catch (_) { brushLibraryMessage("Kunne ikke lese lokale pensler. Ingen sletting."); }
+  }
+
+  function exportBrushLibrary() {
+    if (busy || pointerId !== null || !advancedBrushEnabled()) return;
+    try {
+      const brushes = readBrushLibrary();
+      download("mine-pensler.kunstrommet.json",
+        JSON.stringify({format:"aha-kunstrommet-brushes",version:1,brushes},null,2), "application/json");
+      brushLibraryMessage("Eksporterte " + brushes.length + " pensler. Ingen kunstverk eller profil-ID følger med.");
+    } catch (_) { brushLibraryMessage("Kunne ikke eksportere penselbiblioteket."); }
+  }
+  async function importBrushLibrary(file) {
+    const input = $("kv2-brush-library-import");
+    if (!file || busy || pointerId !== null || !advancedBrushEnabled()) { input.value=""; return; }
+    const key = brushLibraryKey();
+    try {
+      if (file.size > 40000) throw new Error("Penselfilen er for stor.");
+      const data = JSON.parse(await file.text());
+      if (data?.format !== "aha-kunstrommet-brushes" || data.version !== 1 ||
+          !Array.isArray(data.brushes) || data.brushes.length > BRUSH_LIBRARY_LIMIT) {
+        throw new Error("Velg en gyldig penselbibliotekfil.");
+      }
+      const names = new Set();
+      const incoming = data.brushes.map(item => {
+        const name = typeof item?.name === "string" ? item.name.trim() : "";
+        const s = item?.settings;
+        if (!name || name.length > 50 || names.has(name) || !s ||
+            typeof s !== "object" || Array.isArray(s) ||
+            !["size","hardness","opacity","flow","spacing"].every(k=>Number.isFinite(s[k])) ||
+            typeof s.color !== "string" || !/^#[0-9a-f]{6}$/i.test(s.color) ||
+            typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean") {
+          throw new Error("Penselfilen har ugyldige eller gjentatte pensler.");
+        }
+        names.add(name);
+        return {name,settings:safeBrushSettings(s)};
+      });
+      // Re-read after awaiting the file. Never write into a changed profile.
+      if (key !== brushLibraryKey() || busy || pointerId !== null || !advancedBrushEnabled()) {
+        throw new Error("Profilen eller verktøyet er endret. Prøv igjen.");
+      }
+      const existing = readBrushLibrary();
+      const used = new Set(existing.map(item=>item.name));
+      const added = incoming.filter(item=>!used.has(item.name));
+      if (existing.length + added.length > BRUSH_LIBRARY_LIMIT) {
+        throw new Error("Ikke nok plass. Ingen pensler er importert.");
+      }
+      if (!added.length) {
+        brushLibraryMessage("Ingen nye pensler. " + (incoming.length-added.length) + " navn finnes allerede.");
+        return;
+      }
+      writeBrushLibrary([...existing,...added],added[0].name,
+        "Importerte " + added.length + " pensler. Hoppet over " + (incoming.length-added.length) + " eksisterende navn.");
+    } catch (error) { brushLibraryMessage("Import avbrutt: " + error.message); }
+    finally { input.value=""; }
   }
 
   function advancedPoint(event, layer) {
@@ -2893,6 +2949,8 @@
     $("kv2-brush-library-save").addEventListener("click", saveOwnBrush);
     $("kv2-brush-library-load").addEventListener("click", loadOwnBrush);
     $("kv2-brush-library-delete").addEventListener("click", deleteOwnBrush);
+    $("kv2-brush-library-export").addEventListener("click", exportBrushLibrary);
+    $("kv2-brush-library-import").addEventListener("change", event=>importBrushLibrary(event.target.files[0]));
     $("kv2-brush-library-reset").addEventListener("click", () => {
       if (busy || pointerId !== null || !advancedBrushEnabled()) return;
       applyBrushSettings(BRUSH_DEFAULTS);

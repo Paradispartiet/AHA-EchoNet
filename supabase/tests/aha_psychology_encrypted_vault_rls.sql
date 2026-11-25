@@ -42,6 +42,65 @@ alter default privileges in schema public
 alter default privileges in schema public
   revoke select, insert, update, delete on tables from anon, authenticated, service_role;
 
+-- Exercise the actual locked -> pilot transition before the original staging tests.
+create or replace function auth.jwt() returns jsonb language sql stable as
+$jwt$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $jwt$;
+grant execute on function auth.jwt() to authenticated;
+
+\i supabase/psychology-encrypted-vault-pilot.sql
+
+set role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
+do $pilot$
+declare
+  payload text := '{"format":"history-go-psychology-encrypted-backup-v1","version":1,"kdf":"PBKDF2-SHA256","iterations":310000,"cipher":"AES-256-GCM","salt":"AQEBAQEBAQEBAQEBAQEBAQ==","iv":"AgICAgICAgICAgIC","data":"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD"}';
+  claims jsonb;
+begin
+  for claims in select value from jsonb_array_elements('[
+    {},
+    {"is_anonymous":false,"user_metadata":{"aha_psychology_vault_pilot":true}},
+    {"is_anonymous":false,"app_metadata":{"aha_psychology_vault_pilot":"true"}},
+    {"is_anonymous":true,"app_metadata":{"aha_psychology_vault_pilot":true}}
+  ]'::jsonb) loop
+    perform set_config('request.jwt.claims',claims::text,false);
+    begin
+      insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file)
+      values (auth.uid(),payload);
+      raise exception 'Non-pilot upload permitted';
+    exception when insufficient_privilege then null;
+    end;
+  end loop;
+  perform set_config('request.jwt.claims','{"is_anonymous":false,"app_metadata":{"aha_psychology_vault_pilot":true}}',false);
+  insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file)
+  values (auth.uid(),payload);
+  begin
+    insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file)
+    values ('22222222-2222-4222-8222-222222222222',payload);
+    raise exception 'Pilot cross-user upload permitted';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+  if exists (select 1 from public.aha_psychology_encrypted_backups) then
+    raise exception 'Pilot cross-user SELECT permitted';
+  end if;
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
+  perform set_config('request.jwt.claims','{"is_anonymous":false}',false);
+  if not exists (select 1 from public.aha_psychology_encrypted_backups) then
+    raise exception 'Former pilot cannot retrieve own backup';
+  end if;
+  delete from public.aha_psychology_encrypted_backups where user_id=auth.uid();
+  if not found then raise exception 'Former pilot cannot delete own backup'; end if;
+end
+$pilot$;
+reset role;
+\echo 'AHA restricted vault pilot transition: PASS'
+
+-- Clean up pilot privileges/policies in the disposable CI database only.
+drop policy aha_psych_backup_select_own on public.aha_psychology_encrypted_backups;
+drop policy aha_psych_backup_insert_pilot on public.aha_psychology_encrypted_backups;
+drop policy aha_psych_backup_delete_own on public.aha_psychology_encrypted_backups;
+revoke all on public.aha_psychology_encrypted_backups from authenticated;
+
 -- Existing staging script is the subsequent opt-in phase in this disposable CI database.
 \i supabase/psychology-encrypted-vault.sql
 

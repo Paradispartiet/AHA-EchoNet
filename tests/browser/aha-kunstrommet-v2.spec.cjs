@@ -1473,6 +1473,32 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("brush library exports settings only and merges imports without overwriting", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-name").fill("Original");
+    await page.locator("#kv2-brush-library-save").click();
+    const pending=page.waitForEvent("download");
+    await page.locator("#kv2-brush-library-export").click();
+    const file=JSON.parse(await fs.readFile(await (await pending).path(),"utf8"));
+    expect(Object.keys(file).sort()).toEqual(["brushes","format","version"]);
+    expect(file.brushes[0].name).toBe("Original");
+    const baseline=await jsonBackup(page);
+    const importFile=data=>page.locator("#kv2-brush-library-import").setInputFiles({name:"pensler.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await importFile({...file,brushes:[{name:"Original",settings:{...file.brushes[0].settings,flow:.9}},{name:"Akvarell",settings:{...file.brushes[0].settings,flow:.12}}]});
+    await expect(page.locator("#kv2-brush-library-status")).toContainText("Importerte 1 pensler");
+    await page.locator("#kv2-brush-library").selectOption("Original");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-flow")).toHaveValue("35");
+    await page.locator("#kv2-brush-library").selectOption("Akvarell");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-flow")).toHaveValue("12");
+    await importFile({...file,brushes:[{name:"Ugyldig",settings:{}}]});
+    await expect(page.locator("#kv2-brush-library-status")).toContainText("Import avbrutt");
+    await expect(page.locator("#kv2-brush-library option")).toHaveCount(3);
+    expect((await jsonBackup(page)).layers).toEqual(baseline.layers);
+  });
+
   test("named brushes persist locally, are profile scoped and do not edit artwork", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.evaluate(()=>localStorage.setItem("aha_profile_id","brush-test-a"));
