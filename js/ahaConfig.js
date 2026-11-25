@@ -2,33 +2,36 @@
 // Runtime configuration for AHA-EchoNet.
 // Public Supabase frontend config only. Do not put database passwords or service-role keys here.
 
-// PKCE verifiers are browser-origin-bound. This installation is currently
-// approved only for the existing GitHub Pages AHA origin and the exact
-// Cloudflare preview origin. No independent Vercel hostname is yet verified.
-// Fail closed on every other origin, including any *.vercel.app domain,
-// regardless of earlier AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED flags.
-// Enabling a new AHA origin requires an explicit follow-up code review,
-// Supabase Auth exact Redirect URLs approval and an end-to-end test.
+// PKCE verifiers are browser-origin-bound. The three *exact* origins below
+// have dedicated callbacks. AHA Vercel was verified in the correct Vercel
+// project (mats-grans-projects/aha-echo-net) and its exact callback URL was
+// added to AHA production Supabase Auth Redirect URLs on 2026-11-25.
+// Never enable arbitrary Vercel preview URLs, wildcard hosts, HTTP origins,
+// or the legacy aha-echonet.vercel.app project. Host admission here does not
+// replace Supabase's redirect allowlist or real browser sign-in tests.
 (function configureAhaAuthOrigin() {
   const githubOrigin = "https://paradispartiet.github.io";
   const githubApp = githubOrigin + "/AHA-EchoNet/";
   const githubCallback = githubApp + "auth-callback.html";
   const previewOrigin = "https://aha-preview.aha-echonet-preview.pages.dev";
+  const vercelOrigin = "https://aha-echo-net.vercel.app";
   const origin = String(window.location?.origin || "");
   const isGithub = origin === githubOrigin;
   const isExactPreview = origin === previewOrigin;
-  const authOriginVerified = isGithub || isExactPreview;
+  const isExactVercel = origin === vercelOrigin;
+  const authOriginVerified = isGithub || isExactPreview || isExactVercel;
 
   window.AHA_AUTH_ORIGIN_BLOCKED = !authOriginVerified;
-  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = !authOriginVerified &&
+  window.AHA_VERCEL_AUTH_LOGIN_BLOCKED = !isExactVercel &&
     /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin);
 
-  // Keep navigation on the same origin where it began, even while login
-  // is blocked. Never redirect an unverified host back to GitHub Pages.
+  // Keep navigation on the same origin where it began. Do not redirect
+  // blocked Vercel preview origins to GitHub Pages for PKCE completion.
   const localApp = /^https?:\/\/[^/]+$/.test(origin) ? origin + "/" : githubApp;
   const appUrl = isGithub ? githubApp : localApp;
   const callbackUrl = isGithub ? githubCallback :
-    isExactPreview ? previewOrigin + "/auth-callback.html" : "";
+    isExactPreview ? previewOrigin + "/auth-callback.html" :
+    isExactVercel ? vercelOrigin + "/auth-callback.html" : "";
 
   window.AHA_APP_URL = window.AHA_APP_URL || appUrl;
   // An external override must not convert an unverified browser origin into
