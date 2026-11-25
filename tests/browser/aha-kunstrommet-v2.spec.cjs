@@ -92,6 +92,39 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("direct transform handles update draft, cancel pointer gestures and commit once", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [700, 400], [700, 400], 990);
+    const before = await jsonBackup(page);
+    await page.locator("#kv2-transform-free").click();
+    await expect(page.locator("#kv2-transform-overlay")).toBeVisible();
+    const drag = async (key, dx, dy, type = "pointerup") => page.locator("#kv2-transform-overlay").evaluate((svg, d) => {
+      const handle = svg.querySelector("#kv2-handle-" + d.key), box = svg.getBoundingClientRect();
+      const x = Number(handle.getAttribute("cx")), y = Number(handle.getAttribute("cy"));
+      const send = (node, type, a, b) => node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerType: "pen", pointerId: 991, button: 0,
+        buttons: type === "pointerdown" || type === "pointermove" ? 1 : 0,
+        clientX: box.left + a * box.width / 1200, clientY: box.top + b * box.height / 800
+      }));
+      send(handle, "pointerdown", x, y);
+      send(svg, "pointermove", x + d.dx, y + d.dy);
+      send(svg, d.type, x + d.dx, y + d.dy);
+    }, { key, dx, dy, type });
+    await drag("se", 85, 35);
+    await expect(page.locator("#kv2-free-x")).toHaveValue("150");
+    await expect(page.locator("#kv2-free-y")).toHaveValue("150");
+    await drag("pivot", 40, 20);
+    await expect(page.locator("#kv2-handle-pivot")).toHaveAttribute("cx", "640");
+    await drag("rotate", 25, 20, "pointercancel");
+    await expect(page.locator("#kv2-free-angle")).toHaveValue("0");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator("#kv2-free-commit").click();
+    await expect(page.locator("#kv2-transform-overlay")).toBeHidden();
+    expect((await pxAt(page, 730, 390))[0]).toBeLessThan(100);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 700, 400))[0]).toBeLessThan(100);
+  });
+
   test("free transform preview is isolated, supports independent scale and one-step undo", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 987);

@@ -1302,24 +1302,24 @@
   }
 
   // Same document-center pivot and local bitmap bounds as the preset transforms.
-  function transformedSurface(source, layer, degrees, scaleX, scaleY) {
+  function transformedSurface(source, layer, degrees, scaleX, scaleY, pivot = { x: WIDTH / 2, y: HEIGHT / 2 }) {
     const output = imageCanvas();
     const ctx = output.getContext("2d");
     ctx.translate(-layer.x, -layer.y);
-    ctx.translate(WIDTH / 2, HEIGHT / 2);
+    ctx.translate(pivot.x, pivot.y);
     ctx.rotate(degrees * Math.PI / 180);
     ctx.scale(scaleX, scaleY);
     ctx.translate(layer.x, layer.y);
-    ctx.drawImage(source, -WIDTH / 2, -HEIGHT / 2);
+    ctx.drawImage(source, -pivot.x, -pivot.y);
     return output;
   }
 
-  function transformResult(layer, degrees, scaleX, scaleY) {
+  function transformResult(layer, degrees, scaleX, scaleY, pivot) {
     return {
       id: layer.id,
-      bitmap: transformedSurface(surfaces.get(layer.id), layer, degrees, scaleX, scaleY),
+      bitmap: transformedSurface(surfaces.get(layer.id), layer, degrees, scaleX, scaleY, pivot),
       mask: masks.has(layer.id)
-        ? transformedSurface(masks.get(layer.id), layer, degrees, scaleX, scaleY) : null
+        ? transformedSurface(masks.get(layer.id), layer, degrees, scaleX, scaleY, pivot) : null
     };
   }
 
@@ -1341,7 +1341,12 @@
 
   function cancelFreeTransform() {
     if (!freeTransform) return;
+    const drag = freeTransform.drag;
     freeTransform = null;
+    const overlay = $("kv2-transform-overlay");
+    if (drag && overlay.hasPointerCapture?.(drag.id)) overlay.releasePointerCapture(drag.id);
+    overlay.toggleAttribute("hidden", true);
+    $("kv2-transform-live").hidden = true;
     $("kv2-free-transform-panel").hidden = true;
     // Drop any preview-only adjusted bitmap cache entry.
     adjustedBitmaps.clear();
@@ -1369,8 +1374,135 @@
     $("kv2-free-commit").disabled = !values ||
       (values.degrees === 0 && values.x === 1 && values.y === 1);
     $("kv2-free-warning").textContent = values ? "" : "Bruk vinkel −180 til 180 og skala 10 til 300 %.";
+    const result = values ? transformResult(layer, values.degrees, values.x, values.y, freeTransform.pivot) : null;
     const preview = $("kv2-free-preview").getContext("2d");
-    drawComposition(preview, values ? transformResult(layer, values.degrees, values.x, values.y) : null);
+    drawComposition(preview, result);
+    const live = $("kv2-transform-live"), overlay = $("kv2-transform-overlay");
+    const rect = canvas.getBoundingClientRect();
+    [live, overlay].forEach(node => { node.style.width = rect.width + "px"; node.style.height = rect.height + "px"; });
+    live.hidden = false;
+    live.getContext("2d").drawImage($("kv2-free-preview"), 0, 0);
+    overlay.toggleAttribute("hidden", false);
+    renderTransformHandles(values || { degrees: 0, x: 1, y: 1 });
+  }
+
+  // Bounds are computed once from original alpha, not from the preview or mask.
+  function transformBounds(layer) {
+    const pixels = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
+    let left = WIDTH, right = 0, top = HEIGHT, bottom = 0;
+    for (let y = 0; y < HEIGHT; y++) for (let x = 0; x < WIDTH; x++) {
+      if (!pixels[(y * WIDTH + x) * 4 + 3]) continue;
+      left = Math.min(left, x); right = Math.max(right, x + 1);
+      top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
+    }
+    if (right <= left || bottom <= top) return { left: 150, right: WIDTH - 150, top: 100, bottom: HEIGHT - 100 };
+    // Provide a usable grab area even for a dot; it is a UI frame, not a crop.
+    const cx = (left + right) / 2 + layer.x, cy = (top + bottom) / 2 + layer.y;
+    const hw = Math.max(70, (right - left) / 2), hh = Math.max(70, (bottom - top) / 2);
+    return { left: cx - hw, right: cx + hw, top: cy - hh, bottom: cy + hh };
+  }
+
+  function transformPoint(p, values, pivot) {
+    const theta = values.degrees * Math.PI / 180, c = Math.cos(theta), s = Math.sin(theta);
+    const x = (p.x - pivot.x) * values.x, y = (p.y - pivot.y) * values.y;
+    return { x: pivot.x + x * c - y * s, y: pivot.y + x * s + y * c };
+  }
+
+  function renderTransformHandles(values) {
+    const { bounds: b, pivot } = freeTransform;
+    const cx = (b.left + b.right) / 2, cy = (b.top + b.bottom) / 2;
+    const points = {
+      nw: [b.left, b.top], n: [cx, b.top], ne: [b.right, b.top],
+      w: [b.left, cy], e: [b.right, cy], sw: [b.left, b.bottom],
+      s: [cx, b.bottom], se: [b.right, b.bottom]
+    };
+    const mapped = {};
+    Object.entries(points).forEach(([key, p]) => {
+      mapped[key] = transformPoint({ x: p[0], y: p[1] }, values, pivot);
+    });
+    const overlay = $("kv2-transform-overlay");
+    const units = WIDTH / Math.max(1, overlay.getBoundingClientRect().width);
+    const theta = values.degrees * Math.PI / 180;
+    mapped.rotate = { x: mapped.n.x + Math.sin(theta) * 30 * units,
+      y: mapped.n.y - Math.cos(theta) * 30 * units };
+    mapped.pivot = pivot;
+    $("kv2-transform-frame").setAttribute("points", ["nw", "ne", "se", "sw"].map(key => mapped[key].x + "," + mapped[key].y).join(" "));
+    const stem = $("kv2-transform-stem");
+    ["x1", "y1", "x2", "y2"].forEach((name, i) => stem.setAttribute(name, [mapped.n.x, mapped.n.y, mapped.rotate.x, mapped.rotate.y][i]));
+    Object.entries(mapped).forEach(([key, p]) => {
+      const handle = $("kv2-handle-" + key);
+      handle.setAttribute("cx", p.x); handle.setAttribute("cy", p.y);
+      handle.setAttribute("r", (key === "pivot" ? 8 : 9) * units);
+    });
+  }
+
+  function transformPointer(event) {
+    const rect = $("kv2-transform-overlay").getBoundingClientRect();
+    return { x: (event.clientX - rect.left) * WIDTH / rect.width,
+      y: (event.clientY - rect.top) * HEIGHT / rect.height };
+  }
+
+  function beginTransformDrag(event) {
+    const key = event.target.getAttribute("data-transform-handle");
+    const values = freeTransformValues();
+    if (!freeTransformLayer() || freeTransform.drag || !key || !values ||
+        (event.pointerType === "mouse" && event.button !== 0)) return;
+    event.preventDefault();
+    const p = transformPointer(event);
+    freeTransform.drag = { id: event.pointerId, key, p, values, pivot: { ...freeTransform.pivot } };
+    try { $("kv2-transform-overlay").setPointerCapture(event.pointerId); } catch (_) {}
+  }
+
+  function moveTransformDrag(event) {
+    const drag = freeTransform?.drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    event.preventDefault();
+    const p = transformPointer(event), origin = drag.pivot, v = drag.values;
+    if (drag.key === "pivot") {
+      freeTransform.pivot = { x: clamp(origin.x + p.x - drag.p.x, 0, WIDTH),
+        y: clamp(origin.y + p.y - drag.p.y, 0, HEIGHT) };
+    } else if (drag.key === "rotate") {
+      const a = Math.atan2(drag.p.y - origin.y, drag.p.x - origin.x);
+      const b = Math.atan2(p.y - origin.y, p.x - origin.x);
+      const degrees = ((v.degrees + (b - a) * 180 / Math.PI + 540) % 360) - 180;
+      $("kv2-free-angle").value = Math.round(degrees);
+    } else {
+      const theta = v.degrees * Math.PI / 180, c = Math.cos(theta), s = Math.sin(theta);
+      const local = q => ({ x: (q.x - origin.x) * c + (q.y - origin.y) * s,
+        y: -(q.x - origin.x) * s + (q.y - origin.y) * c });
+      const start = local(drag.p), end = local(p);
+      const xAxis = /[ew]/.test(drag.key), yAxis = /[ns]/.test(drag.key);
+      let x = v.x, y = v.y;
+      if ($("kv2-free-ratio").checked) {
+        const denominator = (xAxis ? start.x ** 2 : 0) + (yAxis ? start.y ** 2 : 0);
+        if (denominator > 1) {
+          const ratio = ((xAxis ? start.x * end.x : 0) + (yAxis ? start.y * end.y : 0)) / denominator;
+          x = y = v.x * ratio;
+        }
+      } else {
+        if (xAxis && Math.abs(start.x) > 1) x = v.x * end.x / start.x;
+        if (yAxis && Math.abs(start.y) > 1) y = v.y * end.y / start.y;
+      }
+      $("kv2-free-x").value = Math.round(clamp(x * 100, 10, 300));
+      $("kv2-free-y").value = Math.round(clamp(y * 100, 10, 300));
+    }
+    renderFreeTransform();
+  }
+
+  function endTransformDrag(event) {
+    const drag = freeTransform?.drag;
+    if (!drag || drag.id !== event.pointerId) return;
+    if (event.type === "pointerup") moveTransformDrag(event);
+    else if (event.type === "pointercancel") {
+      freeTransform.pivot = drag.pivot;
+      $("kv2-free-angle").value = drag.values.degrees;
+      $("kv2-free-x").value = Math.round(drag.values.x * 100);
+      $("kv2-free-y").value = Math.round(drag.values.y * 100);
+      renderFreeTransform();
+    }
+    freeTransform.drag = null;
+    const overlay = $("kv2-transform-overlay");
+    if (overlay.hasPointerCapture?.(event.pointerId)) overlay.releasePointerCapture(event.pointerId);
   }
 
   function openFreeTransform() {
@@ -1379,7 +1511,7 @@
     cancelFreeTransform();
     clearTextDraft();
     renderTextPreview();
-    freeTransform = { id: layer.id };
+    freeTransform = { id: layer.id, pivot: { x: WIDTH / 2, y: HEIGHT / 2 }, bounds: transformBounds(layer), drag: null };
     $("kv2-free-angle").value = "0";
     $("kv2-free-x").value = "100";
     $("kv2-free-y").value = "100";
@@ -1399,7 +1531,7 @@
     const layer = freeTransformLayer(), values = freeTransformValues();
     if (!layer || !values || (values.degrees === 0 && values.x === 1 && values.y === 1)) return;
     // Compute from the original surfaces, not from any prior preview.
-    applyTransform(transformResult(layer, values.degrees, values.x, values.y));
+    applyTransform(transformResult(layer, values.degrees, values.x, values.y, freeTransform.pivot));
     status("Transformering utført – kan angres.");
   }
 
@@ -1951,6 +2083,10 @@
       $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
     });
     $("kv2-transform-free").addEventListener("click", openFreeTransform);
+    const transformOverlay = $("kv2-transform-overlay");
+    transformOverlay.addEventListener("pointerdown", beginTransformDrag);
+    transformOverlay.addEventListener("pointermove", moveTransformDrag);
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => transformOverlay.addEventListener(type, endTransformDrag));
     ["angle", "x", "y"].forEach(axis => {
       $("kv2-free-" + axis).addEventListener("input", () => updateFreeTransform(axis));
     });

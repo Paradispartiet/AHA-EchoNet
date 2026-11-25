@@ -212,3 +212,8 @@ Nye tekstlag beholder en avgrenset tekstbeskrivelse sammen med PNG-pikslene i pr
 ## Fri transformering (numerisk førsteversjon)
 
 **Fri transformering** åpner en separat forhåndsvisning av hele komposisjonen. Vinkel −180 til 180 grader og bredde/høyde 10–300 % kan justeres med låste eller uavhengige proporsjoner. Forhåndsvisningen endrer verken lerretet, prosjektkopien eller angrehistorikken. Bruk transformering beregner resultatet fra originalen i ett angresteg, med samme matrise for bilde og eventuell lagmaske, rundt dokumentets sentrum. Avbryt/Escape eller annet lagarbeid forkaster utkastet. Redigerbar tekst må rasteriseres først; låste/skjulte lag og aktiv maskeredigering sperres. Ingen formatendring, nettverk eller AI. Direkte skaleringshåndtak på lerretet er ikke en del av denne førsteversjonen.
+
+
+## Direkte transformasjonskontroller
+
+Fri transformering viser også en separat komposisjonskopi på lerretet med hjørne-/sidehåndtak, rotasjonshåndtak og flyttbart oransje sentrum. Rammen beregnes fra lagets opprinnelige alfa med et minste synlig gripeområde. Tallfeltene er fortsatt tilgjengelige og synkroniseres med drag. Pointercancel forkaster pågående drag; Avbryt/Escape forkaster hele utkastet. Håndtak og livevisning er egne DOM-elementer og inngår aldri i originalens PNG/JSON, lagring eller angrehistorikk. Innhold utenfor bitmapgrensene kan klippes ved bekreftelse; zoom/verktøy-/lagbytte avslutter utkastet. Fysisk iPad-testing er fortsatt nødvendig.
