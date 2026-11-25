@@ -11,6 +11,9 @@ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
     create role anon nosuperuser nobypassrls nologin;
   end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nosuperuser bypassrls nologin;
+  end if;
 end
 $init$;
 
@@ -31,6 +34,15 @@ values
   ('22222222-2222-4222-8222-222222222222')
 on conflict do nothing;
 
+-- Simulate Supabase's default API table grants so the locked installer
+-- must remove even automatically inherited creation-time grants.
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated, service_role;
+\i supabase/psychology-encrypted-vault-locked.sql
+alter default privileges in schema public
+  revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+
+-- Existing staging script is the subsequent opt-in phase in this disposable CI database.
 \i supabase/psychology-encrypted-vault.sql
 
 do $rights$
