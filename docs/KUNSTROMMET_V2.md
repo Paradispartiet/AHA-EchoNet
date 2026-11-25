@@ -327,3 +327,8 @@ Vertikal, horisontal og kombinert speiling med flyttbare akser (10–90 %). Vanl
 ### Radiell symmetri
 
 Mandalamodus med 3–12 jevnt fordelte rotasjoner (inkludert originalstrøket) rundt et flyttbart sentrum. Bruker samme symmetrimotor for vanlig/avansert pensel, viskelær og masker; hele avtrykket roteres, ikke bare posisjonen. Sektorlinjer er visuelle og følger zoom. Identiske sentre/segmenter avdupliseres; overlapp kan bygge opp farge. Innstillinger fryses per strøk. Ingen prosjektformatendring. Nettlesertest dekker seks rotasjoner, flyttbart sentrum, fireveis rotasjon av flat pensel og angre. Tolv er valgt som foreløpig øvre grense av hensyn til ytelse; fysisk iPad-testing gjenstår.
+
+
+### Perspektivlås for penselstrøk
+
+Valgfri lås i ett- og topunktsperspektiv. Første bevegelse over fire CSS-piksler velger nærmeste retning (ettpunkt: horisontal, vertikal eller forsvinningspunkt; topunkt: vertikal eller ett av forsvinningspunktene). Resten av strøket projiseres på samme rette linje og avgrenses ved lerretets kant. Separat oransje linje vises under strøket, men eksporteres aldri. Støtter vanlig/avansert pensel, viskelær og maskestrøk. Symmetri har forrang; perspektivlås anvendes ikke samtidig. Låsens parametre fryses per strøk, prosjektformatet endres ikke. Test dekker retning, angre, avansert pensel, eksport og symmetriprioritet. Fysisk Apple Pencil-verifikasjon gjenstår.

@@ -1435,6 +1435,59 @@
     $("kv2-symmetry-count-control").hidden=!radial;
   }
 
+  // Freeze the perspective ruler for a paint gesture. The first meaningful
+  // movement chooses a direction, subsequent samples project onto that line.
+  function perspectiveLock(origin, symmetry) {
+    if (!$("kv2-guide-lock").checked || (symmetry && symmetry.mode!=="off")) return null;
+    const mode=$("kv2-guide-mode").value;
+    if(mode!=="one"&&mode!=="two")return null;
+    const y=HEIGHT*clamp(Number($("kv2-guide-horizon").value)||0,10,90)/100;
+    const positions=mode==="one"
+      ? [clamp(Number($("kv2-guide-point").value)||0,5,95)]
+      : [clamp(Number($("kv2-guide-left").value)||0,0,45),clamp(Number($("kv2-guide-right").value)||0,55,100)];
+    const directions=[[0,1]];
+    if(mode==="one")directions.push([1,0]);
+    for(const x of positions){
+      const dx=WIDTH*x/100-origin.x,dy=y-origin.y,length=Math.hypot(dx,dy);
+      if(length>1)directions.push([dx/length,dy/length]);
+    }
+    return {origin,directions,direction:null};
+  }
+  function showPerspectiveLock() {
+    const overlay=$("kv2-perspective-lock-overlay"),ruler=pointerStart?.perspective;
+    const u=ruler?.direction;
+    overlay.toggleAttribute("hidden",!u);
+    if(!u)return;
+    overlay.style.width=Math.round(ZOOM_LEVELS[zoomIndex]*100)+"%";
+    const {x,y}=ruler.origin,length=Math.hypot(WIDTH,HEIGHT);
+    $("kv2-perspective-lock-line").setAttribute("d","M "+(x-u[0]*length)+" "+(y-u[1]*length)+" L "+(x+u[0]*length)+" "+(y+u[1]*length));
+  }
+  function paintPoint(event) {
+    const raw=point(event),ruler=pointerStart?.perspective;
+    if(!ruler)return raw;
+    const {origin}=ruler,dx=raw.x-origin.x,dy=raw.y-origin.y;
+    if(!ruler.direction){
+      const box=canvas.getBoundingClientRect();
+      // Threshold in display pixels, independent of CSS zoom.
+      if(Math.hypot(dx*box.width/WIDTH,dy*box.height/HEIGHT)<4)return origin;
+      let score=-1;
+      for(const v of ruler.directions){
+        const next=Math.abs(dx*v[0]+dy*v[1]);
+        if(next>score){score=next;ruler.direction=v;}
+      }
+      showPerspectiveLock();
+    }
+    const [ux,uy]=ruler.direction;
+    let t=dx*ux+dy*uy,lo=-Infinity,hi=Infinity;
+    for(const [p,u,max] of [[origin.x,ux,WIDTH],[origin.y,uy,HEIGHT]]){
+      if(Math.abs(u)<1e-9)continue;
+      const a=-p/u,b=(max-p)/u;
+      lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));
+    }
+    t=clamp(t,lo,hi);
+    return {x:origin.x+t*ux,y:origin.y+t*uy};
+  }
+
   function renderCompositionGuides() {
     const mode=$("kv2-guide-mode").value;
     const one=mode==="one",two=mode==="two",perspective=one||two;
@@ -1443,6 +1496,10 @@
     const left=clamp(Number($("kv2-guide-left").value)||0,0,45);
     const right=clamp(Number($("kv2-guide-right").value)||0,55,100);
     $("kv2-guide-perspective").hidden=!perspective;
+    $("kv2-guide-lock").disabled=!perspective;
+    $("kv2-guide-lock-note").textContent=symmetrySettings().mode==="off"
+      ? "Første bevegelse velger retning. Hold samme retning til du løfter pennen."
+      : "Perspektivlåsen er midlertidig deaktivert mens symmetri er aktiv.";
     $("kv2-guide-one-controls").hidden=!one;
     $("kv2-guide-two-controls").hidden=!two;
     for(const [id,value] of [["horizon",horizon],["point",center],["left",left],["right",right]]) {
@@ -1486,6 +1543,7 @@
   function refresh() {
     renderCompositionGuides();
     renderSymmetry();
+    showPerspectiveLock();
     showSnapGuides();
     cancelFreeTransform();
     if (textEditId && (tool !== "text" || currentLayer()?.id !== textEditId ||
@@ -1844,7 +1902,7 @@
   }
 
   function advancedPoint(event, layer) {
-    const at = point(event), pressure = event.pointerType === "pen" &&
+    const at = paintPoint(event), pressure = event.pointerType === "pen" &&
       Number.isFinite(event.pressure) && event.pressure > 0 ? clamp(event.pressure, 0, 1) : 0.5;
     return { x: at.x - layer.x, y: at.y - layer.y,
       pressure, width: penPressure(event), pen: event.pointerType === "pen", ...penTilt(event) };
@@ -1983,6 +2041,7 @@
     pointerId = null; pointerStart = null; paintPrevious = null;
     $("kv2-brush-live").hidden = true;
     renderSymmetry();
+    showPerspectiveLock();
     if (commit && checkpoint()) {
       const ctx = stroke.source.getContext("2d");
       ctx.save(); ctx.globalCompositeOperation="source-over"; ctx.globalAlpha=stroke.settings.opacity;
@@ -2151,6 +2210,7 @@
       snapBounds: moving.length && $("kv2-snap-enabled").checked ? groupSnapBounds(moving, layer) : null,
       snapTargets: moving.length && $("kv2-snap-enabled").checked ? snapTargets(moving) : null
     };
+    if(tool==="brush"||tool==="eraser")pointerStart.perspective=perspectiveLock(pointerStart.point,pointerStart.symmetry);
     paintPrevious = null;
     if (isShapeTool()) {
       if (maskEditing && tool !== "gradient") {
@@ -2179,7 +2239,7 @@
     }
     if (advanced) beginAdvancedStroke(layer, event);
     else if (tool === "brush" || tool === "eraser") {
-      const at = point(event);
+      const at = paintPoint(event);
       const local = {
         x: at.x - layer.x, y: at.y - layer.y,
         pressureFactor: penPressure(event)
@@ -2249,8 +2309,9 @@
         }
       }
     } else {
+      const guided=paintPoint(event);
       const local = {
-        x: at.x - layer.x, y: at.y - layer.y,
+        x: guided.x - layer.x, y: guided.y - layer.y,
         pressureFactor: penPressure(event)
       };
       paintOnLayer(layer, paintPrevious, local);
@@ -2288,6 +2349,7 @@
     pointerStart = null;
     paintPrevious = null;
     renderSymmetry();
+    showPerspectiveLock();
     if (changedArtwork) {
       changed();
       draw();
@@ -3327,17 +3389,18 @@
 
   function bind() {
     $("kv2-guide-mode").addEventListener("change",renderCompositionGuides);
-    $("kv2-symmetry-mode").addEventListener("change",renderSymmetry);
+    $("kv2-symmetry-mode").addEventListener("change",()=>{renderSymmetry();renderCompositionGuides();});
     ["x","y","count"].forEach(name=>$("kv2-symmetry-"+name).addEventListener("input",renderSymmetry));
     $("kv2-symmetry-reset").addEventListener("click",()=>{
       $("kv2-symmetry-mode").value="off";
-      $("kv2-symmetry-x").value="50";$("kv2-symmetry-y").value="50";$("kv2-symmetry-count").value="6";renderSymmetry();
+      $("kv2-symmetry-x").value="50";$("kv2-symmetry-y").value="50";$("kv2-symmetry-count").value="6";renderSymmetry();renderCompositionGuides();
     });
     ["horizon","point","left","right","opacity"].forEach(name=>{
       $("kv2-guide-"+name).addEventListener("input",renderCompositionGuides);
     });
     $("kv2-guide-reset").addEventListener("click",()=>{
       $("kv2-guide-mode").value="off";
+      $("kv2-guide-lock").checked=false;
       $("kv2-guide-horizon").value="50";$("kv2-guide-point").value="50";
       $("kv2-guide-left").value="20";$("kv2-guide-right").value="80";
       $("kv2-guide-opacity").value="45";renderCompositionGuides();
