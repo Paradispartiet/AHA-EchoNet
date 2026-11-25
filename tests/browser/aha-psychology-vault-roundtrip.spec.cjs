@@ -235,8 +235,29 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(backup.text).not.toContain(SECRET_SENTINEL);
   expect(backup.text).not.toContain(PASSWORD);
 
+  // Exercise the real origin gate on the exact approved HTTPS origin,
+  // serving only checkout files. Never contact the deployed Vercel site.
+  const approvedOrigin = "https://aha-echo-net.vercel.app/";
+  const sourceRoot = nodePath.resolve(__dirname, "../..");
+  await page.route(approvedOrigin + "**", async route => {
+    const relative = decodeURIComponent(new URL(route.request().url()).pathname).slice(1);
+    const resolved = nodePath.resolve(sourceRoot, relative);
+    if (!relative || !resolved.startsWith(sourceRoot + nodePath.sep)) {
+      return route.fulfill({ status: 404, body: "" });
+    }
+    let body;
+    try { body = fs.readFileSync(resolved); }
+    catch { return route.fulfill({ status: 404, body: "" }); }
+    const contentType = relative.endsWith(".html") ? "text/html; charset=utf-8" :
+      relative.endsWith(".js") ? "text/javascript; charset=utf-8" :
+      relative.endsWith(".css") ? "text/css; charset=utf-8" :
+      "application/octet-stream";
+    return route.fulfill({ status: 200, body, contentType });
+  });
+  await page.route("https://*.supabase.co/**", route => route.abort());
   await replaceRemoteSdkWithFake(page, true);
-  await page.goto("/psykologi-vault.html", { waitUntil: "domcontentloaded" });
+  await page.goto(approvedOrigin + "psykologi-vault.html", { waitUntil: "domcontentloaded" });
+  expect(await page.evaluate(() => location.origin)).toBe(approvedOrigin.slice(0, -1));
   await expect(page.locator("#aha-psych-vault-panel")).toBeVisible();
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);

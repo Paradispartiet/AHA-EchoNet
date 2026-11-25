@@ -14,17 +14,15 @@
     return Object.assign(new Error(reason), { code: reason });
   }
 
-  // History-Go and AHA share the paradispartiet.github.io origin. Do not
-  // permit Psychology vault account actions on that shared browser origin,
-  // even if a deploy accidentally enables the feature flag there.
+  // Only the independently verified, separate AHA production origin may
+  // use the vault. Shared GitHub Pages, legacy Vercel, previews and unknown
+  // origins remain blocked even if the UX flag is accidentally enabled.
   // This is defence in depth; the Supabase RLS policies enforce ownership.
-  function onSharedHistoryGoOrigin() {
-    return global.location?.hostname === "paradispartiet.github.io";
-  }
+  const VAULT_ORIGIN = "https://aha-echo-net.vercel.app";
 
   function enabled() {
     return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true &&
-      !onSharedHistoryGoOrigin();
+      global.location?.origin === VAULT_ORIGIN;
   }
 
   function checkEnabled() {

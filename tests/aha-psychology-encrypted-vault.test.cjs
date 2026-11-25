@@ -81,12 +81,28 @@ async function run() {
 
   // Never use the account vault on the GitHub Pages origin shared by
   // History-Go and AHA, even if someone turns on the frontend feature flag.
-  global.location = { hostname: "paradispartiet.github.io" };
   global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = true;
-  assert.equal(vault.enabled(), false);
-  await assert.rejects(vault.status({ client: mockClient(UUID_A) }), /not_activated/);
-  assert.equal(accesses, 0, "shared origin must not access Supabase");
-  global.location = { hostname: "aha-echo-net.vercel.app" };
+  for (const origin of [
+    undefined,
+    "https://paradispartiet.github.io",
+    "https://aha-echonet.vercel.app",
+    "https://aha-preview.aha-echonet-preview.pages.dev",
+    "https://aha-echo-net-preview.vercel.app",
+    "http://aha-echo-net.vercel.app",
+    "https://aha-echo-net.vercel.app:8443",
+    "https://aha-echo-net.vercel.app.example.org",
+    "null"
+  ]) {
+    global.location = origin === undefined ? undefined : { origin };
+    assert.equal(vault.enabled(), false, String(origin));
+    const options = { client: mockClient(UUID_A) };
+    await assert.rejects(vault.status(options), /not_activated/);
+    await assert.rejects(vault.upload(env, options), /not_activated/);
+    await assert.rejects(vault.download(options), /not_activated/);
+    await assert.rejects(vault.remove({ ...options, confirmed: true }), /not_activated/);
+  }
+  assert.equal(accesses, 0, "unapproved origins must not access Supabase");
+  global.location = { origin: "https://aha-echo-net.vercel.app" };
   global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false;
   assert.equal(vault.enabled(), false);
 
@@ -131,8 +147,8 @@ async function run() {
   assert.match(page, /id="aha-psych-vault-shared-origin"[^>]+hidden/);
   assert.match(entryPage, /#aha-psych-vault-entry\[hidden\]\s*\{\s*display:\s*none\s*!important;/,
     "inactive vault entry must remain visually hidden against shared flex styles");
-  // The former suggested Vercel hostname is NOT an approved domain of the
-  // connected team; private links must remain on verified History-Go pages.
+  // Keep private-vault navigation unchanged while production activation
+  // is disabled. The exact Vercel origin is approved for future vault use.
   assert.doesNotMatch(page + bridgePage, /https:\/\/aha-echo-net\.vercel\.app/i);
   assert.match(page, /https:\/\/paradispartiet\.github\.io\/History-Go\/\?room=psychology/);
   assert.match(bridgePage, /https:\/\/paradispartiet\.github\.io\/History-Go\/\?room=psychology/);
