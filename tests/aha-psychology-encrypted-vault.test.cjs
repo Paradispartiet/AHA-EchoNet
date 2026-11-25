@@ -147,6 +147,13 @@ async function run() {
   assert.match(page, /id="aha-psych-vault-shared-origin"[^>]+hidden/);
   assert.match(entryPage, /#aha-psych-vault-entry\[hidden\]\s*\{\s*display:\s*none\s*!important;/,
     "inactive vault entry must remain visually hidden against shared flex styles");
+  assert.match(entryPage, /js\/ahaPsychologyEncryptedVault\.js/);
+  assert.match(entryPage, /window\.AHAPsychologyEncryptedVault\?\.enabled\(\) === true/,
+    "entry must reuse the exact-origin gate instead of duplicating host checks");
+  assert.match(page, /12 MiB/);
+  assert.match(page, /aktive databasen/);
+  assert.match(page, /databasens sikkerhetskopier/);
+  assert.match(page, /lokale notatlagringen i History Go er ikke kryptert/i);
   // Keep private-vault navigation unchanged while production activation
   // is disabled. The exact Vercel origin is approved for future vault use.
   assert.doesNotMatch(page + bridgePage, /https:\/\/aha-echo-net\.vercel\.app/i);
