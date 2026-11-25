@@ -1541,6 +1541,39 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("levels map black, white and gamma without changing raster originals", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
+    await stroke(page);
+    const original = await jsonBackup(page);
+    await page.locator("#kv2-add-adjustment").click();
+    const set = (name, value) => page.locator("#kv2-level-" + name).evaluate((c, value) => {
+      c.value = String(value); c.dispatchEvent(new Event("change", { bubbles: true }));
+    }, value);
+    await set("black", 64);
+    await set("white", 192);
+    expect((await pixel(page)).slice(0, 3)).toEqual([128, 128, 128]);
+    await set("gamma", 200);
+    expect((await pixel(page)).slice(0, 3)).toEqual([180, 180, 180]);
+    await expect(page.locator("#kv2-level-black")).toHaveAttribute("max", "191");
+    await expect(page.locator("#kv2-level-white")).toHaveAttribute("min", "65");
+    await page.locator("#kv2-histogram-refresh").click();
+    await expect(page.locator("#kv2-histogram")).toBeVisible();
+    await expect(page.locator("#kv2-histogram-status")).toContainText("Synlig bilde:");
+    const backup = await jsonBackup(page);
+    expect(backup.layers[0].bitmap).toBe(original.layers[0].bitmap);
+    expect(backup.layers[1].levels).toEqual({black:64,white:192,gamma:200});
+    await page.locator("#kv2-level-reset").click();
+    expect((await pixel(page)).slice(0, 3)).toEqual([128, 128, 128]);
+    await expect(page.locator("#kv2-histogram")).toBeHidden();
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pixel(page))[0]).toBe(180);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({name:"levels.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(backup))});
+    await expect(page.locator("#kv2-level-gamma")).toHaveValue("200");
+    expect((await pixel(page))[0]).toBe(180);
+  });
+
   test("adjustment layer tone controls retain color balance in backup and reset together", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });

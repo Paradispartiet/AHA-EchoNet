@@ -286,6 +286,23 @@
               </div>
               <p class="kv2-tip">Relative RGB-justeringer, ikke kalibrert RAW-eksponering eller Kelvin.</p>
             </div>
+            <div id="kv2-level-controls" hidden>
+              <h3>Nivåer</h3>
+              <label for="kv2-level-black">Svartpunkt</label>
+              <div class="kv2-slider"><input id="kv2-level-black" type="range" min="0" max="254" value="0" />
+                <output id="kv2-level-black-value" for="kv2-level-black">0</output></div>
+              <label for="kv2-level-white">Hvitpunkt</label>
+              <div class="kv2-slider"><input id="kv2-level-white" type="range" min="1" max="255" value="255" />
+                <output id="kv2-level-white-value" for="kv2-level-white">255</output></div>
+              <label for="kv2-level-gamma">Mellomtoner (gamma)</label>
+              <div class="kv2-slider"><input id="kv2-level-gamma" type="range" min="25" max="400" value="100" />
+                <output id="kv2-level-gamma-value" for="kv2-level-gamma">1.00</output></div>
+              <button id="kv2-level-reset" type="button" disabled>Nullstill nivåer</button>
+              <button id="kv2-histogram-refresh" type="button">Oppdater histogram</button>
+              <canvas id="kv2-histogram" width="256" height="80" style="width:100%;max-width:256px;height:auto" aria-label="Lyshetshistogram for synlig komposisjon" hidden></canvas>
+              <p id="kv2-histogram-status" class="kv2-tip" aria-live="polite">Oppdater for å måle gjeldende bilde.</p>
+              <p class="kv2-tip">Histogrammet viser synlig sluttkomposisjon inkludert papir, ikke rådata. Gamma over 1 lysner mellomtoner.</p>
+            </div>
             <button type="button" id="kv2-adjust-reset" disabled>Nullstill bildejusteringene</button>
             <p class="kv2-tip">Slipp glideren for å anvende justeringen. Originalbildet og lagmasken beholdes. Hver endring kan angres.</p>
           </fieldset>

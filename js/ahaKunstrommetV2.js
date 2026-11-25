@@ -23,6 +23,27 @@
     brightness: [50, 150], contrast: [50, 150], saturation: [0, 200]
   });
   const TONE_LIMITS = Object.freeze({ exposure: [-200, 200], temperature: [-100, 100], tint: [-100, 100] });
+  const LEVEL_DEFAULTS = Object.freeze({ black: 0, white: 255, gamma: 100 });
+  function safeLevels(value) {
+    const from = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const black = clamp(Number.isFinite(from.black) ? Math.round(from.black) : 0, 0, 254);
+    const white = clamp(Number.isFinite(from.white) ? Math.round(from.white) : 255, black + 1, 255);
+    const gamma = clamp(Number.isFinite(from.gamma) ? Math.round(from.gamma) : 100, 25, 400);
+    return { black, white, gamma };
+  }
+  function neutralLevels(levels) {
+    return Object.keys(LEVEL_DEFAULTS).every(name => levels[name] === LEVEL_DEFAULTS[name]);
+  }
+  function levelTable(levels) {
+    return Float32Array.from({length: 256}, (_, n) =>
+      255 * Math.pow(clamp((n - levels.black) / (levels.white - levels.black), 0, 1), 100 / levels.gamma));
+  }
+  function mappedLevel(value, table) {
+    const n = clamp(value, 0, 255);
+    if (!table) return n;
+    const low = Math.floor(n), high = Math.min(255, low + 1);
+    return table[low] + (table[high] - table[low]) * (n - low);
+  }
   function safeTone(value) {
     const from = value && typeof value === "object" && !Array.isArray(value) ? value : {};
     return Object.fromEntries(Object.entries(TONE_LIMITS).map(([name, [lo, hi]]) =>
@@ -207,6 +228,31 @@
   function draw() {
     framePending = false;
     drawComposition(view);
+    $("kv2-histogram-status").textContent = "Oppdater for å måle gjeldende bilde.";
+    $("kv2-histogram").hidden = true;
+  }
+
+  function updateHistogram() {
+    if (busy || pointerId !== null) return;
+    draw();
+    const pixels = view.getImageData(0, 0, WIDTH, HEIGHT).data;
+    const bins = new Uint32Array(32);
+    for (let i = 0; i < pixels.length; i += 4) {
+      const value = Math.round(.2126 * pixels[i] + .7152 * pixels[i + 1] + .0722 * pixels[i + 2]);
+      bins[Math.min(31, Math.floor(value / 8))]++;
+    }
+    const chart = $("kv2-histogram"), ctx = chart.getContext("2d");
+    ctx.clearRect(0, 0, chart.width, chart.height);
+    ctx.fillStyle = "#537669";
+    const peak = Math.max(1, ...bins), width = chart.width / bins.length;
+    bins.forEach((count, i) => {
+      const height = count / peak * chart.height;
+      ctx.fillRect(i * width, chart.height - height, Math.max(1, width - 1), height);
+    });
+    const summary = "Synlig bilde: " + Math.round(bins[0] / (WIDTH * HEIGHT) * 100) +
+      " % i mørkeste intervall, " + Math.round(bins[31] / (WIDTH * HEIGHT) * 100) + " % i lyseste intervall.";
+    $("kv2-histogram-status").textContent = summary;
+    chart.hidden = false;
   }
 
   // An adjustment layer modifies only the composite accumulated below it.
@@ -214,8 +260,10 @@
   function applyAdjustmentLayer(target, layer) {
     const a = safeAdjustments(layer.adjustments);
     const tone = safeTone(layer.toneAdjustments);
+    const levels = safeLevels(layer.levels);
+    const table = neutralLevels(levels) ? null : levelTable(levels);
     if (layer.opacity <= 0 || (a.brightness === 100 && a.contrast === 100 && a.saturation === 100 &&
-        Object.values(tone).every(value => value === 0))) return;
+        Object.values(tone).every(value => value === 0) && !table)) return;
     // Exposure-like RGB gain and relative color balance, not Kelvin calibration.
     const exposure = Math.pow(2, tone.exposure / 100);
     const warmth = tone.temperature / 400, tint = tone.tint / 400;
@@ -234,9 +282,9 @@
       const g = (p[i + 1] * brightness * gainG - 128) * contrast + 128;
       const b = (p[i + 2] * brightness * gainB - 128) * contrast + 128;
       const gray = .2126 * r + .7152 * g + .0722 * b;
-      p[i] += (clamp(gray + (r - gray) * saturation, 0, 255) - p[i]) * amount;
-      p[i + 1] += (clamp(gray + (g - gray) * saturation, 0, 255) - p[i + 1]) * amount;
-      p[i + 2] += (clamp(gray + (b - gray) * saturation, 0, 255) - p[i + 2]) * amount;
+      p[i] += (mappedLevel(gray + (r - gray) * saturation, table) - p[i]) * amount;
+      p[i + 1] += (mappedLevel(gray + (g - gray) * saturation, table) - p[i + 1]) * amount;
+      p[i + 2] += (mappedLevel(gray + (b - gray) * saturation, table) - p[i + 2]) * amount;
     }
     target.putImageData(image, 0, 0);
   }
@@ -738,7 +786,7 @@
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         adjustments: safeAdjustments(layer.adjustments),
-        ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments) } : {}),
+        ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels) } : {}),
         x: layer.x, y: layer.y,
         ...(layer.textData ? { textData: { ...layer.textData } } : {}),
         bitmap: surface.toDataURL("image/png"),
@@ -1000,9 +1048,20 @@
       $("kv2-tone-" + name).disabled = !isAdjustment || layer.locked || busy;
       $("kv2-tone-" + name + "-value").textContent = toneLabel(name, tone[name]);
     });
+    const levels = safeLevels(layer?.levels);
+    $("kv2-level-controls").hidden = !isAdjustment;
+    Object.keys(LEVEL_DEFAULTS).forEach(name => {
+      const control = $("kv2-level-" + name);
+      control.value = levels[name];
+      control.disabled = !isAdjustment || layer.locked || busy;
+      $("kv2-level-" + name + "-value").textContent = name === "gamma" ? (levels[name] / 100).toFixed(2) : String(levels[name]);
+    });
+    $("kv2-level-black").max = String(levels.white - 1);
+    $("kv2-level-white").min = String(levels.black + 1);
+    $("kv2-level-reset").disabled = !isAdjustment || layer.locked || busy || neutralLevels(levels);
     $("kv2-adjust-reset").disabled = !layer || layer.locked || busy ||
       (Object.values(adjustments).every(value => value === 100) &&
-        (!isAdjustment || Object.values(tone).every(value => value === 0)));
+        (!isAdjustment || (Object.values(tone).every(value => value === 0) && neutralLevels(levels))));
     $("kv2-rename").value = layer ? layer.name : "";
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
@@ -1575,7 +1634,10 @@
       blendMode: layer.blendMode || "normal", adjustments: safeAdjustments(layer.adjustments),
       x: layer.x, y: layer.y });
     if (layer.textData) clone.textData = { ...layer.textData };
-    if (layer.kind === "adjustment") clone.toneAdjustments = safeTone(layer.toneAdjustments);
+    if (layer.kind === "adjustment") {
+      clone.toneAdjustments = safeTone(layer.toneAdjustments);
+      clone.levels = safeLevels(layer.levels);
+    }
     const source = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT);
     surfaces.get(clone.id).getContext("2d").putImageData(source, 0, 0);
     if (masks.has(layer.id)) {
@@ -2068,7 +2130,7 @@
       // Older projects default to normal; unknown or unsafe modes are ignored.
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       adjustments: safeAdjustments(input.adjustments),
-      ...(input.kind === "adjustment" ? { toneAdjustments: safeTone(input.toneAdjustments) } : {}),
+      ...(input.kind === "adjustment" ? { toneAdjustments: safeTone(input.toneAdjustments), levels: safeLevels(input.levels) } : {}),
       x: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.x) ? Math.round(input.x) : 0, -WIDTH * 2, WIDTH * 2),
       y: input.kind === "adjustment" ? 0 : clamp(Number.isFinite(input.y) ? Math.round(input.y) : 0, -HEIGHT * 2, HEIGHT * 2),
       bitmap: input.bitmap,
@@ -2188,7 +2250,7 @@
           ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
           kind: layer.kind === "adjustment" ? "adjustment" : layer.kind === "image" ? "image" : "paint",
           adjustments: safeAdjustments(layer.adjustments),
-          ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments) } : {}),
+          ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels) } : {}),
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
           blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
@@ -2506,15 +2568,45 @@
         changed(); refresh();
       });
     });
+    $("kv2-histogram-refresh").addEventListener("click", updateHistogram);
+    Object.keys(LEVEL_DEFAULTS).forEach(name => {
+      const control = $("kv2-level-" + name);
+      control.addEventListener("input", () => {
+        $("kv2-level-" + name + "-value").textContent = name === "gamma" ? (Number(control.value) / 100).toFixed(2) : control.value;
+      });
+      control.addEventListener("change", () => {
+        const layer = currentLayer();
+        if (layer?.kind !== "adjustment" || layer.locked || busy) return;
+        const current = safeLevels(layer.levels);
+        let value = Number(control.value);
+        if (!Number.isFinite(value)) return;
+        if (name === "black") value = Math.min(value, current.white - 1);
+        if (name === "white") value = Math.max(value, current.black + 1);
+        const next = safeLevels({ ...current, [name]: value });
+        if (next[name] === current[name] || !checkpoint()) return;
+        layer.levels = next;
+        changed(); refresh();
+      });
+    });
+    $("kv2-level-reset").addEventListener("click", () => {
+      const layer = currentLayer();
+      if (layer?.kind !== "adjustment" || layer.locked || busy || neutralLevels(safeLevels(layer.levels)) || !checkpoint()) return;
+      layer.levels = safeLevels(null);
+      changed(); refresh();
+    });
     $("kv2-adjust-reset").addEventListener("click", () => {
       const layer = currentLayer();
       if (!layer || layer.locked || busy) return;
       const current = safeAdjustments(layer.adjustments);
       if (Object.values(current).every(value => value === 100) &&
-          (layer.kind !== "adjustment" || Object.values(safeTone(layer.toneAdjustments)).every(value => value === 0))) return;
+          (layer.kind !== "adjustment" || (Object.values(safeTone(layer.toneAdjustments)).every(value => value === 0) &&
+            neutralLevels(safeLevels(layer.levels))))) return;
       if (!checkpoint()) return;
       layer.adjustments = safeAdjustments(null);
-      if (layer.kind === "adjustment") layer.toneAdjustments = safeTone(null);
+      if (layer.kind === "adjustment") {
+        layer.toneAdjustments = safeTone(null);
+        layer.levels = safeLevels(null);
+      }
       changed(); refresh();
     });
     $("kv2-blend-mode").addEventListener("change", () => {

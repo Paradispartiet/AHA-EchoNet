@@ -247,3 +247,8 @@ Et eget lag av typen `adjustment` justerer den synlige komposisjonen under sin p
 ### Fargebalanse og eksponeringsstyrke
 
 Justeringslag har tre ekstra kontroller: relativ RGB-eksponeringsstyrke (−2 til +2 EV, faktor 2^EV i kodede RGB-verdier), temperatur (kald–varm, −100 til +100) og fargestikk (grønn–magenta, −100 til +100). Dette er kreative relative kontroller, ikke kalibrert RAW-eksponering eller Kelvin. De virker før kontrast og metning, med eksisterende opasitet og maske. Valgfri `toneAdjustments`-metadata valideres og avgrenses ved import, med nøytral 0 som standard. Angre, nullstill, duplisering, lokal lagring og JSON beholder verdiene. Vanlige rasterlags tidligere metadata er uendret. Automatisk og fysisk verifikasjon gjenstår.
+
+
+## Nivåer og histogram (4.7, første trinn)
+
+Justeringslag får svartpunkt 0–254, hvitpunkt 1–255 (alltid større enn svartpunkt) og gamma 0,25–4,00. En felles RGB-tabell anvendes etter fargebalanse, kontrast og metning og før maskert opasitetsblanding. Gamma over 1 lysner mellomtoner. Valgfri `levels`-metadata valideres ved import og lagres/dupliseres/angres; eldre filer bruker identitetsverdiene 0/255/1. Histogrammet er en manuelt oppdatert 32-intervalls lyshetsfordeling for den synlige sluttkomposisjonen inkludert papiret; det skjules ved neste redraw slik at gamle målinger ikke fremstår som aktuelle. Ingen analyse av rådata eller automatisk deling. RGB-kurver per kanal og fysisk iPad-verifikasjon gjenstår.
