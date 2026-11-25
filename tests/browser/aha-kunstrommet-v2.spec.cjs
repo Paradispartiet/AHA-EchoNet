@@ -92,6 +92,30 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("group transform previews two layers around a shared pivot and undoes together", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [400, 400], [400, 400], 1007);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page, [800, 400], [800, 400], 1008);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    const before = await jsonBackup(page);
+    await page.locator("#kv2-transform-group").click();
+    await expect(page.locator("#kv2-free-target")).toHaveText("2 lag transformeres samlet.");
+    await page.locator("#kv2-free-angle").fill("90");
+    const ink = await page.locator("#kv2-free-preview").evaluate(c => {
+      const ctx = c.getContext("2d");
+      return [ctx.getImageData(600, 200, 1, 1).data[0], ctx.getImageData(600, 600, 1, 1).data[0]];
+    });
+    expect(ink.every(v => v < 100)).toBe(true);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator("#kv2-free-commit").click();
+    expect((await pxAt(page, 600, 200))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 600, 600))[0]).toBeLessThan(100);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 400, 400))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 800, 400))[0]).toBeLessThan(100);
+  });
+
   test("named layer groups preserve membership in backup and support undoable group controls", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [300, 200], [300, 200], 1005);

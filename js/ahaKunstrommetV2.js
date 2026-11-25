@@ -203,7 +203,7 @@
     target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
-      const activePreview = preview?.id === layer.id ? preview : null;
+      const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
       const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
       if (!bitmap) return;
       target.globalAlpha = layer.opacity;
@@ -829,6 +829,7 @@
       include.disabled = !layer.visible || layer.locked;
       include.addEventListener("change", () => {
         if (busy || pointerId !== null) { include.checked = moveTogether.has(layer.id); return; }
+        cancelFreeTransform();
         if (include.checked) moveTogether.add(layer.id);
         else moveTogether.delete(layer.id);
         updateMoveCount();
@@ -853,6 +854,7 @@
     $("kv2-move-count").textContent = count + " lag ved Flytt lag";
     $("kv2-clear-move-group").disabled = moveTogether.size === 0;
     $("kv2-group-save").disabled = count < 2;
+    $("kv2-transform-group").disabled = count < 2;
     renderNamedGroups();
   }
 
@@ -1533,8 +1535,10 @@
 
   function applyTransform(result) {
     if (!checkpoint()) return;
-    surfaces.set(result.id, result.bitmap);
-    if (result.mask) masks.set(result.id, result.mask);
+    for (const item of Array.isArray(result) ? result : [result]) {
+      surfaces.set(item.id, item.bitmap);
+      if (item.mask) masks.set(item.id, item.mask);
+    }
     changed();
     refresh();
   }
@@ -1562,9 +1566,17 @@
 
   function freeTransformLayer() {
     const layer = currentLayer();
-    return freeTransform && layer?.id === freeTransform.id && !busy &&
-      !maskEditing && !layer.locked && layer.visible && !layer.textData &&
-      pointerId === null ? layer : null;
+    if (!freeTransform || layer?.id !== freeTransform.id || busy || maskEditing ||
+        pointerId !== null) return null;
+    return freeTransform.ids.every(id => {
+      const item = project.layers.find(candidate => candidate.id === id);
+      return item && item.visible && !item.locked && !item.textData;
+    }) ? layer : null;
+  }
+
+  function freeTransformResults(values) {
+    return freeTransform.ids.map(id => transformResult(
+      project.layers.find(layer => layer.id === id), values.degrees, values.x, values.y, freeTransform.pivot));
   }
 
   function freeTransformValues() {
@@ -1582,7 +1594,7 @@
     $("kv2-free-commit").disabled = !values ||
       (values.degrees === 0 && values.x === 1 && values.y === 1);
     $("kv2-free-warning").textContent = values ? "" : "Bruk vinkel −180 til 180 og skala 10 til 300 %.";
-    const result = values ? transformResult(layer, values.degrees, values.x, values.y, freeTransform.pivot) : null;
+    const result = values ? freeTransformResults(values) : null;
     const preview = $("kv2-free-preview").getContext("2d");
     drawComposition(preview, result);
     const live = $("kv2-transform-live"), overlay = $("kv2-transform-overlay");
@@ -1713,13 +1725,25 @@
     if (overlay.hasPointerCapture?.(event.pointerId)) overlay.releasePointerCapture(event.pointerId);
   }
 
-  function openFreeTransform() {
+  function openFreeTransform(group = false) {
     const layer = editableLayer();
     if (!layer || requiresRaster(layer) || maskEditing || pointerId !== null) return;
+    const members = group === true ? project.layers.filter(item =>
+      item.visible && !item.locked && (item.id === layer.id || moveTogether.has(item.id))) : [layer];
+    if (group === true && members.length < 2) { status("Velg minst to synlige, ulåste lag."); return; }
+    if (members.some(item => item.textData)) {
+      status("Gjør alle valgte tekstlag om til piksler før gruppetransformering."); return;
+    }
     cancelFreeTransform();
     clearTextDraft();
     renderTextPreview();
-    freeTransform = { id: layer.id, pivot: { x: WIDTH / 2, y: HEIGHT / 2 }, bounds: transformBounds(layer), drag: null };
+    const b = members.map(transformBounds);
+    const bounds = { left: Math.min(...b.map(item => item.left)), right: Math.max(...b.map(item => item.right)),
+      top: Math.min(...b.map(item => item.top)), bottom: Math.max(...b.map(item => item.bottom)) };
+    const pivot = group === true ? { x: clamp((bounds.left + bounds.right) / 2, 0, WIDTH),
+      y: clamp((bounds.top + bounds.bottom) / 2, 0, HEIGHT) } : { x: WIDTH / 2, y: HEIGHT / 2 };
+    freeTransform = { id: layer.id, ids: members.map(item => item.id), pivot, bounds, drag: null };
+    $("kv2-free-target").textContent = group === true ? members.length + " lag transformeres samlet." : "Bare aktivt lag transformeres.";
     $("kv2-free-angle").value = "0";
     $("kv2-free-x").value = "100";
     $("kv2-free-y").value = "100";
@@ -1739,7 +1763,7 @@
     const layer = freeTransformLayer(), values = freeTransformValues();
     if (!layer || !values || (values.degrees === 0 && values.x === 1 && values.y === 1)) return;
     // Compute from the original surfaces, not from any prior preview.
-    applyTransform(transformResult(layer, values.degrees, values.x, values.y, freeTransform.pivot));
+    applyTransform(freeTransformResults(values));
     status("Transformering utført – kan angres.");
   }
 
@@ -2303,7 +2327,8 @@
     ["flip", "rotate", "smaller", "larger"].forEach((mode) => {
       $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
     });
-    $("kv2-transform-free").addEventListener("click", openFreeTransform);
+    $("kv2-transform-free").addEventListener("click", () => openFreeTransform());
+    $("kv2-transform-group").addEventListener("click", () => openFreeTransform(true));
     const transformOverlay = $("kv2-transform-overlay");
     transformOverlay.addEventListener("pointerdown", beginTransformDrag);
     transformOverlay.addEventListener("pointermove", moveTransformDrag);

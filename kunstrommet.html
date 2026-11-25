@@ -187,6 +187,7 @@
           <div class="kv2-group-controls">
             <output id="kv2-move-count" aria-live="polite">1 lag ved Flytt lag</output>
             <button id="kv2-clear-move-group" type="button" disabled>Fjern flervalg</button>
+            <button id="kv2-transform-group" type="button" disabled>Transformer flervalg</button>
           </div>
           <div class="kv2-named-groups" role="group" aria-label="Navngitte laggrupper">
             <label for="kv2-group-name">Gruppenavn</label>
@@ -277,7 +278,8 @@
             <label for="kv2-free-y">Høyde (%)</label>
             <input id="kv2-free-y" type="number" min="10" max="300" step="1" value="100" />
             <label><input id="kv2-free-ratio" type="checkbox" checked /> Bevar proporsjoner</label>
-            <p class="kv2-tip">Dra i håndtakene på lerretet, eller bruk tallfeltene. Det oransje sentrumspunktet kan flyttes. Bare aktivt lag og eventuell maske endres ved bekreftelse.</p>
+            <p id="kv2-free-target" class="kv2-tip">Bare aktivt lag transformeres.</p>
+            <p class="kv2-tip">Dra i håndtakene på lerretet, eller bruk tallfeltene. Det oransje sentrumspunktet kan flyttes. Valgte lag og deres masker endres først ved bekreftelse. Innhold utenfor lagets bitmapgrenser kan klippes.</p>
             <canvas id="kv2-free-preview" width="1200" height="800" aria-label="Forhåndsvisning av transformering"></canvas>
             <p id="kv2-free-warning" class="kv2-tip" role="status"></p>
             <div class="kv2-transform-tools">

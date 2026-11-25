@@ -232,3 +232,8 @@ Aktivt lag redigeres fortsatt individuelt. Avkryssing av ekstra synlige, ulåste
 ## Navngitte laggrupper (4.4, andre trinn)
 
 Opprett en gruppe av minst to synlige, ulåste lag via flervalget og et unikt navn (maks 50 tegn). Hvert lag har høyst ett gruppenavn; eksisterende grupper må løses opp før omgruppering. Velg gruppen fra listen for samlet flytting av synlige, ulåste medlemmer. Skjul/vis/lås/lås opp alle medlemmer med eksplisitte knapper; dette endrer de individuelle flaggene og kan angres i ett steg. Løs opp fjerner bare medlemskap. Gruppene er valgfri lagmetadata i eksisterende V2-format, bevares i lokal lagring, JSON, skissebokk kopi og angrehistorikk. Eldre filer uten metadata åpnes som før. Felles rotasjon/skalering, hierarkiske grupper og fysisk iPad-verifikasjon gjenstår.
+
+
+## Samlet fri transformering (4.4, tredje trinn)
+
+**Transformer flervalg** åpner eksisterende transformasjonsverktøy for minst to synlige, ulåste rasterlag. Felles ramme omfatter de valgte lagenes gripeområder og sentrum kan flyttes. Forhåndsvisning, rotasjon og uavhengig/proporsjonal skalering bruker samme dokumentmatrise på hver originalbitmap og eventuell maske. Bekreft gir ett angresteg for hele flervalget; avbryt beholder originalene. Vanlig Fri transformering gjelder fortsatt bare aktivt lag. Redigerbare tekstlag må rasteriseres eksplisitt. Som ved enkeltlag kan piksler utenfor det enkelte lagets bitmapgrenser klippes. Fysisk iPad og automatisk verifikasjon gjenstår.
