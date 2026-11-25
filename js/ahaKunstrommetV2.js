@@ -361,6 +361,16 @@
     const layout = tool === "text" && textAnchor ? textLayout() : null;
     const valid = !!layout && !layout.error;
     const visible = valid && !editing;
+    const preview = $("kv2-text-edit-preview");
+    const showEdit = editing && valid;
+    preview.hidden = !showEdit;
+    if (showEdit) {
+      const bitmap = imageCanvas();
+      paintText(bitmap, layout, $("kv2-color").value);
+      drawComposition(preview.getContext("2d"), {
+        id: textEditId, bitmap, mask: masks.get(textEditId)
+      });
+    }
     // WebKit may fire a textarea change event while the confirmation button
     // is being pressed. Do not replace its text node or relayout the panel
     // during that pointer sequence when the visible state has not changed.
@@ -369,7 +379,7 @@
     const warning = $("kv2-text-warning");
     const caption = editing ? "Oppdater tekstlag" : "Legg tekst på lag";
     const tip = editing
-      ? "Endre teksten her. Lerretet oppdateres først når du bekrefter."
+      ? "Se endringene på lerretet. Bekreft for å oppdatere laget."
       : "Skriv tekst og trykk på lerretet for å velge plassering. Teksten kan redigeres etterpå.";
     const message = tool === "text" && layout?.error ? layout.error : "";
     if (commit.textContent !== caption) commit.textContent = caption;
@@ -428,6 +438,20 @@
     status("Teksten er gjort om til piksler. Angre for å få tilbake redigerbar tekst.");
   }
 
+  function paintText(bitmap, layout, color) {
+    const context = bitmap.getContext("2d");
+    context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.save();
+    context.font = layout.font;
+    context.textBaseline = "top";
+    context.fillStyle = color;
+    context.globalAlpha = 1;
+    layout.lines.forEach((line, index) => {
+      context.fillText(line, layout.left, layout.top + index * layout.lineHeight);
+    });
+    context.restore();
+  }
+
   function commitText() {
     const existing = textEditId ? currentLayer() : null;
     if (busy || !project || maskEditing || (textEditId
@@ -452,17 +476,7 @@
       size: layout.fontSize, bold: layout.bold,
       color: $("kv2-color").value, left: layout.left, top: layout.top
     };
-    const context = surfaces.get(layer.id).getContext("2d");
-    context.clearRect(0, 0, WIDTH, HEIGHT);
-    context.save();
-    context.font = layout.font;
-    context.textBaseline = "top";
-    context.fillStyle = layer.textData.color;
-    context.globalAlpha = 1;
-    layout.lines.forEach((line, index) => {
-      context.fillText(line, layout.left, layout.top + index * layout.lineHeight);
-    });
-    context.restore();
+    paintText(surfaces.get(layer.id), layout, layer.textData.color);
     selected = layer.id;
     clearTextDraft();
     tool = "move";
