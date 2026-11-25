@@ -17,7 +17,14 @@
   function requireCanvasSize(width,height) {
     if(!validCanvasSize(width,height))throw new Error("Lerretet må være 320–1600 piksler per side, maksimalt 1 440 000 piksler.");
   }
-  const MAX_LAYERS = 8;
+  const MAX_LAYERS = 8; // Existing baseline: never reduce capacity of published formats.
+  const MAX_SMALL_CANVAS_LAYERS = 16;
+  const BASE_LAYER_PIXELS = MAX_LAYERS * DEFAULT_WIDTH * DEFAULT_HEIGHT;
+  // Conservative raster-area proxy, not a device-memory measurement. Each layer
+  // can also have a full-size mask; the same bound applies to masked projects.
+  function layerLimit(width=WIDTH,height=HEIGHT) {
+    return Math.max(MAX_LAYERS,Math.min(MAX_SMALL_CANVAS_LAYERS,Math.floor(BASE_LAYER_PIXELS/(width*height))));
+  }
   // Only standard artistic blend modes; never permit destructive Porter-Duff operations.
   const BLEND_MODES = new Set([
     "normal", "multiply", "screen", "darken", "lighten", "overlay",
@@ -669,7 +676,7 @@
     $("kv2-crop-layer").disabled = !valid;
     const active = currentLayer();
     const canExtract = valid && active && active.visible && !active.locked &&
-      project.layers.length < MAX_LAYERS;
+      project.layers.length < layerLimit();
     $("kv2-copy-selection").disabled = !canExtract;
     $("kv2-cut-selection").disabled = !canExtract;
     $("kv2-fill-selection").disabled = !(valid && active && active.visible && !active.locked && !maskEditing);
@@ -753,7 +760,7 @@
       });
     }
     const disabled = busy || !project || maskEditing || !textAnchor ||
-      (editing ? currentLayer().locked || !currentLayer().visible : project.layers.length >= MAX_LAYERS) || !valid;
+      (editing ? currentLayer().locked || !currentLayer().visible : project.layers.length >= layerLimit()) || !valid;
     if (commit.disabled !== disabled) commit.disabled = disabled;
   }
 
@@ -808,7 +815,7 @@
     const existing = textEditId ? currentLayer() : null;
     if (busy || !project || maskEditing || (textEditId
       ? !existing?.textData || existing.id !== textEditId || existing.locked || !existing.visible
-      : project.layers.length >= MAX_LAYERS)) {
+      : project.layers.length >= layerLimit())) {
       status("Avslutt maskeredigering eller velg et tilgjengelig lag.");
       return;
     }
@@ -1591,8 +1598,8 @@
     $("kv2-zoom-value").textContent = Math.round(ZOOM_LEVELS[zoomIndex] * 100) + "%";
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
-    $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
-    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
+    $("kv2-layer-count").textContent = project.layers.length + " av " + layerLimit() + " lag";
+    $("kv2-duplicate-layer").disabled = project.layers.length >= layerLimit();
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
@@ -2523,8 +2530,8 @@
   function extractSelectionToLayer(removeFromSource) {
     const layer = editableLayer();
     if (!layer || !selection || selection.w < 2 || selection.h < 2) return;
-    if (project.layers.length >= MAX_LAYERS) {
-      status("Du kan bruke inntil " + MAX_LAYERS + " lag i denne versjonen.");
+    if (project.layers.length >= layerLimit()) {
+      status("Du kan bruke inntil " + layerLimit() + " lag i denne versjonen.");
       return;
     }
     if (layer.kind === "adjustment" || (removeFromSource && requiresRaster(layer))) return;
@@ -2583,7 +2590,7 @@
 
   function duplicateActiveLayer() {
     const layer = editableLayer();
-    if (!layer || project.layers.length >= MAX_LAYERS) {
+    if (!layer || project.layers.length >= layerLimit()) {
       status("Det er ikke plass til flere lag.");
       return;
     }
@@ -2902,8 +2909,8 @@
 
   function addLayer(name, kind) {
     if (busy) return null;
-    if (project.layers.length >= MAX_LAYERS) {
-      status("Du kan bruke inntil " + MAX_LAYERS + " lag i denne versjonen.");
+    if (project.layers.length >= layerLimit()) {
+      status("Du kan bruke inntil " + layerLimit() + " lag i denne versjonen.");
       return null;
     }
     checkpoint();
@@ -3157,7 +3164,7 @@
       layers = convertV1(data);
     } else {
       if (data.format !== "aha-kunstrommet-v2" || !Array.isArray(data.layers) ||
-          !data.layers.length || data.layers.length > MAX_LAYERS) {
+          !data.layers.length || data.layers.length > layerLimit(width,height)) {
         throw new Error("Ukjent eller ugyldig prosjektformat.");
       }
       layers = data.layers.map(layer=>validateLayer(layer,width,height));
@@ -3210,6 +3217,7 @@
       const saved = (await getRecords()).find((record) => record.id === item.id);
       if (!saved || !Array.isArray(saved.layers)) throw new Error("Fant ikke originalen i skisseboken.");
       requireCanvasSize(saved.width,saved.height);
+      if(!saved.layers.length||saved.layers.length>layerLimit(saved.width,saved.height))throw new Error("Prosjektet har ugyldig antall lag.");
       const now = new Date().toISOString();
       const copy = {
         format: "aha-kunstrommet-v2", version: 2, width: saved.width, height: saved.height,
@@ -3363,7 +3371,7 @@
       status("Velg et JPG-, PNG- eller WebP-bilde på maks 12 MB.");
       return;
     }
-    if (project.layers.length >= MAX_LAYERS) {
+    if (project.layers.length >= layerLimit()) {
       status("Fjern et lag før du importerer et nytt bilde.");
       return;
     }

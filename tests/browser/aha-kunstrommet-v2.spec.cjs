@@ -92,6 +92,65 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("smaller documents gain bounded layer capacity and imported dimensions set their own limit",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const count=page.locator("#kv2-layer-count");
+    await expect(count).toContainText("1 av 8 lag");
+    const old=await jsonBackup(page);
+    page.on("dialog",d=>d.accept());
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-width").fill("640");
+    await page.locator("#kv2-canvas-height").fill("960");
+    await page.locator("#kv2-new-sized").click();
+    await expect(count).toContainText("1 av 12 lag");
+    await stroke(page);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    for(let i=1;i<12;i++)await page.locator("#kv2-add-layer").click();
+    await expect(count).toContainText("12 av 12 lag");
+    await expect(page.locator("#kv2-duplicate-layer")).toBeDisabled();
+    await page.locator("#kv2-add-layer").evaluate(b=>b.click());
+    await expect(count).toContainText("12 av 12 lag");
+    await page.locator("#kv2-undo").click();
+    await expect(count).toContainText("11 av 12 lag");
+    await page.locator("#kv2-redo").click();
+    await expect(count).toContainText("12 av 12 lag");
+    const small=await jsonBackup(page);
+    expect(small.layers).toHaveLength(12);
+    expect(small.layers[0].maskBitmap).toBeTruthy();
+    const load=async(data)=>page.locator("#kv2-import").setInputFiles({name:"project.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await load({...small,layers:[...small.layers,small.layers[0]]});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    await expect(count).toContainText("12 av 12 lag");
+    await load({...old,layers:Array.from({length:9},()=>old.layers[0])});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    await expect(count).toContainText("12 av 12 lag");
+    await load(old);
+    await expect(count).toContainText("1 av 8 lag");
+    await load(small);
+    await expect(count).toContainText("12 av 12 lag");
+    await expect.poll(async()=>(await pxAt(page,320,480))[0]).toBeLessThan(80);
+    await page.locator("#kv2-title").fill("Tolv lag");
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await page.reload();
+    await page.locator("#kv2-projects .kv2-project--saved").getByRole("button",{name:"Åpne",exact:true}).click();
+    await expect(count).toContainText("12 av 12 lag");
+    expect((await jsonBackup(page)).layers[0].maskBitmap).toBeTruthy();
+  });
+
+  test("small canvas capacity is capped at sixteen and large presets retain eight",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-width").fill("320");
+    await page.locator("#kv2-canvas-height").fill("320");
+    await page.locator("#kv2-new-sized").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 16 lag");
+    await page.locator("#kv2-canvas-preset").selectOption("1600x900");
+    await page.locator("#kv2-new-sized").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+  });
+
   test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const old=await jsonBackup(page);
