@@ -92,6 +92,60 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("raster merge down preserves composition and restores original layers on undo",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const merge=page.locator("#kv2-merge-down"), count=page.locator("#kv2-layer-count");
+    await expect(merge).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1941);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[900,500],[900,500],1942);
+    await expect(merge).toBeEnabled();
+    const original=await jsonBackup(page);
+    const points=[[300,300],[900,500],[600,400]];
+    const colors=async()=>Promise.all(points.map(([x,y])=>pxAt(page,x,y)));
+    const before=await colors();
+    expect(before[0][0]).toBeLessThan(80);
+    expect(before[1][0]).toBeGreaterThan(before[1][1]);
+    page.once("dialog",d=>d.dismiss());
+    await merge.click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    page.once("dialog",d=>d.accept());
+    await merge.click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect(await colors()).toEqual(before);
+    const combined=await jsonBackup(page);
+    expect(combined.layers[0].id).toBe(original.layers[0].id);
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-undo").click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    await page.locator("#kv2-redo").click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(combined.layers);
+    expect(await colors()).toEqual(before);
+  });
+
+  test("raster merge blocks unsupported opacity, blend and masks",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-add-layer").click();
+    const merge=page.locator("#kv2-merge-down");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="100";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-blend-mode").selectOption("normal");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    await expect(merge).toBeDisabled();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+  });
+
   test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const old=await jsonBackup(page);
