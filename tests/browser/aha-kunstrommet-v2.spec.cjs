@@ -1473,6 +1473,49 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("pen tilt widens and rotates shading only when enabled", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-size").evaluate(c=>{c.value="40";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-brush-pressure-width").uncheck();
+    for(const [name,v] of [["hardness",100],["flow",100],["tilt-strength",100]]) {
+      await page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},v);
+    }
+    const tap=(pointerType,tiltX,tiltY)=>page.locator("#kv2-canvas").evaluate((c,p)=>{
+      const box=c.getBoundingClientRect();
+      for(const type of ["pointerdown","pointerup"]) c.dispatchEvent(new PointerEvent(type,{
+        bubbles:true,cancelable:true,pointerId:1491,pointerType:p.pointerType,button:0,
+        buttons:type==="pointerdown"?1:0,pressure:type==="pointerdown"?.5:0,
+        tiltX:p.tiltX,tiltY:p.tiltY,clientX:box.left+box.width/2,clientY:box.top+box.height/2
+      }));
+    },{pointerType,tiltX,tiltY});
+    await tap("pen",60,0);
+    expect((await pxAt(page,632,400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await page.locator("#kv2-brush-tilt-enabled").check();
+    await tap("pen",60,0);
+    expect((await pxAt(page,632,400))[0]).toBeLessThan(150);
+    expect((await pxAt(page,600,432))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await tap("pen",0,60);
+    expect((await pxAt(page,600,432))[0]).toBeLessThan(150);
+    expect((await pxAt(page,632,400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await tap("mouse",60,0);
+    expect((await pxAt(page,632,400))[0]).toBe(255);
+    await page.locator("#kv2-brush-name").fill("Sideskygge");
+    await page.locator("#kv2-brush-library-save").click();
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-library").selectOption("Sideskygge");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-tilt-enabled")).toBeChecked();
+    await expect(page.locator("#kv2-brush-tilt-strength")).toHaveValue("100");
+  });
+
   test("flat brush rotates, scatters reproducibly and saves dynamics", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");

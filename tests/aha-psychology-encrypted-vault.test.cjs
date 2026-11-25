@@ -140,7 +140,33 @@ async function run() {
   assert.equal(cloud.size, 1);
   assert.equal([...cloud.values()].every(x => x.text === env), true);
 
-  // The feature is intentionally dead until RLS/hosted staging approval.
+  // Pilot uses the direct page only; public navigation remains off.
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false;
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_PILOT_ENABLED = true;
+  assert.equal(vault.enabled(), false);
+  assert.equal(vault.pilotEnabled(), true);
+  const nonpilot = mockClient(UUID_A);
+  nonpilot.auth.getUser = async () => ({ data: { user: {
+    id: UUID_A, is_anonymous: false, user_metadata: { aha_psychology_vault_pilot: true }
+  } }, error: null });
+  assert.equal(await vault.pilotAccess({ client: nonpilot }), false);
+  await assert.rejects(vault.upload(env, { client: nonpilot }), /pilot_required/);
+  assert.equal(cloud.has(UUID_A), false);
+  const approved = mockClient(UUID_A);
+  approved.auth.getUser = async () => ({ data: { user: {
+    id: UUID_A, is_anonymous: false, app_metadata: { aha_psychology_vault_pilot: true }
+  } }, error: null });
+  assert.equal(await vault.pilotAccess({ client: approved }), true);
+  assert.equal((await vault.upload(env, { client: approved })).stored, true);
+  assert.equal((await vault.download({ client: nonpilot })).text, env);
+  assert.equal((await vault.remove({ client: nonpilot, confirmed: true })).removed, true);
+  global.location = { origin: "https://paradispartiet.github.io" };
+  assert.equal(vault.pilotEnabled(), false);
+  await assert.rejects(vault.upload(env, { client: approved }), /not_activated/);
+  global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_PILOT_ENABLED = false;
+  assert.match(flags, /AHA_PSYCHOLOGY_ACCOUNT_VAULT_PILOT_ENABLED\s*=\s*true/);
+  assert.match(page, /id="aha-psych-vault-pilot-notice" hidden/);
+  // The general feature stays disabled until separate approval.
   assert.match(flags, /AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED\s*=\s*false/);
   assert.match(page, /js\/ahaPsychologyVaultConfig\.js/);
   assert.match(page, /id="aha-psych-vault-panel"[^>]+hidden/);

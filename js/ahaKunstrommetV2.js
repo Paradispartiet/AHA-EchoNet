@@ -1298,13 +1298,14 @@
       textureStrength: pct("texture-strength", 70),
       aspect: pct("aspect",100,10), angle: clamp(Number($("kv2-brush-angle").value)||0,-180,180),
       scatter: pct("scatter",0), rotationJitter: pct("rotation-jitter",0),
-      followDirection: $("kv2-brush-follow-direction").checked };
+      followDirection: $("kv2-brush-follow-direction").checked,
+      tiltStrength: pct("tilt-strength",70), tiltEnabled: $("kv2-brush-tilt-enabled").checked };
   }
 
   const BRUSH_TEXTURES = ["round","charcoal","chalk","watercolor","dry"];
   function safeBrushTexture(value) { return BRUSH_TEXTURES.includes(value) ? value : "round"; }
   const BRUSH_LIBRARY_LIMIT = 30;
-  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7, aspect:1, angle:0, scatter:0, rotationJitter:0, followDirection:false});
+  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7, aspect:1, angle:0, scatter:0, rotationJitter:0, followDirection:false, tiltStrength:.7, tiltEnabled:false});
   function safeBrushSettings(value) {
     const input = value && typeof value === "object" ? value : {};
     const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
@@ -1317,7 +1318,8 @@
       texture:safeBrushTexture(input.texture), textureStrength:number("textureStrength",0,1),
       aspect:number("aspect",.1,1), angle:number("angle",-180,180),
       scatter:number("scatter",0,1), rotationJitter:number("rotationJitter",0,1),
-      followDirection:input.followDirection === true};
+      followDirection:input.followDirection === true,
+      tiltStrength:number("tiltStrength",0,1), tiltEnabled:input.tiltEnabled === true};
   }
   function brushLibraryKey() {
     return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
@@ -1408,6 +1410,9 @@
     $("kv2-brush-angle").value=Math.round(settings.angle);
     $("kv2-brush-angle-value").textContent=Math.round(settings.angle)+"°";
     $("kv2-brush-follow-direction").checked=settings.followDirection;
+    $("kv2-brush-tilt-enabled").checked=settings.tiltEnabled;
+    $("kv2-brush-tilt-strength").value=Math.round(settings.tiltStrength*100);
+    $("kv2-brush-tilt-strength-value").textContent=Math.round(settings.tiltStrength*100)+"%";
     tool="brush"; refresh();
   }
   function loadOwnBrush() {
@@ -1462,7 +1467,9 @@
             (s.texture !== undefined && !BRUSH_TEXTURES.includes(s.texture)) ||
             (s.textureStrength !== undefined && !Number.isFinite(s.textureStrength)) ||
             ["aspect","angle","scatter","rotationJitter"].some(k=>s[k]!==undefined&&!Number.isFinite(s[k])) ||
-            (s.followDirection !== undefined && typeof s.followDirection !== "boolean")) {
+            (s.followDirection !== undefined && typeof s.followDirection !== "boolean") ||
+            (s.tiltStrength !== undefined && !Number.isFinite(s.tiltStrength)) ||
+            (s.tiltEnabled !== undefined && typeof s.tiltEnabled !== "boolean")) {
           throw new Error("Penselfilen har ugyldige eller gjentatte pensler.");
         }
         names.add(name);
@@ -1488,11 +1495,30 @@
     finally { input.value=""; }
   }
 
+  // Pointer Events tiltX/tiltY measure signed inclination from the surface normal.
+  // Prefer the tilt pair, with altitude/azimuth as fallback; no data means upright.
+  function penTilt(event) {
+    if (event.pointerType !== "pen") return {tx:0,ty:0};
+    if (Number.isFinite(event.tiltX) && Number.isFinite(event.tiltY) &&
+        (event.tiltX !== 0 || event.tiltY !== 0)) {
+      const x=Math.tan(clamp(event.tiltX,-89,89)*Math.PI/180);
+      const y=Math.tan(clamp(event.tiltY,-89,89)*Math.PI/180);
+      const length=Math.hypot(x,y);
+      const tilt=Math.atan(length)/(Math.PI/2);
+      return {tx:x/length*tilt,ty:y/length*tilt};
+    }
+    if (Number.isFinite(event.altitudeAngle) && Number.isFinite(event.azimuthAngle)) {
+      const tilt=1-clamp(event.altitudeAngle,0,Math.PI/2)/(Math.PI/2);
+      return {tx:Math.cos(event.azimuthAngle)*tilt,ty:Math.sin(event.azimuthAngle)*tilt};
+    }
+    return {tx:0,ty:0};
+  }
+
   function advancedPoint(event, layer) {
     const at = point(event), pressure = event.pointerType === "pen" &&
       Number.isFinite(event.pressure) && event.pressure > 0 ? clamp(event.pressure, 0, 1) : 0.5;
     return { x: at.x - layer.x, y: at.y - layer.y,
-      pressure, width: penPressure(event), pen: event.pointerType === "pen" };
+      pressure, width: penPressure(event), pen: event.pointerType === "pen", ...penTilt(event) };
   }
 
   // Small deterministic alpha stamps; generated locally, no image downloads.
@@ -1535,14 +1561,17 @@
     const spreadAngle=textureNoise(index,17,0)*2*Math.PI;
     const spreadDistance=Math.sqrt(textureNoise(index,29,0))*spread;
     const x=at.x+Math.cos(spreadAngle)*spreadDistance, y=at.y+Math.sin(spreadAngle)*spreadDistance;
-    const rotation=(s.angle+(textureNoise(index,41,0)*2-1)*180*s.rotationJitter)*Math.PI/180+
-      (s.followDirection ? at.direction||0 : 0);
+    const tilt=s.tiltEnabled && at.pen ? clamp(Math.hypot(at.tx||0,at.ty||0)*s.tiltStrength,0,1) : 0;
+    const direction=tilt>.01 ? Math.atan2(at.ty,at.tx) : s.followDirection ? at.direction||0 : 0;
+    const rotation=(s.angle+(textureNoise(index,41,0)*2-1)*180*s.rotationJitter)*Math.PI/180+direction;
+    // A tilted nib spreads along its projected axis, with a lighter deposit.
+    const tiltStretch=1+1.5*tilt;
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = flow;
+    ctx.globalAlpha = flow*(1-.35*tilt);
     // Clip in document coordinates before translating or rotating the tip.
     if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
-    ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(1,s.aspect);
+    ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(tiltStretch,s.aspect);
     if (stroke.stamps) {
       const stamp=stroke.stamps[index % stroke.stamps.length];
       ctx.drawImage(stamp,-radius,-radius,radius*2,radius*2);
@@ -1583,7 +1612,7 @@
         const t = distance / length;
         brushDab(stroke, { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t,
           pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen,
-          direction:Math.atan2(b.y-a.y,b.x-a.x) });
+          direction:Math.atan2(b.y-a.y,b.x-a.x), tx:a.tx+(b.tx-a.tx)*t, ty:a.ty+(b.ty-a.ty)*t });
         distance += stroke.spacing;
       }
       stroke.remaining = distance - length;
@@ -3014,7 +3043,7 @@
       if (tool !== "text") tool = "brush";
       refresh();
     });
-    ["hardness","opacity","flow","spacing","texture-strength","aspect","scatter","rotation-jitter"].forEach(name => {
+    ["hardness","opacity","flow","spacing","texture-strength","aspect","scatter","rotation-jitter","tilt-strength"].forEach(name => {
       const control = $("kv2-brush-" + name);
       control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
     });

@@ -25,8 +25,13 @@
       global.location?.origin === VAULT_ORIGIN;
   }
 
+  function pilotEnabled() {
+    return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_PILOT_ENABLED === true &&
+      global.location?.origin === VAULT_ORIGIN;
+  }
+
   function checkEnabled() {
-    if (!enabled()) throw error("not_activated");
+    if (!enabled() && !pilotEnabled()) throw error("not_activated");
   }
 
   function decodeLengthBase64(text, minLength, maxLength) {
@@ -78,6 +83,20 @@
     return { client, userId: id };
   }
 
+  // This network-authenticated check is for UX and data minimization only.
+  // INSERT authorization still comes from the database JWT/RLS policy.
+  async function pilotAccess(options = {}) {
+    if (!pilotEnabled()) return false;
+    const { client, userId } = await authenticated(options);
+    if (typeof client.auth.getUser !== "function") return false;
+    let result;
+    try { result = await client.auth.getUser(); } catch { return false; }
+    const user = result?.data?.user;
+    return !result?.error && user?.id === userId &&
+      user.is_anonymous === false &&
+      user.app_metadata?.aha_psychology_vault_pilot === true;
+  }
+
   async function status(options = {}) {
     const { client, userId } = await authenticated(options);
     const { data, error: dbError } = await client.from(TABLE)
@@ -88,12 +107,14 @@
 
   async function upload(fileText, options = {}) {
     checkEnabled();
+    if (pilotEnabled() && !await pilotAccess(options)) throw error("pilot_required");
     const file = validateEncryptedFile(fileText);
     const { client, userId } = await authenticated(options);
     // Insert-only. A duplicate PK is a refusal, not an automatic overwrite.
     const { error: dbError } = await client.from(TABLE)
       .insert({ user_id: userId, encrypted_file: file.text });
     if (dbError?.code === "23505") throw error("already_exists");
+    if (pilotEnabled() && dbError?.code === "42501") throw error("pilot_required");
     if (dbError) throw error("vault_unavailable");
     return { stored: true, bytes: file.bytes };
   }
@@ -120,7 +141,7 @@
   }
 
   global.AHAPsychologyEncryptedVault = Object.freeze({
-    enabled, validateEncryptedFile, status, upload, download, remove,
+    enabled, pilotEnabled, pilotAccess, validateEncryptedFile, status, upload, download, remove,
     table: TABLE, maxFileBytes: MAX_BYTES
   });
 })(window);

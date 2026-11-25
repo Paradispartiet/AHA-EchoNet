@@ -10,6 +10,7 @@
 
   const messages = {
     not_activated: "Kontohvelvet er ikke aktivert. Bruk kryptert filbackup i Psykologirommet.",
+    pilot_required: "Opplasting krever godkjent pilotkonto og oppdatert innlogging. Eksisterende egne kopier kan fortsatt hentes og slettes.",
     not_configured: "AHA-innloggingen er ikke tilgjengelig på denne siden.",
     login_required: "Logg inn på AHA først, og åpne deretter denne siden på nytt.",
     invalid_file: "Filen har ikke formatet fra Psykologirommets krypterte sikkerhetskopi.",
@@ -66,20 +67,30 @@
       status("Kontohvelvet er sperret på GitHub Pages sitt delte domene.");
       return;
     }
-    if (!vault || !vault.enabled()) {
+    if (!vault || (!vault.enabled() && !vault.pilotEnabled())) {
       status(messages.not_activated);
       return;
     }
     const panel = id("aha-psych-vault-panel");
     if (!panel) return;
     panel.hidden = false;
-    status("Innlogging kreves. Ingen fil blir lastet opp automatisk.");
+    const pilot = vault.pilotEnabled();
+    const uploadForm = id("aha-psych-vault-upload");
+    if (pilot && uploadForm) uploadForm.hidden = true;
+    if (pilot) id("aha-psych-vault-pilot-notice").hidden = false;
+    status(pilot ? "Begrenset pilot. Trykk Sjekk kontokopien for å kontrollere tilgang." :
+      "Innlogging kreves. Ingen fil blir lastet opp automatisk.");
 
     id("aha-psych-vault-check")?.addEventListener("click", () => run(async () => {
+      if (pilot && uploadForm) uploadForm.hidden = true;
       const data = await vault.status();
-      status(data.exists ?
+      const canUpload = !pilot || await vault.pilotAccess();
+      if (pilot && uploadForm) uploadForm.hidden = !canUpload;
+      status((data.exists ?
         "En kryptert fil ligger på kontoen. Du kan laste den ned eller slette den." :
-        "Ingen kryptert fil er lagret på kontoen.");
+        "Ingen kryptert fil er lagret på kontoen.") +
+        (pilot ? (canUpload ? " Pilottilgang bekreftet. Bruk bare en syntetisk testfil." :
+          " Opplasting krever en godkjent pilotkonto.") : ""));
     }));
 
     id("aha-psych-vault-upload")?.addEventListener("submit", event => {
