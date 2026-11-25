@@ -268,6 +268,24 @@
               <input id="kv2-adjust-saturation" type="range" min="0" max="200" step="1" value="100" />
               <output id="kv2-adjust-saturation-value" for="kv2-adjust-saturation">100%</output>
             </div>
+            <div id="kv2-tone-controls" hidden>
+              <label for="kv2-tone-exposure">Eksponeringsstyrke (RGB)</label>
+              <div class="kv2-slider">
+                <input id="kv2-tone-exposure" type="range" min="-200" max="200" step="1" value="0" />
+                <output id="kv2-tone-exposure-value" for="kv2-tone-exposure">0.00 EV</output>
+              </div>
+              <label for="kv2-tone-temperature">Fargetemperatur (kald – varm)</label>
+              <div class="kv2-slider">
+                <input id="kv2-tone-temperature" type="range" min="-100" max="100" step="1" value="0" />
+                <output id="kv2-tone-temperature-value" for="kv2-tone-temperature">0</output>
+              </div>
+              <label for="kv2-tone-tint">Fargestikk (grønn – magenta)</label>
+              <div class="kv2-slider">
+                <input id="kv2-tone-tint" type="range" min="-100" max="100" step="1" value="0" />
+                <output id="kv2-tone-tint-value" for="kv2-tone-tint">0</output>
+              </div>
+              <p class="kv2-tip">Relative RGB-justeringer, ikke kalibrert RAW-eksponering eller Kelvin.</p>
+            </div>
             <button type="button" id="kv2-adjust-reset" disabled>Nullstill bildejusteringene</button>
             <p class="kv2-tip">Slipp glideren for å anvende justeringen. Originalbildet og lagmasken beholdes. Hver endring kan angres.</p>
           </fieldset>

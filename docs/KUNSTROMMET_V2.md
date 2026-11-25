@@ -242,3 +242,8 @@ Opprett en gruppe av minst to synlige, ulåste lag via flervalget og et unikt na
 ## Justeringslag (4.6, første trinn)
 
 Et eget lag av typen `adjustment` justerer den synlige komposisjonen under sin plass i lagstabelen, inkludert det hvite papiret. Lysstyrke, kontrast og metning (inkludert svart-hvitt ved 0 %) kan endres uten å skrive til underliggende bitmaps. Opasitet blander effekten med originalkomposisjonen, og lagmaskens alfa avgrenser effekten. Lag over justeringslaget påvirkes ikke. Laget kan skjules, flyttes i lagrekkefølgen, dupliseres, angres og lagres lokalt/JSON. Ingen ny database. Laget har fast dokumentposisjon og kan ikke males direkte på eller transformeres som rasterlag; bruk masken. Eldre prosjektfiler åpnes som før, men eldre appversjoner vil ikke gjengi den nye lagtypen riktig. Fargetemperatur og fysisk iPad-test gjenstår.
+
+
+### Fargebalanse og eksponeringsstyrke
+
+Justeringslag har tre ekstra kontroller: relativ RGB-eksponeringsstyrke (−2 til +2 EV, faktor 2^EV i kodede RGB-verdier), temperatur (kald–varm, −100 til +100) og fargestikk (grønn–magenta, −100 til +100). Dette er kreative relative kontroller, ikke kalibrert RAW-eksponering eller Kelvin. De virker før kontrast og metning, med eksisterende opasitet og maske. Valgfri `toneAdjustments`-metadata valideres og avgrenses ved import, med nøytral 0 som standard. Angre, nullstill, duplisering, lokal lagring og JSON beholder verdiene. Vanlige rasterlags tidligere metadata er uendret. Automatisk og fysisk verifikasjon gjenstår.
