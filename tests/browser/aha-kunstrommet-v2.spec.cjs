@@ -1836,8 +1836,18 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     const original = await jsonBackup(page);
     await page.locator("#kv2-text-edit").click();
     await expect(page.locator("#kv2-text-content")).toHaveValue("Før");
+    const preview = page.locator("#kv2-text-edit-preview");
+    const canvas = page.locator("#kv2-canvas");
+    const pixels = (element) => element.evaluate(node => node.toDataURL("image/png"));
+    const committedPixels = await pixels(canvas);
+    await expect(preview).toBeVisible();
+    expect(await pixels(preview)).toBe(committedPixels);
     await page.locator("#kv2-text-content").fill("Avbryt");
+    expect(await pixels(preview)).not.toBe(committedPixels);
+    expect(await pixels(canvas)).toBe(committedPixels);
+    expect((await jsonBackup(page)).layers[1].bitmap).toBe(original.layers[1].bitmap);
     await page.locator("#kv2-text-cancel").click();
+    await expect(preview).toBeHidden();
     expect((await jsonBackup(page)).layers[1].textData.content).toBe("Før");
     await page.locator("#kv2-text-edit").click();
     await page.locator("#kv2-text-content").fill("Etter");
