@@ -92,6 +92,44 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("group opacity composites overlapping layers once and survives history and JSON import",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await shapeDrag(page,[300,300],[300,300],1971);
+    await shapeDrag(page,[600,400],[600,400],1972);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page,[600,400],[600,400],1973);
+    await shapeDrag(page,[900,500],[900,500],1974);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    await page.locator("#kv2-group-name").fill("Felles");
+    await page.locator("#kv2-group-save").click();
+    const before=await jsonBackup(page), slider=page.locator("#kv2-group-opacity");
+    await expect(slider).toBeEnabled();
+    await slider.evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    const samples=await Promise.all([[300,300],[600,400],[900,500]].map(([x,y])=>pxAt(page,x,y)));
+    expect(samples[0]).toEqual(samples[1]);expect(samples[1]).toEqual(samples[2]);
+    expect(samples[0][0]).toBeGreaterThan(120);expect(samples[0][0]).toBeLessThan(170);
+    const grouped=await jsonBackup(page);
+    expect(grouped.layers.map(l=>l.groupOpacity)).toEqual([.5,.5]);
+    expect(grouped.layers.map(({groupOpacity,...layer})=>layer)).toEqual(before.layers);
+    await expect(page.locator("#kv2-clip-toggle")).toBeDisabled();
+    await expect(page.locator("#kv2-merge-down")).toBeDisabled();
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,600,400))[0]).toBeLessThan(80);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async()=>(await pxAt(page,600,400))[0]).toBe(samples[1][0]);
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-import").setInputFiles({name:"group-opacity.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(grouped))});
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    expect(await pxAt(page,600,400)).toEqual(samples[1]);
+    await page.locator("#kv2-group-select").selectOption("Felles");
+    await expect(slider).toHaveValue("50");
+    await slider.evaluate(c=>{c.value="0";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    expect(await pxAt(page,600,400)).toEqual([255,255,255,255]);
+    await page.locator("#kv2-group-dissolve-action").click();
+    expect((await pxAt(page,600,400))[0]).toBeLessThan(80);
+    expect((await jsonBackup(page)).layers.every(l=>!l.groupName&&l.groupOpacity===undefined)).toBe(true);
+  });
+
   test("clipping limits the upper raster to the lower alpha without altering source pixels",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const clip=page.locator("#kv2-clip-toggle");

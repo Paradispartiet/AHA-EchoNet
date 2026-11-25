@@ -369,7 +369,7 @@
   let maskEditing = false;
   const maskedComposite = imageCanvas();
   // Allocate clipping scratch surfaces only when a visible clipping pair is drawn.
-  let clipStencil = null, clipContent = null;
+  let clipStencil = null, clipContent = null, groupComposite = null;
 
   function uid() {
     return global.crypto && global.crypto.randomUUID
@@ -402,7 +402,7 @@
     cancelFreeTransform();
     if(width!==WIDTH||height!==HEIGHT){
       WIDTH=width;HEIGHT=height;
-      clipStencil = null; clipContent = null;
+      clipStencil = null; clipContent = null; groupComposite = null;
       [canvas,maskedComposite,...["kv2-text-edit-preview","kv2-brush-live","kv2-gradient-live","kv2-transform-live","kv2-free-preview"].map($)].forEach(node=>{
         node.width=WIDTH;node.height=HEIGHT;
       });
@@ -593,27 +593,52 @@
     target.drawImage(clipContent, 0, 0);
   }
 
+  function groupAlpha(layer) {
+    return safeGroupName(layer?.groupName) && layer.kind !== "adjustment" &&
+      Number.isFinite(layer.groupOpacity) ? clamp(layer.groupOpacity,0,1) : 1;
+  }
+
+  function drawCompositionLayer(target, layer, preview) {
+    if (!layer.visible) return;
+    const activePreview = previewFor(preview, layer);
+    if (layer.kind === "adjustment") {
+      applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
+      return;
+    }
+    target.globalAlpha = layer.opacity;
+    target.globalCompositeOperation = "source-over";
+    if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") target.globalCompositeOperation = layer.blendMode;
+    if (layer.clipToBelow) drawClippedRaster(target, layer, preview);
+    else drawRaster(target, layer, activePreview);
+  }
+
   function drawComposition(target, preview = null) {
     target.save();
     target.globalAlpha = 1;
     target.globalCompositeOperation = "source-over";
     target.fillStyle = "#ffffff";
     target.fillRect(0, 0, WIDTH, HEIGHT);
-    if (project) project.layers.forEach((layer) => {
-      if (!layer.visible) return;
-      const activePreview = previewFor(preview, layer);
-      if (layer.kind === "adjustment") {
-        applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
-        return;
+    const layers = project?.layers || [];
+    for (let i=0;i<layers.length;) {
+      const layer=layers[i], alpha=groupAlpha(layer), name=safeGroupName(layer.groupName);
+      if(alpha===1){drawCompositionLayer(target,layer,preview);i++;continue;}
+      // Group opacity is applied once per contiguous block, never per member.
+      // Keep separated blocks in their original stacking positions.
+      let end=i+1;
+      while(end<layers.length && safeGroupName(layers[end].groupName)===name && groupAlpha(layers[end])===alpha)end++;
+      if(alpha>0){
+        if(!groupComposite)groupComposite=imageCanvas();
+        const context=groupComposite.getContext("2d");
+        context.save();
+        context.globalAlpha=1;context.globalCompositeOperation="source-over";
+        context.clearRect(0,0,WIDTH,HEIGHT);
+        for(let j=i;j<end;j++)drawCompositionLayer(context,layers[j],preview);
+        context.restore();
+        target.globalAlpha=alpha;target.globalCompositeOperation="source-over";
+        target.drawImage(groupComposite,0,0);
       }
-      target.globalAlpha = layer.opacity;
-      target.globalCompositeOperation = "source-over";
-      if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") {
-        target.globalCompositeOperation = layer.blendMode;
-      }
-      if (layer.clipToBelow) drawClippedRaster(target, layer, preview);
-      else drawRaster(target, layer, activePreview);
-    });
+      i=end;
+    }
     target.restore();
   }
 
@@ -1133,6 +1158,7 @@
       return {
         id: layer.id, name: layer.name, kind: layer.kind,
         ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
+        ...(groupAlpha(layer)<1 ? { groupOpacity:groupAlpha(layer) } : {}),
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
         ...(layer.clipToBelow === true && layer.kind !== "adjustment" ? { clipToBelow: true } : {}),
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
@@ -1328,6 +1354,30 @@
     ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
       $("kv2-group-" + action + "-action").disabled = !control.value;
     });
+    const members=project.layers.filter(layer=>control.value&&layer.groupName===control.value);
+    const alphas=[...new Set(members.map(groupAlpha))];
+    const alpha=alphas.length===1?alphas[0]:1;
+    const opacity=$("kv2-group-opacity");
+    opacity.value=String(Math.round(alpha*100));
+    opacity.disabled=!members.length||members.some(layer=>layer.locked||layer.kind==="adjustment")||
+      project.layers.some(layer=>layer.clipToBelow);
+    $("kv2-group-opacity-value").textContent=alphas.length>1?"Ulik":opacity.value+"%";
+    $("kv2-group-opacity-note").textContent=project.layers.some(layer=>layer.clipToBelow)
+      ?"Fjern klippemaskene før du endrer gruppeopasitet."
+      :"Opasitet brukes én gang per sammenhengende gruppeblokk. Delte grupper behandles som separate blokker; blandingsmoduser virker innenfor blokken ved redusert opasitet.";
+  }
+
+  function setGroupOpacity(){
+    if(busy||pointerId!==null||maskEditing)return;
+    const name=$("kv2-group-select").value;
+    const members=project.layers.filter(layer=>name&&layer.groupName===name);
+    if(!members.length||members.some(layer=>layer.locked||layer.kind==="adjustment")||
+      project.layers.some(layer=>layer.clipToBelow)){renderNamedGroups();return;}
+    const alpha=clamp(Number($("kv2-group-opacity").value)/100,0,1);
+    if(members.every(layer=>groupAlpha(layer)===alpha))return;
+    if(!checkpoint())return;
+    members.forEach(layer=>{if(alpha===1)delete layer.groupOpacity;else layer.groupOpacity=alpha;});
+    changed();refresh();
   }
 
   function groupAction(action) {
@@ -1350,7 +1400,7 @@
     }
     if (!checkpoint()) return;
     members.forEach(layer => {
-      if (action === "dissolve") delete layer.groupName;
+      if (action === "dissolve") { delete layer.groupName; delete layer.groupOpacity; }
       else if (action === "hide" || action === "show") layer.visible = action === "show";
       else if (action === "lock" || action === "unlock") layer.locked = action === "lock";
     });
@@ -1371,7 +1421,9 @@
       status("Løs opp eksisterende grupper før du omgrupperer disse lagene."); return;
     }
     if (!checkpoint()) return;
-    members.forEach(layer => { layer.groupName = name; });
+    const existingAlpha = project.layers.find(layer=>layer.groupName===name);
+    const alpha = groupAlpha(existingAlpha);
+    members.forEach(layer => { layer.groupName = name; if(alpha<1)layer.groupOpacity=alpha;else delete layer.groupOpacity; });
     $("kv2-group-name").value = "";
     changed(); refresh();
     $("kv2-group-select").value = name;
@@ -1444,7 +1496,8 @@
     const base = clippingBase(layer);
     const clip = $("kv2-clip-toggle");
     clip.disabled = !editable || pointerId !== null || maskEditing || layer?.kind === "adjustment" ||
-      (!layer?.clipToBelow && (!base || project.layers[project.layers.indexOf(layer)+1]?.clipToBelow));
+      (!layer?.clipToBelow && (!base || project.layers[project.layers.indexOf(layer)+1]?.clipToBelow ||
+        project.layers.some(item=>groupAlpha(item)<1)));
     clip.setAttribute("aria-pressed", String(layer?.clipToBelow === true));
     clip.textContent = layer?.clipToBelow ? "Fjern klippemaske" : "Klipp til laget under";
     $("kv2-clip-status").textContent = layer?.clipToBelow
@@ -2451,7 +2504,7 @@
     if (busy || pointerId !== null || maskEditing || !layer || !layer.visible || layer.locked ||
         layer.kind === "adjustment") return;
     if (!layer.clipToBelow && (!clippingBase(layer) ||
-        project.layers[project.layers.indexOf(layer)+1]?.clipToBelow)) return;
+        project.layers[project.layers.indexOf(layer)+1]?.clipToBelow || project.layers.some(item=>groupAlpha(item)<1))) return;
     if (!checkpoint()) return;
     if (layer.clipToBelow) delete layer.clipToBelow;
     else layer.clipToBelow = true;
@@ -3004,7 +3057,7 @@
     if (!project || busy || pointerId !== null || maskEditing || freeTransform || textEditId || textAnchor || shapeDraft) return null;
     const upper = currentLayer();
     const index = project.layers.indexOf(upper);
-    if (index < 1 || project.layers.some(layer => layer.clipToBelow)) return null;
+    if (index < 1 || project.layers.some(layer => layer.clipToBelow || groupAlpha(layer)<1)) return null;
     const lower = project.layers[index - 1];
     const eligible = layer => layer && ["paint", "image"].includes(layer.kind) &&
       layer.visible && !layer.locked && !layer.textData && layer.opacity === 1 &&
@@ -3205,6 +3258,7 @@
       ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
       ...(safeGroupName(input.groupName) ? { groupName: safeGroupName(input.groupName) } : {}),
+      ...(groupAlpha(input)<1 ? { groupOpacity:groupAlpha(input) } : {}),
       kind: input.kind === "adjustment" ? "adjustment" : input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
@@ -3281,6 +3335,9 @@
       }
       layers = data.layers.map(layer=>validateLayer(layer,width,height));
     }
+    if(layers.some(layer=>groupAlpha(layer)<1)&&layers.some(layer=>layer.clipToBelow)){
+      throw new Error("Denne versjonen støtter ikke klippemasker og gruppeopasitet i samme prosjekt.");
+    }
     if (JSON.stringify(layers).length > MAX_PROJECT_BYTES) {
       throw new Error("Prosjektet er for stort.");
     }
@@ -3335,6 +3392,7 @@
         layers: saved.layers.map((layer) => ({
           id: uid(), name: String(layer.name || "Lag").slice(0, 70),
           ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
+          ...(groupAlpha(layer)<1 ? { groupOpacity:groupAlpha(layer) } : {}),
           kind: layer.kind === "adjustment" ? "adjustment" : layer.kind === "image" ? "image" : "paint",
           adjustments: safeAdjustments(layer.adjustments),
           ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels), curves: safeCurves(layer.curves) } : {}),
@@ -3597,6 +3655,10 @@
     });
     $("kv2-group-save").addEventListener("click", saveNamedGroup);
     $("kv2-group-select").addEventListener("change", renderNamedGroups);
+    $("kv2-group-opacity").addEventListener("input",()=>{
+      $("kv2-group-opacity-value").textContent=$("kv2-group-opacity").value+"%";
+    });
+    $("kv2-group-opacity").addEventListener("change",setGroupOpacity);
     ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
       $("kv2-group-" + action + "-action").addEventListener("click", () => groupAction(action));
     });

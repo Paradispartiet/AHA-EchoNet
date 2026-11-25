@@ -384,6 +384,12 @@
             <button id="kv2-group-save" type="button" disabled>Opprett gruppe fra flervalg</button>
             <label for="kv2-group-select">Laggrupper</label>
             <select id="kv2-group-select"><option value="">Velg laggruppe</option></select>
+            <label for="kv2-group-opacity">Gruppeopasitet</label>
+            <div class="kv2-slider">
+              <input id="kv2-group-opacity" type="range" min="0" max="100" step="1" value="100" disabled aria-describedby="kv2-group-opacity-note"/>
+              <output id="kv2-group-opacity-value">100%</output>
+            </div>
+            <p id="kv2-group-opacity-note" class="kv2-tip">Opasitet brukes én gang per sammenhengende gruppeblokk.</p>
             <div class="kv2-group-buttons">
               <button id="kv2-group-select-action" type="button" disabled>Velg for flytting</button>
               <button id="kv2-group-dissolve-action" type="button" disabled>Løs opp</button>
