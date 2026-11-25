@@ -8,8 +8,10 @@ const configSrc = fs.readFileSync("js/ahaConfig.js", "utf8");
 const authSrc = fs.readFileSync("js/ahaAuth.js", "utf8");
 const GH = "https://paradispartiet.github.io";
 const PREVIEW = "https://aha-preview.aha-echonet-preview.pages.dev";
+const VERCEL = "https://aha-echo-net.vercel.app";
 const GH_CALLBACK = GH + "/AHA-EchoNet/auth-callback.html";
 const PREVIEW_CALLBACK = PREVIEW + "/auth-callback.html";
+const VERCEL_CALLBACK = VERCEL + "/auth-callback.html";
 
 function fixture(origin, { oldVercelOptIn = false, redirectOverride = "" } = {}) {
   const calls = { client: 0, otp: 0, oauth: 0, requests: [] };
@@ -42,7 +44,7 @@ function fixture(origin, { oldVercelOptIn = false, redirectOverride = "" } = {})
 }
 
 async function run() {
-  for (const [origin, callback] of [[GH, GH_CALLBACK], [PREVIEW, PREVIEW_CALLBACK]]) {
+  for (const [origin, callback] of [[GH, GH_CALLBACK], [PREVIEW, PREVIEW_CALLBACK], [VERCEL, VERCEL_CALLBACK]]) {
     const good = fixture(origin);
     assert.equal(good.window.AHA_AUTH_ORIGIN_BLOCKED, false);
     assert.equal(good.window.AHAAuth.getRedirectUrl(), callback);
@@ -61,10 +63,23 @@ async function run() {
     "auth_callback_not_verified");
   assert.equal(wrongGH.calls.client, 0);
 
-  // These are all unverified. The previously configured Vercel opt-in
-  // flag is intentionally ignored, including on the old incorrect domain.
+  const wrongVercel = fixture(VERCEL, { redirectOverride: GH_CALLBACK });
+  assert.equal(wrongVercel.window.AHAAuth.getRedirectUrl(), "");
+  assert.equal((await wrongVercel.window.AHAAuth.signInWithProvider("google")).reason,
+    "auth_callback_not_verified");
+  assert.equal(wrongVercel.calls.client, 0);
+
+  // The formerly used flag cannot be used to authorize unverified origins.
+  const approved = fixture(VERCEL, { oldVercelOptIn: false });
+  assert.equal(approved.window.AHA_APP_URL, VERCEL + "/");
+  assert.equal(approved.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, false);
+  assert.equal(approved.window.AHAAuth.getRedirectUrl(), VERCEL_CALLBACK);
+
+  // Only the exact production AHA Vercel origin is admitted; preview,
+  // legacy and lookalike hosts remain blocked even with the old opt-in flag.
   const forbidden = [
-    "https://aha-echo-net.vercel.app",
+    "https://aha-echo-net-preview.vercel.app",
+    "https://aha-echo-net-git-main-mats-grans-projects.vercel.app",
     "https://aha-echonet.vercel.app",
     "https://aha-echonet-isolert.vercel.app",
     "https://different-preview.vercel.app",
@@ -93,8 +108,9 @@ async function run() {
   }
   assert.match(authSrc, /auth_callback_not_verified/);
   assert.match(configSrc, /AHA_AUTH_ORIGIN_BLOCKED/);
-  assert.doesNotMatch(configSrc, /const vercelOrigin\s*=|AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true/);
+  assert.match(configSrc, /const vercelOrigin\s*= "https:\/\/aha-echo-net\.vercel\.app"/);
+  assert.doesNotMatch(configSrc, /AHA_VERCEL_AUTH_CALLBACK_ALLOWLIST_VERIFIED === true/);
   assert.doesNotMatch(configSrc, /service_role|secret_key/i);
-  console.log("AHA PKCE exact-origin gate: only existing GitHub Pages + preview allowed; all Vercel/unknown origins blocked PASS");
+  console.log("AHA PKCE exact-origin gate: GitHub Pages, Cloudflare preview and verified production Vercel admitted; all other Vercel origins blocked PASS");
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
