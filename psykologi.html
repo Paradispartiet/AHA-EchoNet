@@ -74,9 +74,9 @@
     </section>
   </main>
   <script src="js/ahaPsychologyVaultConfig.js"></script>
+  <script src="js/ahaPsychologyEncryptedVault.js"></script>
   <script>
-    if (window.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true &&
-        window.location.hostname !== "paradispartiet.github.io") {
+    if (window.AHAPsychologyEncryptedVault?.enabled() === true) {
       document.getElementById("aha-psych-vault-entry").hidden = false;
     }
   </script>

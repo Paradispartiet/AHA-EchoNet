@@ -252,3 +252,8 @@ Justeringslag har tre ekstra kontroller: relativ RGB-eksponeringsstyrke (−2 ti
 ## Nivåer og histogram (4.7, første trinn)
 
 Justeringslag får svartpunkt 0–254, hvitpunkt 1–255 (alltid større enn svartpunkt) og gamma 0,25–4,00. En felles RGB-tabell anvendes etter fargebalanse, kontrast og metning og før maskert opasitetsblanding. Gamma over 1 lysner mellomtoner. Valgfri `levels`-metadata valideres ved import og lagres/dupliseres/angres; eldre filer bruker identitetsverdiene 0/255/1. Histogrammet er en manuelt oppdatert 32-intervalls lyshetsfordeling for den synlige sluttkomposisjonen inkludert papiret; det skjules ved neste redraw slik at gamle målinger ikke fremstår som aktuelle. Ingen analyse av rådata eller automatisk deling. RGB-kurver per kanal og fysisk iPad-verifikasjon gjenstår.
+
+
+### RGB-fargekurver
+
+Justeringslag har fire separate kurver (RGB, rød, grønn, blå), med fem faste inngangspunkter 0/64/128/192/255 og redigerbare utgangsverdier 0–255. Grafen følger valgte kanalens glidere; mellom punktene brukes lineær interpolasjon. Felles RGB-kurve anvendes etter nivåer, før hver kanal sin kurve, deretter maske og opasitet. Hver kurve kan nullstilles separat, og alle ved samlet nullstilling. Valgfri `curves`-metadata begrenses ved import og bevares ved lagring/duplisering/angre. Ingen endring i rasteroriginaler. Fri plassering av inngangspunkter og glatte splinekurver er ikke del av denne første versjonen.

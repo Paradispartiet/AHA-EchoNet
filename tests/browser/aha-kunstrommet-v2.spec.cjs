@@ -1541,6 +1541,32 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("master and channel curves compose independently and survive backup", async ({ page }) => {
+    await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-color").evaluate(c => {c.value="#808080";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await stroke(page);
+    const before = await jsonBackup(page);
+    await page.locator("#kv2-add-adjustment").click();
+    const midpoint = page.locator("#kv2-curve-input-2");
+    const set = value => midpoint.evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("change",{bubbles:true}));},value);
+    await set(160);
+    expect((await pixel(page)).slice(0,3)).toEqual([160,160,160]);
+    await page.locator("#kv2-curve-channel").selectOption("red");
+    await set(192);
+    expect((await pixel(page)).slice(0,3)).toEqual([192,160,160]);
+    const backup = await jsonBackup(page);
+    expect(backup.layers[0].bitmap).toBe(before.layers[0].bitmap);
+    expect(backup.layers[1].curves.red).toEqual([0,64,192,192,255]);
+    await page.locator("#kv2-curve-reset").click();
+    expect((await pixel(page)).slice(0,3)).toEqual([160,160,160]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page)).slice(0,3)).toEqual([192,160,160]);
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-import").setInputFiles({name:"curves.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(backup))});
+    await expect(page.locator("#kv2-curve-controls")).toBeVisible();
+    expect((await pixel(page)).slice(0,3)).toEqual([192,160,160]);
+  });
+
   test("levels map black, white and gamma without changing raster originals", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });

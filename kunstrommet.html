@@ -303,6 +303,29 @@
               <p id="kv2-histogram-status" class="kv2-tip" aria-live="polite">Oppdater for å måle gjeldende bilde.</p>
               <p class="kv2-tip">Histogrammet viser synlig sluttkomposisjon inkludert papir, ikke rådata. Gamma over 1 lysner mellomtoner.</p>
             </div>
+            <div id="kv2-curve-controls" hidden>
+              <h3>Fargekurver</h3>
+              <label for="kv2-curve-channel">Kanal</label>
+              <select id="kv2-curve-channel"><option value="rgb">RGB (alle)</option><option value="red">Rød</option><option value="green">Grønn</option><option value="blue">Blå</option></select>
+              <svg viewBox="-5 -5 265 265" style="width:100%;max-width:256px;display:block" role="img" aria-label="Graf over valgt fargekurve">
+                <rect width="255" height="255" fill="#f0f3f1" stroke="#aebeb6"/>
+                <path d="M64 0V255 M128 0V255 M192 0V255 M0 64H255 M0 128H255 M0 192H255" stroke="#cdd8d1" fill="none"/>
+                <path d="M0 255L255 0" stroke="#9ba9a1" stroke-dasharray="4 4" fill="none"/>
+                <polyline id="kv2-curve-line" points="0,255 64,191 128,127 192,63 255,0" stroke="#315f50" stroke-width="2" fill="none"/>
+                <circle id="kv2-curve-point-0" cx="0" cy="255" r="4" fill="#315f50"/>
+                <circle id="kv2-curve-point-1" cx="64" cy="191" r="4" fill="#315f50"/>
+                <circle id="kv2-curve-point-2" cx="128" cy="127" r="4" fill="#315f50"/>
+                <circle id="kv2-curve-point-3" cx="192" cy="63" r="4" fill="#315f50"/>
+                <circle id="kv2-curve-point-4" cx="255" cy="0" r="4" fill="#315f50"/>
+              </svg>
+              <label for="kv2-curve-input-0">Inngang 0 → utgang</label><div class="kv2-slider"><input id="kv2-curve-input-0" type="range" min="0" max="255" value="0"/><output id="kv2-curve-value-0" for="kv2-curve-input-0">0</output></div>
+              <label for="kv2-curve-input-1">Inngang 64 → utgang</label><div class="kv2-slider"><input id="kv2-curve-input-1" type="range" min="0" max="255" value="64"/><output id="kv2-curve-value-1" for="kv2-curve-input-1">64</output></div>
+              <label for="kv2-curve-input-2">Inngang 128 → utgang</label><div class="kv2-slider"><input id="kv2-curve-input-2" type="range" min="0" max="255" value="128"/><output id="kv2-curve-value-2" for="kv2-curve-input-2">128</output></div>
+              <label for="kv2-curve-input-3">Inngang 192 → utgang</label><div class="kv2-slider"><input id="kv2-curve-input-3" type="range" min="0" max="255" value="192"/><output id="kv2-curve-value-3" for="kv2-curve-input-3">192</output></div>
+              <label for="kv2-curve-input-4">Inngang 255 → utgang</label><div class="kv2-slider"><input id="kv2-curve-input-4" type="range" min="0" max="255" value="255"/><output id="kv2-curve-value-4" for="kv2-curve-input-4">255</output></div>
+              <button type="button" id="kv2-curve-reset" disabled>Nullstill valgt kurve</button>
+              <p class="kv2-tip">Fem faste inngangspunkter med flyttbar utgang. RGB-kurven brukes først, deretter enkeltkanalene.</p>
+            </div>
             <button type="button" id="kv2-adjust-reset" disabled>Nullstill bildejusteringene</button>
             <p class="kv2-tip">Slipp glideren for å anvende justeringen. Originalbildet og lagmasken beholdes. Hver endring kan angres.</p>
           </fieldset>
