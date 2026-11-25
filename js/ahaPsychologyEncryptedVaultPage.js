@@ -64,10 +64,18 @@
     });
   }
 
+  function restoreStatus(ready) {
+    const output = id("aha-psych-vault-restore-status");
+    if (output) output.textContent = ready
+      ? "Nedlastingslenken er klargjort. Last ned filen selv og følg stegene. AHA kan ikke bekrefte at filen er lagret."
+      : "Ingen nedlastingslenke klargjort i denne økten. Har du allerede en egen kryptert fil, kan du bruke den i History Go.";
+  }
+
   function clearDownload() {
     if (downloadUrl) global.URL.revokeObjectURL(downloadUrl);
     downloadUrl = null;
     id("aha-psych-vault-download")?.replaceChildren();
+    restoreStatus(false);
   }
 
   function resetAccount() {
@@ -123,9 +131,12 @@
     link.textContent = "Last ned kryptert fil";
     const area = id("aha-psych-vault-download");
     area.replaceChildren(link);
+    restoreStatus(true);
     // Link remains user-initiated and usable on iPad (no forced navigation).
-    link.addEventListener("click", () => global.setTimeout(() =>
-      global.URL.revokeObjectURL(url), 60000), { once: true });
+    link.addEventListener("click", () => global.setTimeout(() => {
+      if (downloadUrl === url) clearDownload();
+      else global.URL.revokeObjectURL(url);
+    }, 60000), { once: true });
   }
 
   function start() {

@@ -285,6 +285,15 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  const guide = page.locator("#aha-psych-vault-restore-guide");
+  const guideStatus = page.locator("#aha-psych-vault-restore-status");
+  await guide.locator("summary").click();
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
+  await expect(guide).toContainText("Gjenopprett lokalt");
+  await expect(guide).toContainText("Ikke slett eksisterende notater");
+  await expect(guide.locator("input")).toHaveCount(0);
+  await expect(guide.locator("a")).toHaveAttribute("href", "https://paradispartiet.github.io/History-Go/?room=psychology");
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   const overview = page.locator("#aha-psych-vault-overview");
   await expect(overview).toContainText("Ikke sjekket");
   await expect(page.locator("#aha-psych-vault-upload")).toBeHidden();
@@ -354,12 +363,14 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   // A generated link and selected file must disappear on an auth event.
   await page.locator("#aha-psych-vault-download-button").click();
   await expect(page.locator("#aha-psych-vault-download a")).toBeVisible();
+  await expect(guideStatus).toContainText("Nedlastingslenken er klargjort");
   await input.setInputFiles({
     name: "pending.json", mimeType: "application/json", buffer: Buffer.from(backup.text)
   });
   await page.locator('#aha-psych-vault-upload input[type="checkbox"]').check();
   await page.evaluate(id => window.__vaultSwitchAccount(id), ACCOUNT_B);
   await expect(page.locator("#aha-psych-vault-download a")).toHaveCount(0);
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
   await expect(input).toHaveValue("");
   await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).not.toBeChecked();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Kontoen er endret");
@@ -394,6 +405,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Slettingen kunne ikke bekreftes");
   await expect(overview).toContainText("Ikke sjekket");
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
   await page.evaluate(() => { window.__vaultSyntheticDeleteNoop = false; });
   page.once("dialog", dialog => dialog.accept());
