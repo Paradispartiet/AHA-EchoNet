@@ -207,3 +207,8 @@ Tekstplassering er sperret mens brukeren redigerer lagmaske, og egne rastertekst
 ## Redigerbare tekstlag
 
 Nye tekstlag beholder en avgrenset tekstbeskrivelse sammen med PNG-pikslene i prosjektformat V2. Velg laget og bruk **Rediger tekstlag** for å endre tekst, font, størrelse, fet skrift og farge uten å endre andre lag. Endringer vises på lerretet ved bekreftelse, og avbryt endrer ingen piksler. Flytting, maske, justeringer, duplisering og angre/gjør om beholder teksten. Tegning, fyll, beskjæring, klipp og geometrisk transform krever først **Gjør tekst om til piksler** (angrebart). Tidligere rastertekst forblir rastertekst; det er ikke mulig å gjenskape opprinnelige bokstaver fra gamle piksler. Eksport beholder pikselbildet også for eldre lesere av prosjektformatet.
+
+
+## Fri transformering (numerisk førsteversjon)
+
+**Fri transformering** åpner en separat forhåndsvisning av hele komposisjonen. Vinkel −180 til 180 grader og bredde/høyde 10–300 % kan justeres med låste eller uavhengige proporsjoner. Forhåndsvisningen endrer verken lerretet, prosjektkopien eller angrehistorikken. Bruk transformering beregner resultatet fra originalen i ett angresteg, med samme matrise for bilde og eventuell lagmaske, rundt dokumentets sentrum. Avbryt/Escape eller annet lagarbeid forkaster utkastet. Redigerbar tekst må rasteriseres først; låste/skjulte lag og aktiv maskeredigering sperres. Ingen formatendring, nettverk eller AI. Direkte skaleringshåndtak på lerretet er ikke en del av denne førsteversjonen.
