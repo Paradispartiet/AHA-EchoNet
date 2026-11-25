@@ -317,3 +317,8 @@ Navngitte paletter kan eksporteres i `aha-kunstrommet-palettes` versjon 1 (JSON)
 ## 6.0-forberedelse: komposisjonshjelpelinjer
 
 Visningslag med rutenett, tredelingsregel, midtlinjer, ett- og topunktsperspektiv. Juster horisont, forsvinningspunkt(er) innenfor lerretet og synlighet. SVG-laget er separat fra rasteret, pekertransparent og følger zoom/fokusmodus. Det er en midlertidig visningsinnstilling, ikke del av prosjektformat, PNG, angrehistorikk eller lagring. Perspektivlinjene er visuelle (ingen penselmagnetisme eller automatisk perspektivkorrigering). Nettlesertest dekker geometri, zoom, uendret prosjekt/PNG og tegning med aktive hjelpelinjer. Fysisk iPad/Apple Pencil-verifikasjon av 5.0 står fortsatt åpen i #1058.
+
+
+### 6.0-forberedelse: symmetritegning
+
+Vertikal, horisontal og kombinert speiling med flyttbare akser (10–90 %). Vanlig pensel, viskelær, maskestrøk og avanserte penselavtrykk kopieres på aktivt lag i dokumentkoordinater. Avansert motor speiler også tekstur, vinkel, spredning og helning. Identiske sentre/segmenter på aksen avdupliseres; delvis overlapp kan bygge opp farge. Markering klipper hver kopi i dokumentkoordinater. Innstillingene fryses per strøk, og alle kopier inngår i samme angrehandling. Avansert avbrutt strøk blir ikke lagret. Separat akselinje følger zoom og eksporteres aldri. Symmetri er en midlertidig verktøyinnstilling, ikke prosjektmetadata. Figurer, tekst, gradienter og lagflytting speiles ikke. To nettlesertester dekker fireveis speiling, viskelær, undo/redo, avbrutt avansert strøk, flyttbar akse, markering og zoom. Fysisk Apple Pencil-verifikasjon gjenstår.

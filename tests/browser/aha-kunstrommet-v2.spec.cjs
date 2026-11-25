@@ -92,6 +92,52 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("four-way symmetry mirrors ordinary and advanced brush strokes with one undo",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-symmetry-panel summary").click();
+    await page.locator("#kv2-symmetry-mode").selectOption("both");
+    await expect(page.locator("#kv2-symmetry-overlay")).toBeVisible();
+    const locations=[[300,200],[900,200],[300,600],[900,600]];
+    const check=async(dark)=>{for(const [x,y] of locations){
+      await expect.poll(async()=>(await pxAt(page,x,y))[0]).toBe(dark?35:255);
+    }};
+    await shapeDrag(page,[300,200],[300,200],1601);await check(true);
+    await page.locator("#kv2-undo").click();await check(false);
+    await page.locator("#kv2-redo").click();await check(true);
+    await page.locator("#kv2-eraser").click();
+    await shapeDrag(page,[300,200],[300,200],1602);await check(false);
+    await page.locator("#kv2-brush").click();
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    for(const name of ["hardness","flow"])await page.locator("#kv2-brush-"+name).evaluate(c=>{c.value="100";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await shapeDrag(page,[300,200],[300,200],1603);await check(true);
+    await page.locator("#kv2-undo").click();await check(false);
+    await shapePointer(page,"pointerdown",300,200,1604);
+    await shapePointer(page,"pointercancel",300,200,1604);await check(false);
+    await page.locator("#kv2-symmetry-reset").click();
+    await expect(page.locator("#kv2-symmetry-overlay")).toBeHidden();
+  });
+
+  test("symmetry axis uses document coordinates and selection clips mirrored copies",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-symmetry-panel summary").click();
+    await page.locator("#kv2-symmetry-mode").selectOption("vertical");
+    await page.locator("#kv2-symmetry-x").evaluate(c=>{c.value="40";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await expect(page.locator("#kv2-symmetry-lines")).toHaveAttribute("d","M 480 0 L 480 800");
+    await page.locator("#kv2-select").click();
+    await shapeDrag(page,[200,100],[400,300],1605);
+    await page.locator("#kv2-brush").click();
+    await shapeDrag(page,[300,200],[300,200],1606);
+    await expect.poll(async()=>(await pxAt(page,300,200))[0]).toBe(35);
+    expect((await pxAt(page,660,200))[0]).toBe(255);
+    await page.locator("#kv2-clear-selection").click();
+    await shapeDrag(page,[300,200],[300,200],1607);
+    await expect.poll(async()=>(await pxAt(page,660,200))[0]).toBe(35);
+    await page.locator("#kv2-zoom-in").click();
+    const sizes=await page.evaluate(()=>["kv2-canvas","kv2-symmetry-overlay"].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [r.width,r.height];}));
+    expect(Math.abs(sizes[0][0]-sizes[1][0])).toBeLessThan(2);
+    expect(Math.abs(sizes[0][1]-sizes[1][1])).toBeLessThan(2);
+  });
+
   test("composition guides follow zoom and never modify artwork or export", async ({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const layer=page.locator("#kv2-composition-guides");
