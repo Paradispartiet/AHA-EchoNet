@@ -10,7 +10,12 @@
   const WIDTH = 1200;
   const HEIGHT = 800;
   const MAX_LAYERS = 8;
-  const BLEND_MODES = new Set(["normal", "multiply", "screen"]);
+  // Only standard artistic blend modes; never permit destructive Porter-Duff operations.
+  const BLEND_MODES = new Set([
+    "normal", "multiply", "screen", "darken", "lighten", "overlay",
+    "soft-light", "hard-light", "color-dodge", "color-burn", "difference",
+    "exclusion", "hue", "saturation", "color", "luminosity"
+  ]);
 
   // Optional adjustment metadata in the existing V2 project format.
   // Values are bounded before composing CSS Canvas filters from them.
@@ -209,8 +214,12 @@
       target.globalAlpha = layer.opacity;
       // Composite into the document after mask application; don't blend
       // the mask bitmap itself, and don't modify any layer's source pixels.
-      target.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
-        layer.blendMode !== "normal" ? layer.blendMode : "source-over";
+      // Reset first: browsers ignore unsupported assignments, so a prior layer
+      // must never leak its blend mode into the next layer.
+      target.globalCompositeOperation = "source-over";
+      if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") {
+        target.globalCompositeOperation = layer.blendMode;
+      }
       // Filter the source non-destructively before its mask and blend mode.
       const adjusted = adjustedBitmap(layer, bitmap);
       const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
@@ -2106,6 +2115,7 @@
           kind: layer.kind === "image" ? "image" : "paint",
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
+          blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
           x: Number.isFinite(layer.x) ? layer.x : 0,
           y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
           ...(typeof layer.pixelFixups === "string" ? { pixelFixups: layer.pixelFixups } : {}),

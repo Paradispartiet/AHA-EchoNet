@@ -1541,6 +1541,40 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("advanced blend modes compose expected grayscale colors and retain editable originals", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    const set = (color) => page.locator("#kv2-color").evaluate((input, value) => {
+      input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, color);
+    await set("#404040"); await stroke(page);
+    await page.locator("#kv2-add-layer").click();
+    await set("#c0c0c0"); await stroke(page);
+    const original = await jsonBackup(page);
+    const modes = {
+      darken: 64, lighten: 192, overlay: 96, "soft-light": 96, "hard-light": 161,
+      "color-dodge": 255, "color-burn": 1, difference: 128, exclusion: 160,
+      hue: 64, saturation: 64, color: 64, luminosity: 192
+    };
+    for (const [mode, expected] of Object.entries(modes)) {
+      await page.locator("#kv2-blend-mode").selectOption(mode);
+      const rgba = await pixel(page);
+      for (const value of rgba.slice(0, 3)) expect(Math.abs(value - expected), mode).toBeLessThanOrEqual(3);
+      expect(rgba[3]).toBe(255);
+    }
+    const exported = await jsonBackup(page);
+    expect(exported.layers[1].blendMode).toBe("luminosity");
+    for (let i = 0; i < original.layers.length; i++) {
+      expect(exported.layers[i].bitmap).toBe(original.layers[i].bitmap);
+    }
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#kv2-import").setInputFiles({
+      name: "advanced-blend.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(exported))
+    });
+    await expect(page.locator("#kv2-blend-mode")).toHaveValue("luminosity");
+    expect((await pixel(page))[0]).toBeGreaterThan(188);
+  });
+
   test("layer blend modes are non-destructive and undo/redo with expected composite colors", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     const center = () => pixel(page);
