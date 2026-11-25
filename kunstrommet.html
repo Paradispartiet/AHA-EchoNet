@@ -104,6 +104,34 @@
           </div>
         </div>
 
+        <details class="kv2-fold kv2-guide-panel">
+          <summary>Komposisjon og perspektiv</summary>
+          <label for="kv2-guide-mode">Hjelpelinjer</label>
+          <select id="kv2-guide-mode">
+            <option value="off">Av</option><option value="grid">Rutenett (6 × 6)</option>
+            <option value="thirds">Tredelingsregelen</option><option value="center">Midtlinjer</option>
+            <option value="one">Ettpunktsperspektiv</option><option value="two">Topunktsperspektiv</option>
+          </select>
+          <div id="kv2-guide-perspective" hidden>
+            <label for="kv2-guide-horizon">Horisontens høyde fra toppen</label>
+            <div class="kv2-slider"><input id="kv2-guide-horizon" type="range" min="10" max="90" value="50"/><output id="kv2-guide-horizon-value">50%</output></div>
+            <div id="kv2-guide-one-controls" hidden>
+              <label for="kv2-guide-point">Forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-point" type="range" min="5" max="95" value="50"/><output id="kv2-guide-point-value">50%</output></div>
+            </div>
+            <div id="kv2-guide-two-controls" hidden>
+              <label for="kv2-guide-left">Venstre forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-left" type="range" min="0" max="45" value="20"/><output id="kv2-guide-left-value">20%</output></div>
+              <label for="kv2-guide-right">Høyre forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-right" type="range" min="55" max="100" value="80"/><output id="kv2-guide-right-value">80%</output></div>
+            </div>
+          </div>
+          <label for="kv2-guide-opacity">Synlighet</label>
+          <div class="kv2-slider"><input id="kv2-guide-opacity" type="range" min="15" max="85" value="45"/><output id="kv2-guide-opacity-value">45%</output></div>
+          <button id="kv2-guide-reset" type="button">Slå av og nullstill</button>
+          <p class="kv2-tip">Hjelpelinjene følger zoom og fokusmodus, men er bare visuelle. De fester ikke penselstrøk og blir aldri med i eksporten.</p>
+        </details>
+
         <div class="kv2-text-panel" id="kv2-text-panel" role="group" aria-label="Tekst på bilde" hidden>
           <label for="kv2-text-content">Tekst (inntil fem linjer)</label>
           <textarea id="kv2-text-content" rows="2" maxlength="280" placeholder="Skriv en tittel eller en kort bildetekst"></textarea>
@@ -151,6 +179,9 @@
               <circle id="kv2-handle-se" data-transform-handle="se" r="9"></circle>
               <circle id="kv2-handle-rotate" data-transform-handle="rotate" r="9"></circle>
               <circle id="kv2-handle-pivot" data-transform-handle="pivot" r="9"></circle>
+            </svg>
+            <svg id="kv2-composition-guides" viewBox="0 0 1200 800" preserveAspectRatio="none" aria-hidden="true" hidden>
+              <path id="kv2-guide-lines"></path><path id="kv2-guide-marks"></path>
             </svg>
             <svg id="kv2-snap-guides" viewBox="0 0 1200 800" preserveAspectRatio="none" aria-hidden="true" hidden>
               <line id="kv2-snap-x" y1="0" y2="800"></line>

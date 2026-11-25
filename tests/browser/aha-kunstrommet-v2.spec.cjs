@@ -92,6 +92,41 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("composition guides follow zoom and never modify artwork or export", async ({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const layer=page.locator("#kv2-composition-guides");
+    const raster=()=>page.locator("#kv2-canvas").evaluate(c=>c.toDataURL("image/png"));
+    const original=await raster(),backup=await jsonBackup(page);
+    await expect(layer).toHaveAttribute("hidden","");
+    await page.locator(".kv2-guide-panel summary").click();
+    await page.locator("#kv2-guide-mode").selectOption("thirds");
+    await expect(layer).toBeVisible();
+    await expect(page.locator("#kv2-guide-lines")).toHaveAttribute("d","M 400 0 L 400 800 M 0 266.6666666666667 L 1200 266.6666666666667 M 800 0 L 800 800 M 0 533.3333333333334 L 1200 533.3333333333334");
+    await page.locator("#kv2-guide-mode").selectOption("one");
+    const set=async(id,value)=>page.locator("#kv2-guide-"+id).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
+    await set("point",65);await set("horizon",35);
+    await expect(page.locator("#kv2-guide-marks")).toHaveAttribute("d","M 770 280 L 790 280 M 780 270 L 780 290");
+    await page.locator("#kv2-guide-mode").selectOption("two");
+    await set("left",10);await set("right",90);
+    await expect(page.locator("#kv2-guide-marks")).toHaveAttribute("d","M 110 280 L 130 280 M 120 270 L 120 290 M 1070 280 L 1090 280 M 1080 270 L 1080 290");
+    await page.locator("#kv2-zoom-in").click();
+    const sizes=await page.evaluate(()=>["kv2-canvas","kv2-composition-guides"].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [r.width,r.height];}));
+    expect(Math.abs(sizes[0][0]-sizes[1][0])).toBeLessThan(2);
+    expect(Math.abs(sizes[0][1]-sizes[1][1])).toBeLessThan(2);
+    expect(await raster()).toBe(original);
+    expect((await jsonBackup(page)).layers).toEqual(backup.layers);
+    const pending=page.waitForEvent("download");await page.locator("#kv2-png").click();
+    const png=await fs.readFile(await (await pending).path());
+    expect(png.toString("base64")).toBe(original.split(",")[1]);
+    await page.locator("#kv2-zoom-reset").click();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBeLessThan(100);
+    await page.locator("#kv2-guide-reset").click();
+    await expect(layer).toBeHidden();
+    await page.locator("#kv2-undo").click();
+    await expect.poll(()=>pixel(page)).toEqual([255,255,255,255]);
+  });
+
   test("group transform previews two layers around a shared pivot and undoes together", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [400, 400], [400, 400], 1007);

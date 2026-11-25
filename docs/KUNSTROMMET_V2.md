@@ -312,3 +312,8 @@ Lokalt profilavgrenset fargebibliotek med 12 nylig valgte farger, inntil 20 navn
 ### Sikkerhetskopi av fargepaletter
 
 Navngitte paletter kan eksporteres i `aha-kunstrommet-palettes` versjon 1 (JSON). Kun palettnavn og RGB-farger følger med; ikke nylig valgte farger, profil-ID eller kunstverk. Import validerer hele filen (maks 30 000 byte, 20 paletter, 12 unike farger per palett) før lagring. Eksisterende navn beholdes, ugyldig fil eller plassmangel avbryter hele importen. Profilbytte under lesing avbryter. Import endrer ikke aktivt kunstverk. Dette erstatter den tidligere begrensningen om manglende palettimport/eksport. Nettlesertest dekker rundtur, navnekollisjon, ugyldig innhold og plassmangel.
+
+
+## 6.0-forberedelse: komposisjonshjelpelinjer
+
+Visningslag med rutenett, tredelingsregel, midtlinjer, ett- og topunktsperspektiv. Juster horisont, forsvinningspunkt(er) innenfor lerretet og synlighet. SVG-laget er separat fra rasteret, pekertransparent og følger zoom/fokusmodus. Det er en midlertidig visningsinnstilling, ikke del av prosjektformat, PNG, angrehistorikk eller lagring. Perspektivlinjene er visuelle (ingen penselmagnetisme eller automatisk perspektivkorrigering). Nettlesertest dekker geometri, zoom, uendret prosjekt/PNG og tegning med aktive hjelpelinjer. Fysisk iPad/Apple Pencil-verifikasjon av 5.0 står fortsatt åpen i #1058.
