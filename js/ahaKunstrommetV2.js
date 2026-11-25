@@ -1237,6 +1237,7 @@
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
     $("kv2-brush-advanced").hidden = !advancedBrushEnabled();
+    if (advancedBrushEnabled()) renderBrushLibrary();
     $("kv2-gradient-panel").hidden = tool !== "gradient";
     $("kv2-gradient-mask-note").textContent = maskEditing
       ? "Maskemodus: synlig til skjult, eller motsatt ved Reverser. Fargene ignoreres."
@@ -1293,6 +1294,116 @@
       opacity: pct("opacity", 100), flow: pct("flow", 35, 1),
       spacing: pct("spacing", 20, 5), pressureWidth: $("kv2-brush-pressure-width").checked,
       pressureFlow: $("kv2-brush-pressure-flow").checked };
+  }
+
+  const BRUSH_LIBRARY_LIMIT = 30;
+  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false});
+  function safeBrushSettings(value) {
+    const input = value && typeof value === "object" ? value : {};
+    const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
+    return {size:Math.round(number("size",1,60)),
+      color:typeof input.color === "string" && /^#[0-9a-f]{6}$/i.test(input.color) ? input.color.toLowerCase() : BRUSH_DEFAULTS.color,
+      hardness:number("hardness",0,1), opacity:number("opacity",0,1),
+      flow:number("flow",.01,1), spacing:number("spacing",.05,1),
+      pressureWidth:typeof input.pressureWidth === "boolean" ? input.pressureWidth : true,
+      pressureFlow:input.pressureFlow === true};
+  }
+  function brushLibraryKey() {
+    return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
+  }
+  function readBrushLibrary() {
+    const raw = global.localStorage.getItem(brushLibraryKey());
+    if (!raw) return [];
+    if (raw.length > 40000) throw new Error("Penselbiblioteket er for stort.");
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error("Ugyldig penselbibliotek.");
+    const names = new Set();
+    return parsed.slice(0,BRUSH_LIBRARY_LIMIT).map(item => ({
+      name:typeof item?.name === "string" ? item.name.trim().slice(0,50) : "",
+      settings:safeBrushSettings(item?.settings)
+    })).filter(item => {
+      if (!item.name || names.has(item.name)) return false;
+      names.add(item.name); return true;
+    });
+  }
+  function brushLibraryMessage(message) {
+    $("kv2-brush-library-status").textContent = message;
+  }
+  function renderBrushLibrary(preferred) {
+    const select = $("kv2-brush-library");
+    const previous = typeof preferred === "string" ? preferred : select.value;
+    let entries;
+    try { entries = readBrushLibrary(); }
+    catch (_) {
+      select.replaceChildren();
+      ["save","load","delete"].forEach(action => { $("kv2-brush-library-" + action).disabled = true; });
+      brushLibraryMessage("Kunne ikke lese lokale pensler. Eksisterende data er ikke overskrevet.");
+      return;
+    }
+    const option = (name,value) => {
+      const node = document.createElement("option"); node.textContent=name; node.value=value; return node;
+    };
+    select.replaceChildren(option("Velg egen pensel",""),...entries.map(item=>option(item.name,item.name)));
+    select.value=entries.some(item=>item.name===previous) ? previous : "";
+    $("kv2-brush-library-save").disabled = false;
+    $("kv2-brush-library-load").disabled = !select.value;
+    $("kv2-brush-library-delete").disabled = !select.value;
+    brushLibraryMessage(entries.length + " av " + BRUSH_LIBRARY_LIMIT + " egne pensler på denne enheten.");
+  }
+  function writeBrushLibrary(entries, preferred, message) {
+    try {
+      global.localStorage.setItem(brushLibraryKey(), JSON.stringify(entries));
+      renderBrushLibrary(preferred);
+      brushLibraryMessage(message);
+    } catch (_) { brushLibraryMessage("Kunne ikke lagre penselbiblioteket. Kontroller lokal lagring."); }
+  }
+  function saveOwnBrush() {
+    if (busy || pointerId !== null || !advancedBrushEnabled()) return;
+    const name = $("kv2-brush-name").value.trim().slice(0,50);
+    if (!name) { brushLibraryMessage("Skriv et navn på penselen."); return; }
+    try {
+      const entries = readBrushLibrary();
+      const index = entries.findIndex(item=>item.name===name);
+      if (index < 0 && entries.length >= BRUSH_LIBRARY_LIMIT) { brushLibraryMessage("Biblioteket er fullt. Slett en pensel først."); return; }
+      if (index >= 0 && !global.confirm("Erstatt den lagrede penselen «" + name + "»?")) return;
+      const item = {name,settings:safeBrushSettings(brushSettings())};
+      if (index >= 0) entries[index]=item; else entries.push(item);
+      writeBrushLibrary(entries,name,"Pensel lagret lokalt: " + name);
+    } catch (_) { brushLibraryMessage("Kunne ikke lese lokale pensler. Ingen overskriving."); }
+  }
+  function applyBrushSettings(value) {
+    const settings = safeBrushSettings(value);
+    $("kv2-brush-preset").value="advanced";
+    $("kv2-size").value=settings.size;
+    $("kv2-size-value").textContent=String(settings.size);
+    $("kv2-color").value=settings.color;
+    ["hardness","opacity","flow","spacing"].forEach(name=>{
+      const n=Math.round(settings[name]*100);
+      $("kv2-brush-"+name).value=n;
+      $("kv2-brush-"+name+"-value").textContent=n+"%";
+    });
+    $("kv2-brush-pressure-width").checked=settings.pressureWidth;
+    $("kv2-brush-pressure-flow").checked=settings.pressureFlow;
+    tool="brush"; refresh();
+  }
+  function loadOwnBrush() {
+    if (busy || pointerId !== null || !advancedBrushEnabled()) return;
+    try {
+      const item=readBrushLibrary().find(item=>item.name===$("kv2-brush-library").value);
+      if (!item) return;
+      $("kv2-brush-name").value=item.name;
+      applyBrushSettings(item.settings);
+      brushLibraryMessage("Pensel valgt: " + item.name);
+    } catch (_) { brushLibraryMessage("Kunne ikke åpne penselen."); }
+  }
+  function deleteOwnBrush() {
+    if (busy || pointerId !== null || !advancedBrushEnabled()) return;
+    try {
+      const name=$("kv2-brush-library").value;
+      const entries=readBrushLibrary();
+      if (!entries.some(item=>item.name===name) || !global.confirm("Slett penselen «" + name + "»?")) return;
+      writeBrushLibrary(entries.filter(item=>item.name!==name),"","Pensel slettet: " + name);
+    } catch (_) { brushLibraryMessage("Kunne ikke lese lokale pensler. Ingen sletting."); }
   }
 
   function advancedPoint(event, layer) {
@@ -2777,6 +2888,15 @@
     ["hardness","opacity","flow","spacing"].forEach(name => {
       const control = $("kv2-brush-" + name);
       control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
+    });
+    $("kv2-brush-library").addEventListener("change", () => renderBrushLibrary());
+    $("kv2-brush-library-save").addEventListener("click", saveOwnBrush);
+    $("kv2-brush-library-load").addEventListener("click", loadOwnBrush);
+    $("kv2-brush-library-delete").addEventListener("click", deleteOwnBrush);
+    $("kv2-brush-library-reset").addEventListener("click", () => {
+      if (busy || pointerId !== null || !advancedBrushEnabled()) return;
+      applyBrushSettings(BRUSH_DEFAULTS);
+      brushLibraryMessage("Penselinnstillingene er nullstilt. Lagrede pensler er beholdt.");
     });
     $("kv2-brush-preset").addEventListener("change", () => {
       // Changing brush settings doesn't create an art edit or undo step.

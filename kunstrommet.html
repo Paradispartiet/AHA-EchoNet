@@ -84,6 +84,18 @@
             <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
             <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
             <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>
+            <fieldset class="kv2-adjustments">
+              <legend>Mine pensler</legend>
+              <label for="kv2-brush-library">Lagrede pensler</label>
+              <select id="kv2-brush-library"><option value="">Velg egen pensel</option></select>
+              <button id="kv2-brush-library-load" type="button" disabled>Bruk pensel</button>
+              <label for="kv2-brush-name">Penselnavn</label>
+              <input id="kv2-brush-name" type="text" maxlength="50" placeholder="F.eks. Myk skygge"/>
+              <button id="kv2-brush-library-save" type="button">Lagre egne innstillinger</button>
+              <button id="kv2-brush-library-delete" type="button" disabled>Slett valgt pensel</button>
+              <button id="kv2-brush-library-reset" type="button">Nullstill aktive innstillinger</button>
+              <p id="kv2-brush-library-status" class="kv2-tip" role="status" aria-live="polite">Lagres lokalt på denne enheten.</p>
+            </fieldset>
           </div>
           <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
           <div class="kv2-palette" role="group" aria-label="Hurtigpalett">

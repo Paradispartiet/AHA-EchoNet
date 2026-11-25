@@ -1473,6 +1473,43 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("named brushes persist locally, are profile scoped and do not edit artwork", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","brush-test-a"));
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const before=await jsonBackup(page);
+    await page.locator("#kv2-brush-hardness").evaluate(c=>{c.value="20";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-brush-flow").evaluate(c=>{c.value="17";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-color").fill("#aabbcc");
+    await page.locator("#kv2-brush-pressure-flow").check();
+    await page.locator("#kv2-brush-name").fill("Myk skygge");
+    await page.locator("#kv2-brush-library-save").click();
+    await expect(page.locator("#kv2-brush-library-status")).toContainText("Pensel lagret lokalt");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-library").selectOption("Myk skygge");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-hardness")).toHaveValue("20");
+    await expect(page.locator("#kv2-brush-flow")).toHaveValue("17");
+    await expect(page.locator("#kv2-color")).toHaveValue("#aabbcc");
+    await expect(page.locator("#kv2-brush-pressure-flow")).toBeChecked();
+    await page.locator("#kv2-brush-library-reset").click();
+    await expect(page.locator("#kv2-brush-flow")).toHaveValue("35");
+    await expect(page.locator("#kv2-brush-library option")).toHaveCount(2);
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","brush-test-b"));
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await expect(page.locator("#kv2-brush-library option")).toHaveCount(1);
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","brush-test-a"));
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-library").selectOption("Myk skygge");
+    page.once("dialog",dialog=>dialog.accept());
+    await page.locator("#kv2-brush-library-delete").click();
+    await expect(page.locator("#kv2-brush-library option")).toHaveCount(1);
+  });
+
   test("advanced brush caps stroke opacity, respects flow, and cancels without edits", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
