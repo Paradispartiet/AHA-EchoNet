@@ -177,3 +177,11 @@
 .kv2-free-transform[hidden] { display: none; }
 .kv2-free-transform { display: grid; gap: 8px; }
 #kv2-free-preview { display: block; width: 100%; height: auto; background: #fff; border: 1px solid #a3b0a8; }
+
+#kv2-transform-live, #kv2-transform-overlay { position: absolute; top: 0; left: 0; }
+#kv2-transform-live { z-index: 5; pointer-events: none; }
+#kv2-transform-overlay { z-index: 6; touch-action: none; user-select: none; -webkit-user-select: none; }
+#kv2-transform-live[hidden], #kv2-transform-overlay[hidden] { display: none; }
+#kv2-transform-frame, #kv2-transform-stem { fill: none; stroke: #176aca; stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+#kv2-transform-overlay circle { fill: #fff; stroke: #176aca; stroke-width: 2; vector-effect: non-scaling-stroke; cursor: grab; }
+#kv2-transform-overlay #kv2-handle-pivot { fill: #ffbe66; stroke: #a04b08; }

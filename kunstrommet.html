@@ -117,6 +117,21 @@
             <canvas id="kv2-canvas" width="1200" height="800"
               aria-label="Kunstlerret. Tegn, marker et område eller flytt det valgte laget med mus, finger eller penn.">Nettleseren støtter ikke lerret.</canvas>
             <canvas id="kv2-text-edit-preview" class="kv2-text-overlay" width="1200" height="800" aria-hidden="true" hidden></canvas>
+            <canvas id="kv2-transform-live" width="1200" height="800" aria-hidden="true" hidden></canvas>
+            <svg id="kv2-transform-overlay" viewBox="0 0 1200 800" preserveAspectRatio="none" aria-hidden="true" hidden>
+              <polygon id="kv2-transform-frame"></polygon>
+              <line id="kv2-transform-stem"></line>
+              <circle id="kv2-handle-nw" data-transform-handle="nw" r="9"></circle>
+              <circle id="kv2-handle-n" data-transform-handle="n" r="9"></circle>
+              <circle id="kv2-handle-ne" data-transform-handle="ne" r="9"></circle>
+              <circle id="kv2-handle-w" data-transform-handle="w" r="9"></circle>
+              <circle id="kv2-handle-e" data-transform-handle="e" r="9"></circle>
+              <circle id="kv2-handle-sw" data-transform-handle="sw" r="9"></circle>
+              <circle id="kv2-handle-s" data-transform-handle="s" r="9"></circle>
+              <circle id="kv2-handle-se" data-transform-handle="se" r="9"></circle>
+              <circle id="kv2-handle-rotate" data-transform-handle="rotate" r="9"></circle>
+              <circle id="kv2-handle-pivot" data-transform-handle="pivot" r="9"></circle>
+            </svg>
             <div id="kv2-selection-overlay" class="kv2-selection-overlay" aria-hidden="true" hidden></div>
             <svg id="kv2-lasso-overlay" class="kv2-lasso-overlay" viewBox="0 0 1200 800"
               preserveAspectRatio="none" aria-hidden="true" hidden><path id="kv2-lasso-path"></path></svg>
@@ -237,7 +252,7 @@
             <label for="kv2-free-y">Høyde (%)</label>
             <input id="kv2-free-y" type="number" min="10" max="300" step="1" value="100" />
             <label><input id="kv2-free-ratio" type="checkbox" checked /> Bevar proporsjoner</label>
-            <p class="kv2-tip">Forhåndsvisning av hele bildet. Transformeringen skjer rundt lerretets sentrum. Bare aktivt lag og eventuell maske endres ved bekreftelse.</p>
+            <p class="kv2-tip">Dra i håndtakene på lerretet, eller bruk tallfeltene. Det oransje sentrumspunktet kan flyttes. Bare aktivt lag og eventuell maske endres ved bekreftelse.</p>
             <canvas id="kv2-free-preview" width="1200" height="800" aria-label="Forhåndsvisning av transformering"></canvas>
             <p id="kv2-free-warning" class="kv2-tip" role="status"></p>
             <div class="kv2-transform-tools">
