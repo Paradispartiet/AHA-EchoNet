@@ -92,6 +92,44 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("history reuses identical layer and mask rasters but decodes changed content",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await shapeDrag(page,[300,300],[300,300],1981);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-brush").click();
+    const original=await jsonBackup(page);
+    await shapeDrag(page,[900,500],[900,500],1982);
+    const painted=await jsonBackup(page);
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    const faded=await jsonBackup(page);
+    // Count Image constructions only during history. The app's decoder is the
+    // only image constructor involved in these local undo/redo operations.
+    await page.evaluate(()=>{
+      const NativeImage=window.Image;
+      window.__kv2HistoryDecodes=0;
+      window.Image=class extends NativeImage {
+        constructor(...args){super(...args);window.__kv2HistoryDecodes++;}
+      };
+    });
+    const decodes=()=>page.evaluate(()=>window.__kv2HistoryDecodes);
+    const undo=page.locator("#kv2-undo"),redo=page.locator("#kv2-redo");
+    await undo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(painted.layers);
+    expect(await decodes()).toBe(0);
+    await undo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(original.layers);
+    expect(await decodes()).toBe(1);
+    await redo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(painted.layers);
+    expect(await decodes()).toBe(2);
+    await redo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(faded.layers);
+    expect(await decodes()).toBe(2);
+    expect((await jsonBackup(page)).layers[0].maskBitmap).toBeTruthy();
+  });
+
   test("group opacity composites overlapping layers once and survives history and JSON import",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await shapeDrag(page,[300,300],[300,300],1971);

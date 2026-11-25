@@ -121,7 +121,10 @@
   let bitmapRevision = 0;
   function adjustedBitmap(layer, source) {
     const a = safeAdjustments(layer.adjustments);
-    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) return source;
+    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) {
+      adjustedBitmaps.delete(layer.id);
+      return source;
+    }
     const key = [a.brightness, a.contrast, a.saturation].join(":");
     const cached = adjustedBitmaps.get(layer.id);
     if (cached && cached.source === source && cached.revision === bitmapRevision &&
@@ -1098,7 +1101,14 @@
   // standard PNG so that editable layers survive a backup round-trip.
   function encodeEdgePixels(surface) {
     const data = surface.getContext("2d").getImageData(0, 0, surface.width, surface.height).data;
-    const bytes = new Uint8Array(surface.width * surface.height * 8);
+    // Allocate only the actual correction records, not eight bytes for every
+    // document pixel. The source readback and the persisted encoding are unchanged.
+    let count = 0;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] !== 0 && data[i] !== 255) count++;
+    }
+    if (!count) return "";
+    const bytes = new Uint8Array(count * 8);
     let used = 0;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0 || data[i + 3] === 255) continue;
@@ -1210,12 +1220,28 @@
     });
   }
 
-  async function decodeLayerBitmaps(layers,width=WIDTH,height=HEIGHT) {
-    // Decode all layer and mask data before mutating the open project.
-    return Promise.all(layers.map(async (layer) => ({
-      bitmap: await decodePng(layer.bitmap, layer.pixelFixups,width,height),
-      mask: layer.maskBitmap ? await decodePng(layer.maskBitmap, layer.maskPixelFixups,width,height) : null
-    })));
+  async function decodeLayerBitmaps(layers,width=WIDTH,height=HEIGHT,currentSnapshot=null) {
+    // Prepare the complete replacement before mutating project maps. Decode
+    // sequentially to avoid simultaneous image/edge-pixel temporary buffers.
+    // History alone may reuse a live surface, and only when the immediately
+    // captured PNG and exact edge corrections both match. Imports never reuse.
+    const current = new Map((currentSnapshot || []).map(layer => [layer.id,layer]));
+    const decoded = [];
+    const sameDimensions = surface => surface && surface.width===width && surface.height===height;
+    for (const layer of layers) {
+      const prior = current.get(layer.id);
+      const live = prior && surfaces.get(layer.id);
+      const liveMask = prior && masks.get(layer.id);
+      const bitmap = sameDimensions(live) && prior.bitmap===layer.bitmap &&
+        (prior.pixelFixups||"")===(layer.pixelFixups||"")
+        ? live : await decodePng(layer.bitmap,layer.pixelFixups,width,height);
+      const mask = !layer.maskBitmap ? null :
+        sameDimensions(liveMask) && prior.maskBitmap===layer.maskBitmap &&
+        (prior.maskPixelFixups||"")===(layer.maskPixelFixups||"")
+          ? liveMask : await decodePng(layer.maskBitmap,layer.maskPixelFixups,width,height);
+      decoded.push({bitmap,mask});
+    }
+    return decoded;
   }
 
   function installDecodedLayers(layers, decoded) {
@@ -1229,20 +1255,20 @@
     project.layers = layers.map(({ bitmap, pixelFixups, maskBitmap, maskPixelFixups, ...meta }) => meta);
   }
 
-  async function installLayers(layers) {
-    const decoded = await decodeLayerBitmaps(layers);
+  async function installLayers(layers,currentSnapshot) {
+    const decoded = await decodeLayerBitmaps(layers,WIDTH,HEIGHT,currentSnapshot);
     installDecodedLayers(layers, decoded);
   }
 
   async function historyStep(from, to) {
-    if (busy || !from.length || !project) return;
+    if (busy || pointerId !== null || !from.length || !project) return;
     busy = true;
     $("kv2-undo").disabled = true;
     $("kv2-redo").disabled = true;
     try {
       const target = from[from.length - 1];
       const previous = { layers: snapshot(), selected: selected };
-      await installLayers(target.layers);
+      await installLayers(target.layers,previous.layers);
       clearTextDraft();
       from.pop();
       to.push(previous);
