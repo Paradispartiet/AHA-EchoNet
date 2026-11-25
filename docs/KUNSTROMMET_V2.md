@@ -277,3 +277,18 @@ Opptil 30 navngitte avanserte pensler per lokal AHA-profil med størrelse, farge
 ### Penselbibliotekets sikkerhetskopi
 
 Eksportformat `aha-kunstrommet-brushes` versjon 1 inneholder bare navngitte penselinnstillinger, ingen profil-ID eller kunstverk. JSON-import på maks 40 000 byte validerer alle oppføringer før lagring. Eksisterende navn hoppes over; dersom nye pensler ikke får plass innen grensen 30, avbrytes hele importen. Profilbytte under filinnlesing avbryter. Ingen skysynkronisering. Test dekker eksport, kollisjon, gyldig/ugyldig import og uendrede originaler.
+
+
+## Teksturpensler
+
+Fire lokale, prosedyregenererte teksturer: kull, kritt, akvarellstruktur og tørrpensel. Avtrykkene bruker deterministiske 64×64 alfamasker med fire varianter per strøk, farget med aktiv farge, kombinert med hardhet, flyt, trykk og strøkopasitet. Teksturstyrke 0 % gir tidligere rundpensel, 100 % full kornstruktur. Ingen eksterne bilder eller nye nettverkskall. Penselbiblioteket bevarer valgfri tekstur og styrke; eldre versjon-1 filer uten feltene får rundpensel. Dette er stiliserte rasterteksturer, ikke fysisk simulering av pigment, væske eller papir. Nettlesertest dekker pikselvariasjon og lagring. Fysisk iPad-ytelse gjenstår.
+
+
+### Penseldynamikk
+
+Penselform 10–100 % (flat ellipse til sirkel), fast vinkel −180 til 180 grader, spredning inntil én grunnpenselbredde fra strøkbanen, rotasjonsvariasjon inntil ±180 grader og valgfri orientering etter strøkretningen. Avtrykksindeks gir deterministisk variasjon, uten ekstra nettverkskall. Både runde og teksturerte avtrykk transformeres; utklipp skjer i dokumentkoordinater. Første avtrykk bruker fast vinkel inntil en bevegelsesretning er kjent. Innstillinger lagres og eksporteres i penselbiblioteket, med bakoverkompatible nøytrale standardverdier. Dette er ikke fysisk Apple Pencil-tilt; maskepensel og viskelær er uendret. Test dekker rotasjon, deterministisk variasjon og gjenåpning. Fysisk iPad-testing gjenstår.
+
+
+### Pennens helning
+
+Valgfri helningsstyring med følsomhet 0–100 %. Pointer Events tiltX/tiltY omregnes til en normalisert helningsvektor, med altitudeAngle/azimuthAngle som reserve. Vektoren interpoleres mellom avtrykk; helning utvider avtrykket langs pennens projiserte akse og reduserer flyten moderat. Aktiv helning prioriterer pennens orientering over strøkretningen, mens fast vinkel og rotasjonsvariasjon fortsatt legges til. Mus, finger og manglende helningsdata gir tidligere oppførsel. Innstillingene bevares i penselbiblioteket; eldre filer har helning avslått. Automatisert test med syntetiske penneeventer dekker begge akser og musefallback; fysisk Apple Pencil-verifikasjon er fortsatt nødvendig. Tidligere beskrivelse av manglende tilt gjelder før denne utvidelsen.

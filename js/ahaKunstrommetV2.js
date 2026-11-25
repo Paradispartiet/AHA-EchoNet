@@ -982,9 +982,11 @@
   async function historyStep(from, to) {
     if (busy || !from.length || !project) return;
     busy = true;
-    const target = from[from.length - 1];
-    const previous = { layers: snapshot(), selected: selected };
+    $("kv2-undo").disabled = true;
+    $("kv2-redo").disabled = true;
     try {
+      const target = from[from.length - 1];
+      const previous = { layers: snapshot(), selected: selected };
       await installLayers(target.layers);
       clearTextDraft();
       from.pop();
@@ -998,6 +1000,9 @@
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
     finally {
       busy = false;
+      // Re-enable history only after the asynchronous PNG restore is complete.
+      $("kv2-undo").disabled = false;
+      $("kv2-redo").disabled = false;
       // refresh() ran while busy was true, so restore disabled sliders and
       // reset control after undo/redo completes.
       updateLayerControls();
@@ -1293,11 +1298,19 @@
       color: $("kv2-color").value, hardness: pct("hardness", 50),
       opacity: pct("opacity", 100), flow: pct("flow", 35, 1),
       spacing: pct("spacing", 20, 5), pressureWidth: $("kv2-brush-pressure-width").checked,
-      pressureFlow: $("kv2-brush-pressure-flow").checked };
+      pressureFlow: $("kv2-brush-pressure-flow").checked,
+      texture: safeBrushTexture($("kv2-brush-texture").value),
+      textureStrength: pct("texture-strength", 70),
+      aspect: pct("aspect",100,10), angle: clamp(Number($("kv2-brush-angle").value)||0,-180,180),
+      scatter: pct("scatter",0), rotationJitter: pct("rotation-jitter",0),
+      followDirection: $("kv2-brush-follow-direction").checked,
+      tiltStrength: pct("tilt-strength",70), tiltEnabled: $("kv2-brush-tilt-enabled").checked };
   }
 
+  const BRUSH_TEXTURES = ["round","charcoal","chalk","watercolor","dry"];
+  function safeBrushTexture(value) { return BRUSH_TEXTURES.includes(value) ? value : "round"; }
   const BRUSH_LIBRARY_LIMIT = 30;
-  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false});
+  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7, aspect:1, angle:0, scatter:0, rotationJitter:0, followDirection:false, tiltStrength:.7, tiltEnabled:false});
   function safeBrushSettings(value) {
     const input = value && typeof value === "object" ? value : {};
     const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
@@ -1306,7 +1319,12 @@
       hardness:number("hardness",0,1), opacity:number("opacity",0,1),
       flow:number("flow",.01,1), spacing:number("spacing",.05,1),
       pressureWidth:typeof input.pressureWidth === "boolean" ? input.pressureWidth : true,
-      pressureFlow:input.pressureFlow === true};
+      pressureFlow:input.pressureFlow === true,
+      texture:safeBrushTexture(input.texture), textureStrength:number("textureStrength",0,1),
+      aspect:number("aspect",.1,1), angle:number("angle",-180,180),
+      scatter:number("scatter",0,1), rotationJitter:number("rotationJitter",0,1),
+      followDirection:input.followDirection === true,
+      tiltStrength:number("tiltStrength",0,1), tiltEnabled:input.tiltEnabled === true};
   }
   function brushLibraryKey() {
     return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
@@ -1386,6 +1404,20 @@
     });
     $("kv2-brush-pressure-width").checked=settings.pressureWidth;
     $("kv2-brush-pressure-flow").checked=settings.pressureFlow;
+    $("kv2-brush-texture").value=settings.texture;
+    $("kv2-brush-texture-strength").value=Math.round(settings.textureStrength*100);
+    $("kv2-brush-texture-strength-value").textContent=Math.round(settings.textureStrength*100)+"%";
+    for (const [id,key] of [["aspect","aspect"],["scatter","scatter"],["rotation-jitter","rotationJitter"]]) {
+      const n=Math.round(settings[key]*100);
+      $("kv2-brush-"+id).value=n;
+      $("kv2-brush-"+id+"-value").textContent=n+"%";
+    }
+    $("kv2-brush-angle").value=Math.round(settings.angle);
+    $("kv2-brush-angle-value").textContent=Math.round(settings.angle)+"°";
+    $("kv2-brush-follow-direction").checked=settings.followDirection;
+    $("kv2-brush-tilt-enabled").checked=settings.tiltEnabled;
+    $("kv2-brush-tilt-strength").value=Math.round(settings.tiltStrength*100);
+    $("kv2-brush-tilt-strength-value").textContent=Math.round(settings.tiltStrength*100)+"%";
     tool="brush"; refresh();
   }
   function loadOwnBrush() {
@@ -1436,7 +1468,13 @@
             typeof s !== "object" || Array.isArray(s) ||
             !["size","hardness","opacity","flow","spacing"].every(k=>Number.isFinite(s[k])) ||
             typeof s.color !== "string" || !/^#[0-9a-f]{6}$/i.test(s.color) ||
-            typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean") {
+            typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean" ||
+            (s.texture !== undefined && !BRUSH_TEXTURES.includes(s.texture)) ||
+            (s.textureStrength !== undefined && !Number.isFinite(s.textureStrength)) ||
+            ["aspect","angle","scatter","rotationJitter"].some(k=>s[k]!==undefined&&!Number.isFinite(s[k])) ||
+            (s.followDirection !== undefined && typeof s.followDirection !== "boolean") ||
+            (s.tiltStrength !== undefined && !Number.isFinite(s.tiltStrength)) ||
+            (s.tiltEnabled !== undefined && typeof s.tiltEnabled !== "boolean")) {
           throw new Error("Penselfilen har ugyldige eller gjentatte pensler.");
         }
         names.add(name);
@@ -1462,31 +1500,97 @@
     finally { input.value=""; }
   }
 
+  // Pointer Events tiltX/tiltY measure signed inclination from the surface normal.
+  // Prefer the tilt pair, with altitude/azimuth as fallback; no data means upright.
+  function penTilt(event) {
+    if (event.pointerType !== "pen") return {tx:0,ty:0};
+    if (Number.isFinite(event.tiltX) && Number.isFinite(event.tiltY) &&
+        (event.tiltX !== 0 || event.tiltY !== 0)) {
+      const x=Math.tan(clamp(event.tiltX,-89,89)*Math.PI/180);
+      const y=Math.tan(clamp(event.tiltY,-89,89)*Math.PI/180);
+      const length=Math.hypot(x,y);
+      const tilt=Math.atan(length)/(Math.PI/2);
+      return {tx:x/length*tilt,ty:y/length*tilt};
+    }
+    if (Number.isFinite(event.altitudeAngle) && Number.isFinite(event.azimuthAngle)) {
+      const tilt=1-clamp(event.altitudeAngle,0,Math.PI/2)/(Math.PI/2);
+      return {tx:Math.cos(event.azimuthAngle)*tilt,ty:Math.sin(event.azimuthAngle)*tilt};
+    }
+    return {tx:0,ty:0};
+  }
+
   function advancedPoint(event, layer) {
     const at = point(event), pressure = event.pointerType === "pen" &&
       Number.isFinite(event.pressure) && event.pressure > 0 ? clamp(event.pressure, 0, 1) : 0.5;
     return { x: at.x - layer.x, y: at.y - layer.y,
-      pressure, width: penPressure(event), pen: event.pointerType === "pen" };
+      pressure, width: penPressure(event), pen: event.pointerType === "pen", ...penTilt(event) };
   }
 
+  // Small deterministic alpha stamps; generated locally, no image downloads.
+  function textureNoise(x,y,seed) {
+    let n = Math.imul(x+1,374761393) ^ Math.imul(y+1,668265263) ^ Math.imul(seed+1,1274126177);
+    n = Math.imul(n ^ (n >>> 13),1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function textureStamp(settings, seed) {
+    const stamp = document.createElement("canvas");
+    const size = 64;
+    stamp.width=size; stamp.height=size;
+    const ctx=stamp.getContext("2d"), image=ctx.createImageData(size,size);
+    const rgb=[1,3,5].map(i=>parseInt(settings.color.slice(i,i+2),16));
+    for(let y=0;y<size;y++) for(let x=0;x<size;x++) {
+      const u=(x+.5-size/2)/(size/2), v=(y+.5-size/2)/(size/2);
+      const r=Math.hypot(u,v);
+      if(r>=1) continue;
+      const envelope=settings.hardness>=.999 ? 1 : clamp((1-r)/(1-settings.hardness),0,1);
+      const fine=textureNoise(x,y,seed), coarse=textureNoise(Math.floor(x/5),Math.floor(y/5),seed);
+      let grain=1;
+      if(settings.texture==="charcoal") grain=fine<.28 ? .06 : .25+.75*coarse;
+      else if(settings.texture==="chalk") grain=fine<.45 ? .04 : .65+.35*coarse;
+      else if(settings.texture==="watercolor") grain=clamp(.18+.52*coarse+.22*fine+.4*Math.pow(r,3),0,1);
+      else if(settings.texture==="dry") grain=textureNoise(0,y,seed)<.5 ? .025 : .4+.6*fine;
+      const alpha=envelope*(1-settings.textureStrength+settings.textureStrength*grain);
+      const i=(y*size+x)*4;
+      image.data[i]=rgb[0];image.data[i+1]=rgb[1];image.data[i+2]=rgb[2];image.data[i+3]=Math.round(alpha*255);
+    }
+    ctx.putImageData(image,0,0);
+    return stamp;
+  }
   function brushDab(stroke, at) {
     const { settings: s, layer } = stroke;
     const ctx = stroke.ink.getContext("2d");
     const radius = Math.max(.5, s.size * (s.pressureWidth ? at.width : 1) / 2);
     const flow = s.flow * (s.pressureFlow && at.pen ? at.pressure : 1);
+    const index=stroke.dabIndex++;
+    const spread=s.scatter*s.size;
+    const spreadAngle=textureNoise(index,17,0)*2*Math.PI;
+    const spreadDistance=Math.sqrt(textureNoise(index,29,0))*spread;
+    const x=at.x+Math.cos(spreadAngle)*spreadDistance, y=at.y+Math.sin(spreadAngle)*spreadDistance;
+    const tilt=s.tiltEnabled && at.pen ? clamp(Math.hypot(at.tx||0,at.ty||0)*s.tiltStrength,0,1) : 0;
+    const direction=tilt>.01 ? Math.atan2(at.ty,at.tx) : s.followDirection ? at.direction||0 : 0;
+    const rotation=(s.angle+(textureNoise(index,41,0)*2-1)*180*s.rotationJitter)*Math.PI/180+direction;
+    // A tilted nib spreads along its projected axis, with a lighter deposit.
+    const tiltStretch=1+1.5*tilt;
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = flow;
+    ctx.globalAlpha = flow*(1-.35*tilt);
+    // Clip in document coordinates before translating or rotating the tip.
     if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
+    ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(tiltStretch,s.aspect);
+    if (stroke.stamps) {
+      const stamp=stroke.stamps[index % stroke.stamps.length];
+      ctx.drawImage(stamp,-radius,-radius,radius*2,radius*2);
+      ctx.restore(); return;
+    }
     if (s.hardness >= .999) ctx.fillStyle = s.color;
     else {
-      const gradient = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, radius);
+      const gradient = ctx.createRadialGradient(0,0,0,0,0,radius);
       gradient.addColorStop(0, s.color);
       gradient.addColorStop(s.hardness, s.color);
       gradient.addColorStop(1, s.color + "00");
       ctx.fillStyle = gradient;
     }
-    ctx.beginPath(); ctx.arc(at.x, at.y, radius, 0, 2*Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,radius,0,2*Math.PI); ctx.fill();
     ctx.restore();
   }
 
@@ -1494,7 +1598,9 @@
     const settings = brushSettings(), first = advancedPoint(event, layer);
     advancedStroke = { layer, source: surfaces.get(layer.id), settings,
       ink: imageCanvas(), composite: imageCanvas(), previous: first,
-      spacing: Math.max(.5, settings.size * settings.spacing), remaining: 0 };
+      spacing: Math.max(.5, settings.size * settings.spacing), remaining: 0,
+      dabIndex:0, stamps:settings.texture !== "round" && settings.textureStrength>0
+        ? Array.from({length:4},(_,seed)=>textureStamp(settings,seed)) : null };
     brushDab(advancedStroke, first);
     advancedStroke.remaining = advancedStroke.spacing;
     drawSoon();
@@ -1510,7 +1616,8 @@
       while (distance <= length) {
         const t = distance / length;
         brushDab(stroke, { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t,
-          pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen });
+          pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen,
+          direction:Math.atan2(b.y-a.y,b.x-a.x), tx:a.tx+(b.tx-a.tx)*t, ty:a.ty+(b.ty-a.ty)*t });
         distance += stroke.spacing;
       }
       stroke.remaining = distance - length;
@@ -2941,9 +3048,12 @@
       if (tool !== "text") tool = "brush";
       refresh();
     });
-    ["hardness","opacity","flow","spacing"].forEach(name => {
+    ["hardness","opacity","flow","spacing","texture-strength","aspect","scatter","rotation-jitter","tilt-strength"].forEach(name => {
       const control = $("kv2-brush-" + name);
       control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
+    });
+    $("kv2-brush-angle").addEventListener("input", () => {
+      $("kv2-brush-angle-value").textContent=$("kv2-brush-angle").value+"°";
     });
     $("kv2-brush-library").addEventListener("change", () => renderBrushLibrary());
     $("kv2-brush-library-save").addEventListener("click", saveOwnBrush);
