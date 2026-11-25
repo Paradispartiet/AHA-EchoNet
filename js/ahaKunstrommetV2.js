@@ -1379,7 +1379,57 @@
         (maskEditing ? " · Du redigerer masken" : " · Du redigerer bildet");
   }
 
+  // Composition guides are a separate SVG, never part of the raster or history.
+  function renderCompositionGuides() {
+    const mode=$("kv2-guide-mode").value;
+    const one=mode==="one",two=mode==="two",perspective=one||two;
+    const horizon=clamp(Number($("kv2-guide-horizon").value)||0,10,90);
+    const center=clamp(Number($("kv2-guide-point").value)||0,5,95);
+    const left=clamp(Number($("kv2-guide-left").value)||0,0,45);
+    const right=clamp(Number($("kv2-guide-right").value)||0,55,100);
+    $("kv2-guide-perspective").hidden=!perspective;
+    $("kv2-guide-one-controls").hidden=!one;
+    $("kv2-guide-two-controls").hidden=!two;
+    for(const [id,value] of [["horizon",horizon],["point",center],["left",left],["right",right]]) {
+      $("kv2-guide-"+id+"-value").textContent=value+"%";
+    }
+    const overlay=$("kv2-composition-guides");
+    overlay.toggleAttribute("hidden",mode==="off");
+    overlay.style.width=Math.round(ZOOM_LEVELS[zoomIndex]*100)+"%";
+    const lines=[],marks=[];
+    const line=(x,y,u,v)=>lines.push("M "+x+" "+y+" L "+u+" "+v);
+    if(mode==="grid"||mode==="thirds"||mode==="center"){
+      const n=mode==="grid"?6:mode==="thirds"?3:2;
+      for(let i=1;i<n;i++){
+        line(WIDTH*i/n,0,WIDTH*i/n,HEIGHT);
+        line(0,HEIGHT*i/n,WIDTH,HEIGHT*i/n);
+      }
+    }
+    if(perspective){
+      const y=HEIGHT*horizon/100;
+      line(0,y,WIDTH,y);
+      const points=one?[WIDTH*center/100]:[WIDTH*left/100,WIDTH*right/100];
+      for(const x of points){
+        for(let i=0;i<=6;i++){
+          line(x,y,WIDTH*i/6,0);
+          line(x,y,WIDTH*i/6,HEIGHT);
+        }
+        for(let i=1;i<4;i++){
+          line(x,y,0,HEIGHT*i/4);
+          line(x,y,WIDTH,HEIGHT*i/4);
+        }
+        marks.push("M "+(x-10)+" "+y+" L "+(x+10)+" "+y+" M "+x+" "+(y-10)+" L "+x+" "+(y+10));
+      }
+    }
+    $("kv2-guide-lines").setAttribute("d",lines.join(" "));
+    $("kv2-guide-marks").setAttribute("d",marks.join(" "));
+    const alpha=clamp(Number($("kv2-guide-opacity").value)||0,15,85);
+    overlay.style.opacity=String(alpha/100);
+    $("kv2-guide-opacity-value").textContent=alpha+"%";
+  }
+
   function refresh() {
+    renderCompositionGuides();
     showSnapGuides();
     cancelFreeTransform();
     if (textEditId && (tool !== "text" || currentLayer()?.id !== textEditId ||
@@ -3213,6 +3263,16 @@
   }
 
   function bind() {
+    $("kv2-guide-mode").addEventListener("change",renderCompositionGuides);
+    ["horizon","point","left","right","opacity"].forEach(name=>{
+      $("kv2-guide-"+name).addEventListener("input",renderCompositionGuides);
+    });
+    $("kv2-guide-reset").addEventListener("click",()=>{
+      $("kv2-guide-mode").value="off";
+      $("kv2-guide-horizon").value="50";$("kv2-guide-point").value="50";
+      $("kv2-guide-left").value="20";$("kv2-guide-right").value="80";
+      $("kv2-guide-opacity").value="45";renderCompositionGuides();
+    });
     $("kv2-focus-mode").addEventListener("click", toggleStudioFocus);
     $("kv2-brush-settings-jump").addEventListener("click", () => {
       if (!advancedBrushEnabled() || pointerId !== null) return;

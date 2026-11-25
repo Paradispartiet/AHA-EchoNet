@@ -240,3 +240,11 @@
 .kv2-color-chips .kv2-color-chip {min-width:76px;min-height:44px;font-size:.78rem;border:1px solid #8e9e96;font-variant-numeric:tabular-nums;}
 #kv2-color-library-panel select {font:inherit;max-width:100%;padding:8px;border-radius:8px;border:1px solid #b9c1bd;background:white;}
 #kv2-color-library-panel h3 {font-size:1rem;margin:14px 0 5px;}
+
+/* Composition guide layer: follows raster width at any zoom, ignores pointer events. */
+#kv2-composition-guides {position:absolute;top:0;left:0;width:100%;height:auto;aspect-ratio:3 / 2;z-index:2;pointer-events:none;overflow:hidden;}
+#kv2-composition-guides[hidden] {display:none;}
+#kv2-composition-guides path {fill:none;stroke:#116aac;stroke-width:1.2;vector-effect:non-scaling-stroke;}
+#kv2-composition-guides #kv2-guide-marks {stroke:#b53355;stroke-width:2.2;}
+.kv2-guide-panel select {font:inherit;max-width:100%;padding:8px;border:1px solid #b9c1bd;border-radius:8px;background:white;}
+.kv2-guide-panel output {min-width:3rem;font-variant-numeric:tabular-nums;text-align:right;}
