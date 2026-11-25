@@ -2304,6 +2304,7 @@
     });
     $("kv2-clear-move-group").addEventListener("click", () => {
       if (busy || pointerId !== null) return;
+      cancelFreeTransform();
       moveTogether.clear();
       renderLayerList();
     });

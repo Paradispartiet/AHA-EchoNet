@@ -108,6 +108,12 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     });
     expect(ink.every(v => v < 100)).toBe(true);
     expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator("#kv2-clear-move-group").click();
+    await expect(page.locator("#kv2-transform-overlay")).toBeHidden();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    await page.locator("#kv2-transform-group").click();
+    await page.locator("#kv2-free-angle").fill("90");
     await page.locator("#kv2-free-commit").click();
     expect((await pxAt(page, 600, 200))[0]).toBeLessThan(100);
     expect((await pxAt(page, 600, 600))[0]).toBeLessThan(100);
@@ -138,7 +144,9 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-move-count")).toHaveText("2 lag ved Flytt lag");
     page.once("dialog", dialog => dialog.accept());
     await page.locator("#kv2-import").setInputFiles({ name: "group.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(grouped)) });
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
     await expect(page.locator("#kv2-group-select option")).toHaveCount(2);
+    expect((await jsonBackup(page)).layers.map(l => l.groupName)).toEqual(["Landskap", "Landskap"]);
     await page.locator("#kv2-group-select").selectOption("Landskap");
     await page.locator("#kv2-group-dissolve-action").click();
     expect((await jsonBackup(page)).layers.every(l => !l.groupName)).toBe(true);
