@@ -121,7 +121,10 @@
   let bitmapRevision = 0;
   function adjustedBitmap(layer, source) {
     const a = safeAdjustments(layer.adjustments);
-    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) return source;
+    if (a.brightness === 100 && a.contrast === 100 && a.saturation === 100) {
+      adjustedBitmaps.delete(layer.id);
+      return source;
+    }
     const key = [a.brightness, a.contrast, a.saturation].join(":");
     const cached = adjustedBitmaps.get(layer.id);
     if (cached && cached.source === source && cached.revision === bitmapRevision &&
@@ -368,6 +371,8 @@
   const masks = new Map();
   let maskEditing = false;
   const maskedComposite = imageCanvas();
+  // Allocate clipping scratch surfaces only when a visible clipping pair is drawn.
+  let clipStencil = null, clipContent = null, groupComposite = null;
 
   function uid() {
     return global.crypto && global.crypto.randomUUID
@@ -400,6 +405,7 @@
     cancelFreeTransform();
     if(width!==WIDTH||height!==HEIGHT){
       WIDTH=width;HEIGHT=height;
+      clipStencil = null; clipContent = null; groupComposite = null;
       [canvas,maskedComposite,...["kv2-text-edit-preview","kv2-brush-live","kv2-gradient-live","kv2-transform-live","kv2-free-preview"].map($)].forEach(node=>{
         node.width=WIDTH;node.height=HEIGHT;
       });
@@ -533,51 +539,111 @@
     target.putImageData(image, 0, 0);
   }
 
+  function clippingBase(layer) {
+    if (!project || !layer || layer.kind === "adjustment") return null;
+    const index = project.layers.indexOf(layer);
+    const base = project.layers[index - 1];
+    return base && base.kind !== "adjustment" && !base.clipToBelow ? base : null;
+  }
+
+  function previewFor(preview, layer) {
+    return Array.isArray(preview) ? preview.find(item => item.id === layer.id)
+      : preview?.id === layer.id ? preview : null;
+  }
+
+  // Draw one raster into its document position; caller sets opacity and blend.
+  function drawRaster(target, layer, activePreview) {
+    const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
+    if (!bitmap) return;
+    const adjusted = adjustedBitmap(layer, bitmap);
+    const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
+    if (!mask) { target.drawImage(adjusted, layer.x, layer.y); return; }
+    const context = maskedComposite.getContext("2d");
+    context.save();
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+    context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.drawImage(adjusted, 0, 0);
+    context.globalCompositeOperation = "destination-in";
+    context.drawImage(mask, 0, 0);
+    context.restore();
+    target.drawImage(maskedComposite, layer.x, layer.y);
+  }
+
+  function drawClippedRaster(target, layer, preview) {
+    const base = clippingBase(layer);
+    // Fail closed if the immediately lower raster is hidden or invalid.
+    if (!base || !base.visible || base.opacity <= 0) return;
+    if (!clipStencil) clipStencil = imageCanvas();
+    if (!clipContent) clipContent = imageCanvas();
+    const stencil = clipStencil.getContext("2d"), content = clipContent.getContext("2d");
+    if (!stencil || !content) return;
+    stencil.save();
+    stencil.globalAlpha = 1;
+    stencil.globalCompositeOperation = "source-over";
+    stencil.clearRect(0, 0, WIDTH, HEIGHT);
+    stencil.globalAlpha = base.opacity;
+    drawRaster(stencil, base, previewFor(preview, base));
+    stencil.restore();
+    content.save();
+    content.globalAlpha = 1;
+    content.globalCompositeOperation = "source-over";
+    content.clearRect(0, 0, WIDTH, HEIGHT);
+    drawRaster(content, layer, previewFor(preview, layer));
+    content.globalCompositeOperation = "destination-in";
+    content.drawImage(clipStencil, 0, 0);
+    content.restore();
+    target.drawImage(clipContent, 0, 0);
+  }
+
+  function groupAlpha(layer) {
+    return safeGroupName(layer?.groupName) && layer.kind !== "adjustment" &&
+      Number.isFinite(layer.groupOpacity) ? clamp(layer.groupOpacity,0,1) : 1;
+  }
+
+  function drawCompositionLayer(target, layer, preview) {
+    if (!layer.visible) return;
+    const activePreview = previewFor(preview, layer);
+    if (layer.kind === "adjustment") {
+      applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
+      return;
+    }
+    target.globalAlpha = layer.opacity;
+    target.globalCompositeOperation = "source-over";
+    if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") target.globalCompositeOperation = layer.blendMode;
+    if (layer.clipToBelow) drawClippedRaster(target, layer, preview);
+    else drawRaster(target, layer, activePreview);
+  }
+
   function drawComposition(target, preview = null) {
     target.save();
     target.globalAlpha = 1;
     target.globalCompositeOperation = "source-over";
     target.fillStyle = "#ffffff";
     target.fillRect(0, 0, WIDTH, HEIGHT);
-    if (project) project.layers.forEach((layer) => {
-      if (!layer.visible) return;
-      const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
-      if (layer.kind === "adjustment") {
-        applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
-        return;
-      }
-      const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
-      if (!bitmap) return;
-      target.globalAlpha = layer.opacity;
-      // Composite into the document after mask application; don't blend
-      // the mask bitmap itself, and don't modify any layer's source pixels.
-      // Reset first: browsers ignore unsupported assignments, so a prior layer
-      // must never leak its blend mode into the next layer.
-      target.globalCompositeOperation = "source-over";
-      if (BLEND_MODES.has(layer.blendMode) && layer.blendMode !== "normal") {
-        target.globalCompositeOperation = layer.blendMode;
-      }
-      // Filter the source non-destructively before its mask and blend mode.
-      const adjusted = adjustedBitmap(layer, bitmap);
-      const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
-      if (!mask) {
-        target.drawImage(adjusted, layer.x, layer.y);
-      } else {
-        const context = maskedComposite.getContext("2d");
+    const layers = project?.layers || [];
+    for (let i=0;i<layers.length;) {
+      const layer=layers[i], alpha=groupAlpha(layer), name=safeGroupName(layer.groupName);
+      if(alpha===1){drawCompositionLayer(target,layer,preview);i++;continue;}
+      // Group opacity is applied once per contiguous block, never per member.
+      // Keep separated blocks in their original stacking positions.
+      let end=i+1;
+      while(end<layers.length && safeGroupName(layers[end].groupName)===name && groupAlpha(layers[end])===alpha)end++;
+      if(alpha>0){
+        if(!groupComposite)groupComposite=imageCanvas();
+        const context=groupComposite.getContext("2d");
         context.save();
-        context.globalAlpha = 1;
-        context.globalCompositeOperation = "source-over";
-        context.clearRect(0, 0, WIDTH, HEIGHT);
-        context.drawImage(adjusted, 0, 0);
-        context.globalCompositeOperation = "destination-in";
-        context.drawImage(mask, 0, 0);
+        context.globalAlpha=1;context.globalCompositeOperation="source-over";
+        context.clearRect(0,0,WIDTH,HEIGHT);
+        for(let j=i;j<end;j++)drawCompositionLayer(context,layers[j],preview);
         context.restore();
-        target.drawImage(maskedComposite, layer.x, layer.y);
+        target.globalAlpha=alpha;target.globalCompositeOperation="source-over";
+        target.drawImage(groupComposite,0,0);
       }
-    });
+      i=end;
+    }
     target.restore();
   }
-
 
   // A lasso is a transient polygon in document coordinates; the project format is unchanged.
   function lassoActive() { return selection?.type === "lasso"; }
@@ -1035,7 +1101,14 @@
   // standard PNG so that editable layers survive a backup round-trip.
   function encodeEdgePixels(surface) {
     const data = surface.getContext("2d").getImageData(0, 0, surface.width, surface.height).data;
-    const bytes = new Uint8Array(surface.width * surface.height * 8);
+    // Allocate only the actual correction records, not eight bytes for every
+    // document pixel. The source readback and the persisted encoding are unchanged.
+    let count = 0;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] !== 0 && data[i] !== 255) count++;
+    }
+    if (!count) return "";
+    const bytes = new Uint8Array(count * 8);
     let used = 0;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0 || data[i + 3] === 255) continue;
@@ -1095,7 +1168,9 @@
       return {
         id: layer.id, name: layer.name, kind: layer.kind,
         ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
+        ...(groupAlpha(layer)<1 ? { groupOpacity:groupAlpha(layer) } : {}),
         visible: layer.visible, locked: layer.locked, opacity: layer.opacity,
+        ...(layer.clipToBelow === true && layer.kind !== "adjustment" ? { clipToBelow: true } : {}),
         blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
         adjustments: safeAdjustments(layer.adjustments),
         ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels), curves: safeCurves(layer.curves) } : {}),
@@ -1145,12 +1220,28 @@
     });
   }
 
-  async function decodeLayerBitmaps(layers,width=WIDTH,height=HEIGHT) {
-    // Decode all layer and mask data before mutating the open project.
-    return Promise.all(layers.map(async (layer) => ({
-      bitmap: await decodePng(layer.bitmap, layer.pixelFixups,width,height),
-      mask: layer.maskBitmap ? await decodePng(layer.maskBitmap, layer.maskPixelFixups,width,height) : null
-    })));
+  async function decodeLayerBitmaps(layers,width=WIDTH,height=HEIGHT,currentSnapshot=null) {
+    // Prepare the complete replacement before mutating project maps. Decode
+    // sequentially to avoid simultaneous image/edge-pixel temporary buffers.
+    // History alone may reuse a live surface, and only when the immediately
+    // captured PNG and exact edge corrections both match. Imports never reuse.
+    const current = new Map((currentSnapshot || []).map(layer => [layer.id,layer]));
+    const decoded = [];
+    const sameDimensions = surface => surface && surface.width===width && surface.height===height;
+    for (const layer of layers) {
+      const prior = current.get(layer.id);
+      const live = prior && surfaces.get(layer.id);
+      const liveMask = prior && masks.get(layer.id);
+      const bitmap = sameDimensions(live) && prior.bitmap===layer.bitmap &&
+        (prior.pixelFixups||"")===(layer.pixelFixups||"")
+        ? live : await decodePng(layer.bitmap,layer.pixelFixups,width,height);
+      const mask = !layer.maskBitmap ? null :
+        sameDimensions(liveMask) && prior.maskBitmap===layer.maskBitmap &&
+        (prior.maskPixelFixups||"")===(layer.maskPixelFixups||"")
+          ? liveMask : await decodePng(layer.maskBitmap,layer.maskPixelFixups,width,height);
+      decoded.push({bitmap,mask});
+    }
+    return decoded;
   }
 
   function installDecodedLayers(layers, decoded) {
@@ -1164,20 +1255,20 @@
     project.layers = layers.map(({ bitmap, pixelFixups, maskBitmap, maskPixelFixups, ...meta }) => meta);
   }
 
-  async function installLayers(layers) {
-    const decoded = await decodeLayerBitmaps(layers);
+  async function installLayers(layers,currentSnapshot) {
+    const decoded = await decodeLayerBitmaps(layers,WIDTH,HEIGHT,currentSnapshot);
     installDecodedLayers(layers, decoded);
   }
 
   async function historyStep(from, to) {
-    if (busy || !from.length || !project) return;
+    if (busy || pointerId !== null || !from.length || !project) return;
     busy = true;
     $("kv2-undo").disabled = true;
     $("kv2-redo").disabled = true;
     try {
       const target = from[from.length - 1];
       const previous = { layers: snapshot(), selected: selected };
-      await installLayers(target.layers);
+      await installLayers(target.layers,previous.layers);
       clearTextDraft();
       from.pop();
       to.push(previous);
@@ -1217,7 +1308,7 @@
     project.layers.slice().reverse().forEach((layer) => {
       const row = document.createElement("div");
       row.className = "kv2-layer" + (selected === layer.id ? " kv2-selected" : "");
-      const choose = makeButton(layer.name + (layer.kind === "adjustment" ? " · justering" : "") + (masks.has(layer.id) ? " · maske" : ""), () => {
+      const choose = makeButton(layer.name + (layer.kind === "adjustment" ? " · justering" : "") + (masks.has(layer.id) ? " · maske" : "") + (layer.clipToBelow ? " · klippet" : ""), () => {
         leaveMaskEdit();
         selected = layer.id;
         clearTextDraft();
@@ -1289,6 +1380,30 @@
     ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
       $("kv2-group-" + action + "-action").disabled = !control.value;
     });
+    const members=project.layers.filter(layer=>control.value&&layer.groupName===control.value);
+    const alphas=[...new Set(members.map(groupAlpha))];
+    const alpha=alphas.length===1?alphas[0]:1;
+    const opacity=$("kv2-group-opacity");
+    opacity.value=String(Math.round(alpha*100));
+    opacity.disabled=!members.length||members.some(layer=>layer.locked||layer.kind==="adjustment")||
+      project.layers.some(layer=>layer.clipToBelow);
+    $("kv2-group-opacity-value").textContent=alphas.length>1?"Ulik":opacity.value+"%";
+    $("kv2-group-opacity-note").textContent=project.layers.some(layer=>layer.clipToBelow)
+      ?"Fjern klippemaskene før du endrer gruppeopasitet."
+      :"Opasitet brukes én gang per sammenhengende gruppeblokk. Delte grupper behandles som separate blokker; blandingsmoduser virker innenfor blokken ved redusert opasitet.";
+  }
+
+  function setGroupOpacity(){
+    if(busy||pointerId!==null||maskEditing)return;
+    const name=$("kv2-group-select").value;
+    const members=project.layers.filter(layer=>name&&layer.groupName===name);
+    if(!members.length||members.some(layer=>layer.locked||layer.kind==="adjustment")||
+      project.layers.some(layer=>layer.clipToBelow)){renderNamedGroups();return;}
+    const alpha=clamp(Number($("kv2-group-opacity").value)/100,0,1);
+    if(members.every(layer=>groupAlpha(layer)===alpha))return;
+    if(!checkpoint())return;
+    members.forEach(layer=>{if(alpha===1)delete layer.groupOpacity;else layer.groupOpacity=alpha;});
+    changed();refresh();
   }
 
   function groupAction(action) {
@@ -1311,7 +1426,7 @@
     }
     if (!checkpoint()) return;
     members.forEach(layer => {
-      if (action === "dissolve") delete layer.groupName;
+      if (action === "dissolve") { delete layer.groupName; delete layer.groupOpacity; }
       else if (action === "hide" || action === "show") layer.visible = action === "show";
       else if (action === "lock" || action === "unlock") layer.locked = action === "lock";
     });
@@ -1332,7 +1447,9 @@
       status("Løs opp eksisterende grupper før du omgrupperer disse lagene."); return;
     }
     if (!checkpoint()) return;
-    members.forEach(layer => { layer.groupName = name; });
+    const existingAlpha = project.layers.find(layer=>layer.groupName===name);
+    const alpha = groupAlpha(existingAlpha);
+    members.forEach(layer => { layer.groupName = name; if(alpha<1)layer.groupOpacity=alpha;else delete layer.groupOpacity; });
     $("kv2-group-name").value = "";
     changed(); refresh();
     $("kv2-group-select").value = name;
@@ -1386,6 +1503,11 @@
     $("kv2-layer-up").disabled = !layer || project.layers.indexOf(layer) === project.layers.length - 1;
     $("kv2-layer-down").disabled = !layer || project.layers.indexOf(layer) === 0;
     $("kv2-remove-layer").disabled = project.layers.length <= 1;
+    const mergePair = mergeRasterPair();
+    $("kv2-merge-down").disabled = !mergePair;
+    $("kv2-merge-down-note").textContent = mergePair
+      ? "Slår sammen med laget under. Angre kan gjenopprette originalene i denne økten."
+      : "Velg to tilstøtende, synlige og ulåste rasterlag med normal blanding, full opasitet, samme gruppe, uten masker, justeringer eller forskyvning. Fjern eventuelle klippemasker før sammenslåing.";
     const textEditable = !!layer?.textData && layer.visible && !layer.locked && !busy && !maskEditing;
     $("kv2-text-edit").disabled = !textEditable;
     $("kv2-text-rasterize").disabled = !textEditable;
@@ -1397,6 +1519,16 @@
     const hasMask = !!layer && masks.has(layer.id);
     const editable = !!layer && layer.visible && !layer.locked && !busy;
     if (!hasMask || layer?.maskEnabled === false) leaveMaskEdit();
+    const base = clippingBase(layer);
+    const clip = $("kv2-clip-toggle");
+    clip.disabled = !editable || pointerId !== null || maskEditing || layer?.kind === "adjustment" ||
+      (!layer?.clipToBelow && (!base || project.layers[project.layers.indexOf(layer)+1]?.clipToBelow ||
+        project.layers.some(item=>groupAlpha(item)<1)));
+    clip.setAttribute("aria-pressed", String(layer?.clipToBelow === true));
+    clip.textContent = layer?.clipToBelow ? "Fjern klippemaske" : "Klipp til laget under";
+    $("kv2-clip-status").textContent = layer?.clipToBelow
+      ? (base && base.visible ? "Klippet til: " + base.name : "Klippet innhold er skjult – laget under er skjult eller ugyldig.")
+      : "Klippemasken følger laget direkte under. Endret lagrekkefølge kan endre klippeformen.";
     $("kv2-mask-add").disabled = !editable || hasMask;
     $("kv2-mask-edit").disabled = !editable || !hasMask || layer.maskEnabled === false;
     $("kv2-mask-edit").setAttribute("aria-pressed", String(hasMask && maskEditing));
@@ -1592,7 +1724,7 @@
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
     $("kv2-layer-count").textContent = project.layers.length + " av " + MAX_LAYERS + " lag";
-    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS;
+    $("kv2-duplicate-layer").disabled = project.layers.length >= MAX_LAYERS || !!currentLayer()?.clipToBelow;
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
@@ -2393,6 +2525,18 @@
     maskEditing = false;
   }
 
+  function toggleClipping() {
+    const layer = currentLayer();
+    if (busy || pointerId !== null || maskEditing || !layer || !layer.visible || layer.locked ||
+        layer.kind === "adjustment") return;
+    if (!layer.clipToBelow && (!clippingBase(layer) ||
+        project.layers[project.layers.indexOf(layer)+1]?.clipToBelow || project.layers.some(item=>groupAlpha(item)<1))) return;
+    if (!checkpoint()) return;
+    if (layer.clipToBelow) delete layer.clipToBelow;
+    else layer.clipToBelow = true;
+    changed(); refresh();
+  }
+
   function addLayerMask() {
     const layer = editableLayer();
     if (!layer || masks.has(layer.id)) return;
@@ -2583,6 +2727,10 @@
 
   function duplicateActiveLayer() {
     const layer = editableLayer();
+    if (layer?.clipToBelow) {
+      status("Fjern klippemasken før du dupliserer laget.");
+      return;
+    }
     if (!layer || project.layers.length >= MAX_LAYERS) {
       status("Det er ikke plass til flere lag.");
       return;
@@ -2929,6 +3077,55 @@
     refresh();
   }
 
+  // Only merge a conservative subset of raster pairs. No destructive baking of
+  // editable metadata or off-document pixels, and no white paper in the output.
+  function mergeRasterPair() {
+    if (!project || busy || pointerId !== null || maskEditing || freeTransform || textEditId || textAnchor || shapeDraft) return null;
+    const upper = currentLayer();
+    const index = project.layers.indexOf(upper);
+    if (index < 1 || project.layers.some(layer => layer.clipToBelow || groupAlpha(layer)<1)) return null;
+    const lower = project.layers[index - 1];
+    const eligible = layer => layer && ["paint", "image"].includes(layer.kind) &&
+      layer.visible && !layer.locked && !layer.textData && layer.opacity === 1 &&
+      (layer.blendMode || "normal") === "normal" && layer.x === 0 && layer.y === 0 &&
+      !masks.has(layer.id) && surfaces.has(layer.id) &&
+      Object.values(safeAdjustments(layer.adjustments)).every(value => value === 100);
+    return eligible(lower) && eligible(upper) &&
+      safeGroupName(lower.groupName) === safeGroupName(upper.groupName)
+      ? { upper, lower, index } : null;
+  }
+
+  function mergeRasterDown() {
+    const pair = mergeRasterPair();
+    if (!pair) { status("Disse lagene kan ikke slås sammen ennå."); return; }
+    if (!global.confirm("Slå sammen de to lagene? Du kan angre i denne økten, men ikke etter at prosjektet er lukket. Eksporter en kopi først hvis du vil beholde originalene.")) return;
+    const { upper, lower, index } = pair;
+    let result;
+    try {
+      result = imageCanvas();
+      const context = result.getContext("2d");
+      if (!context) throw new Error("Mangler lerret.");
+      context.drawImage(surfaces.get(lower.id), 0, 0);
+      context.drawImage(surfaces.get(upper.id), 0, 0);
+      if (!checkpoint()) return;
+    } catch (_) {
+      status("Sammenslåing mislyktes – originalene er uendret.");
+      return;
+    }
+    surfaces.set(lower.id, result);
+    surfaces.delete(upper.id);
+    adjustedBitmaps.delete(lower.id);
+    adjustedBitmaps.delete(upper.id);
+    lower.kind = "paint";
+    project.layers.splice(index, 1);
+    selected = lower.id;
+    moveTogether.clear();
+    clearTextDraft();
+    changed();
+    refresh();
+    status("Lagene er slått sammen – Angre gjenoppretter originalene.");
+  }
+
   function removeLayer() {
     if (busy || project.layers.length <= 1) return;
     checkpoint();
@@ -3087,9 +3284,11 @@
       ...(textData ? { textData } : {}),
       id: uid(), name: String(input.name || "Lag").slice(0, 70),
       ...(safeGroupName(input.groupName) ? { groupName: safeGroupName(input.groupName) } : {}),
+      ...(groupAlpha(input)<1 ? { groupOpacity:groupAlpha(input) } : {}),
       kind: input.kind === "adjustment" ? "adjustment" : input.kind === "image" ? "image" : "paint",
       visible: input.visible !== false, locked: input.locked === true,
       opacity: clamp(Number.isFinite(input.opacity) ? input.opacity : 1, 0, 1),
+      ...(input.clipToBelow === true && input.kind !== "adjustment" ? { clipToBelow: true } : {}),
       // Older projects default to normal; unknown or unsafe modes are ignored.
       blendMode: BLEND_MODES.has(input.blendMode) ? input.blendMode : "normal",
       adjustments: safeAdjustments(input.adjustments),
@@ -3162,6 +3361,9 @@
       }
       layers = data.layers.map(layer=>validateLayer(layer,width,height));
     }
+    if(layers.some(layer=>groupAlpha(layer)<1)&&layers.some(layer=>layer.clipToBelow)){
+      throw new Error("Denne versjonen støtter ikke klippemasker og gruppeopasitet i samme prosjekt.");
+    }
     if (JSON.stringify(layers).length > MAX_PROJECT_BYTES) {
       throw new Error("Prosjektet er for stort.");
     }
@@ -3216,11 +3418,13 @@
         layers: saved.layers.map((layer) => ({
           id: uid(), name: String(layer.name || "Lag").slice(0, 70),
           ...(safeGroupName(layer.groupName) ? { groupName: safeGroupName(layer.groupName) } : {}),
+          ...(groupAlpha(layer)<1 ? { groupOpacity:groupAlpha(layer) } : {}),
           kind: layer.kind === "adjustment" ? "adjustment" : layer.kind === "image" ? "image" : "paint",
           adjustments: safeAdjustments(layer.adjustments),
           ...(layer.kind === "adjustment" ? { toneAdjustments: safeTone(layer.toneAdjustments), levels: safeLevels(layer.levels), curves: safeCurves(layer.curves) } : {}),
           visible: layer.visible !== false, locked: layer.locked === true,
           opacity: Number.isFinite(layer.opacity) ? layer.opacity : 1,
+          ...(layer.clipToBelow === true && layer.kind !== "adjustment" ? { clipToBelow: true } : {}),
           blendMode: BLEND_MODES.has(layer.blendMode) ? layer.blendMode : "normal",
           x: Number.isFinite(layer.x) ? layer.x : 0,
           y: Number.isFinite(layer.y) ? layer.y : 0, bitmap: layer.bitmap,
@@ -3477,6 +3681,10 @@
     });
     $("kv2-group-save").addEventListener("click", saveNamedGroup);
     $("kv2-group-select").addEventListener("change", renderNamedGroups);
+    $("kv2-group-opacity").addEventListener("input",()=>{
+      $("kv2-group-opacity-value").textContent=$("kv2-group-opacity").value+"%";
+    });
+    $("kv2-group-opacity").addEventListener("change",setGroupOpacity);
     ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
       $("kv2-group-" + action + "-action").addEventListener("click", () => groupAction(action));
     });
@@ -3501,6 +3709,8 @@
     $("kv2-layer-up").addEventListener("click", () => reorder(1));
     $("kv2-layer-down").addEventListener("click", () => reorder(-1));
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
+    $("kv2-merge-down").addEventListener("click", mergeRasterDown);
+    $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);

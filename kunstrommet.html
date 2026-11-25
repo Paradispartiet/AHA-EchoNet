@@ -384,6 +384,12 @@
             <button id="kv2-group-save" type="button" disabled>Opprett gruppe fra flervalg</button>
             <label for="kv2-group-select">Laggrupper</label>
             <select id="kv2-group-select"><option value="">Velg laggruppe</option></select>
+            <label for="kv2-group-opacity">Gruppeopasitet</label>
+            <div class="kv2-slider">
+              <input id="kv2-group-opacity" type="range" min="0" max="100" step="1" value="100" disabled aria-describedby="kv2-group-opacity-note"/>
+              <output id="kv2-group-opacity-value">100%</output>
+            </div>
+            <p id="kv2-group-opacity-note" class="kv2-tip">Opasitet brukes én gang per sammenhengende gruppeblokk.</p>
             <div class="kv2-group-buttons">
               <button id="kv2-group-select-action" type="button" disabled>Velg for flytting</button>
               <button id="kv2-group-dissolve-action" type="button" disabled>Løs opp</button>
@@ -401,7 +407,9 @@
             <button type="button" id="kv2-layer-down">Ned</button>
             <button type="button" id="kv2-remove-layer">Fjern</button>
             <button type="button" id="kv2-duplicate-layer">Dupliser lag</button>
+            <button type="button" id="kv2-merge-down" aria-describedby="kv2-merge-down-note" disabled>Slå sammen med laget under</button>
           </div>
+          <small id="kv2-merge-down-note"></small>
           <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
           <div class="kv2-text-actions">
             <button id="kv2-text-edit" type="button" disabled>Rediger tekstlag</button>
@@ -530,6 +538,8 @@
           <p class="kv2-tip">◉ / ○ skjuler eller viser et lag. «Låst» beskytter det mot pensel, viskelær, beskjæring og transformering.</p>
           <div class="kv2-mask-panel" role="group" aria-label="Lagmaske for aktivt lag">
             <h3>Lagmaske</h3>
+            <button id="kv2-clip-toggle" type="button" aria-pressed="false" aria-describedby="kv2-clip-status" disabled>Klipp til laget under</button>
+            <p id="kv2-clip-status" class="kv2-tip">Klippemasken følger laget direkte under.</p>
             <p id="kv2-mask-status" class="kv2-tip" role="status" aria-live="polite">Ingen maske på valgt lag</p>
             <div class="kv2-mask-tools">
               <button id="kv2-mask-add" type="button">Legg til maske</button>
