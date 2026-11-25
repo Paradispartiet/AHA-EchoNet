@@ -1473,6 +1473,51 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("advanced brush caps stroke opacity, respects flow, and cancels without edits", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const set = (name,value) => page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
+    await set("hardness",100); await set("opacity",50); await set("flow",100); await set("spacing",5);
+    await page.locator("#kv2-size").evaluate(c=>{c.value="40";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-brush-pressure-width").uncheck();
+    const before=await jsonBackup(page);
+    await shapePointer(page,"pointerdown",500,400,1301);
+    await shapePointer(page,"pointermove",700,400,1301);
+    await expect(page.locator("#kv2-brush-live")).toBeVisible();
+    expect((await pixel(page))[0]).toBe(255);
+    const preview=await page.locator("#kv2-brush-live").evaluate(c=>c.getContext("2d").getImageData(600,400,1,1).data[0]);
+    expect(preview).toBeGreaterThanOrEqual(143); expect(preview).toBeLessThanOrEqual(146);
+    await shapePointer(page,"pointercancel",700,400,1301);
+    await expect(page.locator("#kv2-brush-live")).toBeHidden();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await shapeDrag(page,[500,400],[700,400],1302);
+    expect((await pixel(page))[0]).toBeGreaterThanOrEqual(143);
+    expect((await pixel(page))[0]).toBeLessThanOrEqual(146);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await set("opacity",100); await set("flow",25); await stroke(page);
+    expect((await pixel(page))[0]).toBeGreaterThan(195);
+    expect((await pixel(page))[0]).toBeLessThan(205);
+  });
+
+  test("advanced soft brush has a feathered edge and keeps original mask tools", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    for (const [name,value] of [["hardness",0],["flow",100]]) {
+      await page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
+    }
+    await stroke(page);
+    const center=(await pixel(page))[0], edge=(await pxAt(page,620,400))[0];
+    expect(center).toBeLessThan(55); expect(edge).toBeGreaterThan(center+50); expect(edge).toBeLessThan(240);
+    await page.locator("#kv2-mask-add").click();
+    await expect(page.locator("#kv2-brush-advanced")).toBeHidden();
+    await stroke(page);
+    expect((await pixel(page))[0]).toBe(255);
+    await page.locator("#kv2-brush").click(); await stroke(page);
+    expect((await pixel(page))[0]).toBe(center);
+  });
+
   test("brush presets and palette change the active brush without creating an edit", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kv2-brush-preset")).toHaveValue("normal");

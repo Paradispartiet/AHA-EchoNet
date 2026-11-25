@@ -189,6 +189,7 @@
   let pointerId = null;
   let pointerStart = null;
   let paintPrevious = null;
+  let advancedStroke = null; // Disposable stroke, committed only on pointerup.
   let dirty = false;
   let busy = false;
   let framePending = false;
@@ -273,6 +274,7 @@
   function draw() {
     framePending = false;
     drawComposition(view);
+    renderAdvancedStroke();
     $("kv2-histogram-status").textContent = "Oppdater for å måle gjeldende bilde.";
     $("kv2-histogram").hidden = true;
   }
@@ -1234,6 +1236,7 @@
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
+    $("kv2-brush-advanced").hidden = !advancedBrushEnabled();
     $("kv2-gradient-panel").hidden = tool !== "gradient";
     $("kv2-gradient-mask-note").textContent = maskEditing
       ? "Maskemodus: synlig til skjult, eller motsatt ved Reverser. Fargene ignoreres."
@@ -1274,6 +1277,116 @@
     viewport.scrollLeft = Math.max(0, centerX * newZoom - width / 2);
     viewport.scrollTop = Math.max(0, centerY * newZoom - height / 2);
     refresh();
+  }
+
+  function advancedBrushEnabled() {
+    return tool === "brush" && !maskEditing && $("kv2-brush-preset").value === "advanced";
+  }
+
+  function brushSettings() {
+    const pct = (name, fallback, min = 0) => {
+      const value = Number($("kv2-brush-" + name).value);
+      return clamp(Number.isFinite(value) ? value : fallback, min, 100) / 100;
+    };
+    return { size: clamp(Number($("kv2-size").value) || 6, 1, 60),
+      color: $("kv2-color").value, hardness: pct("hardness", 50),
+      opacity: pct("opacity", 100), flow: pct("flow", 35, 1),
+      spacing: pct("spacing", 20, 5), pressureWidth: $("kv2-brush-pressure-width").checked,
+      pressureFlow: $("kv2-brush-pressure-flow").checked };
+  }
+
+  function advancedPoint(event, layer) {
+    const at = point(event), pressure = event.pointerType === "pen" &&
+      Number.isFinite(event.pressure) && event.pressure > 0 ? clamp(event.pressure, 0, 1) : 0.5;
+    return { x: at.x - layer.x, y: at.y - layer.y,
+      pressure, width: penPressure(event), pen: event.pointerType === "pen" };
+  }
+
+  function brushDab(stroke, at) {
+    const { settings: s, layer } = stroke;
+    const ctx = stroke.ink.getContext("2d");
+    const radius = Math.max(.5, s.size * (s.pressureWidth ? at.width : 1) / 2);
+    const flow = s.flow * (s.pressureFlow && at.pen ? at.pressure : 1);
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = flow;
+    if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
+    if (s.hardness >= .999) ctx.fillStyle = s.color;
+    else {
+      const gradient = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, radius);
+      gradient.addColorStop(0, s.color);
+      gradient.addColorStop(s.hardness, s.color);
+      gradient.addColorStop(1, s.color + "00");
+      ctx.fillStyle = gradient;
+    }
+    ctx.beginPath(); ctx.arc(at.x, at.y, radius, 0, 2*Math.PI); ctx.fill();
+    ctx.restore();
+  }
+
+  function beginAdvancedStroke(layer, event) {
+    const settings = brushSettings(), first = advancedPoint(event, layer);
+    advancedStroke = { layer, source: surfaces.get(layer.id), settings,
+      ink: imageCanvas(), composite: imageCanvas(), previous: first,
+      spacing: Math.max(.5, settings.size * settings.spacing), remaining: 0 };
+    brushDab(advancedStroke, first);
+    advancedStroke.remaining = advancedStroke.spacing;
+    drawSoon();
+  }
+
+  function advanceBrush(event) {
+    const stroke = advancedStroke;
+    if (!stroke) return;
+    const a = stroke.previous, b = advancedPoint(event, stroke.layer);
+    const length = Math.hypot(b.x-a.x,b.y-a.y);
+    if (length > 0) {
+      let distance = stroke.remaining;
+      while (distance <= length) {
+        const t = distance / length;
+        brushDab(stroke, { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t,
+          pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen });
+        distance += stroke.spacing;
+      }
+      stroke.remaining = distance - length;
+    }
+    stroke.previous = b;
+  }
+
+  function validAdvancedStroke(stroke) {
+    return stroke && currentLayer() === stroke.layer && surfaces.get(stroke.layer.id) === stroke.source &&
+      !busy && advancedBrushEnabled() && stroke.layer.visible && !stroke.layer.locked;
+  }
+
+  function advancedComposite(stroke) {
+    const ctx = stroke.composite.getContext("2d");
+    ctx.putImageData(stroke.source.getContext("2d").getImageData(0,0,WIDTH,HEIGHT),0,0);
+    ctx.save(); ctx.globalCompositeOperation="source-over"; ctx.globalAlpha=stroke.settings.opacity;
+    ctx.drawImage(stroke.ink,0,0); ctx.restore();
+    return stroke.composite;
+  }
+
+  function renderAdvancedStroke() {
+    const live = $("kv2-brush-live"), stroke = advancedStroke;
+    if (!validAdvancedStroke(stroke)) { live.hidden = true; return; }
+    adjustedBitmaps.delete(stroke.layer.id);
+    drawComposition(live.getContext("2d"), { id:stroke.layer.id, bitmap:advancedComposite(stroke), mask:masks.get(stroke.layer.id) });
+    adjustedBitmaps.delete(stroke.layer.id);
+    live.hidden = false;
+  }
+
+  function finishAdvancedStroke(event) {
+    const stroke = advancedStroke;
+    const commit = event.type === "pointerup" && validAdvancedStroke(stroke) && stroke.settings.opacity > 0;
+    if (commit && Number.isFinite(event.clientX) && Number.isFinite(event.clientY) && event.pressure > 0) advanceBrush(event);
+    advancedStroke = null;
+    pointerId = null; pointerStart = null; paintPrevious = null;
+    $("kv2-brush-live").hidden = true;
+    if (commit && checkpoint()) {
+      const ctx = stroke.source.getContext("2d");
+      ctx.save(); ctx.globalCompositeOperation="source-over"; ctx.globalAlpha=stroke.settings.opacity;
+      ctx.drawImage(stroke.ink,0,0); ctx.restore();
+      changed();
+    }
+    draw();
   }
 
   function drawSegment(context, a, b, onMask) {
@@ -1419,7 +1532,8 @@
       return;
     }
     // Moving the viewport is never an artwork edit and must not create undo history.
-    if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !isShapeTool() && !checkpoint()) return;
+    const advanced = advancedBrushEnabled();
+    if (tool !== "hand" && tool !== "select" && tool !== "lasso" && !isShapeTool() && !advanced && !checkpoint()) return;
     event.preventDefault();
     pointerId = event.pointerId;
     const moving = tool === "move" && layer ? project.layers.filter(item =>
@@ -1458,7 +1572,8 @@
         y: Math.floor(p.y), w: 0, h: 0 };
       renderSelection();
     }
-    if (tool === "brush" || tool === "eraser") {
+    if (advanced) beginAdvancedStroke(layer, event);
+    else if (tool === "brush" || tool === "eraser") {
       const at = point(event);
       const local = {
         x: at.x - layer.x, y: at.y - layer.y,
@@ -1474,6 +1589,15 @@
   function move(event) {
     if (pointerId === null || event.pointerId !== pointerId || busy) return;
     event.preventDefault();
+    if (advancedStroke) {
+      if (validAdvancedStroke(advancedStroke)) {
+        const samples = event.getCoalescedEvents?.() || [];
+        for (const sample of samples) advanceBrush(sample);
+        advanceBrush(event);
+        drawSoon();
+      }
+      return;
+    }
     if (tool === "hand") {
       viewport.scrollLeft = Math.max(0, pointerStart.scrollLeft + pointerStart.clientX - event.clientX);
       viewport.scrollTop = Math.max(0, pointerStart.scrollTop + pointerStart.clientY - event.clientY);
@@ -1533,6 +1657,7 @@
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
     showSnapGuides();
+    if (advancedStroke) { finishAdvancedStroke(event); return; }
     if (isShapeTool()) {
       const complete = event.type === "pointerup" && !!shapeDraft;
       if (complete && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
@@ -2649,6 +2774,10 @@
       if (tool !== "text") tool = "brush";
       refresh();
     });
+    ["hardness","opacity","flow","spacing"].forEach(name => {
+      const control = $("kv2-brush-" + name);
+      control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
+    });
     $("kv2-brush-preset").addEventListener("change", () => {
       // Changing brush settings doesn't create an art edit or undo step.
       tool = "brush"; refresh();
@@ -2863,6 +2992,14 @@
         clearTextDraft();
         renderTextPreview();
         status("Tekstplassering avbrutt – ingen endringer.");
+        return;
+      }
+      if (event.key === "Escape" && advancedStroke) {
+        event.preventDefault();
+        const captured = pointerId;
+        finishAdvancedStroke({type:"pointercancel"});
+        if (captured !== null && canvas.hasPointerCapture?.(captured)) canvas.releasePointerCapture(captured);
+        status("Penselstrøk avbrutt – ingen endringer");
         return;
       }
       if (event.key === "Escape" && shapeDraft) {
