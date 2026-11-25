@@ -982,9 +982,11 @@
   async function historyStep(from, to) {
     if (busy || !from.length || !project) return;
     busy = true;
-    const target = from[from.length - 1];
-    const previous = { layers: snapshot(), selected: selected };
+    $("kv2-undo").disabled = true;
+    $("kv2-redo").disabled = true;
     try {
+      const target = from[from.length - 1];
+      const previous = { layers: snapshot(), selected: selected };
       await installLayers(target.layers);
       clearTextDraft();
       from.pop();
@@ -998,6 +1000,9 @@
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
     finally {
       busy = false;
+      // Re-enable history only after the asynchronous PNG restore is complete.
+      $("kv2-undo").disabled = false;
+      $("kv2-redo").disabled = false;
       // refresh() ran while busy was true, so restore disabled sliders and
       // reset control after undo/redo completes.
       updateLayerControls();
