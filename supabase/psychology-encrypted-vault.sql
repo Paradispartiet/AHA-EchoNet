@@ -12,12 +12,25 @@ create table if not exists public.aha_psychology_encrypted_backups (
   user_id uuid primary key references auth.users(id) on delete cascade,
   encrypted_file text not null
     check (octet_length(encrypted_file) between 100 and 12582912),
-  created_at timestamptz not null default now(),
-  -- Enforce the same eight-field-only ciphertext envelope as the browser.
-  -- A direct Data API call must not smuggle plaintext into extra JSON keys.
-  -- Structural checks do not prove that the ciphertext itself is secure.
-  constraint aha_psych_backup_envelope_check check (
-    jsonb_typeof(encrypted_file::jsonb) = 'object'
+  created_at timestamptz not null default now()
+);
+
+-- Reapply atomically even to a previously provisioned staging table.
+-- Existing invalid rows cause rollback rather than deletion or rewriting.
+-- PostgreSQL CHECK accepts NULL, so require the entire expression to be TRUE.
+-- Inspect raw JSON for duplicate keys before jsonb normalization can hide them.
+alter table public.aha_psychology_encrypted_backups
+  drop constraint if exists aha_psych_backup_envelope_check;
+alter table public.aha_psychology_encrypted_backups
+  add constraint aha_psych_backup_envelope_check check ((
+    encrypted_file IS JSON OBJECT WITH UNIQUE KEYS
+    and jsonb_typeof(encrypted_file::jsonb) = 'object'
+    and jsonb_typeof(encrypted_file::jsonb -> 'format') = 'string'
+    and jsonb_typeof(encrypted_file::jsonb -> 'cipher') = 'string'
+    and jsonb_typeof(encrypted_file::jsonb -> 'kdf') = 'string'
+    and jsonb_typeof(encrypted_file::jsonb -> 'salt') = 'string'
+    and jsonb_typeof(encrypted_file::jsonb -> 'iv') = 'string'
+    and jsonb_typeof(encrypted_file::jsonb -> 'data') = 'string'
     and (encrypted_file::jsonb ?& array['format','version','kdf','iterations','cipher','salt','iv','data'])
     and (encrypted_file::jsonb - array['format','version','kdf','iterations','cipher','salt','iv','data']) = '{}'::jsonb
     and (encrypted_file::jsonb ->> 'format') = 'history-go-psychology-encrypted-backup-v1'
@@ -30,8 +43,7 @@ create table if not exists public.aha_psychology_encrypted_backups (
     and length(encrypted_file::jsonb ->> 'data') >= 24
     and mod(length(encrypted_file::jsonb ->> 'data'), 4) = 0
     and (encrypted_file::jsonb ->> 'data') ~ '^[A-Za-z0-9+/]+={0,2}$'
-  )
-);
+  ) IS TRUE);
 
 comment on table public.aha_psychology_encrypted_backups is
   'Optional per-user opaque encrypted file, one slot. Never feed into AHA insights, canonical sync, AI, or indexes.';
