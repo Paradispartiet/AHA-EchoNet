@@ -7,6 +7,8 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/psychology-encrypted-vault.sql"
+      - "supabase/psychology-encrypted-vault-quota-staging.sql"
+      - "scripts/aha-psychology-vault-quota-concurrency.sh"
       - "supabase/tests/aha_psychology_encrypted_vault_rls.sql"
       - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
       - "scripts/aha-postgresql-staging-rehearsal.sh"
@@ -19,6 +21,8 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/psychology-encrypted-vault.sql"
+      - "supabase/psychology-encrypted-vault-quota-staging.sql"
+      - "scripts/aha-psychology-vault-quota-concurrency.sh"
       - "supabase/tests/aha_psychology_encrypted_vault_rls.sql"
       - "supabase/tests/aha_postgresql_staging_rehearsal_v1.sql"
       - "scripts/aha-postgresql-staging-rehearsal.sh"
@@ -73,3 +77,6 @@ jobs:
 
       - name: Check opt-in encrypted vault tenant isolation in PostgreSQL 16
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/aha_psychology_encrypted_vault_rls.sql
+
+      - name: Check simultaneous encrypted vault uploads against quota
+        run: bash scripts/aha-psychology-vault-quota-concurrency.sh
