@@ -92,6 +92,41 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("perspective ruler locks the first direction and never exports its guide",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-guide-panel summary").click();
+    await page.locator("#kv2-guide-mode").selectOption("one");
+    await page.locator("#kv2-guide-lock").check();
+    await page.locator("#kv2-size").evaluate(c=>{c.value="20";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await shapePointer(page,"pointerdown",300,200,1631);
+    await shapePointer(page,"pointermove",450,300,1631);
+    await expect(page.locator("#kv2-perspective-lock-overlay")).toBeVisible();
+    await shapePointer(page,"pointermove",520,220,1631);
+    await shapePointer(page,"pointerup",520,220,1631);
+    await expect(page.locator("#kv2-perspective-lock-overlay")).toBeHidden();
+    expect((await pxAt(page,450,300))[0]).toBeLessThan(80);
+    expect((await pxAt(page,520,220))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,450,300))[0]).toBe(255);
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    for(const name of ["hardness","flow"])await page.locator("#kv2-brush-"+name).evaluate(c=>{c.value="100";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await shapePointer(page,"pointerdown",300,200,1632);
+    await shapePointer(page,"pointermove",450,300,1632);
+    await shapePointer(page,"pointermove",520,220,1632);
+    await shapePointer(page,"pointerup",520,220,1632);
+    expect((await pxAt(page,450,300))[0]).toBeLessThan(80);
+    expect((await pxAt(page,520,220))[0]).toBe(255);
+    const raster=await page.locator("#kv2-canvas").evaluate(c=>c.toDataURL("image/png"));
+    const pending=page.waitForEvent("download");await page.locator("#kv2-png").click();
+    expect((await fs.readFile(await (await pending).path())).toString("base64")).toBe(raster.split(",")[1]);
+    await page.locator(".kv2-symmetry-panel summary").click();
+    await page.locator("#kv2-symmetry-mode").selectOption("vertical");
+    await expect(page.locator("#kv2-guide-lock-note")).toContainText("deaktivert");
+    await shapeDrag(page,[200,600],[310,630],1633);
+    expect((await pxAt(page,310,630))[0]).toBeLessThan(80);
+    expect((await pxAt(page,890,630))[0]).toBeLessThan(80);
+  });
+
   test("radial symmetry rotates strokes around a movable center and remains a single undo",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-symmetry-panel summary").click();
