@@ -177,6 +177,7 @@ test("encrypted vault is OFF by default and performs no account access", async (
   // A general flex rule used to defeat the HTML hidden attribute here.
   await page.goto("/psykologi.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#aha-psych-vault-entry")).toBeHidden();
+  await expect(page.locator("#aha-psych-vault-pilot-entry")).toBeHidden();
   expect(callsToSupabase).toEqual([]);
 });
 
@@ -223,6 +224,7 @@ test("shared GitHub Pages origin rejects account access even with vault flag ena
   // GitHub Pages origin is forbidden to operate.
   await page.goto(sharedOrigin + "psykologi.html", { waitUntil: "domcontentloaded" });
   await expect(page.locator("#aha-psych-vault-entry")).toBeHidden();
+  await expect(page.locator("#aha-psych-vault-pilot-entry")).toBeHidden();
   expect(realBackendRequests).toEqual([]);
 });
 
@@ -255,6 +257,11 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
     return route.fulfill({ status: 200, body, contentType });
   });
   await page.route("https://*.supabase.co/**", route => route.abort());
+  await page.goto(approvedOrigin + "psykologi.html", { waitUntil: "domcontentloaded" });
+  await expect(page.locator("#aha-psych-vault-entry")).toBeHidden();
+  await expect(page.locator("#aha-psych-vault-pilot-entry")).toBeVisible();
+  await expect(page.locator("#aha-psych-vault-pilot-entry a")).toHaveAttribute("href", "psykologi-vault.html");
+  await expect(page.locator("#aha-psych-vault-pilot-entry")).toContainText("syntetiske testfiler");
   await replaceRemoteSdkWithFake(page, true);
   await page.goto(approvedOrigin + "psykologi-vault.html", { waitUntil: "domcontentloaded" });
   expect(await page.evaluate(() => location.origin)).toBe(approvedOrigin.slice(0, -1));
