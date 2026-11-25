@@ -176,7 +176,8 @@
   const moveTogether = new Set(); // Transient selection, not project metadata.
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
-  let shapeDraft = null; // Transient SVG-only preview until pointerup.
+  let shapeDraft = null; // Transient preview until pointerup.
+  let gradientFramePending = false;
   let textEditId = null;
   let freeTransform = null; // UI-only draft, never stored in a project.
   let textAnchor = null; // Local document coordinates; never persisted before commit.
@@ -301,7 +302,7 @@
 
   // An adjustment layer modifies only the composite accumulated below it.
   // Its own opacity and optional mask mix the original and adjusted RGB.
-  function applyAdjustmentLayer(target, layer) {
+  function applyAdjustmentLayer(target, layer, previewMask = masks.get(layer.id)) {
     const a = safeAdjustments(layer.adjustments);
     const tone = safeTone(layer.toneAdjustments);
     const levels = safeLevels(layer.levels);
@@ -322,7 +323,7 @@
     const gainB = exposure * (1 - warmth + tint / 2);
     const image = target.getImageData(0, 0, WIDTH, HEIGHT);
     const p = image.data;
-    const mask = layer.maskEnabled !== false && masks.get(layer.id);
+    const mask = layer.maskEnabled !== false && previewMask;
     const alpha = mask ? mask.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data : null;
     const brightness = a.brightness / 100, contrast = a.contrast / 100, saturation = a.saturation / 100;
     for (let i = 0; i < p.length; i += 4) {
@@ -347,8 +348,11 @@
     target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
-      if (layer.kind === "adjustment") { applyAdjustmentLayer(target, layer); return; }
       const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
+      if (layer.kind === "adjustment") {
+        applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
+        return;
+      }
       const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
       if (!bitmap) return;
       target.globalAlpha = layer.opacity;
@@ -641,9 +645,9 @@
   }
 
   function isShapeTool() {
-    return ["rectangle", "ellipse", "line", "arrow"].includes(tool);
+    return ["rectangle", "ellipse", "line", "arrow", "gradient"].includes(tool);
   }
-  function isLinearShape(kind) { return kind === "line" || kind === "arrow"; }
+  function isLinearShape(kind) { return kind === "line" || kind === "arrow" || kind === "gradient"; }
   function shapeValid(draft) {
     if (!draft) return false;
     if (isLinearShape(draft.kind)) {
@@ -673,6 +677,8 @@
   function renderShapePreview() {
     const svg = $("kv2-shape-overlay"), path = $("kv2-shape-path");
     const visible = shapeValid(shapeDraft);
+    if (visible && shapeDraft.kind === "gradient") queueGradientPreview();
+    else $("kv2-gradient-live").hidden = true;
     svg.toggleAttribute("hidden", !visible);
     if (!visible) { path.setAttribute("d", ""); return; }
     const draft = shapeDraft, b = normalizedSelection(draft.start, draft.end);
@@ -698,11 +704,75 @@
     const filled = !isLinearShape(draft.kind) && $("kv2-shape-style").value === "fill";
     path.setAttribute("d", outline);
     path.setAttribute("stroke", $("kv2-color").value);
-    path.setAttribute("stroke-width", filled ? "1" : String(Number($("kv2-size").value) || 6));
+    path.setAttribute("stroke-width", draft.kind === "gradient" ? "3" : filled ? "1" : String(Number($("kv2-size").value) || 6));
     path.setAttribute("fill", filled ? $("kv2-color").value : "none");
     path.setAttribute("fill-opacity", filled ? "0.3" : "1");
   }
+  function gradientLayer(draft) {
+    const layer = currentLayer();
+    if (!shapeValid(draft) || !layer || draft.layerId !== layer.id || layer.locked ||
+        !layer.visible || busy || draft.onMask !== maskEditing) return null;
+    if (draft.onMask ? !masks.has(layer.id) || layer.maskEnabled === false :
+        layer.textData || layer.kind === "adjustment") return null;
+    return layer;
+  }
+
+  function queueGradientPreview() {
+    if (gradientFramePending) return;
+    gradientFramePending = true;
+    global.requestAnimationFrame(() => {
+      gradientFramePending = false;
+      const draft = shapeDraft, layer = draft?.kind === "gradient" && tool === "gradient" ? gradientLayer(draft) : null;
+      const live = $("kv2-gradient-live");
+      if (!layer) { live.hidden = true; return; }
+      // Copy the exact source pixels into a disposable surface. The real
+      // bitmap, mask, history, export and save paths remain untouched.
+      const original = draft.onMask ? masks.get(layer.id) : surfaces.get(layer.id);
+      const scratch = imageCanvas(), context = scratch.getContext("2d");
+      context.putImageData(original.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT), 0, 0);
+      paintGradient(context, draft, layer, draft.onMask);
+      const preview = { id: layer.id,
+        bitmap: draft.onMask ? surfaces.get(layer.id) : scratch,
+        mask: draft.onMask ? scratch : masks.get(layer.id) };
+      drawComposition(live.getContext("2d"), preview);
+      adjustedBitmaps.delete(layer.id);
+      live.hidden = false;
+    });
+  }
+
+  function paintGradient(context, draft, layer, mask) {
+    const x = draft.start.x - layer.x, y = draft.start.y - layer.y;
+    const ex = draft.end.x - layer.x, ey = draft.end.y - layer.y;
+    const gradient = draft.radial
+      ? context.createRadialGradient(x, y, 0, x, y, Math.hypot(ex-x, ey-y))
+      : context.createLinearGradient(x, y, ex, ey);
+    const colors = mask ? ["#ffffff", "rgba(255,255,255,0)"]
+      : [draft.first, draft.transparent ? draft.first + "00" : draft.last];
+    if (draft.reverse) colors.reverse();
+    gradient.addColorStop(0, colors[0]); gradient.addColorStop(1, colors[1]);
+    context.save();
+    context.globalCompositeOperation = "source-over";
+    context.globalAlpha = 1;
+    if (validSelection()) { selectionPath(context, layer.x, layer.y); context.clip(); }
+    // A mask gradient replaces alpha only within the chosen region.
+    // A raster gradient paints over the existing pixels normally.
+    if (mask) context.clearRect(0, 0, WIDTH, HEIGHT);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    context.restore();
+  }
+
+  function commitGradient(draft) {
+    const layer = gradientLayer(draft);
+    if (!layer || !checkpoint()) return false;
+    const mask = draft.onMask ? masks.get(layer.id) : null;
+    paintGradient((mask || surfaces.get(layer.id)).getContext("2d"), draft, layer, !!mask);
+    changed();
+    return true;
+  }
+
   function commitShape() {
+    if (shapeDraft?.kind === "gradient") return commitGradient(shapeDraft);
     const layer = currentLayer();
     if (!shapeValid(shapeDraft) || !layer || layer.textData || layer.locked || !layer.visible || busy || maskEditing ||
         !checkpoint()) return false;
@@ -1151,7 +1221,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -1164,6 +1234,10 @@
     renderSelection();
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
+    $("kv2-gradient-panel").hidden = tool !== "gradient";
+    $("kv2-gradient-mask-note").textContent = maskEditing
+      ? "Maskemodus: synlig til skjult, eller motsatt ved Reverser. Fargene ignoreres."
+      : "Dra fra start til slutt. Se fargeovergangen direkte før du slipper. Bruk eget lag for å bevare originalen.";
     $("kv2-text-panel").hidden = tool !== "text";
     renderTextPreview();
   }
@@ -1335,8 +1409,8 @@
       status("Velg et synlig, ulåst lag før du arbeider.");
       return;
     }
-    if (layer?.kind === "adjustment" && (tool === "move" || isShapeTool() ||
-        (!maskEditing && (tool === "brush" || tool === "eraser")))) {
+    if (layer?.kind === "adjustment" && (tool === "move" || (isShapeTool() && tool !== "gradient") ||
+        (!maskEditing && (tool === "brush" || tool === "eraser" || tool === "gradient")))) {
       status("Justeringslag har ingen tegnbare piksler. Rediger justeringene eller lagmasken.");
       return;
     }
@@ -1360,12 +1434,19 @@
     };
     paintPrevious = null;
     if (isShapeTool()) {
-      if (maskEditing) {
+      if (maskEditing && tool !== "gradient") {
         pointerId = null; pointerStart = null;
         status("Avslutt maskeredigering før du tegner figurer.");
         return;
       }
-      shapeDraft = { kind: tool, start: pointerStart.point, end: pointerStart.point };
+      shapeDraft = { kind: tool, start: pointerStart.point, end: pointerStart.point,
+        ...(tool === "gradient" ? {
+          layerId: layer.id, onMask: maskEditing,
+          radial: $("kv2-gradient-type").value === "radial",
+          transparent: $("kv2-gradient-end").value === "transparent",
+          first: $("kv2-color").value, last: $("kv2-gradient-color").value,
+          reverse: $("kv2-gradient-reverse").checked
+        } : {}) };
       renderShapePreview();
     }
     if (tool === "select") {
@@ -1461,7 +1542,7 @@
       shapeDraft = null;
       pointerId = null; pointerStart = null; paintPrevious = null;
       renderShapePreview();
-      if (painted) { draw(); status("Figur lagt til på valgt lag"); }
+      if (painted) { draw(); status(tool === "gradient" ? "Gradient lagt til" : "Figur lagt til på valgt lag"); }
       return;
     }
     const changedArtwork = tool !== "hand" && tool !== "select" && tool !== "lasso";
@@ -1484,7 +1565,7 @@
 
   function leaveMaskEdit() {
     // A mask eraser must never silently become a destructive image eraser.
-    if (maskEditing && (tool === "brush" || tool === "eraser")) tool = "hand";
+    if (maskEditing && (tool === "brush" || tool === "eraser" || tool === "gradient")) tool = "hand";
     maskEditing = false;
   }
 
@@ -2714,7 +2795,7 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
         if (["rectangle", "ellipse", "line", "arrow", "text"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
