@@ -79,11 +79,22 @@ async function replaceRemoteSdkWithFake(page, enabled) {
   await page.addInitScript(({ accountA }) => {
     window.__vaultSyntheticAccount = accountA;
     window.__vaultSyntheticRows = new Map();
+    window.__vaultAuthListeners = [];
+    window.__vaultSwitchAccount = id => {
+      window.__vaultSyntheticAccount = id;
+      for (const callback of window.__vaultAuthListeners) {
+        callback(id ? "SIGNED_IN" : "SIGNED_OUT", id ? { user: { id } } : null);
+      }
+    };
     window.__vaultSyntheticRequests = [];
     window.supabase = {
       createClient() {
         return {
           auth: {
+            onAuthStateChange(callback) {
+              window.__vaultAuthListeners.push(callback);
+              return { data: { subscription: { unsubscribe() {} } } };
+            },
             async getSession() {
               window.__vaultSyntheticRequests.push("auth.getSession");
               return {
@@ -269,6 +280,10 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  await expect(page.locator("#aha-psych-vault-upload")).toBeHidden();
+  await page.locator("#aha-psych-vault-check").click();
+  await expect(page.locator("#aha-psych-vault-upload")).toBeVisible();
+
   // Reproduce the physical iPad consent-label regression: shared input
   // styling must not consume the entire width of the label.
   const originalViewport = page.viewportSize();
@@ -323,15 +338,27 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await expect(page.locator("#aha-psych-vault-status")).toContainText("allerede");
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
 
+  // A generated link and selected file must disappear on an auth event.
+  await page.locator("#aha-psych-vault-download-button").click();
+  await expect(page.locator("#aha-psych-vault-download a")).toBeVisible();
+  await input.setInputFiles({
+    name: "pending.json", mimeType: "application/json", buffer: Buffer.from(backup.text)
+  });
+  await page.locator('#aha-psych-vault-upload input[type="checkbox"]').check();
+  await page.evaluate(id => window.__vaultSwitchAccount(id), ACCOUNT_B);
+  await expect(page.locator("#aha-psych-vault-download a")).toHaveCount(0);
+  await expect(input).toHaveValue("");
+  await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).not.toBeChecked();
+  await expect(page.locator("#aha-psych-vault-status")).toContainText("Kontoen er endret");
+
   // A second session cannot view or retrieve the first session's copy.
-  await page.evaluate(id => { window.__vaultSyntheticAccount = id; }, ACCOUNT_B);
   await page.locator("#aha-psych-vault-check").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Ingen kryptert fil");
   await page.locator("#aha-psych-vault-download-button").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("ingen kryptert");
   expect(await page.locator("#aha-psych-vault-download a").count()).toBe(0);
 
-  await page.evaluate(id => { window.__vaultSyntheticAccount = id; }, ACCOUNT_A);
+  await page.evaluate(id => window.__vaultSwitchAccount(id), ACCOUNT_A);
   await page.locator("#aha-psych-vault-download-button").click();
   await expect(page.locator("#aha-psych-vault-download a")).toBeVisible();
   const downloaded = await page.evaluate(async () => {
