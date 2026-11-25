@@ -1473,6 +1473,44 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("flat brush rotates, scatters reproducibly and saves dynamics", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const set=async(name,value)=>page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
+    await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
+    await page.locator("#kv2-brush-pressure-width").uncheck();
+    await set("hardness",100);await set("flow",100);await set("aspect",20);
+    await stroke(page);
+    expect((await pxAt(page,620,400))[0]).toBeLessThan(60);
+    expect((await pxAt(page,600,420))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await set("angle",90);await stroke(page);
+    expect((await pxAt(page,620,400))[0]).toBe(255);
+    expect((await pxAt(page,600,420))[0]).toBeLessThan(60);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await set("scatter",80);await set("rotation-jitter",60);
+    await page.locator("#kv2-brush-follow-direction").check();
+    await shapeDrag(page,[300,400],[900,400],1401);
+    const first=(await jsonBackup(page)).layers[0].bitmap;
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=> (await pixel(page))[0]).toBe(255);
+    await shapeDrag(page,[300,400],[900,400],1402);
+    expect((await jsonBackup(page)).layers[0].bitmap).toBe(first);
+    await page.locator("#kv2-brush-name").fill("Flat penn");
+    await page.locator("#kv2-brush-library-save").click();
+    await page.reload({waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    await page.locator("#kv2-brush-library").selectOption("Flat penn");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-angle")).toHaveValue("90");
+    await expect(page.locator("#kv2-brush-aspect")).toHaveValue("20");
+    await expect(page.locator("#kv2-brush-scatter")).toHaveValue("80");
+    await expect(page.locator("#kv2-brush-rotation-jitter")).toHaveValue("60");
+    await expect(page.locator("#kv2-brush-follow-direction")).toBeChecked();
+  });
+
   test("procedural texture dabs vary alpha and survive named brush reload", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");

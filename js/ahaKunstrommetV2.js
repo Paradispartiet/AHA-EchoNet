@@ -1295,13 +1295,16 @@
       spacing: pct("spacing", 20, 5), pressureWidth: $("kv2-brush-pressure-width").checked,
       pressureFlow: $("kv2-brush-pressure-flow").checked,
       texture: safeBrushTexture($("kv2-brush-texture").value),
-      textureStrength: pct("texture-strength", 70) };
+      textureStrength: pct("texture-strength", 70),
+      aspect: pct("aspect",100,10), angle: clamp(Number($("kv2-brush-angle").value)||0,-180,180),
+      scatter: pct("scatter",0), rotationJitter: pct("rotation-jitter",0),
+      followDirection: $("kv2-brush-follow-direction").checked };
   }
 
   const BRUSH_TEXTURES = ["round","charcoal","chalk","watercolor","dry"];
   function safeBrushTexture(value) { return BRUSH_TEXTURES.includes(value) ? value : "round"; }
   const BRUSH_LIBRARY_LIMIT = 30;
-  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7});
+  const BRUSH_DEFAULTS = Object.freeze({size:6, color:"#23242c", hardness:.5, opacity:1, flow:.35, spacing:.2, pressureWidth:true, pressureFlow:false, texture:"round", textureStrength:.7, aspect:1, angle:0, scatter:0, rotationJitter:0, followDirection:false});
   function safeBrushSettings(value) {
     const input = value && typeof value === "object" ? value : {};
     const number = (name, lo, hi) => clamp(Number.isFinite(input[name]) ? input[name] : BRUSH_DEFAULTS[name], lo, hi);
@@ -1311,7 +1314,10 @@
       flow:number("flow",.01,1), spacing:number("spacing",.05,1),
       pressureWidth:typeof input.pressureWidth === "boolean" ? input.pressureWidth : true,
       pressureFlow:input.pressureFlow === true,
-      texture:safeBrushTexture(input.texture), textureStrength:number("textureStrength",0,1)};
+      texture:safeBrushTexture(input.texture), textureStrength:number("textureStrength",0,1),
+      aspect:number("aspect",.1,1), angle:number("angle",-180,180),
+      scatter:number("scatter",0,1), rotationJitter:number("rotationJitter",0,1),
+      followDirection:input.followDirection === true};
   }
   function brushLibraryKey() {
     return "aha_kunstrommet_v2_brushes:" + encodeURIComponent(owner());
@@ -1394,6 +1400,14 @@
     $("kv2-brush-texture").value=settings.texture;
     $("kv2-brush-texture-strength").value=Math.round(settings.textureStrength*100);
     $("kv2-brush-texture-strength-value").textContent=Math.round(settings.textureStrength*100)+"%";
+    for (const [id,key] of [["aspect","aspect"],["scatter","scatter"],["rotation-jitter","rotationJitter"]]) {
+      const n=Math.round(settings[key]*100);
+      $("kv2-brush-"+id).value=n;
+      $("kv2-brush-"+id+"-value").textContent=n+"%";
+    }
+    $("kv2-brush-angle").value=Math.round(settings.angle);
+    $("kv2-brush-angle-value").textContent=Math.round(settings.angle)+"°";
+    $("kv2-brush-follow-direction").checked=settings.followDirection;
     tool="brush"; refresh();
   }
   function loadOwnBrush() {
@@ -1446,7 +1460,9 @@
             typeof s.color !== "string" || !/^#[0-9a-f]{6}$/i.test(s.color) ||
             typeof s.pressureWidth !== "boolean" || typeof s.pressureFlow !== "boolean" ||
             (s.texture !== undefined && !BRUSH_TEXTURES.includes(s.texture)) ||
-            (s.textureStrength !== undefined && !Number.isFinite(s.textureStrength))) {
+            (s.textureStrength !== undefined && !Number.isFinite(s.textureStrength)) ||
+            ["aspect","angle","scatter","rotationJitter"].some(k=>s[k]!==undefined&&!Number.isFinite(s[k])) ||
+            (s.followDirection !== undefined && typeof s.followDirection !== "boolean")) {
           throw new Error("Penselfilen har ugyldige eller gjentatte pensler.");
         }
         names.add(name);
@@ -1514,24 +1530,33 @@
     const ctx = stroke.ink.getContext("2d");
     const radius = Math.max(.5, s.size * (s.pressureWidth ? at.width : 1) / 2);
     const flow = s.flow * (s.pressureFlow && at.pen ? at.pressure : 1);
+    const index=stroke.dabIndex++;
+    const spread=s.scatter*s.size;
+    const spreadAngle=textureNoise(index,17,0)*2*Math.PI;
+    const spreadDistance=Math.sqrt(textureNoise(index,29,0))*spread;
+    const x=at.x+Math.cos(spreadAngle)*spreadDistance, y=at.y+Math.sin(spreadAngle)*spreadDistance;
+    const rotation=(s.angle+(textureNoise(index,41,0)*2-1)*180*s.rotationJitter)*Math.PI/180+
+      (s.followDirection ? at.direction||0 : 0);
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = flow;
+    // Clip in document coordinates before translating or rotating the tip.
     if (validSelection()) { selectionPath(ctx, layer.x, layer.y); ctx.clip(); }
+    ctx.translate(x,y); ctx.rotate(rotation); ctx.scale(1,s.aspect);
     if (stroke.stamps) {
-      const stamp=stroke.stamps[stroke.dabIndex++ % stroke.stamps.length];
-      ctx.drawImage(stamp,at.x-radius,at.y-radius,radius*2,radius*2);
+      const stamp=stroke.stamps[index % stroke.stamps.length];
+      ctx.drawImage(stamp,-radius,-radius,radius*2,radius*2);
       ctx.restore(); return;
     }
     if (s.hardness >= .999) ctx.fillStyle = s.color;
     else {
-      const gradient = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, radius);
+      const gradient = ctx.createRadialGradient(0,0,0,0,0,radius);
       gradient.addColorStop(0, s.color);
       gradient.addColorStop(s.hardness, s.color);
       gradient.addColorStop(1, s.color + "00");
       ctx.fillStyle = gradient;
     }
-    ctx.beginPath(); ctx.arc(at.x, at.y, radius, 0, 2*Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,radius,0,2*Math.PI); ctx.fill();
     ctx.restore();
   }
 
@@ -1557,7 +1582,8 @@
       while (distance <= length) {
         const t = distance / length;
         brushDab(stroke, { x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t,
-          pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen });
+          pressure:a.pressure+(b.pressure-a.pressure)*t, width:a.width+(b.width-a.width)*t, pen:b.pen,
+          direction:Math.atan2(b.y-a.y,b.x-a.x) });
         distance += stroke.spacing;
       }
       stroke.remaining = distance - length;
@@ -2988,9 +3014,12 @@
       if (tool !== "text") tool = "brush";
       refresh();
     });
-    ["hardness","opacity","flow","spacing","texture-strength"].forEach(name => {
+    ["hardness","opacity","flow","spacing","texture-strength","aspect","scatter","rotation-jitter"].forEach(name => {
       const control = $("kv2-brush-" + name);
       control.addEventListener("input", () => { $("kv2-brush-" + name + "-value").textContent = control.value + "%"; });
+    });
+    $("kv2-brush-angle").addEventListener("input", () => {
+      $("kv2-brush-angle-value").textContent=$("kv2-brush-angle").value+"°";
     });
     $("kv2-brush-library").addEventListener("change", () => renderBrushLibrary());
     $("kv2-brush-library-save").addEventListener("click", saveOwnBrush);

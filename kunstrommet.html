@@ -87,6 +87,11 @@
               <option value="watercolor">Akvarellstruktur</option><option value="dry">Tørrpensel</option>
             </select>
             <label for="kv2-brush-texture-strength">Teksturstyrke</label><div class="kv2-slider"><input id="kv2-brush-texture-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-texture-strength-value">70%</output></div>
+            <label for="kv2-brush-aspect">Penselform (flat til rund)</label><div class="kv2-slider"><input id="kv2-brush-aspect" type="range" min="10" max="100" value="100"/><output id="kv2-brush-aspect-value">100%</output></div>
+            <label for="kv2-brush-angle">Vinkel</label><div class="kv2-slider"><input id="kv2-brush-angle" type="range" min="-180" max="180" value="0"/><output id="kv2-brush-angle-value">0°</output></div>
+            <label for="kv2-brush-scatter">Spredning</label><div class="kv2-slider"><input id="kv2-brush-scatter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-scatter-value">0%</output></div>
+            <label for="kv2-brush-rotation-jitter">Rotasjonsvariasjon</label><div class="kv2-slider"><input id="kv2-brush-rotation-jitter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-rotation-jitter-value">0%</output></div>
+            <label><input id="kv2-brush-follow-direction" type="checkbox"/> Følg strøkretningen</label>
             <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
             <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
             <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>

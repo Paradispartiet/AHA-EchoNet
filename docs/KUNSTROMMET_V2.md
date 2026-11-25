@@ -282,3 +282,8 @@ Eksportformat `aha-kunstrommet-brushes` versjon 1 inneholder bare navngitte pens
 ## Teksturpensler
 
 Fire lokale, prosedyregenererte teksturer: kull, kritt, akvarellstruktur og tørrpensel. Avtrykkene bruker deterministiske 64×64 alfamasker med fire varianter per strøk, farget med aktiv farge, kombinert med hardhet, flyt, trykk og strøkopasitet. Teksturstyrke 0 % gir tidligere rundpensel, 100 % full kornstruktur. Ingen eksterne bilder eller nye nettverkskall. Penselbiblioteket bevarer valgfri tekstur og styrke; eldre versjon-1 filer uten feltene får rundpensel. Dette er stiliserte rasterteksturer, ikke fysisk simulering av pigment, væske eller papir. Nettlesertest dekker pikselvariasjon og lagring. Fysisk iPad-ytelse gjenstår.
+
+
+### Penseldynamikk
+
+Penselform 10–100 % (flat ellipse til sirkel), fast vinkel −180 til 180 grader, spredning inntil én grunnpenselbredde fra strøkbanen, rotasjonsvariasjon inntil ±180 grader og valgfri orientering etter strøkretningen. Avtrykksindeks gir deterministisk variasjon, uten ekstra nettverkskall. Både runde og teksturerte avtrykk transformeres; utklipp skjer i dokumentkoordinater. Første avtrykk bruker fast vinkel inntil en bevegelsesretning er kjent. Innstillinger lagres og eksporteres i penselbiblioteket, med bakoverkompatible nøytrale standardverdier. Dette er ikke fysisk Apple Pencil-tilt; maskepensel og viskelær er uendret. Test dekker rotasjon, deterministisk variasjon og gjenåpning. Fysisk iPad-testing gjenstår.
