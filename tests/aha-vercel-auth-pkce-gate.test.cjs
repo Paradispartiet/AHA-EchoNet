@@ -7,6 +7,8 @@ const vm = require("node:vm");
 const configSrc = fs.readFileSync("js/ahaConfig.js", "utf8");
 const authSrc = fs.readFileSync("js/ahaAuth.js", "utf8");
 const GH = "https://paradispartiet.github.io";
+const NEW_GH = "https://aha-echonet.github.io";
+const NEW_GH_CALLBACK = NEW_GH + "/AHA-EchoNet/auth-callback.html";
 const PREVIEW = "https://aha-preview.aha-echonet-preview.pages.dev";
 const VERCEL = "https://aha-echo-net.vercel.app";
 const GH_CALLBACK = GH + "/AHA-EchoNet/auth-callback.html";
@@ -44,7 +46,7 @@ function fixture(origin, { oldVercelOptIn = false, redirectOverride = "" } = {})
 }
 
 async function run() {
-  for (const [origin, callback] of [[GH, GH_CALLBACK], [PREVIEW, PREVIEW_CALLBACK], [VERCEL, VERCEL_CALLBACK]]) {
+  for (const [origin, callback] of [[GH, GH_CALLBACK], [NEW_GH, NEW_GH_CALLBACK], [PREVIEW, PREVIEW_CALLBACK], [VERCEL, VERCEL_CALLBACK]]) {
     const good = fixture(origin);
     assert.equal(good.window.AHA_AUTH_ORIGIN_BLOCKED, false);
     assert.equal(good.window.AHAAuth.getRedirectUrl(), callback);
@@ -55,6 +57,13 @@ async function run() {
     assert.equal(good.calls.requests[0].options.emailRedirectTo, callback);
     assert.equal(good.calls.requests[1].options.redirectTo, callback);
   }
+
+  const transferred = fixture(NEW_GH);
+  assert.equal(transferred.window.AHA_APP_URL, NEW_GH + "/AHA-EchoNet/");
+  assert.equal(transferred.window.AHA_CONFIG.musicProviders.spotify.redirectUri, NEW_GH + "/AHA-EchoNet/music.html");
+  const crossOwner = fixture(NEW_GH, { redirectOverride: GH_CALLBACK });
+  assert.equal((await crossOwner.window.AHAAuth.signInWithProvider("google")).reason, "auth_callback_not_verified");
+  assert.equal(crossOwner.calls.client, 0);
 
   // Even on an approved origin, an inconsistent or remote redirect must fail.
   const wrongGH = fixture(GH, { redirectOverride: PREVIEW_CALLBACK });
@@ -86,6 +95,8 @@ async function run() {
     "http://aha-echonet.vercel.app",
     "https://aha-echonet.vercel.app.evil.example",
     "https://new-aha.example",
+    "http://aha-echonet.github.io",
+    "https://aha-echonet.github.io.evil.example",
     "https://paradispartiet.github.io.evil.example",
     "http://localhost:3000"
   ];
