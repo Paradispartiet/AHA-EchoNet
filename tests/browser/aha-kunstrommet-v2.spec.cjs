@@ -1473,6 +1473,117 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("palette files export only named colors and merge safely",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-color").fill("#112233");
+    await page.locator("#kv2-color-add").click();
+    await page.locator("#kv2-color-palette-name").fill("Original");
+    await page.locator("#kv2-color-palette-save").click();
+    const pending=page.waitForEvent("download");
+    await page.locator("#kv2-color-export").click();
+    const file=JSON.parse(await fs.readFile(await (await pending).path(),"utf8"));
+    expect(file).toEqual({format:"aha-kunstrommet-palettes",version:1,palettes:[{name:"Original",colors:["#112233"]}]});
+    const before=await jsonBackup(page);
+    const importFile=data=>page.locator("#kv2-color-import").setInputFiles({name:"paletter.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await importFile({...file,palettes:[{name:"Original",colors:["#ffffff"]},{name:"Hav",colors:["#0077AA","#224466"]}]});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Importerte 1 paletter");
+    await page.locator("#kv2-color-library-select").selectOption("Original");
+    await expect(page.locator("#kv2-color-saved")).toContainText("#112233");
+    await page.locator("#kv2-color-library-select").selectOption("Hav");
+    await expect(page.locator("#kv2-color-saved")).toContainText("#0077aa");
+    await importFile({...file,palettes:[{name:"Ny",colors:["#abcdef"]},{name:"Ugyldig",colors:["red"]}]});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Import avbrutt");
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(3);
+    await importFile({...file,palettes:Array.from({length:19},(_,i)=>({name:"Palett "+i,colors:["#123456"]}))});
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Ikke nok plass");
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(3);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
+  test("color library remembers chosen colors and named harmonies without changing art",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-a"));
+    const before=await jsonBackup(page);
+    await page.locator("#kv2-color").fill("#ff0000");
+    await page.locator("#kv2-color").dispatchEvent("change");
+    await expect(page.locator("#kv2-color-harmony button")).toHaveCount(2);
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#00ffff");
+    await page.locator("#kv2-color-harmony-mode").selectOption("triad");
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#00ff00");
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#0000ff");
+    await page.locator("#kv2-color-add-harmony").click();
+    await page.locator("#kv2-color-palette-name").fill("Primær");
+    await page.locator("#kv2-color-palette-save").click();
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Palett lagret lokalt");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.reload({waitUntil:"domcontentloaded"});
+    await expect(page.locator("#kv2-color-recent")).toContainText("#ff0000");
+    await page.locator("#kv2-color-library-select").selectOption("Primær");
+    await page.locator("#kv2-color-saved button").filter({hasText:"#0000ff"}).click();
+    await expect(page.locator("#kv2-color")).toHaveValue("#0000ff");
+    await page.locator("#kv2-color-palette-load").click();
+    await expect(page.locator("#kv2-color-draft button")).toHaveCount(3);
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-b"));
+    await page.reload({waitUntil:"domcontentloaded"});
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(1);
+  });
+
+  test("studio brush samples use the real dab engine without editing art", async ({page}) => {
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const before=await jsonBackup(page);
+    const sample=()=>page.locator("#kv2-active-brush-sample").evaluate(c=>c.toDataURL());
+    await expect.poll(async()=>page.locator("#kv2-studio-sample-ink").evaluate(c=>{
+      const p=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
+      return p.some((n,i)=>i%4===3&&n>0);
+    })).toBe(true);
+    const old=await sample();
+    await page.locator("#kv2-color").fill("#aabbcc");
+    await page.locator("#kv2-studio-brush-charcoal").click();
+    await expect(page.locator("#kv2-brush-texture")).toHaveValue("charcoal");
+    await expect(page.locator("#kv2-brush-tilt-enabled")).toBeChecked();
+    await expect(page.locator("#kv2-color")).toHaveValue("#aabbcc");
+    await expect.poll(sample).not.toBe(old);
+    await page.locator("#kv2-brush-library-save").click();
+    await expect(page.locator("#kv2-saved-brush-sample")).toBeVisible();
+    await page.locator("#kv2-studio-brush-calligraphy").click();
+    await expect(page.locator("#kv2-brush-aspect")).toHaveValue("22");
+    await expect(page.locator("#kv2-brush-angle")).toHaveValue("40");
+    await page.locator("#kv2-brush-library-load").click();
+    await expect(page.locator("#kv2-brush-texture")).toHaveValue("charcoal");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
+  test("studio focus and folding settings preserve artwork and make canvas accessible", async ({page}) => {
+    await page.setViewportSize({width:1366,height:900});
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const before=await jsonBackup(page);
+    const width=()=>page.locator("#kv2-canvas").evaluate(c=>c.getBoundingClientRect().width);
+    const normal=await width();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator("#kv2-focus-mode")).toHaveAttribute("aria-pressed","true");
+    await expect(page.locator(".kv2-sidebar")).toBeHidden();
+    expect(await width()).toBeGreaterThan(normal+100);
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator(".kv2-sidebar")).toBeVisible();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.setViewportSize({width:820,height:1180});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const position=await page.evaluate(()=>({
+      canvas:document.querySelector("#kv2-canvas").getBoundingClientRect().top,
+      settings:document.querySelector("#kv2-brush-advanced").getBoundingClientRect().top
+    }));
+    expect(position.settings).toBeGreaterThan(position.canvas);
+    await page.locator("#kv2-brush-settings-detail summary").click();
+    await expect(page.locator("#kv2-brush-hardness")).toBeHidden();
+    await page.locator("#kv2-brush-settings-jump").click();
+    await expect(page.locator("#kv2-brush-hardness")).toBeVisible();
+    await page.locator("#kv2-back-to-canvas").click();
+    await expect(page.locator("#kv2-paper")).toBeFocused();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
   test("pen tilt widens and rotates shading only when enabled", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");

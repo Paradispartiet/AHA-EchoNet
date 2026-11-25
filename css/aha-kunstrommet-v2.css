@@ -209,3 +209,34 @@
 #kv2-brush-live { position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
 #kv2-brush-live[hidden], #kv2-brush-advanced[hidden] { display:none; }
 #kv2-brush-advanced { border:1px solid #b8c7bf; padding:10px; border-radius:8px; }
+
+/* Studio 5.0 layout: keep the drawing surface ahead of long settings. */
+.kv2-fold { border:1px solid #d0dcd3; border-radius:10px; padding:9px 12px; margin:10px 0; background:#fafbf9; min-width:0; }
+.kv2-fold summary { cursor:pointer; font-weight:650; color:#304d43; padding:5px 0; }
+.kv2-fold summary:focus-visible { outline:3px solid #4874a8; outline-offset:3px; }
+.kv2-brush-inspector { margin:12px 0; }
+.kv2-brush-parameter-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:5px 14px; align-items:center; }
+.kv2-brush-parameter-grid label { margin:7px 0; }
+.kv2-brush-parameter-grid .kv2-tip { grid-column:1/-1; }
+.kv2-brush-parameter-grid select { width:100%; min-width:0; padding:8px; font:inherit; }
+.kv2-brush-parameter-grid input[type="range"] { width:100%; }
+.kv2-brush-parameter-grid output { min-width:3rem; font-variant-numeric:tabular-nums; text-align:right; }
+#kv2-brush-settings-jump[hidden] { display:none; }
+.kv2[data-studio-focus="true"] .kv2-workspace { grid-template-columns:minmax(0,1fr); margin-top:8px; }
+.kv2[data-studio-focus="true"] .kv2-heading, .kv2[data-studio-focus="true"] .kv2-sidebar,
+.kv2[data-studio-focus="true"] .kv2-document-heading, .kv2[data-studio-focus="true"] .kv2-document-notes,
+.kv2[data-studio-focus="true"] .kv2-workspace-help { display:none; }
+.kv2[data-studio-focus="true"] .kv2-paper { max-height:min(85vh,1100px); }
+@media(max-width:680px) { .kv2-brush-parameter-grid { grid-template-columns:minmax(0,1fr); } }
+
+/* Local stroke samples use the same rendering engine as the active brush. */
+.kv2-studio-brushes { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:8px; }
+.kv2-studio-brushes button { display:grid; gap:5px; text-align:left; min-width:0; padding:7px; }
+.kv2-studio-brushes canvas, .kv2-active-sample canvas, #kv2-saved-brush-sample { display:block; width:100%; max-width:240px; height:auto; background-color:#fff; background-image:linear-gradient(45deg,#e7e7e7 25%,transparent 25%),linear-gradient(-45deg,#e7e7e7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e7e7e7 75%),linear-gradient(-45deg,transparent 75%,#e7e7e7 75%);background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0; border-radius:5px; }
+#kv2-saved-brush-sample[hidden] { display:none; }
+.kv2-active-sample { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:10px 0; }
+
+.kv2-color-chips {display:flex;flex-wrap:wrap;gap:7px;margin:8px 0;}
+.kv2-color-chips .kv2-color-chip {min-width:76px;min-height:44px;font-size:.78rem;border:1px solid #8e9e96;font-variant-numeric:tabular-nums;}
+#kv2-color-library-panel select {font:inherit;max-width:100%;padding:8px;border-radius:8px;border:1px solid #b9c1bd;background:white;}
+#kv2-color-library-panel h3 {font-size:1rem;margin:14px 0 5px;}

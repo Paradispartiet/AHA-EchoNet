@@ -292,3 +292,23 @@ Penselform 10–100 % (flat ellipse til sirkel), fast vinkel −180 til 180 grad
 ### Pennens helning
 
 Valgfri helningsstyring med følsomhet 0–100 %. Pointer Events tiltX/tiltY omregnes til en normalisert helningsvektor, med altitudeAngle/azimuthAngle som reserve. Vektoren interpoleres mellom avtrykk; helning utvider avtrykket langs pennens projiserte akse og reduserer flyten moderat. Aktiv helning prioriterer pennens orientering over strøkretningen, mens fast vinkel og rotasjonsvariasjon fortsatt legges til. Mus, finger og manglende helningsdata gir tidligere oppførsel. Innstillingene bevares i penselbiblioteket; eldre filer har helning avslått. Automatisert test med syntetiske penneeventer dekker begge akser og musefallback; fysisk Apple Pencil-verifikasjon er fortsatt nødvendig. Tidligere beskrivelse av manglende tilt gjelder før denne utvidelsen.
+
+
+## Atelierets arbeidsflate (5.0-forberedelse)
+
+Fokusmodus er et reversibelt visningsvalg: skjuler introduksjon, sidepanel, tittel/notater og lange hjelpetekster, utvider lerretet og beholder tegneverktøy, angre, zoom og prosjektlagring. Gå tilbake til hele atelieret for lag og prosjekter. Avansert penselinspektør ligger etter lerretet, med snarvei fra verktøylinjen og tilbakeknapp. Sammenleggbare grupper for penselparametre, penselbibliotek, laggrupper, bildejustering og hjelpetekster. Ingen prosjektmetadata, raster eller historikk endres. Fokusmodus endres ikke midt i en aktiv pekerbevegelse eller fri transformering. Nettlesertest ved desktop- og iPad-lignende størrelse; fysisk iPad gjenstår.
+
+
+### Atelierets penselutvalg
+
+Åtte ferdige redigerbare penseloppsett: illustrasjonspenn, grafitt, kull, kritt, akvarellstruktur, tørrpensel, myk skygge og kalligrafi. Valg bevarer aktiv farge og fyller inn et forslag til navn; ingen lagring før brukeren velger Lagre. Strøkprøver for ferdige, aktive og valgte lagrede pensler bruker samme avtrykksmotor på små separate canvases, med nøytralt trykk, ingen helning, ingen markering og skalert størrelse (maks 28 px). Prøvene oppdateres ved endringer og caches etter innstillinger. Ingen endring av kunstverk, prosjektformat, angrehistorikk eller synkronisering. Automatisert test dekker strøkprøver, penselvalg, fargebevaring og uendrede rastere.
+
+
+### Mine farger og paletter
+
+Lokalt profilavgrenset fargebibliotek med 12 nylig valgte farger, inntil 20 navngitte paletter à 12 unike RGB-farger, redigerbart palettutkast og HSL-baserte komplementære, analoge og triadiske harmonier fra aktiv farge. Farger i utkastet kan fjernes, lagrede paletter kan redigeres eller slettes med bekreftelse. Bytte av farge i biblioteket bevarer aktivt verktøy. Nylige farger registreres ved bekreftet fargevalg, hurtigpalett og pipette; ikke ved tegning eller hver mellomverdi under fargevalg. Ingen kunstverk, prosjektmetadata, skybackup eller databaseendring. Lokal lagring er ikke en sikkerhetsgrense. Test dekker harmonier, lokal gjenåpning, profilbytte og uendrede rastere. Penselbiblioteket eksporteres separat; paletter har foreløpig ikke import/eksport.
+
+
+### Sikkerhetskopi av fargepaletter
+
+Navngitte paletter kan eksporteres i `aha-kunstrommet-palettes` versjon 1 (JSON). Kun palettnavn og RGB-farger følger med; ikke nylig valgte farger, profil-ID eller kunstverk. Import validerer hele filen (maks 30 000 byte, 20 paletter, 12 unike farger per palett) før lagring. Eksisterende navn beholdes, ugyldig fil eller plassmangel avbryter hele importen. Profilbytte under lesing avbryter. Import endrer ikke aktivt kunstverk. Dette erstatter den tidligere begrensningen om manglende palettimport/eksport. Nettlesertest dekker rundtur, navnekollisjon, ugyldig innhold og plassmangel.

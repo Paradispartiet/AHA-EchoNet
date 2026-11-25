@@ -30,11 +30,15 @@
       <section class="aha-panel kv2-editor" aria-label="Redigeringsflate">
         <div class="kv2-titlebar">
           <h2>Lerretet</h2>
+          <button id="kv2-focus-mode" type="button" aria-pressed="false" aria-describedby="kv2-focus-hint">Fokusmodus</button>
           <output id="kv2-status" role="status" aria-live="polite">Nytt prosjekt</output>
         </div>
 
-        <label for="kv2-title">Navn på kunstverket</label>
-        <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
+        <p id="kv2-focus-hint" class="kv2-tip" role="status">Hele atelieret vises.</p>
+        <div class="kv2-document-heading">
+          <label for="kv2-title">Navn på kunstverket</label>
+          <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
+        </div>
 
         <div class="kv2-toolbar" role="group" aria-label="Tegne- og redigeringsverktøy">
           <button id="kv2-brush" type="button" aria-pressed="true">Pensel</button>
@@ -76,45 +80,7 @@
               <option value="advanced">Avansert pensel</option>
             </select>
           </label>
-          <div id="kv2-brush-advanced" hidden>
-            <label for="kv2-brush-hardness">Hardhet</label><div class="kv2-slider"><input id="kv2-brush-hardness" type="range" min="0" max="100" value="50"/><output id="kv2-brush-hardness-value">50%</output></div>
-            <label for="kv2-brush-opacity">Strøkets opasitet</label><div class="kv2-slider"><input id="kv2-brush-opacity" type="range" min="0" max="100" value="100"/><output id="kv2-brush-opacity-value">100%</output></div>
-            <label for="kv2-brush-flow">Flyt per avtrykk</label><div class="kv2-slider"><input id="kv2-brush-flow" type="range" min="1" max="100" value="35"/><output id="kv2-brush-flow-value">35%</output></div>
-            <label for="kv2-brush-spacing">Avstand mellom avtrykk</label><div class="kv2-slider"><input id="kv2-brush-spacing" type="range" min="5" max="100" value="20"/><output id="kv2-brush-spacing-value">20%</output></div>
-            <label for="kv2-brush-texture">Penseltekstur</label>
-            <select id="kv2-brush-texture">
-              <option value="round">Jevn rund</option><option value="charcoal">Kull</option><option value="chalk">Kritt</option>
-              <option value="watercolor">Akvarellstruktur</option><option value="dry">Tørrpensel</option>
-            </select>
-            <label for="kv2-brush-texture-strength">Teksturstyrke</label><div class="kv2-slider"><input id="kv2-brush-texture-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-texture-strength-value">70%</output></div>
-            <label for="kv2-brush-aspect">Penselform (flat til rund)</label><div class="kv2-slider"><input id="kv2-brush-aspect" type="range" min="10" max="100" value="100"/><output id="kv2-brush-aspect-value">100%</output></div>
-            <label for="kv2-brush-angle">Vinkel</label><div class="kv2-slider"><input id="kv2-brush-angle" type="range" min="-180" max="180" value="0"/><output id="kv2-brush-angle-value">0°</output></div>
-            <label for="kv2-brush-scatter">Spredning</label><div class="kv2-slider"><input id="kv2-brush-scatter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-scatter-value">0%</output></div>
-            <label for="kv2-brush-rotation-jitter">Rotasjonsvariasjon</label><div class="kv2-slider"><input id="kv2-brush-rotation-jitter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-rotation-jitter-value">0%</output></div>
-            <label><input id="kv2-brush-follow-direction" type="checkbox"/> Følg strøkretningen</label>
-            <label><input id="kv2-brush-tilt-enabled" type="checkbox"/> Pennens helning styrer penselformen</label>
-            <label for="kv2-brush-tilt-strength">Helningsfølsomhet</label><div class="kv2-slider"><input id="kv2-brush-tilt-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-tilt-strength-value">70%</output></div>
-            <p class="kv2-tip">Med kompatibel penn gir helning bredere, lettere avtrykk i pennens retning. Mus og finger beholder vanlig form.</p>
-            <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
-            <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
-            <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>
-            <fieldset class="kv2-adjustments">
-              <legend>Mine pensler</legend>
-              <label for="kv2-brush-library">Lagrede pensler</label>
-              <select id="kv2-brush-library"><option value="">Velg egen pensel</option></select>
-              <button id="kv2-brush-library-load" type="button" disabled>Bruk pensel</button>
-              <label for="kv2-brush-name">Penselnavn</label>
-              <input id="kv2-brush-name" type="text" maxlength="50" placeholder="F.eks. Myk skygge"/>
-              <button id="kv2-brush-library-save" type="button">Lagre egne innstillinger</button>
-              <button id="kv2-brush-library-delete" type="button" disabled>Slett valgt pensel</button>
-              <button id="kv2-brush-library-reset" type="button">Nullstill aktive innstillinger</button>
-              <button id="kv2-brush-library-export" type="button" disabled>Eksporter penselbibliotek</button>
-              <label for="kv2-brush-library-import">Importer pensler (JSON)</label>
-              <input id="kv2-brush-library-import" type="file" accept=".json,application/json"/>
-              <p class="kv2-tip">Import legger til nye navn og beholder eksisterende pensler. Ingen kunstverk eller kontodata følger med.</p>
-              <p id="kv2-brush-library-status" class="kv2-tip" role="status" aria-live="polite">Lagres lokalt på denne enheten.</p>
-            </fieldset>
-          </div>
+          <button id="kv2-brush-settings-jump" type="button" hidden aria-controls="kv2-brush-advanced">Penselinnstillinger ↓</button>
           <label>Farge <input id="kv2-color" type="color" value="#23242c" /></label>
           <div class="kv2-palette" role="group" aria-label="Hurtigpalett">
             <button type="button" class="kv2-swatch" id="kv2-swatch-blekk" style="--kv2-swatch:#23242c" aria-label="Blekk" aria-pressed="true"></button>
@@ -199,7 +165,98 @@
               preserveAspectRatio="none" aria-hidden="true" hidden><text id="kv2-text-preview"></text></svg>
           </div>
         </div>
+        <div id="kv2-brush-advanced" class="kv2-brush-inspector" hidden>
+            <div class="kv2-titlebar"><h2>Avansert pensel</h2><button id="kv2-back-to-canvas" type="button">Tilbake til lerretet</button></div>
+            <div class="kv2-active-sample"><strong>Aktiv pensel</strong><canvas id="kv2-active-brush-sample" width="180" height="64" aria-label="Strøkprøve for aktiv pensel"></canvas></div>
+            <details class="kv2-fold" open>
+              <summary>Atelierets pensler</summary>
+              <div class="kv2-studio-brushes">
+                <button id="kv2-studio-brush-ink" type="button"><canvas id="kv2-studio-sample-ink" width="180" height="64" aria-hidden="true"></canvas><span>Illustrasjonspenn</span></button>
+                <button id="kv2-studio-brush-graphite" type="button"><canvas id="kv2-studio-sample-graphite" width="180" height="64" aria-hidden="true"></canvas><span>Grafitt</span></button>
+                <button id="kv2-studio-brush-charcoal" type="button"><canvas id="kv2-studio-sample-charcoal" width="180" height="64" aria-hidden="true"></canvas><span>Kull</span></button>
+                <button id="kv2-studio-brush-chalk" type="button"><canvas id="kv2-studio-sample-chalk" width="180" height="64" aria-hidden="true"></canvas><span>Kritt</span></button>
+                <button id="kv2-studio-brush-wash" type="button"><canvas id="kv2-studio-sample-wash" width="180" height="64" aria-hidden="true"></canvas><span>Akvarellstruktur</span></button>
+                <button id="kv2-studio-brush-dry" type="button"><canvas id="kv2-studio-sample-dry" width="180" height="64" aria-hidden="true"></canvas><span>Tørrpensel</span></button>
+                <button id="kv2-studio-brush-shade" type="button"><canvas id="kv2-studio-sample-shade" width="180" height="64" aria-hidden="true"></canvas><span>Myk skygge</span></button>
+                <button id="kv2-studio-brush-calligraphy" type="button"><canvas id="kv2-studio-sample-calligraphy" width="180" height="64" aria-hidden="true"></canvas><span>Kalligrafi</span></button>
+              </div>
+              <p class="kv2-tip">Velg en ferdig pensel. Aktiv farge beholdes. Strøkprøver er skalert og viser nøytralt trykk, uten helning.</p>
+            </details>
+            <details id="kv2-brush-settings-detail" class="kv2-fold" open>
+              <summary>Form, tekstur, flyt og pennetrykk</summary>
+              <div class="kv2-brush-parameter-grid">
+            <label for="kv2-brush-hardness">Hardhet</label><div class="kv2-slider"><input id="kv2-brush-hardness" type="range" min="0" max="100" value="50"/><output id="kv2-brush-hardness-value">50%</output></div>
+            <label for="kv2-brush-opacity">Strøkets opasitet</label><div class="kv2-slider"><input id="kv2-brush-opacity" type="range" min="0" max="100" value="100"/><output id="kv2-brush-opacity-value">100%</output></div>
+            <label for="kv2-brush-flow">Flyt per avtrykk</label><div class="kv2-slider"><input id="kv2-brush-flow" type="range" min="1" max="100" value="35"/><output id="kv2-brush-flow-value">35%</output></div>
+            <label for="kv2-brush-spacing">Avstand mellom avtrykk</label><div class="kv2-slider"><input id="kv2-brush-spacing" type="range" min="5" max="100" value="20"/><output id="kv2-brush-spacing-value">20%</output></div>
+            <label for="kv2-brush-texture">Penseltekstur</label>
+            <select id="kv2-brush-texture">
+              <option value="round">Jevn rund</option><option value="charcoal">Kull</option><option value="chalk">Kritt</option>
+              <option value="watercolor">Akvarellstruktur</option><option value="dry">Tørrpensel</option>
+            </select>
+            <label for="kv2-brush-texture-strength">Teksturstyrke</label><div class="kv2-slider"><input id="kv2-brush-texture-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-texture-strength-value">70%</output></div>
+            <label for="kv2-brush-aspect">Penselform (flat til rund)</label><div class="kv2-slider"><input id="kv2-brush-aspect" type="range" min="10" max="100" value="100"/><output id="kv2-brush-aspect-value">100%</output></div>
+            <label for="kv2-brush-angle">Vinkel</label><div class="kv2-slider"><input id="kv2-brush-angle" type="range" min="-180" max="180" value="0"/><output id="kv2-brush-angle-value">0°</output></div>
+            <label for="kv2-brush-scatter">Spredning</label><div class="kv2-slider"><input id="kv2-brush-scatter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-scatter-value">0%</output></div>
+            <label for="kv2-brush-rotation-jitter">Rotasjonsvariasjon</label><div class="kv2-slider"><input id="kv2-brush-rotation-jitter" type="range" min="0" max="100" value="0"/><output id="kv2-brush-rotation-jitter-value">0%</output></div>
+            <label><input id="kv2-brush-follow-direction" type="checkbox"/> Følg strøkretningen</label>
+            <label><input id="kv2-brush-tilt-enabled" type="checkbox"/> Pennens helning styrer penselformen</label>
+            <label for="kv2-brush-tilt-strength">Helningsfølsomhet</label><div class="kv2-slider"><input id="kv2-brush-tilt-strength" type="range" min="0" max="100" value="70"/><output id="kv2-brush-tilt-strength-value">70%</output></div>
+            <p class="kv2-tip">Med kompatibel penn gir helning bredere, lettere avtrykk i pennens retning. Mus og finger beholder vanlig form.</p>
+            <label><input id="kv2-brush-pressure-width" type="checkbox" checked/> Pennetrykk styrer bredde</label>
+            <label><input id="kv2-brush-pressure-flow" type="checkbox"/> Pennetrykk styrer flyt</label>
+            <p class="kv2-tip">Flyt bygger opp fargen med avtrykk; opasitet begrenser hele strøket. Slipp for å bekrefte, Escape avbryter.</p>
+              </div>
+            </details>
+            <details class="kv2-fold" open>
+              <summary>Mine pensler</summary>
+            <fieldset class="kv2-adjustments">
+              <legend>Personlig penselbibliotek</legend>
+              <label for="kv2-brush-library">Lagrede pensler</label>
+              <select id="kv2-brush-library"><option value="">Velg egen pensel</option></select>
+              <canvas id="kv2-saved-brush-sample" width="180" height="64" aria-label="Strøkprøve for valgt lagret pensel" hidden></canvas>
+              <button id="kv2-brush-library-load" type="button" disabled>Bruk pensel</button>
+              <label for="kv2-brush-name">Penselnavn</label>
+              <input id="kv2-brush-name" type="text" maxlength="50" placeholder="F.eks. Myk skygge"/>
+              <button id="kv2-brush-library-save" type="button">Lagre egne innstillinger</button>
+              <button id="kv2-brush-library-delete" type="button" disabled>Slett valgt pensel</button>
+              <button id="kv2-brush-library-reset" type="button">Nullstill aktive innstillinger</button>
+              <button id="kv2-brush-library-export" type="button" disabled>Eksporter penselbibliotek</button>
+              <label for="kv2-brush-library-import">Importer pensler (JSON)</label>
+              <input id="kv2-brush-library-import" type="file" accept=".json,application/json"/>
+              <p class="kv2-tip">Import legger til nye navn og beholder eksisterende pensler. Ingen kunstverk eller kontodata følger med.</p>
+              <p id="kv2-brush-library-status" class="kv2-tip" role="status" aria-live="polite">Lagres lokalt på denne enheten.</p>
+            </fieldset>
+            </details>
+          </div>
+        <details class="kv2-fold" id="kv2-color-library-panel" open>
+          <summary>Mine farger og paletter</summary>
+          <h3>Nylig valgte farger</h3><div id="kv2-color-recent" class="kv2-color-chips"></div>
+          <h3>Fargeharmonier</h3>
+          <label for="kv2-color-harmony-mode">Harmoni fra aktiv farge</label>
+          <select id="kv2-color-harmony-mode"><option value="complementary">Komplementær</option><option value="analogous">Analog</option><option value="triad">Triade</option></select>
+          <div id="kv2-color-harmony" class="kv2-color-chips"></div>
+          <button id="kv2-color-add-harmony" type="button">Legg harmonien i paletten</button>
+          <h3>Palettutkast</h3><div id="kv2-color-draft" class="kv2-color-chips"></div>
+          <p class="kv2-tip">Trykk på en farge i utkastet for å fjerne den.</p>
+          <button id="kv2-color-add" type="button">Legg til aktiv farge</button>
+          <button id="kv2-color-palette-clear" type="button">Tøm utkast</button>
+          <label for="kv2-color-palette-name">Palettnavn</label><input id="kv2-color-palette-name" type="text" maxlength="50"/>
+          <button id="kv2-color-palette-save" type="button" disabled>Lagre palett lokalt</button>
+          <label for="kv2-color-library-select">Lagrede paletter</label><select id="kv2-color-library-select"><option value="">Velg palett</option></select>
+          <div id="kv2-color-saved" class="kv2-color-chips"></div>
+          <button id="kv2-color-palette-load" type="button" disabled>Rediger palett</button>
+          <button id="kv2-color-palette-delete" type="button" disabled>Slett palett</button>
+          <button id="kv2-color-export" type="button" disabled>Eksporter paletter</button>
+          <label for="kv2-color-import">Importer paletter (JSON)</label>
+          <input id="kv2-color-import" type="file" accept=".json,application/json"/>
+          <p class="kv2-tip">Import legger til nye palettnavn uten å overskrive eksisterende. Eksport inneholder bare navngitte paletter.</p>
+          <p id="kv2-color-library-status" class="kv2-tip" role="status" aria-live="polite"></p>
+        </details>
+        <details class="kv2-fold kv2-workspace-help">
+          <summary>Veiledning for tegneverktøy</summary>
         <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Velg mellom vanlig pensel, en tynn blyant, bred tusj og halvtransparent lasur. Hurtigpaletten gir åtte farger; fargevelgeren lar deg velge andre farger. Verktøyvalg og farge endrer ikke bildet før du tegner. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lager et rektangel; «Frihåndsmarkering (lasso)» lager en lukket form med mus, finger eller penn. Begge begrenser pensel og viskelær uten å endre bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Rektangel» og «Ellipse» tegner fylte figurer eller omriss på valgt bildelag. «Linje» og «Pil» tegner rette streker med tykkelsen fra Størrelse; pilspissen peker mot slutten av dragbevegelsen. «Tekst» gir et eget tekstpanel med skrifttype, størrelse og fet skrift. Trykk på lerretet for plassering og bekreft for å lage et eget bildepiksellag som kan flyttes og angres. Dra og slipp for å tegne; Escape avbryter før endringen er lagret. En aktiv markering begrenser figuren, og omrissbredden følger Størrelse. Avslutt maskeredigering før bruk. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>
+        </details>
         <div class="kv2-selection-tools" role="group" aria-label="Markering og beskjæring">
           <button id="kv2-clear-selection" type="button" disabled>Fjern markering</button>
           <button id="kv2-crop-layer" type="button" disabled>Beskjær valgt lag til markering</button>
@@ -208,10 +265,15 @@
           <button id="kv2-fill-selection" type="button" disabled>Fyll markering med farge</button>
           <button id="kv2-export-selection" type="button" disabled>Eksporter utsnitt (PNG)</button>
         </div>
+        <details class="kv2-fold kv2-workspace-help">
+          <summary>Veiledning for markering og beskjæring</summary>
         <p class="kv2-tip">Beskjæring fjerner piksler utenfor markeringen <strong>bare i det aktive laget</strong>. Lerretet forblir 1200 × 800; bruk eksport av utsnitt for en egen PNG med markeringens størrelse. «Kopier markering til nytt lag» oppretter et nytt, flyttbart lag og beholder originalen. «Klipp markering til nytt lag» flytter de markerte pikslene til et nytt lag og gjør akkurat det området gjennomsiktig i originalen. Begge krever et synlig, ulåst lag, og begge kan angres. «Fyll markering med farge» fyller bare den markerte flaten på det valgte bildelaget med penselfargen, ikke masken eller andre lag. Avslutt maskeredigering før fylling. Rektangel og lasso kan begge brukes til kopiering, klipping, beskjæring, fargefylling og eksport. Utenfor lassoformen er eksportert PNG gjennomsiktig. Beskjæring, fylling og transformering kan også angres.</p>
+        </details>
 
-        <label for="kv2-note">Arbeidsnotater</label>
-        <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>
+        <div class="kv2-document-notes">
+          <label for="kv2-note">Arbeidsnotater</label>
+          <textarea id="kv2-note" rows="2" maxlength="4000" placeholder="Ideer, teknikk, inspirasjon ..."></textarea>
+        </div>
 
         <div class="kv2-actions">
           <button id="kv2-new" type="button">Nytt prosjekt</button>
@@ -242,6 +304,8 @@
             <button id="kv2-clear-move-group" type="button" disabled>Fjern flervalg</button>
             <button id="kv2-transform-group" type="button" disabled>Transformer flervalg</button>
           </div>
+          <details class="kv2-fold" open>
+            <summary>Laggrupper</summary>
           <div class="kv2-named-groups" role="group" aria-label="Navngitte laggrupper">
             <label for="kv2-group-name">Gruppenavn</label>
             <input id="kv2-group-name" type="text" maxlength="50" placeholder="For eksempel Landskap" />
@@ -257,6 +321,7 @@
               <button id="kv2-group-unlock-action" type="button" disabled>Lås opp alle</button>
             </div>
           </div>
+          </details>
           <div class="kv2-layer-actions">
             <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
             <button type="button" id="kv2-add-adjustment">+ Justeringslag</button>
@@ -303,6 +368,8 @@
           </select>
           <p class="kv2-tip">Blandingsmodus påvirker bare hvordan dette laget vises over lagene under. Originalpikslene endres ikke. Valget kan angres og lagres.</p>
 
+          <details class="kv2-fold" open>
+            <summary>Bildejusteringer og fargekurver</summary>
           <fieldset class="kv2-adjustments" aria-label="Ikke-destruktive bildejusteringer">
             <legend>Bildejustering på aktivt lag</legend>
             <p id="kv2-adjust-scope" class="kv2-tip">Bildejusteringer påvirker bare aktivt lag.</p>
@@ -382,6 +449,7 @@
             <button type="button" id="kv2-adjust-reset" disabled>Nullstill bildejusteringene</button>
             <p class="kv2-tip">Slipp glideren for å anvende justeringen. Originalbildet og lagmasken beholdes. Hver endring kan angres.</p>
           </fieldset>
+          </details>
           <label for="kv2-opacity">Gjennomsiktighet / opasitet</label>
           <div class="kv2-slider">
             <input id="kv2-opacity" type="range" min="0" max="100" step="1" value="100" />
