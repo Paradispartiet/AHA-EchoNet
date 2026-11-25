@@ -30,13 +30,15 @@
   }
 
   function getRedirectUrl() {
-    // Only already-approved, exact AHA origins may initiate PKCE. All Vercel
-    // origins are currently unverified, including the historical hostname.
-    // Do not trust a front-end flag or a manually supplied redirect override.
+    // Only verified, exact AHA browser origins may initiate PKCE.
+    // Vercel production was independently confirmed and its exact callback
+    // added to the AHA Supabase Redirect URLs allowlist on 2026-11-25.
+    // Never trust a caller-provided redirect, wildcard or unverified preview.
     const origin = String(global.location?.origin || "");
     const expected = origin === "https://paradispartiet.github.io"
       ? "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html"
-      : origin === "https://aha-preview.aha-echonet-preview.pages.dev"
+      : origin === "https://aha-preview.aha-echonet-preview.pages.dev" ||
+        origin === "https://aha-echo-net.vercel.app"
         ? origin + "/auth-callback.html"
         : "";
     const configured = String(global.AHA_AUTH_REDIRECT_URL || "").trim();
