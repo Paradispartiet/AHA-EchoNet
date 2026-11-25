@@ -13,6 +13,7 @@
     /* The shared AHA stylesheet declares display:flex on module actions.
        Ensure hidden stays authoritative until the opt-in vault is activated. */
     #aha-psych-vault-entry[hidden] { display: none !important; }
+    #aha-psych-vault-pilot-entry[hidden] { display: none !important; }
     .aha-psych-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
     .aha-psych-form { display: grid; gap: .8rem; }
     .aha-psych-form textarea { display: block; width: 100%; box-sizing: border-box; min-height: 8rem; padding: .85rem; border: 1px solid #8b99a6; border-radius: .65rem; background: var(--aha-surface, #fff); color: var(--aha-text, #222); font: inherit; }
@@ -41,9 +42,14 @@
       </div>
       <p class="aha-muted">Sikkerhetskopi: Åpne Psykologirommet, velg <strong>Min oversikt</strong> og deretter
         <strong>Min krypterte sikkerhetskopi</strong>. Der kan du selv laste ned en passordkryptert fil
-        med Tankeverksted-notater og Mitt indre kart. Filen blir ikke lagret på AHA-kontoen, og
+        med Tankeverksted-notater og Mitt indre kart. Eksporten alene lagrer ikke filen på AHA-kontoen, og
         eksisterende lokale notater blir ikke automatisk sendt til AHA. Oppbevar fil og passord
         på et trygt sted, separat fra hverandre.</p>
+      <p id="aha-psych-vault-unavailable" class="aha-muted">Kryptert kontohvelv er under utprøving. Ordinær kontolagring er ennå ikke åpnet.</p>
+      <div id="aha-psych-vault-pilot-entry" hidden>
+        <p><strong>Begrenset pilot:</strong> Bare godkjente pilotkontoer kan laste opp. Bruk kun syntetiske testfiler, aldri ekte refleksjoner.</p>
+        <a class="aha-tile-btn aha-tile-btn-secondary" href="psykologi-vault.html">Åpne kontohvelvets testpilot</a>
+      </div>
       <div id="aha-psych-vault-entry" class="aha-module-actions" hidden>
         <a class="aha-tile-btn aha-tile-btn-secondary" href="psykologi-vault.html">Kryptert kontohvelv (frivillig)</a>
       </div>
@@ -78,6 +84,9 @@
   <script>
     if (window.AHAPsychologyEncryptedVault?.enabled() === true) {
       document.getElementById("aha-psych-vault-entry").hidden = false;
+      document.getElementById("aha-psych-vault-unavailable").hidden = true;
+    } else if (window.AHAPsychologyEncryptedVault?.pilotEnabled() === true) {
+      document.getElementById("aha-psych-vault-pilot-entry").hidden = false;
     }
   </script>
   <script src="js/ahaPsychologyRoomBridge.js"></script>
