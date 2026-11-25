@@ -870,10 +870,15 @@
   function renderNamedGroups() {
     const control = $("kv2-group-select");
     const previous = control.value;
-    control.replaceChildren(new Option("Velg laggruppe", ""));
+    const option = (label, value) => {
+      const node = document.createElement("option");
+      node.textContent = label;
+      node.value = value;
+      return node;
+    };
     const names = [...new Set(project.layers.map(layer => safeGroupName(layer.groupName)).filter(Boolean))];
-    names.forEach(name => control.add(new Option(name, name)));
-    if (names.includes(previous)) control.value = previous;
+    control.replaceChildren(option("Velg laggruppe", ""), ...names.map(name => option(name, name)));
+    control.value = names.includes(previous) ? previous : "";
     ["select", "dissolve", "hide", "show", "lock", "unlock"].forEach(action => {
       $("kv2-group-" + action + "-action").disabled = !control.value;
     });
