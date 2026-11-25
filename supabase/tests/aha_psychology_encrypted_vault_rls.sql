@@ -274,3 +274,84 @@ $anonymous$;
 reset role;
 
 \echo 'AHA private encrypted vault RLS rehearsal: PASS'
+
+
+-- Quota rehearsal in the disposable CI database, after existing RLS tests.
+\i supabase/psychology-encrypted-vault-quota-staging.sql
+begin;
+do $quota_init$
+begin
+  if (select used_bytes from aha_psych_quota_private.budget) is distinct from
+     (select sum(octet_length(encrypted_file)) from public.aha_psychology_encrypted_backups)
+    then raise exception 'initial quota counter mismatch'; end if;
+  if has_schema_privilege('authenticated','aha_psych_quota_private','USAGE')
+     or has_function_privilege('authenticated','aha_psych_quota_private.account_payload()','EXECUTE')
+     or has_table_privilege('authenticated','aha_psych_quota_private.budget','UPDATE')
+    then raise exception 'quota internals exposed'; end if;
+end
+$quota_init$;
+
+-- Clean up only synthetic rows inside rollback-protected test transaction.
+delete from public.aha_psychology_encrypted_backups;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+do $closed$
+declare
+  payload text := '{"format":"history-go-psychology-encrypted-backup-v1","version":1,"kdf":"PBKDF2-SHA256","iterations":310000,"cipher":"AES-256-GCM","salt":"AQEBAQEBAQEBAQEBAQEBAQ==","iv":"AgICAgICAgICAgIC","data":"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD"}';
+begin
+  begin
+    insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file) values(auth.uid(),payload);
+    raise exception 'closed quota allowed upload';
+  exception when raise_exception then
+    if sqlerrm <> 'vault_quota_or_uploads_closed' then raise; end if;
+  end;
+end
+$closed$;
+reset role;
+update aha_psych_quota_private.budget set accepting_uploads=true, limit_bytes=524288;
+set local role authenticated;
+do $quota_bounds$
+declare
+  payload text := '{"format":"history-go-psychology-encrypted-backup-v1","version":1,"kdf":"PBKDF2-SHA256","iterations":310000,"cipher":"AES-256-GCM","salt":"AQEBAQEBAQEBAQEBAQEBAQ==","iv":"AgICAgICAgICAgIC","data":"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD"}';
+  exact_payload text;
+begin
+  exact_payload := payload || repeat(' ',524288-octet_length(payload));
+  begin
+    insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file) values(auth.uid(),exact_payload || ' ');
+    raise exception 'oversize upload accepted';
+  exception when raise_exception then
+    if sqlerrm <> 'vault_quota_or_uploads_closed' then raise; end if;
+  end;
+  insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file) values(auth.uid(),exact_payload);
+  insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file)
+    values(auth.uid(),payload) on conflict do nothing;
+  perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+  begin
+    insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file) values(auth.uid(),payload);
+    raise exception 'aggregate limit bypassed';
+  exception when raise_exception then
+    if sqlerrm <> 'vault_quota_or_uploads_closed' then raise; end if;
+  end;
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  delete from public.aha_psychology_encrypted_backups where user_id=auth.uid();
+  perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+  insert into public.aha_psychology_encrypted_backups(user_id,encrypted_file) values(auth.uid(),payload);
+end
+$quota_bounds$;
+reset role;
+do $quota_reconcile$
+begin
+  if (select used_bytes from aha_psych_quota_private.budget) is distinct from
+     (select sum(octet_length(encrypted_file)) from public.aha_psychology_encrypted_backups)
+    then raise exception 'quota counter drift'; end if;
+end
+$quota_reconcile$;
+delete from auth.users where id='22222222-2222-4222-8222-222222222222';
+do $quota_cascade$
+begin
+  if (select used_bytes from aha_psych_quota_private.budget) <> 0
+    then raise exception 'cascade did not release capacity'; end if;
+end
+$quota_cascade$;
+rollback;
+\echo 'AHA private vault transactional quota boundary rehearsal: PASS'
