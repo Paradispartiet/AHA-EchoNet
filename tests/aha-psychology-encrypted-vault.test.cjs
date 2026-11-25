@@ -129,6 +129,20 @@ async function run() {
   await assert.rejects(vault.remove({ ...stale, confirmed: true }), /account_changed/);
   assert.equal(cloud.size, 0);
   assert.equal((await vault.status(alice)).exists, false);
+  // Quota rejection is specific to the server's known code AND message.
+  for (const [dbError, expected] of [
+    [{ code: "P0001", message: "vault_quota_or_uploads_closed" }, "quota_or_uploads_closed"],
+    [{ code: "P0001", message: "other error" }, "vault_unavailable"],
+    [{ code: "XX000", message: "vault_quota_or_uploads_closed" }, "vault_unavailable"]
+  ]) {
+    const rejected = mockClient(UUID_A);
+    const originalFrom = rejected.from;
+    rejected.from = name => ({ ...originalFrom(name), insert: async () => ({ error: dbError }) });
+    await assert.rejects(vault.upload(env, { client: rejected }), err => err.code === expected);
+    assert.equal(cloud.size, 0);
+  }
+  const pageCode = fs.readFileSync("js/ahaPsychologyEncryptedVaultPage.js", "utf8");
+  assert.match(pageCode, /quota_or_uploads_closed: ".*Behold den lokale krypterte filen/);
   assert.equal((await vault.upload(env, alice)).stored, true);
   assert.equal((await vault.status(alice)).exists, true);
   assert.equal((await vault.status(bob)).exists, false, "B must not see A's status");

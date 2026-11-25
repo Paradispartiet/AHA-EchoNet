@@ -18,6 +18,7 @@
     account_changed: "Kontoen er endret. Sjekk kontokopien på nytt.",
     login_required: "Logg inn på AHA først, og åpne deretter denne siden på nytt.",
     invalid_file: "Filen har ikke formatet fra Psykologirommets krypterte sikkerhetskopi.",
+    quota_or_uploads_closed: "Filen kan ikke lagres nå. Den kan være større enn kontogrensen, lagringsbudsjettet kan være fullt, eller nye opplastinger kan være stengt. Behold den lokale krypterte filen. Ingen ny kontokopi er lagret.",
     already_exists: "Det ligger allerede en kryptert fil på kontoen. Last den ned før du eventuelt sletter den.",
     no_backup: "Det finnes ingen kryptert sikkerhetskopi på kontoen.",
     confirmation_required: "Bekreft sletting før du fortsetter.",
