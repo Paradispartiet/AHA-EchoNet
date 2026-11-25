@@ -35,6 +35,28 @@
     if (output) output.textContent = message;
   }
 
+  function overview(data) {
+    const output = id("aha-psych-vault-overview");
+    if (!output) return;
+    if (!data) {
+      output.textContent = "Ikke sjekket i denne økten.";
+      return;
+    }
+    if (!data.exists) {
+      output.textContent = "Ingen kontokopi synlig ved siste kontroll.";
+      return;
+    }
+    const date = typeof data.createdAt === "string" ? new Date(data.createdAt) : null;
+    const time = date && Number.isFinite(date.getTime())
+      ? new Intl.DateTimeFormat("nb-NO", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC"
+      : "ikke bekreftet";
+    const size = Number.isSafeInteger(data.bytes) && data.bytes > 0 && data.bytes <= MAX_BYTES
+      ? new Intl.NumberFormat("nb-NO").format(data.bytes) + " byte"
+      : "ikke hentet";
+    output.textContent = "Kryptert kontokopi registrert. Opplastingstid: " + time +
+      ". Filstørrelse: " + size + ".";
+  }
+
   function setBusy(value) {
     busy = value;
     global.document.querySelectorAll("#aha-psych-vault-panel button").forEach(button => {
@@ -51,6 +73,7 @@
   function resetAccount() {
     generation++;
     activeUserId = null;
+    overview(null);
     clearDownload();
     const form = id("aha-psych-vault-upload");
     form?.reset();
@@ -60,6 +83,7 @@
 
   async function run(operation, checkOnly = false) {
     if (busy) return;
+    overview(null);
     setBusy(true);
     const initialGeneration = generation;
     try {
@@ -143,6 +167,7 @@
       const canUpload = !pilot || await vault.pilotAccess(options);
       if (!await current()) return;
       if (uploadForm) uploadForm.hidden = !canUpload;
+      overview(data);
       status((data.exists ?
         "En kryptert fil ligger på kontoen. Du kan laste den ned eller slette den." :
         "Ingen kryptert fil er lagret på kontoen.") +
@@ -171,8 +196,9 @@
         const text = await file.text();
         vault.validateEncryptedFile(text);
         if (!await current()) return;
-        await vault.upload(text, options);
+        const result = await vault.upload(text, options);
         if (!await current()) return;
+        overview({ exists: true, bytes: result.bytes });
         form.reset();
         status("Den krypterte filen er lagret på AHA-kontoen. Ingen notattekst ble dekryptert.");
       });
@@ -183,6 +209,7 @@
       const result = await vault.download(options);
       if (!await current()) return;
       saveFile(result.text);
+      overview({ exists: true, createdAt: result.createdAt, bytes: result.bytes });
       status("Den krypterte filen er klar. Trykk på lenken for å laste den ned.");
     }));
 
@@ -192,6 +219,7 @@
       clearDownload();
       const result = await vault.remove({ ...options, confirmed: true });
       if (!await current()) return;
+      overview({ exists: false });
       status(result.removed
         ? "Den krypterte kontokopien er slettet og fraværet kontrollert i databasen. Lokale notater er ikke berørt."
         : "Ingen kontokopi er synlig på kontoen. Ingen sletting ble bekreftet. Lokale notater er ikke berørt.");
