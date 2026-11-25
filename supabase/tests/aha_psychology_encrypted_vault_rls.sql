@@ -147,25 +147,35 @@ $still$;
 do $invalid$
 declare
   original jsonb;
-  candidate jsonb;
+  candidate text;
 begin
   select encrypted_file::jsonb into original
     from public.aha_psychology_encrypted_backups
     where user_id='11111111-1111-4111-8111-111111111111';
 
   for candidate in
-    select value from jsonb_array_elements(jsonb_build_array(
+    select value::text from jsonb_array_elements(jsonb_build_array(
       original || jsonb_build_object('private_note', 'readable text'),
       original - 'iv',
       original || jsonb_build_object('iterations', 1),
       original || jsonb_build_object('salt', 'not-base64'),
       original || jsonb_build_object('data', 'private plaintext'),
-      original || jsonb_build_object('version', '1')
+      original || jsonb_build_object('version', '1'),
+      original || jsonb_build_object('format', null::text),
+      original || jsonb_build_object('kdf', null::text),
+      original || jsonb_build_object('cipher', null::text),
+      original || jsonb_build_object('salt', null::text),
+      original || jsonb_build_object('iv', null::text),
+      original || jsonb_build_object('data', null::text),
+      original || jsonb_build_object('iv', 1234567890123456::bigint),
+      original || jsonb_build_object('data', 123456789012345678901234::numeric)
     ))
+    union all
+    select '{"data":"synthetic-duplicate",' || substring(original::text from 2)
   loop
     begin
       update public.aha_psychology_encrypted_backups
-      set encrypted_file = candidate::text
+      set encrypted_file = candidate
       where user_id='11111111-1111-4111-8111-111111111111';
       raise exception 'Malformed envelope accepted by PostgreSQL';
     exception when check_violation then null;
