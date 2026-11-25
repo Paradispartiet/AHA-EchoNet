@@ -273,6 +273,10 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  await expect(page.locator("#aha-psych-vault-upload")).toBeHidden();
+  await page.locator("#aha-psych-vault-check").click();
+  await expect(page.locator("#aha-psych-vault-upload")).toBeVisible();
+
   // Reproduce the physical iPad consent-label regression: shared input
   // styling must not consume the entire width of the label.
   const originalViewport = page.viewportSize();
