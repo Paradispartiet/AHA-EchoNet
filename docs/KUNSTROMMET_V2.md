@@ -292,3 +292,8 @@ Penselform 10–100 % (flat ellipse til sirkel), fast vinkel −180 til 180 grad
 ### Pennens helning
 
 Valgfri helningsstyring med følsomhet 0–100 %. Pointer Events tiltX/tiltY omregnes til en normalisert helningsvektor, med altitudeAngle/azimuthAngle som reserve. Vektoren interpoleres mellom avtrykk; helning utvider avtrykket langs pennens projiserte akse og reduserer flyten moderat. Aktiv helning prioriterer pennens orientering over strøkretningen, mens fast vinkel og rotasjonsvariasjon fortsatt legges til. Mus, finger og manglende helningsdata gir tidligere oppførsel. Innstillingene bevares i penselbiblioteket; eldre filer har helning avslått. Automatisert test med syntetiske penneeventer dekker begge akser og musefallback; fysisk Apple Pencil-verifikasjon er fortsatt nødvendig. Tidligere beskrivelse av manglende tilt gjelder før denne utvidelsen.
+
+
+## Atelierets arbeidsflate (5.0-forberedelse)
+
+Fokusmodus er et reversibelt visningsvalg: skjuler introduksjon, sidepanel, tittel/notater og lange hjelpetekster, utvider lerretet og beholder tegneverktøy, angre, zoom og prosjektlagring. Gå tilbake til hele atelieret for lag og prosjekter. Avansert penselinspektør ligger etter lerretet, med snarvei fra verktøylinjen og tilbakeknapp. Sammenleggbare grupper for penselparametre, penselbibliotek, laggrupper, bildejustering og hjelpetekster. Ingen prosjektmetadata, raster eller historikk endres. Fokusmodus endres ikke midt i en aktiv pekerbevegelse eller fri transformering. Nettlesertest ved desktop- og iPad-lignende størrelse; fysisk iPad gjenstår.

@@ -170,6 +170,7 @@
 
   const viewport = $("kv2-paper");
   let zoomIndex = 2;
+  let focusMode = false;
   let dbPromise = null;
   let project = null;
   let selected = null;
@@ -1237,6 +1238,7 @@
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
     $("kv2-brush-advanced").hidden = !advancedBrushEnabled();
+    $("kv2-brush-settings-jump").hidden = !advancedBrushEnabled();
     if (advancedBrushEnabled()) renderBrushLibrary();
     $("kv2-gradient-panel").hidden = tool !== "gradient";
     $("kv2-gradient-mask-note").textContent = maskEditing
@@ -2970,7 +2972,35 @@
     finally { busy = false; $("kv2-import").value = ""; updateLayerControls(); renderTextPreview(); }
   }
 
+  function toggleStudioFocus() {
+    if (busy || pointerId !== null || freeTransform) {
+      $("kv2-focus-hint").textContent="Fullfør eller avbryt den aktive redigeringen først.";
+      return;
+    }
+    focusMode = !focusMode;
+    $("main").setAttribute("data-studio-focus", String(focusMode));
+    $("kv2-focus-mode").setAttribute("aria-pressed", String(focusMode));
+    $("kv2-focus-mode").textContent=focusMode ? "Vis hele atelieret" : "Fokusmodus";
+    $("kv2-focus-hint").textContent=focusMode
+      ? "Fokusmodus: lerretet har mer plass. Vis hele atelieret for lag og prosjekter."
+      : "Hele atelieret vises.";
+    refresh();
+    if (typeof $("kv2-focus-mode").scrollIntoView === "function") {
+      $("kv2-focus-mode").scrollIntoView({block:"nearest"});
+    }
+  }
+
   function bind() {
+    $("kv2-focus-mode").addEventListener("click", toggleStudioFocus);
+    $("kv2-brush-settings-jump").addEventListener("click", () => {
+      if (!advancedBrushEnabled() || pointerId !== null) return;
+      $("kv2-brush-settings-detail").setAttribute("open","");
+      $("kv2-brush-advanced").scrollIntoView?.({block:"start"});
+    });
+    $("kv2-back-to-canvas").addEventListener("click", () => {
+      $("kv2-paper").scrollIntoView?.({block:"start"});
+      $("kv2-paper").focus?.({preventScroll:true});
+    });
     $("kv2-new").addEventListener("click", () => {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return;
       newProject();

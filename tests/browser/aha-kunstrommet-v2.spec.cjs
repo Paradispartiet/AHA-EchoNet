@@ -1473,6 +1473,36 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("studio focus and folding settings preserve artwork and make canvas accessible", async ({page}) => {
+    await page.setViewportSize({width:1366,height:900});
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const before=await jsonBackup(page);
+    const width=()=>page.locator("#kv2-canvas").evaluate(c=>c.getBoundingClientRect().width);
+    const normal=await width();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator("#kv2-focus-mode")).toHaveAttribute("aria-pressed","true");
+    await expect(page.locator(".kv2-sidebar")).toBeHidden();
+    expect(await width()).toBeGreaterThan(normal+100);
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator(".kv2-sidebar")).toBeVisible();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.setViewportSize({width:820,height:1180});
+    await page.locator("#kv2-brush-preset").selectOption("advanced");
+    const position=await page.evaluate(()=>({
+      canvas:document.querySelector("#kv2-canvas").getBoundingClientRect().top,
+      settings:document.querySelector("#kv2-brush-advanced").getBoundingClientRect().top
+    }));
+    expect(position.settings).toBeGreaterThan(position.canvas);
+    await page.locator("#kv2-brush-settings-detail summary").click();
+    await expect(page.locator("#kv2-brush-hardness")).toBeHidden();
+    await page.locator("#kv2-brush-settings-jump").click();
+    await expect(page.locator("#kv2-brush-hardness")).toBeVisible();
+    await page.locator("#kv2-back-to-canvas").click();
+    await expect(page.locator("#kv2-paper")).toBeFocused();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
   test("pen tilt widens and rotates shading only when enabled", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
