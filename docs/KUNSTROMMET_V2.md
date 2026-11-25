@@ -267,3 +267,13 @@ Lineær eller radial gradient med aktiv startfarge og egen sluttfarge eller gjen
 ## Avansert pensel (4.9)
 
 Eget valg i Penseltype, uten endring av de fire tidligere penslene. Hardhet 0–100 %, strøkopasitet 0–100 %, flyt per avtrykk 1–100 %, avtrykksavstand 5–100 % av grunnstørrelse, valgfri trykkstyrt bredde og flyt. Avtrykk med radial alfafalloff legges i et midlertidig strøklag med avstandsbasert sampling og interpolert trykk; strøkopasitet anvendes én gang ved sammensetting. En separat forhåndsvisning bruker samme lagrekkefølge, justeringer og masker som sluttbildet. Markering/lasso begrenser avtrykkene. Pointerup bekrefter ett angresteg; pointercancel/Escape forkaster. Maskepensel og viskelær bruker fortsatt den tidligere motoren. Innstillingene er foreløpig sesjonsinnstillinger, ikke prosjektmetadata. Fysisk iPad-ytelse og Apple Pencil-trykk gjenstår å verifisere.
+
+
+## Mine pensler (etter 4.9)
+
+Opptil 30 navngitte avanserte pensler per lokal AHA-profil med størrelse, farge, hardhet, strøkopasitet, flyt, avstand og trykkvalg. Velg/bruk, lagre, erstatt med bekreftelse, slett med bekreftelse og nullstill aktive innstillinger. Penselinnstillinger endrer ikke prosjektets rastere eller angrehistorikk. Biblioteket ligger i profilavgrenset localStorage på den aktuelle enheten, uten synkronisering eller ny database; lokal profilavgrensning er ikke kryptering eller en sikkerhetsgrense. Ugyldig lagring overskrives ikke automatisk. Nettlesertest dekker gjenåpning, profilbytte, sletting og uendrede lag. Eksport/import av penselbibliotek og fysisk iPad-testing gjenstår.
+
+
+### Penselbibliotekets sikkerhetskopi
+
+Eksportformat `aha-kunstrommet-brushes` versjon 1 inneholder bare navngitte penselinnstillinger, ingen profil-ID eller kunstverk. JSON-import på maks 40 000 byte validerer alle oppføringer før lagring. Eksisterende navn hoppes over; dersom nye pensler ikke får plass innen grensen 30, avbrytes hele importen. Profilbytte under filinnlesing avbryter. Ingen skysynkronisering. Test dekker eksport, kollisjon, gyldig/ugyldig import og uendrede originaler.
