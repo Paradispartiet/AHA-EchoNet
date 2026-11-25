@@ -248,3 +248,9 @@
 #kv2-composition-guides #kv2-guide-marks {stroke:#b53355;stroke-width:2.2;}
 .kv2-guide-panel select {font:inherit;max-width:100%;padding:8px;border:1px solid #b9c1bd;border-radius:8px;background:white;}
 .kv2-guide-panel output {min-width:3rem;font-variant-numeric:tabular-nums;text-align:right;}
+
+#kv2-symmetry-overlay {position:absolute;top:0;left:0;width:100%;height:auto;aspect-ratio:3 / 2;z-index:3;pointer-events:none;overflow:hidden;}
+#kv2-symmetry-overlay[hidden]{display:none;}
+#kv2-symmetry-lines{fill:none;stroke:#a73881;stroke-width:1.5;stroke-dasharray:8 5;vector-effect:non-scaling-stroke;opacity:.8;}
+.kv2-symmetry-panel select{font:inherit;max-width:100%;padding:8px;border:1px solid #b9c1bd;border-radius:8px;background:white;}
+.kv2-symmetry-panel output{min-width:3rem;text-align:right;font-variant-numeric:tabular-nums;}
