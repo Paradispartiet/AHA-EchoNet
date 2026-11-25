@@ -285,6 +285,12 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  const center = page.locator("#aha-psych-vault-center");
+  await expect(center).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Min lokale sikkerhetskopi" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Hent og gjenopprett" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Aktivitet og kontroll" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Slett aktiv kontokopi" })).toBeVisible();
   const guide = page.locator("#aha-psych-vault-restore-guide");
   const guideStatus = page.locator("#aha-psych-vault-restore-status");
   await guide.locator("summary").click();
@@ -369,6 +375,12 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await expect(comparisonResult).toContainText("Filene er forskjellige");
   await expect(historyPanel).toContainText("Filsammenligning gjennomført");
   expect(await page.evaluate(() => window.__vaultSyntheticRows.get(window.__vaultSyntheticAccount).encrypted_file)).toBe(backup.text);
+  const beforeClear = await page.evaluate(() => window.__vaultSyntheticRequests.length);
+  await page.locator("#aha-psych-vault-clear-history").click();
+  await expect(historyPanel.locator("li")).toHaveCount(0);
+  await expect(historyPanel).toContainText("Ingen bekreftede handlinger");
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests.length)).toBe(beforeClear);
+  expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
 
   // One slot per account: refuse a duplicate rather than overwriting.
   await input.setInputFiles({

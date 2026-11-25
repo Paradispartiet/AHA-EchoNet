@@ -32,7 +32,7 @@
   }
 
   function record(label) {
-    history.unshift({ time: new Date().toISOString().slice(11, 19), label });
+    history.unshift({ time: new Date().toISOString().slice(0, 19).replace("T", " "), label });
     history.length = Math.min(history.length, 20);
     renderHistory();
   }
@@ -202,6 +202,12 @@
     status(pilot ? "Begrenset pilot. Trykk Sjekk kontokopien for å kontrollere tilgang." :
       "Trykk Sjekk kontokopien før opplasting. Ingen fil blir lastet opp automatisk.");
 
+    id("aha-psych-vault-clear-history")?.addEventListener("click", () => {
+      if (busy) return;
+      history.length = 0;
+      renderHistory();
+    });
+
     id("aha-psych-vault-check")?.addEventListener("click", () => run(async (options, current) => {
       clearDownload();
       if (uploadForm) uploadForm.hidden = true;
@@ -241,6 +247,7 @@
         if (!await current()) return;
         const result = await vault.upload(text, options);
         if (!await current()) return;
+        clearDownload();
         overview({ exists: true, bytes: result.bytes });
         record("Opplasting bekreftet");
         form.reset();

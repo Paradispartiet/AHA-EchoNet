@@ -31,6 +31,18 @@
     #aha-psych-vault-download a { display: inline-block; padding: 12px; min-height: 44px; box-sizing: border-box; }
     #aha-psych-vault-status { min-height: 30px; overflow-wrap: anywhere; }
     .psych-vault-shell button { min-height: 44px; cursor: pointer; }
+    .psych-vault-center { display: grid; gap: 16px; min-width: 0; }
+    .psych-vault-center > section { border: 1px solid #7d97a8; border-radius: 12px; padding: 16px; min-width: 0; overflow-wrap: anywhere; }
+    .psych-vault-center h3 { margin-top: 0; }
+    .psych-vault-center details { margin-block: 12px; }
+    .psych-vault-center summary { cursor: pointer; min-height: 44px; padding-block: 10px; box-sizing: border-box; }
+    .psych-vault-center button { white-space: normal; max-width: 100%; }
+    .psych-vault-delete-area { border-top: 1px solid #7d97a8; margin-top: 16px; padding-top: 16px; }
+    .psych-vault-center input[type=file] { min-width: 0; max-width: 100%; }
+    @media (min-width: 720px) {
+      .psych-vault-center { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .psych-vault-center .psych-vault-wide { grid-column: 1 / -1; }
+    }
   </style>
 </head>
 <body>
@@ -86,24 +98,32 @@
       </details>
     </section>
     <section id="aha-psych-vault-panel" class="aha-panel" hidden>
-      <h2>Mine krypterte kontofiler</h2>
+      <h2>Mitt sikkerhetskopisenter</h2>
+      <p>Kontroller, behold og gjenopprett dine krypterte filer. Velg hver handling selv.</p>
       <p id="aha-psych-vault-pilot-notice" hidden><strong>Begrenset testpilot:</strong>
         Bruk bare en syntetisk sikkerhetskopi uten ekte refleksjoner eller private opplysninger.
         Trykk «Sjekk kontokopien» for å kontrollere opplastingsgodkjenningen.</p>
       <p>Det er plass til <strong>én</strong> kryptert fil per konto. Ny opplasting kan ikke overskrive en
         tidligere fil. Last ned den gamle og slett den manuelt dersom du vil erstatte den.</p>
-      <div class="psych-vault-actions">
-        <button type="button" id="aha-psych-vault-check" class="aha-tile-btn aha-tile-btn-secondary">Sjekk kontokopien</button>
-        <button type="button" id="aha-psych-vault-download-button" class="aha-tile-btn aha-tile-btn-primary">Hent kryptert fil</button>
-        <button type="button" id="aha-psych-vault-delete" class="aha-tile-btn aha-tile-btn-secondary">Slett kontokopi</button>
-      </div>
+      <div id="aha-psych-vault-center" class="psych-vault-center">
       <section aria-labelledby="aha-psych-vault-overview-heading">
         <h3 id="aha-psych-vault-overview-heading">Kontokopistatus</h3>
         <p id="aha-psych-vault-overview" role="status" aria-live="polite">Ikke sjekket i denne økten.</p>
         <p>Dette gjelder bare kontokopien. AHA kan ikke kontrollere om lokale notater er nyere,
           om du har beholdt en lokal fil eller om passordet kan åpne kopien.</p>
+        <div class="psych-vault-actions">
+          <button type="button" id="aha-psych-vault-check" class="aha-tile-btn aha-tile-btn-secondary">Sjekk kontokopien</button>
+        </div>
       </section>
-      <div id="aha-psych-vault-download"></div>
+      <section aria-labelledby="aha-psych-vault-local-heading">
+        <h3 id="aha-psych-vault-local-heading">Min lokale sikkerhetskopi</h3>
+        <p>Lokale filer og notater styres i History Go. AHA kan ikke se hvilke filer du har på enheten.</p>
+        <a href="https://paradispartiet.github.io/History-Go/?room=psychology" target="_blank" rel="noopener noreferrer">Åpne Psykologirommet for å lage en kryptert fil</a>
+      </section>
+      <section aria-labelledby="aha-psych-vault-recovery-heading">
+        <h3 id="aha-psych-vault-recovery-heading">Hent og gjenopprett</h3>
+        <button type="button" id="aha-psych-vault-download-button" class="aha-tile-btn aha-tile-btn-primary">Hent kryptert fil</button>
+        <div id="aha-psych-vault-download"></div>
       <details id="aha-psych-vault-restore-guide">
         <summary>Gjenopprett i History Go – steg for steg</summary>
         <p id="aha-psych-vault-restore-status" role="status" aria-live="polite">Ingen nedlastingslenke klargjort i denne økten. Har du allerede en egen kryptert fil, kan du bruke den i History Go.</p>
@@ -116,11 +136,16 @@
         <p><strong>Ikke slett eksisterende notater for å gjøre plass.</strong> Gjenoppretting krever et tomt lokalt arkiv og overskriver ikke et eksisterende. Behold egen kryptert fil og passord separat. AHA kan ikke bekrefte at filen er lagret på enheten eller at gjenopprettingen har lykkes.</p>
         <p>Å åpne veiviseren eller History Go overfører ikke filen, passordet eller kontokopien automatisk.</p>
       </details>
+      </section>
+      <section aria-labelledby="aha-psych-vault-activity-heading">
+        <h3 id="aha-psych-vault-activity-heading">Aktivitet og kontroll</h3>
       <details id="aha-psych-vault-history">
         <summary>Aktivitet i denne økten</summary>
         <p>Viser bekreftede handlinger på kontokopien i denne nettleserfanen. Ingen varig historikk lagres; listen tømmes ved kontobytte eller når siden forlates.</p>
         <p id="aha-psych-vault-history-empty">Ingen bekreftede handlinger ennå.</p>
         <ol id="aha-psych-vault-history-list"></ol>
+        <button type="button" id="aha-psych-vault-clear-history" class="aha-tile-btn aha-tile-btn-secondary">Tøm aktivitetslisten</button>
+        <p>Dette påvirker ikke kontokopien eller lokale filer.</p>
       </details>
       <details id="aha-psych-vault-compare">
         <summary>Sammenlign egen kryptert fil med kontokopien</summary>
@@ -132,6 +157,9 @@
         <p id="aha-psych-vault-compare-result" role="status" aria-live="polite">Ingen sammenligning utført.</p>
         <p>Ulike krypterte filer kan inneholde samme notater. En lik fil bekrefter ikke at passordet virker eller at notatene er oppdaterte.</p>
       </details>
+      </section>
+      <section class="psych-vault-wide" aria-labelledby="aha-psych-vault-storage-heading">
+      <h3 id="aha-psych-vault-storage-heading">Lagre eller bytt kontokopi</h3>
       <details id="aha-psych-vault-replace-guide">
         <summary>Bytt kontokopi på en tryggere måte</summary>
         <ol>
@@ -143,8 +171,7 @@
         </ol>
         <p>Bytte er ikke atomisk: opplasting kan bli avvist etter sletting, for eksempel ved kvote eller stengt opplasting. Veiviseren utfører ingen sletting eller opplasting. Det er fortsatt bare én aktiv kontokopi.</p>
       </details>
-      <hr>
-      <h3>Last opp en kryptert fil</h3>
+      <h4>Last opp en kryptert fil</h4>
       <form id="aha-psych-vault-upload" class="psych-vault-form">
         <input type="file" name="encrypted_file" accept=".json,application/json" aria-label="Kryptert sikkerhetskopi fra Psykologirommet" required>
         <label><input type="checkbox" name="consent" required>
@@ -152,7 +179,7 @@
           akkurat denne filen på AHA-kontoen. Ingen automatisk synkronisering.</span></label>
         <button type="submit" class="aha-tile-btn aha-tile-btn-primary">Lagre kryptert fil på kontoen</button>
       </form>
-      <h3>Før du lagrer</h3>
+      <h4>Før du lagrer</h4>
       <p>Bruk bare en kryptert fil du selv har eksportert fra Psykologirommet. Maksimal filstørrelse
         er 12 MiB. Den lokale notatlagringen i History Go er ikke kryptert av denne tjenesten.
         Oppbevar også en egen sikkerhetskopi på et trygt sted, og passordet separat.</p>
@@ -160,6 +187,13 @@
         fjerner filen fra den aktive databasen, men eldre krypterte kopier kan fortsatt finnes
         i databasens sikkerhetskopier frem til disse utløper eller slettes.
         Lokale filer og notater slettes ikke av denne handlingen.</p>
+      <div class="psych-vault-delete-area" aria-labelledby="aha-psych-vault-delete-heading">
+        <h4 id="aha-psych-vault-delete-heading">Slett aktiv kontokopi</h4>
+        <p>Dette fjerner ikke lokale filer. Behold en egen kryptert fil før du sletter; ny opplasting kan bli avvist.</p>
+        <button type="button" id="aha-psych-vault-delete" class="aha-tile-btn aha-tile-btn-secondary">Slett kontokopi</button>
+      </div>
+      </section>
+      </div>
     </section>
   </main>
   <script src="js/ahaPsychologyVaultConfig.js"></script>
