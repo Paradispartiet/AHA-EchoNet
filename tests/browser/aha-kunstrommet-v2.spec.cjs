@@ -1473,6 +1473,34 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
 
+  test("color library remembers chosen colors and named harmonies without changing art",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-a"));
+    const before=await jsonBackup(page);
+    await page.locator("#kv2-color").fill("#ff0000");
+    await page.locator("#kv2-color").dispatchEvent("change");
+    await expect(page.locator("#kv2-color-harmony button")).toHaveCount(2);
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#00ffff");
+    await page.locator("#kv2-color-harmony-mode").selectOption("triad");
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#00ff00");
+    await expect(page.locator("#kv2-color-harmony")).toContainText("#0000ff");
+    await page.locator("#kv2-color-add-harmony").click();
+    await page.locator("#kv2-color-palette-name").fill("Primær");
+    await page.locator("#kv2-color-palette-save").click();
+    await expect(page.locator("#kv2-color-library-status")).toContainText("Palett lagret lokalt");
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.reload({waitUntil:"domcontentloaded"});
+    await expect(page.locator("#kv2-color-recent")).toContainText("#ff0000");
+    await page.locator("#kv2-color-library-select").selectOption("Primær");
+    await page.locator("#kv2-color-saved button").filter({hasText:"#0000ff"}).click();
+    await expect(page.locator("#kv2-color")).toHaveValue("#0000ff");
+    await page.locator("#kv2-color-palette-load").click();
+    await expect(page.locator("#kv2-color-draft button")).toHaveCount(3);
+    await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-b"));
+    await page.reload({waitUntil:"domcontentloaded"});
+    await expect(page.locator("#kv2-color-library-select option")).toHaveCount(1);
+  });
+
   test("studio brush samples use the real dab engine without editing art", async ({page}) => {
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");

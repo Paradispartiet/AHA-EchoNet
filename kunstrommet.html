@@ -229,6 +229,26 @@
             </fieldset>
             </details>
           </div>
+        <details class="kv2-fold" id="kv2-color-library-panel" open>
+          <summary>Mine farger og paletter</summary>
+          <h3>Nylig valgte farger</h3><div id="kv2-color-recent" class="kv2-color-chips"></div>
+          <h3>Fargeharmonier</h3>
+          <label for="kv2-color-harmony-mode">Harmoni fra aktiv farge</label>
+          <select id="kv2-color-harmony-mode"><option value="complementary">Komplementær</option><option value="analogous">Analog</option><option value="triad">Triade</option></select>
+          <div id="kv2-color-harmony" class="kv2-color-chips"></div>
+          <button id="kv2-color-add-harmony" type="button">Legg harmonien i paletten</button>
+          <h3>Palettutkast</h3><div id="kv2-color-draft" class="kv2-color-chips"></div>
+          <p class="kv2-tip">Trykk på en farge i utkastet for å fjerne den.</p>
+          <button id="kv2-color-add" type="button">Legg til aktiv farge</button>
+          <button id="kv2-color-palette-clear" type="button">Tøm utkast</button>
+          <label for="kv2-color-palette-name">Palettnavn</label><input id="kv2-color-palette-name" type="text" maxlength="50"/>
+          <button id="kv2-color-palette-save" type="button" disabled>Lagre palett lokalt</button>
+          <label for="kv2-color-library-select">Lagrede paletter</label><select id="kv2-color-library-select"><option value="">Velg palett</option></select>
+          <div id="kv2-color-saved" class="kv2-color-chips"></div>
+          <button id="kv2-color-palette-load" type="button" disabled>Rediger palett</button>
+          <button id="kv2-color-palette-delete" type="button" disabled>Slett palett</button>
+          <p id="kv2-color-library-status" class="kv2-tip" role="status" aria-live="polite"></p>
+        </details>
         <details class="kv2-fold kv2-workspace-help">
           <summary>Veiledning for tegneverktøy</summary>
         <p class="kv2-tip">Velg et lag til høyre før du tegner. Apple Pencil kan bruke trykk til å variere penselbredden; mus og finger beholder vanlig strek. Velg mellom vanlig pensel, en tynn blyant, bred tusj og halvtransparent lasur. Hurtigpaletten gir åtte farger; fargevelgeren lar deg velge andre farger. Verktøyvalg og farge endrer ikke bildet før du tegner. Med aktiv lagmaske kan pensel vise igjen og viskelær skjule piksler uten å slette dem. Viskelæret påvirker ellers bare aktivt lag. «Marker område» lager et rektangel; «Frihåndsmarkering (lasso)» lager en lukket form med mus, finger eller penn. Begge begrenser pensel og viskelær uten å endre bildet. «Fargepipette» henter synlig farge fra lerretet og bytter tilbake til pensel uten å endre kunstverket. «Rektangel» og «Ellipse» tegner fylte figurer eller omriss på valgt bildelag. «Linje» og «Pil» tegner rette streker med tykkelsen fra Størrelse; pilspissen peker mot slutten av dragbevegelsen. «Tekst» gir et eget tekstpanel med skrifttype, størrelse og fet skrift. Trykk på lerretet for plassering og bekreft for å lage et eget bildepiksellag som kan flyttes og angres. Dra og slipp for å tegne; Escape avbryter før endringen er lagret. En aktiv markering begrenser figuren, og omrissbredden følger Størrelse. Avslutt maskeredigering før bruk. «Flytt lag» plasserer et lag, mens «Hånd» og zoom bare flytter visningen.</p>

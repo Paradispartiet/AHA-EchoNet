@@ -235,3 +235,8 @@
 .kv2-studio-brushes canvas, .kv2-active-sample canvas, #kv2-saved-brush-sample { display:block; width:100%; max-width:240px; height:auto; background-color:#fff; background-image:linear-gradient(45deg,#e7e7e7 25%,transparent 25%),linear-gradient(-45deg,#e7e7e7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e7e7e7 75%),linear-gradient(-45deg,transparent 75%,#e7e7e7 75%);background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0; border-radius:5px; }
 #kv2-saved-brush-sample[hidden] { display:none; }
 .kv2-active-sample { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:10px 0; }
+
+.kv2-color-chips {display:flex;flex-wrap:wrap;gap:7px;margin:8px 0;}
+.kv2-color-chips .kv2-color-chip {min-width:76px;min-height:44px;font-size:.78rem;border:1px solid #8e9e96;font-variant-numeric:tabular-nums;}
+#kv2-color-library-panel select {font:inherit;max-width:100%;padding:8px;border-radius:8px;border:1px solid #b9c1bd;background:white;}
+#kv2-color-library-panel h3 {font-size:1rem;margin:14px 0 5px;}

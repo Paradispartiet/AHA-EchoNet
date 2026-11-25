@@ -302,3 +302,8 @@ Fokusmodus er et reversibelt visningsvalg: skjuler introduksjon, sidepanel, titt
 ### Atelierets penselutvalg
 
 Åtte ferdige redigerbare penseloppsett: illustrasjonspenn, grafitt, kull, kritt, akvarellstruktur, tørrpensel, myk skygge og kalligrafi. Valg bevarer aktiv farge og fyller inn et forslag til navn; ingen lagring før brukeren velger Lagre. Strøkprøver for ferdige, aktive og valgte lagrede pensler bruker samme avtrykksmotor på små separate canvases, med nøytralt trykk, ingen helning, ingen markering og skalert størrelse (maks 28 px). Prøvene oppdateres ved endringer og caches etter innstillinger. Ingen endring av kunstverk, prosjektformat, angrehistorikk eller synkronisering. Automatisert test dekker strøkprøver, penselvalg, fargebevaring og uendrede rastere.
+
+
+### Mine farger og paletter
+
+Lokalt profilavgrenset fargebibliotek med 12 nylig valgte farger, inntil 20 navngitte paletter à 12 unike RGB-farger, redigerbart palettutkast og HSL-baserte komplementære, analoge og triadiske harmonier fra aktiv farge. Farger i utkastet kan fjernes, lagrede paletter kan redigeres eller slettes med bekreftelse. Bytte av farge i biblioteket bevarer aktivt verktøy. Nylige farger registreres ved bekreftet fargevalg, hurtigpalett og pipette; ikke ved tegning eller hver mellomverdi under fargevalg. Ingen kunstverk, prosjektmetadata, skybackup eller databaseendring. Lokal lagring er ikke en sikkerhetsgrense. Test dekker harmonier, lokal gjenåpning, profilbytte og uendrede rastere. Penselbiblioteket eksporteres separat; paletter har foreløpig ikke import/eksport.

@@ -168,6 +168,124 @@
     });
   }
 
+  const COLOR_LIMIT=12, PALETTE_LIMIT=20;
+  let colorDraft=[], colorDraftOwner=null;
+  function validColor(value) { return typeof value==="string"&&/^#[0-9a-f]{6}$/i.test(value); }
+  function colorLibraryKey() { return "aha_kunstrommet_v2_colors:"+encodeURIComponent(owner()); }
+  function readColors() {
+    const raw=global.localStorage.getItem(colorLibraryKey());
+    if(!raw) return {recent:[],palettes:[]};
+    if(raw.length>30000) throw new Error("Fargebiblioteket er for stort.");
+    const data=JSON.parse(raw);
+    const colors=value=>Array.isArray(value)&&value.length<=COLOR_LIMIT&&value.every(validColor)&&new Set(value.map(c=>c.toLowerCase())).size===value.length;
+    if(!data||!colors(data.recent)||!Array.isArray(data.palettes)||data.palettes.length>PALETTE_LIMIT||
+      data.palettes.some(p=>!p||typeof p.name!=="string"||!p.name.trim()||p.name.length>50||!colors(p.colors)||!p.colors.length)||
+      new Set(data.palettes.map(p=>p.name)).size!==data.palettes.length) throw new Error("Ugyldig fargebibliotek.");
+    return data;
+  }
+  function colorMessage(message) { $("kv2-color-library-status").textContent=message; }
+  function storeColors(data) {
+    try { global.localStorage.setItem(colorLibraryKey(),JSON.stringify(data)); return true; }
+    catch (_) { colorMessage("Kunne ikke lagre fargene lokalt."); return false; }
+  }
+  function rememberColor(value) {
+    if(!validColor(value)) return;
+    const color=value.toLowerCase();
+    try {
+      const data=readColors();
+      if(data.recent[0]!==color) { data.recent=[color,...data.recent.filter(c=>c!==color)].slice(0,COLOR_LIMIT); storeColors(data); }
+    } catch (_) {}
+  }
+  function chooseColor(value) {
+    if(busy||pointerId!==null||!validColor(value)) return;
+    $("kv2-color").value=value;
+    rememberColor(value);
+    refresh();
+  }
+  function harmonyColors(value, mode) {
+    if(!validColor(value)) return [];
+    const [r,g,b]=[1,3,5].map(i=>parseInt(value.slice(i,i+2),16)/255);
+    const hi=Math.max(r,g,b),lo=Math.min(r,g,b),d=hi-lo,l=(hi+lo)/2;
+    const s=d===0?0:d/(1-Math.abs(2*l-1));
+    let h=d===0?0:hi===r?60*((g-b)/d%6):hi===g?60*((b-r)/d+2):60*((r-g)/d+4);
+    const shifts=mode==="triad"?[0,120,240]:mode==="analogous"?[-30,0,30]:[0,180];
+    return [...new Set(shifts.map(shift=>{
+      const hue=((h+shift)%360+360)%360,c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs(hue/60%2-1)),m=l-c/2;
+      const rgb=hue<60?[c,x,0]:hue<120?[x,c,0]:hue<180?[0,c,x]:hue<240?[0,x,c]:hue<300?[x,0,c]:[c,0,x];
+      return "#"+rgb.map(n=>Math.round((n+m)*255).toString(16).padStart(2,"0")).join("");
+    }))];
+  }
+  function renderColorChips(id,colors,action) {
+    const nodes=colors.map(color=>{
+      const button=document.createElement("button");
+      button.type="button";button.className="kv2-color-chip";
+      button.style.backgroundColor=color;
+      button.textContent=color;
+      const ink=parseInt(color.slice(1,3),16)*.299+parseInt(color.slice(3,5),16)*.587+parseInt(color.slice(5,7),16)*.114;
+      button.style.color=ink>150?"#202020":"#ffffff";
+      button.setAttribute("aria-label",(id==="kv2-color-draft"?"Fjern ":"Velg ")+color);
+      button.addEventListener("click",()=>action(color));return button;
+    });
+    $(id).replaceChildren(...nodes);
+  }
+  function renderColorLibrary(preferred) {
+    const key=colorLibraryKey(), select=$("kv2-color-library-select");
+    if(colorDraftOwner!==key) {colorDraftOwner=key;colorDraft=[];$("kv2-color-palette-name").value="";}
+    const previous=typeof preferred==="string"?preferred:select.value;
+    let data;
+    try {data=readColors();}
+    catch (_) {data=null;}
+    const option=(name,value)=>{const n=document.createElement("option");n.textContent=name;n.value=value;return n;};
+    select.replaceChildren(option("Velg palett",""),...(data?.palettes||[]).map(p=>option(p.name,p.name)));
+    select.value=data?.palettes.some(p=>p.name===previous)?previous:"";
+    const selected=data?.palettes.find(p=>p.name===select.value);
+    renderColorChips("kv2-color-recent",data?.recent||[],chooseColor);
+    renderColorChips("kv2-color-saved",selected?.colors||[],chooseColor);
+    renderColorChips("kv2-color-draft",colorDraft,c=>{colorDraft=colorDraft.filter(x=>x!==c);renderColorLibrary();});
+    renderColorChips("kv2-color-harmony",harmonyColors($("kv2-color").value,$("kv2-color-harmony-mode").value),chooseColor);
+    $("kv2-color-palette-save").disabled=!data||!colorDraft.length;
+    $("kv2-color-palette-load").disabled=!selected;
+    $("kv2-color-palette-delete").disabled=!selected;
+    colorMessage(data?data.palettes.length+" av "+PALETTE_LIMIT+" egne paletter · "+colorDraft.length+" av "+COLOR_LIMIT+" farger i utkast.":"Lokal lagring kunne ikke leses. Eksisterende data er ikke overskrevet.");
+  }
+  function addPaletteColors(colors) {
+    if(busy||pointerId!==null) return;
+    renderColorLibrary();
+    const combined=[...new Set([...colorDraft,...colors.filter(validColor).map(c=>c.toLowerCase())])];
+    if(combined.length>COLOR_LIMIT){colorMessage("Maks 12 farger per palett.");return;}
+    colorDraft=combined;renderColorLibrary();
+  }
+  function saveColorPalette() {
+    if(busy||pointerId!==null) return;
+    renderColorLibrary();
+    const name=$("kv2-color-palette-name").value.trim().slice(0,50);
+    if(!name||!colorDraft.length){colorMessage("Skriv et navn og legg til minst én farge.");return;}
+    try {
+      const data=readColors(),index=data.palettes.findIndex(p=>p.name===name);
+      if(index<0&&data.palettes.length>=PALETTE_LIMIT){colorMessage("Biblioteket er fullt.");return;}
+      if(index>=0&&!global.confirm("Erstatt paletten «"+name+"»?"))return;
+      const item={name,colors:colorDraft.slice()};
+      if(index>=0)data.palettes[index]=item;else data.palettes.push(item);
+      if(storeColors(data)){renderColorLibrary(name);colorMessage("Palett lagret lokalt: "+name);}
+    }catch(_){colorMessage("Kunne ikke lese lokale paletter. Ingen overskriving.");}
+  }
+  function loadColorPalette(remove=false) {
+    if(busy||pointerId!==null)return;
+    try{
+      const name=$("kv2-color-library-select").value,data=readColors();
+      const item=data.palettes.find(p=>p.name===name);
+      if(!item)return;
+      if(remove){
+        if(!global.confirm("Slett paletten «"+name+"»?"))return;
+        data.palettes=data.palettes.filter(p=>p.name!==name);
+        if(storeColors(data))renderColorLibrary("");
+      }else{
+        colorDraftOwner=colorLibraryKey();colorDraft=item.colors.slice();
+        $("kv2-color-palette-name").value=item.name;renderColorLibrary(item.name);
+      }
+    }catch(_){colorMessage("Kunne ikke lese paletten.");}
+  }
+
   const viewport = $("kv2-paper");
   let zoomIndex = 2;
   let focusMode = false;
@@ -983,9 +1101,11 @@
   async function historyStep(from, to) {
     if (busy || !from.length || !project) return;
     busy = true;
-    const target = from[from.length - 1];
-    const previous = { layers: snapshot(), selected: selected };
+    $("kv2-undo").disabled = true;
+    $("kv2-redo").disabled = true;
     try {
+      const target = from[from.length - 1];
+      const previous = { layers: snapshot(), selected: selected };
       await installLayers(target.layers);
       clearTextDraft();
       from.pop();
@@ -999,6 +1119,8 @@
     } catch (error) { status("Kunne ikke gjenopprette: " + error.message); }
     finally {
       busy = false;
+      $("kv2-undo").disabled = false;
+      $("kv2-redo").disabled = false;
       // refresh() ran while busy was true, so restore disabled sliders and
       // reset control after undo/redo completes.
       updateLayerControls();
@@ -1229,6 +1351,7 @@
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
     refreshPalette();
+    renderColorLibrary();
     $("kv2-zoom-value").textContent = Math.round(ZOOM_LEVELS[zoomIndex] * 100) + "%";
     $("kv2-zoom-out").disabled = zoomIndex === 0;
     $("kv2-zoom-in").disabled = zoomIndex === ZOOM_LEVELS.length - 1;
@@ -1839,6 +1962,7 @@
       ).data;
       $("kv2-color").value = "#" + Array.from(rgba.slice(0, 3))
         .map((channel) => channel.toString(16).padStart(2, "0")).join("");
+      rememberColor($("kv2-color").value);
       tool = "brush";
       refresh();
       status("Farge hentet fra lerretet");
@@ -3126,6 +3250,15 @@
     $("kv2-redo").addEventListener("click", () => historyStep(redoStack, undoStack));
     $("kv2-title").addEventListener("input", changed);
     $("kv2-note").addEventListener("input", changed);
+    $("kv2-color-library-select").addEventListener("change",()=>renderColorLibrary());
+    $("kv2-color-harmony-mode").addEventListener("change",()=>renderColorLibrary());
+    $("kv2-color-add").addEventListener("click",()=>addPaletteColors([$("kv2-color").value]));
+    $("kv2-color-add-harmony").addEventListener("click",()=>addPaletteColors(harmonyColors($("kv2-color").value,$("kv2-color-harmony-mode").value)));
+    $("kv2-color-palette-clear").addEventListener("click",()=>{if(busy||pointerId!==null)return;colorDraft=[];renderColorLibrary();});
+    $("kv2-color-palette-save").addEventListener("click",saveColorPalette);
+    $("kv2-color-palette-load").addEventListener("click",()=>loadColorPalette());
+    $("kv2-color-palette-delete").addEventListener("click",()=>loadColorPalette(true));
+    $("kv2-color").addEventListener("change",()=>{rememberColor($("kv2-color").value);renderColorLibrary();});
     $("kv2-color").addEventListener("input", () => {
       if (tool !== "text") tool = "brush";
       refresh();
@@ -3166,6 +3299,7 @@
     PALETTE.forEach(([name, color]) => {
       $("kv2-swatch-" + name).addEventListener("click", () => {
         $("kv2-color").value = color;
+        rememberColor(color);
         if (tool !== "text") tool = "brush";
         refresh();
       });
