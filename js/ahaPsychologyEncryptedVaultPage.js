@@ -7,11 +7,15 @@
   const vault = global.AHAPsychologyEncryptedVault;
   const MAX_BYTES = vault?.maxFileBytes || 12582912;
   let busy = false;
+  let generation = 0;
+  let activeUserId = null;
+  let downloadUrl = null;
 
   const messages = {
     not_activated: "Kontohvelvet er ikke aktivert. Bruk kryptert filbackup i Psykologirommet.",
     pilot_required: "Opplasting krever godkjent pilotkonto og oppdatert innlogging. Eksisterende egne kopier kan fortsatt hentes og slettes.",
     not_configured: "AHA-innloggingen er ikke tilgjengelig på denne siden.",
+    account_changed: "Kontoen er endret. Sjekk kontokopien på nytt.",
     login_required: "Logg inn på AHA først, og åpne deretter denne siden på nytt.",
     invalid_file: "Filen har ikke formatet fra Psykologirommets krypterte sikkerhetskopi.",
     already_exists: "Det ligger allerede en kryptert fil på kontoen. Last den ned før du eventuelt sletter den.",
@@ -36,17 +40,57 @@
     });
   }
 
-  async function run(operation) {
+  function clearDownload() {
+    if (downloadUrl) global.URL.revokeObjectURL(downloadUrl);
+    downloadUrl = null;
+    id("aha-psych-vault-download")?.replaceChildren();
+  }
+
+  function resetAccount() {
+    generation++;
+    activeUserId = null;
+    clearDownload();
+    const form = id("aha-psych-vault-upload");
+    form?.reset();
+    if (form) form.hidden = true;
+    status(messages.account_changed);
+  }
+
+  async function run(operation, checkOnly = false) {
     if (busy) return;
     setBusy(true);
-    try { await operation(); }
-    catch (error) { status(messageFor(error)); }
+    const initialGeneration = generation;
+    try {
+      const userId = await vault.accountId();
+      if (initialGeneration !== generation) return;
+      if (activeUserId && activeUserId !== userId) {
+        resetAccount();
+        if (!checkOnly) return;
+      }
+      activeUserId = userId;
+      const expectedGeneration = generation;
+      const options = { expectedUserId: userId };
+      const current = async () => {
+        if (expectedGeneration !== generation) return false;
+        const id = await vault.accountId(options);
+        return id === userId && expectedGeneration === generation;
+      };
+      await operation(options, current);
+    }
+    catch (error) {
+      if (initialGeneration === generation) {
+        if (error?.code === "account_changed" || error?.code === "login_required") resetAccount();
+        status(messageFor(error));
+      }
+    }
     finally { setBusy(false); }
   }
 
   function saveFile(text) {
+    clearDownload();
     const blob = new global.Blob([text], { type: "application/json" });
     const url = global.URL.createObjectURL(blob);
+    downloadUrl = url;
     const link = global.document.createElement("a");
     link.href = url;
     link.download = "psykologirommet-kryptert-fra-aha.json";
@@ -76,30 +120,45 @@
     panel.hidden = false;
     const pilot = vault.pilotEnabled();
     const uploadForm = id("aha-psych-vault-upload");
-    if (pilot && uploadForm) uploadForm.hidden = true;
+    if (uploadForm) uploadForm.hidden = true;
     if (pilot) id("aha-psych-vault-pilot-notice").hidden = false;
+    // Supabase auth callbacks must stay synchronous. Ignore token refreshes
+    // for the same identity; invalidate pending results on sign-out/switch.
+    const auth = global.AHADb?.getClient?.()?.auth;
+    auth?.onAuthStateChange?.((event, session) => {
+      if (event === "SIGNED_OUT" || (activeUserId && session?.user?.id !== activeUserId)) {
+        resetAccount();
+      }
+    });
+    global.addEventListener("pagehide", resetAccount);
     status(pilot ? "Begrenset pilot. Trykk Sjekk kontokopien for å kontrollere tilgang." :
-      "Innlogging kreves. Ingen fil blir lastet opp automatisk.");
+      "Trykk Sjekk kontokopien før opplasting. Ingen fil blir lastet opp automatisk.");
 
-    id("aha-psych-vault-check")?.addEventListener("click", () => run(async () => {
-      if (pilot && uploadForm) uploadForm.hidden = true;
-      const data = await vault.status();
-      const canUpload = !pilot || await vault.pilotAccess();
-      if (pilot && uploadForm) uploadForm.hidden = !canUpload;
+    id("aha-psych-vault-check")?.addEventListener("click", () => run(async (options, current) => {
+      clearDownload();
+      if (uploadForm) uploadForm.hidden = true;
+      const data = await vault.status(options);
+      const canUpload = !pilot || await vault.pilotAccess(options);
+      if (!await current()) return;
+      if (uploadForm) uploadForm.hidden = !canUpload;
       status((data.exists ?
         "En kryptert fil ligger på kontoen. Du kan laste den ned eller slette den." :
         "Ingen kryptert fil er lagret på kontoen.") +
         (pilot ? (canUpload ? " Pilottilgang bekreftet. Bruk bare en syntetisk testfil." :
           " Opplasting krever en godkjent pilotkonto.") : ""));
-    }));
+    }, true));
 
     id("aha-psych-vault-upload")?.addEventListener("submit", event => {
       event.preventDefault();
-      run(async () => {
-        const form = event.currentTarget;
-        const file = form.querySelector('input[type="file"]')?.files?.[0];
-        const consent = form.querySelector('input[name="consent"]');
-        if (!file || consent?.checked !== true) {
+      const form = event.currentTarget;
+      if (form.hidden || !activeUserId) {
+        status(messages.account_changed);
+        return;
+      }
+      const file = form.querySelector('input[type="file"]')?.files?.[0];
+      const consented = form.querySelector('input[name="consent"]')?.checked === true;
+      run(async (options, current) => {
+        if (!file || !consented) {
           status("Velg fil og bekreft at den bare inneholder krypterte data.");
           return;
         }
@@ -109,22 +168,28 @@
         }
         const text = await file.text();
         vault.validateEncryptedFile(text);
-        await vault.upload(text);
+        if (!await current()) return;
+        await vault.upload(text, options);
+        if (!await current()) return;
         form.reset();
         status("Den krypterte filen er lagret på AHA-kontoen. Ingen notattekst ble dekryptert.");
       });
     });
 
-    id("aha-psych-vault-download-button")?.addEventListener("click", () => run(async () => {
-      const result = await vault.download();
+    id("aha-psych-vault-download-button")?.addEventListener("click", () => run(async (options, current) => {
+      clearDownload();
+      const result = await vault.download(options);
+      if (!await current()) return;
       saveFile(result.text);
       status("Den krypterte filen er klar. Trykk på lenken for å laste den ned.");
     }));
 
-    id("aha-psych-vault-delete")?.addEventListener("click", () => run(async () => {
+    id("aha-psych-vault-delete")?.addEventListener("click", () => run(async (options, current) => {
       if (!global.confirm("Slette den krypterte kopien fra AHA-kontoen? Last den ned først om du vil beholde den.")) return;
-      await vault.remove({ confirmed: true });
-      id("aha-psych-vault-download")?.replaceChildren();
+      if (!await current()) return;
+      await vault.remove({ ...options, confirmed: true });
+      if (!await current()) return;
+      clearDownload();
       status("Den krypterte kontokopien er slettet. Lokale notater er ikke berørt.");
     }));
   }

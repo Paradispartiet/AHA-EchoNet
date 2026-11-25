@@ -121,6 +121,13 @@ async function run() {
 
   const alice = { client: mockClient(UUID_A) };
   const bob = { client: mockClient(UUID_B) };
+  assert.equal(await vault.accountId(alice), UUID_A);
+  const stale = { ...bob, expectedUserId: UUID_A };
+  await assert.rejects(vault.status(stale), /account_changed/);
+  await assert.rejects(vault.download(stale), /account_changed/);
+  await assert.rejects(vault.upload(env, stale), /account_changed/);
+  await assert.rejects(vault.remove({ ...stale, confirmed: true }), /account_changed/);
+  assert.equal(cloud.size, 0);
   assert.equal((await vault.status(alice)).exists, false);
   assert.equal((await vault.upload(env, alice)).stored, true);
   assert.equal((await vault.status(alice)).exists, true);

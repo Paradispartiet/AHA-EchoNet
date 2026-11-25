@@ -79,8 +79,13 @@
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       throw error("login_required");
     }
+    if (options.expectedUserId && id !== options.expectedUserId) throw error("account_changed");
     // Server-side RLS compares user_id against the verified Supabase JWT.
     return { client, userId: id };
+  }
+
+  async function accountId(options = {}) {
+    return (await authenticated(options)).userId;
   }
 
   // This network-authenticated check is for UX and data minimization only.
@@ -107,9 +112,11 @@
 
   async function upload(fileText, options = {}) {
     checkEnabled();
-    if (pilotEnabled() && !await pilotAccess(options)) throw error("pilot_required");
-    const file = validateEncryptedFile(fileText);
     const { client, userId } = await authenticated(options);
+    const bound = { ...options, client, expectedUserId: userId };
+    if (pilotEnabled() && !await pilotAccess(bound)) throw error("pilot_required");
+    const file = validateEncryptedFile(fileText);
+    await authenticated(bound);
     // Insert-only. A duplicate PK is a refusal, not an automatic overwrite.
     const { error: dbError } = await client.from(TABLE)
       .insert({ user_id: userId, encrypted_file: file.text });
@@ -141,7 +148,7 @@
   }
 
   global.AHAPsychologyEncryptedVault = Object.freeze({
-    enabled, pilotEnabled, pilotAccess, validateEncryptedFile, status, upload, download, remove,
+    enabled, pilotEnabled, pilotAccess, accountId, validateEncryptedFile, status, upload, download, remove,
     table: TABLE, maxFileBytes: MAX_BYTES
   });
 })(window);
