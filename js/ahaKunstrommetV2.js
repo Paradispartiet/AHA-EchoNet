@@ -176,7 +176,8 @@
   const moveTogether = new Set(); // Transient selection, not project metadata.
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
-  let shapeDraft = null; // Transient SVG-only preview until pointerup.
+  let shapeDraft = null; // Transient preview until pointerup.
+  let gradientFramePending = false;
   let textEditId = null;
   let freeTransform = null; // UI-only draft, never stored in a project.
   let textAnchor = null; // Local document coordinates; never persisted before commit.
@@ -301,7 +302,7 @@
 
   // An adjustment layer modifies only the composite accumulated below it.
   // Its own opacity and optional mask mix the original and adjusted RGB.
-  function applyAdjustmentLayer(target, layer) {
+  function applyAdjustmentLayer(target, layer, previewMask = masks.get(layer.id)) {
     const a = safeAdjustments(layer.adjustments);
     const tone = safeTone(layer.toneAdjustments);
     const levels = safeLevels(layer.levels);
@@ -322,7 +323,7 @@
     const gainB = exposure * (1 - warmth + tint / 2);
     const image = target.getImageData(0, 0, WIDTH, HEIGHT);
     const p = image.data;
-    const mask = layer.maskEnabled !== false && masks.get(layer.id);
+    const mask = layer.maskEnabled !== false && previewMask;
     const alpha = mask ? mask.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data : null;
     const brightness = a.brightness / 100, contrast = a.contrast / 100, saturation = a.saturation / 100;
     for (let i = 0; i < p.length; i += 4) {
@@ -347,8 +348,11 @@
     target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
-      if (layer.kind === "adjustment") { applyAdjustmentLayer(target, layer); return; }
       const activePreview = Array.isArray(preview) ? preview.find(item => item.id === layer.id) : preview?.id === layer.id ? preview : null;
+      if (layer.kind === "adjustment") {
+        applyAdjustmentLayer(target, layer, activePreview ? activePreview.mask : masks.get(layer.id));
+        return;
+      }
       const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
       if (!bitmap) return;
       target.globalAlpha = layer.opacity;
@@ -673,6 +677,8 @@
   function renderShapePreview() {
     const svg = $("kv2-shape-overlay"), path = $("kv2-shape-path");
     const visible = shapeValid(shapeDraft);
+    if (visible && shapeDraft.kind === "gradient") queueGradientPreview();
+    else $("kv2-gradient-live").hidden = true;
     svg.toggleAttribute("hidden", !visible);
     if (!visible) { path.setAttribute("d", ""); return; }
     const draft = shapeDraft, b = normalizedSelection(draft.start, draft.end);
@@ -702,14 +708,39 @@
     path.setAttribute("fill", filled ? $("kv2-color").value : "none");
     path.setAttribute("fill-opacity", filled ? "0.3" : "1");
   }
-  function commitGradient(draft) {
+  function gradientLayer(draft) {
     const layer = currentLayer();
     if (!shapeValid(draft) || !layer || draft.layerId !== layer.id || layer.locked ||
-        !layer.visible || busy || draft.onMask !== maskEditing) return false;
-    const mask = draft.onMask ? masks.get(layer.id) : null;
-    if (draft.onMask ? !mask || layer.maskEnabled === false : layer.textData || layer.kind === "adjustment") return false;
-    if (!checkpoint()) return false;
-    const context = (mask || surfaces.get(layer.id)).getContext("2d");
+        !layer.visible || busy || draft.onMask !== maskEditing) return null;
+    if (draft.onMask ? !masks.has(layer.id) || layer.maskEnabled === false :
+        layer.textData || layer.kind === "adjustment") return null;
+    return layer;
+  }
+
+  function queueGradientPreview() {
+    if (gradientFramePending) return;
+    gradientFramePending = true;
+    global.requestAnimationFrame(() => {
+      gradientFramePending = false;
+      const draft = shapeDraft, layer = draft?.kind === "gradient" && tool === "gradient" ? gradientLayer(draft) : null;
+      const live = $("kv2-gradient-live");
+      if (!layer) { live.hidden = true; return; }
+      // Copy the exact source pixels into a disposable surface. The real
+      // bitmap, mask, history, export and save paths remain untouched.
+      const original = draft.onMask ? masks.get(layer.id) : surfaces.get(layer.id);
+      const scratch = imageCanvas(), context = scratch.getContext("2d");
+      context.putImageData(original.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT), 0, 0);
+      paintGradient(context, draft, layer, draft.onMask);
+      const preview = { id: layer.id,
+        bitmap: draft.onMask ? surfaces.get(layer.id) : scratch,
+        mask: draft.onMask ? scratch : masks.get(layer.id) };
+      drawComposition(live.getContext("2d"), preview);
+      adjustedBitmaps.delete(layer.id);
+      live.hidden = false;
+    });
+  }
+
+  function paintGradient(context, draft, layer, mask) {
     const x = draft.start.x - layer.x, y = draft.start.y - layer.y;
     const ex = draft.end.x - layer.x, ey = draft.end.y - layer.y;
     const gradient = draft.radial
@@ -729,6 +760,13 @@
     context.fillStyle = gradient;
     context.fillRect(0, 0, WIDTH, HEIGHT);
     context.restore();
+  }
+
+  function commitGradient(draft) {
+    const layer = gradientLayer(draft);
+    if (!layer || !checkpoint()) return false;
+    const mask = draft.onMask ? masks.get(layer.id) : null;
+    paintGradient((mask || surfaces.get(layer.id)).getContext("2d"), draft, layer, !!mask);
     changed();
     return true;
   }
@@ -1199,7 +1237,7 @@
     $("kv2-gradient-panel").hidden = tool !== "gradient";
     $("kv2-gradient-mask-note").textContent = maskEditing
       ? "Maskemodus: synlig til skjult, eller motsatt ved Reverser. Fargene ignoreres."
-      : "Dra fra start til slutt. Linjen viser retning/radius før du slipper. Bruk eget lag for å bevare originalen.";
+      : "Dra fra start til slutt. Se fargeovergangen direkte før du slipper. Bruk eget lag for å bevare originalen.";
     $("kv2-text-panel").hidden = tool !== "text";
     renderTextPreview();
   }
