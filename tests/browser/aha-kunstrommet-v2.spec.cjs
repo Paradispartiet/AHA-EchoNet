@@ -92,6 +92,60 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("free transform preview is isolated, supports independent scale and one-step undo", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [700, 400], [700, 400], 987);
+    const before = await jsonBackup(page);
+    expect((await pxAt(page, 700, 400))[0]).toBeLessThan(100);
+    await page.locator("#kv2-transform-free").click();
+    await expect(page.locator("#kv2-free-commit")).toBeDisabled();
+    await page.locator("#kv2-free-angle").fill("45");
+    await page.locator("#kv2-free-x").fill("150");
+    await expect(page.locator("#kv2-free-y")).toHaveValue("150");
+    await page.locator("#kv2-free-ratio").uncheck();
+    await page.locator("#kv2-free-y").fill("100");
+    await expect(page.locator("#kv2-free-x")).toHaveValue("150");
+    const preview = await page.locator("#kv2-free-preview").evaluate(canvas =>
+      canvas.getContext("2d").getImageData(706, 506, 1, 1).data[0]);
+    expect(preview).toBeLessThan(100);
+    expect((await pxAt(page, 700, 400))[0]).toBeLessThan(100);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator("#kv2-free-cancel").click();
+    await expect(page.locator("#kv2-free-transform-panel")).toBeHidden();
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+    await page.locator("#kv2-transform-free").click();
+    await page.locator("#kv2-free-angle").fill("45");
+    await page.locator("#kv2-free-x").fill("150");
+    await page.locator("#kv2-free-commit").click();
+    await expect(page.locator("#kv2-free-transform-panel")).toBeHidden();
+    expect((await pxAt(page, 706, 506))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 700, 400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 700, 400))[0]).toBeLessThan(100);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async () => (await pxAt(page, 706, 506))[0]).toBeLessThan(100);
+  });
+
+  test("free transform keeps masks aligned and abandons drafts on layer change", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [700, 400], [700, 400], 988);
+    await page.locator("#kv2-mask-add").click();
+    await shapeDrag(page, [700, 400], [700, 400], 989);
+    await page.locator("#kv2-mask-edit").click();
+    expect((await pxAt(page, 700, 400))[0]).toBe(255);
+    await page.locator("#kv2-transform-free").click();
+    await page.locator("#kv2-free-angle").fill("45");
+    await page.locator("#kv2-free-commit").click();
+    expect((await pxAt(page, 671, 471))[0]).toBe(255);
+    await page.locator("#kv2-mask-toggle").click();
+    expect((await pxAt(page, 671, 471))[0]).toBeLessThan(100);
+    await page.locator("#kv2-transform-free").click();
+    await page.locator("#kv2-free-angle").fill("30");
+    await page.locator("#kv2-add-layer").click();
+    await expect(page.locator("#kv2-free-transform-panel")).toBeHidden();
+    expect((await jsonBackup(page)).layers).toHaveLength(2);
+  });
+
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");

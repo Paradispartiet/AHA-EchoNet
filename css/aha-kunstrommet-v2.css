@@ -172,3 +172,7 @@
 }
 
 #kv2-text-warning:not(:empty) { color: #9b4130; font-weight: 600; margin: 0; }
+
+.kv2-free-transform[hidden] { display: none; }
+.kv2-free-transform { display: grid; gap: 8px; }
+#kv2-free-preview { display: block; width: 100%; height: auto; background: #fff; border: 1px solid #a3b0a8; }

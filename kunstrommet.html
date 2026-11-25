@@ -226,6 +226,23 @@
             <button id="kv2-transform-rotate" type="button">Roter 90°</button>
             <button id="kv2-transform-smaller" type="button">Skaler til 75 %</button>
             <button id="kv2-transform-larger" type="button">Skaler til 125 %</button>
+            <button id="kv2-transform-free" type="button">Fri transformering</button>
+          </div>
+          <div id="kv2-free-transform-panel" class="kv2-free-transform" hidden>
+            <label for="kv2-free-angle">Rotasjon (grader)</label>
+            <input id="kv2-free-angle" type="number" min="-180" max="180" step="1" value="0" />
+            <label for="kv2-free-x">Bredde (%)</label>
+            <input id="kv2-free-x" type="number" min="10" max="300" step="1" value="100" />
+            <label for="kv2-free-y">Høyde (%)</label>
+            <input id="kv2-free-y" type="number" min="10" max="300" step="1" value="100" />
+            <label><input id="kv2-free-ratio" type="checkbox" checked /> Bevar proporsjoner</label>
+            <p class="kv2-tip">Forhåndsvisning av hele bildet. Transformeringen skjer rundt lerretets sentrum. Bare aktivt lag og eventuell maske endres ved bekreftelse.</p>
+            <canvas id="kv2-free-preview" width="1200" height="800" aria-label="Forhåndsvisning av transformering"></canvas>
+            <p id="kv2-free-warning" class="kv2-tip" role="status"></p>
+            <div class="kv2-transform-tools">
+              <button id="kv2-free-commit" type="button" disabled>Bruk transformering</button>
+              <button id="kv2-free-cancel" type="button">Avbryt</button>
+            </div>
           </div>
           <p class="kv2-tip">Transformering påvirker bare aktivt lag. Innhold utenfor lerretet blir klippet. Bruk Angre hvis resultatet ikke passer.</p>
         </section>

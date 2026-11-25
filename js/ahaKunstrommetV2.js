@@ -98,6 +98,7 @@
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let shapeDraft = null; // Transient SVG-only preview until pointerup.
   let textEditId = null;
+  let freeTransform = null; // UI-only draft, never stored in a project.
   let textAnchor = null; // Local document coordinates; never persisted before commit.
   const TEXT_FONTS = Object.freeze({
     sans: "Arial, sans-serif", serif: "Georgia, serif",
@@ -130,6 +131,7 @@
 
   function status(message) { $("kv2-status").textContent = message; }
   function changed() {
+    cancelFreeTransform();
     bitmapRevision++;
     dirty = true;
     status("Ulagrede endringer");
@@ -184,25 +186,30 @@
 
   function draw() {
     framePending = false;
-    view.save();
-    view.globalAlpha = 1;
-    view.globalCompositeOperation = "source-over";
-    view.fillStyle = "#ffffff";
-    view.fillRect(0, 0, WIDTH, HEIGHT);
+    drawComposition(view);
+  }
+
+  function drawComposition(target, preview = null) {
+    target.save();
+    target.globalAlpha = 1;
+    target.globalCompositeOperation = "source-over";
+    target.fillStyle = "#ffffff";
+    target.fillRect(0, 0, WIDTH, HEIGHT);
     if (project) project.layers.forEach((layer) => {
       if (!layer.visible) return;
-      const bitmap = surfaces.get(layer.id);
+      const activePreview = preview?.id === layer.id ? preview : null;
+      const bitmap = activePreview ? activePreview.bitmap : surfaces.get(layer.id);
       if (!bitmap) return;
-      view.globalAlpha = layer.opacity;
+      target.globalAlpha = layer.opacity;
       // Composite into the document after mask application; don't blend
       // the mask bitmap itself, and don't modify any layer's source pixels.
-      view.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
+      target.globalCompositeOperation = BLEND_MODES.has(layer.blendMode) &&
         layer.blendMode !== "normal" ? layer.blendMode : "source-over";
       // Filter the source non-destructively before its mask and blend mode.
       const adjusted = adjustedBitmap(layer, bitmap);
-      const mask = layer.maskEnabled !== false && masks.get(layer.id);
+      const mask = layer.maskEnabled !== false && (activePreview ? activePreview.mask : masks.get(layer.id));
       if (!mask) {
-        view.drawImage(adjusted, layer.x, layer.y);
+        target.drawImage(adjusted, layer.x, layer.y);
       } else {
         const context = maskedComposite.getContext("2d");
         context.save();
@@ -213,10 +220,10 @@
         context.globalCompositeOperation = "destination-in";
         context.drawImage(mask, 0, 0);
         context.restore();
-        view.drawImage(maskedComposite, layer.x, layer.y);
+        target.drawImage(maskedComposite, layer.x, layer.y);
       }
     });
-    view.restore();
+    target.restore();
   }
 
 
@@ -674,6 +681,7 @@
 
   function checkpoint(allowBusy) {
     if (busy && !allowBusy) return false;
+    cancelFreeTransform();
     undoStack.push({ layers: snapshot(), selected: selected });
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
@@ -798,6 +806,7 @@
 
   function updateLayerControls() {
     const layer = currentLayer();
+    $("kv2-transform-free").disabled = !layer || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
@@ -838,6 +847,7 @@
   }
 
   function refresh() {
+    cancelFreeTransform();
     if (textEditId && (tool !== "text" || currentLayer()?.id !== textEditId ||
         !currentLayer()?.textData || currentLayer().locked || !currentLayer().visible || maskEditing)) clearTextDraft();
     draw();
@@ -925,6 +935,7 @@
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
+    cancelFreeTransform();
     if (tool === "text") {
       event.preventDefault();
       if (maskEditing) { status("Avslutt maskeredigering før du legger til tekst."); return; }
@@ -1290,43 +1301,106 @@
     changed(); refresh();
   }
 
+  // Same document-center pivot and local bitmap bounds as the preset transforms.
+  function transformedSurface(source, layer, degrees, scaleX, scaleY) {
+    const output = imageCanvas();
+    const ctx = output.getContext("2d");
+    ctx.translate(-layer.x, -layer.y);
+    ctx.translate(WIDTH / 2, HEIGHT / 2);
+    ctx.rotate(degrees * Math.PI / 180);
+    ctx.scale(scaleX, scaleY);
+    ctx.translate(layer.x, layer.y);
+    ctx.drawImage(source, -WIDTH / 2, -HEIGHT / 2);
+    return output;
+  }
+
+  function transformResult(layer, degrees, scaleX, scaleY) {
+    return {
+      id: layer.id,
+      bitmap: transformedSurface(surfaces.get(layer.id), layer, degrees, scaleX, scaleY),
+      mask: masks.has(layer.id)
+        ? transformedSurface(masks.get(layer.id), layer, degrees, scaleX, scaleY) : null
+    };
+  }
+
+  function applyTransform(result) {
+    if (!checkpoint()) return;
+    surfaces.set(result.id, result.bitmap);
+    if (result.mask) masks.set(result.id, result.mask);
+    changed();
+    refresh();
+  }
+
   function transformLayer(mode) {
     const layer = editableLayer();
     if (!layer || requiresRaster(layer)) return;
-    const original = surfaces.get(layer.id);
-    const output = imageCanvas();
-    const ctx = output.getContext("2d");
     const scale = mode === "smaller" ? 0.75 : mode === "larger" ? 1.25 : 1;
-    ctx.save();
-    // Layers are drawn at (layer.x, layer.y). Transform in document space,
-    // then convert back to local bitmap coordinates before compositing.
-    // Without this, a moved layer flips/rotates around the wrong pivot.
-    ctx.translate(-layer.x, -layer.y);
-    ctx.translate(WIDTH / 2, HEIGHT / 2);
-    if (mode === "flip") ctx.scale(-1, 1);
-    if (mode === "rotate") ctx.rotate(Math.PI / 2);
-    if (scale !== 1) ctx.scale(scale, scale);
-    ctx.translate(layer.x, layer.y);
-    ctx.drawImage(original, -WIDTH / 2, -HEIGHT / 2);
-    ctx.restore();
-    let transformedMask = null;
-    if (masks.has(layer.id)) {
-      transformedMask = imageCanvas();
-      const mc = transformedMask.getContext("2d");
-      mc.save();
-      mc.translate(-layer.x, -layer.y);
-      mc.translate(WIDTH / 2, HEIGHT / 2);
-      if (mode === "flip") mc.scale(-1, 1);
-      if (mode === "rotate") mc.rotate(Math.PI / 2);
-      if (scale !== 1) mc.scale(scale, scale);
-      mc.translate(layer.x, layer.y);
-      mc.drawImage(masks.get(layer.id), -WIDTH / 2, -HEIGHT / 2);
-      mc.restore();
+    applyTransform(transformResult(layer, mode === "rotate" ? 90 : 0,
+      mode === "flip" ? -1 : scale, scale));
+  }
+
+  function cancelFreeTransform() {
+    if (!freeTransform) return;
+    freeTransform = null;
+    $("kv2-free-transform-panel").hidden = true;
+    // Drop any preview-only adjusted bitmap cache entry.
+    adjustedBitmaps.clear();
+  }
+
+  function freeTransformLayer() {
+    const layer = currentLayer();
+    return freeTransform && layer?.id === freeTransform.id && !busy &&
+      !maskEditing && !layer.locked && layer.visible && !layer.textData &&
+      pointerId === null ? layer : null;
+  }
+
+  function freeTransformValues() {
+    const controls = ["angle", "x", "y"].map(name => $("kv2-free-" + name));
+    if (controls.some(control => !control.validity.valid || !control.value.trim())) return null;
+    const [degrees, x, y] = controls.map(control => Number(control.value));
+    if (![degrees, x, y].every(Number.isFinite)) return null;
+    return { degrees, x: x / 100, y: y / 100 };
+  }
+
+  function renderFreeTransform() {
+    const layer = freeTransformLayer();
+    if (!layer) { cancelFreeTransform(); return; }
+    const values = freeTransformValues();
+    $("kv2-free-commit").disabled = !values ||
+      (values.degrees === 0 && values.x === 1 && values.y === 1);
+    $("kv2-free-warning").textContent = values ? "" : "Bruk vinkel −180 til 180 og skala 10 til 300 %.";
+    const preview = $("kv2-free-preview").getContext("2d");
+    drawComposition(preview, values ? transformResult(layer, values.degrees, values.x, values.y) : null);
+  }
+
+  function openFreeTransform() {
+    const layer = editableLayer();
+    if (!layer || requiresRaster(layer) || maskEditing || pointerId !== null) return;
+    cancelFreeTransform();
+    clearTextDraft();
+    renderTextPreview();
+    freeTransform = { id: layer.id };
+    $("kv2-free-angle").value = "0";
+    $("kv2-free-x").value = "100";
+    $("kv2-free-y").value = "100";
+    $("kv2-free-ratio").checked = true;
+    $("kv2-free-transform-panel").hidden = false;
+    renderFreeTransform();
+  }
+
+  function updateFreeTransform(axis) {
+    if ($("kv2-free-ratio").checked && (axis === "x" || axis === "y")) {
+      $("kv2-free-" + (axis === "x" ? "y" : "x")).value = $("kv2-free-" + axis).value;
     }
-    checkpoint();
-    surfaces.set(layer.id, output);
-    if (transformedMask) masks.set(layer.id, transformedMask);
-    changed(); refresh();
+    renderFreeTransform();
+  }
+
+  function commitFreeTransform() {
+    const layer = freeTransformLayer(), values = freeTransformValues();
+    if (!layer || !values || (values.degrees === 0 && values.x === 1 && values.y === 1)) return;
+    // Compute from the original surfaces, not from any prior preview.
+    applyTransform(transformResult(layer, values.degrees, values.x, values.y));
+    status("Transformering utført – kan angres.");
   }
 
   function exportSelection() {
@@ -1876,6 +1950,16 @@
     ["flip", "rotate", "smaller", "larger"].forEach((mode) => {
       $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
     });
+    $("kv2-transform-free").addEventListener("click", openFreeTransform);
+    ["angle", "x", "y"].forEach(axis => {
+      $("kv2-free-" + axis).addEventListener("input", () => updateFreeTransform(axis));
+    });
+    $("kv2-free-ratio").addEventListener("change", () => updateFreeTransform("x"));
+    $("kv2-free-cancel").addEventListener("click", () => {
+      cancelFreeTransform();
+      status("Transformering avbrutt – ingen endringer.");
+    });
+    $("kv2-free-commit").addEventListener("click", commitFreeTransform);
     $("kv2-save").addEventListener("click", save);
     $("kv2-project-search")?.addEventListener("input", () => {
       renderProjects().catch((error) => status("Søk feilet: " + error.message));
@@ -2010,6 +2094,12 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && freeTransform) {
+        event.preventDefault();
+        cancelFreeTransform();
+        status("Transformering avbrutt – ingen endringer.");
+        return;
+      }
       if (event.key === "Escape" && tool === "text" && textAnchor &&
           !/^(input|textarea|select)$/i.test(document.activeElement?.tagName || "")) {
         event.preventDefault();
