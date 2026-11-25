@@ -262,6 +262,30 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  // Reproduce the physical iPad consent-label regression: shared input
+  // styling must not consume the entire width of the label.
+  const originalViewport = page.viewportSize();
+  for (const width of [390, 768, 1024]) {
+    await page.setViewportSize({ width, height: 1024 });
+    const geometry = await page.locator("#aha-psych-vault-upload label").evaluate(label => {
+      const check = label.querySelector('input[type="checkbox"]').getBoundingClientRect();
+      const span = label.querySelector("span").getBoundingClientRect();
+      const box = label.getBoundingClientRect();
+      return { checkWidth: check.width, checkHeight: check.height,
+        textWidth: span.width, labelWidth: box.width, textLeft: span.left, checkRight: check.right };
+    });
+    expect(geometry.checkWidth).toBe(24);
+    expect(geometry.checkHeight).toBe(24);
+    expect(geometry.textWidth).toBeGreaterThan(geometry.labelWidth - 50);
+    expect(geometry.textWidth).toBeGreaterThan(180);
+    expect(geometry.textLeft).toBeGreaterThan(geometry.checkRight);
+    await page.locator("#aha-psych-vault-upload label span").click();
+    await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).toBeChecked();
+    await page.locator("#aha-psych-vault-upload label span").click();
+    await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).not.toBeChecked();
+  }
+  if (originalViewport) await page.setViewportSize(originalViewport);
+
   const input = page.locator('#aha-psych-vault-upload input[type="file"]');
   await input.setInputFiles({
     name: "psykologirommet-syntetisk-kryptert.json",
