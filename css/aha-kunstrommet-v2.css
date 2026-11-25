@@ -185,3 +185,8 @@
 #kv2-transform-frame, #kv2-transform-stem { fill: none; stroke: #176aca; stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
 #kv2-transform-overlay circle { fill: #fff; stroke: #176aca; stroke-width: 2; vector-effect: non-scaling-stroke; cursor: grab; }
 #kv2-transform-overlay #kv2-handle-pivot { fill: #ffbe66; stroke: #a04b08; }
+
+/* View-only magnetic alignment guides; never intercept drawing or exports. */
+#kv2-snap-guides { position: absolute; top: 0; left: 0; z-index: 4; pointer-events: none; }
+#kv2-snap-guides[hidden] { display: none; }
+#kv2-snap-guides line { stroke: #cf267d; stroke-width: 1.5; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }

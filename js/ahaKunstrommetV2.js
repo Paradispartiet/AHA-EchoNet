@@ -861,6 +861,7 @@
   }
 
   function refresh() {
+    showSnapGuides();
     cancelFreeTransform();
     if (textEditId && (tool !== "text" || currentLayer()?.id !== textEditId ||
         !currentLayer()?.textData || currentLayer().locked || !currentLayer().visible || maskEditing)) clearTextDraft();
@@ -946,6 +947,61 @@
     context.restore();
   }
 
+  // Snapshot the original nontransparent bitmap bounds only once per move gesture.
+  // Masked-out pixels are deliberately included; this is the layer's geometry.
+  function snapBounds(layer) {
+    const data = surfaces.get(layer.id).getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
+    let left = WIDTH, right = 0, top = HEIGHT, bottom = 0;
+    for (let y = 0; y < HEIGHT; y++) for (let x = 0; x < WIDTH; x++) {
+      if (!data[(y * WIDTH + x) * 4 + 3]) continue;
+      left = Math.min(left, x); right = Math.max(right, x + 1);
+      top = Math.min(top, y); bottom = Math.max(bottom, y + 1);
+    }
+    return right > left && bottom > top ? { left, right, top, bottom } : null;
+  }
+
+  function snapTargets(active) {
+    const x = [WIDTH / 2, 0, WIDTH], y = [HEIGHT / 2, 0, HEIGHT];
+    for (const layer of project.layers) {
+      if (layer.id === active.id || !layer.visible || layer.opacity <= 0) continue;
+      const b = snapBounds(layer);
+      if (!b) continue;
+      x.push(layer.x + (b.left + b.right) / 2, layer.x + b.left, layer.x + b.right);
+      y.push(layer.y + (b.top + b.bottom) / 2, layer.y + b.top, layer.y + b.bottom);
+    }
+    return { x: x.filter(v => v >= 0 && v <= WIDTH), y: y.filter(v => v >= 0 && v <= HEIGHT) };
+  }
+
+  function nearestSnap(offset, anchors, targets, tolerance) {
+    let best = null;
+    for (const anchor of anchors) for (const target of targets) {
+      const delta = target - (offset + anchor);
+      if (Math.abs(delta) <= tolerance && (!best || Math.abs(delta) < Math.abs(best.delta))) {
+        best = { delta, target };
+      }
+    }
+    return best;
+  }
+
+  function showSnapGuides(x = null, y = null) {
+    const overlay = $("kv2-snap-guides");
+    const vertical = $("kv2-snap-x"), horizontal = $("kv2-snap-y");
+    overlay.toggleAttribute("hidden", x === null && y === null);
+    vertical.style.display = x === null ? "none" : "";
+    horizontal.style.display = y === null ? "none" : "";
+    if (x !== null) {
+      vertical.setAttribute("x1", x); vertical.setAttribute("x2", x);
+    }
+    if (y !== null) {
+      horizontal.setAttribute("y1", y); horizontal.setAttribute("y2", y);
+    }
+    if (x !== null || y !== null) {
+      const box = canvas.getBoundingClientRect();
+      overlay.style.width = box.width + "px";
+      overlay.style.height = box.height + "px";
+    }
+  }
+
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
@@ -993,7 +1049,9 @@
     pointerStart = {
       point: point(event), x: layer?.x || 0, y: layer?.y || 0,
       clientX: event.clientX, clientY: event.clientY,
-      scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0
+      scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0,
+      snapBounds: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapBounds(layer) : null,
+      snapTargets: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapTargets(layer) : null
     };
     paintPrevious = null;
     if (isShapeTool()) {
@@ -1054,8 +1112,21 @@
     if (!layer) return;
     const at = point(event);
     if (tool === "move") {
-      layer.x = Math.round(pointerStart.x + at.x - pointerStart.point.x);
-      layer.y = Math.round(pointerStart.y + at.y - pointerStart.point.y);
+      let x = pointerStart.x + at.x - pointerStart.point.x;
+      let y = pointerStart.y + at.y - pointerStart.point.y;
+      const b = pointerStart.snapBounds;
+      if (b && pointerStart.snapTargets && $("kv2-snap-enabled").checked && !event.altKey) {
+        const box = canvas.getBoundingClientRect();
+        const sx = nearestSnap(x, [(b.left + b.right) / 2, b.left, b.right],
+          pointerStart.snapTargets.x, 8 * WIDTH / Math.max(1, box.width));
+        const sy = nearestSnap(y, [(b.top + b.bottom) / 2, b.top, b.bottom],
+          pointerStart.snapTargets.y, 8 * HEIGHT / Math.max(1, box.height));
+        if (sx) x += sx.delta;
+        if (sy) y += sy.delta;
+        showSnapGuides(sx?.target ?? null, sy?.target ?? null);
+      } else showSnapGuides();
+      layer.x = Math.round(x);
+      layer.y = Math.round(y);
     } else {
       const local = {
         x: at.x - layer.x, y: at.y - layer.y,
@@ -1069,6 +1140,7 @@
 
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
+    showSnapGuides();
     if (isShapeTool()) {
       const complete = event.type === "pointerup" && !!shapeDraft;
       if (complete && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
