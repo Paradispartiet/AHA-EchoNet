@@ -285,6 +285,21 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
 
+  const center = page.locator("#aha-psych-vault-center");
+  await expect(center).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Min lokale sikkerhetskopi" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Hent og gjenopprett" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Aktivitet og kontroll" })).toBeVisible();
+  await expect(center.getByRole("heading", { name: "Slett aktiv kontokopi" })).toBeVisible();
+  const guide = page.locator("#aha-psych-vault-restore-guide");
+  const guideStatus = page.locator("#aha-psych-vault-restore-status");
+  await guide.locator("summary").click();
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
+  await expect(guide).toContainText("Gjenopprett lokalt");
+  await expect(guide).toContainText("Ikke slett eksisterende notater");
+  await expect(guide.locator("input")).toHaveCount(0);
+  await expect(guide.locator("a")).toHaveAttribute("href", "https://paradispartiet.github.io/History-Go/?room=psychology");
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests)).toEqual([]);
   const overview = page.locator("#aha-psych-vault-overview");
   await expect(overview).toContainText("Ikke sjekket");
   await expect(page.locator("#aha-psych-vault-upload")).toBeHidden();
@@ -341,6 +356,32 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await expect(overview).toContainText("UTC");
   await expect(overview).toContainText("Filstørrelse: ikke hentet");
 
+  const historyPanel = page.locator("#aha-psych-vault-history");
+  const comparison = page.locator("#aha-psych-vault-compare");
+  const comparisonResult = page.locator("#aha-psych-vault-compare-result");
+  const compareInput = comparison.locator('input[type="file"]');
+  await historyPanel.locator("summary").click();
+  await expect(historyPanel).toContainText("Opplasting bekreftet");
+  const beforeGuide = await page.evaluate(() => window.__vaultSyntheticRequests.length);
+  await comparison.locator("summary").click();
+  await page.locator("#aha-psych-vault-replace-guide summary").click();
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests.length)).toBe(beforeGuide);
+  await compareInput.setInputFiles({ name: "same.json", mimeType: "application/json", buffer: Buffer.from(backup.text) });
+  await comparison.locator("button").click();
+  await expect(comparisonResult).toContainText("byte-for-byte identiske");
+  await compareInput.setInputFiles({ name: "different.json", mimeType: "application/json", buffer: Buffer.from(backup.text + " ") });
+  await expect(comparisonResult).toContainText("Ingen sammenligning");
+  await comparison.locator("button").click();
+  await expect(comparisonResult).toContainText("Filene er forskjellige");
+  await expect(historyPanel).toContainText("Filsammenligning gjennomført");
+  expect(await page.evaluate(() => window.__vaultSyntheticRows.get(window.__vaultSyntheticAccount).encrypted_file)).toBe(backup.text);
+  const beforeClear = await page.evaluate(() => window.__vaultSyntheticRequests.length);
+  await page.locator("#aha-psych-vault-clear-history").click();
+  await expect(historyPanel.locator("li")).toHaveCount(0);
+  await expect(historyPanel).toContainText("Ingen bekreftede handlinger");
+  expect(await page.evaluate(() => window.__vaultSyntheticRequests.length)).toBe(beforeClear);
+  expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
+
   // One slot per account: refuse a duplicate rather than overwriting.
   await input.setInputFiles({
     name: "duplicate.json", mimeType: "application/json",
@@ -354,16 +395,21 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   // A generated link and selected file must disappear on an auth event.
   await page.locator("#aha-psych-vault-download-button").click();
   await expect(page.locator("#aha-psych-vault-download a")).toBeVisible();
+  await expect(guideStatus).toContainText("Nedlastingslenken er klargjort");
   await input.setInputFiles({
     name: "pending.json", mimeType: "application/json", buffer: Buffer.from(backup.text)
   });
   await page.locator('#aha-psych-vault-upload input[type="checkbox"]').check();
   await page.evaluate(id => window.__vaultSwitchAccount(id), ACCOUNT_B);
   await expect(page.locator("#aha-psych-vault-download a")).toHaveCount(0);
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
   await expect(input).toHaveValue("");
   await expect(page.locator('#aha-psych-vault-upload input[type="checkbox"]')).not.toBeChecked();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Kontoen er endret");
   await expect(overview).toContainText("Ikke sjekket");
+  await expect(comparisonResult).toContainText("Ingen sammenligning");
+  await expect(compareInput).toHaveValue("");
+  await expect(historyPanel.locator("li")).toHaveCount(0);
 
   // A second session cannot view or retrieve the first session's copy.
   await page.locator("#aha-psych-vault-check").click();
@@ -394,6 +440,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Slettingen kunne ikke bekreftes");
   await expect(overview).toContainText("Ikke sjekket");
+  await expect(guideStatus).toContainText("Ingen nedlastingslenke");
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(1);
   await page.evaluate(() => { window.__vaultSyntheticDeleteNoop = false; });
   page.once("dialog", dialog => dialog.accept());
@@ -403,6 +450,7 @@ test("manual upload, account isolation, download, decrypt and delete in Chromium
   );
   expect(await page.evaluate(() => window.__vaultSyntheticRows.size)).toBe(0);
   await expect(overview).toContainText("Ingen kontokopi synlig");
+  await expect(historyPanel).toContainText("Sletting bekreftet");
   page.once("dialog", dialog => dialog.accept());
   await page.locator("#aha-psych-vault-delete").click();
   await expect(page.locator("#aha-psych-vault-status")).toContainText("Ingen sletting ble bekreftet");

@@ -10,6 +10,32 @@
   let generation = 0;
   let activeUserId = null;
   let downloadUrl = null;
+  const history = [];
+  const comparisonIdle = "Ingen sammenligning utført.";
+
+  function compareStatus(message = comparisonIdle) {
+    const output = id("aha-psych-vault-compare-result");
+    if (output) output.textContent = message;
+  }
+
+  function renderHistory() {
+    const list = id("aha-psych-vault-history-list");
+    if (!list) return;
+    list.replaceChildren();
+    for (const entry of history) {
+      const item = global.document.createElement("li");
+      item.textContent = entry.time + " UTC – " + entry.label;
+      list.appendChild(item);
+    }
+    const empty = id("aha-psych-vault-history-empty");
+    if (empty) empty.hidden = history.length > 0;
+  }
+
+  function record(label) {
+    history.unshift({ time: new Date().toISOString().slice(0, 19).replace("T", " "), label });
+    history.length = Math.min(history.length, 20);
+    renderHistory();
+  }
 
   const messages = {
     not_activated: "Kontohvelvet er ikke aktivert. Bruk kryptert filbackup i Psykologirommet.",
@@ -64,16 +90,28 @@
     });
   }
 
+  function restoreStatus(ready) {
+    const output = id("aha-psych-vault-restore-status");
+    if (output) output.textContent = ready
+      ? "Nedlastingslenken er klargjort. Last ned filen selv og følg stegene. AHA kan ikke bekrefte at filen er lagret."
+      : "Ingen nedlastingslenke klargjort i denne økten. Har du allerede en egen kryptert fil, kan du bruke den i History Go.";
+  }
+
   function clearDownload() {
     if (downloadUrl) global.URL.revokeObjectURL(downloadUrl);
     downloadUrl = null;
     id("aha-psych-vault-download")?.replaceChildren();
+    restoreStatus(false);
   }
 
   function resetAccount() {
     generation++;
     activeUserId = null;
     overview(null);
+    history.length = 0;
+    renderHistory();
+    compareStatus();
+    id("aha-psych-vault-compare-form")?.reset();
     clearDownload();
     const form = id("aha-psych-vault-upload");
     form?.reset();
@@ -84,6 +122,7 @@
   async function run(operation, checkOnly = false) {
     if (busy) return;
     overview(null);
+    compareStatus();
     setBusy(true);
     const initialGeneration = generation;
     try {
@@ -123,9 +162,12 @@
     link.textContent = "Last ned kryptert fil";
     const area = id("aha-psych-vault-download");
     area.replaceChildren(link);
+    restoreStatus(true);
     // Link remains user-initiated and usable on iPad (no forced navigation).
-    link.addEventListener("click", () => global.setTimeout(() =>
-      global.URL.revokeObjectURL(url), 60000), { once: true });
+    link.addEventListener("click", () => global.setTimeout(() => {
+      if (downloadUrl === url) clearDownload();
+      else global.URL.revokeObjectURL(url);
+    }, 60000), { once: true });
   }
 
   function start() {
@@ -160,6 +202,12 @@
     status(pilot ? "Begrenset pilot. Trykk Sjekk kontokopien for å kontrollere tilgang." :
       "Trykk Sjekk kontokopien før opplasting. Ingen fil blir lastet opp automatisk.");
 
+    id("aha-psych-vault-clear-history")?.addEventListener("click", () => {
+      if (busy) return;
+      history.length = 0;
+      renderHistory();
+    });
+
     id("aha-psych-vault-check")?.addEventListener("click", () => run(async (options, current) => {
       clearDownload();
       if (uploadForm) uploadForm.hidden = true;
@@ -168,6 +216,7 @@
       if (!await current()) return;
       if (uploadForm) uploadForm.hidden = !canUpload;
       overview(data);
+      record(data.exists ? "Kontokopi funnet" : "Ingen kontokopi synlig");
       status((data.exists ?
         "En kryptert fil ligger på kontoen. Du kan laste den ned eller slette den." :
         "Ingen kryptert fil er lagret på kontoen.") +
@@ -198,7 +247,9 @@
         if (!await current()) return;
         const result = await vault.upload(text, options);
         if (!await current()) return;
+        clearDownload();
         overview({ exists: true, bytes: result.bytes });
+        record("Opplasting bekreftet");
         form.reset();
         status("Den krypterte filen er lagret på AHA-kontoen. Ingen notattekst ble dekryptert.");
       });
@@ -209,9 +260,55 @@
       const result = await vault.download(options);
       if (!await current()) return;
       saveFile(result.text);
+      record("Nedlastingslenke klargjort");
       overview({ exists: true, createdAt: result.createdAt, bytes: result.bytes });
       status("Den krypterte filen er klar. Trykk på lenken for å laste den ned.");
     }));
+
+    const compareForm = id("aha-psych-vault-compare-form");
+    const compareInput = compareForm?.querySelector('input[type="file"]');
+    compareInput?.addEventListener("change", () => compareStatus());
+    compareForm?.addEventListener("submit", event => {
+      event.preventDefault();
+      const file = compareInput?.files?.[0];
+      if (!file || busy) return;
+      run(async (options, current) => {
+        if (file.size > MAX_BYTES) {
+          compareStatus("Filen er for stor (maks 12 MiB).");
+          return;
+        }
+        let local;
+        try {
+          const text = await file.text();
+          // The validated envelope is ASCII. Reject BOM/encoding differences
+          // rather than reporting byte equality after text normalization.
+          if (file.size !== text.length) throw Error("encoding");
+          local = vault.validateEncryptedFile(text);
+        } catch {
+          if (await current() && compareInput.files?.[0] === file) {
+            compareStatus("Den lokale filen har ikke forventet kryptert format.");
+          }
+          return;
+        }
+        if (!await current() || compareInput.files?.[0] !== file) return;
+        let remote;
+        try { remote = await vault.download(options); }
+        catch (error) {
+          if (await current() && compareInput.files?.[0] === file) {
+            compareStatus(error?.code === "no_backup" ?
+              "Ingen kontokopi synlig. Sammenligning er ikke mulig." :
+              "Kontokopien kunne ikke hentes. Sammenligning er ikke bekreftet.");
+          }
+          return;
+        }
+        if (!await current() || compareInput.files?.[0] !== file) return;
+        compareStatus(local.text === remote.text ?
+          "Filene er byte-for-byte identiske ved denne kontrollen." :
+          "Filene er forskjellige. Dette sier ikke om notatene er forskjellige eller nyere.");
+        overview({ exists: true, createdAt: remote.createdAt, bytes: remote.bytes });
+        record("Filsammenligning gjennomført");
+      });
+    });
 
     id("aha-psych-vault-delete")?.addEventListener("click", () => run(async (options, current) => {
       if (!global.confirm("Slette den krypterte kopien fra AHA-kontoen? Last den ned først om du vil beholde den.")) return;
@@ -220,6 +317,7 @@
       const result = await vault.remove({ ...options, confirmed: true });
       if (!await current()) return;
       overview({ exists: false });
+      record(result.removed ? "Sletting bekreftet" : "Ingen kontokopi synlig; ingen sletting bekreftet");
       status(result.removed
         ? "Den krypterte kontokopien er slettet og fraværet kontrollert i databasen. Lokale notater er ikke berørt."
         : "Ingen kontokopi er synlig på kontoen. Ingen sletting ble bekreftet. Lokale notater er ikke berørt.");
