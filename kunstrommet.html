@@ -221,8 +221,31 @@
           <label for="kv2-blend-mode">Blandingsmodus for laget</label>
           <select id="kv2-blend-mode" aria-label="Blandingsmodus for aktivt lag">
             <option value="normal">Normal</option>
-            <option value="multiply">Multipliser – mørkere</option>
-            <option value="screen">Skjerm – lysere</option>
+            <optgroup label="Mørkere">
+              <option value="multiply">Multipliser – mørkere</option>
+              <option value="darken">Mørkere (Darken)</option>
+              <option value="color-burn">Fargebrenning (Color Burn)</option>
+            </optgroup>
+            <optgroup label="Lysere">
+              <option value="screen">Skjerm – lysere</option>
+              <option value="lighten">Lysere (Lighten)</option>
+              <option value="color-dodge">Fargebleking (Color Dodge)</option>
+            </optgroup>
+            <optgroup label="Kontrast">
+              <option value="overlay">Overlegg (Overlay)</option>
+              <option value="soft-light">Mykt lys (Soft Light)</option>
+              <option value="hard-light">Hardt lys (Hard Light)</option>
+            </optgroup>
+            <optgroup label="Sammenligning">
+              <option value="difference">Differanse (Difference)</option>
+              <option value="exclusion">Ekskludering (Exclusion)</option>
+            </optgroup>
+            <optgroup label="Farge og lysstyrke">
+              <option value="hue">Kulør (Hue)</option>
+              <option value="saturation">Metning (Saturation)</option>
+              <option value="color">Farge (Color)</option>
+              <option value="luminosity">Lysverdi (Luminosity)</option>
+            </optgroup>
           </select>
           <p class="kv2-tip">Blandingsmodus påvirker bare hvordan dette laget vises over lagene under. Originalpikslene endres ikke. Valget kan angres og lagres.</p>
 
