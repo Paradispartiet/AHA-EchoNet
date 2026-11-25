@@ -100,17 +100,43 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await expect(page.locator("#kv2-snap-enabled")).not.toBeChecked();
     await page.locator("#kv2-snap-enabled").check();
     await shapePointer(page, "pointerdown", 700, 400, 996);
-    await shapePointer(page, "pointermove", 602, 402, 996);
+    await shapePointer(page, "pointermove", 601, 401, 996);
     await expect(page.locator("#kv2-snap-guides")).toBeVisible();
     await expect(page.locator("#kv2-snap-x")).toHaveAttribute("x1", "600");
     await expect(page.locator("#kv2-snap-y")).toHaveAttribute("y1", "400");
-    await shapePointer(page, "pointerup", 602, 402, 996);
+    await shapePointer(page, "pointerup", 601, 401, 996);
     await expect(page.locator("#kv2-snap-guides")).toBeHidden();
     expect((await pxAt(page, 600, 400))[0]).toBeLessThan(100);
     expect((await pxAt(page, 700, 400))[0]).toBe(255);
     await page.locator("#kv2-undo").click();
     await expect.poll(async () => (await pxAt(page, 700, 400))[0]).toBeLessThan(100);
     expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
+  test("magnetic guides align visible layers and ignore hidden reference layers", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [350, 260], [350, 260], 997);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page, [750, 500], [750, 500], 998);
+    const before = await jsonBackup(page);
+    await page.locator("#kv2-move").click();
+    await page.locator("#kv2-snap-enabled").check();
+    await shapePointer(page, "pointerdown", 750, 500, 999);
+    await shapePointer(page, "pointermove", 351, 500, 999);
+    await expect(page.locator("#kv2-snap-guides")).toBeVisible();
+    await expect(page.locator("#kv2-snap-x")).toHaveAttribute("x1", "350");
+    await shapePointer(page, "pointerup", 351, 500, 999);
+    const after = await jsonBackup(page);
+    expect(after.layers[0]).toEqual(before.layers[0]);
+    expect(after.layers[1].x).toBe(before.layers[1].x - 400);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 750, 500))[0]).toBeLessThan(100);
+    await page.locator(".kv2-layer").last().getByRole("button", { name: /^Skjul / }).click();
+    await shapePointer(page, "pointerdown", 750, 500, 1000);
+    await shapePointer(page, "pointermove", 351, 500, 1000);
+    await expect(page.locator("#kv2-snap-guides")).toBeHidden();
+    await shapePointer(page, "pointerup", 351, 500, 1000);
+    expect((await jsonBackup(page)).layers[1].x).toBe(before.layers[1].x - 399);
   });
 
   test("direct transform handles update draft, cancel pointer gestures and commit once", async ({ page }) => {

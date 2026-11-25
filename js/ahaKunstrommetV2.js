@@ -960,6 +960,18 @@
     return right > left && bottom > top ? { left, right, top, bottom } : null;
   }
 
+  function snapTargets(active) {
+    const x = [WIDTH / 2, 0, WIDTH], y = [HEIGHT / 2, 0, HEIGHT];
+    for (const layer of project.layers) {
+      if (layer.id === active.id || !layer.visible || layer.opacity <= 0) continue;
+      const b = snapBounds(layer);
+      if (!b) continue;
+      x.push(layer.x + (b.left + b.right) / 2, layer.x + b.left, layer.x + b.right);
+      y.push(layer.y + (b.top + b.bottom) / 2, layer.y + b.top, layer.y + b.bottom);
+    }
+    return { x: x.filter(v => v >= 0 && v <= WIDTH), y: y.filter(v => v >= 0 && v <= HEIGHT) };
+  }
+
   function nearestSnap(offset, anchors, targets, tolerance) {
     let best = null;
     for (const anchor of anchors) for (const target of targets) {
@@ -1038,7 +1050,8 @@
       point: point(event), x: layer?.x || 0, y: layer?.y || 0,
       clientX: event.clientX, clientY: event.clientY,
       scrollLeft: viewport.scrollLeft || 0, scrollTop: viewport.scrollTop || 0,
-      snapBounds: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapBounds(layer) : null
+      snapBounds: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapBounds(layer) : null,
+      snapTargets: tool === "move" && layer && $("kv2-snap-enabled").checked ? snapTargets(layer) : null
     };
     paintPrevious = null;
     if (isShapeTool()) {
@@ -1102,12 +1115,12 @@
       let x = pointerStart.x + at.x - pointerStart.point.x;
       let y = pointerStart.y + at.y - pointerStart.point.y;
       const b = pointerStart.snapBounds;
-      if (b && $("kv2-snap-enabled").checked && !event.altKey) {
+      if (b && pointerStart.snapTargets && $("kv2-snap-enabled").checked && !event.altKey) {
         const box = canvas.getBoundingClientRect();
-        const sx = nearestSnap(x, [b.left, (b.left + b.right) / 2, b.right],
-          [0, WIDTH / 2, WIDTH], 8 * WIDTH / Math.max(1, box.width));
-        const sy = nearestSnap(y, [b.top, (b.top + b.bottom) / 2, b.bottom],
-          [0, HEIGHT / 2, HEIGHT], 8 * HEIGHT / Math.max(1, box.height));
+        const sx = nearestSnap(x, [(b.left + b.right) / 2, b.left, b.right],
+          pointerStart.snapTargets.x, 8 * WIDTH / Math.max(1, box.width));
+        const sy = nearestSnap(y, [(b.top + b.bottom) / 2, b.top, b.bottom],
+          pointerStart.snapTargets.y, 8 * HEIGHT / Math.max(1, box.height));
         if (sx) x += sx.delta;
         if (sy) y += sy.delta;
         showSnapGuides(sx?.target ?? null, sy?.target ?? null);
