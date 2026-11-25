@@ -217,3 +217,8 @@ Nye tekstlag beholder en avgrenset tekstbeskrivelse sammen med PNG-pikslene i pr
 ## Direkte transformasjonskontroller
 
 Fri transformering viser også en separat komposisjonskopi på lerretet med hjørne-/sidehåndtak, rotasjonshåndtak og flyttbart oransje sentrum. Rammen beregnes fra lagets opprinnelige alfa med et minste synlig gripeområde. Tallfeltene er fortsatt tilgjengelige og synkroniseres med drag. Pointercancel forkaster pågående drag; Avbryt/Escape forkaster hele utkastet. Håndtak og livevisning er egne DOM-elementer og inngår aldri i originalens PNG/JSON, lagring eller angrehistorikk. Innhold utenfor bitmapgrensene kan klippes ved bekreftelse; zoom/verktøy-/lagbytte avslutter utkastet. Fysisk iPad-testing er fortsatt nødvendig.
+
+
+## Magnetiske hjelpelinjer – første trinn (4.3)
+
+Valget **Fest til lerret** er av som standard og gjelder bare Flytt lag. Under drag kan ytterkant eller sentrum av lagets opprinnelige, ikke-gjennomsiktige pikselinnhold feste seg til lerretets kanter eller midtlinjer innenfor åtte CSS-piksler. Rosa, stiplede hjelpelinjer viser treffet og skjules ved avsluttet drag. Alt-tasten gir midlertidig fri flytting med mus. Lagmasker endrer ikke grensene som brukes; tomme lag festes ikke. Ingen ny prosjektmetadata eller eksportinnhold. Angre bruker det eksisterende flyttesteget. Festing til andre lag og fysisk iPad-verifikasjon gjenstår.

@@ -92,6 +92,27 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("optional magnetic guides snap content to canvas center and undo without guide pixels", async ({ page }) => {
+    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await shapeDrag(page, [700, 400], [700, 400], 995);
+    const before = await jsonBackup(page);
+    await page.locator("#kv2-move").click();
+    await expect(page.locator("#kv2-snap-enabled")).not.toBeChecked();
+    await page.locator("#kv2-snap-enabled").check();
+    await shapePointer(page, "pointerdown", 700, 400, 996);
+    await shapePointer(page, "pointermove", 602, 402, 996);
+    await expect(page.locator("#kv2-snap-guides")).toBeVisible();
+    await expect(page.locator("#kv2-snap-x")).toHaveAttribute("x1", "600");
+    await expect(page.locator("#kv2-snap-y")).toHaveAttribute("y1", "400");
+    await shapePointer(page, "pointerup", 602, 402, 996);
+    await expect(page.locator("#kv2-snap-guides")).toBeHidden();
+    expect((await pxAt(page, 600, 400))[0]).toBeLessThan(100);
+    expect((await pxAt(page, 700, 400))[0]).toBe(255);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async () => (await pxAt(page, 700, 400))[0]).toBeLessThan(100);
+    expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  });
+
   test("direct transform handles update draft, cancel pointer gestures and commit once", async ({ page }) => {
     await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 990);
