@@ -32,14 +32,14 @@
   }
 
   function persistAuthReturnTargetFromUrl() {
-    const target = getAuthReturnTargetFromUrl();
-    if (!target) {
+    const destination = getAuthReturnTargetFromUrl();
+    if (!destination) {
       clearAuthReturnTarget();
       return;
     }
 
     try {
-      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, target);
+      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, destination);
     } catch {}
   }
 
