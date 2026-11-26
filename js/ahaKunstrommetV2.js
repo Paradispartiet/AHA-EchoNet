@@ -1733,6 +1733,11 @@
     $("kv2-layer-count").textContent = project.layers.length + " av " + layerLimit() + " lag";
     $("kv2-duplicate-layer").disabled = project.layers.length >= layerLimit() || !!currentLayer()?.clipToBelow;
     renderSelection();
+    // View-only controls follow the active tool, without resetting any settings.
+    $("kv2-context-snap").hidden = tool !== "move";
+    $("kv2-context-shape").hidden = tool !== "rectangle" && tool !== "ellipse";
+    $("kv2-context-brush").hidden = tool !== "brush";
+    $("kv2-context-size").hidden = !["brush", "eraser", "rectangle", "ellipse", "line", "arrow"].includes(tool);
     $("kv2-shape-style").disabled = isLinearShape(tool);
     renderShapePreview();
     $("kv2-brush-advanced").hidden = !advancedBrushEnabled();

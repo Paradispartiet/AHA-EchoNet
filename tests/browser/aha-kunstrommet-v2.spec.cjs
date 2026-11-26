@@ -2309,6 +2309,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await stroke(page);
     expect(await pixel(page)).toEqual([35, 36, 44, 255]);
     await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-brush").click(); // Presets are contextual to the brush.
     await page.locator("#kv2-brush-preset").selectOption("lasur");
     // Changing a preset selects the brush; select mask eraser explicitly.
     await page.locator("#kv2-eraser").click();
@@ -3295,4 +3296,89 @@ test("one sketchbook restores search, thumbnail, copy and safe local deletion", 
   await page.locator("#kv2-project-search").fill("");
   await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
   await expect(page.locator("#kv2-projects")).toContainText("Kveldsmaleri");
+});
+
+
+test("8.1 workspace gives the canvas priority without losing existing controls", async ({page}) => {
+  for (const width of [390, 834, 1180]) {
+    await page.setViewportSize({width, height: 900});
+    await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
+    const layout = await page.evaluate(() => {
+      const main = document.querySelector(".aha-dashboard.kv2");
+      const paper = document.querySelector("#kv2-paper");
+      const after = selector => !!(paper.compareDocumentPosition(document.querySelector(selector)) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return {width:main.getBoundingClientRect().width, overflow:document.documentElement.scrollWidth > innerWidth + 1,
+        canvasWidth:paper.clientWidth, after:["#kv2-save","#kv2-title",".kv2-guide-panel",".kv2-symmetry-panel","#kv2-brush-advanced"].every(after)};
+    });
+    expect(layout.after).toBe(true);
+    expect(layout.overflow).toBe(false);
+    if (width >= 834) expect(layout.width).toBeGreaterThan(760);
+    expect(layout.canvasWidth).toBeGreaterThan(250);
+    await expect(page.locator("#kv2-brush")).toBeVisible();
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await expect(page.locator("#kv2-add-layer")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator(".kv2-sidebar")).toBeHidden();
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator("#kv2-add-layer")).toBeVisible();
+  }
+});
+
+
+test("8.1 icon tools and collapsible layers preserve the drawing", async ({page}) => {
+  await page.setViewportSize({width:834,height:1180});
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  const brush=page.getByRole("button",{name:"Pensel",exact:true});
+  await expect(brush).toHaveAttribute("aria-pressed","true");
+  await expect(brush.locator("svg")).toBeVisible();
+  const size=await brush.boundingBox();
+  expect(size.width).toBeGreaterThanOrEqual(44);
+  expect(size.height).toBeGreaterThanOrEqual(44);
+  await stroke(page);
+  const before=await jsonBackup(page);
+  const disclosure=page.locator(".kv2-layer-disclosure");
+  await disclosure.locator(":scope > summary").click();
+  await expect(page.locator("#kv2-add-layer")).toBeHidden();
+  await expect(page.locator("#kv2-layer-count")).toBeVisible();
+  await page.getByRole("button",{name:"Viskelær",exact:true}).click();
+  await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed","true");
+  await brush.click();
+  await disclosure.locator(":scope > summary").click();
+  await expect(page.locator("#kv2-add-layer")).toBeVisible();
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
+
+
+test("8.1 contextual tool settings preserve values, artwork and history", async ({page}) => {
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  const visible = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeVisible(); };
+  const hidden = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeHidden(); };
+  await visible(["brush-preset","size","color","undo","redo"]);
+  await hidden(["shape-style","snap-enabled","gradient-panel","text-panel"]);
+  await page.locator("#kv2-brush-preset").selectOption("blyant");
+  await stroke(page);
+  const before=await jsonBackup(page);
+  await page.locator("#kv2-move").click();
+  await visible(["snap-enabled","color"]); await hidden(["brush-preset","size","shape-style"]);
+  await page.locator("#kv2-snap-enabled").check();
+  await page.locator("#kv2-rectangle").click();
+  await visible(["shape-style","size"]); await hidden(["brush-preset","snap-enabled"]);
+  await page.locator("#kv2-shape-style").selectOption("outline");
+  await page.locator("#kv2-line").click();
+  await visible(["size"]); await hidden(["shape-style"]);
+  await page.locator("#kv2-gradient").click();
+  await visible(["gradient-panel","color"]); await hidden(["size","brush-preset","shape-style"]);
+  await page.locator("#kv2-gradient-type").selectOption("radial");
+  await page.locator("#kv2-text").click();
+  await visible(["text-panel"]); await hidden(["gradient-panel","size"]);
+  await page.locator("#kv2-hand").click();
+  await hidden(["text-panel","size","brush-preset","snap-enabled"]);
+  await page.locator("#kv2-move").click(); await expect(page.locator("#kv2-snap-enabled")).toBeChecked();
+  await page.locator("#kv2-rectangle").click(); await expect(page.locator("#kv2-shape-style")).toHaveValue("outline");
+  await page.locator("#kv2-gradient").click(); await expect(page.locator("#kv2-gradient-type")).toHaveValue("radial");
+  await page.locator("#kv2-brush").click(); await expect(page.locator("#kv2-brush-preset")).toHaveValue("blyant");
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  await page.locator("#kv2-undo").click();
+  await expect.poll(async()=>await pixel(page)).toEqual([255,255,255,255]);
 });

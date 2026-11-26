@@ -369,3 +369,18 @@ Behold minst 8 lag for alle publiserte formater, og øk kun for mindre lerreter:
 ### Samlet 7.0-kandidat
 
 Denne grenen samordner #1142, #1145, #1146, #1147 og #1148 med oppdatert hovedgren. Samme dimensjonsbaserte laggrense brukes også for duplisering med klippemaske-sperren. Ingen endringer i Psykologirommet eller database. De opprinnelige utkastene beholdes som sporbarhet, men skal ikke merges separat hvis den samlede kandidaten godkjennes. Hele kandidaten trenger egne automatiske kontroller og dokumentert fysisk iPad-test (#1058), ikke bare grønne resultater på delgrenene. Bruk syntetisk kunstverk, 8/12/16 lag, masker, sammenslåing, klippemaske og gruppeopasitet i separate prosjekter, angre/gjør om, lagring/åpning og eksport. Ingen økning utover 16 lag; avbryt ved minnefeil eller Safari-omstart.
+
+
+## 8.1 – tegneflaten først (utviklingskandidat)
+
+Kunstrommet får egen arbeidsbredde opptil 1520 CSS-piksler i stedet for den globale feedens 760 px. Lerretet følger verktøylinjen og det kontekstavhengige tekstpanelet; lagring/import/eksport ligger rett under, før navn, komposisjon, symmetri og øvrige innstillinger. De eksisterende verktøyene, DOM-ID-ene, fokusmodus og lagpanelet beholdes. På smalere skjermer plasseres lagpanelet under editoren. Sentrale knappemål er minst 44 px. Ingen endring av rastermotor, pikselmål, prosjektformat, lokal lagring eller nettverk. Ny nettlesertest dekker 390, 834 og 1180 CSS-piksler, rekkefølge, sidebredde, horisontal overflow og tilgang til lag og lagring i og utenfor fokusmodus. Fysisk iPad/Apple Pencil og belastningstest er fortsatt åpen i #1058.
+
+
+### 8.1 – ikonverktøy og sammenleggbart lagpanel
+
+13 tegne-/redigeringsverktøy og angre/gjør om får lokale SVG-ikoner, korte synlige navn, opprinnelige tilgjengelige navn og minst 48 CSS-piksler trykkflate. Alle eksisterende verktøy-ID-er og hendelser beholdes. Lagverktøy kan foldes sammen med en innfødt details/summary, som er åpen som standard; lagantall forblir synlig. Ingen ny lagring, motor eller nettverk. Test dekker verktøyvalg, trykkflate, sammenfolding/gjenåpning og uendrede lag i prosjektbackup. Kontekstavhengige verktøymenyer er ikke en del av denne etappen.
+
+
+### 8.1 – kontekstavhengige verktøyinnstillinger
+
+Penseltype vises ved Pensel, magnetisk justering ved Flytt lag, fyll/omriss ved rektangel/ellipse og størrelse ved pensel, viskelær, figurer, linje og pil. Gradient- og tekstpanelene følger fortsatt aktivt verktøy. Farge, hurtigpalett, zoom og angre/gjør om er alltid tilgjengelige (farge kan også brukes til markering). Verktøybytte bevarer innstillingsverdiene; skjulte kontroller blir ikke fjernet, nullstilt eller lagt i angrehistorikken. Ingen nye prosjektdata eller nettverkskall. Nettlesertest dekker synlighet, gjenvalg, identiske lag i eksport og angre. Eksisterende masketest velger Pensel eksplisitt før penseltype, i tråd med den nye arbeidsflyten. Fysisk iPad-testing gjenstår.
