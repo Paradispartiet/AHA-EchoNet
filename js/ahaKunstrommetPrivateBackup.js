@@ -8,6 +8,7 @@
   // before enabling the pilot. Concurrent devices can race a client check.
   const ADVISORY_QUOTA=100*1024*1024;
   const INVENTORY_LIMIT=200;
+  const SLOT_TABLE="aha_kunstrommet_backup_slots", MAX_SLOTS=16;
   const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   const REV=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.json$/;
   // Must be wired to a dedicated, verified staging deployment before use.
@@ -25,7 +26,7 @@
     if(error||!UUID.test(user?.id||"")||user.is_anonymous!==false)fail("login_required");
     if(expected&&user.id!==expected || profile()!==user.id)fail("account_changed");
     if(upload&&user.app_metadata?.aha_kunstrommet_backup_pilot!==true)fail("pilot_required");
-    return {id:user.id,bucket:client.storage.from(BUCKET)};
+    return {id:user.id,bucket:client.storage.from(BUCKET),client};
   }
   function payload(data,maxBytes=PILOT_BYTES){
     if(data?.format!=="aha-kunstrommet-v2"||data.version!==2||
@@ -63,6 +64,20 @@
     await account(id);
     return {bytes,files,quota:ADVISORY_QUOTA};
   }
+  async function reservePath(expected,path){
+    const {id,client}=await account(expected,true);
+    if(typeof client.from!=="function")fail("reservation_unavailable");
+    const result=await client.from(SLOT_TABLE).select("slot").eq("user_id",id);
+    if(result.error||!Array.isArray(result.data)||result.data.length>MAX_SLOTS)fail("reservation_unavailable");
+    const used=new Set(result.data.map(x=>x.slot));
+    if([...used].some(x=>!Number.isInteger(x)||x<1||x>MAX_SLOTS))fail("reservation_unavailable");
+    const slot=Array.from({length:MAX_SLOTS},(_,i)=>i+1).find(x=>!used.has(x));
+    if(!slot)fail("slots_full");
+    const fresh=await account(id,true);
+    const receipt=await fresh.client.from(SLOT_TABLE).insert({user_id:id,slot,object_name:path}).select("slot,object_name").single();
+    if(receipt.error||receipt.data?.slot!==slot||receipt.data?.object_name!==path)fail("reservation_unconfirmed");
+    await account(id,true);
+  }
   async function saveCurrent({confirm}={}){
     const first=await account(null,true);
     const snap=global.AHAKunstrommetV2.cloudSnapshot(first.id);
@@ -71,8 +86,9 @@
     if(typeof confirm!=="function"||!await confirm(blob.size))fail("cancelled");
     const usage=await storageUsage(first.id);
     if(usage.bytes+blob.size>usage.quota)fail("quota_reached");
-    const fresh=await account(first.id,true);
     const path=first.id+"/"+snap.projectId+"/"+global.crypto.randomUUID()+".json";
+    await reservePath(first.id,path);
+    const fresh=await account(first.id,true);
     const {data,error}=await fresh.bucket.upload(path,blob,{contentType:"application/json",upsert:false,cacheControl:"0"});
     if(error||data?.path!==path)fail("upload_unconfirmed");
     await account(first.id);
@@ -106,9 +122,23 @@
     // Editor performs full bitmap/mask validation and inserts a new local copy.
     return global.AHAKunstrommetV2.saveCloudCopy(portable,id,()=>account(id));
   }
-  const api=Object.freeze({enabled,saveCurrent,listProjects,listRevisions,restore,storageUsage,maxBytes:PILOT_BYTES,maxRestoreBytes:RESTORE_BYTES});
+  async function removeRevision(project,revision,expected,{confirmed=false}={}){
+    checkPath(project,revision);
+    if(confirmed!==true)fail("cancelled");
+    if(!UUID.test(expected||""))fail("account_changed");
+    const {id,bucket}=await account(expected);
+    const prefix=id+"/"+project,path=prefix+"/"+revision;
+    const result=await bucket.remove([path]);
+    await account(id);
+    if(result.error||!Array.isArray(result.data)||result.data.length!==1||result.data[0]?.name!==path)fail("delete_unconfirmed");
+    const check=await bucket.list(prefix,{limit:51,search:revision});
+    await account(id);
+    if(check.error||!Array.isArray(check.data)||check.data.length>50||check.data.some(x=>x.name===revision))fail("delete_unconfirmed");
+    return {removed:true,slotReleased:false};
+  }
+  const api=Object.freeze({enabled,saveCurrent,listProjects,listRevisions,restore,storageUsage,removeRevision,maxBytes:PILOT_BYTES,maxRestoreBytes:RESTORE_BYTES});
   global.AHAKunstrommetPrivateBackup=api;
-  const messages={disabled:"Piloten er ikke aktivert.",not_configured:"Skylagring er ikke konfigurert.",login_required:"Logg inn med AHA-kontoen.",account_changed:"Konto eller lokal profil er endret. Start på nytt.",pilot_required:"Kontoen har ikke pilottilgang.",too_large:"Prosjektet er større enn 6 MiB. Eksporter lokalt.",invalid_project:"Ugyldig prosjektfil.",invalid_path:"Ugyldig prosjektadresse.",cancelled:"Avbrutt. Ingen opplasting.",upload_unconfirmed:"Opplasting ikke bekreftet. Behold den lokale kopien og sjekk listen før nytt forsøk.",list_failed:"Kunne ikke hente listen.",download_failed:"Kunne ikke hente prosjektet.",quota_unknown:"Kunne ikke kontrollere lagringsplassen sikkert. Ingen ny opplasting.",quota_reached:"Pilotens foreløpige lagringsgrense på 100 MiB er nådd."};
+  const messages={disabled:"Piloten er ikke aktivert.",not_configured:"Skylagring er ikke konfigurert.",login_required:"Logg inn med AHA-kontoen.",account_changed:"Konto eller lokal profil er endret. Start på nytt.",pilot_required:"Kontoen har ikke pilottilgang.",too_large:"Prosjektet er større enn 6 MiB. Eksporter lokalt.",invalid_project:"Ugyldig prosjektfil.",invalid_path:"Ugyldig prosjektadresse.",cancelled:"Avbrutt. Ingen opplasting.",upload_unconfirmed:"Opplasting ikke bekreftet. Behold den lokale kopien og sjekk listen før nytt forsøk.",list_failed:"Kunne ikke hente listen.",download_failed:"Kunne ikke hente prosjektet.",quota_unknown:"Kunne ikke kontrollere lagringsplassen sikkert. Ingen ny opplasting.",quota_reached:"Pilotens foreløpige lagringsgrense på 100 MiB er nådd.",slots_full:"Alle 16 pilotplasser er reservert. Lokal lagring fungerer.",reservation_unavailable:"Kunne ikke kontrollere serverens pilotplasser.",reservation_unconfirmed:"Reservering ikke bekreftet. Ingen ny opplasting.",delete_unconfirmed:"Sletting ikke bekreftet. Hent listen på nytt."};
   function bind(){
     const doc=global.document, panel=doc?.getElementById("kv2-cloud-backup");
     if(!panel||!enabled())return;
@@ -119,7 +149,7 @@
     const message=t=>{$("status").textContent=t;};
     const reset=(select,label)=>{select.replaceChildren();const o=doc.createElement("option");o.value="";o.textContent=label;select.appendChild(o);};
     const add=(select,value,label)=>{const o=doc.createElement("option");o.value=value;o.textContent=label;select.appendChild(o);};
-    function controls(){ $("save").disabled=working;$("list").disabled=working;projects.disabled=working||!expected||projects.options.length<2;revisions.disabled=working||revisions.options.length<2;$("restore").disabled=working||!expected||!projects.value||!revisions.value;}
+    function controls(){ $("save").disabled=working;$("list").disabled=working;projects.disabled=working||!expected||projects.options.length<2;revisions.disabled=working||revisions.options.length<2;$("restore").disabled=working||!expected||!projects.value||!revisions.value;$("delete").disabled=$("restore").disabled;}
     async function run(fn){if(working)return;working=true;controls();try{await fn();}catch(e){message(messages[e?.code]||"Handlingen ble ikke bekreftet. Det åpne prosjektet er ikke erstattet.");}finally{working=false;controls();}}
     $("save").addEventListener("click",()=>run(async()=>{
       const result=await saveCurrent({confirm:bytes=>global.confirm("Lagre privat prosjektkopi ("+(bytes/1048576).toFixed(2)+" MiB), inkludert tittel, notat og alle lag? Kopien er ikke ende-til-ende-kryptert.")});
@@ -143,6 +173,12 @@
       if(!global.confirm("Hent en ny lokal kopi? Det åpne kunstverket beholdes."))return;
       await restore(projects.value,revisions.value,expected);
       message("Lokal kopi lagret i Mine prosjekter. Det åpne kunstverket er beholdt.");
+    }));
+    $("delete").addEventListener("click",()=>run(async()=>{
+      if(!global.confirm("Slette denne ene skyversjonen permanent? Lokale kopier beholdes. Pilotplassen frigjøres ikke automatisk."))return;
+      await removeRevision(projects.value,revisions.value,expected,{confirmed:true});
+      reset(revisions,"Velg versjon");
+      message("Skyversjonen er slettet. Lokale kopier er beholdt. Oppdater listen for å fortsette.");
     }));
     controls();
   }
