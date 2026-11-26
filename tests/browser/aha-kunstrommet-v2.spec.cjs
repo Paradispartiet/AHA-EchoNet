@@ -2219,8 +2219,11 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await shapePointer(page,"pointermove",700,400,1301);
     await expect(page.locator("#kv2-brush-live")).toBeVisible();
     expect((await pixel(page))[0]).toBe(255);
-    const preview=await page.locator("#kv2-brush-live").evaluate(c=>c.getContext("2d").getImageData(600,400,1,1).data[0]);
-    expect(preview).toBeGreaterThanOrEqual(143); expect(preview).toBeLessThanOrEqual(146);
+    // Preview painting is scheduled by requestAnimationFrame, not by visibility.
+    await expect.poll(async()=>{
+      const preview=await page.locator("#kv2-brush-live").evaluate(c=>c.getContext("2d").getImageData(600,400,1,1).data[0]);
+      return preview>=143 && preview<=146;
+    }).toBe(true);
     await shapePointer(page,"pointercancel",700,400,1301);
     await expect(page.locator("#kv2-brush-live")).toBeHidden();
     expect((await jsonBackup(page)).layers).toEqual(before.layers);
@@ -3295,4 +3298,37 @@ test("one sketchbook restores search, thumbnail, copy and safe local deletion", 
   await page.locator("#kv2-project-search").fill("");
   await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
   await expect(page.locator("#kv2-projects")).toContainText("Kveldsmaleri");
+});
+
+
+test("8.2 cloud restore validates before inserting and never replaces the open artwork", async ({page}) => {
+  const user="11111111-1111-4111-8111-111111111111";
+  await page.addInitScript(id=>localStorage.setItem("aha_profile_id",id),user);
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await expect(page.locator("#kv2-cloud-backup")).toBeHidden();
+  await page.locator("#kv2-title").fill("Aktivt kunstverk");
+  await stroke(page);
+  const before=await jsonBackup(page);
+  const summary=await page.evaluate(()=>window.AHAKunstrommetV2.summary());
+  const copy={...before,title:"Hentet sikkerhetskopi",note:"Bevart notat"};
+  const restore=(data,deny=false)=>page.evaluate(async ({data,user,deny})=>{
+    try {return {id:await window.AHAKunstrommetV2.saveCloudCopy(data,user,async()=>{if(deny)throw Error("account_changed");})};}
+    catch(e){return {error:e.message};}
+  },{data,user,deny});
+  expect((await restore({...copy,layers:[{...copy.layers[0],bitmap:"data:image/png;base64,AAAA"}]})).error).toBeTruthy();
+  expect((await restore(copy,true)).error).toBe("account_changed");
+  expect(await page.evaluate(async()=> (await window.AHAKunstrommetV2.savedProjects()).length)).toBe(0);
+  const saved=await restore(copy);
+  expect(saved.id).toBeTruthy();expect(saved.id).not.toBe(summary.id);
+  await expect(page.locator("#kv2-title")).toHaveValue("Aktivt kunstverk");
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  expect(await page.evaluate(()=>window.AHAKunstrommetV2.summary())).toEqual(summary);
+  const records=await page.evaluate(()=>window.AHAKunstrommetV2.savedProjects());
+  expect(records).toHaveLength(1);expect(records[0].owner).toBe(user);
+  expect(records[0].title).toBe(copy.title);expect(records[0].note).toBe(copy.note);
+  expect(records[0].layers[0].bitmap).toBe(copy.layers[0].bitmap);
+  page.once("dialog",dialog=>dialog.accept());
+  await page.locator("#kv2-projects .kv2-project--saved").getByRole("button",{name:"Åpne",exact:true}).click();
+  await expect(page.locator("#kv2-title")).toHaveValue(copy.title);
+  expect((await pixel(page))[0]).toBeLessThan(100);
 });

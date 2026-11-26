@@ -26,3 +26,12 @@ En skjult, avslått pilot i Mine prosjekter tilbyr «Lagre i skyen», «Hent fra
 Den første transportpiloten avgrenser filer til 6 MiB (bytekontroll av Blob), uavhengig av bucketens 36 MiB-tak. TUS for større filer gjenstår. Ingen overskriving, ingen offentlig URL eller automatisk overføring. Listen viser inntil 50 prosjektmapper og 50 revisjoner per mappe med ID/dato; meningsfulle private titler, full paginering, samlet kvote og slettefunksjon gjenstår. En hentet fil valideres med editorens format-, dimensjons-, lag- og PNG/maskekontroller og settes inn med IndexedDB add under en ny ID, uten å installere den i åpent lerret. Kopien får ingen thumbnail før ordinær lagring. Ingen referanser til Galleri eller innsiktsmotor opprettes.
 
 Node-test bruker falsk klient og verifiserer sperret flagg/origin, avbrudd, kontobytte, pilotkrav, bytegrense, private stier, insert-only og hentet kopi. Reell Storage HTTP, SDK-innlasting, iPad, kvote/retensjon, avbruddsrobust opplasting, UI og endelig gjenopprettingskontroll må godkjennes før noen aktivering.
+
+
+## 8.2 – gjenoppretting og foreløpig kvotekontroll
+
+Gjenoppretting kan nå lese filer opptil 36 MiB, uavhengig av at standard opplasting fortsatt er begrenset til 6 MiB. Enheten validerer ett PNG-lag eller maske om gangen og kontrollerer størrelsen på den komplette lokale posten før insert. En ekte nettlesertest av editorens lokale IndexedDB-kopi sjekker avvist korrupt PNG, avvist kontoendring, ny ID, uendret åpent lerret, tittel/notat og gjenåpning med piksler. Ingen Storage-nettverk brukes i denne testen.
+
+En konservativ, **kun veiledende klientkontroll** på 100 MiB per konto er foreslått for piloten: summer rapportert metadata.size for private revisjoner, avvis ny opplasting hvis inventaret ikke kan verifiseres eller overskrider 200 mapper/filer. Dette er ikke en serverkvote, beskytter ikke mot samtidige opplastinger eller direkte API-kall, og må ikke brukes som aktiveringsgrunnlag. Endelig kvote og kostnadsgrense må godkjennes, og serverhåndheving må implementeres før aktivering. TUS-opplasting, full paginering og slettefunksjon gjenstår. Ingen endring i produksjon eller bucket.
+
+Nettleserregresjon: 193/194 bestått på forrige commit; iPad WebKit leste penselpreview før requestAnimationFrame hadde oppdatert forventet piksel. Testen poller nå samme 143–146-krav før avbryt. Dette er en testjustering basert på asynkron rendering; ny CI må bekrefte hypotesen.

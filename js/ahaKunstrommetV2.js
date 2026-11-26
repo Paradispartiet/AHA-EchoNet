@@ -4085,7 +4085,12 @@
           throw new Error("Prosjektet har en kombinasjon av lagfunksjoner som ikke støttes.");
         }
         if (JSON.stringify(layers).length > MAX_PROJECT_BYTES) throw new Error("Prosjektet er for stort.");
-        await decodeLayerBitmaps(layers,width,height);
+        // Validate one decoded layer at a time; do not retain every temporary canvas
+        // while the existing artwork is open on a memory-constrained iPad.
+        for (const layer of layers) {
+          await decodePng(layer.bitmap,layer.pixelFixups,width,height);
+          if (layer.maskBitmap) await decodePng(layer.maskBitmap,layer.maskPixelFixups,width,height);
+        }
         await verifyAccount();
         if (owner() !== expectedUserId) throw new Error("Profilen er endret.");
         const db = await openDb();
@@ -4095,6 +4100,7 @@
           id:uid(),owner:expectedUserId,title:String(data.title||"").slice(0,120),
           note:String(data.note||"").slice(0,4000),created_at:now,updated_at:now,
           preview:"",local_only:true,shared:false,analyzed_image:false};
+        if (new Blob([JSON.stringify(record)]).size > MAX_PROJECT_BYTES) throw new Error("Prosjektkopien er for stor for lokal lagring.");
         await new Promise((resolve,reject)=>{
           const tx=db.transaction(STORE,"readwrite");
           tx.objectStore(STORE).add(record);
