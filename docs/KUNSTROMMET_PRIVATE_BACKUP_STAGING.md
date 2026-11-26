@@ -17,3 +17,12 @@ Staging-scriptet er ikke en automatisk migrasjon. Eierskap kontrolleres med auth
 5. Senere synkronisering: uforanderlige revisjoner og konfliktkopier på begge enheter, deretter eksplisitt synkvalg. Ingen automatisk konfliktoverskriving, ingen realtime-dataoverføring under strøk. Lagringskvote, retensjon, opprydding og eventuelt ende-til-ende-kryptering må avklares før utrulling.
 
 Kilder: https://supabase.com/docs/guides/storage/security/access-control og https://supabase.com/docs/guides/storage/uploads/resumable-uploads. Eksisterende AHA-mønster: supabase/psychology-encrypted-vault-pilot.sql (separat datadomene).
+
+
+## 8.2 – manuelle knapper og transportkandidat
+
+En skjult, avslått pilot i Mine prosjekter tilbyr «Lagre i skyen», «Hent fra skyen» og «Hent som lokal kopi». Den krever både eksplisitt stagingflagg og eksakt preview-origin; ingen SDK lastes eller autentisering/nettverk startes av Kunstrommet ved sideåpning. AHA-klienten må kobles inn i verifisert, separat staging før aktivering. Serverens RLS og app_metadata er den egentlige autorisasjonen. Brukerens verifiserte konto må samsvare med lokal profil; kontoendring kontrolleres før/etter nettverksoperasjoner. En allerede startet opplasting kan ikke garanteres avbrutt; den må derfor aldri omtales som slettet eller ikke lagret uten serverkvittering.
+
+Den første transportpiloten avgrenser filer til 6 MiB (bytekontroll av Blob), uavhengig av bucketens 36 MiB-tak. TUS for større filer gjenstår. Ingen overskriving, ingen offentlig URL eller automatisk overføring. Listen viser inntil 50 prosjektmapper og 50 revisjoner per mappe med ID/dato; meningsfulle private titler, full paginering, samlet kvote og slettefunksjon gjenstår. En hentet fil valideres med editorens format-, dimensjons-, lag- og PNG/maskekontroller og settes inn med IndexedDB add under en ny ID, uten å installere den i åpent lerret. Kopien får ingen thumbnail før ordinær lagring. Ingen referanser til Galleri eller innsiktsmotor opprettes.
+
+Node-test bruker falsk klient og verifiserer sperret flagg/origin, avbrudd, kontobytte, pilotkrav, bytegrense, private stier, insert-only og hentet kopi. Reell Storage HTTP, SDK-innlasting, iPad, kvote/retensjon, avbruddsrobust opplasting, UI og endelig gjenopprettingskontroll må godkjennes før noen aktivering.

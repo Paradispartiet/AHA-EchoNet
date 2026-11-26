@@ -4062,6 +4062,50 @@
       };
     },
     savedProjects: getRecords,
+    cloudSnapshot(expectedUserId) {
+      if (busy || pointerId !== null || freeTransform || textAnchor ||
+          !project || owner() !== expectedUserId || project.owner !== expectedUserId) {
+        throw new Error("Åpne prosjektet i riktig innlogget profil og fullfør aktiv redigering.");
+      }
+      return { projectId: project.id, data: formatRecord() };
+    },
+    async saveCloudCopy(data, expectedUserId, verifyAccount) {
+      if (busy || pointerId !== null || freeTransform || owner() !== expectedUserId ||
+          typeof verifyAccount !== "function") throw new Error("Profil eller redigering er endret.");
+      busy = true;
+      try {
+        if (data?.format !== "aha-kunstrommet-v2" || data.version !== 2) throw new Error("Ugyldig prosjektformat.");
+        const {width,height} = data;
+        requireCanvasSize(width,height);
+        if (!Array.isArray(data.layers) || !data.layers.length || data.layers.length > layerLimit(width,height)) {
+          throw new Error("Ugyldig lagantall.");
+        }
+        const layers = data.layers.map(layer=>validateLayer(layer,width,height));
+        if (layers.some(layer=>groupAlpha(layer)<1) && layers.some(layer=>layer.clipToBelow)) {
+          throw new Error("Prosjektet har en kombinasjon av lagfunksjoner som ikke støttes.");
+        }
+        if (JSON.stringify(layers).length > MAX_PROJECT_BYTES) throw new Error("Prosjektet er for stort.");
+        await decodeLayerBitmaps(layers,width,height);
+        await verifyAccount();
+        if (owner() !== expectedUserId) throw new Error("Profilen er endret.");
+        const db = await openDb();
+        if (owner() !== expectedUserId) throw new Error("Profilen er endret.");
+        const now = new Date().toISOString();
+        const record = {format:"aha-kunstrommet-v2",version:2,width,height,layers,
+          id:uid(),owner:expectedUserId,title:String(data.title||"").slice(0,120),
+          note:String(data.note||"").slice(0,4000),created_at:now,updated_at:now,
+          preview:"",local_only:true,shared:false,analyzed_image:false};
+        await new Promise((resolve,reject)=>{
+          const tx=db.transaction(STORE,"readwrite");
+          tx.objectStore(STORE).add(record);
+          tx.oncomplete=()=>resolve();
+          tx.onerror=()=>reject(tx.error||new Error("Kunne ikke lagre lokal kopi."));
+          tx.onabort=()=>reject(tx.error||new Error("Lagring avbrutt."));
+        });
+        await renderProjects();
+        return record.id;
+      } finally { busy=false; updateLayerControls(); }
+    },
     async openSaved(id) {
       if (busy || (dirty && !global.confirm("Forkaste endringer som ikke er lagret?"))) return false;
       const record = (await getRecords()).find((item) => item.id === id);
