@@ -588,6 +588,27 @@
             placeholder="Søk i titler og notater" />
           <p id="kv2-project-count" class="kv2-tip" role="status" aria-live="polite"></p>
           <div id="kv2-projects" class="kv2-projects"></div>
+          <details id="kv2-cloud-backup" class="kv2-fold" hidden>
+            <summary>Privat skybackup (pilot)</summary>
+            <p class="kv2-tip">Manuell kopi av kunstverket med alle lag, tittel og notat. Maks 6 MiB i piloten. Ikke ende-til-ende-kryptert. Ingen automatisk synkronisering.</p>
+            <button id="kv2-cloud-save" type="button">Lagre i skyen</button>
+            <div id="kv2-cloud-transfer" hidden>
+              <label for="kv2-cloud-progress">Opplastingsfremdrift</label>
+              <progress id="kv2-cloud-progress" max="1" value="0"></progress>
+              <span id="kv2-cloud-progress-text">0 / 0 MiB</span>
+              <button id="kv2-cloud-resume" type="button" disabled>Fortsett opplasting</button>
+              <button id="kv2-cloud-discard" type="button" disabled>Avslutt opplastingsøkt</button>
+              <p class="kv2-tip">Gjenopptak gjelder samme åpne fane. Lukk ikke fanen før opplastingen er bekreftet.</p>
+            </div>
+            <button id="kv2-cloud-list" type="button">Hent fra skyen</button>
+            <label for="kv2-cloud-project">Prosjekt i skyen</label>
+            <select id="kv2-cloud-project" disabled><option value="">Velg prosjekt</option></select>
+            <label for="kv2-cloud-revision">Prosjektversjon</label>
+            <select id="kv2-cloud-revision" disabled><option value="">Velg versjon</option></select>
+            <button id="kv2-cloud-restore" type="button" disabled>Hent som lokal kopi</button>
+            <button id="kv2-cloud-delete" type="button" disabled>Slett valgt skyversjon</button>
+            <p id="kv2-cloud-status" class="kv2-tip" role="status" aria-live="polite">Ingen overføring uten ditt valg.</p>
+          </details>
         </section>
         <section class="aha-panel kv2-panel" aria-labelledby="kv2-legacy-title">
           <h2 id="kv2-legacy-title">Tidligere skisser</h2>
@@ -633,6 +654,8 @@
   <script src="js/ahaKunstrommetReferences.js"></script>
   <script src="js/ahaLists.js"></script>
   <script src="js/ahaKunstrommetV2.js"></script>
+  <script src="js/ahaKunstrommetResumableUpload.js"></script>
+  <script src="js/ahaKunstrommetPrivateBackup.js"></script>
   <script src="js/ahaKunstrommetBridge.js"></script>
   <script src="js/ahaModules.js"></script>
   <script src="js/ahaGlobalNav.js"></script>
