@@ -1,0 +1,37 @@
+name: Kunstrommet private backup RLS rehearsal
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/kunstrommet-private-backup-staging.sql'
+      - 'supabase/tests/aha_kunstrommet_private_backup_rls.sql'
+      - '.github/workflows/aha-kunstrommet-backup-rls.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-storage-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kunstrommet_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local-fixture-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kunstrommet_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: kunstrommet_test
+      PGUSER: postgres
+      PGPASSWORD: local-fixture-only
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: psql -X -f supabase/tests/aha_kunstrommet_private_backup_rls.sql
