@@ -92,6 +92,233 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
   }, { x, y, w, h });
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
+  test("smaller documents gain bounded layer capacity and imported dimensions set their own limit",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const count=page.locator("#kv2-layer-count");
+    await expect(count).toContainText("1 av 8 lag");
+    const old=await jsonBackup(page);
+    page.on("dialog",d=>d.accept());
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-width").fill("640");
+    await page.locator("#kv2-canvas-height").fill("960");
+    await page.locator("#kv2-new-sized").click();
+    await expect(count).toContainText("1 av 12 lag");
+    await stroke(page);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    for(let i=1;i<12;i++)await page.locator("#kv2-add-layer").click();
+    await expect(count).toContainText("12 av 12 lag");
+    await expect(page.locator("#kv2-duplicate-layer")).toBeDisabled();
+    await page.locator("#kv2-add-layer").evaluate(b=>b.click());
+    await expect(count).toContainText("12 av 12 lag");
+    await page.locator("#kv2-undo").click();
+    await expect(count).toContainText("11 av 12 lag");
+    await page.locator("#kv2-redo").click();
+    await expect(count).toContainText("12 av 12 lag");
+    const small=await jsonBackup(page);
+    expect(small.layers).toHaveLength(12);
+    expect(small.layers[0].maskBitmap).toBeTruthy();
+    const load=async(data)=>page.locator("#kv2-import").setInputFiles({name:"project.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data))});
+    await load({...small,layers:[...small.layers,small.layers[0]]});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    await expect(count).toContainText("12 av 12 lag");
+    await load({...old,layers:Array.from({length:9},()=>old.layers[0])});
+    await expect(page.locator("#kv2-status")).toContainText("Import feilet");
+    await expect(count).toContainText("12 av 12 lag");
+    await load(old);
+    await expect(count).toContainText("1 av 8 lag");
+    await load(small);
+    await expect(count).toContainText("12 av 12 lag");
+    await expect.poll(async()=>(await pxAt(page,320,480))[0]).toBeLessThan(80);
+    await page.locator("#kv2-title").fill("Tolv lag");
+    await page.locator("#kv2-save").click();
+    await expect(page.locator("#kv2-status")).toHaveText("Lagret på denne enheten");
+    await page.reload();
+    await page.locator("#kv2-projects .kv2-project--saved").getByRole("button",{name:"Åpne",exact:true}).click();
+    await expect(count).toContainText("12 av 12 lag");
+    expect((await jsonBackup(page)).layers[0].maskBitmap).toBeTruthy();
+  });
+
+  test("small canvas capacity is capped at sixteen and large presets retain eight",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator(".kv2-size-panel summary").click();
+    await page.locator("#kv2-canvas-width").fill("320");
+    await page.locator("#kv2-canvas-height").fill("320");
+    await page.locator("#kv2-new-sized").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 16 lag");
+    await page.locator("#kv2-canvas-preset").selectOption("1600x900");
+    await page.locator("#kv2-new-sized").click();
+    await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+  });
+
+  test("history reuses identical layer and mask rasters but decodes changed content",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await shapeDrag(page,[300,300],[300,300],1981);
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-brush").click();
+    const original=await jsonBackup(page);
+    await shapeDrag(page,[900,500],[900,500],1982);
+    const painted=await jsonBackup(page);
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    const faded=await jsonBackup(page);
+    // Count Image constructions only during history. The app's decoder is the
+    // only image constructor involved in these local undo/redo operations.
+    await page.evaluate(()=>{
+      const NativeImage=window.Image;
+      window.__kv2HistoryDecodes=0;
+      window.Image=class extends NativeImage {
+        constructor(...args){super(...args);window.__kv2HistoryDecodes++;}
+      };
+    });
+    const decodes=()=>page.evaluate(()=>window.__kv2HistoryDecodes);
+    const undo=page.locator("#kv2-undo"),redo=page.locator("#kv2-redo");
+    await undo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(painted.layers);
+    expect(await decodes()).toBe(0);
+    await undo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(original.layers);
+    expect(await decodes()).toBe(1);
+    await redo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(painted.layers);
+    expect(await decodes()).toBe(2);
+    await redo.click();
+    await expect.poll(async()=>(await jsonBackup(page)).layers).toEqual(faded.layers);
+    expect(await decodes()).toBe(2);
+    expect((await jsonBackup(page)).layers[0].maskBitmap).toBeTruthy();
+  });
+
+  test("group opacity composites overlapping layers once and survives history and JSON import",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await shapeDrag(page,[300,300],[300,300],1971);
+    await shapeDrag(page,[600,400],[600,400],1972);
+    await page.locator("#kv2-add-layer").click();
+    await shapeDrag(page,[600,400],[600,400],1973);
+    await shapeDrag(page,[900,500],[900,500],1974);
+    await page.locator(".kv2-layer").last().locator(".kv2-move-together").check();
+    await page.locator("#kv2-group-name").fill("Felles");
+    await page.locator("#kv2-group-save").click();
+    const before=await jsonBackup(page), slider=page.locator("#kv2-group-opacity");
+    await expect(slider).toBeEnabled();
+    await slider.evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    const samples=await Promise.all([[300,300],[600,400],[900,500]].map(([x,y])=>pxAt(page,x,y)));
+    expect(samples[0]).toEqual(samples[1]);expect(samples[1]).toEqual(samples[2]);
+    expect(samples[0][0]).toBeGreaterThan(120);expect(samples[0][0]).toBeLessThan(170);
+    const grouped=await jsonBackup(page);
+    expect(grouped.layers.map(l=>l.groupOpacity)).toEqual([.5,.5]);
+    expect(grouped.layers.map(({groupOpacity,...layer})=>layer)).toEqual(before.layers);
+    await expect(page.locator("#kv2-clip-toggle")).toBeDisabled();
+    await expect(page.locator("#kv2-merge-down")).toBeDisabled();
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,600,400))[0]).toBeLessThan(80);
+    await page.locator("#kv2-redo").click();
+    await expect.poll(async()=>(await pxAt(page,600,400))[0]).toBe(samples[1][0]);
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-import").setInputFiles({name:"group-opacity.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(grouped))});
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    expect(await pxAt(page,600,400)).toEqual(samples[1]);
+    await page.locator("#kv2-group-select").selectOption("Felles");
+    await expect(slider).toHaveValue("50");
+    await slider.evaluate(c=>{c.value="0";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    expect(await pxAt(page,600,400)).toEqual([255,255,255,255]);
+    await page.locator("#kv2-group-dissolve-action").click();
+    expect((await pxAt(page,600,400))[0]).toBeLessThan(80);
+    expect((await jsonBackup(page)).layers.every(l=>!l.groupName&&l.groupOpacity===undefined)).toBe(true);
+  });
+
+  test("clipping limits the upper raster to the lower alpha without altering source pixels",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const clip=page.locator("#kv2-clip-toggle");
+    await expect(clip).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1961);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[300,300],[300,300],1962);
+    await shapeDrag(page,[900,500],[900,500],1963);
+    const original=await jsonBackup(page);
+    const red=await pxAt(page,900,500);
+    expect(red[0]).toBeGreaterThan(red[1]);
+    await clip.click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    expect((await pxAt(page,300,300))[0]).toBeGreaterThan((await pxAt(page,300,300))[1]);
+    const clipped=await jsonBackup(page);
+    expect(clipped.layers[1].clipToBelow).toBe(true);
+    expect(clipped.layers.map(({clipToBelow,...layer})=>layer)).toEqual(original.layers);
+    await expect(page.locator("#kv2-merge-down")).toBeDisabled();
+    await page.getByRole("button",{name:"Skjul Lag 1 · Tegning",exact:true}).click();
+    expect(await pxAt(page,300,300)).toEqual([255,255,255,255]);
+    await page.locator("#kv2-undo").click();
+    await expect.poll(async()=>(await pxAt(page,300,300))[1]).toBeLessThan(200);
+    await page.locator("#kv2-undo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","false");
+    expect(await pxAt(page,900,500)).toEqual(red);
+    await page.locator("#kv2-redo").click();
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    page.on("dialog",d=>d.accept());
+    await page.locator("#kv2-import").setInputFiles({name:"clip.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(clipped))});
+    await expect(page.locator("#kv2-status")).toHaveText("Importert – lagre for å beholde");
+    await expect(clip).toHaveAttribute("aria-pressed","true");
+    expect(await pxAt(page,900,500)).toEqual([255,255,255,255]);
+    await clip.click();
+    expect(await pxAt(page,900,500)).toEqual(red);
+  });
+
+  test("raster merge down preserves composition and restores original layers on undo",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    const merge=page.locator("#kv2-merge-down"), count=page.locator("#kv2-layer-count");
+    await expect(merge).toBeDisabled();
+    await shapeDrag(page,[300,300],[300,300],1941);
+    await page.locator("#kv2-add-layer").click();
+    await page.locator("#kv2-swatch-korall").click();
+    await shapeDrag(page,[900,500],[900,500],1942);
+    await expect(merge).toBeEnabled();
+    const original=await jsonBackup(page);
+    const points=[[300,300],[900,500],[600,400]];
+    const colors=async()=>Promise.all(points.map(([x,y])=>pxAt(page,x,y)));
+    const before=await colors();
+    expect(before[0][0]).toBeLessThan(80);
+    expect(before[1][0]).toBeGreaterThan(before[1][1]);
+    page.once("dialog",d=>d.dismiss());
+    await merge.click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    page.once("dialog",d=>d.accept());
+    await merge.click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect(await colors()).toEqual(before);
+    const combined=await jsonBackup(page);
+    expect(combined.layers[0].id).toBe(original.layers[0].id);
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-undo").click();
+    await expect(count).toContainText("2 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(original.layers);
+    await page.locator("#kv2-redo").click();
+    await expect(count).toContainText("1 av 8 lag");
+    expect((await jsonBackup(page)).layers).toEqual(combined.layers);
+    expect(await colors()).toEqual(before);
+  });
+
+  test("raster merge blocks unsupported opacity, blend and masks",async({page})=>{
+    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.locator("#kv2-add-layer").click();
+    const merge=page.locator("#kv2-merge-down");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="50";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-opacity").evaluate(c=>{c.value="100";c.dispatchEvent(new Event("change",{bubbles:true}));});
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-blend-mode").selectOption("multiply");
+    await expect(merge).toBeDisabled();
+    await page.locator("#kv2-blend-mode").selectOption("normal");
+    await expect(merge).toBeEnabled();
+    await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-mask-edit").click();
+    await expect(merge).toBeDisabled();
+    await expect(page.locator("#kv2-layer-count")).toContainText("2 av 8 lag");
+  });
+
   test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
     await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
     const old=await jsonBackup(page);
