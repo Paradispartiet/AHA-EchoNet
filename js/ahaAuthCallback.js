@@ -88,6 +88,9 @@
     try {
       const value = String(localStorage.getItem(AHA_AUTH_RETURN_TO_KEY) || "").trim();
       if (value === HISTORY_GO_PROFILE_URL) return value;
+      if (value === "psykologi-vault.html") {
+        return new URL(value, global.location.href).href;
+      }
     } catch {}
     return "";
   }
@@ -180,7 +183,7 @@
         warnProfileFailure("existing session", profileResult);
 
         status(returnTarget
-          ? "Du er allerede innlogget. Sender deg tilbake til History Go …"
+          ? "Du er allerede innlogget. Sender deg tilbake …"
           : "Du er allerede innlogget. Sender deg til AHA Dashboard …"
         );
         goAfterAuth(700);
@@ -210,7 +213,7 @@
 
         cleanCallbackUrl();
         status(returnTarget
-          ? "Innlogging fullført. Sender deg tilbake til History Go …"
+          ? "Innlogging fullført. Sender deg tilbake …"
           : "Innlogging fullført. Sender deg til AHA Dashboard …"
         );
         goAfterAuth(700);
