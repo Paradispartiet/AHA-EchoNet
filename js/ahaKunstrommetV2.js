@@ -3714,6 +3714,7 @@
       if (addLayer("Justeringslag", "adjustment")) {
         tool = "hand";
         moveTogether.clear();
+        $("kv2-adjustment-controls").open = true;
         refresh();
         status("Justeringslag opprettet – bruk bildejusteringene i lagpanelet.");
       }
