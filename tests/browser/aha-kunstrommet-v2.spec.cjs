@@ -3296,3 +3296,30 @@ test("one sketchbook restores search, thumbnail, copy and safe local deletion", 
   await expect(page.locator("#kv2-projects .kv2-project--saved")).toHaveCount(1);
   await expect(page.locator("#kv2-projects")).toContainText("Kveldsmaleri");
 });
+
+
+test("8.1 workspace gives the canvas priority without losing existing controls", async ({page}) => {
+  for (const width of [390, 834, 1180]) {
+    await page.setViewportSize({width, height: 900});
+    await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
+    const layout = await page.evaluate(() => {
+      const main = document.querySelector(".aha-dashboard.kv2");
+      const paper = document.querySelector("#kv2-paper");
+      const after = selector => !!(paper.compareDocumentPosition(document.querySelector(selector)) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return {width:main.getBoundingClientRect().width, overflow:document.documentElement.scrollWidth > innerWidth + 1,
+        canvasWidth:paper.clientWidth, after:["#kv2-save","#kv2-title",".kv2-guide-panel",".kv2-symmetry-panel","#kv2-brush-advanced"].every(after)};
+    });
+    expect(layout.after).toBe(true);
+    expect(layout.overflow).toBe(false);
+    if (width >= 834) expect(layout.width).toBeGreaterThan(760);
+    expect(layout.canvasWidth).toBeGreaterThan(250);
+    await expect(page.locator("#kv2-brush")).toBeVisible();
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await expect(page.locator("#kv2-add-layer")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator(".kv2-sidebar")).toBeHidden();
+    await expect(page.locator("#kv2-save")).toBeVisible();
+    await page.locator("#kv2-focus-mode").click();
+    await expect(page.locator("#kv2-add-layer")).toBeVisible();
+  }
+});

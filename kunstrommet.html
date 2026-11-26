@@ -35,11 +35,6 @@
         </div>
 
         <p id="kv2-focus-hint" class="kv2-tip" role="status">Hele atelieret vises.</p>
-        <div class="kv2-document-heading">
-          <label for="kv2-title">Navn på kunstverket</label>
-          <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
-        </div>
-
         <div class="kv2-toolbar" role="group" aria-label="Tegne- og redigeringsverktøy">
           <button id="kv2-brush" type="button" aria-pressed="true">Pensel</button>
           <button id="kv2-eraser" type="button" aria-pressed="false">Viskelær</button>
@@ -104,55 +99,6 @@
           </div>
         </div>
 
-        <details class="kv2-fold kv2-guide-panel">
-          <summary>Komposisjon og perspektiv</summary>
-          <label for="kv2-guide-mode">Hjelpelinjer</label>
-          <select id="kv2-guide-mode">
-            <option value="off">Av</option><option value="grid">Rutenett (6 × 6)</option>
-            <option value="thirds">Tredelingsregelen</option><option value="center">Midtlinjer</option>
-            <option value="one">Ettpunktsperspektiv</option><option value="two">Topunktsperspektiv</option>
-          </select>
-          <div id="kv2-guide-perspective" hidden>
-            <label><input id="kv2-guide-lock" type="checkbox" disabled/> Lås penselstrøk til perspektivet</label>
-            <p class="kv2-tip" id="kv2-guide-lock-note">Første bevegelse velger retning. Hold samme retning til du løfter pennen.</p>
-            <label for="kv2-guide-horizon">Horisontens høyde fra toppen</label>
-            <div class="kv2-slider"><input id="kv2-guide-horizon" type="range" min="10" max="90" value="50"/><output id="kv2-guide-horizon-value">50%</output></div>
-            <div id="kv2-guide-one-controls" hidden>
-              <label for="kv2-guide-point">Forsvinningspunkt</label>
-              <div class="kv2-slider"><input id="kv2-guide-point" type="range" min="5" max="95" value="50"/><output id="kv2-guide-point-value">50%</output></div>
-            </div>
-            <div id="kv2-guide-two-controls" hidden>
-              <label for="kv2-guide-left">Venstre forsvinningspunkt</label>
-              <div class="kv2-slider"><input id="kv2-guide-left" type="range" min="0" max="45" value="20"/><output id="kv2-guide-left-value">20%</output></div>
-              <label for="kv2-guide-right">Høyre forsvinningspunkt</label>
-              <div class="kv2-slider"><input id="kv2-guide-right" type="range" min="55" max="100" value="80"/><output id="kv2-guide-right-value">80%</output></div>
-            </div>
-          </div>
-          <label for="kv2-guide-opacity">Synlighet</label>
-          <div class="kv2-slider"><input id="kv2-guide-opacity" type="range" min="15" max="85" value="45"/><output id="kv2-guide-opacity-value">45%</output></div>
-          <button id="kv2-guide-reset" type="button">Slå av og nullstill</button>
-          <p class="kv2-tip">Hjelpelinjene følger zoom og fokusmodus og blir aldri med i eksporten. Slå på perspektivlåsen for rette pensel-, viskelær- og maskestrøk. I ettpunktsperspektiv kan du også tegne vannrett og loddrett; i topunktsperspektiv loddrett eller mot et forsvinningspunkt. Symmetri har forrang.</p>
-        </details>
-
-        <details class="kv2-fold kv2-symmetry-panel">
-          <summary>Symmetritegning</summary>
-          <label for="kv2-symmetry-mode">Speil pensel og viskelær</label>
-          <select id="kv2-symmetry-mode"><option value="off">Av</option><option value="vertical">Venstre / høyre</option><option value="horizontal">Over / under</option><option value="both">Fireveis</option><option value="radial">Radiell (mandala)</option></select>
-          <div id="kv2-symmetry-x-control" hidden>
-            <label for="kv2-symmetry-x">Vertikal akse / sentrum fra venstre</label>
-            <div class="kv2-slider"><input id="kv2-symmetry-x" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-x-value">50%</output></div>
-          </div>
-          <div id="kv2-symmetry-y-control" hidden>
-            <label for="kv2-symmetry-y">Horisontal akse / sentrum fra toppen</label>
-            <div class="kv2-slider"><input id="kv2-symmetry-y" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-y-value">50%</output></div>
-          </div>
-          <div id="kv2-symmetry-count-control" hidden>
-            <label for="kv2-symmetry-count">Antall radielle gjentakelser (inkludert originalen)</label>
-            <div class="kv2-slider"><input id="kv2-symmetry-count" type="range" min="3" max="12" value="6"/><output id="kv2-symmetry-count-value">6</output></div>
-          </div>
-          <button id="kv2-symmetry-reset" type="button">Slå av og nullstill</button>
-          <p class="kv2-tip">Pensel, viskelær og maskestrøk speiles eller roteres på aktivt lag. Radiell modus gjentar strøket rundt et flyttbart sentrum. Markering begrenser alle kopier; overlapping kan bygge opp farge. Akseendringer gjelder fra neste strøk. Figurer, tekst og gradienter speiles ikke.</p>
-        </details>
         <div class="kv2-text-panel" id="kv2-text-panel" role="group" aria-label="Tekst på bilde" hidden>
           <label for="kv2-text-content">Tekst (inntil fem linjer)</label>
           <textarea id="kv2-text-content" rows="2" maxlength="280" placeholder="Skriv en tittel eller en kort bildetekst"></textarea>
@@ -219,6 +165,72 @@
               preserveAspectRatio="none" aria-hidden="true" hidden><text id="kv2-text-preview"></text></svg>
           </div>
         </div>
+        <div class="kv2-actions">
+          <button id="kv2-new" type="button">Nytt prosjekt</button>
+          <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>
+          <label class="kv2-file" for="kv2-photo">Importer foto
+            <input id="kv2-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
+          </label>
+          <button id="kv2-png" type="button">Eksporter bilde (PNG)</button>
+          <button id="kv2-json" type="button">Eksporter redigerbart prosjekt</button>
+          <label class="kv2-file" for="kv2-import">Åpne prosjektfil
+            <input id="kv2-import" type="file" accept=".json,application/json" />
+          </label>
+        </div>
+        <div class="kv2-document-heading">
+          <label for="kv2-title">Navn på kunstverket</label>
+          <input id="kv2-title" type="text" maxlength="120" placeholder="For eksempel: Lys gjennom vinduet" />
+        </div>
+
+        <details class="kv2-fold kv2-guide-panel">
+          <summary>Komposisjon og perspektiv</summary>
+          <label for="kv2-guide-mode">Hjelpelinjer</label>
+          <select id="kv2-guide-mode">
+            <option value="off">Av</option><option value="grid">Rutenett (6 × 6)</option>
+            <option value="thirds">Tredelingsregelen</option><option value="center">Midtlinjer</option>
+            <option value="one">Ettpunktsperspektiv</option><option value="two">Topunktsperspektiv</option>
+          </select>
+          <div id="kv2-guide-perspective" hidden>
+            <label><input id="kv2-guide-lock" type="checkbox" disabled/> Lås penselstrøk til perspektivet</label>
+            <p class="kv2-tip" id="kv2-guide-lock-note">Første bevegelse velger retning. Hold samme retning til du løfter pennen.</p>
+            <label for="kv2-guide-horizon">Horisontens høyde fra toppen</label>
+            <div class="kv2-slider"><input id="kv2-guide-horizon" type="range" min="10" max="90" value="50"/><output id="kv2-guide-horizon-value">50%</output></div>
+            <div id="kv2-guide-one-controls" hidden>
+              <label for="kv2-guide-point">Forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-point" type="range" min="5" max="95" value="50"/><output id="kv2-guide-point-value">50%</output></div>
+            </div>
+            <div id="kv2-guide-two-controls" hidden>
+              <label for="kv2-guide-left">Venstre forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-left" type="range" min="0" max="45" value="20"/><output id="kv2-guide-left-value">20%</output></div>
+              <label for="kv2-guide-right">Høyre forsvinningspunkt</label>
+              <div class="kv2-slider"><input id="kv2-guide-right" type="range" min="55" max="100" value="80"/><output id="kv2-guide-right-value">80%</output></div>
+            </div>
+          </div>
+          <label for="kv2-guide-opacity">Synlighet</label>
+          <div class="kv2-slider"><input id="kv2-guide-opacity" type="range" min="15" max="85" value="45"/><output id="kv2-guide-opacity-value">45%</output></div>
+          <button id="kv2-guide-reset" type="button">Slå av og nullstill</button>
+          <p class="kv2-tip">Hjelpelinjene følger zoom og fokusmodus og blir aldri med i eksporten. Slå på perspektivlåsen for rette pensel-, viskelær- og maskestrøk. I ettpunktsperspektiv kan du også tegne vannrett og loddrett; i topunktsperspektiv loddrett eller mot et forsvinningspunkt. Symmetri har forrang.</p>
+        </details>
+
+        <details class="kv2-fold kv2-symmetry-panel">
+          <summary>Symmetritegning</summary>
+          <label for="kv2-symmetry-mode">Speil pensel og viskelær</label>
+          <select id="kv2-symmetry-mode"><option value="off">Av</option><option value="vertical">Venstre / høyre</option><option value="horizontal">Over / under</option><option value="both">Fireveis</option><option value="radial">Radiell (mandala)</option></select>
+          <div id="kv2-symmetry-x-control" hidden>
+            <label for="kv2-symmetry-x">Vertikal akse / sentrum fra venstre</label>
+            <div class="kv2-slider"><input id="kv2-symmetry-x" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-x-value">50%</output></div>
+          </div>
+          <div id="kv2-symmetry-y-control" hidden>
+            <label for="kv2-symmetry-y">Horisontal akse / sentrum fra toppen</label>
+            <div class="kv2-slider"><input id="kv2-symmetry-y" type="range" min="10" max="90" value="50"/><output id="kv2-symmetry-y-value">50%</output></div>
+          </div>
+          <div id="kv2-symmetry-count-control" hidden>
+            <label for="kv2-symmetry-count">Antall radielle gjentakelser (inkludert originalen)</label>
+            <div class="kv2-slider"><input id="kv2-symmetry-count" type="range" min="3" max="12" value="6"/><output id="kv2-symmetry-count-value">6</output></div>
+          </div>
+          <button id="kv2-symmetry-reset" type="button">Slå av og nullstill</button>
+          <p class="kv2-tip">Pensel, viskelær og maskestrøk speiles eller roteres på aktivt lag. Radiell modus gjentar strøket rundt et flyttbart sentrum. Markering begrenser alle kopier; overlapping kan bygge opp farge. Akseendringer gjelder fra neste strøk. Figurer, tekst og gradienter speiles ikke.</p>
+        </details>
         <div id="kv2-brush-advanced" class="kv2-brush-inspector" hidden>
             <div class="kv2-titlebar"><h2>Avansert pensel</h2><button id="kv2-back-to-canvas" type="button">Tilbake til lerretet</button></div>
             <div class="kv2-active-sample"><strong>Aktiv pensel</strong><canvas id="kv2-active-brush-sample" width="180" height="64" aria-label="Strøkprøve for aktiv pensel"></canvas></div>
@@ -347,18 +359,6 @@
           <button id="kv2-new-sized" type="button">Nytt prosjekt med valgt format</button>
           <p class="kv2-tip">Oppretter et nytt, tomt lerret. Lagrede kunstverk beholder sine mål. 320–1600 px per side, maks 1 440 000 piksler. Eksisterende prosjekt skaleres ikke.</p>
         </details>
-        <div class="kv2-actions">
-          <button id="kv2-new" type="button">Nytt prosjekt</button>
-          <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>
-          <label class="kv2-file" for="kv2-photo">Importer foto
-            <input id="kv2-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
-          </label>
-          <button id="kv2-png" type="button">Eksporter bilde (PNG)</button>
-          <button id="kv2-json" type="button">Eksporter redigerbart prosjekt</button>
-          <label class="kv2-file" for="kv2-import">Åpne prosjektfil
-            <input id="kv2-import" type="file" accept=".json,application/json" />
-          </label>
-        </div>
         <p class="kv2-tip">Lagre lokalt for å åpne igjen med lagene intakte. Eksporter også prosjektfilen som sikkerhetskopi. Du kan importere prosjektfiler fra Kunstrommet V1, men V1 endres ikke.</p>
       </section>
 
