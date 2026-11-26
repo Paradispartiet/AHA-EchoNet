@@ -35,8 +35,8 @@
     // added to the AHA Supabase Redirect URLs allowlist on 2026-11-25.
     // Never trust a caller-provided redirect, wildcard or unverified preview.
     const origin = String(global.location?.origin || "");
-    const expected = origin === "https://paradispartiet.github.io"
-      ? "https://paradispartiet.github.io/AHA-EchoNet/auth-callback.html"
+    const expected = origin === "https://paradispartiet.github.io" || origin === "https://echonetaha.github.io"
+      ? origin + "/AHA-EchoNet/auth-callback.html"
       : origin === "https://aha-preview.aha-echonet-preview.pages.dev" ||
         origin === "https://aha-echo-net.vercel.app"
         ? origin + "/auth-callback.html"

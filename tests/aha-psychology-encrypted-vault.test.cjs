@@ -112,6 +112,8 @@ async function run() {
     await assert.rejects(vault.remove({ ...options, confirmed: true }), /not_activated/);
   }
   assert.equal(accesses, 0, "unapproved origins must not access Supabase");
+  global.location = { origin: "https://echonetaha.github.io" };
+  assert.equal(vault.enabled(), true);
   global.location = { origin: "https://aha-echo-net.vercel.app" };
   global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED = false;
   assert.equal(vault.enabled(), false);

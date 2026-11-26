@@ -75,6 +75,12 @@ async function run() {
   assert.equal(approved.window.AHA_VERCEL_AUTH_LOGIN_BLOCKED, false);
   assert.equal(approved.window.AHAAuth.getRedirectUrl(), VERCEL_CALLBACK);
 
+  const pagesOrigin = "https://echonetaha.github.io";
+  const pages = fixture(pagesOrigin);
+  assert.equal(pages.window.AHA_APP_URL, pagesOrigin + "/AHA-EchoNet/");
+  assert.equal(pages.window.AHAAuth.getRedirectUrl(), pagesOrigin + "/AHA-EchoNet/auth-callback.html");
+  assert.equal(fixture(pagesOrigin, { redirectOverride: GH_CALLBACK }).window.AHAAuth.getRedirectUrl(), "");
+
   // Only the exact production AHA Vercel origin is admitted; preview,
   // legacy and lookalike hosts remain blocked even with the old opt-in flag.
   const forbidden = [
@@ -87,6 +93,7 @@ async function run() {
     "https://aha-echonet.vercel.app.evil.example",
     "https://new-aha.example",
     "https://paradispartiet.github.io.evil.example",
+    "https://echonetaha.github.io.evil.example",
     "http://localhost:3000"
   ];
   for (const origin of forbidden) {
