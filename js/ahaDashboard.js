@@ -23,14 +23,23 @@
     return params.get("source") === "historygo" && params.get("auth") === "login";
   }
 
+  function getAuthReturnTargetFromUrl() {
+    if (isHistoryGoLoginReturnRequest()) return HISTORY_GO_PROFILE_URL;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("source") === "kontohvelv" && params.get("auth") === "login"
+      ? "psykologi-vault.html"
+      : "";
+  }
+
   function persistAuthReturnTargetFromUrl() {
-    if (!isHistoryGoLoginReturnRequest()) {
+    const target = getAuthReturnTargetFromUrl();
+    if (!target) {
       clearAuthReturnTarget();
       return;
     }
 
     try {
-      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, HISTORY_GO_PROFILE_URL);
+      localStorage.setItem(AHA_AUTH_RETURN_TO_KEY, target);
     } catch {}
   }
 
@@ -38,11 +47,6 @@
     try {
       localStorage.removeItem(AHA_AUTH_RETURN_TO_KEY);
     } catch {}
-  }
-
-  function redirectBackToHistoryGoProfile() {
-    clearAuthReturnTarget();
-    window.location.replace(HISTORY_GO_PROFILE_URL);
   }
 
   function countActive(items) {
@@ -3012,8 +3016,10 @@
       if (eventAuthState) renderIdentity(eventAuthState);
       const authState = eventAuthState || await loadAuthState();
       if (renderSeq !== ahaDashboardRenderSeq) return;
-      if (authState.user?.id && isHistoryGoLoginReturnRequest()) {
-        redirectBackToHistoryGoProfile();
+      const returnTarget = getAuthReturnTargetFromUrl();
+      if (authState.user?.id && returnTarget) {
+        clearAuthReturnTarget();
+        window.location.replace(returnTarget);
         return;
       }
 
@@ -3122,7 +3128,7 @@
       modal.setAttribute("aria-hidden", "true");
     };
     const openModal = () => {
-      if (!isHistoryGoLoginReturnRequest()) clearAuthReturnTarget();
+      persistAuthReturnTargetFromUrl();
       modal.classList.remove("is-hidden");
       modal.setAttribute("aria-hidden", "false");
     };
