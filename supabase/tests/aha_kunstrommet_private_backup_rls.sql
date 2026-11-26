@@ -28,15 +28,15 @@ end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
 select set_config('request.jwt.claims','{"is_anonymous":false,"app_metadata":{"aha_kunstrommet_backup_pilot":true}}',false);
-do $ begin
+do $test$ begin
  begin
  insert into storage.objects values ('aha-kunstrommet-private-backups','11111111-1111-4111-8111-111111111111/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json');
  raise exception 'Unreserved upload allowed';
  exception when insufficient_privilege then null; end;
-end $;
+end $test$;
 insert into public.aha_kunstrommet_backup_slots(user_id,slot,object_name) values ('11111111-1111-4111-8111-111111111111',1,'11111111-1111-4111-8111-111111111111/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json');
 insert into storage.objects values ('aha-kunstrommet-private-backups','11111111-1111-4111-8111-111111111111/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json');
-do $ begin
+do $test$ begin
  for i in 2..16 loop
  insert into public.aha_kunstrommet_backup_slots(user_id,slot,object_name)
  values ('11111111-1111-4111-8111-111111111111',i,'11111111-1111-4111-8111-111111111111/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/'||lpad(i::text,8,'0')||'-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json');
@@ -60,7 +60,7 @@ do $ begin
  values ('22222222-2222-4222-8222-222222222222',1,'22222222-2222-4222-8222-222222222222/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json');
  raise exception 'Cross-user reservation';
  exception when insufficient_privilege then null; end;
-end $;
+end $test$;
 insert into storage.objects values ('unrelated','existing.json');
 do $$ begin
  if (select count(*) from storage.objects where bucket_id='aha-kunstrommet-private-backups')<>1 then raise exception 'Own read failed'; end if;

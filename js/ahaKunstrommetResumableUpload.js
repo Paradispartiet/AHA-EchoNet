@@ -1,4 +1,4 @@
-// Isolated TUS transport candidate. Not loaded by Kunstrommet, not enabled in production.
+// Staging TUS transport. Loading this file does not initiate requests or enable it.
 // Caller must first reserve a path under an independently verified server quota.
 (function(global){
  "use strict";

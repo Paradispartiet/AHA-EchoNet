@@ -51,3 +51,10 @@ Ny separat modul (ikke lastet av HTML) for avbruddsrobust overføring av inntil 
 Serverkvoten på 16 x 6 MiB beholdes foreløpig; store filer må ha egen, transaksjonssikker reservasjon før TUS kobles til. Ikke frigjør reserverte stier bare ved sletting eller timeout: TUS-URL kan være gyldig inntil 24 timer, og sletting alene beviser ikke at pågående uploads er stoppet. Sikker automatisk opprydding krever en verifisert serverprosess med sperring av ny upload, utløps-/revisjonskontroll, avstemming av faktisk Storage-objekt og test mot ekte API. Ikke implementert. Reell TUS, CORS, staging-konto/SDK, iPad og kvotebruk må verifiseres før aktivering.
 
 Forrige RLS-jobb feilet med psql invalid command grunnet duplisert SQL-tekst under innsetting av regex. SQL-filen er rekonstruert med én transaksjon og unike policyer; ny CI må bekrefte resultatet.
+
+
+## 8.2 – staginggrensesnitt for gjenopptak
+
+TUS er koblet til eksisterende skybackup-grensesnitt med progress, Fortsett opplasting og Avslutt opplastingsøkt. Ingen ny aktivering: eksisterende stagingflagg og separat TUS-flagg/prosjektref må være eksplisitt angitt; konfigurasjon og faktisk klient-URL må samsvare, kjent produksjonsref er sperret. Verifisert konto og token kontrolleres for hver nettverksforespørsel. Første steg reserverer eksisterende småfilplass, og 6 MiB er fortsatt absolutt pilotgrense. Privat readback og SHA-256 er påkrevd før suksess. En avbrutt økt holdes i minnet i samme fane; ny opplasting er sperret mens økten er uavklart. Avslutt sletter verken objekt eller reservasjon. Ingen lagring av token/upload-URL på disk. Reell TUS, CORS, SDK og konto i separat Supabase-staging må testes før flagg aktiveres. 36 MiB opplastinger krever egen kvotemodell; ikke åpnet i appen.
+
+RLS-testens nye DO-blokker hadde feil dollaravgrensning. Avgrensningen er rettet; policyene er uendret.

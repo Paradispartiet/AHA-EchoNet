@@ -587,6 +587,14 @@
             <summary>Privat skybackup (pilot)</summary>
             <p class="kv2-tip">Manuell kopi av kunstverket med alle lag, tittel og notat. Maks 6 MiB i piloten. Ikke ende-til-ende-kryptert. Ingen automatisk synkronisering.</p>
             <button id="kv2-cloud-save" type="button">Lagre i skyen</button>
+            <div id="kv2-cloud-transfer" hidden>
+              <label for="kv2-cloud-progress">Opplastingsfremdrift</label>
+              <progress id="kv2-cloud-progress" max="1" value="0"></progress>
+              <span id="kv2-cloud-progress-text">0 / 0 MiB</span>
+              <button id="kv2-cloud-resume" type="button" disabled>Fortsett opplasting</button>
+              <button id="kv2-cloud-discard" type="button" disabled>Avslutt opplastingsøkt</button>
+              <p class="kv2-tip">Gjenopptak gjelder samme åpne fane. Lukk ikke fanen før opplastingen er bekreftet.</p>
+            </div>
             <button id="kv2-cloud-list" type="button">Hent fra skyen</button>
             <label for="kv2-cloud-project">Prosjekt i skyen</label>
             <select id="kv2-cloud-project" disabled><option value="">Velg prosjekt</option></select>
@@ -641,6 +649,7 @@
   <script src="js/ahaKunstrommetReferences.js"></script>
   <script src="js/ahaLists.js"></script>
   <script src="js/ahaKunstrommetV2.js"></script>
+  <script src="js/ahaKunstrommetResumableUpload.js"></script>
   <script src="js/ahaKunstrommetPrivateBackup.js"></script>
   <script src="js/ahaKunstrommetBridge.js"></script>
   <script src="js/ahaModules.js"></script>
