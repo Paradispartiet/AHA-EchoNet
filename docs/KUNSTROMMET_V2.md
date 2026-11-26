@@ -374,3 +374,8 @@ Denne grenen samordner #1142, #1145, #1146, #1147 og #1148 med oppdatert hovedgr
 ## 8.1 – tegneflaten først (utviklingskandidat)
 
 Kunstrommet får egen arbeidsbredde opptil 1520 CSS-piksler i stedet for den globale feedens 760 px. Lerretet følger verktøylinjen og det kontekstavhengige tekstpanelet; lagring/import/eksport ligger rett under, før navn, komposisjon, symmetri og øvrige innstillinger. De eksisterende verktøyene, DOM-ID-ene, fokusmodus og lagpanelet beholdes. På smalere skjermer plasseres lagpanelet under editoren. Sentrale knappemål er minst 44 px. Ingen endring av rastermotor, pikselmål, prosjektformat, lokal lagring eller nettverk. Ny nettlesertest dekker 390, 834 og 1180 CSS-piksler, rekkefølge, sidebredde, horisontal overflow og tilgang til lag og lagring i og utenfor fokusmodus. Fysisk iPad/Apple Pencil og belastningstest er fortsatt åpen i #1058.
+
+
+### 8.1 – ikonverktøy og sammenleggbart lagpanel
+
+13 tegne-/redigeringsverktøy og angre/gjør om får lokale SVG-ikoner, korte synlige navn, opprinnelige tilgjengelige navn og minst 48 CSS-piksler trykkflate. Alle eksisterende verktøy-ID-er og hendelser beholdes. Lagverktøy kan foldes sammen med en innfødt details/summary, som er åpen som standard; lagantall forblir synlig. Ingen ny lagring, motor eller nettverk. Test dekker verktøyvalg, trykkflate, sammenfolding/gjenåpning og uendrede lag i prosjektbackup. Kontekstavhengige verktøymenyer er ikke en del av denne etappen.

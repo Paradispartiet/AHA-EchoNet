@@ -291,3 +291,12 @@
   .kv2-zoom-controls { max-width: 100%; }
   .kv2-paper { padding: 4px; }
 }
+
+/* Studio 8.1 – accessible icon strip and optional layer disclosure. */
+.kv2-tool-strip { display:flex; flex:1 0 100%; flex-wrap:wrap; gap:4px; min-width:0; }
+.kv2 .kv2-toolbar .kv2-icon-tool { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:48px; min-height:48px; padding:4px 5px; border-radius:8px; font-size:.68rem; line-height:1.1; }
+.kv2-icon-tool svg { flex:none; display:block; }
+.kv2-icon-tool span { white-space:nowrap; }
+.kv2 .kv2-layer-disclosure > summary { cursor:pointer; padding:10px 0; min-height:44px; box-sizing:border-box; font-weight:600; }
+.kv2-layer-disclosure > summary:focus-visible { outline:3px solid #4874a8; outline-offset:2px; }
+@media(max-width:680px) { .kv2-tool-strip { gap:4px; } }

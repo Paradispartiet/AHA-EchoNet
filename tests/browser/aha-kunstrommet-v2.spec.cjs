@@ -3323,3 +3323,27 @@ test("8.1 workspace gives the canvas priority without losing existing controls",
     await expect(page.locator("#kv2-add-layer")).toBeVisible();
   }
 });
+
+
+test("8.1 icon tools and collapsible layers preserve the drawing", async ({page}) => {
+  await page.setViewportSize({width:834,height:1180});
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  const brush=page.getByRole("button",{name:"Pensel",exact:true});
+  await expect(brush).toHaveAttribute("aria-pressed","true");
+  await expect(brush.locator("svg")).toBeVisible();
+  const size=await brush.boundingBox();
+  expect(size.width).toBeGreaterThanOrEqual(44);
+  expect(size.height).toBeGreaterThanOrEqual(44);
+  await stroke(page);
+  const before=await jsonBackup(page);
+  const disclosure=page.locator(".kv2-layer-disclosure");
+  await disclosure.locator(":scope > summary").click();
+  await expect(page.locator("#kv2-add-layer")).toBeHidden();
+  await expect(page.locator("#kv2-layer-count")).toBeVisible();
+  await page.getByRole("button",{name:"Viskelær",exact:true}).click();
+  await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed","true");
+  await brush.click();
+  await disclosure.locator(":scope > summary").click();
+  await expect(page.locator("#kv2-add-layer")).toBeVisible();
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

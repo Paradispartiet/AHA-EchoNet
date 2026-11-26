@@ -36,20 +36,22 @@
 
         <p id="kv2-focus-hint" class="kv2-tip" role="status">Hele atelieret vises.</p>
         <div class="kv2-toolbar" role="group" aria-label="Tegne- og redigeringsverktøy">
-          <button id="kv2-brush" type="button" aria-pressed="true">Pensel</button>
-          <button id="kv2-eraser" type="button" aria-pressed="false">Viskelær</button>
-          <button id="kv2-move" type="button" aria-pressed="false">Flytt lag</button>
+          <div class="kv2-tool-strip" role="group" aria-label="Velg verktøy">
+          <button id="kv2-brush" type="button" aria-pressed="true" class="kv2-icon-tool" aria-label="Pensel" title="Pensel"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m14 6 4-4 4 4-10 10-4-4zM8 12c-5 0-3 6-6 8 5 1 9-1 10-5"/></svg><span aria-hidden="true">Pensel</span></button>
+          <button id="kv2-eraser" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Viskelær" title="Viskelær"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 14 10-10 7 7-10 10H7zM10 21h12M8 9l9 9"/></svg><span aria-hidden="true">Visk</span></button>
+          <button id="kv2-move" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Flytt lag" title="Flytt lag"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2v20M2 12h20M9 5l3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3M19 9l3 3-3 3"/></svg><span aria-hidden="true">Flytt</span></button>
+          <button id="kv2-hand" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Hånd" title="Hånd"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 13V6a2 2 0 0 1 4 0v5-7a2 2 0 0 1 4 0v7-4a2 2 0 0 1 4 0v8c0 5-3 7-7 7h-1c-3 0-5-2-7-5l-2-3a2 2 0 0 1 3-2l2 2"/></svg><span aria-hidden="true">Hånd</span></button>
+          <button id="kv2-select" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Marker område" title="Marker område"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1" stroke-dasharray="3 3"/></svg><span aria-hidden="true">Marker</span></button>
+          <button id="kv2-lasso" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Frihåndsmarkering (lasso)" title="Frihåndsmarkering (lasso)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 17C2 17 1 5 9 3c8-3 16 4 11 10-2 3-10 4-12 7-1 2 2 3 4 1" stroke-dasharray="3 2"/></svg><span aria-hidden="true">Lasso</span></button>
+          <button id="kv2-eyedropper" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Fargepipette" title="Fargepipette"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 5 7 7M16 2l6 6-4 4-2-2L6 20l-4 2 2-4L14 8l-2-2z"/></svg><span aria-hidden="true">Pipette</span></button>
+          <button id="kv2-rectangle" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Rektangel" title="Rektangel"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="1"/></svg><span aria-hidden="true">Firkant</span></button>
+          <button id="kv2-ellipse" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Ellipse" title="Ellipse"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="12" rx="9" ry="7"/></svg><span aria-hidden="true">Ellipse</span></button>
+          <button id="kv2-line" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Linje" title="Linje"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20 20 4"/></svg><span aria-hidden="true">Linje</span></button>
+          <button id="kv2-arrow" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Pil" title="Pil"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20 20 4M10 4h10v10"/></svg><span aria-hidden="true">Pil</span></button>
+          <button id="kv2-text" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Tekst" title="Tekst"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6V3h16v3M12 3v18M8 21h8"/></svg><span aria-hidden="true">Tekst</span></button>
+          <button id="kv2-gradient" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Gradient" title="Gradient"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M11 4v16M15 4v16M19 4v16" opacity=".55"/></svg><span aria-hidden="true">Gradient</span></button>
+          </div>
           <label><input id="kv2-snap-enabled" type="checkbox" /> Fest til lerret og lag</label>
-          <button id="kv2-hand" type="button" aria-pressed="false">Hånd</button>
-          <button id="kv2-select" type="button" aria-pressed="false">Marker område</button>
-          <button id="kv2-lasso" type="button" aria-pressed="false">Frihåndsmarkering (lasso)</button>
-          <button id="kv2-eyedropper" type="button" aria-pressed="false">Fargepipette</button>
-          <button id="kv2-rectangle" type="button" aria-pressed="false">Rektangel</button>
-          <button id="kv2-ellipse" type="button" aria-pressed="false">Ellipse</button>
-          <button id="kv2-line" type="button" aria-pressed="false">Linje</button>
-          <button id="kv2-arrow" type="button" aria-pressed="false">Pil</button>
-          <button id="kv2-text" type="button" aria-pressed="false">Tekst</button>
-          <button id="kv2-gradient" type="button" aria-pressed="false">Gradient</button>
           <div id="kv2-gradient-panel" hidden>
             <label for="kv2-gradient-type">Gradienttype</label>
             <select id="kv2-gradient-type"><option value="linear">Lineær</option><option value="radial">Radial</option></select>
@@ -89,8 +91,8 @@
           </div>
           <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
             <output id="kv2-size-value">6</output></label>
-          <button id="kv2-undo" type="button">Angre</button>
-          <button id="kv2-redo" type="button">Gjør om</button>
+          <button id="kv2-undo" type="button" class="kv2-icon-tool" aria-label="Angre" title="Angre"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 6 6"/></svg><span aria-hidden="true">Angre</span></button>
+          <button id="kv2-redo" type="button" class="kv2-icon-tool" aria-label="Gjør om" title="Gjør om"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5 6 6-6 6M21 11H10a6 6 0 0 0-6 6"/></svg><span aria-hidden="true">Gjør om</span></button>
           <div class="kv2-zoom-controls" role="group" aria-label="Zoom på lerretet">
             <button id="kv2-zoom-out" type="button">Zoom ut</button>
             <output id="kv2-zoom-value" aria-live="polite">100%</output>
@@ -368,6 +370,8 @@
             <h2 id="kv2-layer-title">Lag</h2>
             <small id="kv2-layer-count"></small>
           </div>
+          <details class="kv2-layer-disclosure" open>
+            <summary>Lagverktøy</summary>
           <p class="kv2-tip">Øverste lag i listen ligger foran de andre.</p>
           <p class="kv2-tip">Merk av ekstra lag i listen for å flytte dem sammen med aktivt lag. Andre verktøy virker fortsatt bare på aktivt lag.</p>
           <div id="kv2-layers" class="kv2-layers" aria-label="Lagene i kunstverket"></div>
@@ -574,6 +578,7 @@
             </div>
           </div>
           <p class="kv2-tip">Transformering påvirker bare aktivt lag. Innhold utenfor lerretet blir klippet. Bruk Angre hvis resultatet ikke passer.</p>
+          </details>
         </section>
 
         <section class="aha-panel kv2-panel" aria-labelledby="kv2-library-title">
