@@ -8,6 +8,8 @@ const other="22222222-2222-4222-8222-222222222222";
 const project="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const rev="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.json";
 const art={format:"aha-kunstrommet-v2",version:2,width:320,height:320,title:"Test",note:"",layers:[{bitmap:"fixture"}],owner:"omit"};
+const staging="https://sstuzwppsheivczyqrim.supabase.co";
+let clientURL=staging;
 let id=user,local=user,pilot=true,anonymous=false,uploads=0,downloads=0,auth=0,restores=0,lastUpload,changeOnDownload=false,quotaMode="normal",slotMode="normal",reserves=0,removes=0,removed=false;
 const bucket={
  async upload(p,b,o){uploads++;lastUpload={p,b,o};return {data:{path:p},error:null};},
@@ -15,8 +17,8 @@ const bucket={
  async list(p,opts){assert.ok(p===user||p===user+"/"+project);if(opts?.search)return {data:removed?[]:[{name:rev,id:"file"}]};return {data:p===user?[{name:project,id:null},{name:"bad",id:null}]:quotaMode==="full"?Array.from({length:3},()=>({name:rev,id:"file",metadata:{size:36*1024*1024}})):[{name:rev,id:"file",created_at:"2026-11-26",metadata:quotaMode==="unknown"?{}:{size:123}}]};},
  async download(p){downloads++;assert.equal(p,user+"/"+project+"/"+rev);if(changeOnDownload)id=other;return {data:new Blob([JSON.stringify(art)])};}
 };
-const window={location:{origin:"https://aha-preview.aha-echonet-preview.pages.dev"},localStorage:{getItem:()=>local},crypto:{randomUUID:()=>rev.slice(0,-5)},
- AHADb:{getClient:()=>({auth:{getUser:async()=>{auth++;return {data:{user:{id,is_anonymous:anonymous,app_metadata:{aha_kunstrommet_backup_pilot:pilot}}}};}},storage:{from:n=>{assert.equal(n,"aha-kunstrommet-private-backups");return bucket;}},from:name=>{assert.equal(name,"aha_kunstrommet_backup_slots");return {
+const window={AHA_SUPABASE_URL:staging,location:{origin:"https://aha-preview.aha-echonet-preview.pages.dev"},localStorage:{getItem:()=>local},crypto:{randomUUID:()=>rev.slice(0,-5)},
+ AHADb:{getClient:()=>({supabaseUrl:clientURL,auth:{getUser:async()=>{auth++;return {data:{user:{id,is_anonymous:anonymous,app_metadata:{aha_kunstrommet_backup_pilot:pilot}}}};}},storage:{from:n=>{assert.equal(n,"aha-kunstrommet-private-backups");return bucket;}},from:name=>{assert.equal(name,"aha_kunstrommet_backup_slots");return {
  select:()=>({eq:async()=>({data:slotMode==="full"?Array.from({length:16},(_,i)=>({slot:i+1})):[]})}),
  insert:row=>{reserves++;return {select:()=>({single:async()=>slotMode==="conflict"?{error:{code:"23505"}}:{data:row}})};}
  };}})},
@@ -30,6 +32,10 @@ const rejects=(f,code)=>assert.rejects(f,e=>e.code===code);
  window.AHA_KUNSTROMMET_BACKUP_STAGING_ENABLED=true;
  window.location.origin="https://echonetaha.github.io";await rejects(()=>api.saveCurrent({confirm:()=>true}),"disabled");assert.equal(auth,0);
  window.location.origin="https://aha-preview.aha-echonet-preview.pages.dev";
+ window.AHA_SUPABASE_URL="https://wshmybqyksrwkawqleiz.supabase.co";
+ await rejects(()=>api.listProjects(),"disabled");assert.equal(auth,0);
+ window.AHA_SUPABASE_URL=staging;clientURL="https://wshmybqyksrwkawqleiz.supabase.co";
+ await rejects(()=>api.saveCurrent({confirm:()=>true}),"not_configured");assert.equal(auth,0);clientURL=staging;
  await rejects(()=>api.saveCurrent({confirm:()=>false}),"cancelled");assert.equal(uploads,0);
  pilot=false;await rejects(()=>api.saveCurrent({confirm:()=>true}),"pilot_required");pilot=true;
  anonymous=true;await rejects(()=>api.listProjects(),"login_required");anonymous=false;

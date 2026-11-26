@@ -2,6 +2,7 @@
 (function(global){
   "use strict";
   const BUCKET="aha-kunstrommet-private-backups";
+  const STAGING_REF="sstuzwppsheivczyqrim", STAGING_URL="https://"+STAGING_REF+".supabase.co";
   const PILOT_BYTES=6*1024*1024;
   const RESTORE_BYTES=36*1024*1024;
   // Advisory only: the actual aggregate quota must be enforced server-side
@@ -14,12 +15,13 @@
   // Must be wired to a dedicated, verified staging deployment before use.
   // A client flag is NOT authorization; RLS and server pilot metadata are required.
   const enabled=()=>global.AHA_KUNSTROMMET_BACKUP_STAGING_ENABLED===true &&
-    global.location?.origin==="https://aha-preview.aha-echonet-preview.pages.dev";
+    global.location?.origin==="https://aha-preview.aha-echonet-preview.pages.dev" &&
+    global.AHA_SUPABASE_URL===STAGING_URL;
   // Separate, deliberately off staging gate. Never target the known production project.
   function tusRef(){
     const ref=global.AHA_KUNSTROMMET_TUS_STAGING_PROJECT_REF;
     return enabled()&&global.AHA_KUNSTROMMET_TUS_STAGING_ENABLED===true&&
-      /^[a-z0-9]{20}$/.test(ref||"")&&ref!=="wshmybqyksrwkawqleiz"&&
+      ref===STAGING_REF&&
       global.AHA_SUPABASE_URL==="https://"+ref+".supabase.co" ? ref:null;
   }
   function fail(code){throw Object.assign(new Error(code),{code});}
@@ -27,7 +29,7 @@
   async function account(expected,upload=false){
     if(!enabled())fail("disabled");
     const client=global.AHADb?.getClient?.();
-    if(!client?.auth?.getUser||!client?.storage?.from)fail("not_configured");
+    if(!client?.auth?.getUser||!client?.storage?.from||client.supabaseUrl!==STAGING_URL)fail("not_configured");
     const {data,error}=await client.auth.getUser();
     const user=data?.user;
     if(error||!UUID.test(user?.id||"")||user.is_anonymous!==false)fail("login_required");

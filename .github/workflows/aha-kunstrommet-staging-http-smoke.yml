@@ -1,0 +1,27 @@
+name: Kunstrommet staging HTTP smoke
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type synthetic-test-only to use two dedicated staging accounts"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  smoke:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'synthetic-test-only'
+    runs-on: ubuntu-latest
+    environment: kunstrommet-staging-test
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/kunstrommet-staging-http-smoke.mjs
+        env:
+          KR_STAGING_CONFIRM: synthetic-test-only
+          KR_STAGING_PUBLISHABLE_KEY: ${{ secrets.KR_STAGING_PUBLISHABLE_KEY }}
+          KR_STAGING_A_PASSWORD: ${{ secrets.KR_STAGING_A_PASSWORD }}
+          KR_STAGING_B_PASSWORD: ${{ secrets.KR_STAGING_B_PASSWORD }}
