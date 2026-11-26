@@ -51,7 +51,7 @@
           <button id="kv2-text" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Tekst" title="Tekst"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6V3h16v3M12 3v18M8 21h8"/></svg><span aria-hidden="true">Tekst</span></button>
           <button id="kv2-gradient" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Gradient" title="Gradient"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M11 4v16M15 4v16M19 4v16" opacity=".55"/></svg><span aria-hidden="true">Gradient</span></button>
           </div>
-          <label><input id="kv2-snap-enabled" type="checkbox" /> Fest til lerret og lag</label>
+          <label id="kv2-context-snap" hidden><input id="kv2-snap-enabled" type="checkbox" /> Fest til lerret og lag</label>
           <div id="kv2-gradient-panel" hidden>
             <label for="kv2-gradient-type">Gradienttype</label>
             <select id="kv2-gradient-type"><option value="linear">Lineær</option><option value="radial">Radial</option></select>
@@ -62,13 +62,13 @@
             <label><input id="kv2-gradient-reverse" type="checkbox"/> Reverser gradient</label>
             <p id="kv2-gradient-mask-note" class="kv2-tip"></p>
           </div>
-          <label for="kv2-shape-style">Form
+          <label id="kv2-context-shape" for="kv2-shape-style" hidden>Form
             <select id="kv2-shape-style" aria-label="Fyll eller omriss">
               <option value="fill">Fylt</option>
               <option value="outline">Omriss</option>
             </select>
           </label>
-          <label for="kv2-brush-preset">Penseltype
+          <label id="kv2-context-brush" for="kv2-brush-preset">Penseltype
             <select id="kv2-brush-preset" aria-label="Penseltype">
               <option value="normal">Vanlig</option>
               <option value="blyant">Blyant</option>
@@ -89,7 +89,7 @@
             <button type="button" class="kv2-swatch" id="kv2-swatch-krem" style="--kv2-swatch:#f4e8d3" aria-label="Krem" aria-pressed="false"></button>
             <button type="button" class="kv2-swatch" id="kv2-swatch-hvit" style="--kv2-swatch:#ffffff" aria-label="Hvit" aria-pressed="false"></button>
           </div>
-          <label>Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
+          <label id="kv2-context-size">Størrelse <input id="kv2-size" type="range" min="1" max="60" value="6" />
             <output id="kv2-size-value">6</output></label>
           <button id="kv2-undo" type="button" class="kv2-icon-tool" aria-label="Angre" title="Angre"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 6 6"/></svg><span aria-hidden="true">Angre</span></button>
           <button id="kv2-redo" type="button" class="kv2-icon-tool" aria-label="Gjør om" title="Gjør om"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5 6 6-6 6M21 11H10a6 6 0 0 0-6 6"/></svg><span aria-hidden="true">Gjør om</span></button>

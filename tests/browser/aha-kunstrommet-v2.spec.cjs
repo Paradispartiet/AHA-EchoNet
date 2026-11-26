@@ -2309,6 +2309,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
     await stroke(page);
     expect(await pixel(page)).toEqual([35, 36, 44, 255]);
     await page.locator("#kv2-mask-add").click();
+    await page.locator("#kv2-brush").click(); // Presets are contextual to the brush.
     await page.locator("#kv2-brush-preset").selectOption("lasur");
     // Changing a preset selects the brush; select mask eraser explicitly.
     await page.locator("#kv2-eraser").click();
@@ -3346,4 +3347,38 @@ test("8.1 icon tools and collapsible layers preserve the drawing", async ({page}
   await disclosure.locator(":scope > summary").click();
   await expect(page.locator("#kv2-add-layer")).toBeVisible();
   expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
+
+
+test("8.1 contextual tool settings preserve values, artwork and history", async ({page}) => {
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  const visible = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeVisible(); };
+  const hidden = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeHidden(); };
+  await visible(["brush-preset","size","color","undo","redo"]);
+  await hidden(["shape-style","snap-enabled","gradient-panel","text-panel"]);
+  await page.locator("#kv2-brush-preset").selectOption("blyant");
+  await stroke(page);
+  const before=await jsonBackup(page);
+  await page.locator("#kv2-move").click();
+  await visible(["snap-enabled","color"]); await hidden(["brush-preset","size","shape-style"]);
+  await page.locator("#kv2-snap-enabled").check();
+  await page.locator("#kv2-rectangle").click();
+  await visible(["shape-style","size"]); await hidden(["brush-preset","snap-enabled"]);
+  await page.locator("#kv2-shape-style").selectOption("outline");
+  await page.locator("#kv2-line").click();
+  await visible(["size"]); await hidden(["shape-style"]);
+  await page.locator("#kv2-gradient").click();
+  await visible(["gradient-panel","color"]); await hidden(["size","brush-preset","shape-style"]);
+  await page.locator("#kv2-gradient-type").selectOption("radial");
+  await page.locator("#kv2-text").click();
+  await visible(["text-panel"]); await hidden(["gradient-panel","size"]);
+  await page.locator("#kv2-hand").click();
+  await hidden(["text-panel","size","brush-preset","snap-enabled"]);
+  await page.locator("#kv2-move").click(); await expect(page.locator("#kv2-snap-enabled")).toBeChecked();
+  await page.locator("#kv2-rectangle").click(); await expect(page.locator("#kv2-shape-style")).toHaveValue("outline");
+  await page.locator("#kv2-gradient").click(); await expect(page.locator("#kv2-gradient-type")).toHaveValue("radial");
+  await page.locator("#kv2-brush").click(); await expect(page.locator("#kv2-brush-preset")).toHaveValue("blyant");
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  await page.locator("#kv2-undo").click();
+  await expect.poll(async()=>await pixel(page)).toEqual([255,255,255,255]);
 });

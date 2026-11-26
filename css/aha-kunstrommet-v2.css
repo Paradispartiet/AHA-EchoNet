@@ -300,3 +300,8 @@
 .kv2 .kv2-layer-disclosure > summary { cursor:pointer; padding:10px 0; min-height:44px; box-sizing:border-box; font-weight:600; }
 .kv2-layer-disclosure > summary:focus-visible { outline:3px solid #4874a8; outline-offset:2px; }
 @media(max-width:680px) { .kv2-tool-strip { gap:4px; } }
+
+/* Studio 8.1 – contextual controls: respect hidden despite toolbar label flex rules. */
+.kv2-toolbar > [hidden] { display:none !important; }
+#kv2-gradient-panel:not([hidden]) { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+#kv2-gradient-panel .kv2-tip { flex-basis:100%; margin:4px 0; }

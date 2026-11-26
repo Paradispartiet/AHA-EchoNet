@@ -379,3 +379,8 @@ Kunstrommet får egen arbeidsbredde opptil 1520 CSS-piksler i stedet for den glo
 ### 8.1 – ikonverktøy og sammenleggbart lagpanel
 
 13 tegne-/redigeringsverktøy og angre/gjør om får lokale SVG-ikoner, korte synlige navn, opprinnelige tilgjengelige navn og minst 48 CSS-piksler trykkflate. Alle eksisterende verktøy-ID-er og hendelser beholdes. Lagverktøy kan foldes sammen med en innfødt details/summary, som er åpen som standard; lagantall forblir synlig. Ingen ny lagring, motor eller nettverk. Test dekker verktøyvalg, trykkflate, sammenfolding/gjenåpning og uendrede lag i prosjektbackup. Kontekstavhengige verktøymenyer er ikke en del av denne etappen.
+
+
+### 8.1 – kontekstavhengige verktøyinnstillinger
+
+Penseltype vises ved Pensel, magnetisk justering ved Flytt lag, fyll/omriss ved rektangel/ellipse og størrelse ved pensel, viskelær, figurer, linje og pil. Gradient- og tekstpanelene følger fortsatt aktivt verktøy. Farge, hurtigpalett, zoom og angre/gjør om er alltid tilgjengelige (farge kan også brukes til markering). Verktøybytte bevarer innstillingsverdiene; skjulte kontroller blir ikke fjernet, nullstilt eller lagt i angrehistorikken. Ingen nye prosjektdata eller nettverkskall. Nettlesertest dekker synlighet, gjenvalg, identiske lag i eksport og angre. Eksisterende masketest velger Pensel eksplisitt før penseltype, i tråd med den nye arbeidsflyten. Fysisk iPad-testing gjenstår.
