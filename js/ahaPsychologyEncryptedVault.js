@@ -14,20 +14,20 @@
     return Object.assign(new Error(reason), { code: reason });
   }
 
-  // Only the independently verified, separate AHA production origin may
-  // use the vault. Shared GitHub Pages, legacy Vercel, previews and unknown
+  // Only the dedicated AHA production origins may use the vault.
+  // Shared GitHub Pages, legacy Vercel, previews and unknown
   // origins remain blocked even if the UX flag is accidentally enabled.
   // This is defence in depth; the Supabase RLS policies enforce ownership.
-  const VAULT_ORIGIN = "https://aha-echo-net.vercel.app";
+  const VAULT_ORIGINS = new Set(["https://echonetaha.github.io", "https://aha-echo-net.vercel.app"]);
 
   function enabled() {
     return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_ENABLED === true &&
-      global.location?.origin === VAULT_ORIGIN;
+      VAULT_ORIGINS.has(global.location?.origin);
   }
 
   function pilotEnabled() {
     return global.AHA_PSYCHOLOGY_ACCOUNT_VAULT_PILOT_ENABLED === true &&
-      global.location?.origin === VAULT_ORIGIN;
+      VAULT_ORIGINS.has(global.location?.origin);
   }
 
   function checkEnabled() {
