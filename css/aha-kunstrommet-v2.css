@@ -262,3 +262,46 @@
 .kv2-size-panel select{font:inherit;max-width:100%;padding:8px;border:1px solid #b9c1bd;border-radius:8px;background:white;}
 .kv2-size-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .kv2-size-inputs input{width:100%;min-width:0;box-sizing:border-box;}
+
+/* Studio 8.1 – drawing-first layout, independent of the feed's 760px width. */
+.aha-dashboard.kv2 { width: min(1520px, 100%); max-width: 1520px; box-sizing: border-box; padding-inline: clamp(8px, 1.5vw, 20px); }
+.kv2 .kv2-heading { padding: 12px 16px; align-items: center; }
+.kv2-heading h1 { margin: 0 0 4px; font-size: clamp(1.4rem, 2.3vw, 1.85rem); }
+.kv2-heading .eyebrow, .kv2-heading h1 + p { margin-bottom: 4px; }
+.kv2 .kv2-editor, .kv2 .kv2-panel { padding: clamp(10px, 1.5vw, 16px); }
+.kv2-workspace { gap: 12px; margin-top: 10px; grid-template-columns: minmax(0, 1fr) 300px; }
+.kv2-titlebar h2 { margin: 0; }
+#kv2-focus-hint { margin: 4px 0; }
+.kv2-toolbar { gap: 6px; margin-top: 8px; }
+.kv2-toolbar > button, .kv2-zoom-controls > button, .kv2-actions > button, .kv2-actions > .kv2-file { min-height: 44px; padding: 7px 10px; font-size: .86rem; border-radius: 8px; }
+.kv2-toolbar label { margin: 0 2px; }
+.kv2-toolbar .kv2-swatch { min-width: 44px; min-height: 44px; }
+.kv2-toolbar input[type="color"] { width: 44px; height: 44px; }
+.kv2-paper { margin: 10px 0; padding: 8px; border-radius: 10px; }
+.kv2-actions { margin-top: 8px; gap: 6px; }
+.kv2-sidebar { gap: 12px; }
+@media (max-width: 1100px) {
+  .kv2-workspace { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  .kv2 .kv2-heading { padding: 10px; }
+  .kv2-toolbar { align-items: center; }
+  .kv2-toolbar label { width: auto; max-width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .kv2-toolbar .kv2-palette { width: 100%; gap: 4px; }
+  .kv2-zoom-controls { max-width: 100%; }
+  .kv2-paper { padding: 4px; }
+}
+
+/* Studio 8.1 – accessible icon strip and optional layer disclosure. */
+.kv2-tool-strip { display:flex; flex:1 0 100%; flex-wrap:wrap; gap:4px; min-width:0; }
+.kv2 .kv2-toolbar .kv2-icon-tool { display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:48px; min-height:48px; padding:4px 5px; border-radius:8px; font-size:.68rem; line-height:1.1; }
+.kv2-icon-tool svg { flex:none; display:block; }
+.kv2-icon-tool span { white-space:nowrap; }
+.kv2 .kv2-layer-disclosure > summary { cursor:pointer; padding:10px 0; min-height:44px; box-sizing:border-box; font-weight:600; }
+.kv2-layer-disclosure > summary:focus-visible { outline:3px solid #4874a8; outline-offset:2px; }
+@media(max-width:680px) { .kv2-tool-strip { gap:4px; } }
+
+/* Studio 8.1 – contextual controls: respect hidden despite toolbar label flex rules. */
+.kv2-toolbar > [hidden] { display:none !important; }
+#kv2-gradient-panel:not([hidden]) { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+#kv2-gradient-panel .kv2-tip { flex-basis:100%; margin:4px 0; }
