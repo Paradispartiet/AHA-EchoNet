@@ -305,3 +305,9 @@
 .kv2-toolbar > [hidden] { display:none !important; }
 #kv2-gradient-panel:not([hidden]) { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
 #kv2-gradient-panel .kv2-tip { flex-basis:100%; margin:4px 0; }
+
+/* 9.1 – color-region preview is separate from all artwork canvases. */
+#kv2-color-region-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;}
+#kv2-color-region-overlay[hidden],#kv2-color-region-panel[hidden]{display:none!important;}
+#kv2-color-region-panel:not([hidden]){display:flex;flex:1 0 100%;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;}
+#kv2-color-region-info{flex-basis:100%;}

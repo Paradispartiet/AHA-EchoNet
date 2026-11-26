@@ -354,6 +354,7 @@
   const moveTogether = new Set(); // Transient selection, not project metadata.
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
+  let colorRegion = null; // Preview only; invalidated by artwork changes.
   let shapeDraft = null; // Transient preview until pointerup.
   let gradientFramePending = false;
   let textEditId = null;
@@ -395,6 +396,8 @@
   function changed() {
     cancelFreeTransform();
     bitmapRevision++;
+    colorRegion = null;
+    renderColorRegion();
     dirty = true;
     status("Ulagrede endringer");
   }
@@ -1721,7 +1724,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -1733,6 +1736,7 @@
     $("kv2-layer-count").textContent = project.layers.length + " av " + layerLimit() + " lag";
     $("kv2-duplicate-layer").disabled = project.layers.length >= layerLimit() || !!currentLayer()?.clipToBelow;
     renderSelection();
+    renderColorRegion();
     // View-only controls follow the active tool, without resetting any settings.
     $("kv2-context-snap").hidden = tool !== "move";
     $("kv2-context-shape").hidden = tool !== "rectangle" && tool !== "ellipse";
@@ -2327,6 +2331,11 @@
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     cancelFreeTransform();
+    if (tool === "color-region") {
+      event.preventDefault();
+      sampleColorRegion(point(event));
+      return;
+    }
     if (tool === "text") {
       event.preventDefault();
       if (maskEditing) { status("Avslutt maskeredigering før du legger til tekst."); return; }
@@ -2547,6 +2556,91 @@
     if (layer.clipToBelow) delete layer.clipToBelow;
     else layer.clipToBelow = true;
     changed(); refresh();
+  }
+
+  function colorRegionLayer() {
+    const layer = currentLayer();
+    return !busy && pointerId === null && !maskEditing && layer?.visible && !layer.locked &&
+      layer.kind !== "adjustment" && !layer.textData && !masks.has(layer.id) ? layer : null;
+  }
+
+  function renderColorRegion() {
+    const overlay = $("kv2-color-region-overlay");
+    if (!overlay) return;
+    const layer = colorRegionLayer();
+    if (tool !== "color-region" || !layer || colorRegion?.layerId !== layer.id ||
+        colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
+        colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
+    $("kv2-color-region-panel").hidden = tool !== "color-region";
+    $("kv2-color-region-apply").disabled = !colorRegion;
+    $("kv2-color-region-cancel").disabled = !colorRegion;
+    overlay.hidden = !colorRegion;
+    if (!colorRegion) {
+      if (overlay.width !== 1 || overlay.height !== 1) { overlay.width=1; overlay.height=1; }
+      $("kv2-color-region-info").textContent = layer ? "Trykk på en sammenhengende fargeflate." :
+        "Velg et synlig, ulåst rasterlag uten lagmaske.";
+      return;
+    }
+    $("kv2-color-region-info").textContent = colorRegion.count.toLocaleString("nb-NO") + " piksler markert.";
+    overlay.width = WIDTH; overlay.height = HEIGHT;
+    const ctx = overlay.getContext("2d"), image = ctx.createImageData(WIDTH, HEIGHT);
+    for (let i=0; i<colorRegion.bits.length; i++) {
+      if (!colorRegion.bits[i]) continue;
+      const x=i%WIDTH+layer.x, y=Math.floor(i/WIDTH)+layer.y;
+      if (x<0 || y<0 || x>=WIDTH || y>=HEIGHT) continue;
+      const k=(y*WIDTH+x)*4;
+      image.data[k]=30; image.data[k+1]=145; image.data[k+2]=240; image.data[k+3]=110;
+    }
+    ctx.putImageData(image,0,0);
+  }
+
+  function sampleColorRegion(at) {
+    const layer = colorRegionLayer();
+    colorRegion = null;
+    if (!layer) { renderColorRegion(); status("Fargemaske krever et synlig, ulåst rasterlag uten maske."); return; }
+    const sx=Math.floor(at.x-layer.x), sy=Math.floor(at.y-layer.y);
+    if(sx<0||sy<0||sx>=WIDTH||sy>=HEIGHT) { renderColorRegion(); return; }
+    const rgba=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    const seed=(sy*WIDTH+sx)*4;
+    if(!rgba[seed+3]) { renderColorRegion(); status("Velg en piksel med farge, ikke et gjennomsiktig område."); return; }
+    const tol=clamp(Number($("kv2-color-region-tolerance").value)||0,0,100)*255/100;
+    // Fixed-size queue and visited bitmap; compare to the seed, not the last neighbor.
+    // 4-connected, no traversal through fully transparent pixels.
+    const total=WIDTH*HEIGHT, bits=new Uint8Array(total), seen=new Uint8Array(total), queue=new Uint32Array(total);
+    let head=0,tail=0;
+    const visit=i=>{
+      if(seen[i])return;
+      seen[i]=1;
+      const k=i*4;
+      if(!rgba[k+3]||Math.max(Math.abs(rgba[k]-rgba[seed]),Math.abs(rgba[k+1]-rgba[seed+1]),
+        Math.abs(rgba[k+2]-rgba[seed+2]),Math.abs(rgba[k+3]-rgba[seed+3]))>tol)return;
+      bits[i]=1;queue[tail++]=i;
+    };
+    visit(sy*WIDTH+sx);
+    while(head<tail){
+      const i=queue[head++],x=i%WIDTH,y=Math.floor(i/WIDTH);
+      if(x>0)visit(i-1);if(x+1<WIDTH)visit(i+1);
+      if(y>0)visit(i-WIDTH);if(y+1<HEIGHT)visit(i+WIDTH);
+    }
+    colorRegion={bits,count:tail,layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y,at};
+    renderColorRegion();
+  }
+
+  function applyColorRegion() {
+    renderColorRegion();
+    const layer=colorRegionLayer(),region=colorRegion;
+    if(!layer||!region)return;
+    const keep=$("kv2-color-region-mode").value==="keep";
+    const mask=imageCanvas(),ctx=mask.getContext("2d"),image=ctx.createImageData(WIDTH,HEIGHT);
+    for(let i=0;i<region.bits.length;i++){
+      const k=i*4;
+      if(Boolean(region.bits[i])===keep){image.data[k]=255;image.data[k+1]=255;image.data[k+2]=255;image.data[k+3]=255;}
+    }
+    ctx.putImageData(image,0,0);
+    if(!checkpoint())return;
+    masks.set(layer.id,mask);layer.maskEnabled=true;
+    colorRegion=null;tool="hand";changed();refresh();
+    status("Fargemaske opprettet – originalpikslene er bevart.");
   }
 
   function addLayerMask() {
@@ -3725,6 +3819,9 @@
     $("kv2-duplicate-layer").addEventListener("click", duplicateActiveLayer);
     $("kv2-merge-down").addEventListener("click", mergeRasterDown);
     $("kv2-clip-toggle").addEventListener("click", toggleClipping);
+    $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
+    $("kv2-color-region-cancel").addEventListener("click",()=>{colorRegion=null;renderColorRegion();});
+    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at);});
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
@@ -3954,9 +4051,10 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
-        if (["rectangle", "ellipse", "line", "arrow", "text"].includes(name) && maskEditing) {
+        if (busy || pointerId !== null) return;
+        if (["rectangle", "ellipse", "line", "arrow", "text", "color-region"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
           return;
         }
