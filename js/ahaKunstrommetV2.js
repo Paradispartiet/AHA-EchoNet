@@ -1545,6 +1545,7 @@
     $("kv2-mask-toggle").disabled = !hasMask || busy;
     $("kv2-mask-toggle").textContent = layer?.maskEnabled === false ? "Aktiver maske" : "Skru av maske";
     $("kv2-mask-remove").disabled = !editable || !hasMask;
+    $("kv2-mask-edge-copy").disabled = !edgeCorrectionLayer();
     $("kv2-mask-status").textContent = !hasMask
       ? "Ingen maske på valgt lag"
       : "Lagmaske: " + (layer.maskEnabled === false ? "av" : "på") +
@@ -2741,6 +2742,72 @@
     status("Fargemaske opprettet – originalpikslene er bevart.");
   }
 
+  // Color correction deliberately creates a new raster layer with its own mask.
+  // Only standalone masked raster layers qualify; clipping and group topology stay intact.
+  function edgeCorrectionLayer() {
+    const layer=currentLayer();
+    if(!project||busy||pointerId!==null||maskEditing||!layer?.visible||layer.locked||
+       layer.kind==="adjustment"||layer.textData||layer.maskEnabled===false||!masks.has(layer.id)||
+       layer.clipToBelow||project.layers[project.layers.indexOf(layer)+1]?.clipToBelow||
+       safeGroupName(layer.groupName)||project.layers.length>=layerLimit())return null;
+    return layer;
+  }
+
+  function copyWithCorrectedEdge() {
+    const layer=edgeCorrectionLayer();
+    if(!layer){status("Velg et synlig, fritt rasterlag med aktiv maske og plass til en kopi.");return;}
+    const strength=clamp(Number($("kv2-mask-edge-strength").value)||0,0,100)/100;
+    if(!strength){status("Velg en styrke over null.");return;}
+    const source=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT);
+    const mask=masks.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT);
+    const rgba=source.data, alpha=mask.data, total=WIDTH*HEIGHT, maxDistance=8;
+    // Multi-source 4-neighbor traversal: only partial-mask pixels may inherit
+    // color, and only from an opaque foreground pixel within eight raster steps.
+    // Never sample hidden background or cross fully transparent gaps.
+    const distance=new Uint8Array(total), nearest=new Uint32Array(total), queue=new Uint32Array(total);
+    distance.fill(255);
+    let head=0,tail=0,changedPixels=0;
+    for(let i=0;i<total;i++){
+      const k=i*4;
+      if(alpha[k+3]===255&&rgba[k+3]===255){distance[i]=0;nearest[i]=i;queue[tail++]=i;}
+    }
+    const visit=(i,from)=>{
+      const k=i*4,d=distance[from]+1;
+      if(distance[i]!==255||d>maxDistance||!rgba[k+3]||!alpha[k+3]||alpha[k+3]===255)return;
+      distance[i]=d;nearest[i]=nearest[from];queue[tail++]=i;
+    };
+    while(head<tail){
+      const i=queue[head++],x=i%WIDTH,y=Math.floor(i/WIDTH);
+      if(distance[i]>=maxDistance)continue;
+      if(x>0)visit(i-1,i);if(x+1<WIDTH)visit(i+1,i);
+      if(y>0)visit(i-WIDTH,i);if(y+1<HEIGHT)visit(i+WIDTH,i);
+    }
+    for(let i=0;i<total;i++){
+      if(!distance[i]||distance[i]===255)continue;
+      const k=i*4,s=nearest[i]*4,weight=strength*(1-alpha[k+3]/255);
+      let modified=false;
+      for(let c=0;c<3;c++){
+        const next=Math.round(rgba[k+c]+(rgba[s+c]-rgba[k+c])*weight);
+        if(next!==rgba[k+c]){rgba[k+c]=next;modified=true;}
+      }
+      if(modified)changedPixels++;
+    }
+    if(!changedPixels){status("Ingen egnede fargerester funnet langs den myke maskekanten.");return;}
+    const maskCopy=imageCanvas();
+    maskCopy.getContext("2d").putImageData(mask,0,0);
+    if(!checkpoint())return;
+    const clone=createLayer(layer.name.slice(0,45)+" – kantkorrigert",layer.kind);
+    Object.assign(clone,{opacity:layer.opacity,blendMode:layer.blendMode||"normal",
+      adjustments:safeAdjustments(layer.adjustments),x:layer.x,y:layer.y,maskEnabled:true});
+    surfaces.get(clone.id).getContext("2d").putImageData(source,0,0);
+    masks.set(clone.id,maskCopy);
+    layer.visible=false;
+    project.layers.splice(project.layers.indexOf(layer)+1,0,clone);
+    selected=clone.id;moveTogether.clear();tool="hand";
+    changed();refresh();
+    status("Kantkorrigert kopi opprettet. Originalen er skjult, ikke slettet.");
+  }
+
   function addLayerMask() {
     const layer = editableLayer();
     if (!layer || masks.has(layer.id)) return;
@@ -3928,6 +3995,8 @@
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
     $("kv2-mask-remove").addEventListener("click", removeLayerMask);
+    $("kv2-mask-edge-copy").addEventListener("click",copyWithCorrectedEdge);
+    $("kv2-mask-edge-strength").addEventListener("input",()=>{$("kv2-mask-edge-value").textContent=$("kv2-mask-edge-strength").value+" %";});
     $("kv2-crop-layer").addEventListener("click", cropActiveLayer);
     $("kv2-copy-selection").addEventListener("click", copySelectionToLayer);
     $("kv2-cut-selection").addEventListener("click", cutSelectionToLayer);

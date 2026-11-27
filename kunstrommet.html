@@ -564,6 +564,12 @@
               <button id="kv2-mask-toggle" type="button" disabled>Skru av maske</button>
               <button id="kv2-mask-remove" type="button" disabled>Fjern maske</button>
             </div>
+            <details class="kv2-mask-edge-panel">
+              <summary>Korriger fargerester langs kanten</summary>
+              <label>Styrke <input id="kv2-mask-edge-strength" type="range" min="0" max="100" value="70" step="1" /> <output id="kv2-mask-edge-value" for="kv2-mask-edge-strength">70 %</output></label>
+              <button id="kv2-mask-edge-copy" type="button" disabled>Lag kantkorrigert kopi</button>
+              <p class="kv2-tip">På myke maskekanter hentes farge fra nærmeste heldekkende del av motivet. Kopien får samme maske; originalen skjules og bevares. Krever plass til et ekstra, fritt rasterlag.</p>
+            </details>
             <p class="kv2-tip">Trykk «Rediger maske». Bruk <strong>Viskelær</strong> for å skjule og <strong>Pensel</strong> for å hente innholdet tilbake. Bildets originale piksler beholdes. Velg «Rediger maske» igjen for å male på bildet. Masken følger laget ved flytting, kopiering og transformering, og lagres i prosjektfilen.</p>
           </div>
           <div class="kv2-transform-tools" role="group" aria-label="Transformer aktivt lag">
