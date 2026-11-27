@@ -2666,7 +2666,7 @@
     overlay.hidden = !adjusted?.count;
     if (!adjusted?.count) {
       if (overlay.width !== 1 || overlay.height !== 1) { overlay.width=1; overlay.height=1; }
-      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Juster kanten eller legg til et område." : layer ? "Trykk på en sammenhengende fargeflate." :
+      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Juster kanten eller legg til et område." : layer ? (aiTool?"Velg behold/fjern-punkter og trykk Analyser.":"Trykk på en sammenhengende fargeflate.") :
         "Velg et synlig, ulåst rasterlag uten lagmaske.";
       return;
     }
@@ -4305,6 +4305,7 @@
         }
         shapeDraft = null;
         clearTextDraft();
+        if(aiTool)colorRegion=null;
         aiTool=false;resetAiPoints();
         tool = name;
         refresh();
@@ -4408,20 +4409,35 @@
     if(aiTimer!==null)global.clearTimeout(aiTimer);aiTimer=null;
     if(aiWorker){aiWorker.terminate();aiWorker=null;}
     if(localMaskRequest)cancelLocalMask(localMaskRequest.token);
-    aiPoints=[];aiContext=null;
+    aiPoints=[];aiContext=null;renderAiMarkers();
   }
   function aiContextMatches(layer){return aiContext&&layer&&aiContext.project===project&&aiContext.owner===owner()&&aiContext.id===layer.id&&aiContext.rev===bitmapRevision&&aiContext.x===layer.x&&aiContext.y===layer.y;}
+  function renderAiMarkers(){
+    const overlay=$("kv2-ai-points-overlay");if(!overlay)return;
+    overlay.replaceChildren();overlay.hidden=!aiTool||!aiPoints.length||!aiContext;
+    if(overlay.hidden)return;
+    const rect=canvas.getBoundingClientRect();overlay.style.width=rect.width+"px";overlay.style.height=rect.height+"px";
+    for(const [x,y,label] of aiPoints){
+      const dx=x+aiContext.x,dy=y+aiContext.y;if(dx<0||dy<0||dx>=WIDTH||dy>=HEIGHT)continue;
+      const marker=document.createElement("span");marker.className="kv2-ai-point";marker.dataset.label=String(label);
+      marker.style.left=((dx+.5)/WIDTH*100)+"%";marker.style.top=((dy+.5)/HEIGHT*100)+"%";
+      marker.textContent=label===1?"+":"−";overlay.append(marker);
+    }
+  }
   function renderAiTool(layer){
     const button=$("kv2-ai-region"),panel=$("kv2-ai-region-controls");if(!button||!panel)return;
-    if(!aiToolEnabled()||tool!=="color-region"||!layer){aiTool=false;resetAiPoints();}
-    else if(aiContext&&!aiContextMatches(layer)){resetAiPoints();}
+    if(aiTool&&(!aiToolEnabled()||tool!=="color-region"||!layer||project.owner!==owner())){aiTool=false;resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
+    else if(aiContext&&!aiContextMatches(layer)){resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
     button.hidden=!aiToolEnabled();button.setAttribute("aria-pressed",String(aiTool));
     panel.hidden=!aiTool;
     if(aiTool)$("kv2-color-region").setAttribute("aria-pressed","false");
     $("kv2-ai-count").textContent=aiPoints.length+" / 12 punkter";
     $("kv2-ai-analyze").disabled=!aiTool||!!aiWorker||!aiPoints.some(p=>p[2]===1);
     $("kv2-ai-clear").disabled=!aiPoints.length&&!aiWorker;
-    $("kv2-color-region-propose").hidden=aiTool;
+    $("kv2-ai-undo-point").disabled=!aiPoints.length||!!aiWorker;
+    for(const node of [$("kv2-color-region-propose"),$("kv2-color-region-propose").nextElementSibling,$("kv2-color-region-operation").closest("label"),$("kv2-color-region-tolerance").closest("label")])if(node)node.hidden=aiTool;
+    $("kv2-color-region-cancel").textContent=aiTool?"Fjern KI-forslag":"Fjern fargevalg";
+    renderAiMarkers();
   }
   function addAiPoint(at){
     const layer=localMaskTarget();if(!layer||aiWorker||aiPoints.length>=12)return;
@@ -4457,15 +4473,22 @@
   function bindAiTool(){
     if(!aiToolEnabled())return;
     const button=document.createElement("button");button.type="button";button.id="kv2-ai-region";button.textContent="KI-markering";button.setAttribute("aria-pressed","false");
-    button.className=$("kv2-color-region").className;$("kv2-color-region").after(button);
+    button.className=$("kv2-color-region").className;button.title="KI-markering";button.setAttribute("aria-label","KI-markering");
+    button.innerHTML=`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m4 20 11-11 2 2L6 22zM15 2v5M12.5 4.5h5M21 9v5M18.5 11.5h5"/></svg><span aria-hidden="true">KI-markering</span>`;
+    $("kv2-color-region").after(button);
     const panel=document.createElement("div");panel.id="kv2-ai-region-controls";panel.hidden=true;
     const mode=document.createElement("select");mode.id="kv2-ai-point-mode";mode.setAttribute("aria-label","KI-punkt: behold eller fjern");
     for(const [value,label] of [["1","Behold motiv"],["0","Fjern område"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=label;mode.append(opt);}
     const count=document.createElement("span");count.id="kv2-ai-count";
     const analyze=document.createElement("button");analyze.type="button";analyze.id="kv2-ai-analyze";analyze.textContent="Analyser";
     const clear=document.createElement("button");clear.type="button";clear.id="kv2-ai-clear";clear.textContent="Nullstill / avbryt";
-    panel.append(mode,count,analyze,clear);$("kv2-color-region-panel").prepend(panel);
+    const undo=document.createElement("button");undo.type="button";undo.id="kv2-ai-undo-point";undo.textContent="Fjern siste punkt";
+    panel.append(mode,count,analyze,undo,clear);$("kv2-color-region-panel").prepend(panel);
+    const overlay=document.createElement("div");overlay.id="kv2-ai-points-overlay";overlay.hidden=true;overlay.setAttribute("aria-hidden","true");
+    $("kv2-color-region-overlay").after(overlay);
+    if(typeof ResizeObserver==="function")new ResizeObserver(renderAiMarkers).observe(canvas);
     button.onclick=()=>{if(!aiToolEnabled()||busy||pointerId!==null||maskEditing)return;resetAiPoints();colorRegion=null;shapeDraft=null;clearTextDraft();tool="color-region";aiTool=true;refresh();status("Velg punkter på motivet og trykk Analyser.");};
+    undo.onclick=()=>{if(aiWorker||!aiPoints.length)return;aiPoints.pop();colorRegion=null;renderColorRegion();status("Siste KI-punkt fjernet. Analyser på nytt.");};
     analyze.onclick=analyzeAiPoints;clear.onclick=()=>{resetAiPoints();colorRegion=null;renderColorRegion();status("KI-markering avbrutt – originalen er uendret.");};
     global.addEventListener("pagehide",resetAiPoints);
   }

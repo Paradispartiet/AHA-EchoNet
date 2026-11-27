@@ -426,3 +426,7 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Dedikert engangsworker på samme origin; kun RGBA fra aktivt lag og punkter, ingen fjernmodell, bilde-URL, backend eller prosjektdata. Worker termineres ved avbrudd, endret kontekst eller timeout.
 - Runtime og modellfiler er ikke inkludert i repo eller deploy. En kontrollert lokal testserver må først stage de låste filene fra 9.5b under `tools/kunstrommet-sam-pilot/runtime/` og `tools/kunstrommet-sam-pilot/models/`; ingen automatisk nedlasting fra editoren. Ingen produksjonsaktivering.
 - Nettlesertest med simulert worker kontrollerer UI/transport/maske/undo, ikke reell inferens med brukerbilder. Reell editorinferens, visuelle punktmarkører, iPad-ytelse, mobil layout og publiseringsbeslutning gjenstår.
+
+### 9.5d – punktmarkører og reell editorprøve (utkast)
+- Grønne plusspunkter/røde minuspunkter i et separat, ikke-eksporterbart visningslag. Markører følger lerretets størrelse og zoom; fjern siste punkt uten å endre bildet. Fargebaserte kontroller skjules i KI-modus.
+- Ny isolert editor-smoke med de verifiserte lokale modellfilene og syntetisk bilde. Kjører faktisk worker i Chromium og WebKit, kontrollerer KI-forhåndsvisning, originalbitmap og undo. Ikke fysisk iPad, ikke produksjon eller brukerbilder.
