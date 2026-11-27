@@ -2564,6 +2564,39 @@
       layer.kind !== "adjustment" && !layer.textData && !masks.has(layer.id) ? layer : null;
   }
 
+  // Separable box feather, with edge replication instead of transparent padding.
+  // O(width * height), irrespective of radius; one temporary Uint16 buffer.
+  function featherRegion(region, radius) {
+    if (!radius) return null;
+    if (region.feather?.radius === radius) return region.feather.alpha;
+    region.feather = null;
+    const width=WIDTH,height=HEIGHT,span=radius*2+1;
+    const sums=new Uint16Array(width*height), alpha=new Uint8Array(width*height);
+    for(let y=0;y<height;y++){
+      const row=y*width;
+      let sum=0;
+      for(let dx=-radius;dx<=radius;dx++)sum+=region.bits[row+clamp(dx,0,width-1)];
+      for(let x=0;x<width;x++){
+        sums[row+x]=sum;
+        sum+=region.bits[row+Math.min(width-1,x+radius+1)]-region.bits[row+Math.max(0,x-radius)];
+      }
+    }
+    for(let x=0;x<width;x++){
+      let sum=0;
+      for(let dy=-radius;dy<=radius;dy++)sum+=sums[clamp(dy,0,height-1)*width+x];
+      for(let y=0;y<height;y++){
+        alpha[y*width+x]=Math.round(sum*255/(span*span));
+        sum+=sums[Math.min(height-1,y+radius+1)*width+x]-sums[Math.max(0,y-radius)*width+x];
+      }
+    }
+    region.feather={radius,alpha};
+    return alpha;
+  }
+
+  function colorRegionRadius() {
+    return clamp(Math.round(Number($("kv2-color-region-feather").value)||0),0,32);
+  }
+
   function renderColorRegion() {
     const overlay = $("kv2-color-region-overlay");
     if (!overlay) return;
@@ -2572,6 +2605,9 @@
         colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
+    const radius=colorRegionRadius();
+    $("kv2-color-region-feather-value").textContent=radius+" px";
+    if(colorRegion && !radius)colorRegion.feather=null;
     $("kv2-color-region-apply").disabled = !colorRegion?.count;
     $("kv2-color-region-cancel").disabled = !colorRegion;
     overlay.hidden = !colorRegion?.count;
@@ -2584,12 +2620,14 @@
     $("kv2-color-region-info").textContent = colorRegion.count.toLocaleString("nb-NO") + " piksler markert.";
     overlay.width = WIDTH; overlay.height = HEIGHT;
     const ctx = overlay.getContext("2d"), image = ctx.createImageData(WIDTH, HEIGHT);
+    const softened=featherRegion(colorRegion,radius);
     for (let i=0; i<colorRegion.bits.length; i++) {
-      if (!colorRegion.bits[i]) continue;
+      const coverage=softened?softened[i]:colorRegion.bits[i]*255;
+      if (!coverage) continue;
       const x=i%WIDTH+layer.x, y=Math.floor(i/WIDTH)+layer.y;
       if (x<0 || y<0 || x>=WIDTH || y>=HEIGHT) continue;
       const k=(y*WIDTH+x)*4;
-      image.data[k]=30; image.data[k+1]=145; image.data[k+2]=240; image.data[k+3]=110;
+      image.data[k]=30; image.data[k+1]=145; image.data[k+2]=240; image.data[k+3]=Math.round(coverage*110/255);
     }
     ctx.putImageData(image,0,0);
   }
@@ -2646,9 +2684,11 @@
     if(!layer||!region?.count)return;
     const keep=$("kv2-color-region-mode").value==="keep";
     const mask=imageCanvas(),ctx=mask.getContext("2d"),image=ctx.createImageData(WIDTH,HEIGHT);
+    const softened=featherRegion(region,colorRegionRadius());
     for(let i=0;i<region.bits.length;i++){
-      const k=i*4;
-      if(Boolean(region.bits[i])===keep){image.data[k]=255;image.data[k+1]=255;image.data[k+2]=255;image.data[k+3]=255;}
+      const k=i*4, coverage=softened?softened[i]:region.bits[i]*255;
+      const opacity=keep?coverage:255-coverage;
+      if(opacity){image.data[k]=255;image.data[k+1]=255;image.data[k+2]=255;image.data[k+3]=opacity;}
     }
     ctx.putImageData(image,0,0);
     if(!checkpoint())return;
@@ -3836,6 +3876,8 @@
     $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
     $("kv2-color-region-cancel").addEventListener("click",()=>{colorRegion=null;renderColorRegion();});
     $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at,true);});
+    $("kv2-color-region-feather").addEventListener("input",()=>{$("kv2-color-region-feather-value").textContent=colorRegionRadius()+" px";});
+    $("kv2-color-region-feather").addEventListener("change",renderColorRegion);
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);

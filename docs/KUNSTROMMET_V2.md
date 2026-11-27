@@ -394,3 +394,8 @@ Velg Fargemaske, trykk på en farget piksel på aktivt rasterlag og juster Farge
 ## Kunstrommet 9.2 – kombiner fargeområder
 
 Fargemaske har Ny markering, Legg til område og Trekk fra område. Legg til beregner union, Trekk fra differanse mellom eksisterende markering og den valgte sammenhengende fargeflaten. Toleranse endrer kun siste områdeoperasjon mot en beholdt baseline, også når markeringen blir tom; tidligere områder er uendret. Tomt valg kan ikke opprette maske. Kun to heldekkende binære markeringskart beholdes, uten voksende historikk. Ugyldig/transparent treff bevarer eksisterende markering. Avslutt med Lag maske, som før, i ett angresteg. Ingen prosjektmetadata, nettverk eller endring av originalbitmap. Fysisk iPad gjenstår.
+
+
+## Kunstrommet 9.3 – myke maskekanter
+
+Fargemaske får Myke kanter 0–32 dokumentpiksler. Null beholder eksakt binær maske fra 9.2. Positiv radius bruker separerbar glidende boksutjevning av det kombinerte binære valget med replikerte ytterpiksler, slik at dokumentgrensen ikke skaper en kunstig transparent kant. Blå markering gjenspeiler myk dekning; masken bruker samme alfaverdier (eller invers ved skjul). Toleranse, add/subtract og siste baseline forblir binære; mykhet kan endres uten akkumulert uskarphet. O(pikselantall) per radiusendring, midlertidig 16-bit buffer og ett cachet 8-bit alfakart. Oppdatering etter avsluttet sliderdrag for å begrense iPad-belastning. Ingen endring av originalbitmap eller eksisterende maskeskjema. Ett undo-steg ved bekreftelse. Dette er fjæring av maskekant, ikke AI-hårsegmentering. Fysisk iPad-test gjenstår.
