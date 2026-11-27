@@ -3710,11 +3710,14 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
  await page.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
  // Mock the worker transport, not the editor; real WASM inference is tested separately.
  await page.route("**/tools/kunstrommet-sam-pilot/editor-worker.mjs",route=>route.fulfill({contentType:"application/javascript",body:`
+  let width,height;
   self.onmessage=({data})=>{
-    if(data.type!=="segment"||data.points.length!==2||data.points[0][2]!==1||data.points[1][2]!==0||data.rgba.length!==data.width*data.height*4){self.postMessage({type:"error"});return;}
-    const bits=new Uint8Array(data.width*data.height);
-    for(let y=200;y<400;y++)for(let x=250;x<450;x++)bits[y*data.width+x]=1;
-    self.postMessage({type:"mask",bits},[bits.buffer]);
+    const reused=data.type==="refine";
+    if(!reused){width=data.width;height=data.height;}
+    if(!width||!height||data.points.length<2||data.points[0][2]!==1||data.points[1][2]!==0||(!reused&&data.rgba.length!==width*height*4)||(reused&&data.rgba)){self.postMessage({type:"error",id:data.id});return;}
+    const bits=new Uint8Array(width*height);
+    for(let y=200;y<400;y++)for(let x=250;x<450;x++)bits[y*width+x]=1;
+    self.postMessage({type:"mask",id:data.id,bits,reused,encoderRuns:1},[bits.buffer]);
   };
  `}));
  await page.reload({waitUntil:"domcontentloaded"});
@@ -3738,6 +3741,15 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
  await expect(page.locator("#kv2-ai-points-overlay .kv2-ai-point")).toHaveCount(2);
  await page.locator("#kv2-ai-analyze").click();
  await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await expect(page.locator("#kv2-ai-region-controls")).toHaveAttribute("data-cache","cold");
+ await page.locator("#kv2-ai-point-mode").selectOption("1");
+ await shapeDrag(page,[350,350],[350,350],9535);
+ await expect(page.locator("#kv2-color-region-apply")).toBeDisabled();
+ await page.locator("#kv2-ai-analyze").click();
+ await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ await expect(page.locator("#kv2-ai-region-controls")).toHaveAttribute("data-cache","warm");
+ await expect(page.locator("#kv2-ai-region-controls")).toHaveAttribute("data-encoder-runs","1");
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
  await page.locator("#kv2-color-region-apply").click();
  await expect(page.locator("#kv2-ai-points-overlay")).toBeHidden();

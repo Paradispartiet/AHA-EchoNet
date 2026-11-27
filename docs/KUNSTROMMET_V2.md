@@ -430,3 +430,8 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 ### 9.5d – punktmarkører og reell editorprøve (utkast)
 - Grønne plusspunkter/røde minuspunkter i et separat, ikke-eksporterbart visningslag. Markører følger lerretets størrelse og zoom; fjern siste punkt uten å endre bildet. Fargebaserte kontroller skjules i KI-modus.
 - Ny isolert editor-smoke med de verifiserte lokale modellfilene og syntetisk bilde. Kjører faktisk worker i Chromium og WebKit, kontrollerer KI-forhåndsvisning, originalbitmap og undo. Ikke fysisk iPad, ikke produksjon eller brukerbilder.
+
+### 9.5e – gjenbruk av KI-bildeanalyse (utkast)
+- Én worker, én modell og ett aktivt rasterlag per KI-økt. Første analyse beregner SAM-bildeembedding; nye punkter gjenbruker den via modellens dokumenterte embedding-input. Punktnormalisering og maskeberegning gjentas. Ny pikselkopi sendes ikke ved justeringer.
+- Engangs forespørselstoken og sekvensnummer per maskesvar. Worker frigjøres ved kontekstendring, avbrudd, feil, skjult side, maskebekreftelse eller 60 sekunder uten ny analyse. Ingen persistens eller ekstern inferens.
+- Utvidet transporttest og reell editor-smoke krever kald/varm kjøring med nøyaktig én encoderkjøring, uendrede originaldata, korrekt maske/undo. Måler begge tider uten ubegrunnet hastighetskrav. Fysisk iPad og produksjonsdistribusjon fortsatt ikke godkjent.

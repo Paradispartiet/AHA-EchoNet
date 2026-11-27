@@ -62,12 +62,29 @@ try{
    const alpha=await page.locator("#kv2-color-region-overlay").evaluate((c,ps)=>ps.map(([x,y])=>c.getContext("2d").getImageData(x*2,y*2,1,1).data[3]),GUIDED_POINTS);
    assert.deepEqual(alpha,GUIDED_POINTS.map(p=>p[2]?110:0));
    assert.deepEqual((await snapshot()).layers,before.layers);
+   const coldMs=Math.round(performance.now()-start);
+   const panel=page.locator("#kv2-ai-region-controls");
+   assert.equal(await panel.getAttribute("data-cache"),"cold");
+   assert.equal(await panel.getAttribute("data-encoder-runs"),"1");
+   await page.locator("#kv2-ai-undo-point").click();
+   await page.locator("#kv2-ai-point-mode").selectOption(String(GUIDED_POINTS.at(-1)[2]));
+   const [lx,ly]=GUIDED_POINTS.at(-1);
+   // Re-add the same valid point to exercise a genuine second decoder invocation.
+   await page.locator("#kv2-canvas").evaluate((c,p)=>{const r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerType:"pen",button:0,clientX:r.left+(p[0]+.25)/640*r.width,clientY:r.top+(p[1]+.25)/480*r.height}));},[lx*2,ly*2]);
+   const warmStart=performance.now();
+   await page.locator("#kv2-ai-analyze").click();
+   await page.waitForFunction(()=>!document.querySelector("#kv2-color-region-apply").disabled||/kunne ikke|Ingen gyldig|avbrutt etter|ikke tilgjengelig/.test(document.querySelector("#kv2-status").textContent),{},{timeout:255000});
+   assert.ok(await page.locator("#kv2-color-region-apply").isEnabled(),await page.locator("#kv2-status").innerText());
+   assert.equal(await panel.getAttribute("data-cache"),"warm");
+   assert.equal(await panel.getAttribute("data-encoder-runs"),"1");
+   const warmMs=Math.round(performance.now()-warmStart);
+   assert.deepEqual((await snapshot()).layers,before.layers);
    await page.locator("#kv2-color-region-apply").click();
    const after=await snapshot();assert.ok(after.layers[1].maskBitmap);assert.equal(after.layers[1].bitmap,before.layers[1].bitmap);
    await page.locator("#kv2-undo").click();
    await page.waitForFunction(()=>{try{return !window.AHAKunstrommetV2.cloudSnapshot("local").data.layers[1].maskBitmap;}catch{return false;}});
    assert.deepEqual((await snapshot()).layers,before.layers);
-   assert.deepEqual(blocked,[]);console.log(JSON.stringify({browser:name,editorInferenceMs:Math.round(performance.now()-start),status:state}));
+   assert.deepEqual(blocked,[]);console.log(JSON.stringify({browser:name,coldMs,warmMs,encoderRuns:1,status:state}));
   }finally{await browser.close();}
  }
 }finally{await new Promise(resolve=>server.close(resolve));}
