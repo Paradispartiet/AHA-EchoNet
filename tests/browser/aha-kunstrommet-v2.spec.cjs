@@ -3418,3 +3418,32 @@ test("8.1 contextual tool settings preserve values, artwork and history", async 
   await page.locator("#kv2-undo").click();
   await expect.poll(async()=>await pixel(page)).toEqual([255,255,255,255]);
 });
+
+
+test("9.1 color region preview preserves pixels and creates an undoable connected mask",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b52c35";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[200,200],[400,400],9101);
+ await shapeDrag(page,[700,200],[900,400],9102);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-color-region").click();
+ await shapePointer(page,"pointerdown",300,300,9103);
+ await shapePointer(page,"pointerup",300,300,9103);
+ await expect(page.locator("#kv2-color-region-overlay")).toBeVisible();
+ await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region-apply").click();
+ await expect(page.locator("#kv2-color-region-overlay")).toBeHidden();
+ const after=await jsonBackup(page);
+ expect(after.layers[0].bitmap).toBe(before.layers[0].bitmap);
+ expect(after.layers[0].maskBitmap).toBeTruthy();
+ expect((await pxAt(page,300,300)).slice(0,3)).toEqual([255,255,255]);
+ expect((await pxAt(page,800,300))[1]).toBeLessThan(100);
+ await page.locator("#kv2-color-region").click();
+ await shapePointer(page,"pointerdown",800,300,9104);
+ await expect(page.locator("#kv2-color-region-apply")).toBeDisabled();
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=>(await pxAt(page,300,300))[1]).toBeLessThan(100);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

@@ -384,3 +384,8 @@ Kunstrommet får egen arbeidsbredde opptil 1520 CSS-piksler i stedet for den glo
 ### 8.1 – kontekstavhengige verktøyinnstillinger
 
 Penseltype vises ved Pensel, magnetisk justering ved Flytt lag, fyll/omriss ved rektangel/ellipse og størrelse ved pensel, viskelær, figurer, linje og pil. Gradient- og tekstpanelene følger fortsatt aktivt verktøy. Farge, hurtigpalett, zoom og angre/gjør om er alltid tilgjengelige (farge kan også brukes til markering). Verktøybytte bevarer innstillingsverdiene; skjulte kontroller blir ikke fjernet, nullstilt eller lagt i angrehistorikken. Ingen nye prosjektdata eller nettverkskall. Nettlesertest dekker synlighet, gjenvalg, identiske lag i eksport og angre. Eksisterende masketest velger Pensel eksplisitt før penseltype, i tråd med den nye arbeidsflyten. Fysisk iPad-testing gjenstår.
+
+
+## Kunstrommet 9.1 – fargebasert områdevalg og ikke-destruktiv maske
+
+Velg Fargemaske, trykk på en farget piksel på aktivt rasterlag og juster Fargetoleranse. Fireveis sammenhengende RGBA-område sammenlignes med startpikselen; gjennomsiktige piksler stopper utbredelsen. Blå forhåndsvisning er et separat lerret, ikke eksportert eller lagret. Lag maske skjuler eller beholder valgt område på aktivt lag i ett angresteg; originalbitmap bevares. Flyttede lag og zoom bruker dokumentkoordinater. Eksisterende lagmasker overskrives ikke; tekst-, justerings-, låste og skjulte lag er sperret. Dette er fargebasert segmentering, ikke KI eller semantisk objektgjenkjenning. Rektangel/lasso er separate verktøy. Ingen nettverk, nye prosjektfelter eller databaseendringer. Fysisk iPad-ytelse må kontrolleres i #1058.
