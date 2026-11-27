@@ -11,9 +11,9 @@ jobs:
   synthetic-inference:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      KR_PILOT_DIR: ${{ runner.temp }}/kr-sam-pilot
     steps:
+      - name: Set isolated pilot directory
+        run: printf 'KR_PILOT_DIR=%s/kr-sam-pilot\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
