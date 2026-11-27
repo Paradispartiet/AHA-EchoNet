@@ -3703,3 +3703,37 @@ test("9.5b gated local model mask is preview-only, reversible and rejects stale 
  await page.locator("#kv2-color-region").click();
  expect(await page.evaluate(()=>{const a=window.__krPending;return window.AHAKunstrommetV2.localMaskPilot.preview(a.token,new Uint8Array(a.width*a.height));})).toBe(false);
 });
+
+test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed mask",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await expect(page.locator("#kv2-ai-region")).toHaveCount(0);
+ await page.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
+ // Mock the worker transport, not the editor; real WASM inference is tested separately.
+ await page.route("**/tools/kunstrommet-sam-pilot/editor-worker.mjs",route=>route.fulfill({contentType:"application/javascript",body:`
+  self.onmessage=({data})=>{
+    if(data.type!=="segment"||data.points.length!==2||data.points[0][2]!==1||data.points[1][2]!==0||data.rgba.length!==data.width*data.height*4){self.postMessage({type:"error"});return;}
+    const bits=new Uint8Array(data.width*data.height);
+    for(let y=200;y<400;y++)for(let x=250;x<450;x++)bits[y*data.width+x]=1;
+    self.postMessage({type:"mask",bits},[bits.buffer]);
+  };
+ `}));
+ await page.reload({waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[100,100],[900,650],9531);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-ai-region").click();
+ await expect(page.locator("#kv2-ai-analyze")).toBeDisabled();
+ await shapeDrag(page,[300,300],[300,300],9532);
+ await page.locator("#kv2-ai-point-mode").selectOption("0");
+ await shapeDrag(page,[700,500],[700,500],9533);
+ await expect(page.locator("#kv2-ai-count")).toHaveText("2 / 12 punkter");
+ await page.locator("#kv2-ai-analyze").click();
+ await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region-apply").click();
+ expect((await jsonBackup(page)).layers[0].bitmap).toBe(before.layers[0].bitmap);
+ expect((await pxAt(page,700,500)).slice(0,3)).toEqual([255,255,255]);
+ await page.locator("#kv2-undo").click();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
