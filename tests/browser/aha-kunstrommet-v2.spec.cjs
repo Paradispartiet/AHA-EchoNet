@@ -3494,3 +3494,44 @@ test("9.2 combines disconnected color regions and subtracts before committing on
  await expect.poll(async()=>(await pxAt(page,250,300))[1]).toBeLessThan(100);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+
+test("9.3 feather previews fractional coverage and commits matching reversible alpha",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
+ await color("#202020");
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[100,100],[1100,700],9301);
+ await color("#b52c35");
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[300,250],[700,550],9302);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-color-region").click();
+ await shapePointer(page,"pointerdown",500,400,9303);
+ await shapePointer(page,"pointerup",500,400,9303);
+ const alpha=async(x,y)=>page.locator("#kv2-color-region-overlay").evaluate((c,p)=>c.getContext("2d").getImageData(p.x,p.y,1,1).data[3],{x,y});
+ const setRadius=async(n)=>page.locator("#kv2-color-region-feather").evaluate((el,n)=>{el.value=String(n);el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));},n);
+ expect(await alpha(299,400)).toBe(0);
+ expect(await alpha(300,400)).toBe(110);
+ await setRadius(8);
+ const outside=await alpha(299,400),inside=await alpha(300,400);
+ expect(outside).toBeGreaterThan(0);expect(inside).toBeGreaterThan(outside);expect(inside).toBeLessThan(110);
+ expect(await alpha(500,400)).toBe(110);
+ expect(await alpha(200,400)).toBe(0);
+ await setRadius(0);
+ expect(await alpha(299,400)).toBe(0);expect(await alpha(300,400)).toBe(110);
+ await setRadius(8);
+ expect(await alpha(299,400)).toBe(outside);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region-mode").selectOption("keep");
+ await page.locator("#kv2-color-region-apply").click();
+ const after=await jsonBackup(page);
+ expect(after.layers[0].bitmap).toBe(before.layers[0].bitmap);
+ const coverage=await pngLayersAt(page,[{bitmap:after.layers[0].maskBitmap}],300,400);
+ expect(coverage[0][3]).toBeGreaterThan(0);expect(coverage[0][3]).toBeLessThan(255);
+ expect(Math.round(coverage[0][3]*110/255)).toBe(inside);
+ expect((await pngLayersAt(page,[{bitmap:after.layers[0].maskBitmap}],500,400))[0][3]).toBe(255);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=>(await pxAt(page,200,400))[0]).toBeLessThan(100);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
