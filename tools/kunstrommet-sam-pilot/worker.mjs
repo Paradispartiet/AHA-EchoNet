@@ -10,7 +10,7 @@ self.onmessage=async({data})=>{
     // Runtime and model assets must be reviewed and staged locally first.
     // No user images, URLs, remote inference, or automatic loading.
     step("runtime");
-    const {env,SamModel,AutoProcessor,RawImage}=await import("./runtime/transformers.web.js");
+    const {env,SamModel,AutoProcessor,RawImage}=await import("./runtime/transformers.js");
     env.allowLocalModels=true;env.allowRemoteModels=false;env.useBrowserCache=false;
     env.localModelPath=new URL("./models/",import.meta.url).href;
     env.backends.onnx.wasm.wasmPaths=new URL("./runtime/",import.meta.url).href;

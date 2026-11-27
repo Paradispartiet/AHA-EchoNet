@@ -11,9 +11,15 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 # Download the exact prebuilt package; do not install its dependencies or run lifecycle scripts.
 (cd "$work"; npm pack @huggingface/transformers@3.8.1 --ignore-scripts --json > pack.json)
-node -e 'const p=require(process.argv[1]);if(p.length!==1||p[0].name!=="@huggingface/transformers"||p[0].version!=="3.8.1"||!p[0].integrity)process.exit(1);console.log("Runtime package integrity:",p[0].integrity)' "$work/pack.json"
-tar -xzf "$work/huggingface-transformers-3.8.1.tgz" -C "$work" package/dist/transformers.web.js package/dist/ort-wasm-simd-threaded.jsep.mjs package/dist/ort-wasm-simd-threaded.jsep.wasm
+node -e 'const p=require(process.argv[1]);if(p.length!==1||p[0].name!=="@huggingface/transformers"||p[0].version!=="3.8.1"||p[0].integrity!=="sha512-tsTk4zVjImqdqjS8/AOZg2yNLd1z9S5v+7oUPpXaasDRwEDhB+xnglK1k5cad26lL5/ZIaeREgWWy0bs9y9pPA==")process.exit(1);console.log("Runtime package integrity:",p[0].integrity)' "$work/pack.json"
+node -e 'const fs=require("fs"),crypto=require("crypto");const actual="sha512-"+crypto.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64");if(actual!=="sha512-tsTk4zVjImqdqjS8/AOZg2yNLd1z9S5v+7oUPpXaasDRwEDhB+xnglK1k5cad26lL5/ZIaeREgWWy0bs9y9pPA==")throw Error("Runtime tarball integrity mismatch")' "$work/huggingface-transformers-3.8.1.tgz"
+tar -xzf "$work/huggingface-transformers-3.8.1.tgz" -C "$work" package/dist/transformers.js package/dist/ort-wasm-simd-threaded.jsep.mjs package/dist/ort-wasm-simd-threaded.jsep.wasm
 cp "$work/package/dist/"* "$KR_PILOT_DIR/runtime/"
+(cd "$KR_PILOT_DIR/runtime"; sha256sum --check <<'SHA'
+08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9  ort-wasm-simd-threaded.jsep.mjs
+c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39  ort-wasm-simd-threaded.jsep.wasm
+SHA
+)
 sha256sum "$KR_PILOT_DIR/runtime/"*
 model="$KR_PILOT_DIR/models/Xenova/slimsam-77-uniform"
 url="https://huggingface.co/Xenova/slimsam-77-uniform/resolve/d827ef090922d0c7b96fc6111908fb996ff3d1c1"
