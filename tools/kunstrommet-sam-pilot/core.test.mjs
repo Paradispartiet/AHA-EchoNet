@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import {WIDTH,HEIGHT,fixture,selectMask,intersectionOverUnion} from "./core.mjs";
+const {truth,rgb}=fixture(),n=WIDTH*HEIGHT;
+assert.equal(rgb.length,n*3);
+const data=new Uint8Array(3*n);data.set(truth,n);data.fill(1,2*n);
+const tensor={dims:[1,3,HEIGHT,WIDTH],type:"bool",data};
+const best=selectMask(tensor,[.9,.8,.99],160,120);
+assert.equal(best.channel,1);assert.equal(intersectionOverUnion(best.bits,truth),1);
+assert.throws(()=>selectMask(tensor,[.9,.8,.99],0,0),/no_valid_mask/);
+assert.throws(()=>selectMask({...tensor,dims:[3,HEIGHT,WIDTH]},[.9,.8,.99],160,120),/unexpected_model_output/);
+assert.throws(()=>selectMask(tensor,[.9,.8,.99],WIDTH,0),/invalid_point/);
+assert.equal(intersectionOverUnion(new Uint8Array(n),truth),0);
+console.log("SAM pilot contracts passed (synthetic outputs; not model inference).");
