@@ -1,4 +1,4 @@
-import {WIDTH,HEIGHT,fixture,selectMask,intersectionOverUnion} from "./core.mjs";
+import {WIDTH,HEIGHT,fixture,BASELINE_POINTS,GUIDED_POINTS,maskCandidates,chooseCandidate,intersectionOverUnion} from "./core.mjs";
 let running=false;
 self.onmessage=async({data})=>{
   if(running||data?.type!=="run")return;
@@ -23,16 +23,34 @@ self.onmessage=async({data})=>{
     model=await SamModel.from_pretrained(id,options);
     const loaded=performance.now(),{rgb,truth}=fixture();
     const image=new RawImage(rgb,WIDTH,HEIGHT,3);
-    step("preprocess");
-    inputs=await processor(image,{input_points:[[[160,120]]]});
-    step("inference");
-    outputs=await model(inputs);
-    step("postprocess");
-    masks=await processor.post_process_masks(outputs.pred_masks,inputs.original_sizes,inputs.reshaped_input_sizes);
-    step("mask-contract");
-    const result=selectMask(masks[0],outputs.iou_scores.data,160,120);
-    self.postMessage({type:"result",bits:result.bits,score:result.score,iou:intersectionOverUnion(result.bits,truth),
-      loadMs:Math.round(loaded-start),inferMs:Math.round(performance.now()-loaded)},[result.bits.buffer]);
+    async function analyze(points){
+      const started=performance.now();
+      step("preprocess");
+      inputs=await processor(image,{input_points:[points.map(([x,y])=>[x,y])],input_labels:[points.map(p=>p[2])]});
+      step("inference");
+      outputs=await model(inputs);
+      step("postprocess");
+      masks=await processor.post_process_masks(outputs.pred_masks,inputs.original_sizes,inputs.reshaped_input_sizes);
+      step("mask-contract");
+      const candidates=maskCandidates(masks[0],outputs.iou_scores.data,points);
+      let chosen=null;
+      try{chosen=chooseCandidate(candidates);}catch(e){if(e.message!=="no_valid_mask")throw e;}
+      const report={chosen_channel:chosen?.channel??null,model_score:chosen?.score??null,
+        fixture_iou:chosen?intersectionOverUnion(chosen.bits,truth):null,
+        inference_ms:Math.round(performance.now()-started),
+        candidates:candidates.map(c=>({channel:c.channel,model_score:Number.isFinite(c.score)?c.score:null,
+          pixels:c.count,prompt_matches:c.matches,eligible:c.eligible,fixture_iou:intersectionOverUnion(c.bits,truth)}))};
+      // Release tensors before the next prompt, preserving only small CPU mask bytes.
+      for(const tensor of new Set([...Object.values(inputs),...Object.values(outputs),...masks])){try{tensor?.dispose?.();}catch(_){}}
+      inputs=outputs=masks=null;
+      return {report,bits:chosen?.bits??null};
+    }
+    const baseline=await analyze(BASELINE_POINTS);
+    const guided=await analyze(GUIDED_POINTS);
+    const bits=guided.bits||new Uint8Array(WIDTH*HEIGHT);
+    self.postMessage({type:"result",bits,score:guided.report.model_score,iou:guided.report.fixture_iou,
+      loadMs:Math.round(loaded-start),inferMs:guided.report.inference_ms,
+      baseline:baseline.report,guided:guided.report},[bits.buffer]);
   }catch(e){
     // Synthetic fixture only: bounded error details, no stack trace.
     const detail=String(e?.message||e?.name||"unknown_error").replace(/[\r\n\t]+/g," ").slice(0,300);

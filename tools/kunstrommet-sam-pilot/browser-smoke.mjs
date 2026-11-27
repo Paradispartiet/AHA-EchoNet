@@ -50,6 +50,11 @@ try{
       const result=JSON.parse(raw);
       for(const k of ["model_score","fixture_iou","load_ms","inference_ms"])assert.ok(Number.isFinite(result[k]),k);
       assert.ok(result.fixture_iou>=0&&result.fixture_iou<=1,"invalid IoU");
+      for(const report of [result.baseline,result.guided]){
+        assert.equal(report.candidates.length,3,"all model candidates measured");
+        assert.ok(report.candidates.every(c=>Number.isFinite(c.fixture_iou)&&c.fixture_iou>=0&&c.fixture_iou<=1));
+      }
+      assert.equal(result.guided.candidates.find(c=>c.channel===result.guided.chosen_channel)?.eligible,true,"chosen mask satisfies all prompts");
       // Pilot quality floor only, not a real photo or physical iPad acceptance gate.
       assert.ok(result.fixture_iou>=0.5,"synthetic IoU below pilot floor");
       console.log(name+" actual model inference passed");

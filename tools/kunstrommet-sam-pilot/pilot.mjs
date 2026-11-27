@@ -25,7 +25,7 @@ run.onclick=()=>{
     worker.onmessage=({data})=>{
       if(data?.type==="result"){
         draw(data.bits);
-        result.textContent=JSON.stringify({model_score:data.score,fixture_iou:data.iou,load_ms:data.loadMs,inference_ms:data.inferMs},null,2);
+        result.textContent=JSON.stringify({model_score:data.score,fixture_iou:data.iou,load_ms:data.loadMs,inference_ms:data.inferMs,baseline:data.baseline,guided:data.guided},null,2);
         finish("Test ferdig. Resultatet gjelder bare dette syntetiske motivet.");
       }else if(data?.type==="phase"&&Object.hasOwn(phaseLabels,data.phase)){
         lastPhase=data.phase;status.textContent=phaseLabels[lastPhase]+" …";

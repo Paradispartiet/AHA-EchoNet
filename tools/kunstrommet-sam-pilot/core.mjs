@@ -10,21 +10,31 @@ export function fixture(){
   }
   return {rgb,truth};
 }
-export function selectMask(tensor,scores,x,y,width=WIDTH,height=HEIGHT){
-  if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||y<0||x>=width||y>=height)throw Error("invalid_point");
+// Prompt coordinates are fixed synthetic user-like clicks, not a ground-truth mask.
+export const BASELINE_POINTS=[[160,120,1]];
+export const GUIDED_POINTS=[[160,120,1],[117,120,1],[203,120,1],[160,70,1],[160,170,1],[65,120,0],[255,120,0],[160,20,0],[160,220,0]];
+export function maskCandidates(tensor,scores,points,width=WIDTH,height=HEIGHT){
+  if(!Array.isArray(points)||!points.length||!points.some(p=>p[2]===1)||points.some(p=>!Array.isArray(p)||p.length!==3||
+    !Number.isInteger(p[0])||!Number.isInteger(p[1])||p[0]<0||p[1]<0||p[0]>=width||p[1]>=height||![0,1].includes(p[2])))throw Error("invalid_point");
   const size=width*height,d=tensor?.dims;
   if(!Array.isArray(d)||d.length!==4||d[0]!==1||d[1]!==3||d[2]!==height||d[3]!==width||
      tensor.data?.length!==3*size||scores?.length!==3||tensor.type!=="bool")throw Error("unexpected_model_output");
-  let best=null;
-  for(let c=0;c<3;c++){
-    if(!Number.isFinite(scores[c])||!tensor.data[c*size+y*width+x])continue;
+  return Array.from({length:3},(_,channel)=>{
     const bits=new Uint8Array(size);let count=0;
-    for(let i=0;i<size;i++){bits[i]=tensor.data[c*size+i]?1:0;count+=bits[i];}
-    if(count===0||count===size)continue;
-    if(!best||scores[c]>best.score)best={bits,count,score:scores[c],channel:c};
-  }
+    for(let i=0;i<size;i++){bits[i]=tensor.data[channel*size+i]?1:0;count+=bits[i];}
+    const matches=points.filter(([x,y,label])=>bits[y*width+x]===label).length;
+    const score=scores[channel];
+    return {bits,count,score,channel,matches,eligible:Number.isFinite(score)&&count>0&&count<size&&matches===points.length};
+  });
+}
+export function chooseCandidate(candidates){
+  // No ground-truth input: choose only prompt-consistent, nontrivial masks by model score.
+  const best=candidates.filter(c=>c.eligible).sort((a,b)=>b.score-a.score||a.channel-b.channel)[0];
   if(!best)throw Error("no_valid_mask");
   return best;
+}
+export function selectMask(tensor,scores,x,y,width=WIDTH,height=HEIGHT){
+  return chooseCandidate(maskCandidates(tensor,scores,[[x,y,1]],width,height));
 }
 export function intersectionOverUnion(bits,truth){
   if(bits.length!==truth.length)throw Error("dimension_mismatch");
