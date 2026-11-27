@@ -53,6 +53,8 @@
           <button id="kv2-gradient" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Gradient" title="Gradient"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M11 4v16M15 4v16M19 4v16" opacity=".55"/></svg><span aria-hidden="true">Gradient</span></button>
           </div>
           <div id="kv2-color-region-panel" hidden>
+            <button id="kv2-color-region-propose" type="button" disabled>Foreslå motiv i markert ramme</button>
+            <p class="kv2-tip">Bruk Marker til å tegne et rektangel rundt motivet med litt bakgrunn på alle sider. Velg så Fargemaske og Foreslå motiv. Fungerer best når motivet er tydelig skilt fra bakgrunnen.</p>
             <label>Områdevalg <select id="kv2-color-region-operation"><option value="replace">Ny markering</option><option value="add">Legg til område</option><option value="subtract">Trekk fra område</option></select></label>
             <label>Fargetoleranse (siste område) <input id="kv2-color-region-tolerance" type="range" min="0" max="100" value="15" /></label>
             <label>Juster markeringens kant <input id="kv2-color-region-shift" type="range" min="-16" max="16" value="0" step="1" /> <output id="kv2-color-region-shift-value" for="kv2-color-region-shift">0 px</output></label>

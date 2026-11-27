@@ -2646,6 +2646,7 @@
         colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
+    $("kv2-color-region-propose").disabled = !layer || !validSelection() || lassoActive();
     const radius=colorRegionRadius(),shift=colorRegionShift();
     $("kv2-color-region-feather-value").textContent=radius+" px";
     $("kv2-color-region-shift-value").textContent=(shift>0?"+":"")+shift+" px";
@@ -2673,6 +2674,66 @@
       image.data[k]=30; image.data[k+1]=145; image.data[k+2]=240; image.data[k+3]=Math.round(coverage*110/255);
     }
     ctx.putImageData(image,0,0);
+  }
+
+  // Assisted foreground proposal, not semantic recognition. Estimate background
+  // colors from the enclosing rectangle and flood only connected background.
+  function proposeForeground(box=selection) {
+    renderColorRegion();
+    const layer=colorRegionLayer();
+    if(!layer||!box||box.type==="lasso"||box.w<8||box.h<8)return;
+    const left=clamp(Math.ceil(box.x-layer.x),0,WIDTH),top=clamp(Math.ceil(box.y-layer.y),0,HEIGHT);
+    const right=clamp(Math.floor(box.x+box.w-layer.x),0,WIDTH),bottom=clamp(Math.floor(box.y+box.h-layer.y),0,HEIGHT);
+    if(right-left<8||bottom-top<8){status("Tegn en større ramme rundt motivet.");return;}
+    const rgba=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    const total=WIDTH*HEIGHT, perimeter=[];
+    for(let x=left;x<right;x++){perimeter.push(top*WIDTH+x,(bottom-1)*WIDTH+x);}
+    for(let y=top+1;y<bottom-1;y++){perimeter.push(y*WIDTH+left,y*WIDTH+right-1);}
+    const bins=new Map();
+    let opaque=0;
+    for(const i of perimeter){
+      const k=i*4;if(!rgba[k+3])continue;
+      opaque++;
+      const key=(rgba[k]>>5)*64+(rgba[k+1]>>5)*8+(rgba[k+2]>>5);
+      const bin=bins.get(key)||{n:0,r:0,g:0,b:0};
+      bin.n++;bin.r+=rgba[k];bin.g+=rgba[k+1];bin.b+=rgba[k+2];bins.set(key,bin);
+    }
+    const palette=[...bins.values()].sort((a,b)=>b.n-a.n).slice(0,8)
+      .filter(b=>b.n>=Math.max(1,opaque*.03)).map(b=>[b.r/b.n,b.g/b.n,b.b/b.n]);
+    const tolerance=clamp(Number($("kv2-color-region-tolerance").value)||0,0,100)*255/100;
+    const matches=i=>{
+      const k=i*4;if(!rgba[k+3])return true;
+      return palette.some(c=>Math.max(Math.abs(rgba[k]-c[0]),Math.abs(rgba[k+1]-c[1]),Math.abs(rgba[k+2]-c[2]))<=tolerance);
+    };
+    const seen=new Uint8Array(total),queue=new Uint32Array(total),bits=new Uint8Array(total);
+    let head=0,tail=0;
+    const visit=i=>{
+      if(seen[i])return;
+      seen[i]=1;
+      if(!matches(i))return;
+      seen[i]=2;queue[tail++]=i;
+    };
+    perimeter.forEach(visit);
+    if(tail<perimeter.length*.7){
+      if(colorRegion?.proposal){colorRegion=null;renderColorRegion();}
+      status("Usikker bakgrunn. Tegn en ramme med mer bakgrunn rundt hele motivet, eller juster toleransen.");return;
+    }
+    while(head<tail){
+      const i=queue[head++],x=i%WIDTH,y=Math.floor(i/WIDTH);
+      if(x>left)visit(i-1);if(x+1<right)visit(i+1);
+      if(y>top)visit(i-WIDTH);if(y+1<bottom)visit(i+WIDTH);
+    }
+    let count=0;
+    for(let y=top;y<bottom;y++)for(let x=left;x<right;x++){
+      const i=y*WIDTH+x;
+      if(seen[i]!==2&&rgba[i*4+3]){bits[i]=1;count++;}
+    }
+    // Empty result is never applicable; retain the rectangle for tolerance adjustment.
+    colorRegion={bits,count,baseline:null,op:"replace",proposal:{x:box.x,y:box.y,w:box.w,h:box.h},
+      layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y};
+    $("kv2-color-region-mode").value="keep";
+    renderColorRegion();
+    status(count?"Motivforslag klart. Kontroller markeringen og juster før du lager maske.":"Ingen tydelig forgrunn funnet. Juster toleransen eller rammen.");
   }
 
   function sampleColorRegion(at, repeatLast = false) {
@@ -3986,7 +4047,8 @@
     $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
     $("kv2-color-region-cancel").addEventListener("click",()=>{colorRegion=null;renderColorRegion();});
-    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at,true);});
+    $("kv2-color-region-propose").addEventListener("click",()=>proposeForeground());
+    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion?.proposal)proposeForeground(colorRegion.proposal);else if(colorRegion)sampleColorRegion(colorRegion.at,true);});
     $("kv2-color-region-feather").addEventListener("input",()=>{$("kv2-color-region-feather-value").textContent=colorRegionRadius()+" px";});
     $("kv2-color-region-feather").addEventListener("change",renderColorRegion);
     $("kv2-color-region-shift").addEventListener("input",()=>{const n=colorRegionShift();$("kv2-color-region-shift-value").textContent=(n>0?"+":"")+n+" px";});
