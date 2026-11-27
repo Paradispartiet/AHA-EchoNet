@@ -389,3 +389,8 @@ Penseltype vises ved Pensel, magnetisk justering ved Flytt lag, fyll/omriss ved 
 ## Kunstrommet 9.1 – fargebasert områdevalg og ikke-destruktiv maske
 
 Velg Fargemaske, trykk på en farget piksel på aktivt rasterlag og juster Fargetoleranse. Fireveis sammenhengende RGBA-område sammenlignes med startpikselen; gjennomsiktige piksler stopper utbredelsen. Blå forhåndsvisning er et separat lerret, ikke eksportert eller lagret. Lag maske skjuler eller beholder valgt område på aktivt lag i ett angresteg; originalbitmap bevares. Flyttede lag og zoom bruker dokumentkoordinater. Eksisterende lagmasker overskrives ikke; tekst-, justerings-, låste og skjulte lag er sperret. Dette er fargebasert segmentering, ikke KI eller semantisk objektgjenkjenning. Rektangel/lasso er separate verktøy. Ingen nettverk, nye prosjektfelter eller databaseendringer. Fysisk iPad-ytelse må kontrolleres i #1058.
+
+
+## Kunstrommet 9.2 – kombiner fargeområder
+
+Fargemaske har Ny markering, Legg til område og Trekk fra område. Legg til beregner union, Trekk fra differanse mellom eksisterende markering og den valgte sammenhengende fargeflaten. Toleranse endrer kun siste områdeoperasjon mot en beholdt baseline, også når markeringen blir tom; tidligere områder er uendret. Tomt valg kan ikke opprette maske. Kun to heldekkende binære markeringskart beholdes, uten voksende historikk. Ugyldig/transparent treff bevarer eksisterende markering. Avslutt med Lag maske, som før, i ett angresteg. Ingen prosjektmetadata, nettverk eller endring av originalbitmap. Fysisk iPad gjenstår.
