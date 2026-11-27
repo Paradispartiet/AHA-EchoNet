@@ -13,6 +13,35 @@ export function fixture(){
 // Prompt coordinates are fixed synthetic user-like clicks, not a ground-truth mask.
 export const BASELINE_POINTS=[[160,120,1]];
 export const GUIDED_POINTS=[[160,120,1],[117,120,1],[203,120,1],[160,70,1],[160,170,1],[65,120,0],[255,120,0],[160,20,0],[160,220,0]];
+// Fixed prompts mimic deliberate user clicks. Ground truth is for evaluation only.
+export const CHALLENGES=Object.freeze([
+ {id:"ring",label:"Motiv med hull",points:[[105,120,1],[215,120,1],[160,65,1],[160,175,1],[160,120,0],[55,120,0],[265,120,0]]},
+ {id:"low-contrast",label:"Lav kontrast og tekstur",points:[[160,120,1],[120,120,1],[195,120,1],[160,75,1],[160,165,1],[65,120,0],[255,120,0],[160,22,0],[160,218,0]]},
+ {id:"neighbor",label:"Konkurrerende nabomotiv",points:[[113,120,1],[82,120,1],[138,90,1],[115,160,1],[222,120,0],[175,120,0],[30,120,0],[113,24,0]]}
+]);
+export function challengeFixture(id){
+ if(!CHALLENGES.some(x=>x.id===id))throw Error("unknown_fixture");
+ const rgb=new Uint8Array(WIDTH*HEIGHT*3),truth=new Uint8Array(WIDTH*HEIGHT);
+ for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
+   const i=y*WIDTH+x,noise=((x*17+y*31+(x*y)%29)%13)-6;
+   let body=false,color;
+   if(id==="ring"){
+     const d=(x-160)**2+(y-120)**2;
+     body=d<=77**2&&d>=34**2;
+     color=body?[205+noise,128+noise,62+noise]:[48+noise,94+noise,128+noise];
+   }else if(id==="low-contrast"){
+     body=(x-160)**2/70**2+(y-120)**2/72**2<=1;
+     const shade=Math.round(10*Math.sin(x/11)+8*Math.cos(y/17))+noise;
+     color=body?[126+shade,137+shade,124+shade]:[107+shade,121+shade,111+shade];
+   }else{
+     body=(x-113)**2/56**2+(y-120)**2/70**2<=1;
+     const neighbor=(x-224)**2/56**2+(y-120)**2/68**2<=1;
+     color=body?[173+noise,85+noise,67+noise]:neighbor?[166+noise,98+noise,70+noise]:[55+noise,100+noise,130+noise];
+   }
+   truth[i]=body?1:0;rgb.set(color,i*3);
+ }
+ return {rgb,truth};
+}
 export function maskCandidates(tensor,scores,points,width=WIDTH,height=HEIGHT){
   if(!Array.isArray(points)||!points.length||!points.some(p=>p[2]===1)||points.some(p=>!Array.isArray(p)||p.length!==3||
     !Number.isInteger(p[0])||!Number.isInteger(p[1])||p[0]<0||p[1]<0||p[0]>=width||p[1]>=height||![0,1].includes(p[2])))throw Error("invalid_point");

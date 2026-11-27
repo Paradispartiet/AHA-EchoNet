@@ -1,4 +1,4 @@
-import {WIDTH,HEIGHT,fixture,BASELINE_POINTS,GUIDED_POINTS,maskCandidates,chooseCandidate,intersectionOverUnion} from "./core.mjs";
+import {WIDTH,HEIGHT,fixture,BASELINE_POINTS,GUIDED_POINTS,CHALLENGES,challengeFixture,maskCandidates,chooseCandidate,intersectionOverUnion} from "./core.mjs";
 let running=false;
 self.onmessage=async({data})=>{
   if(running||data?.type!=="run")return;
@@ -23,7 +23,7 @@ self.onmessage=async({data})=>{
     model=await SamModel.from_pretrained(id,options);
     const loaded=performance.now(),{rgb,truth}=fixture();
     const image=new RawImage(rgb,WIDTH,HEIGHT,3);
-    async function analyze(points){
+    async function analyze(points,image,truth){
       const started=performance.now();
       step("preprocess");
       inputs=await processor(image,{input_points:[points.map(([x,y])=>[x,y])],input_labels:[points.map(p=>p[2])]});
@@ -45,12 +45,19 @@ self.onmessage=async({data})=>{
       inputs=outputs=masks=null;
       return {report,bits:chosen?.bits??null};
     }
-    const baseline=await analyze(BASELINE_POINTS);
-    const guided=await analyze(GUIDED_POINTS);
+    const baseline=await analyze(BASELINE_POINTS,image,truth);
+    const guided=await analyze(GUIDED_POINTS,image,truth);
+    const challenges=[];
+    for(const spec of CHALLENGES){
+      self.postMessage({type:"challenge",id:spec.id,label:spec.label});
+      const f=challengeFixture(spec.id);
+      const sample=await analyze(spec.points,new RawImage(f.rgb,WIDTH,HEIGHT,3),f.truth);
+      challenges.push({id:spec.id,label:spec.label,prompt_count:spec.points.length,...sample.report});
+    }
     const bits=guided.bits||new Uint8Array(WIDTH*HEIGHT);
     self.postMessage({type:"result",bits,score:guided.report.model_score,iou:guided.report.fixture_iou,
       loadMs:Math.round(loaded-start),inferMs:guided.report.inference_ms,
-      baseline:baseline.report,guided:guided.report},[bits.buffer]);
+      baseline:baseline.report,guided:guided.report,challenges},[bits.buffer]);
   }catch(e){
     // Synthetic fixture only: bounded error details, no stack trace.
     const detail=String(e?.message||e?.name||"unknown_error").replace(/[\r\n\t]+/g," ").slice(0,300);

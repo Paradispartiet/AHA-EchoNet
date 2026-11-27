@@ -32,3 +32,9 @@ CI 27.11: runner, nettlesere, npm-pakke og begge ONNX SHA-256-kontroller bestod.
 ### Første faktiske inferens og guidet oppfølging
 
 CI 46073794507 (commit a400386): Chromium 2152 ms innlasting, 9555 ms analyse, IoU 0.253843; WebKit 4614 ms innlasting, 8911 ms analyse, IoU 0.253957. Begge modeller kjørte, null observerte eksterne nettverksforespørsler. Kvalitetskravet 0.5 feilet. Modellscore >1 er rå modellscore, ikke kalibrert sannsynlighet. Hypotese: enkeltpunkt på kontraststripe velger delmotiv. Ny kandidat måler samme motiv med ett klikk og med fem positive/fire negative klikk. Alle tre maskekandidater, areal, samsvar med klikk, modellscore og IoU logges. Masken velges utelukkende ut fra klikk og modellscore, aldri fasit. Ingen senking av IoU-grensen; guidet maske må bestå. To analyser i samme worker, frigjør tensorer mellom analyser; tid per analyse og innlasting separat. Fysisk iPad og representativ fotokvalitet fortsatt utestet.
+
+### Veiledet test bestått og utvidet testsett
+
+CI 46074379640 (f37bc44): Chromium IoU 0.992115, modellinnlasting 1545 ms, guidet analyse 6443 ms; WebKit IoU 0.990697, innlasting 3471 ms, guidet analyse 5966 ms. Ett klikk ga fortsatt 0.253843/0.253957. Alle tre kandidater ble målt, og masken ble valgt uten fasit. Begge nettlesere bestod den faktiske inferenstesten. Testen gjaldt ett syntetisk motiv.
+
+Ny testutvidelse: ring med indre hull, lav kontrast med deterministisk tekstur, og konkurrerende nabomotiv. Fast definerte positive/negative klikk, separat fasit og uendret IoU-minstekrav 0.5 for hvert motiv og hver nettleser. Ingen valg basert på fasit. Modell lastes én gang per worker, tensorer frigis etter hvert motiv; økt total timeout til 240 sek for fem analyser. Kvalitetsresultatene for de tre nye motivene er ikke målt ennå. Syntetisk testsett erstatter ikke foto eller fysisk iPad.

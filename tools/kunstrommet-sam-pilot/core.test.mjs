@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {WIDTH,HEIGHT,fixture,selectMask,maskCandidates,chooseCandidate,GUIDED_POINTS,intersectionOverUnion} from "./core.mjs";
+import {WIDTH,HEIGHT,fixture,selectMask,maskCandidates,chooseCandidate,GUIDED_POINTS,CHALLENGES,challengeFixture,intersectionOverUnion} from "./core.mjs";
 const {truth,rgb}=fixture(),n=WIDTH*HEIGHT;
 assert.equal(rgb.length,n*3);
 const data=new Uint8Array(3*n);data.set(truth,n);data.fill(1,2*n);
@@ -22,4 +22,13 @@ assert.equal(choices[0].eligible,false);
 assert.equal(chooseCandidate(choices).channel,1);
 assert.throws(()=>maskCandidates(tensor,[.9,.8,.99],[[1,1,0]]),/invalid_point/);
 assert.throws(()=>chooseCandidate(choices.filter(x=>x.channel!==1)),/no_valid_mask/);
+for(const spec of CHALLENGES){
+ const f=challengeFixture(spec.id);
+ assert.equal(f.rgb.length,3*n);assert.equal(f.truth.length,n);
+ assert.ok(f.truth.some(x=>x===1)&&f.truth.some(x=>x===0));
+ for(const [x,y,label] of spec.points)assert.equal(f.truth[y*WIDTH+x],label,spec.id+" prompt");
+ const buf=new Uint8Array(3*n);buf.set(f.truth,n);buf.fill(1,2*n);
+ assert.equal(chooseCandidate(maskCandidates({...tensor,data:buf},[.9,.8,.99],spec.points)).channel,1);
+}
+assert.throws(()=>challengeFixture("other"),/unknown_fixture/);
 console.log("SAM pilot contracts passed (synthetic outputs; not model inference).");

@@ -25,8 +25,10 @@ run.onclick=()=>{
     worker.onmessage=({data})=>{
       if(data?.type==="result"){
         draw(data.bits);
-        result.textContent=JSON.stringify({model_score:data.score,fixture_iou:data.iou,load_ms:data.loadMs,inference_ms:data.inferMs,baseline:data.baseline,guided:data.guided},null,2);
-        finish("Test ferdig. Resultatet gjelder bare dette syntetiske motivet.");
+        result.textContent=JSON.stringify({model_score:data.score,fixture_iou:data.iou,load_ms:data.loadMs,inference_ms:data.inferMs,baseline:data.baseline,guided:data.guided,challenges:data.challenges},null,2);
+        finish("Test ferdig. Resultatene gjelder bare syntetiske motiver.");
+      }else if(data?.type==="challenge"){
+        status.textContent="Analyserer: "+data.label;
       }else if(data?.type==="phase"&&Object.hasOwn(phaseLabels,data.phase)){
         lastPhase=data.phase;status.textContent=phaseLabels[lastPhase]+" …";
       }else if(data?.type==="error"){
@@ -35,7 +37,7 @@ run.onclick=()=>{
       }
     };
     worker.onerror=()=>{result.textContent=JSON.stringify({failed_phase:lastPhase,error_detail:"worker_error"});finish("Modellen kunne ikke kjøres i denne nettleseren.");};
-    timer=setTimeout(()=>{result.textContent=JSON.stringify({failed_phase:lastPhase,error_detail:"timeout"});finish("Avbrutt etter 120 sekunder.");},120000);
+    timer=setTimeout(()=>{result.textContent=JSON.stringify({failed_phase:lastPhase,error_detail:"timeout"});finish("Avbrutt etter 240 sekunder.");},240000);
     worker.postMessage({type:"run"});
   }catch(_){finish("Worker kunne ikke startes.");}
 };

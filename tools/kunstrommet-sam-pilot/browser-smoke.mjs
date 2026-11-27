@@ -41,7 +41,7 @@ try{
       page.on("pageerror",e=>errors.push(e.message.slice(0,500)));
       await page.goto(origin);
       await page.locator("#run").click();
-      await page.waitForFunction(()=>!document.querySelector("#run").disabled,{},{timeout:135000});
+      await page.waitForFunction(()=>!document.querySelector("#run").disabled,{},{timeout:255000});
       const status=await page.locator("#status").innerText(),raw=await page.locator("#result").innerText();
       console.log(JSON.stringify({browser:name,status,result:raw,errors,blocked,requests},null,2));
       assert.equal(blocked.length,0,"external browser request blocked");
@@ -57,6 +57,14 @@ try{
       assert.equal(result.guided.candidates.find(c=>c.channel===result.guided.chosen_channel)?.eligible,true,"chosen mask satisfies all prompts");
       // Pilot quality floor only, not a real photo or physical iPad acceptance gate.
       assert.ok(result.fixture_iou>=0.5,"synthetic IoU below pilot floor");
+      assert.deepEqual(result.challenges.map(x=>x.id),["ring","low-contrast","neighbor"]);
+      for(const item of result.challenges){
+        assert.equal(item.candidates.length,3);
+        assert.ok(item.candidates.every(c=>Number.isFinite(c.fixture_iou)&&c.fixture_iou>=0&&c.fixture_iou<=1));
+        assert.ok(Number.isFinite(item.inference_ms));
+        assert.ok(Number.isFinite(item.fixture_iou)&&item.fixture_iou>=0.5,item.id+" below pilot floor or no prompt-consistent mask");
+        assert.equal(item.candidates.find(c=>c.channel===item.chosen_channel)?.eligible,true);
+      }
       console.log(name+" actual model inference passed");
     }catch(e){failures.push(name+": "+e.message);console.error(name,e.message);}
     finally{await browser?.close();}
