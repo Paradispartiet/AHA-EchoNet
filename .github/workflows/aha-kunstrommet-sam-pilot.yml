@@ -10,7 +10,7 @@ permissions:
 jobs:
   synthetic-inference:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Set isolated pilot directory
         run: printf 'KR_PILOT_DIR=%s/kr-sam-pilot\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
@@ -29,4 +29,14 @@ jobs:
       - name: Stage pinned public model files and verify hashes
         run: bash tools/kunstrommet-sam-pilot/stage.sh
       - name: Real local WASM inference on synthetic image
+        env:
+          KR_PHOTO_REPORT_DIR: ${{ runner.temp }}/kr-sam-photo-reports
         run: node tools/kunstrommet-sam-pilot/browser-smoke.mjs
+      - name: Visual review of public photograph masks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kunstrommet-public-photo-masks
+          path: ${{ runner.temp }}/kr-sam-photo-reports/*.png
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import http from "node:http";
-import {readFile,stat} from "node:fs/promises";
+import {readFile,stat,mkdir} from "node:fs/promises";
 import path from "node:path";
 import {chromium,webkit} from "@playwright/test";
 const root=path.resolve(process.env.KR_PILOT_DIR||"");
 assert.ok(process.env.KR_PILOT_DIR,"missing pilot root");
-const mime={".html":"text/html; charset=utf-8",".mjs":"text/javascript",".js":"text/javascript",".css":"text/css",".json":"application/json",".wasm":"application/wasm",".onnx":"application/octet-stream"};
+const mime={".html":"text/html; charset=utf-8",".mjs":"text/javascript",".js":"text/javascript",".css":"text/css",".json":"application/json",".wasm":"application/wasm",".onnx":"application/octet-stream",".png":"image/png"};
 const csp="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; worker-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'";
 const server=http.createServer(async(req,res)=>{
   res.setHeader("Content-Security-Policy",csp);
@@ -65,7 +65,26 @@ try{
         assert.ok(Number.isFinite(item.fixture_iou)&&item.fixture_iou>=0.5,item.id+" below pilot floor or no prompt-consistent mask");
         assert.equal(item.candidates.find(c=>c.channel===item.chosen_channel)?.eligible,true);
       }
-      console.log(name+" actual model inference passed");
+      console.log(name+" actual synthetic model inference passed");
+      const out=path.resolve(process.env.KR_PHOTO_REPORT_DIR||path.join(root,"photo-reports"));
+      await mkdir(out,{recursive:true});
+      for(const id of ["chelsea","coffee"]){
+        await page.locator("#photo-"+id).click();
+        await page.waitForFunction(()=>!document.querySelector("#run").disabled,{},{timeout:255000});
+        const state=await page.locator("#status").innerText(),rawPhoto=await page.locator("#result").innerText();
+        console.log(JSON.stringify({browser:name,photo:id,status:state,result:rawPhoto},null,2));
+        // Capture the actual model output for manual review, not a ground-truth mask.
+        await page.locator("#preview").screenshot({path:path.join(out,name+"-"+id+".png")});
+        assert.ok(state.startsWith("Fototest ferdig."),id+" did not finish");
+        const f=JSON.parse(rawPhoto);
+        assert.equal(f.photo_id,id);assert.equal(f.fixture_iou,null);
+        assert.equal(f.candidates.length,3);assert.ok(f.candidates.every(c=>c.fixture_iou===null));
+        assert.ok(Number.isFinite(f.inference_ms));
+        assert.equal(f.candidates.find(c=>c.channel===f.chosen_channel)?.eligible,true,id+" no prompt-consistent mask");
+      }
+      assert.equal(blocked.length,0,"external browser request blocked");
+      assert.ok(requests.every(u=>new URL(u).origin===origin),"non-local browser request");
+      console.log(name+" actual photo smoke passed (visual review required)");
     }catch(e){failures.push(name+": "+e.message);console.error(name,e.message);}
     finally{await browser?.close();}
   }

@@ -32,18 +32,32 @@ self.onmessage=async({data})=>{
       step("postprocess");
       masks=await processor.post_process_masks(outputs.pred_masks,inputs.original_sizes,inputs.reshaped_input_sizes);
       step("mask-contract");
-      const candidates=maskCandidates(masks[0],outputs.iou_scores.data,points);
+      const candidates=maskCandidates(masks[0],outputs.iou_scores.data,points,image.width,image.height);
       let chosen=null;
       try{chosen=chooseCandidate(candidates);}catch(e){if(e.message!=="no_valid_mask")throw e;}
       const report={chosen_channel:chosen?.channel??null,model_score:chosen?.score??null,
-        fixture_iou:chosen?intersectionOverUnion(chosen.bits,truth):null,
+        fixture_iou:chosen&&truth?intersectionOverUnion(chosen.bits,truth):null,
         inference_ms:Math.round(performance.now()-started),
         candidates:candidates.map(c=>({channel:c.channel,model_score:Number.isFinite(c.score)?c.score:null,
-          pixels:c.count,prompt_matches:c.matches,eligible:c.eligible,fixture_iou:intersectionOverUnion(c.bits,truth)}))};
+          pixels:c.count,prompt_matches:c.matches,eligible:c.eligible,fixture_iou:truth?intersectionOverUnion(c.bits,truth):null}))};
       // Release tensors before the next prompt, preserving only small CPU mask bytes.
       for(const tensor of new Set([...Object.values(inputs),...Object.values(outputs),...masks])){try{tensor?.dispose?.();}catch(_){}}
       inputs=outputs=masks=null;
       return {report,bits:chosen?.bits??null};
+    }
+    if(data.photoId!==undefined){
+      // Only these public, hash-verified photographs; no arbitrary URL or user image.
+      const specs={chelsea:{w:451,h:300},coffee:{w:600,h:400}};
+      if(!Object.hasOwn(specs,data.photoId))throw Error("unknown_photo");
+      const spec=specs[data.photoId];step("photo");
+      const photo=await RawImage.read(new URL("./photos/"+data.photoId+".png",import.meta.url));
+      if(photo.width!==spec.w||photo.height!==spec.h||photo.channels!==4||photo.data.length!==spec.w*spec.h*4)throw Error("unexpected_photo_dimensions");
+      const rgba=new Uint8ClampedArray(photo.data);
+      const points=[[Math.floor(spec.w/2),Math.floor(spec.h/2),1]];
+      const sample=await analyze(points,photo,null);
+      const bits=sample.bits||new Uint8Array(spec.w*spec.h);
+      self.postMessage({type:"photo-result",id:data.photoId,width:spec.w,height:spec.h,rgba,bits,points,loadMs:Math.round(loaded-start),report:sample.report},[rgba.buffer,bits.buffer]);
+      return;
     }
     const baseline=await analyze(BASELINE_POINTS,image,truth);
     const guided=await analyze(GUIDED_POINTS,image,truth);

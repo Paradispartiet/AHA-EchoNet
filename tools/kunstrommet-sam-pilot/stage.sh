@@ -33,3 +33,15 @@ SHA
 )
 node -e 'for (const p of process.argv.slice(1)) JSON.parse(require("fs").readFileSync(p,"utf8"))' "$model/config.json" "$model/preprocessor_config.json"
 echo "Both pinned weight hashes verified. Runtime file hashes recorded above."
+
+# CC0 photographs: exact scikit-image v0.25.2 commit and upstream data registry hashes.
+mkdir "$KR_PILOT_DIR/photos"
+photos="https://raw.githubusercontent.com/scikit-image/scikit-image/e8a42ba85aaf5fd9322ef9ca51bc21063b22fcae/skimage/data"
+for f in chelsea.png coffee.png; do
+  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --retry 2 --max-time 90 "$photos/$f" --output "$KR_PILOT_DIR/photos/$f"
+done
+(cd "$KR_PILOT_DIR/photos"; sha256sum --check <<'SHA'
+596aa1e7cb875eb79f437e310381d26b338a81c2da23439704a73c4651e8c4bb  chelsea.png
+cc02f8ca188b167c775a7101b5d767d1e71792cf762c33d6fa15a4599b5a8de7  coffee.png
+SHA
+)
