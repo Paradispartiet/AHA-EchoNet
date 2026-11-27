@@ -3587,3 +3587,42 @@ test("9.4 edge shift shrinks and expands the raw selection, then feathers the sa
  await expect.poll(async()=>(await pxAt(page,200,400))[0]).toBeLessThan(100);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+
+test("9.4b corrects partially masked edge colors on a separate undoable copy",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
+ await color("#184ad2");
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[100,100],[1100,700],9491);
+ await color("#d82c24");
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[300,250],[700,550],9492);
+ await page.locator("#kv2-color-region").click();
+ await shapePointer(page,"pointerdown",500,400,9493);
+ await shapePointer(page,"pointerup",500,400,9493);
+ await page.locator("#kv2-color-region-feather").evaluate(el=>{el.value="4";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ await page.locator("#kv2-color-region-mode").selectOption("keep");
+ await page.locator("#kv2-color-region-apply").click();
+ const before=await jsonBackup(page);
+ await page.locator(".kv2-mask-edge-panel summary").click();
+ await page.locator("#kv2-mask-edge-strength").evaluate(el=>{el.value="100";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await expect(page.locator("#kv2-mask-edge-copy")).toBeEnabled();
+ await page.locator("#kv2-mask-edge-copy").click();
+ const after=await jsonBackup(page);
+ expect(after.layers).toHaveLength(2);
+ expect(after.layers[0]).toEqual({...before.layers[0],visible:false});
+ expect(after.layers[1].maskBitmap).toBe(before.layers[0].maskBitmap);
+ expect(after.layers[1].maskPixelFixups).toBe(before.layers[0].maskPixelFixups);
+ const edge=await pngLayersAt(page,after.layers,299,400);
+ expect(edge[1][0]).toBeGreaterThan(edge[0][0]);
+ expect(edge[1][2]).toBeLessThan(edge[0][2]);
+ expect(edge[1][3]).toBe(edge[0][3]);
+ const interior=await pngLayersAt(page,after.layers,500,400);
+ expect(interior[1]).toEqual(interior[0]);
+ const hidden=await pngLayersAt(page,after.layers,200,400);
+ expect(hidden[1]).toEqual(hidden[0]);
+ await page.locator("#kv2-undo").click();
+ await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
