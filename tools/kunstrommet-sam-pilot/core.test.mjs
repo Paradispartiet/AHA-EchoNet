@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {WIDTH,HEIGHT,fixture,selectMask,maskCandidates,chooseCandidate,GUIDED_POINTS,CHALLENGES,challengeFixture,intersectionOverUnion} from "./core.mjs";
+import {WIDTH,HEIGHT,fixture,selectMask,maskCandidates,chooseCandidate,GUIDED_POINTS,CHALLENGES,challengeFixture,PHOTO_SPECS,validatePhotoPoints,intersectionOverUnion} from "./core.mjs";
 const {truth,rgb}=fixture(),n=WIDTH*HEIGHT;
 assert.equal(rgb.length,n*3);
 const data=new Uint8Array(3*n);data.set(truth,n);data.fill(1,2*n);
@@ -31,4 +31,10 @@ for(const spec of CHALLENGES){
  assert.equal(chooseCandidate(maskCandidates({...tensor,data:buf},[.9,.8,.99],spec.points)).channel,1);
 }
 assert.throws(()=>challengeFixture("other"),/unknown_fixture/);
+for(const [id,spec] of Object.entries(PHOTO_SPECS))assert.deepEqual(validatePhotoPoints(id,spec.guided),spec.guided);
+assert.throws(()=>validatePhotoPoints("unknown",[[1,1,1]]),/invalid_photo_points/);
+assert.throws(()=>validatePhotoPoints("coffee",[[600,1,1]]),/invalid_photo_points/);
+assert.throws(()=>validatePhotoPoints("coffee",[[1,1,0]]),/invalid_photo_points/);
+assert.throws(()=>validatePhotoPoints("coffee",[[1,1,1],[1,1,0]]),/duplicate_photo_point/);
+assert.throws(()=>validatePhotoPoints("coffee",Array.from({length:13},(_,i)=>[i,1,1])),/invalid_photo_points/);
 console.log("SAM pilot contracts passed (synthetic outputs; not model inference).");

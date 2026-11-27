@@ -1,4 +1,4 @@
-import {WIDTH,HEIGHT,fixture,BASELINE_POINTS,GUIDED_POINTS,CHALLENGES,challengeFixture,maskCandidates,chooseCandidate,intersectionOverUnion} from "./core.mjs";
+import {WIDTH,HEIGHT,fixture,BASELINE_POINTS,GUIDED_POINTS,CHALLENGES,challengeFixture,PHOTO_SPECS,validatePhotoPoints,maskCandidates,chooseCandidate,intersectionOverUnion} from "./core.mjs";
 let running=false;
 self.onmessage=async({data})=>{
   if(running||data?.type!=="run")return;
@@ -47,13 +47,13 @@ self.onmessage=async({data})=>{
     }
     if(data.photoId!==undefined){
       // Only these public, hash-verified photographs; no arbitrary URL or user image.
-      const specs={chelsea:{w:451,h:300},coffee:{w:600,h:400}};
-      if(!Object.hasOwn(specs,data.photoId))throw Error("unknown_photo");
-      const spec=specs[data.photoId];step("photo");
+      if(!Object.hasOwn(PHOTO_SPECS,data.photoId))throw Error("unknown_photo");
+      const spec=PHOTO_SPECS[data.photoId];
+      const points=validatePhotoPoints(data.photoId,data.points??[[Math.floor(spec.w/2),Math.floor(spec.h/2),1]]);
+      step("photo");
       const photo=await RawImage.read(new URL("./photos/"+data.photoId+".png",import.meta.url));
       if(photo.width!==spec.w||photo.height!==spec.h||photo.channels!==4||photo.data.length!==spec.w*spec.h*4)throw Error("unexpected_photo_dimensions");
       const rgba=new Uint8ClampedArray(photo.data);
-      const points=[[Math.floor(spec.w/2),Math.floor(spec.h/2),1]];
       const sample=await analyze(points,photo,null);
       const bits=sample.bits||new Uint8Array(spec.w*spec.h);
       self.postMessage({type:"photo-result",id:data.photoId,width:spec.w,height:spec.h,rgba,bits,points,loadMs:Math.round(loaded-start),report:sample.report},[rgba.buffer,bits.buffer]);

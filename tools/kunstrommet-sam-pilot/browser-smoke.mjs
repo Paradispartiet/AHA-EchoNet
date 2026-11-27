@@ -81,6 +81,29 @@ try{
         assert.equal(f.candidates.length,3);assert.ok(f.candidates.every(c=>c.fixture_iou===null));
         assert.ok(Number.isFinite(f.inference_ms));
         assert.equal(f.candidates.find(c=>c.channel===f.chosen_channel)?.eligible,true,id+" no prompt-consistent mask");
+        await page.locator("#photo-guided").click();
+        const count=await page.locator("#photo-points").innerText();
+        assert.ok(count.startsWith("6 /"),"guided points loaded");
+        await page.locator("#photo-analyze").click();
+        await page.waitForFunction(()=>!document.querySelector("#run").disabled,{},{timeout:255000});
+        const guidedStatus=await page.locator("#status").innerText(),guidedRaw=await page.locator("#result").innerText();
+        await page.locator("#preview").screenshot({path:path.join(out,name+"-"+id+"-guided.png")});
+        console.log(JSON.stringify({browser:name,photo:id,mode:"guided",status:guidedStatus,result:guidedRaw},null,2));
+        assert.ok(guidedStatus.startsWith("Fototest ferdig."));
+        const g=JSON.parse(guidedRaw);
+        assert.equal(g.points.length,6);assert.equal(g.fixture_iou,null);assert.equal(g.candidates.length,3);
+        // Failure to satisfy all clicks is a valid rejected proposal, not a fake success.
+        if(g.chosen_channel!==null)assert.equal(g.candidates.find(c=>c.channel===g.chosen_channel)?.eligible,true);
+        await page.locator("#photo-clear").click();
+        assert.equal(await page.locator("#photo-analyze").isDisabled(),true);
+        await page.locator("#photo-include").click();
+        const rect=await page.locator("#preview").boundingBox();
+        await page.locator("#preview").click({position:{x:Math.round(rect.width/2),y:Math.round(rect.height/2)}});
+        assert.equal(await page.locator("#photo-points").innerText(),"1 / 12 punkter");
+        assert.equal(await page.locator("#photo-analyze").isEnabled(),true);
+        await page.locator("#photo-exclude").click();
+        await page.locator("#preview").click({position:{x:Math.round(rect.width*.9),y:Math.round(rect.height*.2)}});
+        assert.equal(await page.locator("#photo-points").innerText(),"2 / 12 punkter");
       }
       assert.equal(blocked.length,0,"external browser request blocked");
       assert.ok(requests.every(u=>new URL(u).origin===origin),"non-local browser request");

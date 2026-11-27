@@ -71,3 +71,17 @@ export function intersectionOverUnion(bits,truth){
   for(let i=0;i<bits.length;i++){if(bits[i]||truth[i])union++;if(bits[i]&&truth[i])intersection++;}
   return union?intersection/union:0;
 }
+
+// Public-photo pilot only. Coordinates are in original image pixels.
+export const PHOTO_SPECS=Object.freeze({
+ chelsea:{w:451,h:300,guided:[[225,150,1],[112,112,1],[280,180,1],[150,248,1],[420,148,0],[18,30,0]]},
+ coffee:{w:600,h:400,guided:[[300,200,1],[226,269,1],[285,76,1],[356,285,0],[140,230,0],[300,350,0]]}
+});
+export function validatePhotoPoints(id,points){
+ const spec=Object.hasOwn(PHOTO_SPECS,id)?PHOTO_SPECS[id]:null;
+ if(!spec||!Array.isArray(points)||points.length<1||points.length>12||!points.some(p=>Array.isArray(p)&&p[2]===1)||
+    points.some(p=>!Array.isArray(p)||p.length!==3||!Number.isInteger(p[0])||!Number.isInteger(p[1])||p[0]<0||p[0]>=spec.w||p[1]<0||p[1]>=spec.h||![0,1].includes(p[2])))throw Error("invalid_photo_points");
+ const seen=new Set();
+ for(const [x,y] of points){const key=x+","+y;if(seen.has(key))throw Error("duplicate_photo_point");seen.add(key);}
+ return points.map(p=>p.slice());
+}

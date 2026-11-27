@@ -6,5 +6,10 @@
 <canvas id="preview" width="320" height="240" aria-label="Syntetisk motiv og foreslått maske"></canvas>
 <p><button id="run">Kjør lokal modell</button> <button id="stop" disabled>Avbryt</button></p>
 <p><button id="photo-chelsea">Test katt</button> <button id="photo-coffee">Test kaffekopp</button></p>
+<section id="photo-controls" hidden aria-label="Korriger motivmarkering">
+<p>Trykk i bildet for å legge til punkter. Grønt beholdes, rødt utelates. Ny analyse endrer bare forhåndsvisningen.</p>
+<p><button id="photo-include" type="button" aria-pressed="true">Inkluder</button> <button id="photo-exclude" type="button" aria-pressed="false">Utelat</button> <button id="photo-clear" type="button">Nullstill punkter</button> <button id="photo-guided" type="button">Eksempel på veiledning</button></p>
+<p><span id="photo-points" aria-live="polite">0 / 12 punkter</span> <button id="photo-analyze" type="button">Analyser punktene</button></p>
+</section>
 <p id="status" role="status">Ikke startet. Krever lokalt installerte modellfiler.</p>
 <pre id="result"></pre></main><script type="module" src="./pilot.mjs"></script></body></html>
