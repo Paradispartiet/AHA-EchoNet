@@ -3447,3 +3447,50 @@ test("9.1 color region preview preserves pixels and creates an undoable connecte
  await expect.poll(async()=>(await pxAt(page,300,300))[1]).toBeLessThan(100);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+
+test("9.2 combines disconnected color regions and subtracts before committing one mask",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b52c35";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[150,200],[350,400],9201);
+ await shapeDrag(page,[500,200],[700,400],9202);
+ await shapeDrag(page,[850,200],[1050,400],9203);
+ const before=await jsonBackup(page);
+ const click=async(x,y,id)=>{await shapePointer(page,"pointerdown",x,y,id);await shapePointer(page,"pointerup",x,y,id);};
+ const alpha=async(x,y)=>page.locator("#kv2-color-region-overlay").evaluate((c,p)=>c.getContext("2d").getImageData(p.x,p.y,1,1).data[3],{x,y});
+ const op=page.locator("#kv2-color-region-operation");
+ await page.locator("#kv2-color-region").click();
+ await click(250,300,9204);
+ await op.selectOption("add");
+ await click(600,300,9205);
+ expect(await alpha(250,300)).toBe(110);
+ expect(await alpha(600,300)).toBe(110);
+ expect(await alpha(950,300)).toBe(0);
+ await click(450,500,9206); // transparent click must preserve previous selection
+ expect(await alpha(250,300)).toBe(110);
+ await op.selectOption("subtract");
+ await click(250,300,9207);
+ expect(await alpha(250,300)).toBe(0);
+ expect(await alpha(600,300)).toBe(110);
+ await click(600,300,9208);
+ await expect(page.locator("#kv2-color-region-apply")).toBeDisabled();
+ await expect(page.locator("#kv2-color-region-overlay")).toBeHidden();
+ await op.selectOption("add");
+ await click(950,300,9209);
+ await click(600,300,9210);
+ await page.locator("#kv2-color-region-tolerance").evaluate(el=>{el.value="0";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ expect(await alpha(950,300)).toBe(110);
+ expect(await alpha(600,300)).toBe(110);
+ expect(await alpha(250,300)).toBe(0);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region-mode").selectOption("keep");
+ await page.locator("#kv2-color-region-apply").click();
+ expect((await pxAt(page,250,300)).slice(0,3)).toEqual([255,255,255]);
+ expect((await pxAt(page,600,300))[1]).toBeLessThan(100);
+ expect((await pxAt(page,950,300))[1]).toBeLessThan(100);
+ expect((await jsonBackup(page)).layers[0].bitmap).toBe(before.layers[0].bitmap);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=>(await pxAt(page,250,300))[1]).toBeLessThan(100);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

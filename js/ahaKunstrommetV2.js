@@ -2572,12 +2572,12 @@
         colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
-    $("kv2-color-region-apply").disabled = !colorRegion;
+    $("kv2-color-region-apply").disabled = !colorRegion?.count;
     $("kv2-color-region-cancel").disabled = !colorRegion;
-    overlay.hidden = !colorRegion;
-    if (!colorRegion) {
+    overlay.hidden = !colorRegion?.count;
+    if (!colorRegion?.count) {
       if (overlay.width !== 1 || overlay.height !== 1) { overlay.width=1; overlay.height=1; }
-      $("kv2-color-region-info").textContent = layer ? "Trykk på en sammenhengende fargeflate." :
+      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Legg til et område eller juster siste toleranse." : layer ? "Trykk på en sammenhengende fargeflate." :
         "Velg et synlig, ulåst rasterlag uten lagmaske.";
       return;
     }
@@ -2594,9 +2594,9 @@
     ctx.putImageData(image,0,0);
   }
 
-  function sampleColorRegion(at) {
+  function sampleColorRegion(at, repeatLast = false) {
+    renderColorRegion(); // Invalidate stale preview before using its bitmap.
     const layer = colorRegionLayer();
-    colorRegion = null;
     if (!layer) { renderColorRegion(); status("Fargemaske krever et synlig, ulåst rasterlag uten maske."); return; }
     const sx=Math.floor(at.x-layer.x), sy=Math.floor(at.y-layer.y);
     if(sx<0||sy<0||sx>=WIDTH||sy>=HEIGHT) { renderColorRegion(); return; }
@@ -2622,14 +2622,28 @@
       if(x>0)visit(i-1);if(x+1<WIDTH)visit(i+1);
       if(y>0)visit(i-WIDTH);if(y+1<HEIGHT)visit(i+WIDTH);
     }
-    colorRegion={bits,count:tail,layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y,at};
+    // Retain one baseline only, so tolerance can replace the last operation
+    // without accumulating old pixels or replaying arbitrarily many samples.
+    const previous = colorRegion;
+    const op = repeatLast && previous ? previous.op : $("kv2-color-region-operation").value;
+    const baseline = repeatLast && previous ? previous.baseline : previous?.bits || null;
+    if(op==="subtract" && !baseline){status("Marker først et område.");return;}
+    let count=tail;
+    if(op!=="replace" && baseline){
+      count=0;
+      for(let i=0;i<total;i++){
+        bits[i]=op==="subtract" ? (baseline[i]&&!bits[i]?1:0) : (baseline[i]||bits[i]?1:0);
+        count+=bits[i];
+      }
+    }
+    colorRegion={bits,count,baseline:op==="replace"?null:baseline,op,layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y,at};
     renderColorRegion();
   }
 
   function applyColorRegion() {
     renderColorRegion();
     const layer=colorRegionLayer(),region=colorRegion;
-    if(!layer||!region)return;
+    if(!layer||!region?.count)return;
     const keep=$("kv2-color-region-mode").value==="keep";
     const mask=imageCanvas(),ctx=mask.getContext("2d"),image=ctx.createImageData(WIDTH,HEIGHT);
     for(let i=0;i<region.bits.length;i++){
@@ -3821,7 +3835,7 @@
     $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
     $("kv2-color-region-cancel").addEventListener("click",()=>{colorRegion=null;renderColorRegion();});
-    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at);});
+    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at,true);});
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
