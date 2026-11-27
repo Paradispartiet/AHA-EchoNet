@@ -2593,6 +2593,46 @@
     return alpha;
   }
 
+  function colorRegionShift() {
+    return clamp(Math.round(Number($("kv2-color-region-shift").value)||0),-16,16);
+  }
+
+  // Expand/shrink the binary selection with a separable square neighborhood.
+  // Replicated document edges prevent a synthetic fringe along the canvas border.
+  // Recompute from the original binary region, never from a previous adjustment.
+  function shiftedColorRegion(region, shift) {
+    if (!shift) { region.shifted=null; return region; }
+    if (region.shifted?.shift===shift) return region.shifted;
+    region.shifted=null;
+    region.feather=null;
+    const width=WIDTH,height=HEIGHT,radius=Math.abs(shift),span=radius*2+1;
+    const horizontal=new Uint8Array(width*height),bits=new Uint8Array(width*height);
+    const expand=shift>0;
+    const matches=sum=>expand?sum>0:sum===span;
+    for(let y=0;y<height;y++){
+      const row=y*width;
+      let sum=0;
+      for(let dx=-radius;dx<=radius;dx++)sum+=region.bits[row+clamp(dx,0,width-1)];
+      for(let x=0;x<width;x++){
+        horizontal[row+x]=matches(sum)?1:0;
+        sum+=region.bits[row+Math.min(width-1,x+radius+1)]-region.bits[row+Math.max(0,x-radius)];
+      }
+    }
+    let count=0;
+    for(let x=0;x<width;x++){
+      let sum=0;
+      for(let dy=-radius;dy<=radius;dy++)sum+=horizontal[clamp(dy,0,height-1)*width+x];
+      for(let y=0;y<height;y++){
+        const i=y*width+x;
+        bits[i]=matches(sum)?1:0;
+        count+=bits[i];
+        sum+=horizontal[Math.min(height-1,y+radius+1)*width+x]-horizontal[Math.max(0,y-radius)*width+x];
+      }
+    }
+    region.shifted={shift,bits,count};
+    return region.shifted;
+  }
+
   function colorRegionRadius() {
     return clamp(Math.round(Number($("kv2-color-region-feather").value)||0),0,32);
   }
@@ -2605,24 +2645,26 @@
         colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
-    const radius=colorRegionRadius();
+    const radius=colorRegionRadius(),shift=colorRegionShift();
     $("kv2-color-region-feather-value").textContent=radius+" px";
-    if(colorRegion && !radius)colorRegion.feather=null;
-    $("kv2-color-region-apply").disabled = !colorRegion?.count;
+    $("kv2-color-region-shift-value").textContent=(shift>0?"+":"")+shift+" px";
+    const adjusted=colorRegion?.count?shiftedColorRegion(colorRegion,shift):null;
+    if(adjusted && !radius)adjusted.feather=null;
+    $("kv2-color-region-apply").disabled = !adjusted?.count;
     $("kv2-color-region-cancel").disabled = !colorRegion;
-    overlay.hidden = !colorRegion?.count;
-    if (!colorRegion?.count) {
+    overlay.hidden = !adjusted?.count;
+    if (!adjusted?.count) {
       if (overlay.width !== 1 || overlay.height !== 1) { overlay.width=1; overlay.height=1; }
-      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Legg til et område eller juster siste toleranse." : layer ? "Trykk på en sammenhengende fargeflate." :
+      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Juster kanten eller legg til et område." : layer ? "Trykk på en sammenhengende fargeflate." :
         "Velg et synlig, ulåst rasterlag uten lagmaske.";
       return;
     }
-    $("kv2-color-region-info").textContent = colorRegion.count.toLocaleString("nb-NO") + " piksler markert.";
+    $("kv2-color-region-info").textContent = adjusted.count.toLocaleString("nb-NO") + " piksler markert (før myke kanter).";
     overlay.width = WIDTH; overlay.height = HEIGHT;
     const ctx = overlay.getContext("2d"), image = ctx.createImageData(WIDTH, HEIGHT);
-    const softened=featherRegion(colorRegion,radius);
-    for (let i=0; i<colorRegion.bits.length; i++) {
-      const coverage=softened?softened[i]:colorRegion.bits[i]*255;
+    const softened=featherRegion(adjusted,radius);
+    for (let i=0; i<adjusted.bits.length; i++) {
+      const coverage=softened?softened[i]:adjusted.bits[i]*255;
       if (!coverage) continue;
       const x=i%WIDTH+layer.x, y=Math.floor(i/WIDTH)+layer.y;
       if (x<0 || y<0 || x>=WIDTH || y>=HEIGHT) continue;
@@ -2682,11 +2724,13 @@
     renderColorRegion();
     const layer=colorRegionLayer(),region=colorRegion;
     if(!layer||!region?.count)return;
+    const adjusted=shiftedColorRegion(region,colorRegionShift());
+    if(!adjusted.count)return;
     const keep=$("kv2-color-region-mode").value==="keep";
     const mask=imageCanvas(),ctx=mask.getContext("2d"),image=ctx.createImageData(WIDTH,HEIGHT);
-    const softened=featherRegion(region,colorRegionRadius());
-    for(let i=0;i<region.bits.length;i++){
-      const k=i*4, coverage=softened?softened[i]:region.bits[i]*255;
+    const softened=featherRegion(adjusted,colorRegionRadius());
+    for(let i=0;i<adjusted.bits.length;i++){
+      const k=i*4, coverage=softened?softened[i]:adjusted.bits[i]*255;
       const opacity=keep?coverage:255-coverage;
       if(opacity){image.data[k]=255;image.data[k+1]=255;image.data[k+2]=255;image.data[k+3]=opacity;}
     }
@@ -3878,6 +3922,8 @@
     $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion)sampleColorRegion(colorRegion.at,true);});
     $("kv2-color-region-feather").addEventListener("input",()=>{$("kv2-color-region-feather-value").textContent=colorRegionRadius()+" px";});
     $("kv2-color-region-feather").addEventListener("change",renderColorRegion);
+    $("kv2-color-region-shift").addEventListener("input",()=>{const n=colorRegionShift();$("kv2-color-region-shift-value").textContent=(n>0?"+":"")+n+" px";});
+    $("kv2-color-region-shift").addEventListener("change",renderColorRegion);
     $("kv2-mask-add").addEventListener("click", addLayerMask);
     $("kv2-mask-edit").addEventListener("click", toggleMaskEdit);
     $("kv2-mask-toggle").addEventListener("click", toggleLayerMask);
