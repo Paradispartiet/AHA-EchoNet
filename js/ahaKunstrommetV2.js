@@ -363,6 +363,7 @@
   let gradientFramePending = false;
   let textEditId = null;
   let freeTransform = null; // UI-only draft, never stored in a project.
+  let photoPerspective=null;
   let textAnchor = null; // Local document coordinates; never persisted before commit.
   const TEXT_FONTS = Object.freeze({
     sans: "Arial, sans-serif", serif: "Georgia, serif",
@@ -1478,6 +1479,7 @@
   function updateLayerControls() {
     const layer = currentLayer();
     $("kv2-transform-free").disabled = !layer || layer.kind === "adjustment" || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
+    $("kv2-photo-perspective").disabled=$("kv2-transform-free").disabled||project?.owner!==owner();
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
@@ -3251,6 +3253,102 @@
     return output;
   }
 
+  // Photo rectification: inverse projective sampling from a convex quadrilateral.
+  // UI points are normalized layer-local coordinates, not the visible composition.
+  function perspectiveMap(p){
+    if(p.length!==4||p.some(a=>!Number.isFinite(a.x)||!Number.isFinite(a.y)||a.x<0||a.x>1||a.y<0||a.y>1))return null;
+    const cross=(a,b,c)=>(b.x-a.x)*(c.y-b.y)-(b.y-a.y)*(c.x-b.x);
+    if(p.some((a,i)=>cross(a,p[(i+1)%4],p[(i+2)%4])<.0001))return null;
+    const [a,b,c,d]=p,dx1=b.x-c.x,dx2=d.x-c.x,dx3=a.x-b.x+c.x-d.x,dy1=b.y-c.y,dy2=d.y-c.y,dy3=a.y-b.y+c.y-d.y;
+    const den=dx1*dy2-dx2*dy1;if(Math.abs(den)<1e-8)return null;
+    const g=(dx3*dy2-dx2*dy3)/den,h=(dx1*dy3-dx3*dy1)/den;
+    if(Math.min(1,1+g,1+h,1+g+h)<.001)return null;
+    return [b.x-a.x+g*b.x,d.x-a.x+h*d.x,a.x,b.y-a.y+g*b.y,d.y-a.y+h*d.y,a.y,g,h];
+  }
+  function perspectiveRatio(points){
+    const choice=$("kv2-photo-perspective-ratio").value;
+    if(choice==="original")return WIDTH/HEIGHT;
+    if(choice!=="auto")return Number(choice)||1;
+    const dist=(a,b)=>Math.hypot((a.x-b.x)*WIDTH,(a.y-b.y)*HEIGHT);
+    return clamp((dist(points[0],points[1])+dist(points[3],points[2]))/Math.max(1,dist(points[0],points[3])+dist(points[1],points[2])),.1,10);
+  }
+  function perspectiveOutput(source,map,ratio,width,height){
+    const src=source.getContext("2d").getImageData(0,0,source.width,source.height).data;
+    const result=imageCanvas(width,height),ctx=result.getContext("2d"),im=ctx.createImageData(width,height),out=im.data;
+    const rw=Math.max(1,Math.min(width,Math.round(height*ratio))),rh=Math.max(1,Math.min(height,Math.round(width/ratio)));
+    const left=Math.floor((width-rw)/2),top=Math.floor((height-rh)/2),sw=source.width,sh=source.height;
+    const [a,b,c,d,e,f,g,h]=map;
+    for(let y=0;y<rh;y++){
+      const v=(y+.5)/rh;
+      for(let x=0;x<rw;x++){
+        const u=(x+.5)/rw,z=g*u+h*v+1;
+        const sx=clamp((a*u+b*v+c)/z*sw-.5,0,sw-1),sy=clamp((d*u+e*v+f)/z*sh-.5,0,sh-1);
+        const x0=Math.floor(sx),y0=Math.floor(sy),x1=Math.min(x0+1,sw-1),y1=Math.min(y0+1,sh-1);
+        const fx=sx-x0,fy=sy-y0,w0=(1-fx)*(1-fy),w1=fx*(1-fy),w2=(1-fx)*fy,w3=fx*fy;
+        const k0=(y0*sw+x0)*4,k1=(y0*sw+x1)*4,k2=(y1*sw+x0)*4,k3=(y1*sw+x1)*4;
+        // Interpolate premultiplied RGB to avoid dark/colored transparent fringes.
+        const a0=w0*src[k0+3],a1=w1*src[k1+3],a2=w2*src[k2+3],a3=w3*src[k3+3],alpha=a0+a1+a2+a3;
+        const k=((y+top)*width+x+left)*4;out[k+3]=alpha;
+        if(alpha>0)for(let ch=0;ch<3;ch++)out[k+ch]=(a0*src[k0+ch]+a1*src[k1+ch]+a2*src[k2+ch]+a3*src[k3+ch])/alpha;
+      }
+    }
+    ctx.putImageData(im,0,0);return result;
+  }
+  function photoPerspectiveValid(){
+    const p=photoPerspective,layer=currentLayer();
+    return !!(p&&p.project===project&&p.owner===owner()&&project.owner===p.owner&&p.layer===layer&&p.rev===bitmapRevision&&p.bitmap===surfaces.get(layer.id)&&p.mask===masks.get(layer.id)&&!busy&&!maskEditing&&pointerId===null&&layer.visible&&!layer.locked&&!layer.textData&&layer.kind!=="adjustment");
+  }
+  function cancelPhotoPerspective(){
+    if(!photoPerspective)return;
+    photoPerspective=null;$("kv2-photo-perspective-panel").hidden=true;
+    for(const id of ["kv2-photo-perspective-source","kv2-photo-perspective-result"]){const c=$(id);c.width=1;c.height=1;}
+  }
+  function renderPhotoPerspective(){
+    if(!photoPerspectiveValid()){cancelPhotoPerspective();return;}
+    const p=photoPerspective,source=$("kv2-photo-perspective-source"),result=$("kv2-photo-perspective-result");
+    const ctx=source.getContext("2d"),w=source.width,h=source.height,points=p.points;
+    ctx.clearRect(0,0,w,h);ctx.drawImage(p.bitmap,0,0,w,h);
+    ctx.save();ctx.strokeStyle="#00d8ff";ctx.lineWidth=2;ctx.beginPath();
+    points.forEach((q,i)=>i?ctx.lineTo(q.x*w,q.y*h):ctx.moveTo(q.x*w,q.y*h));ctx.closePath();ctx.stroke();
+    points.forEach((q,i)=>{
+      const x=clamp(q.x*w,9,w-9),y=clamp(q.y*h,9,h-9);
+      ctx.fillStyle=i===Number($("kv2-photo-perspective-corner").value)?"#ffbe43":"#005d79";
+      ctx.beginPath();ctx.arc(x,y,8,0,2*Math.PI);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(i+1),x,y);
+    });ctx.restore();
+    const map=perspectiveMap(points),ratio=perspectiveRatio(points);
+    $("kv2-photo-perspective-apply").disabled=!map;
+    $("kv2-photo-perspective-warning").textContent=map?"Forhåndsvisning av rålaget. Korrigert utsnitt tilpasses lerretet; eventuell maske følger bildet ved bekreftelse.":"Hjørnene må ligge i rekkefølgen øvre venstre, øvre høyre, nedre høyre, nedre venstre uten kryssing.";
+    const dst=result.getContext("2d");dst.clearRect(0,0,result.width,result.height);
+    if(map)dst.drawImage(perspectiveOutput(p.bitmap,map,ratio,result.width,result.height),0,0);
+  }
+  function openPhotoPerspective(){
+    const layer=editableLayer();
+    if(!layer||requiresRaster(layer)||layer.kind==="adjustment"||maskEditing||pointerId!==null||project.owner!==owner())return;
+    cancelFreeTransform();clearTextDraft();resetAiPoints();colorRegion=null;aiTool=false;tool="hand";refresh();
+    photoPerspective={project,owner:owner(),layer,rev:bitmapRevision,bitmap:surfaces.get(layer.id),mask:masks.get(layer.id),points:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}]};
+    const scale=Math.min(1,320/Math.max(WIDTH,HEIGHT));
+    for(const id of ["kv2-photo-perspective-source","kv2-photo-perspective-result"]){const c=$(id);c.width=Math.max(1,Math.round(WIDTH*scale));c.height=Math.max(1,Math.round(HEIGHT*scale));}
+    $("kv2-photo-perspective-corner").value="0";$("kv2-photo-perspective-ratio").value="auto";
+    $("kv2-photo-perspective-panel").hidden=false;renderPhotoPerspective();
+  }
+  function photoPerspectivePoint(event){
+    if(!photoPerspectiveValid()||(event.pointerType==="mouse"&&event.button!==0))return;
+    event.preventDefault();const c=$("kv2-photo-perspective-source"),r=c.getBoundingClientRect(),i=Number($("kv2-photo-perspective-corner").value);
+    photoPerspective.points[i]={x:clamp((event.clientX-r.left)/r.width,0,1),y:clamp((event.clientY-r.top)/r.height,0,1)};
+    $("kv2-photo-perspective-corner").value=String((i+1)%4);renderPhotoPerspective();
+  }
+  function applyPhotoPerspective(){
+    if(!photoPerspectiveValid())return;
+    const p=photoPerspective,map=perspectiveMap(p.points);if(!map)return;
+    const ratio=perspectiveRatio(p.points);
+    try{
+      const bitmap=perspectiveOutput(p.bitmap,map,ratio,WIDTH,HEIGHT);
+      const mask=p.mask?perspectiveOutput(p.mask,map,ratio,WIDTH,HEIGHT):null;
+      applyTransform({id:p.layer.id,bitmap,mask});
+      status("Perspektiv korrigert – kan angres.");
+    }catch(_){status("Kunne ikke korrigere perspektivet. Originalen er uendret.");}
+  }
+
   function transformResult(layer, degrees, scaleX, scaleY, pivot) {
     return {
       id: layer.id,
@@ -3279,6 +3377,7 @@
   }
 
   function cancelFreeTransform() {
+    cancelPhotoPerspective();
     if (!freeTransform) return;
     const drag = freeTransform.drag;
     freeTransform = null;
@@ -4220,6 +4319,12 @@
       $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
     });
     $("kv2-transform-free").addEventListener("click", () => openFreeTransform());
+    $("kv2-photo-perspective").addEventListener("click",openPhotoPerspective);
+    $("kv2-photo-perspective-source").addEventListener("pointerdown",photoPerspectivePoint);
+    $("kv2-photo-perspective-corner").addEventListener("change",renderPhotoPerspective);
+    $("kv2-photo-perspective-ratio").addEventListener("change",renderPhotoPerspective);
+    $("kv2-photo-perspective-apply").addEventListener("click",applyPhotoPerspective);
+    $("kv2-photo-perspective-cancel").addEventListener("click",cancelPhotoPerspective);
     $("kv2-transform-group").addEventListener("click", () => openFreeTransform(true));
     const transformOverlay = $("kv2-transform-overlay");
     transformOverlay.addEventListener("pointerdown", beginTransformDrag);
@@ -4492,6 +4597,7 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if(event.key==="Escape"&&photoPerspective){event.preventDefault();cancelPhotoPerspective();return;}
       if (event.key === "Escape" && freeTransform) {
         event.preventDefault();
         cancelFreeTransform();

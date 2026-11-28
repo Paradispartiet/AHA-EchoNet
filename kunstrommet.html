@@ -614,6 +614,7 @@
             <button id="kv2-transform-smaller" type="button">Skaler til 75 %</button>
             <button id="kv2-transform-larger" type="button">Skaler til 125 %</button>
             <button id="kv2-transform-free" type="button">Fri transformering</button>
+            <button id="kv2-photo-perspective" type="button">Perspektivkorrigering</button>
           </div>
           <div id="kv2-free-transform-panel" class="kv2-free-transform" hidden>
             <label for="kv2-free-angle">Rotasjon (grader)</label>
@@ -631,6 +632,15 @@
               <button id="kv2-free-commit" type="button" disabled>Bruk transformering</button>
               <button id="kv2-free-cancel" type="button">Avbryt</button>
             </div>
+          </div>
+          <div id="kv2-photo-perspective-panel" class="kv2-free-transform" hidden>
+            <p class="kv2-tip">Velg hjørne, trykk på bildet og fortsett med neste hjørne. Bare utsnittet innenfor de fire punktene beholdes. Dupliser laget først hvis du vil bevare en egen original.</p>
+            <label>Hjørne <select id="kv2-photo-perspective-corner"><option value="0">1 Øvre venstre</option><option value="1">2 Øvre høyre</option><option value="2">3 Nedre høyre</option><option value="3">4 Nedre venstre</option></select></label>
+            <canvas id="kv2-photo-perspective-source" width="1" height="1" aria-label="Originalt rasterlag – velg hjørnepunkter"></canvas>
+            <label>Sideforhold <select id="kv2-photo-perspective-ratio"><option value="auto">Anslå fra hjørnene</option><option value="original">Lerretets sideforhold</option><option value="1">1:1</option><option value="1.3333333333">4:3</option><option value="0.75">3:4</option><option value="1.7777777778">16:9</option></select></label>
+            <canvas id="kv2-photo-perspective-result" width="1" height="1" aria-label="Forhåndsvisning av rettet utsnitt"></canvas>
+            <p id="kv2-photo-perspective-warning" class="kv2-tip" role="status"></p>
+            <div class="kv2-transform-tools"><button id="kv2-photo-perspective-apply" type="button" disabled>Bruk perspektiv</button><button id="kv2-photo-perspective-cancel" type="button">Avbryt</button></div>
           </div>
           <p class="kv2-tip">Transformering påvirker bare aktivt lag. Innhold utenfor lerretet blir klippet. Bruk Angre hvis resultatet ikke passer.</p>
           </details>
