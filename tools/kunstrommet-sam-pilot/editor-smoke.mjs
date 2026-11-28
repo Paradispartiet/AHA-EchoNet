@@ -56,8 +56,11 @@ try{
     const sample=await context.request.get(origin+"/sample.png");
     assert.ok(sample.ok());assert.equal(sample.headers()["content-type"],"image/png");
    }
+   // Exercise the actual default compact workspace, not a hidden old control.
+   if(await page.locator("#main").getAttribute("data-studio-layout")==="compact")await page.locator("#kv2-studio-project").click();
    await page.locator(".kv2-size-panel summary").click();
    await page.locator("#kv2-canvas-width").fill("640");await page.locator("#kv2-canvas-height").fill("480");await page.locator("#kv2-new-sized").click();
+   if(await page.locator("#main").getAttribute("data-studio-layout")==="compact")await page.locator("#kv2-studio-layers").click();
    const image=await page.evaluate(({rgb,w,h})=>{
     const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
     const ctx=canvas.getContext("2d"),im=ctx.createImageData(w,h);

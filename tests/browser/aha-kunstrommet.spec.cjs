@@ -212,6 +212,7 @@ test.describe("Kunstrommet – personal, local-only atelier", () => {
     expect(artwork.node.href).toBe("kunstrommet.html#art-" + encodeURIComponent(projectId));
 
     await page.goto("/" + artwork.node.href, { waitUntil: "domcontentloaded" });
+    if(await page.locator("#main").getAttribute("data-studio-layout")==="compact")await page.locator("#kv2-studio-project").click();
     await expect(page.locator("#kv2-title")).toHaveValue("Maleri med rødt");
     await expect(page.locator("#kv2-note")).toHaveValue("Personlig, ikke delt");
     page.once("dialog", (dialog) => dialog.accept());
