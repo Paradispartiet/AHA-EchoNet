@@ -418,3 +418,25 @@ Marker et rektangel som inneholder hele motivet med bakgrunn rundt, velg Fargema
 ## Kunstrommet 9.5b – avgrenset lokal maskebro (utviklingskandidat)
 
 Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ingen modell, nettverk eller nytt brukergrensesnitt aktiveres av denne endringen. Kun ved eksplisitt flagg og Fargemaske på synlig, ulåst rasterlag uten eksisterende maske i riktig lokal profil kan begin() gi en kopi av det aktive rasterets RGBA-piksler og laglokale koordinater. Ett engangstoken i minnet; preview avviser utdatert prosjekt, lag, profil, dimensjoner, posisjon, bitmaprevisjon, ugyldig eller tom/full binærmaske. Gjennomsiktige piksler inngår ikke i forslaget. Gyldig forslag bruker eksisterende blå forhåndsvisning, kantjustering, myke kanter og Lag maske. Fargetoleranse kan ikke rekalkulere et rent KI-forslag; manuelle add/subtract kan fortsatt brukes. Ingen lagendring før eksplisitt godkjenning, ett angresteg, originalraster bevares. Test med simulert maskesvar (ikke KI-inferens) dekker avskrudd flagg, engangstoken, ugyldig og utdatert svar, kopi av maske, forhåndsvisning, maske og undo. Faktisk runtimekobling, brukergrensesnitt for punkter, sikkerhetsrevisjon og fysisk iPad gjenstår. Ingen produksjonsaktivering.
+
+
+### 9.5c – opt-in KI-markering i editor (utkast)
+- Separat verktøyknapp, kun ved begge utviklingsflagg `AHA_KUNSTROMMET_LOCAL_MASK_PILOT` og `AHA_KUNSTROMMET_AI_TOOL_PILOT` før editorens oppstart. Ingen standardaktivering.
+- Opptil 12 behold/fjern-punkter i aktivt rasterlags koordinater. Eksplisitt Analyser, avbryt/nullstill, deretter eksisterende kantjustering/fjæring og Lag maske. Ingen endring før bekreftelse.
+- Dedikert engangsworker på samme origin; kun RGBA fra aktivt lag og punkter, ingen fjernmodell, bilde-URL, backend eller prosjektdata. Worker termineres ved avbrudd, endret kontekst eller timeout.
+- Runtime og modellfiler er ikke inkludert i repo eller deploy. En kontrollert lokal testserver må først stage de låste filene fra 9.5b under `tools/kunstrommet-sam-pilot/runtime/` og `tools/kunstrommet-sam-pilot/models/`; ingen automatisk nedlasting fra editoren. Ingen produksjonsaktivering.
+- Nettlesertest med simulert worker kontrollerer UI/transport/maske/undo, ikke reell inferens med brukerbilder. Reell editorinferens, visuelle punktmarkører, iPad-ytelse, mobil layout og publiseringsbeslutning gjenstår.
+
+### 9.5d – punktmarkører og reell editorprøve (utkast)
+- Grønne plusspunkter/røde minuspunkter i et separat, ikke-eksporterbart visningslag. Markører følger lerretets størrelse og zoom; fjern siste punkt uten å endre bildet. Fargebaserte kontroller skjules i KI-modus.
+- Ny isolert editor-smoke med de verifiserte lokale modellfilene og syntetisk bilde. Kjører faktisk worker i Chromium og WebKit, kontrollerer KI-forhåndsvisning, originalbitmap og undo. Ikke fysisk iPad, ikke produksjon eller brukerbilder.
+
+### 9.5e – gjenbruk av KI-bildeanalyse (utkast)
+- Én worker, én modell og ett aktivt rasterlag per KI-økt. Første analyse beregner SAM-bildeembedding; nye punkter gjenbruker den via modellens dokumenterte embedding-input. Punktnormalisering og maskeberegning gjentas. Ny pikselkopi sendes ikke ved justeringer.
+- Engangs forespørselstoken og sekvensnummer per maskesvar. Worker frigjøres ved kontekstendring, avbrudd, feil, skjult side, maskebekreftelse eller 60 sekunder uten ny analyse. Ingen persistens eller ekstern inferens.
+- Utvidet transporttest og reell editor-smoke krever kald/varm kjøring med nøyaktig én encoderkjøring, uendrede originaldata, korrekt maske/undo. Måler begge tider uten ubegrunnet hastighetskrav. Fysisk iPad og produksjonsdistribusjon fortsatt ikke godkjent.
+
+### 9.5f – regresjonsrettelse og gjentatte målinger (utkast)
+- 9.5e målt i CI på 640 × 480 syntetisk bilde: Chromium 11 356 ms kald / 512 ms varm; WebKit 14 240 ms kald / 940 ms varm. Én encoderkjøring i begge. Ikke fysisk iPad.
+- KI-kontroller og markørbeholder er nå statisk deklarert, skjult som standard; binding og worker-URL opprettes først ved begge opt-in-flagg. Eksisterende DOM-kontrakt beholdes uendret.
+- Reell editor-smoke utvidet til fem varme punktjusteringer, med målinger per justering, nøyaktig én worker, uendrede rasterdata og bekreftet worker-avslutning ved maskebekreftelse. Dette er livssyklustest, ikke måling av total WASM-heap eller fysisk enhetsminne.

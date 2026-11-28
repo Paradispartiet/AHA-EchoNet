@@ -32,6 +32,8 @@ jobs:
         env:
           KR_PHOTO_REPORT_DIR: ${{ runner.temp }}/kr-sam-photo-reports
         run: node tools/kunstrommet-sam-pilot/browser-smoke.mjs
+      - name: Real local WASM inference through isolated editor
+        run: node tools/kunstrommet-sam-pilot/editor-smoke.mjs
       - name: Visual review of public photograph masks
         if: always()
         uses: actions/upload-artifact@v4

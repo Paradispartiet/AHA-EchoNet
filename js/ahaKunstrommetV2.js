@@ -356,6 +356,9 @@
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let colorRegion = null; // Preview only; invalidated by artwork changes.
   let localMaskRequest = null; // One in-memory, opt-in candidate; never saved.
+  let aiTool = false, aiPoints = [], aiContext = null, aiWorker = null, aiTimer = null, aiIdleTimer = null, aiPending = null, aiSequence = 0;
+  const AI_IDLE_MS=60000;
+  let aiWorkerUrl=null,aiUiBound=false;
   let shapeDraft = null; // Transient preview until pointerup.
   let gradientFramePending = false;
   let textEditId = null;
@@ -397,6 +400,7 @@
   function changed() {
     cancelFreeTransform();
     bitmapRevision++;
+    resetAiPoints();
     localMaskRequest = null;
     colorRegion = null;
     renderColorRegion();
@@ -2336,6 +2340,7 @@
     cancelFreeTransform();
     if (tool === "color-region") {
       event.preventDefault();
+      if(aiTool){addAiPoint(point(event));return;}
       sampleColorRegion(point(event));
       return;
     }
@@ -2650,6 +2655,7 @@
         (colorRegion?.localModel && (!localMaskEnabled() || colorRegion.owner!==owner() || project.owner!==owner())) ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
+    renderAiTool(layer);
     $("kv2-color-region-propose").disabled = !layer || !validSelection() || lassoActive();
     const radius=colorRegionRadius(),shift=colorRegionShift();
     $("kv2-color-region-feather-value").textContent=radius+" px";
@@ -2661,7 +2667,7 @@
     overlay.hidden = !adjusted?.count;
     if (!adjusted?.count) {
       if (overlay.width !== 1 || overlay.height !== 1) { overlay.width=1; overlay.height=1; }
-      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Juster kanten eller legg til et område." : layer ? "Trykk på en sammenhengende fargeflate." :
+      $("kv2-color-region-info").textContent = colorRegion ? "0 piksler markert. Juster kanten eller legg til et område." : layer ? (aiTool?"Velg behold/fjern-punkter og trykk Analyser.":"Trykk på en sammenhengende fargeflate.") :
         "Velg et synlig, ulåst rasterlag uten lagmaske.";
       return;
     }
@@ -4053,7 +4059,7 @@
     $("kv2-merge-down").addEventListener("click", mergeRasterDown);
     $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
-    $("kv2-color-region-cancel").addEventListener("click",()=>{localMaskRequest=null;colorRegion=null;renderColorRegion();});
+    $("kv2-color-region-cancel").addEventListener("click",()=>{resetAiPoints();localMaskRequest=null;colorRegion=null;renderColorRegion();});
     $("kv2-color-region-propose").addEventListener("click",()=>proposeForeground());
     $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion?.proposal)proposeForeground(colorRegion.proposal);else if(colorRegion?.at)sampleColorRegion(colorRegion.at,true);});
     $("kv2-color-region-feather").addEventListener("input",()=>{$("kv2-color-region-feather-value").textContent=colorRegionRadius()+" px";});
@@ -4300,6 +4306,8 @@
         }
         shapeDraft = null;
         clearTextDraft();
+        if(aiTool)colorRegion=null;
+        aiTool=false;resetAiPoints();
         tool = name;
         refresh();
       });
@@ -4396,17 +4404,119 @@
   // Private local-model integration seam. Off unless an isolated development
   // harness explicitly enables it; no worker, model download or network here.
   const localMaskEnabled=()=>global.AHA_KUNSTROMMET_LOCAL_MASK_PILOT===true;
+  // Separate opt-in; the isolated seam remains usable without the toolbar.
+  const aiToolEnabled=()=>localMaskEnabled()&&global.AHA_KUNSTROMMET_AI_TOOL_PILOT===true;
+  function releaseAiWorker(){
+    if(aiTimer!==null)global.clearTimeout(aiTimer);aiTimer=null;
+    if(aiIdleTimer!==null)global.clearTimeout(aiIdleTimer);aiIdleTimer=null;
+    if(aiWorker){aiWorker.terminate();aiWorker=null;}
+    if(aiPending)cancelLocalMask(aiPending.token);aiPending=null;
+  }
+  function resetAiPoints(){
+    releaseAiWorker();
+    aiPoints=[];aiContext=null;renderAiMarkers();
+    if(aiUiBound){const panel=$("kv2-ai-region-controls");delete panel.dataset.cache;delete panel.dataset.encoderRuns;}
+  }
+  function aiContextMatches(layer){return aiContext&&layer&&aiContext.project===project&&aiContext.owner===owner()&&aiContext.id===layer.id&&aiContext.rev===bitmapRevision&&aiContext.x===layer.x&&aiContext.y===layer.y;}
+  function renderAiMarkers(){
+    if(!aiUiBound)return;
+    const overlay=$("kv2-ai-points-overlay");if(!overlay)return;
+    overlay.replaceChildren();overlay.hidden=!aiTool||!aiPoints.length||!aiContext;
+    if(overlay.hidden)return;
+    const rect=canvas.getBoundingClientRect();overlay.style.width=rect.width+"px";overlay.style.height=rect.height+"px";
+    for(const [x,y,label] of aiPoints){
+      const dx=x+aiContext.x,dy=y+aiContext.y;if(dx<0||dy<0||dx>=WIDTH||dy>=HEIGHT)continue;
+      const marker=document.createElement("span");marker.className="kv2-ai-point";marker.dataset.label=String(label);
+      marker.style.left=((dx+.5)/WIDTH*100)+"%";marker.style.top=((dy+.5)/HEIGHT*100)+"%";
+      marker.textContent=label===1?"+":"−";overlay.append(marker);
+    }
+  }
+  function renderAiTool(layer){
+    if(!aiUiBound)return;
+    const button=$("kv2-ai-region"),panel=$("kv2-ai-region-controls");if(!button||!panel)return;
+    if(aiTool&&(!aiToolEnabled()||tool!=="color-region"||!layer||project.owner!==owner())){aiTool=false;resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
+    else if(aiContext&&!aiContextMatches(layer)){resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
+    button.hidden=!aiToolEnabled();button.setAttribute("aria-pressed",String(aiTool));
+    panel.hidden=!aiTool;
+    if(aiTool)$("kv2-color-region").setAttribute("aria-pressed","false");
+    $("kv2-ai-count").textContent=aiPoints.length+" / 12 punkter";
+    $("kv2-ai-analyze").disabled=!aiTool||!!aiPending||!aiPoints.some(p=>p[2]===1);
+    $("kv2-ai-clear").disabled=!aiPoints.length&&!aiWorker;
+    $("kv2-ai-undo-point").disabled=!aiPoints.length||!!aiPending;
+    for(const node of [$("kv2-color-region-propose"),$("kv2-color-region-propose").nextElementSibling,$("kv2-color-region-operation").closest("label"),$("kv2-color-region-tolerance").closest("label")])if(node)node.hidden=aiTool;
+    $("kv2-color-region-cancel").textContent=aiTool?"Fjern KI-forslag":"Fjern fargevalg";
+    renderAiMarkers();
+  }
+  function addAiPoint(at){
+    const layer=localMaskTarget();if(!layer||aiPending||aiPoints.length>=12)return;
+    if(!aiContextMatches(layer)){resetAiPoints();aiContext={project,owner:owner(),id:layer.id,rev:bitmapRevision,x:layer.x,y:layer.y};}
+    const x=Math.floor(at.x-layer.x),y=Math.floor(at.y-layer.y);
+    if(x<0||y<0||x>=WIDTH||y>=HEIGHT||aiPoints.some(p=>p[0]===x&&p[1]===y))return;
+    aiPoints.push([x,y,Number($("kv2-ai-point-mode").value)]);colorRegion=null;renderColorRegion();
+    status("Punkt valgt. Trykk Analyser for KI-forslag.");
+  }
+  function analyzeAiPoints(){
+    if(!aiToolEnabled()||!aiTool||aiPending||!aiPoints.some(p=>p[2]===1)||!aiContextMatches(localMaskTarget()))return;
+    const cold=!aiWorker,request=beginLocalMask(cold);if(!request)return;
+    colorRegion=null;
+    if(aiIdleTimer!==null)global.clearTimeout(aiIdleTimer);aiIdleTimer=null;
+    const id=++aiSequence;
+    aiPending={id,token:request.token};
+    const panel=$("kv2-ai-region-controls");delete panel.dataset.cache;
+    let worker=aiWorker;
+    const finish=(message,data)=>{
+      if(aiWorker!==worker||aiPending?.id!==id)return;
+      if(aiTimer!==null)global.clearTimeout(aiTimer);aiTimer=null;
+      aiPending=null;
+      const accepted=data?.type==="mask"&&aiToolEnabled()&&aiTool&&aiContextMatches(localMaskTarget())&&previewLocalMask(request.token,data.bits);
+      if(!accepted){cancelLocalMask(request.token);status(message);}
+      if(accepted){
+        panel.dataset.cache=data.reused===true?"warm":"cold";
+        panel.dataset.encoderRuns=String(data.encoderRuns??"");
+        aiIdleTimer=global.setTimeout(()=>{releaseAiWorker();renderColorRegion();},AI_IDLE_MS);
+      }else releaseAiWorker();
+      renderColorRegion();
+    };
+    try{
+      if(cold){
+        if(new URL(aiWorkerUrl).origin!==global.location.origin)throw Error("cross-origin worker");
+        worker=new Worker(aiWorkerUrl,{type:"module"});aiWorker=worker;
+      }
+      worker.onmessage=({data})=>{if(data?.id!==id)return;if(data.type==="mask")finish("Ingen gyldig KI-maske.",data);else if(data.type==="error")finish("Lokal KI kunne ikke fullføres. Ingen endring er gjort.");};
+      worker.onerror=()=>finish("Lokal KI er ikke tilgjengelig. Ingen endring er gjort.");
+      aiTimer=global.setTimeout(()=>finish("KI-analyse avbrutt etter 240 sekunder."),240000);
+      const points=aiPoints.map(p=>p.slice());
+      if(cold)worker.postMessage({type:"segment",id,width:request.width,height:request.height,rgba:request.rgba,points},[request.rgba.buffer]);
+      else worker.postMessage({type:"refine",id,points});
+      renderColorRegion();status(cold?"Analyserer aktivt lag lokalt …":"Justerer KI-markeringen lokalt …");
+    }catch(_){
+      if(worker&&aiWorker===worker)finish("KI-analyse kunne ikke startes.");
+      else{cancelLocalMask(request.token);releaseAiWorker();renderColorRegion();status("KI-analyse kunne ikke startes.");}
+    }
+  }
+  function bindAiTool(){
+    if(!aiToolEnabled())return;
+    const button=$("kv2-ai-region"),analyze=$("kv2-ai-analyze"),clear=$("kv2-ai-clear"),undo=$("kv2-ai-undo-point");
+    aiWorkerUrl=new URL("../tools/kunstrommet-sam-pilot/editor-worker.mjs",document.currentScript?.src||new URL("js/ahaKunstrommetV2.js",document.baseURI)).href;
+    aiUiBound=true;
+    if(typeof ResizeObserver==="function")new ResizeObserver(renderAiMarkers).observe(canvas);
+    button.onclick=()=>{if(!aiToolEnabled()||busy||pointerId!==null||maskEditing)return;resetAiPoints();colorRegion=null;shapeDraft=null;clearTextDraft();tool="color-region";aiTool=true;refresh();status("Velg punkter på motivet og trykk Analyser.");};
+    undo.onclick=()=>{if(aiPending||!aiPoints.length)return;aiPoints.pop();colorRegion=null;renderColorRegion();status("Siste KI-punkt fjernet. Analyser på nytt.");};
+    analyze.onclick=analyzeAiPoints;clear.onclick=()=>{resetAiPoints();colorRegion=null;renderColorRegion();status("KI-markering avbrutt – originalen er uendret.");};
+    global.addEventListener("pagehide",resetAiPoints);
+    document.addEventListener("visibilitychange",()=>{if(document.hidden){const pending=!!aiPending;releaseAiWorker();if(pending)status("KI-analyse avbrutt – atelieret er ikke synlig.");renderColorRegion();}});
+  }
   function localMaskTarget(){
     if(!localMaskEnabled()||!project||project.owner!==owner()||tool!=="color-region"||
        freeTransform||textEditId||textAnchor||shapeDraft)return null;
     return colorRegionLayer();
   }
-  function beginLocalMask(){
+  function beginLocalMask(readPixels=true){
     localMaskRequest=null;
     const layer=localMaskTarget();
     if(!layer)return null;
     const token=Object.freeze({});
-    const rgba=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    const rgba=readPixels?surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data:null;
     localMaskRequest={token,project,owner:owner(),layerId:layer.id,revision:bitmapRevision,
       width:WIDTH,height:HEIGHT,x:layer.x,y:layer.y};
     // Transfer a copy of the active raster in layer-local coordinates, not the project or other layers.
@@ -4455,7 +4565,7 @@
       };
     },
     savedProjects: getRecords,
-    localMaskPilot: Object.freeze({begin:beginLocalMask,preview:previewLocalMask,cancel:cancelLocalMask}),
+    localMaskPilot: Object.freeze({begin:()=>beginLocalMask(),preview:previewLocalMask,cancel:cancelLocalMask}),
     cloudSnapshot(expectedUserId) {
       if (busy || pointerId !== null || freeTransform || textAnchor ||
           !project || owner() !== expectedUserId || project.owner !== expectedUserId) {
@@ -4529,6 +4639,7 @@
   };
 
   bind();
+  bindAiTool();
   newProject();
   renderProjects();
 })(window);

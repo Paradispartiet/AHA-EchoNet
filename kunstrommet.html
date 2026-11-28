@@ -44,6 +44,7 @@
           <button id="kv2-select" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Marker område" title="Marker område"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1" stroke-dasharray="3 3"/></svg><span aria-hidden="true">Marker</span></button>
           <button id="kv2-lasso" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Frihåndsmarkering (lasso)" title="Frihåndsmarkering (lasso)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 17C2 17 1 5 9 3c8-3 16 4 11 10-2 3-10 4-12 7-1 2 2 3 4 1" stroke-dasharray="3 2"/></svg><span aria-hidden="true">Lasso</span></button>
           <button id="kv2-color-region" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Fargemaske" title="Fargemaske"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 20 11-11 2 2L6 22zM15 3v3M21 9h-3M19 3l-2 2M9 3v2M3 9h2"/></svg><span aria-hidden="true">Fargemaske</span></button>
+          <button id="kv2-ai-region" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="KI-markering" title="KI-markering" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m4 20 11-11 2 2L6 22zM15 2v5M12.5 4.5h5M21 9v5M18.5 11.5h5"/></svg><span aria-hidden="true">KI-markering</span></button>
           <button id="kv2-eyedropper" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Fargepipette" title="Fargepipette"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 5 7 7M16 2l6 6-4 4-2-2L6 20l-4 2 2-4L14 8l-2-2z"/></svg><span aria-hidden="true">Pipette</span></button>
           <button id="kv2-rectangle" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Rektangel" title="Rektangel"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="1"/></svg><span aria-hidden="true">Firkant</span></button>
           <button id="kv2-ellipse" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Ellipse" title="Ellipse"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="12" rx="9" ry="7"/></svg><span aria-hidden="true">Ellipse</span></button>
@@ -53,6 +54,13 @@
           <button id="kv2-gradient" type="button" aria-pressed="false" class="kv2-icon-tool" aria-label="Gradient" title="Gradient"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M11 4v16M15 4v16M19 4v16" opacity=".55"/></svg><span aria-hidden="true">Gradient</span></button>
           </div>
           <div id="kv2-color-region-panel" hidden>
+            <div id="kv2-ai-region-controls" hidden>
+              <select id="kv2-ai-point-mode" aria-label="KI-punkt: behold eller fjern"><option value="1">Behold motiv</option><option value="0">Fjern område</option></select>
+              <span id="kv2-ai-count">0 / 12 punkter</span>
+              <button type="button" id="kv2-ai-analyze" disabled>Analyser</button>
+              <button type="button" id="kv2-ai-undo-point" disabled>Fjern siste punkt</button>
+              <button type="button" id="kv2-ai-clear" disabled>Nullstill / avbryt</button>
+            </div>
             <button id="kv2-color-region-propose" type="button" disabled>Foreslå motiv i markert ramme</button>
             <p class="kv2-tip">Bruk Marker til å tegne et rektangel rundt motivet med litt bakgrunn på alle sider. Velg så Fargemaske og Foreslå motiv. Fungerer best når motivet er tydelig skilt fra bakgrunnen.</p>
             <label>Områdevalg <select id="kv2-color-region-operation"><option value="replace">Ny markering</option><option value="add">Legg til område</option><option value="subtract">Trekk fra område</option></select></label>
@@ -173,6 +181,7 @@
               <line id="kv2-snap-y" x1="0" x2="1200"></line>
             </svg>
             <canvas id="kv2-color-region-overlay" width="1" height="1" aria-hidden="true" hidden></canvas>
+            <div id="kv2-ai-points-overlay" aria-hidden="true" hidden></div>
             <div id="kv2-selection-overlay" class="kv2-selection-overlay" aria-hidden="true" hidden></div>
             <svg id="kv2-lasso-overlay" class="kv2-lasso-overlay" viewBox="0 0 1200 800"
               preserveAspectRatio="none" aria-hidden="true" hidden><path id="kv2-lasso-path"></path></svg>
