@@ -473,3 +473,5 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Ingen publisering/merge før samlet kandidat har grønne aktuelle arbeidsflyter og riktig main-base. Ingen aktivering av KI-pilot. Fysisk iPad, reelle foto og distribusjonsgodkjenning av KI er separate gjenstående kontroller.
 
 - Sluttkontroll: fotoimport oppdaterer lagkontrollene på nytt etter at busy er satt til false. 10.0e-testen verifiserer at fri transformering, perspektiv og detaljjustering er tilgjengelige rett etter import, uten å bytte verktøy først.
+
+- Sluttkontroll: samlet fullregresjon på 57c3fbf ble avbrutt ved tidsgrensen (20 min), under test 218 av 228. Separat målrettet 10/10 bestått, lokale kontrakter og de øvrige seks arbeidsflytene bestått. Fullregresjonen deles nå i to uavhengige matrisejobber (chromium-corpus og ipad-webkit), med 30 min per jobb og fail-fast deaktivert. Samme to testfiler, samme konfigurasjon og én worker per prosjekt; ingen tester fjernes. Begge jobbene må bestå før merge. Ingen endring av editor eller testinnhold.

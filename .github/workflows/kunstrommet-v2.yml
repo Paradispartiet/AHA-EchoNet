@@ -33,9 +33,13 @@ jobs:
       - run: node tests/aha-kunstrommet-interaction.test.cjs
 
   browser:
-    name: V2 browser – Chromium and iPad WebKit
+    name: V2 browser – ${{ matrix.project }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium-corpus, ipad-webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,12 +48,12 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium webkit
-      - run: npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs tests/browser/aha-kunstrommet.spec.cjs --config=playwright.config.cjs
+      - run: npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs tests/browser/aha-kunstrommet.spec.cjs --config=playwright.config.cjs --project="${{ matrix.project }}"
       - name: Test artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: kunstrommet-v2-playwright
+          name: kunstrommet-v2-playwright-${{ matrix.project }}
           path: test-results/
           retention-days: 7
 
