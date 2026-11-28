@@ -93,7 +93,7 @@ async function textInk(page, x = 100, y = 120, w = 460, h = 140) {
 }
 test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   test("smaller documents gain bounded layer capacity and imported dimensions set their own limit",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const count=page.locator("#kv2-layer-count");
     await expect(count).toContainText("1 av 8 lag");
     const old=await jsonBackup(page);
@@ -140,7 +140,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("small canvas capacity is capped at sixteen and large presets retain eight",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-size-panel summary").click();
     await page.locator("#kv2-canvas-width").fill("320");
     await page.locator("#kv2-canvas-height").fill("320");
@@ -152,7 +152,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("history reuses identical layer and mask rasters but decodes changed content",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await shapeDrag(page,[300,300],[300,300],1981);
     await page.locator("#kv2-mask-add").click();
     await page.locator("#kv2-mask-edit").click();
@@ -190,7 +190,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("group opacity composites overlapping layers once and survives history and JSON import",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await shapeDrag(page,[300,300],[300,300],1971);
     await shapeDrag(page,[600,400],[600,400],1972);
     await page.locator("#kv2-add-layer").click();
@@ -228,7 +228,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("clipping limits the upper raster to the lower alpha without altering source pixels",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const clip=page.locator("#kv2-clip-toggle");
     await expect(clip).toBeDisabled();
     await shapeDrag(page,[300,300],[300,300],1961);
@@ -266,7 +266,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("raster merge down preserves composition and restores original layers on undo",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const merge=page.locator("#kv2-merge-down"), count=page.locator("#kv2-layer-count");
     await expect(merge).toBeDisabled();
     await shapeDrag(page,[300,300],[300,300],1941);
@@ -301,7 +301,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("raster merge blocks unsupported opacity, blend and masks",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-add-layer").click();
     const merge=page.locator("#kv2-merge-down");
     await expect(merge).toBeEnabled();
@@ -320,7 +320,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("new document formats preserve pixels, masks, history and exact export dimensions",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const old=await jsonBackup(page);
     const dims=()=>page.locator("#kv2-canvas").evaluate(c=>[c.width,c.height]);
     await page.locator(".kv2-size-panel summary").click();
@@ -372,7 +372,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("invalid new canvas dimensions leave current document intact",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await stroke(page);
     await page.locator(".kv2-size-panel summary").click();
     await page.locator("#kv2-canvas-width").fill("1600");
@@ -389,7 +389,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("perspective ruler locks the first direction and never exports its guide",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-guide-panel summary").click();
     await page.locator("#kv2-guide-mode").selectOption("one");
     await page.locator("#kv2-guide-lock").check();
@@ -424,7 +424,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("radial symmetry rotates strokes around a movable center and remains a single undo",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-symmetry-panel summary").click();
     await page.locator("#kv2-symmetry-mode").selectOption("radial");
     const set=async(id,v)=>page.locator("#kv2-symmetry-"+id).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},v);
@@ -455,7 +455,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("four-way symmetry mirrors ordinary and advanced brush strokes with one undo",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-symmetry-panel summary").click();
     await page.locator("#kv2-symmetry-mode").selectOption("both");
     await expect(page.locator("#kv2-symmetry-overlay")).toBeVisible();
@@ -480,7 +480,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("symmetry axis uses document coordinates and selection clips mirrored copies",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator(".kv2-symmetry-panel summary").click();
     await page.locator("#kv2-symmetry-mode").selectOption("vertical");
     await page.locator("#kv2-symmetry-x").evaluate(c=>{c.value="40";c.dispatchEvent(new Event("input",{bubbles:true}));});
@@ -501,7 +501,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("composition guides follow zoom and never modify artwork or export", async ({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const layer=page.locator("#kv2-composition-guides");
     const raster=()=>page.locator("#kv2-canvas").evaluate(c=>c.toDataURL("image/png"));
     const original=await raster(),backup=await jsonBackup(page);
@@ -536,7 +536,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("group transform previews two layers around a shared pivot and undoes together", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [400, 400], [400, 400], 1007);
     await page.locator("#kv2-add-layer").click();
     await shapeDrag(page, [800, 400], [800, 400], 1008);
@@ -566,7 +566,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("named layer groups preserve membership in backup and support undoable group controls", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [300, 200], [300, 200], 1005);
     await page.locator("#kv2-add-layer").click();
     await shapeDrag(page, [700, 400], [700, 400], 1006);
@@ -596,7 +596,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("multi-layer move preserves relative positions, locks and one-step undo", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [300, 200], [300, 200], 1001);
     await page.locator("#kv2-add-layer").click();
     await shapeDrag(page, [600, 300], [600, 300], 1002);
@@ -619,7 +619,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("optional magnetic guides snap content to canvas center and undo without guide pixels", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 995);
     const before = await jsonBackup(page);
     await page.locator("#kv2-move").click();
@@ -640,7 +640,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("magnetic guides align visible layers and ignore hidden reference layers", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [350, 260], [350, 260], 997);
     await page.locator("#kv2-add-layer").click();
     await shapeDrag(page, [750, 500], [750, 500], 998);
@@ -666,7 +666,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("direct transform handles update draft, cancel pointer gestures and commit once", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 990);
     const before = await jsonBackup(page);
     await page.locator("#kv2-transform-free").click();
@@ -699,7 +699,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("free transform preview is isolated, supports independent scale and one-step undo", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 987);
     const before = await jsonBackup(page);
     expect((await pxAt(page, 700, 400))[0]).toBeLessThan(100);
@@ -733,7 +733,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("free transform keeps masks aligned and abandons drafts on layer change", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await shapeDrag(page, [700, 400], [700, 400], 988);
     await page.locator("#kv2-mask-add").click();
     await shapeDrag(page, [700, 400], [700, 400], 989);
@@ -753,7 +753,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("photo import, three editable layers, local save and reload", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kv2-layer-count")).toContainText("1 av 8 lag");
     await page.locator("#kv2-title").fill("Personlig collage");
     await page.locator("#kv2-note").fill("Dette bildet forblir lokalt.");
@@ -815,7 +815,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("transparent eraser affects only active layer; undo restores pixels", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "40"; input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -843,7 +843,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("storage quota failure offers backup and retry without losing editable work", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-title").fill("Kvotetest");
     await page.locator("#kv2-note").fill("Dette må kunne reddes uten lagring.");
 
@@ -879,7 +879,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("Pencil pressure changes brush width without changing mouse or eraser behavior", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "30";
       input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -921,7 +921,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("zoom and hand-pan change only the view, never the art or edit history", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const original = await page.locator("#kv2-canvas").evaluate((canvas) => canvas.toDataURL("image/png"));
     await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
     await page.locator("#kv2-zoom-in").click();
@@ -969,7 +969,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("brush lands at the correct bitmap coordinate after hand-pan and zoom", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     for (let i = 0; i < 3; i++) await page.locator("#kv2-zoom-in").click();
     await expect(page.locator("#kv2-zoom-value")).toHaveText("200%");
     await page.locator("#kv2-hand").click();
@@ -1037,7 +1037,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("editable JSON backup restores all layer bitmaps after zoom", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-title").fill("Sikkerhetskopi av atelier");
     await page.locator("#kv2-note").fill("To tegnebaserte lag skal beholdes.");
     await page.locator("#kv2-color").evaluate((input) => {
@@ -1164,7 +1164,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("invalid exact-pixel metadata rejects import without replacing open artwork", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-title").fill("Original som ikke skal erstattes");
     await stroke(page);
     const originalPixel = await pixel(page);
@@ -1196,7 +1196,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("marquee keeps document clean, clips drawing and exports exact cropped PNG", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     await page.locator("#kv2-select").click();
     await canvas.evaluate((node) => {
@@ -1253,7 +1253,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("crop only the selected layer, undo, duplicate and transform", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     await page.locator("#kv2-size").evaluate((el) => {
       el.value = "60"; el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1314,7 +1314,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("copy selection creates an independent layer, leaves the original and supports undo", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const pointer = (a) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1376,7 +1376,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("copy selection from a moved layer preserves its document position", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const drag = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1410,7 +1410,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("non-destructive layer mask hides and restores original pixels, with undo and saved backup", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {
       node.value = "#d34539"; node.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -1466,7 +1466,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("layer masks stay attached after move, duplicate and transform, without modifying image bitmap", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const drag = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1521,7 +1521,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("invalid imported layer mask never replaces the active artwork; removal reveals originals", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await stroke(page);
     await page.locator("#kv2-mask-add").click();
     await stroke(page);
@@ -1555,7 +1555,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("cut selection extracts pixels without touching other areas; undo and redo restore layers", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const pointer = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1615,7 +1615,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("cut handles moved layers, empty selections, locking, and the eight-layer limit", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const drag = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1665,7 +1665,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("moved layer transforms around the document center and undo preserves its position", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     await page.locator("#kv2-size").evaluate((el) => {
       el.value = "24";
@@ -1706,7 +1706,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("fill selection uses brush color on active layer and one undo step", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const drag = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1748,7 +1748,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("fill selection uses moved layer coordinates and respects locking", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const drag = (v) => canvas.evaluate((node, v) => {
       const b = node.getBoundingClientRect();
@@ -1784,7 +1784,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("fill selection is protected while editing a layer mask", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const canvas = page.locator("#kv2-canvas");
     const select = async () => canvas.evaluate((node) => {
       const box = node.getBoundingClientRect();
@@ -1810,7 +1810,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("lasso fill and undo respect the polygon, not its bounding box", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((el) => {
       el.value = "#3c75ac"; el.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -1832,7 +1832,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("lasso copy and cut preserve outside pixels and undo works", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((el) => {
       el.value = "#ce5423"; el.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -1868,7 +1868,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("lasso rejects tiny areas, clips brush and mask, and PNG corners are transparent", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-lasso").click();
     await traceLasso(page, [[300, 300], [301, 301], [301, 300]], 986);
     await expect(page.locator("#kv2-fill-selection")).toBeDisabled();
@@ -1917,7 +1917,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("palette files export only named colors and merge safely",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-color").fill("#112233");
     await page.locator("#kv2-color-add").click();
     await page.locator("#kv2-color-palette-name").fill("Original");
@@ -1944,7 +1944,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("color library remembers chosen colors and named harmonies without changing art",async({page})=>{
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.evaluate(()=>localStorage.setItem("aha_profile_id","color-library-a"));
     const before=await jsonBackup(page);
     await page.locator("#kv2-color").fill("#ff0000");
@@ -1972,7 +1972,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("studio brush samples use the real dab engine without editing art", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     const before=await jsonBackup(page);
     const sample=()=>page.locator("#kv2-active-brush-sample").evaluate(c=>c.toDataURL());
@@ -1999,7 +1999,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
   test("studio focus and folding settings preserve artwork and make canvas accessible", async ({page}) => {
     await page.setViewportSize({width:1366,height:900});
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     const before=await jsonBackup(page);
     const width=()=>page.locator("#kv2-canvas").evaluate(c=>c.getBoundingClientRect().width);
     const normal=await width();
@@ -2028,7 +2028,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("pen tilt widens and rotates shading only when enabled", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     await page.locator("#kv2-size").evaluate(c=>{c.value="40";c.dispatchEvent(new Event("input",{bubbles:true}));});
     await page.locator("#kv2-brush-pressure-width").uncheck();
@@ -2071,7 +2071,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("flat brush rotates, scatters reproducibly and saves dynamics", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     const set=async(name,value)=>page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
     await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
@@ -2109,7 +2109,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("procedural texture dabs vary alpha and survive named brush reload", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
     await page.locator("#kv2-brush-pressure-width").uncheck();
@@ -2145,7 +2145,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("brush library exports settings only and merges imports without overwriting", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     await page.locator("#kv2-brush-name").fill("Original");
     await page.locator("#kv2-brush-library-save").click();
@@ -2171,7 +2171,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("named brushes persist locally, are profile scoped and do not edit artwork", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.evaluate(()=>localStorage.setItem("aha_profile_id","brush-test-a"));
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     const before=await jsonBackup(page);
@@ -2208,7 +2208,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("advanced brush caps stroke opacity, respects flow, and cancels without edits", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     const set = (name,value) => page.locator("#kv2-brush-"+name).evaluate((c,v)=>{c.value=String(v);c.dispatchEvent(new Event("input",{bubbles:true}));},value);
     await set("hardness",100); await set("opacity",50); await set("flow",100); await set("spacing",5);
@@ -2238,7 +2238,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("advanced soft brush has a feathered edge and keeps original mask tools", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-brush-preset").selectOption("advanced");
     await page.locator("#kv2-size").evaluate(c=>{c.value="60";c.dispatchEvent(new Event("input",{bubbles:true}));});
     for (const [name,value] of [["hardness",0],["flow",100]]) {
@@ -2256,7 +2256,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("brush presets and palette change the active brush without creating an edit", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await expect(page.locator("#kv2-brush-preset")).toHaveValue("normal");
     await expect(page.locator("#kv2-status")).toHaveText("Nytt prosjekt");
     await page.locator("#kv2-brush-preset").selectOption("blyant");
@@ -2281,7 +2281,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("pencil, ink and translucent glaze have different size and opacity", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "20"; input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -2304,7 +2304,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("brush preset does not weaken erasing or restoring a non-destructive mask", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "35"; input.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -2325,7 +2325,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("gradient supports linear and radial raster fill, selection and cancellation", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-color").evaluate(c=>{c.value="#000000";c.dispatchEvent(new Event("input",{bubbles:true}));});
     await page.locator("#kv2-gradient").click();
     const before=await jsonBackup(page);
@@ -2357,7 +2357,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("gradient mask reveals the original gradually without altering its bitmap", async ({page}) => {
-    await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
     await page.locator("#kv2-color").evaluate(c=>{c.value="#000000";c.dispatchEvent(new Event("input",{bubbles:true}));});
     await page.locator("#kv2-gradient").click();
     await page.locator("#kv2-gradient-color").fill("#000000");
@@ -2384,7 +2384,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("master and channel curves compose independently and survive backup", async ({ page }) => {
-    await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview", {waitUntil:"domcontentloaded"});
     await page.locator("#kv2-color").evaluate(c => {c.value="#808080";c.dispatchEvent(new Event("input",{bubbles:true}));});
     await stroke(page);
     const before = await jsonBackup(page);
@@ -2410,7 +2410,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("levels map black, white and gamma without changing raster originals", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
     await stroke(page);
     const original = await jsonBackup(page);
@@ -2443,7 +2443,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("adjustment layer tone controls retain color balance in backup and reset together", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
     await stroke(page);
     const original = await jsonBackup(page);
@@ -2473,7 +2473,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("adjustment layers affect lower layers, support masks and survive editable backup", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate(c => { c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true })); });
     await stroke(page);
     const original = await jsonBackup(page);
@@ -2502,7 +2502,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("advanced blend modes compose expected grayscale colors and retain editable originals", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const set = (color) => page.locator("#kv2-color").evaluate((input, value) => {
       input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
     }, color);
@@ -2536,7 +2536,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("layer blend modes are non-destructive and undo/redo with expected composite colors", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const center = () => pixel(page);
     const set = async (color) => page.locator("#kv2-color").evaluate((input, value) => {
       input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -2566,7 +2566,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("blend modes survive editable export and import; unknown modes fall back to normal", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await stroke(page);
     await page.locator("#kv2-add-layer").click();
     await stroke(page);
@@ -2601,7 +2601,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("blended masked layer restores the underlying image; duplication retains mode", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     const color = (value) => page.locator("#kv2-color").evaluate((input, value) => {
       input.value = value; input.dispatchEvent(new Event("input", { bubbles: true }));
     }, value);
@@ -2633,7 +2633,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("brightness and contrast edit appearance but not source pixels, with distinct undo steps", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((c) => {
       c.value = "#808080"; c.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -2666,7 +2666,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("saturation is per layer, survives local save and editable export, and imports old/malformed settings safely", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((c) => {
       c.value = "#9c6030"; c.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -2706,7 +2706,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("layer adjustments follow duplicate and selection extraction, while masks stay non-destructive", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((c) => {
       c.value = "#4080c0"; c.dispatchEvent(new Event("input", { bubbles: true }));
     });
@@ -2753,7 +2753,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("rectangle preview is invisible in the artwork until pointerup, then a single undo step", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-rectangle").click();
     await expect(page.locator("#kv2-rectangle")).toHaveAttribute("aria-pressed", "true");
     await shapePointer(page, "pointerdown", 400, 300);
@@ -2774,7 +2774,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("ellipse outline is hollow and its thickness follows the size setting", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-ellipse").click();
     await page.locator("#kv2-shape-style").selectOption("outline");
     await page.locator("#kv2-size").evaluate((input) => {
@@ -2790,7 +2790,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("a selection clips a rectangle after moving the active layer", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-move").click();
     await shapeDrag(page, [600, 400], [620, 410], 883);
     await page.locator("#kv2-select").click();
@@ -2806,7 +2806,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("Escape, cancelled pointer, locked layers and mask editing protect against accidental shapes", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-rectangle").click();
     await shapePointer(page, "pointerdown", 400, 300, 886);
     await shapePointer(page, "pointermove", 700, 500, 886);
@@ -2835,7 +2835,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("horizontal and diagonal lines use one undo step, with no pixels before pointerup", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-line").click();
     await expect(page.locator("#kv2-line")).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#kv2-shape-style")).toBeDisabled();
@@ -2858,7 +2858,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("reversed arrow points to the drag endpoint and preserves the source layer on undo", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-arrow").click();
     await page.locator("#kv2-size").evaluate((input) => {
       input.value = "12"; input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -2883,7 +2883,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("selected region clips arrow head and shaft on a translated layer", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-move").click();
     await shapeDrag(page, [600, 400], [620, 410], 943);
     await page.locator("#kv2-select").click();
@@ -2903,7 +2903,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
   test("text preview is local-only and one confirmation adds a movable editable text layer in one undo step", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await expect(page.locator("#kv2-text-panel")).toBeVisible();
     await page.locator("#kv2-text-content").fill("Kunstrommet");
@@ -2930,7 +2930,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("focused textarea confirmation preserves button identity and commits on first click", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await page.locator("#kv2-text-content").fill("Første trykk");
     await shapePointer(page, "pointerdown", 150, 180, 981);
@@ -2951,7 +2951,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("editable text survives backup, cancel, update, undo, duplicate and explicit rasterization", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await page.locator("#kv2-text-content").fill("Før");
     await shapePointer(page, "pointerdown", 150, 180, 979);
@@ -3000,7 +3000,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("text metadata is restored from project files and old raster projects remain compatible", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await page.locator("#kv2-text-content").fill("Bevar teksten");
     await shapePointer(page, "pointerdown", 150, 180, 980);
@@ -3032,7 +3032,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("multiline typography supports font family, size, bold and palette without leaving text tool", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await page.locator("#kv2-text-content").fill("AHA\nKunst");
     await page.locator("#kv2-text-font").selectOption("serif");
@@ -3054,7 +3054,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("empty, too wide and six-line text are rejected; cancel makes no edit", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-text").click();
     await shapePointer(page, "pointerdown", 200, 200, 977);
     await expect(page.locator("#kv2-text-commit")).toBeDisabled();
@@ -3076,7 +3076,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("text cannot be placed during mask editing and an Escape key cancels only preview", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-mask-add").click();
     await page.locator("#kv2-text").click();
     await expect(page.locator("#kv2-eraser")).toHaveAttribute("aria-pressed", "true");
@@ -3095,7 +3095,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("eyedropper samples visible color without pixels, undo history or dirty edits", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-color").evaluate((node) => {
       node.value = "#e7493b";
       node.dispatchEvent(new Event("input", { bubbles: true }));
@@ -3141,7 +3141,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
   });
 
   test("manual V1 project JSON import never touches V1 database", async ({ page }) => {
-    await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+    await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
     await page.locator("#kv2-import").setInputFiles({
       name: "v1.json", mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify({
@@ -3165,7 +3165,7 @@ test.describe("Kunstrommet V2 – isolated, local layer editor", () => {
 
 
 test("unified Kunstrommet reuses Gallery metadata and opens legacy sketches as copies", async ({ page }) => {
-  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
   await page.evaluate(async () => {
     localStorage.setItem("aha_gallery_v1", JSON.stringify([{
       id: "source-1", title: "Et lysende atelier", description: "Varme farger og lange skygger",
@@ -3218,7 +3218,7 @@ test("unified Kunstrommet reuses Gallery metadata and opens legacy sketches as c
 });
 
 test("one atelier, explicit Aha collection link stores metadata only", async ({ page }) => {
-  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => localStorage.setItem("aha_lists_v1", JSON.stringify([{
     id: "v2-art-ideas", title: "Kunstideer", type: "favorites",
     local_only: true, sync_enabled: false, published_external: false,
@@ -3264,7 +3264,7 @@ test("one atelier, explicit Aha collection link stores metadata only", async ({ 
 
 
 test("one sketchbook restores search, thumbnail, copy and safe local deletion", async ({ page }) => {
-  await page.goto("/kunstrommet.html", { waitUntil: "domcontentloaded" });
+  await page.goto("/kunstrommet.html?studio=overview", { waitUntil: "domcontentloaded" });
   await page.locator("#kv2-title").fill("Kveldsmaleri");
   await page.locator("#kv2-note").fill("Farger fra parken");
   await page.locator("#kv2-save").click();
@@ -3305,7 +3305,7 @@ test("one sketchbook restores search, thumbnail, copy and safe local deletion", 
 test("8.2 cloud restore validates before inserting and never replaces the open artwork", async ({page}) => {
   const user="11111111-1111-4111-8111-111111111111";
   await page.addInitScript(id=>localStorage.setItem("aha_profile_id",id),user);
-  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
   await expect(page.locator("#kv2-cloud-backup")).toBeHidden();
   await page.locator("#kv2-title").fill("Aktivt kunstverk");
   await stroke(page);
@@ -3338,7 +3338,7 @@ test("8.2 cloud restore validates before inserting and never replaces the open a
 test("8.1 workspace gives the canvas priority without losing existing controls", async ({page}) => {
   for (const width of [390, 834, 1180]) {
     await page.setViewportSize({width, height: 900});
-    await page.goto("/kunstrommet.html", {waitUntil:"domcontentloaded"});
+    await page.goto("/kunstrommet.html?studio=overview", {waitUntil:"domcontentloaded"});
     const layout = await page.evaluate(() => {
       const main = document.querySelector(".aha-dashboard.kv2");
       const paper = document.querySelector("#kv2-paper");
@@ -3364,7 +3364,7 @@ test("8.1 workspace gives the canvas priority without losing existing controls",
 
 test("8.1 icon tools and collapsible layers preserve the drawing", async ({page}) => {
   await page.setViewportSize({width:834,height:1180});
-  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
   const brush=page.getByRole("button",{name:"Pensel",exact:true});
   await expect(brush).toHaveAttribute("aria-pressed","true");
   await expect(brush.locator("svg")).toBeVisible();
@@ -3387,7 +3387,7 @@ test("8.1 icon tools and collapsible layers preserve the drawing", async ({page}
 
 
 test("8.1 contextual tool settings preserve values, artwork and history", async ({page}) => {
-  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
   const visible = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeVisible(); };
   const hidden = async (ids) => { for (const id of ids) await expect(page.locator("#kv2-"+id)).toBeHidden(); };
   await visible(["brush-preset","size","color","undo","redo"]);
@@ -3421,7 +3421,7 @@ test("8.1 contextual tool settings preserve values, artwork and history", async 
 
 
 test("9.1 color region preview preserves pixels and creates an undoable connected mask",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await page.locator("#kv2-color").evaluate(el=>{el.value="#b52c35";el.dispatchEvent(new Event("input",{bubbles:true}));});
  await page.locator("#kv2-rectangle").click();
  await shapeDrag(page,[200,200],[400,400],9101);
@@ -3450,7 +3450,7 @@ test("9.1 color region preview preserves pixels and creates an undoable connecte
 
 
 test("9.2 combines disconnected color regions and subtracts before committing one mask",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await page.locator("#kv2-color").evaluate(el=>{el.value="#b52c35";el.dispatchEvent(new Event("input",{bubbles:true}));});
  await page.locator("#kv2-rectangle").click();
  await shapeDrag(page,[150,200],[350,400],9201);
@@ -3497,7 +3497,7 @@ test("9.2 combines disconnected color regions and subtracts before committing on
 
 
 test("9.3 feather previews fractional coverage and commits matching reversible alpha",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
  await color("#202020");
  await page.locator("#kv2-rectangle").click();
@@ -3538,7 +3538,7 @@ test("9.3 feather previews fractional coverage and commits matching reversible a
 
 
 test("9.4 edge shift shrinks and expands the raw selection, then feathers the same mask",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
  await color("#202020");
  await page.locator("#kv2-rectangle").click();
@@ -3590,7 +3590,7 @@ test("9.4 edge shift shrinks and expands the raw selection, then feathers the sa
 
 
 test("9.4b corrects partially masked edge colors on a separate undoable copy",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
  await color("#184ad2");
  await page.locator("#kv2-rectangle").click();
@@ -3629,7 +3629,7 @@ test("9.4b corrects partially masked edge colors on a separate undoable copy",as
 
 
 test("9.5a suggests multicolor foreground inside a rectangle without altering the source",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const color=async(v)=>page.locator("#kv2-color").evaluate((el,v)=>{el.value=v;el.dispatchEvent(new Event("input",{bubbles:true}));},v);
  const rect=async(v,a,b,id)=>{await color(v);await page.locator("#kv2-rectangle").click();await shapeDrag(page,a,b,id);};
  await rect("#204070",[100,100],[1100,700],9511);
@@ -3663,7 +3663,7 @@ test("9.5a suggests multicolor foreground inside a rectangle without altering th
 
 
 test("9.5b gated local model mask is preview-only, reversible and rejects stale replies",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
  await page.locator("#kv2-rectangle").click();
  await shapeDrag(page,[100,100],[900,650],9521);
@@ -3705,7 +3705,7 @@ test("9.5b gated local model mask is preview-only, reversible and rejects stale 
 });
 
 test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed mask",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await expect(page.locator("#kv2-ai-region")).toBeHidden();
  await page.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
  // Mock the worker transport, not the editor; real WASM inference is tested separately.
@@ -3763,7 +3763,7 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
 test("10.0a tool families keep direct access and touch targets on narrow and tablet widths",async({page})=>{
  for(const width of [375,820,1180]){
   await page.setViewportSize({width,height:900});
-  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
   await expect(page.locator(".kv2-tool-group")).toHaveCount(3);
   await expect(page.getByRole("group",{name:"Tegning",exact:true})).toBeVisible();
   await expect(page.getByRole("group",{name:"Flytt og marker",exact:true})).toBeVisible();
@@ -3784,7 +3784,7 @@ test("10.0a tool families keep direct access and touch targets on narrow and tab
 });
 
 test("10.0b clone stamp samples the active raw layer, cancels preview, commits and undoes",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
  await page.locator("#kv2-rectangle").click();await shapeDrag(page,[100,100],[300,300],9601);
  const before=await jsonBackup(page);
@@ -3809,7 +3809,7 @@ test("10.0b clone stamp samples the active raw layer, cancels preview, commits a
 });
 
 test("10.0c healing transfers texture with local color correction and preserves transparency",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const paint=async(color,start,end,id)=>{
   await page.locator("#kv2-color").evaluate((el,value)=>{el.value=value;el.dispatchEvent(new Event("input",{bubbles:true}));},color);
   await page.locator("#kv2-rectangle").click();await shapeDrag(page,start,end,id);
@@ -3841,7 +3841,7 @@ test("10.0c healing transfers texture with local color correction and preserves 
 });
 
 test("10.0d projective rectification previews a convex source crop, rejects crossed corners and undoes",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
  await page.locator("#kv2-rectangle").click();await shapeDrag(page,[200,100],[1000,700],9701);
  const before=await jsonBackup(page);
@@ -3867,7 +3867,7 @@ test("10.0d projective rectification previews a convex source crop, rejects cros
 });
 
 test("10.0e local detail preview is reversible, smooths noise and preserves alpha",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  // A synthetic opaque field with a slight center impulse, transparent outside.
  const png=await page.evaluate(()=>{
   const c=document.createElement("canvas");c.width=1200;c.height=800;
@@ -3902,7 +3902,7 @@ test("10.0e local detail preview is reversible, smooths noise and preserves alph
 });
 
 test("10.0f restoration preview restores faded range, reduces cast and isolated dust without inventing pixels",async({page})=>{
- await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.goto("/kunstrommet.html?studio=overview",{waitUntil:"domcontentloaded"});
  const png=await page.evaluate(()=>{
   const c=document.createElement("canvas");c.width=1200;c.height=800;const ctx=c.getContext("2d");
   ctx.fillStyle="rgb(110,90,70)";ctx.fillRect(100,100,500,600);
@@ -3940,4 +3940,34 @@ test("10.0f restoration preview restores faded range, reduces cast and isolated 
  await page.locator("#kv2-photo-restore").click();await set("fade",100);
  await page.locator("#kv2-photo-detail-cancel").click();
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
+
+test("10.1a compact workspace keeps canvas, tools and selected inspector on one surface",async({page})=>{
+ for(const [width,height] of [[390,844],[834,1180],[1180,820]]){
+  await page.setViewportSize({width,height});
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await expect(page.locator("#main")).toHaveAttribute("data-studio-layout","compact");
+  await expect(page.locator("#kv2-brush")).toBeVisible();
+  await expect(page.locator("#kv2-save")).toBeVisible();
+  const layout=await page.evaluate(()=>{
+   const m=document.querySelector("#main").getBoundingClientRect(),p=document.querySelector("#kv2-paper").getBoundingClientRect(),c=document.querySelector("#kv2-canvas").getBoundingClientRect(),a=document.querySelector(".kv2-actions").getBoundingClientRect();
+   return {overflow:document.documentElement.scrollWidth>innerWidth+1,mainHeight:m.height,canvasWidth:c.width,canvasHeight:c.height,paperHeight:p.height,actionsBottom:a.bottom,mainBottom:m.bottom,ids:[...document.querySelectorAll("[id]")].map(n=>n.id)};
+  });
+  expect(layout.overflow).toBe(false);expect(layout.mainHeight).toBeLessThanOrEqual(height);
+  expect(layout.canvasWidth).toBeGreaterThan(180);expect(layout.canvasHeight).toBeGreaterThan(100);
+  expect(layout.actionsBottom).toBeLessThanOrEqual(layout.mainBottom+2);expect(new Set(layout.ids).size).toBe(layout.ids.length);
+  if(width<760){await expect(page.locator(".kv2-sidebar")).toBeHidden();await page.locator("#kv2-studio-layers").click();}
+  await expect(page.locator("#kv2-add-layer")).toBeVisible();
+  await page.locator("#kv2-studio-photo").click();
+  await expect(page.locator("#kv2-photo-detail")).toBeVisible();await expect(page.locator("#kv2-add-layer")).toBeHidden();
+  await page.locator("#kv2-photo-detail").click();await expect(page.locator("#kv2-photo-detail-panel")).toBeVisible();
+  await page.locator("#kv2-studio-mask").click();await expect(page.locator("#kv2-photo-detail-panel")).toBeHidden();await expect(page.locator("#kv2-mask-add")).toBeVisible();
+  await page.locator("#kv2-studio-project").click();await expect(page.locator("#kv2-title")).toBeVisible();
+  if(width<760)await page.locator("#kv2-studio-close").click();
+  await stroke(page);const before=await jsonBackup(page);
+  await page.locator("#kv2-studio-layout").click();await expect(page.locator("#main")).toHaveAttribute("data-studio-layout","overview");
+  await expect(page.locator("#kv2-add-layer")).toBeVisible();expect((await jsonBackup(page)).layers).toEqual(before.layers);
+  await page.locator("#kv2-studio-layout").click();await expect(page.locator("#main")).toHaveAttribute("data-studio-layout","compact");
+  expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ }
 });
