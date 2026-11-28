@@ -302,7 +302,9 @@
 @media(max-width:680px) { .kv2-tool-strip { gap:4px; } }
 
 /* Studio 8.1 – contextual controls: respect hidden despite toolbar label flex rules. */
-.kv2-toolbar > [hidden] { display:none !important; }
+.kv2-toolbar > [hidden], .kv2-context-bar [hidden] { display:none !important; }
+/* Keep the optional expanded overview's original flex layout. */
+.kv2[data-studio-layout="overview"] .kv2-context-bar { display:contents; }
 #kv2-gradient-panel:not([hidden]) { flex:1 0 100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
 #kv2-gradient-panel .kv2-tip { flex-basis:100%; margin:4px 0; }
 
