@@ -3759,3 +3759,144 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
  await page.locator("#kv2-undo").click();
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+test("10.0a tool families keep direct access and touch targets on narrow and tablet widths",async({page})=>{
+ for(const width of [375,820,1180]){
+  await page.setViewportSize({width,height:900});
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await expect(page.locator(".kv2-tool-group")).toHaveCount(3);
+  await expect(page.getByRole("group",{name:"Tegning",exact:true})).toBeVisible();
+  await expect(page.getByRole("group",{name:"Flytt og marker",exact:true})).toBeVisible();
+  await expect(page.getByRole("group",{name:"Form og tekst",exact:true})).toBeVisible();
+  await expect(page.locator("#kv2-ai-region")).toBeHidden();
+  const geometry=await page.locator(".kv2-tool-strip").evaluate(el=>{
+   const r=el.getBoundingClientRect();
+   const buttons=[...el.querySelectorAll("button:not([hidden])")].map(b=>{const x=b.getBoundingClientRect();return {w:x.width,h:x.height,left:x.left,right:x.right};});
+   return {left:r.left,right:r.right,buttons};
+  });
+  expect(geometry.buttons).toHaveLength(15);
+  expect(geometry.buttons.every(b=>b.w>=44&&b.h>=44&&b.left>=geometry.left-1&&b.right<=geometry.right+1)).toBe(true);
+  for(const id of ["brush","hand","lasso","rectangle","gradient","text"]){
+   await page.locator("#kv2-"+id).click();
+   await expect(page.locator("#kv2-"+id)).toHaveAttribute("aria-pressed","true");
+  }
+ }
+});
+
+test("10.0b clone stamp samples the active raw layer, cancels preview, commits and undoes",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();await shapeDrag(page,[100,100],[300,300],9601);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-clone").click();
+ await shapeDrag(page,[200,200],[200,200],9602);
+ await expect(page.locator("#kv2-clone-marker")).toBeVisible();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-clone-size").evaluate(el=>{el.value="100";});
+ await shapePointer(page,"pointerdown",600,400,9603);
+ await shapePointer(page,"pointermove",650,400,9603);
+ await expect(page.locator("#kv2-brush-live")).toBeVisible();
+ await shapePointer(page,"pointercancel",650,400,9603);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await shapeDrag(page,[600,400],[650,400],9604);
+ expect((await pxAt(page,620,400)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,200,200)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,800,500)).slice(0,3)).toEqual([255,255,255]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,620,400)).slice(0,3)).toEqual([255,255,255]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await expect(page.locator("#kv2-clone-marker")).toBeHidden();
+});
+
+test("10.0c healing transfers texture with local color correction and preserves transparency",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ const paint=async(color,start,end,id)=>{
+  await page.locator("#kv2-color").evaluate((el,value)=>{el.value=value;el.dispatchEvent(new Event("input",{bubbles:true}));},color);
+  await page.locator("#kv2-rectangle").click();await shapeDrag(page,start,end,id);
+ };
+ // Source: lighter field with a dark texture stripe. Destination: darker
+ // field with a black blemish at the center. Same opaque raster layer.
+ await paint("#c8aa8c",[100,100],[400,400],9651);
+ await paint("#b4987c",[196,180],[204,220],9652);
+ await paint("#8c7054",[500,100],[800,400],9653);
+ await paint("#000000",[646,196],[654,204],9654);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-clone").click();
+ await page.locator("#kv2-clone-mode").selectOption("heal");
+ await page.locator("#kv2-clone-size").evaluate(el=>{el.value="100";});
+ await shapeDrag(page,[200,200],[200,200],9655);
+ await shapeDrag(page,[650,200],[650,200],9656);
+ const repaired=(await pxAt(page,650,200)).slice(0,3);
+ // Source stripe [180,152,124], local difference [-60,-58,-56].
+ expect(repaired.every((v,i)=>Math.abs(v-[120,94,68][i])<=4)).toBe(true);
+ expect((await pxAt(page,675,200)).slice(0,3)).toEqual([140,112,84]);
+ expect((await pxAt(page,200,200)).slice(0,3)).toEqual([180,152,124]);
+ // No opaque destination ring: healing on blank canvas must not paint it.
+ const healed=await jsonBackup(page);
+ await shapeDrag(page,[950,500],[950,500],9657);
+ expect((await jsonBackup(page)).layers).toEqual(healed.layers);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,650,200)).slice(0,3)).toEqual([0,0,0]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
+
+test("10.0d projective rectification previews a convex source crop, rejects crossed corners and undoes",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();await shapeDrag(page,[200,100],[1000,700],9701);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-photo-perspective").click();
+ await expect(page.locator("#kv2-photo-perspective-panel")).toBeVisible();
+ const selectCorner=async(i,x,y)=>{
+  await page.locator("#kv2-photo-perspective-corner").selectOption(String(i));
+  await page.locator("#kv2-photo-perspective-source").evaluate((c,p)=>{const r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerType:"touch",clientX:r.left+p.x*r.width,clientY:r.top+p.y*r.height}));},{x,y});
+ };
+ await selectCorner(0,.9,.8);
+ await expect(page.locator("#kv2-photo-perspective-apply")).toBeDisabled();
+ await selectCorner(0,.25,.25);await selectCorner(1,.75,.2);await selectCorner(2,.65,.75);await selectCorner(3,.3,.8);
+ await page.locator("#kv2-photo-perspective-ratio").selectOption("original");
+ await expect(page.locator("#kv2-photo-perspective-apply")).toBeEnabled();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-perspective-apply").click();
+ await expect(page.locator("#kv2-photo-perspective-panel")).toBeHidden();
+ expect((await pxAt(page,50,50)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,1100,750)).slice(0,3)).toEqual([176,48,64]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,50,50)).slice(0,3)).toEqual([255,255,255]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
+
+test("10.0e local detail preview is reversible, smooths noise and preserves alpha",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ // A synthetic opaque field with a slight center impulse, transparent outside.
+ const png=await page.evaluate(()=>{
+  const c=document.createElement("canvas");c.width=1200;c.height=800;
+  const ctx=c.getContext("2d");ctx.fillStyle="rgb(120,120,120)";ctx.fillRect(100,100,1000,600);
+  ctx.fillStyle="rgb(140,140,140)";ctx.fillRect(600,400,1,1);
+  return c.toDataURL("image/png").split(",")[1];
+ });
+ await page.locator("#kv2-photo").setInputFiles({name:"detail.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
+ await expect.poll(async()=> (await pxAt(page,600,400))[0]).toBe(140);
+ await expect(page.locator("#kv2-photo-detail")).toBeEnabled();
+ await expect(page.locator("#kv2-photo-perspective")).toBeEnabled();
+ await expect(page.locator("#kv2-transform-free")).toBeEnabled();
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-photo-detail").click();
+ await expect(page.locator("#kv2-photo-detail-apply")).toBeDisabled();
+ await page.locator("#kv2-photo-detail-noise").evaluate(el=>{el.value="100";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ const preview=await page.locator("#kv2-photo-detail-after").evaluate(c=>c.getContext("2d").getImageData(160,160,1,1).data[0]);
+ expect(preview).toBeLessThan(140);expect(preview).toBeGreaterThan(120);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-detail-apply").click();
+ expect((await pxAt(page,600,400))[0]).toBe(preview);
+ expect((await pxAt(page,30,30)).slice(0,3)).toEqual([255,255,255]);
+ expect((await pxAt(page,300,300)).slice(0,3)).toEqual([120,120,120]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,600,400))[0]).toBe(140);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-detail").click();
+ await page.locator("#kv2-photo-detail-sharp").evaluate(el=>{el.value="100";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ expect(await page.locator("#kv2-photo-detail-after").evaluate(c=>c.getContext("2d").getImageData(160,160,1,1).data[0])).toBeGreaterThan(140);
+ await page.locator("#kv2-photo-detail-cancel").click();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

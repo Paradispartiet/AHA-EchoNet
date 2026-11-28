@@ -321,3 +321,31 @@
 
 /* Hidden opt-in controls must win against the normal icon-toolbar display rule. */
 .kv2 #kv2-ai-region[hidden]{display:none!important;}
+
+/* Studio 10.0a: three direct-access tool families, no extra mode or menu. */
+.kv2-tool-strip {gap:6px 12px;align-items:flex-start;}
+.kv2-tool-group {display:flex;flex-direction:column;gap:3px;min-width:0;max-width:100%;}
+.kv2-tool-group-label {font-size:.7rem;font-weight:650;color:#63716c;line-height:1.25;letter-spacing:.015em;}
+.kv2-tool-group-buttons {display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+@media(max-width:680px) {
+  .kv2-tool-strip {gap:7px 9px;}
+  .kv2-tool-group-label {font-size:.68rem;}
+}
+
+/* 10.0b clone controls and view-only source crosshair. */
+#kv2-clone-panel:not([hidden]){display:flex;flex:1 0 100%;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;}
+#kv2-clone-info{flex-basis:100%;margin:3px 0;}
+#kv2-clone-marker{position:absolute;z-index:6;transform:translate(-50%,-50%);width:24px;height:24px;border:2px solid white;box-shadow:0 0 0 1px #222;box-sizing:border-box;border-radius:50%;background:#255b8c99;color:white;font:bold 18px/20px system-ui;text-align:center;pointer-events:none;}
+#kv2-clone-marker[hidden]{display:none!important;}
+
+/* 10.0d bounded layer-local photo perspective previews. */
+#kv2-photo-perspective-source,#kv2-photo-perspective-result{display:block;width:100%;height:auto;max-width:320px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 0/16px 16px;border:1px solid #b9c4bf;box-sizing:border-box;}
+#kv2-photo-perspective-source{touch-action:none;cursor:crosshair;}
+#kv2-photo-perspective-panel[hidden]{display:none!important;}
+
+/* 10.0e selectable detail crop, equal before/after scale. */
+#kv2-photo-detail-overview,#kv2-photo-detail-before,#kv2-photo-detail-after{display:block;max-width:100%;height:auto;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 0/16px 16px;}
+#kv2-photo-detail-overview{touch-action:none;cursor:crosshair;}
+.kv2-detail-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.kv2-detail-comparison canvas{width:100%;height:auto;}
+#kv2-photo-detail-panel[hidden]{display:none!important;}

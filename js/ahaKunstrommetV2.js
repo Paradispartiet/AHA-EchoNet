@@ -363,6 +363,7 @@
   let gradientFramePending = false;
   let textEditId = null;
   let freeTransform = null; // UI-only draft, never stored in a project.
+  let photoPerspective=null,photoDetail=null;
   let textAnchor = null; // Local document coordinates; never persisted before commit.
   const TEXT_FONTS = Object.freeze({
     sans: "Arial, sans-serif", serif: "Georgia, serif",
@@ -373,6 +374,7 @@
   let pointerStart = null;
   let paintPrevious = null;
   let advancedStroke = null; // Disposable stroke, committed only on pointerup.
+  let cloneAnchor=null,cloneStroke=null,clonePicking=true;
   let dirty = false;
   let busy = false;
   let framePending = false;
@@ -488,6 +490,7 @@
     framePending = false;
     drawComposition(view);
     renderAdvancedStroke();
+    renderClonePreview();
     $("kv2-histogram-status").textContent = "Oppdater for å måle gjeldende bilde.";
     $("kv2-histogram").hidden = true;
   }
@@ -1476,6 +1479,8 @@
   function updateLayerControls() {
     const layer = currentLayer();
     $("kv2-transform-free").disabled = !layer || layer.kind === "adjustment" || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
+    $("kv2-photo-perspective").disabled=$("kv2-transform-free").disabled||project?.owner!==owner();
+    $("kv2-photo-detail").disabled=$("kv2-photo-perspective").disabled;
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
@@ -1731,7 +1736,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text", "clone"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -1760,6 +1765,7 @@
       : "Dra fra start til slutt. Se fargeovergangen direkte før du slipper. Bruk eget lag for å bevare originalen.";
     $("kv2-text-panel").hidden = tool !== "text";
     renderTextPreview();
+    renderCloneTool();
   }
 
   function point(event) {
@@ -2334,10 +2340,138 @@
     }
   }
 
+  // Clone stamp: a frozen source per gesture, editable preview, commit on pointerup.
+  function cloneLayer(){
+    const layer=currentLayer();
+    return project?.owner===owner()&&!maskEditing&&layer?.visible&&!layer.locked&&layer.kind!=="adjustment"&&!layer.textData&&surfaces.has(layer.id)?layer:null;
+  }
+  function cloneAnchorValid(){
+    const layer=cloneLayer();
+    return !!(cloneAnchor&&layer&&cloneAnchor.layer===layer&&cloneAnchor.project===project&&cloneAnchor.owner===owner()&&cloneAnchor.rev===bitmapRevision&&cloneAnchor.surface===surfaces.get(layer.id)&&cloneAnchor.ox===layer.x&&cloneAnchor.oy===layer.y);
+  }
+  function renderCloneTool(){
+    const active=tool==="clone";
+    if(!active||!cloneAnchorValid()){cloneAnchor=null;clonePicking=true;}
+    $("kv2-clone-panel").hidden=!active;
+    $("kv2-clone-source").setAttribute("aria-pressed",String(clonePicking));
+    $("kv2-clone-mode").disabled=!!cloneStroke;
+    const heal=$("kv2-clone-mode").value==="heal";
+    $("kv2-clone-info").textContent=!cloneLayer()?"Velg et synlig, ulåst rasterlag.":clonePicking?"Trykk på ønsket kilde i aktivt lag.":heal?"Kilde valgt. Mal på ugjennomsiktige bildepiksler for lokal fargetilpasning.":"Kilde valgt. Mal over området som skal retusjeres.";
+    const mark=$("kv2-clone-marker");mark.hidden=!active||!cloneAnchor;
+    if(!mark.hidden){const rect=canvas.getBoundingClientRect();mark.style.left=((cloneAnchor.x+cloneAnchor.ox)*rect.width/WIDTH)+"px";mark.style.top=((cloneAnchor.y+cloneAnchor.oy)*rect.height/HEIGHT)+"px";}
+  }
+  function validCloneStroke(stroke){
+    return !!(stroke&&tool==="clone"&&cloneAnchorValid()&&stroke.layer===cloneLayer()&&!busy&&stroke.surface===surfaces.get(stroke.layer.id));
+  }
+  // Local healing: estimate RGB offset from paired peripheral samples,
+  // ignoring transparent pixels and the blemish in the center. The immutable
+  // stroke snapshot also prevents correction drift along overlapping dabs.
+  function healOffset(stroke,x,y,sx,sy){
+    const pixels=stroke.healPixels,delta=[[],[],[]],r=stroke.radius;
+    const offset=(px,py)=>{
+      const ix=Math.round(px),iy=Math.round(py);
+      return ix>=0&&iy>=0&&ix<WIDTH&&iy<HEIGHT?(iy*WIDTH+ix)*4:-1;
+    };
+    for(const ring of [.8,1.15]){
+      for(let i=0;i<24;i++){
+        const angle=i*Math.PI/12,dx=Math.cos(angle)*r*ring,dy=Math.sin(angle)*r*ring;
+        const a=offset(sx+dx,sy+dy),b=offset(x+dx,y+dy);
+        if(a<0||b<0||pixels[a+3]!==255||pixels[b+3]!==255)continue;
+        for(let ch=0;ch<3;ch++)delta[ch].push(pixels[b+ch]-pixels[a+ch]);
+      }
+    }
+    if(delta[0].length<12)return null;
+    return delta.map(values=>{
+      values.sort((a,b)=>a-b);const m=Math.floor(values.length/2);
+      return values.length%2?values[m]:(values[m-1]+values[m])/2;
+    });
+  }
+  function adaptHealStamp(stroke,stamp,x,y,sx,sy){
+    const correction=healOffset(stroke,x,y,sx,sy);
+    if(!correction)return false;
+    const n=stroke.stamp.width,r=stroke.radius,im=stamp.getImageData(0,0,n,n),data=im.data;
+    let eligible=false;
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+      const k=(j*n+i)*4,dx=Math.floor(x-r+i+.5),dy=Math.floor(y-r+j+.5);
+      const target=dx>=0&&dy>=0&&dx<WIDTH&&dy<HEIGHT?(dy*WIDTH+dx)*4:-1;
+      // Healing cannot introduce opacity into empty or semitransparent pixels.
+      if(target<0||stroke.healPixels[target+3]!==255||data[k+3]!==255){data[k+3]=0;continue;}
+      if(Math.hypot(i+.5-r,j+.5-r)>=r){data[k+3]=0;continue;}
+      eligible=true;
+      for(let ch=0;ch<3;ch++)data[k+ch]=clamp(data[k+ch]+correction[ch],0,255);
+    }
+    if(eligible)stamp.putImageData(im,0,0);
+    return eligible;
+  }
+  function cloneDab(stroke,x,y){
+    const r=stroke.radius,n=stroke.stamp.width,sx=x+stroke.dx,sy=y+stroke.dy;
+    if(sx+r<=0||sy+r<=0||sx-r>=WIDTH||sy-r>=HEIGHT)return;
+    const stamp=stroke.stamp.getContext("2d");
+    stamp.clearRect(0,0,n,n);stamp.save();
+    // Read only the unmodified original raster, never the accumulating preview.
+    stamp.drawImage(stroke.surface,r-sx,r-sy);
+    if(stroke.healPixels&&!adaptHealStamp(stroke,stamp,x,y,sx,sy)){stamp.restore();return;}
+    stamp.globalCompositeOperation="destination-in";
+    const g=stamp.createRadialGradient(r,r,0,r,r,r);
+    g.addColorStop(0,"#fff");g.addColorStop(stroke.hardness,"#fff");g.addColorStop(1,"rgba(255,255,255,0)");
+    stamp.fillStyle=g;stamp.fillRect(0,0,n,n);stamp.restore();
+    const ctx=stroke.preview.getContext("2d");ctx.save();
+    if(validSelection()){selectionPath(ctx,stroke.layer.x,stroke.layer.y);ctx.clip();}
+    ctx.globalAlpha=stroke.opacity;ctx.drawImage(stroke.stamp,x-r,y-r);ctx.restore();
+    stroke.applied=true;
+  }
+  function beginClone(event){
+    event.preventDefault();
+    const layer=cloneLayer();if(!layer){status("Velg et synlig, ulåst rasterlag.");return;}
+    const p=point(event),x=Math.floor(p.x-layer.x),y=Math.floor(p.y-layer.y);
+    if(x<0||y<0||x>=WIDTH||y>=HEIGHT)return;
+    const surface=surfaces.get(layer.id);
+    if(clonePicking||!cloneAnchorValid()){
+      if(!surface.getContext("2d").getImageData(x,y,1,1).data[3]){status("Velg et kildepunkt med bildepiksler.");return;}
+      cloneAnchor={project,owner:owner(),layer,surface,rev:bitmapRevision,ox:layer.x,oy:layer.y,x,y};clonePicking=false;
+      renderCloneTool();status("Kilde valgt – mal på området du vil reparere.");return;
+    }
+    const radius=clamp(Math.round(Number($("kv2-clone-size").value)||32),4,160)/2;
+    const opacity=clamp(Number($("kv2-clone-opacity").value)/100,0.01,1);
+    const hardness=clamp(Number($("kv2-clone-hardness").value)/100,0,.99);
+    const preview=imageCanvas();preview.getContext("2d").drawImage(surface,0,0);
+    const heal=$("kv2-clone-mode").value==="heal";
+    cloneStroke={layer,surface,preview,stamp:imageCanvas(Math.ceil(radius*2),Math.ceil(radius*2)),radius,opacity,hardness,dx:cloneAnchor.x-x,dy:cloneAnchor.y-y,previous:{x,y},applied:false,healPixels:heal?surface.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data:null};
+    pointerId=event.pointerId;cloneDab(cloneStroke,x,y);renderCloneTool();drawSoon();
+    try{canvas.setPointerCapture(pointerId);}catch(_){}
+  }
+  function advanceClone(event){
+    const stroke=cloneStroke;if(!validCloneStroke(stroke))return;
+    const at=point(event),b={x:at.x-stroke.layer.x,y:at.y-stroke.layer.y},a=stroke.previous;
+    const distance=Math.hypot(b.x-a.x,b.y-a.y);if(!distance)return;
+    const steps=Math.ceil(distance/Math.max(1,stroke.radius*.35));
+    for(let i=1;i<=steps;i++)cloneDab(stroke,a.x+(b.x-a.x)*i/steps,a.y+(b.y-a.y)*i/steps);
+    stroke.previous=b;drawSoon();
+  }
+  function renderClonePreview(){
+    if(!cloneStroke)return;
+    const live=$("kv2-brush-live");if(!validCloneStroke(cloneStroke)){live.hidden=true;return;}
+    const {layer,preview}=cloneStroke;adjustedBitmaps.delete(layer.id);
+    drawComposition(live.getContext("2d"),{id:layer.id,bitmap:preview,mask:masks.get(layer.id)});
+    adjustedBitmaps.delete(layer.id);live.hidden=false;
+  }
+  function finishClone(event){
+    const stroke=cloneStroke,commit=event.type==="pointerup"&&validCloneStroke(stroke);
+    if(commit&&Number.isFinite(event.clientX)&&Number.isFinite(event.clientY))advanceClone(event);
+    cloneStroke=null;pointerId=null;pointerStart=null;paintPrevious=null;$("kv2-brush-live").hidden=true;
+    if(commit&&stroke.applied&&checkpoint()){
+      // Replace the raster only after confirmation; masks and other layers unchanged.
+      surfaces.set(stroke.layer.id,stroke.preview);changed();
+      cloneAnchor.surface=stroke.preview;cloneAnchor.rev=bitmapRevision;
+      refresh();status("Retusjering utført – kan angres.");
+    }else{draw();renderCloneTool();status(commit&&stroke.healPixels?"Ingen egnede, ugjennomsiktige piksler å reparere – ingen endringer.":"Kloning avbrutt – ingen endringer.");}
+  }
+
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     cancelFreeTransform();
+    if(tool==="clone"){beginClone(event);return;}
     if (tool === "color-region") {
       event.preventDefault();
       if(aiTool){addAiPoint(point(event));return;}
@@ -2446,6 +2580,7 @@
   function move(event) {
     if (pointerId === null || event.pointerId !== pointerId || busy) return;
     event.preventDefault();
+    if(cloneStroke){advanceClone(event);return;}
     if (advancedStroke) {
       if (validAdvancedStroke(advancedStroke)) {
         const samples = event.getCoalescedEvents?.() || [];
@@ -2515,6 +2650,7 @@
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
     showSnapGuides();
+    if(cloneStroke){finishClone(event);return;}
     if (advancedStroke) { finishAdvancedStroke(event); return; }
     if (isShapeTool()) {
       const complete = event.type === "pointerup" && !!shapeDraft;
@@ -3118,6 +3254,190 @@
     return output;
   }
 
+  // Local detail adjustment. Edge-aware noise reduction, then two scales of
+  // luminance-only unsharp detail. Alpha stays bit-for-bit unchanged.
+  // Read neighbors from the original immutable raster, including preview halo.
+  function detailPixels(src,w,h,region,settings){
+    const {x:left,y:top,w:rw,h:rh}=region,out=new Uint8ClampedArray(rw*rh*4);
+    const n=settings.noise/100,s=settings.sharp/100,c=settings.clarity/100;
+    const luma=(i)=>.2126*src[i]+.7152*src[i+1]+.0722*src[i+2];
+    for(let y=0;y<rh;y++)for(let x=0;x<rw;x++){
+      const px=x+left,py=y+top,i=(py*w+px)*4,o=(y*rw+x)*4,alpha=src[i+3];
+      out.set(src.subarray(i,i+4),o);
+      if(!alpha||(!n&&!s&&!c))continue;
+      const center=luma(i);
+      let sum=0,r=0,g=0,b=0,near=0,nearW=0,far=0,farW=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const j=(clamp(py+dy,0,h-1)*w+clamp(px+dx,0,w-1))*4;
+        const a=src[j+3]/255;if(!a)continue;
+        const lum=luma(j),spatial=(dx===0?2:1)*(dy===0?2:1)*a;
+        const range=1/(1+Math.pow((lum-center)/18,2)),weight=spatial*range;
+        sum+=weight;r+=weight*src[j];g+=weight*src[j+1];b+=weight*src[j+2];
+        near+=spatial*lum;nearW+=spatial;
+        const k=(clamp(py+dy*4,0,h-1)*w+clamp(px+dx*4,0,w-1))*4;
+        const fw=(dx===0?2:1)*(dy===0?2:1)*src[k+3]/255;
+        far+=fw*luma(k);farW+=fw;
+      }
+      const rr=src[i]+n*(r/sum-src[i]),gg=src[i+1]+n*(g/sum-src[i+1]),bb=src[i+2]+n*(b/sum-src[i+2]);
+      const base=.2126*rr+.7152*gg+.0722*bb;
+      // Reduce sharpening of low-amplitude noise; clamp local contrast gain.
+      const fine=center-near/nearW,coarse=center-(farW?far/farW:center);
+      const boost=clamp(s*1.5*fine*(1-n*.8)+c*.65*coarse,-64,64);
+      out[o]=clamp(rr+boost,0,255);out[o+1]=clamp(gg+boost,0,255);out[o+2]=clamp(bb+boost,0,255);
+    }
+    return out;
+  }
+  function photoDetailValid(){
+    const p=photoDetail,layer=currentLayer();
+    return !!(p&&p.project===project&&p.owner===owner()&&project.owner===p.owner&&layer===p.layer&&p.rev===bitmapRevision&&p.bitmap===surfaces.get(layer.id)&&!busy&&!maskEditing&&pointerId===null&&layer.visible&&!layer.locked&&!layer.textData&&layer.kind!=="adjustment");
+  }
+  function cancelPhotoDetail(){
+    if(!photoDetail)return;
+    photoDetail=null;$("kv2-photo-detail-panel").hidden=true;
+    for(const id of ["kv2-photo-detail-overview","kv2-photo-detail-before","kv2-photo-detail-after"]){const c=$(id);c.width=1;c.height=1;}
+  }
+  function photoDetailSettings(){
+    return Object.fromEntries(["noise","sharp","clarity"].map(k=>[k,clamp(Number($("kv2-photo-detail-"+k).value)||0,0,100)]));
+  }
+  function renderPhotoDetail(){
+    if(!photoDetailValid()){cancelPhotoDetail();return;}
+    const p=photoDetail,settings=photoDetailSettings(),region=p.region;
+    for(const k of Object.keys(settings))$("kv2-photo-detail-"+k+"-value").textContent=settings[k]+"%";
+    const overview=$("kv2-photo-detail-overview"),ctx=overview.getContext("2d");
+    ctx.clearRect(0,0,overview.width,overview.height);ctx.drawImage(p.bitmap,0,0,overview.width,overview.height);
+    ctx.save();ctx.strokeStyle="#00d8ff";ctx.lineWidth=2;ctx.strokeRect(region.x/WIDTH*overview.width,region.y/HEIGHT*overview.height,region.w/WIDTH*overview.width,region.h/HEIGHT*overview.height);ctx.restore();
+    const a=$("kv2-photo-detail-before"),b=$("kv2-photo-detail-after");
+    a.width=b.width=region.w;a.height=b.height=region.h;
+    a.getContext("2d").drawImage(p.bitmap,region.x,region.y,region.w,region.h,0,0,region.w,region.h);
+    const dst=b.getContext("2d"),im=dst.createImageData(region.w,region.h);
+    im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,region,settings));dst.putImageData(im,0,0);
+    $("kv2-photo-detail-apply").disabled=!Object.values(settings).some(Boolean);
+  }
+  function openPhotoDetail(){
+    const layer=editableLayer();
+    if(!layer||requiresRaster(layer)||maskEditing||pointerId!==null||project.owner!==owner())return;
+    cancelFreeTransform();clearTextDraft();resetAiPoints();colorRegion=null;aiTool=false;tool="hand";refresh();
+    const bitmap=surfaces.get(layer.id),w=Math.min(320,WIDTH),h=Math.min(320,HEIGHT);
+    photoDetail={project,owner:owner(),layer,rev:bitmapRevision,bitmap,pixels:bitmap.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data,region:{x:Math.floor((WIDTH-w)/2),y:Math.floor((HEIGHT-h)/2),w,h}};
+    const overview=$("kv2-photo-detail-overview"),scale=Math.min(1,240/Math.max(WIDTH,HEIGHT));
+    overview.width=Math.max(1,Math.round(WIDTH*scale));overview.height=Math.max(1,Math.round(HEIGHT*scale));
+    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).value="0";
+    $("kv2-photo-detail-panel").hidden=false;renderPhotoDetail();
+  }
+  function photoDetailPoint(event){
+    if(!photoDetailValid()||(event.pointerType==="mouse"&&event.button!==0))return;
+    event.preventDefault();const r=$("kv2-photo-detail-overview").getBoundingClientRect(),q=photoDetail.region;
+    q.x=clamp(Math.round((event.clientX-r.left)/r.width*WIDTH-q.w/2),0,WIDTH-q.w);
+    q.y=clamp(Math.round((event.clientY-r.top)/r.height*HEIGHT-q.h/2),0,HEIGHT-q.h);renderPhotoDetail();
+  }
+  function applyPhotoDetail(){
+    if(!photoDetailValid())return;
+    const p=photoDetail,settings=photoDetailSettings();
+    if(!Object.values(settings).some(Boolean))return;
+    try{
+      const bitmap=imageCanvas(),ctx=bitmap.getContext("2d"),im=ctx.createImageData(WIDTH,HEIGHT);
+      im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,{x:0,y:0,w:WIDTH,h:HEIGHT},settings));ctx.putImageData(im,0,0);
+      applyTransform({id:p.layer.id,bitmap,mask:null});
+      status("Detaljjustering utført – kan angres.");
+    }catch(_){status("Kunne ikke justere detaljene. Originalen er uendret.");}
+  }
+
+  // Photo rectification: inverse projective sampling from a convex quadrilateral.
+  // UI points are normalized layer-local coordinates, not the visible composition.
+  function perspectiveMap(p){
+    if(p.length!==4||p.some(a=>!Number.isFinite(a.x)||!Number.isFinite(a.y)||a.x<0||a.x>1||a.y<0||a.y>1))return null;
+    const cross=(a,b,c)=>(b.x-a.x)*(c.y-b.y)-(b.y-a.y)*(c.x-b.x);
+    if(p.some((a,i)=>cross(a,p[(i+1)%4],p[(i+2)%4])<.0001))return null;
+    const [a,b,c,d]=p,dx1=b.x-c.x,dx2=d.x-c.x,dx3=a.x-b.x+c.x-d.x,dy1=b.y-c.y,dy2=d.y-c.y,dy3=a.y-b.y+c.y-d.y;
+    const den=dx1*dy2-dx2*dy1;if(Math.abs(den)<1e-8)return null;
+    const g=(dx3*dy2-dx2*dy3)/den,h=(dx1*dy3-dx3*dy1)/den;
+    if(Math.min(1,1+g,1+h,1+g+h)<.001)return null;
+    return [b.x-a.x+g*b.x,d.x-a.x+h*d.x,a.x,b.y-a.y+g*b.y,d.y-a.y+h*d.y,a.y,g,h];
+  }
+  function perspectiveRatio(points){
+    const choice=$("kv2-photo-perspective-ratio").value;
+    if(choice==="original")return WIDTH/HEIGHT;
+    if(choice!=="auto")return Number(choice)||1;
+    const dist=(a,b)=>Math.hypot((a.x-b.x)*WIDTH,(a.y-b.y)*HEIGHT);
+    return clamp((dist(points[0],points[1])+dist(points[3],points[2]))/Math.max(1,dist(points[0],points[3])+dist(points[1],points[2])),.1,10);
+  }
+  function perspectiveOutput(source,map,ratio,width,height){
+    const src=source.getContext("2d").getImageData(0,0,source.width,source.height).data;
+    const result=imageCanvas(width,height),ctx=result.getContext("2d"),im=ctx.createImageData(width,height),out=im.data;
+    const rw=Math.max(1,Math.min(width,Math.round(height*ratio))),rh=Math.max(1,Math.min(height,Math.round(width/ratio)));
+    const left=Math.floor((width-rw)/2),top=Math.floor((height-rh)/2),sw=source.width,sh=source.height;
+    const [a,b,c,d,e,f,g,h]=map;
+    for(let y=0;y<rh;y++){
+      const v=(y+.5)/rh;
+      for(let x=0;x<rw;x++){
+        const u=(x+.5)/rw,z=g*u+h*v+1;
+        const sx=clamp((a*u+b*v+c)/z*sw-.5,0,sw-1),sy=clamp((d*u+e*v+f)/z*sh-.5,0,sh-1);
+        const x0=Math.floor(sx),y0=Math.floor(sy),x1=Math.min(x0+1,sw-1),y1=Math.min(y0+1,sh-1);
+        const fx=sx-x0,fy=sy-y0,w0=(1-fx)*(1-fy),w1=fx*(1-fy),w2=(1-fx)*fy,w3=fx*fy;
+        const k0=(y0*sw+x0)*4,k1=(y0*sw+x1)*4,k2=(y1*sw+x0)*4,k3=(y1*sw+x1)*4;
+        // Interpolate premultiplied RGB to avoid dark/colored transparent fringes.
+        const a0=w0*src[k0+3],a1=w1*src[k1+3],a2=w2*src[k2+3],a3=w3*src[k3+3],alpha=a0+a1+a2+a3;
+        const k=((y+top)*width+x+left)*4;out[k+3]=alpha;
+        if(alpha>0)for(let ch=0;ch<3;ch++)out[k+ch]=(a0*src[k0+ch]+a1*src[k1+ch]+a2*src[k2+ch]+a3*src[k3+ch])/alpha;
+      }
+    }
+    ctx.putImageData(im,0,0);return result;
+  }
+  function photoPerspectiveValid(){
+    const p=photoPerspective,layer=currentLayer();
+    return !!(p&&p.project===project&&p.owner===owner()&&project.owner===p.owner&&p.layer===layer&&p.rev===bitmapRevision&&p.bitmap===surfaces.get(layer.id)&&p.mask===masks.get(layer.id)&&!busy&&!maskEditing&&pointerId===null&&layer.visible&&!layer.locked&&!layer.textData&&layer.kind!=="adjustment");
+  }
+  function cancelPhotoPerspective(){
+    if(!photoPerspective)return;
+    photoPerspective=null;$("kv2-photo-perspective-panel").hidden=true;
+    for(const id of ["kv2-photo-perspective-source","kv2-photo-perspective-result"]){const c=$(id);c.width=1;c.height=1;}
+  }
+  function renderPhotoPerspective(){
+    if(!photoPerspectiveValid()){cancelPhotoPerspective();return;}
+    const p=photoPerspective,source=$("kv2-photo-perspective-source"),result=$("kv2-photo-perspective-result");
+    const ctx=source.getContext("2d"),w=source.width,h=source.height,points=p.points;
+    ctx.clearRect(0,0,w,h);ctx.drawImage(p.bitmap,0,0,w,h);
+    ctx.save();ctx.strokeStyle="#00d8ff";ctx.lineWidth=2;ctx.beginPath();
+    points.forEach((q,i)=>i?ctx.lineTo(q.x*w,q.y*h):ctx.moveTo(q.x*w,q.y*h));ctx.closePath();ctx.stroke();
+    points.forEach((q,i)=>{
+      const x=clamp(q.x*w,9,w-9),y=clamp(q.y*h,9,h-9);
+      ctx.fillStyle=i===Number($("kv2-photo-perspective-corner").value)?"#ffbe43":"#005d79";
+      ctx.beginPath();ctx.arc(x,y,8,0,2*Math.PI);ctx.fill();ctx.fillStyle="#fff";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(i+1),x,y);
+    });ctx.restore();
+    const map=perspectiveMap(points),ratio=perspectiveRatio(points);
+    $("kv2-photo-perspective-apply").disabled=!map;
+    $("kv2-photo-perspective-warning").textContent=map?"Forhåndsvisning av rålaget. Korrigert utsnitt tilpasses lerretet; eventuell maske følger bildet ved bekreftelse.":"Hjørnene må ligge i rekkefølgen øvre venstre, øvre høyre, nedre høyre, nedre venstre uten kryssing.";
+    const dst=result.getContext("2d");dst.clearRect(0,0,result.width,result.height);
+    if(map)dst.drawImage(perspectiveOutput(p.bitmap,map,ratio,result.width,result.height),0,0);
+  }
+  function openPhotoPerspective(){
+    const layer=editableLayer();
+    if(!layer||requiresRaster(layer)||layer.kind==="adjustment"||maskEditing||pointerId!==null||project.owner!==owner())return;
+    cancelFreeTransform();clearTextDraft();resetAiPoints();colorRegion=null;aiTool=false;tool="hand";refresh();
+    photoPerspective={project,owner:owner(),layer,rev:bitmapRevision,bitmap:surfaces.get(layer.id),mask:masks.get(layer.id),points:[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}]};
+    const scale=Math.min(1,320/Math.max(WIDTH,HEIGHT));
+    for(const id of ["kv2-photo-perspective-source","kv2-photo-perspective-result"]){const c=$(id);c.width=Math.max(1,Math.round(WIDTH*scale));c.height=Math.max(1,Math.round(HEIGHT*scale));}
+    $("kv2-photo-perspective-corner").value="0";$("kv2-photo-perspective-ratio").value="auto";
+    $("kv2-photo-perspective-panel").hidden=false;renderPhotoPerspective();
+  }
+  function photoPerspectivePoint(event){
+    if(!photoPerspectiveValid()||(event.pointerType==="mouse"&&event.button!==0))return;
+    event.preventDefault();const c=$("kv2-photo-perspective-source"),r=c.getBoundingClientRect(),i=Number($("kv2-photo-perspective-corner").value);
+    photoPerspective.points[i]={x:clamp((event.clientX-r.left)/r.width,0,1),y:clamp((event.clientY-r.top)/r.height,0,1)};
+    $("kv2-photo-perspective-corner").value=String((i+1)%4);renderPhotoPerspective();
+  }
+  function applyPhotoPerspective(){
+    if(!photoPerspectiveValid())return;
+    const p=photoPerspective,map=perspectiveMap(p.points);if(!map)return;
+    const ratio=perspectiveRatio(p.points);
+    try{
+      const bitmap=perspectiveOutput(p.bitmap,map,ratio,WIDTH,HEIGHT);
+      const mask=p.mask?perspectiveOutput(p.mask,map,ratio,WIDTH,HEIGHT):null;
+      applyTransform({id:p.layer.id,bitmap,mask});
+      status("Perspektiv korrigert – kan angres.");
+    }catch(_){status("Kunne ikke korrigere perspektivet. Originalen er uendret.");}
+  }
+
   function transformResult(layer, degrees, scaleX, scaleY, pivot) {
     return {
       id: layer.id,
@@ -3146,6 +3466,7 @@
   }
 
   function cancelFreeTransform() {
+    cancelPhotoPerspective();cancelPhotoDetail();
     if (!freeTransform) return;
     const drag = freeTransform.drag;
     freeTransform = null;
@@ -3943,7 +4264,13 @@
       changed();
       refresh();
     } catch (error) { status("Import feilet: " + error.message); }
-    finally { busy = false; URL.revokeObjectURL(url); $("kv2-photo").value = ""; }
+    finally {
+      busy = false; URL.revokeObjectURL(url); $("kv2-photo").value = "";
+      // refresh() ran while the import was busy. Restore editability on completion.
+      updateLayerControls();
+      renderTextPreview();
+      renderCloneTool();
+    }
   }
 
   async function importProject(file) {
@@ -3996,6 +4323,9 @@
       $("kv2-guide-opacity").value="45";renderCompositionGuides();
     });
     $("kv2-focus-mode").addEventListener("click", toggleStudioFocus);
+    $("kv2-clone-source").addEventListener("click",()=>{if(pointerId!==null||busy)return;cloneAnchor=null;clonePicking=true;renderCloneTool();});
+    $("kv2-clone-mode").addEventListener("change",()=>{if(pointerId===null&&!busy)renderCloneTool();});
+    if(typeof ResizeObserver==="function")new ResizeObserver(renderCloneTool).observe(canvas);
     $("kv2-brush-settings-jump").addEventListener("click", () => {
       if (!advancedBrushEnabled() || pointerId !== null) return;
       $("kv2-brush-settings-detail").setAttribute("open","");
@@ -4084,6 +4414,17 @@
       $("kv2-transform-" + mode).addEventListener("click", () => transformLayer(mode));
     });
     $("kv2-transform-free").addEventListener("click", () => openFreeTransform());
+    $("kv2-photo-perspective").addEventListener("click",openPhotoPerspective);
+    $("kv2-photo-detail").addEventListener("click",openPhotoDetail);
+    $("kv2-photo-detail-overview").addEventListener("pointerdown",photoDetailPoint);
+    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).addEventListener("change",renderPhotoDetail);
+    $("kv2-photo-detail-apply").addEventListener("click",applyPhotoDetail);
+    $("kv2-photo-detail-cancel").addEventListener("click",cancelPhotoDetail);
+    $("kv2-photo-perspective-source").addEventListener("pointerdown",photoPerspectivePoint);
+    $("kv2-photo-perspective-corner").addEventListener("change",renderPhotoPerspective);
+    $("kv2-photo-perspective-ratio").addEventListener("change",renderPhotoPerspective);
+    $("kv2-photo-perspective-apply").addEventListener("click",applyPhotoPerspective);
+    $("kv2-photo-perspective-cancel").addEventListener("click",cancelPhotoPerspective);
     $("kv2-transform-group").addEventListener("click", () => openFreeTransform(true));
     const transformOverlay = $("kv2-transform-overlay");
     transformOverlay.addEventListener("pointerdown", beginTransformDrag);
@@ -4297,10 +4638,10 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text", "clone"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
         if (busy || pointerId !== null) return;
-        if (["rectangle", "ellipse", "line", "arrow", "text", "color-region"].includes(name) && maskEditing) {
+        if (["rectangle", "ellipse", "line", "arrow", "text", "color-region", "clone"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
           return;
         }
@@ -4356,6 +4697,8 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if(event.key==="Escape"&&photoDetail){event.preventDefault();cancelPhotoDetail();return;}
+      if(event.key==="Escape"&&photoPerspective){event.preventDefault();cancelPhotoPerspective();return;}
       if (event.key === "Escape" && freeTransform) {
         event.preventDefault();
         cancelFreeTransform();
@@ -4370,6 +4713,7 @@
         status("Tekstplassering avbrutt – ingen endringer.");
         return;
       }
+      if(event.key==="Escape"&&cloneStroke){event.preventDefault();const captured=pointerId;finishClone({type:"pointercancel"});if(captured!==null&&canvas.hasPointerCapture?.(captured))canvas.releasePointerCapture(captured);return;}
       if (event.key === "Escape" && advancedStroke) {
         event.preventDefault();
         const captured = pointerId;

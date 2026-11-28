@@ -440,3 +440,38 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - 9.5e målt i CI på 640 × 480 syntetisk bilde: Chromium 11 356 ms kald / 512 ms varm; WebKit 14 240 ms kald / 940 ms varm. Én encoderkjøring i begge. Ikke fysisk iPad.
 - KI-kontroller og markørbeholder er nå statisk deklarert, skjult som standard; binding og worker-URL opprettes først ved begge opt-in-flagg. Eksisterende DOM-kontrakt beholdes uendret.
 - Reell editor-smoke utvidet til fem varme punktjusteringer, med målinger per justering, nøyaktig én worker, uendrede rasterdata og bekreftet worker-avslutning ved maskebekreftelse. Dette er livssyklustest, ikke måling av total WASM-heap eller fysisk enhetsminne.
+
+## 10.0a – samlet verktøyflate (utviklingskandidat)
+- Viderefører eksisterende 9.5-verktøy og arbeidsflyter; ingen ny motor eller ny verktøytilstand. Tre direkte tilgjengelige grupper: Tegning (pensel, visk, pipette, gradient), Flytt og marker (flytt, hånd, marker, lasso, fargemaske og skjult KI-pilot), Form og tekst (firkant, ellipse, linje, pil, tekst).
+- Alle tidligere ID-er, kontekstavhengige innstillinger og minst 44 px berøringsmål beholdes. Ingen ekstra menytrykk og ingen aktivering av KI. Test på 375/820/1180 CSS-pikslers bredde for grupper, mål, overflow og verktøyskifte.
+- Eksisterende bildejusteringer inkluderer lys, kontrast, metning, nivåer, histogram, RGB-kurver og justeringslag. Perspektivhjelp for tegning er ikke fotografisk perspektivkorrigering. Klonestempel/retusjering og fotografisk perspektivkorrigering er senere kandidater, ikke implementert her.
+- Fysisk iPad-test og 9.5-pilotens distribusjonsport er separate og uavklarte. Ikke bytt aktiv produksjonskonfig.
+
+## 10.0b – klonestempel (utviklingskandidat)
+- Velg kilde med finger/penn/mus, deretter mal på aktivt rasterlag. Kilden følger strøkets forskyvning, ny kilde velges eksplisitt. Størrelse, hardhet og styrke per avtrykk. Råpiksler fra aktivt lag, ikke sammensatt bilde eller justeringslag; eksisterende maske beholdes. Bruk duplisert lag for separat retusjkopi.
+- Én midlertidig rasterkopi per strøk, liten avtrykksflate, ingen selvkopiering fra live-preview. Eksisterende markeringsklipp, lagkomposisjon og undo; pointercancel/Escape forkaster strøket. Kildepunkt er visningsdata, ikke eksportert. Ingen KI eller ekstern behandling.
+- Test: kildetapp endrer ikke dokumentet, avbrutt strøk er uendret, riktig kopierte farger, andre områder uendret og undo. Fysisk iPad/ytelse ikke testet.
+
+## 10.0c – lokal reparasjonspensel (utviklingskandidat)
+- Samme kildevalg, avtrykk og angreflyt som klonestempel, men egen metodevelger i retusjkontrollene. Median av parvise RGB-forskjeller fra to ringer med 24 prøver hver rundt kilde og mål (ikke sentrum). Minst 12 gyldige par; ellers hoppes avtrykket over. Bevarer lokal tekstur relativt til farge-/lysnivå, men er ikke Poisson-healing, frekvensseparasjon eller KI.
+- En ekstra RGBA-kopi av aktivt rålag per reparasjonsstrøk (maks 5,76 MB ved 1,44 Mpx), frigjøres ved bekreftelse/avbrudd. Ingen behandling av sammensatt bilde. Bare helt ugjennomsiktige kilde-/målpiksler deltar, så reparasjon fyller ikke transparent område. Eksisterende lagmaske og markeringsklipp beholdes. Ingen angresteg hvis alle avtrykk hoppes over.
+- Syntetisk nettlesertest kontrollerer korrigert RGB, bevart tekstur og kilde, transparent mål uten endring og undo. Fysisk iPad, fotografisk kvalitet og ytelse gjenstår.
+
+## 10.0d – fotografisk perspektivkorrigering (utviklingskandidat)
+- Fire eksplisitte, normaliserte hjørnepunkter i separat forhåndsvisning av aktivt rålag. Hjørnevelger med automatisk neste hjørne etter trykk, konveksitets- og degenerasjonskontroll. Automatisk anslått sideforhold eller original/1:1/4:3/3:4/16:9. Ikke automatisk motivdeteksjon.
+- Invers homografi med premultiplisert bilineær RGBA-interpolasjon. Utsnittet fyller et sentrert rektangel innenfor eksisterende lagdimensjoner; ytre område transparent. Samme projeksjon på eventuell lagmaske; andre lag, eksisterende lagforskyvning og dokumentformat uendret. Forhåndsvisning er rålaget, ikke maskert/justert komposisjon. Maks 320 px forhåndsvisning; full oppløsning bare ved Bruk perspektiv. Angre og avbryt; redigering av annet verktøy eller lag lukker utkastet.
+- Syntetisk nettlesertest: kryssende hjørner avvises, gyldig utsnitt, ingen endring før bekreftelse, undo. Fysisk iPad og realistiske fotografier gjenstår.
+
+## 10.0e – skarphet, detaljkontrast og støyreduksjon (utviklingskandidat)
+- Tre uavhengige kontroller på aktivt rålag: lokal kantvektet 3×3 støyreduksjon, luminansbasert uskarp maske i liten skala og kontrast i større skala (avstand 4 px). Ingen KI, dekonvolusjon eller rekonstruksjon av tapt detalj. Effektene kan kombineres; skarphet dempes ved høy støyreduksjon.
+- Sammenligning før/etter av samme valgbare utsnitt opptil 320×320 kildepiksler; filteret leser fra full original med halo. Visuell størrelse kan begrenses av panelet. Oversiktsbilde for valg av utsnitt. Forhåndsvisning på avsluttet sliderbevegelse; full oppløsning ved eksplisitt bekreftelse. Eksisterende alpha, maske, lagforskyvning, justeringer og andre lag beholdes; angre/avbryt. Dupliser aktivt lag for separat original. Dette er ikke et nytt vedvarende justeringslag.
+- Syntetisk nettlesertest for støyimpuls, skarphet, preview/commit-samsvar, nøytrale områder, avbrudd og undo. Fysisk iPad, ytelse og realistiske foto gjenstår.
+
+## 10.0 – samlet ferdigstilling
+- #1165–#1169 utgjør fem sammenhengende commits. #1169 retargetes til main og brukes som samlet integrasjonskandidat. Behold underliggende PR-er som historikk frem til samlet merge. Ingen flere funksjoner før verifisering.
+- Før retarget er alle fem lokale kontrakttester og Engine-jobber grønne; full browser-regresjon er fortsatt uavklart. Ny separat fokusjobb kjører nøyaktig fem 10.0a–e tester i begge nettleserprosjektene (10 tilfeller). Den erstatter ikke den ordinære fulle regresjonen.
+- Ingen publisering/merge før samlet kandidat har grønne aktuelle arbeidsflyter og riktig main-base. Ingen aktivering av KI-pilot. Fysisk iPad, reelle foto og distribusjonsgodkjenning av KI er separate gjenstående kontroller.
+
+- Sluttkontroll: fotoimport oppdaterer lagkontrollene på nytt etter at busy er satt til false. 10.0e-testen verifiserer at fri transformering, perspektiv og detaljjustering er tilgjengelige rett etter import, uten å bytte verktøy først.
+
+- Sluttkontroll: samlet fullregresjon på 57c3fbf ble avbrutt ved tidsgrensen (20 min), under test 218 av 228. Separat målrettet 10/10 bestått, lokale kontrakter og de øvrige seks arbeidsflytene bestått. Fullregresjonen deles nå i to uavhengige matrisejobber (chromium-corpus og ipad-webkit), med 30 min per jobb og fail-fast deaktivert. Samme to testfiler, samme konfigurasjon og én worker per prosjekt; ingen tester fjernes. Begge jobbene må bestå før merge. Ingen endring av editor eller testinnhold.
