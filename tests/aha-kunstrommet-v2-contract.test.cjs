@@ -56,7 +56,8 @@ function createNode(tag = "div") {
   const listeners = {};
   const node = {
     tag, tagName: tag.toUpperCase(), value: "", textContent: "", children: [],
-    dataset: {}, style: {}, disabled: false, files: [], attributes: {},
+    dataset: {}, style: { setProperty: noop }, disabled: false, files: [], attributes: {},
+    querySelector() { return createNode('span'); },
     width: 1200, height: 800,
     addEventListener(name, fn) { listeners[name] = fn; },
     dispatch(name, event = {}) { return listeners[name]?.(event); },
@@ -143,10 +144,14 @@ const document = {
   body: { appendChild: noop },
   activeElement: { tagName: "BODY" },
   getElementById: get,
-  createElement: createNode
+  createElement: createNode,
+  querySelector: () => null,
+  querySelectorAll: () => []
 };
 const window = {
   indexedDB,
+  location: { search: '?studio=overview' },
+  scrollTo: noop,
   crypto: { randomUUID: () => "v2-id-" + (++nextId) },
   localStorage: { getItem: () => "test-profile" },
   requestAnimationFrame: (callback) => callback(),
@@ -154,7 +159,7 @@ const window = {
   confirm: () => true,
   addEventListener(name, fn) { globals[name] = fn; }
 };
-vm.runInNewContext(js, { window, document, Image: ImageFake, URL: URLMock, Blob,
+vm.runInNewContext(js, { window, document, Image: ImageFake, URL: URLMock, URLSearchParams, Blob,
   queueMicrotask, console }, { filename: "ahaKunstrommetV2.js" });
 const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); };
 (async () => {

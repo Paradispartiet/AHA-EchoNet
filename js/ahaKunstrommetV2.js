@@ -437,6 +437,7 @@
       zoomIndex=ZOOM_LEVELS.indexOf(1);canvas.style.width="100%";
       viewport.scrollLeft=0;viewport.scrollTop=0;
     }
+    $("main").style.setProperty("--kv2-aspect",String(WIDTH/HEIGHT));
     $("kv2-canvas-dimensions").textContent=WIDTH+" × "+HEIGHT+" px";
   }
 
@@ -3723,6 +3724,7 @@
       status("Gjør alle valgte tekstlag om til piksler før gruppetransformering."); return;
     }
     cancelFreeTransform();
+    selectStudioPanel("photo");
     clearTextDraft();
     renderTextPreview();
     const b = members.map(transformBounds);
@@ -4356,6 +4358,63 @@
     finally { busy = false; $("kv2-import").value = ""; updateLayerControls(); renderTextPreview(); }
   }
 
+  // One DOM, two user-selectable layouts. Moving the existing nodes preserves
+  // event listeners, inputs, project state and unique IDs.
+  const studioMoves=[];
+  function registerStudioMoves(){
+    const groups={
+      photo:["#kv2-adjustment-controls",'.kv2-transform-tools[aria-label="Transformer aktivt lag"]',"#kv2-free-transform-panel","#kv2-photo-detail-panel","#kv2-photo-perspective-panel"],
+      mask:[".kv2-mask-panel"],
+      brush:["#kv2-brush-advanced","#kv2-color-library-panel"],
+      guides:[".kv2-guide-panel",".kv2-symmetry-panel"],
+      project:[".kv2-document-heading",".kv2-document-notes",".kv2-size-panel",'[aria-labelledby="kv2-library-title"]','[aria-labelledby="kv2-legacy-title"]','[aria-labelledby="kv2-gallery-title"]','[aria-labelledby="kv2-aha-title"]'],
+      help:[".kv2-workspace-help"],
+      context:["#kv2-text-panel",".kv2-selection-tools"]
+    };
+    for(const [group,selectors] of Object.entries(groups))for(const selector of selectors){
+      for(const node of document.querySelectorAll(selector)){
+        const mark=document.createComment("studio:"+selector);node.before(mark);
+        studioMoves.push({node,mark,target:$(group==="context"?"kv2-studio-context-mount":"kv2-studio-mount-"+group)});
+      }
+    }
+  }
+  function selectStudioPanel(name,open=true){
+    const main=$("main");
+    if(main.dataset.studioLayout!=="compact")return;
+    if(main.dataset.studioPanel!==name)cancelFreeTransform();
+    if(focusMode&&open){toggleStudioFocus();}
+    main.dataset.studioPanel=name;main.dataset.studioInspectorOpen=String(open);
+    document.querySelectorAll("[data-studio-tab]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.studioTab===name&&open)));
+    $("kv2-studio-inspector").scrollTop=0;
+  }
+  function setStudioLayout(compact){
+    const main=$("main");
+    if(busy||pointerId!==null||freeTransform||photoDetail||photoPerspective)return;
+    if(!studioMoves.length)registerStudioMoves();
+    for(const item of studioMoves){
+      if(compact)item.target.append(item.node);else item.mark.after(item.node);
+    }
+    main.dataset.studioLayout=compact?"compact":"overview";
+    $("kv2-studio-layout").setAttribute("aria-pressed",String(!compact));
+    $("kv2-studio-layout").setAttribute("aria-label",compact?"Utvidet oversikt":"Kompakt arbeidsflate");
+    $("kv2-studio-layout").title=compact?"Utvidet oversikt":"Kompakt arbeidsflate";
+    $("kv2-studio-layout").querySelector("span").textContent=compact?"Oversikt":"Arbeidsflate";
+    if(compact){selectStudioPanel("layers",global.innerWidth>=760);const group=document.querySelector(".kv2-layer-disclosure > .kv2-fold");if(group)group.open=false;}
+    else{const group=document.querySelector(".kv2-layer-disclosure > .kv2-fold");if(group)group.open=true;}
+    main.style.setProperty("--kv2-aspect",String(WIDTH/HEIGHT));
+    global.scrollTo(0,0);
+  }
+  function bindStudio(){
+    $("kv2-studio-layout").addEventListener("click",()=>setStudioLayout($("main").dataset.studioLayout!=="compact"));
+    document.querySelectorAll("[data-studio-tab]").forEach(b=>b.addEventListener("click",()=>{
+      if(pointerId!==null||busy)return;
+      const main=$("main"),same=main.dataset.studioPanel===b.dataset.studioTab&&main.dataset.studioInspectorOpen==="true";
+      if(same&&global.innerWidth<760){cancelFreeTransform();selectStudioPanel(b.dataset.studioTab,false);}
+      else selectStudioPanel(b.dataset.studioTab,true);
+    }));
+    $("kv2-studio-close").addEventListener("click",()=>{if(pointerId!==null||busy)return;cancelFreeTransform();selectStudioPanel($("main").dataset.studioPanel,false);});
+    setStudioLayout(new URLSearchParams(global.location.search).get("studio")!=="overview");
+  }
   function toggleStudioFocus() {
     if (busy || pointerId !== null || freeTransform) {
       $("kv2-focus-hint").textContent="Fullfør eller avbryt den aktive redigeringen først.";
@@ -4398,10 +4457,12 @@
     if(typeof ResizeObserver==="function")new ResizeObserver(renderCloneTool).observe(canvas);
     $("kv2-brush-settings-jump").addEventListener("click", () => {
       if (!advancedBrushEnabled() || pointerId !== null) return;
+      selectStudioPanel("brush");
       $("kv2-brush-settings-detail").setAttribute("open","");
       $("kv2-brush-advanced").scrollIntoView?.({block:"start"});
     });
     $("kv2-back-to-canvas").addEventListener("click", () => {
+      if($("main").dataset.studioLayout==="compact"&&global.innerWidth<760)selectStudioPanel("brush",false);
       $("kv2-paper").scrollIntoView?.({block:"start"});
       $("kv2-paper").focus?.({preventScroll:true});
     });
@@ -5056,5 +5117,6 @@
   bind();
   bindAiTool();
   newProject();
+  bindStudio();
   renderProjects();
 })(window);

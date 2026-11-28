@@ -58,7 +58,7 @@ jobs:
           retention-days: 7
 
   browser-10-focused:
-    name: 10.0a–f focused browser release gate
+    name: 10.0a–f, 10.1a and contextual visibility release gate
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
@@ -69,12 +69,12 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium webkit
-      - name: Verify all six feature tests in both browser projects
+      - name: Verify all seven feature tests and contextual visibility in both browser projects
         run: |
           set -euo pipefail
-          npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs --config=playwright.config.cjs --grep '10\.0[a-f]' --list | tee /tmp/kr10-tests.txt
-          grep -Fx 'Total: 12 tests in 1 file' /tmp/kr10-tests.txt
-          npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs --config=playwright.config.cjs --grep '10\.0[a-f]'
+          npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs --config=playwright.config.cjs --grep '10\.(0[a-f]|1a)|8\.1 contextual tool settings' --list | tee /tmp/kr10-tests.txt
+          grep -Fx 'Total: 16 tests in 1 file' /tmp/kr10-tests.txt
+          npx playwright test tests/browser/aha-kunstrommet-v2.spec.cjs --config=playwright.config.cjs --grep '10\.(0[a-f]|1a)|8\.1 contextual tool settings'
       - name: Focused artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4

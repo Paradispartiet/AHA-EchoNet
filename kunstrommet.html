@@ -19,6 +19,7 @@
         <p>Et arbeidsrom for bilder, tegning og lag – ikke et teknisk kontrollpanel.</p>
         <p class="kv2-privacy">Alt arbeid blir på denne enheten. Ingen automatisk deling, bildeanalyse eller skybackup.</p>
       </div>
+      <div id="kv2-studio-switch" class="kv2-studio-switch"><button type="button" id="kv2-studio-layout" aria-label="Utvidet oversikt" title="Utvidet oversikt" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M16 4v16"/></svg><span>Oversikt</span></button></div>
       <nav class="kv2-navigation" aria-label="Tilbake til Aha">
         <a href="index.html">Aha Home</a>
         <a href="gallery.html">Galleri</a>
@@ -26,6 +27,7 @@
       </nav>
     </header>
 
+    <nav class="kv2-studio-tabs" aria-label="Arbeidsflater"><button type="button" id="kv2-studio-layers" data-studio-tab="layers" aria-label="Lag" title="Lag" aria-pressed="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 10 5-10 5L2 8zM2 12l10 5 10-5M2 16l10 5 10-5"/></svg><span>Lag</span></button><button type="button" id="kv2-studio-photo" data-studio-tab="photo" aria-label="Bilde" title="Bilde" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 16l6-6 4 4 3-3 5 5"/><circle cx="16" cy="8" r="1.5"/></svg><span>Bilde</span></button><button type="button" id="kv2-studio-mask" data-studio-tab="mask" aria-label="Masker" title="Masker" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="5"/></svg><span>Masker</span></button><button type="button" id="kv2-studio-brush" data-studio-tab="brush" aria-label="Pensler og farger" title="Pensler og farger" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m14 6 4-4 4 4-10 10-4-4zM8 12c-5 0-3 6-6 8 5 1 9-1 10-5"/></svg><span>Pensler og farger</span></button><button type="button" id="kv2-studio-guides" data-studio-tab="guides" aria-label="Hjelpelinjer" title="Hjelpelinjer" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>Hjelpelinjer</span></button><button type="button" id="kv2-studio-project" data-studio-tab="project" aria-label="Prosjekter" title="Prosjekter" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h7l2 2h9v12H3zM3 7V4h7l2 3"/></svg><span>Prosjekter</span></button><button type="button" id="kv2-studio-help" data-studio-tab="help" aria-label="Hjelp" title="Hjelp" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01"/></svg><span>Hjelp</span></button></nav>
     <div class="kv2-workspace">
       <section class="aha-panel kv2-editor" aria-label="Redigeringsflate">
         <div class="kv2-titlebar">
@@ -69,6 +71,7 @@
               </div>
             </div>
           </div>
+          <div class="kv2-context-bar">
           <div id="kv2-clone-panel" hidden>
             <label>Metode <select id="kv2-clone-mode" aria-label="Retusjeringsmetode"><option value="clone">Klonestempel</option><option value="heal">Reparasjonspensel</option></select></label>
             <button id="kv2-clone-source" type="button" aria-pressed="true">Velg kilde</button>
@@ -140,10 +143,12 @@
           <button id="kv2-undo" type="button" class="kv2-icon-tool" aria-label="Angre" title="Angre"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 6 6"/></svg><span aria-hidden="true">Angre</span></button>
           <button id="kv2-redo" type="button" class="kv2-icon-tool" aria-label="Gjør om" title="Gjør om"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 5 6 6-6 6M21 11H10a6 6 0 0 0-6 6"/></svg><span aria-hidden="true">Gjør om</span></button>
           <div class="kv2-zoom-controls" role="group" aria-label="Zoom på lerretet">
-            <button id="kv2-zoom-out" type="button">Zoom ut</button>
+            <button id="kv2-zoom-out" type="button" aria-label="Zoom ut" title="Zoom ut" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h16"/></svg><span>Zoom ut</span></button>
             <output id="kv2-zoom-value" aria-live="polite">100%</output>
-            <button id="kv2-zoom-in" type="button">Zoom inn</button>
-            <button id="kv2-zoom-reset" type="button">Tilpass</button>
+            <button id="kv2-zoom-in" type="button" aria-label="Zoom inn" title="Zoom inn" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v18M3 12h18"/></svg><span>Zoom inn</span></button>
+            <button id="kv2-zoom-reset" type="button" aria-label="Tilpass" title="Tilpass" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6"/></svg><span>Tilpass</span></button>
+          </div>
+          <div id="kv2-studio-context-mount"></div>
           </div>
         </div>
 
@@ -217,14 +222,14 @@
           </div>
         </div>
         <div class="kv2-actions">
-          <button id="kv2-new" type="button">Nytt prosjekt</button>
-          <button id="kv2-save" type="button" class="kv2-primary">Lagre lokalt</button>
-          <label class="kv2-file" for="kv2-photo">Importer foto
+          <button id="kv2-new" type="button" aria-label="Nytt prosjekt" title="Nytt prosjekt" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v18M3 12h18"/></svg><span>Nytt prosjekt</span></button>
+          <button id="kv2-save" type="button" class="kv2-primary" aria-label="Lagre lokalt" title="Lagre lokalt" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 3h13l3 3v15H4zM8 3v6h8V3M8 21v-8h8v8"/></svg><span>Lagre lokalt</span></button>
+          <label class="kv2-file" for="kv2-photo" title="Importer foto" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16V3M7 8l5-5 5 5M3 14v7h18v-7"/></svg><span>Importer foto</span>
             <input id="kv2-photo" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
           </label>
-          <button id="kv2-png" type="button">Eksporter bilde (PNG)</button>
-          <button id="kv2-json" type="button">Eksporter redigerbart prosjekt</button>
-          <label class="kv2-file" for="kv2-import">Åpne prosjektfil
+          <button id="kv2-png" type="button" aria-label="Eksporter bilde (PNG)" title="Eksporter bilde (PNG)" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v13M7 11l5 5 5-5M3 16v5h18v-5"/></svg><span>Eksporter bilde (PNG)</span></button>
+          <button id="kv2-json" type="button" aria-label="Eksporter redigerbart prosjekt" title="Eksporter redigerbart prosjekt" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 3h9l5 5v13H5zM14 3v5h5"/></svg><span>Eksporter redigerbart prosjekt</span></button>
+          <label class="kv2-file" for="kv2-import" title="Åpne prosjektfil" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h7l2 2h9v12H3zM3 7V4h7l2 3"/></svg><span>Åpne prosjektfil</span>
             <input id="kv2-import" type="file" accept=".json,application/json" />
           </label>
         </div>
@@ -413,8 +418,9 @@
         <p class="kv2-tip">Lagre lokalt for å åpne igjen med lagene intakte. Eksporter også prosjektfilen som sikkerhetskopi. Du kan importere prosjektfiler fra Kunstrommet V1, men V1 endres ikke.</p>
       </section>
 
-      <aside class="kv2-sidebar">
-        <section class="aha-panel kv2-panel" aria-labelledby="kv2-layer-title">
+      <aside class="kv2-sidebar" id="kv2-studio-inspector">
+        <button type="button" id="kv2-studio-close" aria-label="Lukk panel" title="Lukk panel"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        <section class="aha-panel kv2-panel" data-studio-panel="layers" aria-labelledby="kv2-layer-title">
           <div class="kv2-titlebar">
             <h2 id="kv2-layer-title">Lag</h2>
             <small id="kv2-layer-count"></small>
@@ -454,13 +460,13 @@
           </div>
           </details>
           <div class="kv2-layer-actions">
-            <button type="button" id="kv2-add-layer">+ Nytt tegnelag</button>
-            <button type="button" id="kv2-add-adjustment">+ Justeringslag</button>
-            <button type="button" id="kv2-layer-up">Opp</button>
-            <button type="button" id="kv2-layer-down">Ned</button>
-            <button type="button" id="kv2-remove-layer">Fjern</button>
-            <button type="button" id="kv2-duplicate-layer">Dupliser lag</button>
-            <button type="button" id="kv2-merge-down" aria-describedby="kv2-merge-down-note" disabled>Slå sammen med laget under</button>
+            <button type="button" id="kv2-add-layer" aria-label="+ Nytt tegnelag" title="+ Nytt tegnelag" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v18M3 12h18"/></svg><span>+ Nytt tegnelag</span></button>
+            <button type="button" id="kv2-add-adjustment" aria-label="+ Justeringslag" title="+ Justeringslag" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="19" r="2"/></svg><span>+ Justeringslag</span></button>
+            <button type="button" id="kv2-layer-up" aria-label="Opp" title="Opp" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20V4M6 10l6-6 6 6"/></svg><span>Opp</span></button>
+            <button type="button" id="kv2-layer-down" aria-label="Ned" title="Ned" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v16M6 14l6 6 6-6"/></svg><span>Ned</span></button>
+            <button type="button" id="kv2-remove-layer" aria-label="Fjern" title="Fjern" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M8 6V3h8v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg><span>Fjern</span></button>
+            <button type="button" id="kv2-duplicate-layer" aria-label="Dupliser lag" title="Dupliser lag" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="13" height="13" rx="1"/><path d="M16 5V3H3v13h2"/></svg><span>Dupliser lag</span></button>
+            <button type="button" id="kv2-merge-down" aria-describedby="kv2-merge-down-note" disabled aria-label="Slå sammen med laget under" title="Slå sammen med laget under" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4v6l7 5 7-5V4M12 15v6"/></svg><span>Slå sammen med laget under</span></button>
           </div>
           <small id="kv2-merge-down-note"></small>
           <p class="kv2-tip">Aktivt lag: <strong id="kv2-active-layer">Lag 1</strong></p>
@@ -609,14 +615,14 @@
             <p class="kv2-tip">Trykk «Rediger maske». Bruk <strong>Viskelær</strong> for å skjule og <strong>Pensel</strong> for å hente innholdet tilbake. Bildets originale piksler beholdes. Velg «Rediger maske» igjen for å male på bildet. Masken følger laget ved flytting, kopiering og transformering, og lagres i prosjektfilen.</p>
           </div>
           <div class="kv2-transform-tools" role="group" aria-label="Transformer aktivt lag">
-            <button id="kv2-transform-flip" type="button">Speil vannrett</button>
-            <button id="kv2-transform-rotate" type="button">Roter 90°</button>
-            <button id="kv2-transform-smaller" type="button">Skaler til 75 %</button>
-            <button id="kv2-transform-larger" type="button">Skaler til 125 %</button>
-            <button id="kv2-transform-free" type="button">Fri transformering</button>
-            <button id="kv2-photo-perspective" type="button">Perspektivkorrigering</button>
-            <button id="kv2-photo-detail" type="button">Skarphet og støy</button>
-            <button id="kv2-photo-restore" type="button">Fotorestaurering</button>
+            <button id="kv2-transform-flip" type="button" aria-label="Speil vannrett" title="Speil vannrett" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v18M9 5 3 12l6 7zM15 5l6 7-6 7z"/></svg><span>Speil vannrett</span></button>
+            <button id="kv2-transform-rotate" type="button" aria-label="Roter 90°" title="Roter 90°" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 3 9M3 4v6h6"/></svg><span>Roter 90°</span></button>
+            <button id="kv2-transform-smaller" type="button" aria-label="Skaler til 75 %" title="Skaler til 75 %" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 4h16v16H4zM8 8l4 4m0-4v4H8"/></svg><span>Skaler til 75 %</span></button>
+            <button id="kv2-transform-larger" type="button" aria-label="Skaler til 125 %" title="Skaler til 125 %" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16"/><path d="m9 15 6-6m-5 0h5v5"/></svg><span>Skaler til 125 %</span></button>
+            <button id="kv2-transform-free" type="button" aria-label="Fri transformering" title="Fri transformering" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="5" width="14" height="14"/><path d="M3 3h4v4H3zM17 3h4v4h-4zM3 17h4v4H3zM17 17h4v4h-4z"/></svg><span>Fri transformering</span></button>
+            <button id="kv2-photo-perspective" type="button" aria-label="Perspektivkorrigering" title="Perspektivkorrigering" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 4 10 0 4 16H3zM7 4l-4 16M12 4v16"/></svg><span>Perspektivkorrigering</span></button>
+            <button id="kv2-photo-detail" type="button" aria-label="Skarphet og støy" title="Skarphet og støy" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 9 18H3zM12 10v6M12 19h.01"/></svg><span>Skarphet og støy</span></button>
+            <button id="kv2-photo-restore" type="button" aria-label="Fotorestaurering" title="Fotorestaurering" data-studio-icon><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8h18v13H3zM6 8V3h12v5M7 16l4-4 3 3 3-2 4 4"/></svg><span>Fotorestaurering</span></button>
           </div>
           <div id="kv2-free-transform-panel" class="kv2-free-transform" hidden>
             <label for="kv2-free-angle">Rotasjon (grader)</label>
@@ -720,6 +726,12 @@
           <button id="kv2-send-aha" type="button">Send tittel og notat til Aha</button>
           <p class="kv2-tip" role="status" aria-live="polite" id="kv2-aha-state">Ingen overføring uten ditt valg.</p>
         </section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="photo" id="kv2-studio-mount-photo"><h2>Bilde</h2></section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="mask" id="kv2-studio-mount-mask"><h2>Masker</h2></section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="brush" id="kv2-studio-mount-brush"><h2>Pensler og farger</h2><p class="kv2-studio-brush-note">Velg Pensel → Avansert pensel for alle penselinnstillinger.</p></section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="guides" id="kv2-studio-mount-guides"><h2>Hjelpelinjer</h2></section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="project" id="kv2-studio-mount-project"><h2>Prosjekter</h2></section>
+        <section class="aha-panel kv2-panel kv2-studio-mount" data-studio-panel="help" id="kv2-studio-mount-help"><h2>Hjelp</h2></section>
       </aside>
     </div>
   </main>
