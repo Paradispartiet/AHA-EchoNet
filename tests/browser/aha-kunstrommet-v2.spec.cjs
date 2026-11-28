@@ -3839,3 +3839,29 @@ test("10.0c healing transfers texture with local color correction and preserves 
  await expect.poll(async()=> (await pxAt(page,650,200)).slice(0,3)).toEqual([0,0,0]);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+test("10.0d projective rectification previews a convex source crop, rejects crossed corners and undoes",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();await shapeDrag(page,[200,100],[1000,700],9701);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-photo-perspective").click();
+ await expect(page.locator("#kv2-photo-perspective-panel")).toBeVisible();
+ const selectCorner=async(i,x,y)=>{
+  await page.locator("#kv2-photo-perspective-corner").selectOption(String(i));
+  await page.locator("#kv2-photo-perspective-source").evaluate((c,p)=>{const r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerType:"touch",clientX:r.left+p.x*r.width,clientY:r.top+p.y*r.height}));},{x,y});
+ };
+ await selectCorner(0,.9,.8);
+ await expect(page.locator("#kv2-photo-perspective-apply")).toBeDisabled();
+ await selectCorner(0,.25,.25);await selectCorner(1,.75,.2);await selectCorner(2,.65,.75);await selectCorner(3,.3,.8);
+ await page.locator("#kv2-photo-perspective-ratio").selectOption("original");
+ await expect(page.locator("#kv2-photo-perspective-apply")).toBeEnabled();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-perspective-apply").click();
+ await expect(page.locator("#kv2-photo-perspective-panel")).toBeHidden();
+ expect((await pxAt(page,50,50)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,1100,750)).slice(0,3)).toEqual([176,48,64]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,50,50)).slice(0,3)).toEqual([255,255,255]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
