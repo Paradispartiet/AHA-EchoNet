@@ -321,3 +321,13 @@
 
 /* Hidden opt-in controls must win against the normal icon-toolbar display rule. */
 .kv2 #kv2-ai-region[hidden]{display:none!important;}
+
+/* Studio 10.0a: three direct-access tool families, no extra mode or menu. */
+.kv2-tool-strip {gap:6px 12px;align-items:flex-start;}
+.kv2-tool-group {display:flex;flex-direction:column;gap:3px;min-width:0;max-width:100%;}
+.kv2-tool-group-label {font-size:.7rem;font-weight:650;color:#63716c;line-height:1.25;letter-spacing:.015em;}
+.kv2-tool-group-buttons {display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+@media(max-width:680px) {
+  .kv2-tool-strip {gap:7px 9px;}
+  .kv2-tool-group-label {font-size:.68rem;}
+}

@@ -440,3 +440,9 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - 9.5e målt i CI på 640 × 480 syntetisk bilde: Chromium 11 356 ms kald / 512 ms varm; WebKit 14 240 ms kald / 940 ms varm. Én encoderkjøring i begge. Ikke fysisk iPad.
 - KI-kontroller og markørbeholder er nå statisk deklarert, skjult som standard; binding og worker-URL opprettes først ved begge opt-in-flagg. Eksisterende DOM-kontrakt beholdes uendret.
 - Reell editor-smoke utvidet til fem varme punktjusteringer, med målinger per justering, nøyaktig én worker, uendrede rasterdata og bekreftet worker-avslutning ved maskebekreftelse. Dette er livssyklustest, ikke måling av total WASM-heap eller fysisk enhetsminne.
+
+## 10.0a – samlet verktøyflate (utviklingskandidat)
+- Viderefører eksisterende 9.5-verktøy og arbeidsflyter; ingen ny motor eller ny verktøytilstand. Tre direkte tilgjengelige grupper: Tegning (pensel, visk, pipette, gradient), Flytt og marker (flytt, hånd, marker, lasso, fargemaske og skjult KI-pilot), Form og tekst (firkant, ellipse, linje, pil, tekst).
+- Alle tidligere ID-er, kontekstavhengige innstillinger og minst 44 px berøringsmål beholdes. Ingen ekstra menytrykk og ingen aktivering av KI. Test på 375/820/1180 CSS-pikslers bredde for grupper, mål, overflow og verktøyskifte.
+- Eksisterende bildejusteringer inkluderer lys, kontrast, metning, nivåer, histogram, RGB-kurver og justeringslag. Perspektivhjelp for tegning er ikke fotografisk perspektivkorrigering. Klonestempel/retusjering og fotografisk perspektivkorrigering er senere kandidater, ikke implementert her.
+- Fysisk iPad-test og 9.5-pilotens distribusjonsport er separate og uavklarte. Ikke bytt aktiv produksjonskonfig.

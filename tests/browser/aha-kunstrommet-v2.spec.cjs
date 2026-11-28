@@ -3759,3 +3759,26 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
  await page.locator("#kv2-undo").click();
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+test("10.0a tool families keep direct access and touch targets on narrow and tablet widths",async({page})=>{
+ for(const width of [375,820,1180]){
+  await page.setViewportSize({width,height:900});
+  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await expect(page.locator(".kv2-tool-group")).toHaveCount(3);
+  await expect(page.getByRole("group",{name:"Tegning",exact:true})).toBeVisible();
+  await expect(page.getByRole("group",{name:"Flytt og marker",exact:true})).toBeVisible();
+  await expect(page.getByRole("group",{name:"Form og tekst",exact:true})).toBeVisible();
+  await expect(page.locator("#kv2-ai-region")).toBeHidden();
+  const geometry=await page.locator(".kv2-tool-strip").evaluate(el=>{
+   const r=el.getBoundingClientRect();
+   const buttons=[...el.querySelectorAll("button:not([hidden])")].map(b=>{const x=b.getBoundingClientRect();return {w:x.width,h:x.height,left:x.left,right:x.right};});
+   return {left:r.left,right:r.right,buttons};
+  });
+  expect(geometry.buttons).toHaveLength(14);
+  expect(geometry.buttons.every(b=>b.w>=44&&b.h>=44&&b.left>=geometry.left-1&&b.right<=geometry.right+1)).toBe(true);
+  for(const id of ["brush","hand","lasso","rectangle","gradient","text"]){
+   await page.locator("#kv2-"+id).click();
+   await expect(page.locator("#kv2-"+id)).toHaveAttribute("aria-pressed","true");
+  }
+ }
+});
