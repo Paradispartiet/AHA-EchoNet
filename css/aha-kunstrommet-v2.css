@@ -342,3 +342,10 @@
 #kv2-photo-perspective-source,#kv2-photo-perspective-result{display:block;width:100%;height:auto;max-width:320px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 0/16px 16px;border:1px solid #b9c4bf;box-sizing:border-box;}
 #kv2-photo-perspective-source{touch-action:none;cursor:crosshair;}
 #kv2-photo-perspective-panel[hidden]{display:none!important;}
+
+/* 10.0e selectable detail crop, equal before/after scale. */
+#kv2-photo-detail-overview,#kv2-photo-detail-before,#kv2-photo-detail-after{display:block;max-width:100%;height:auto;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 0/16px 16px;}
+#kv2-photo-detail-overview{touch-action:none;cursor:crosshair;}
+.kv2-detail-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.kv2-detail-comparison canvas{width:100%;height:auto;}
+#kv2-photo-detail-panel[hidden]{display:none!important;}

@@ -615,6 +615,7 @@
             <button id="kv2-transform-larger" type="button">Skaler til 125 %</button>
             <button id="kv2-transform-free" type="button">Fri transformering</button>
             <button id="kv2-photo-perspective" type="button">Perspektivkorrigering</button>
+            <button id="kv2-photo-detail" type="button">Skarphet og støy</button>
           </div>
           <div id="kv2-free-transform-panel" class="kv2-free-transform" hidden>
             <label for="kv2-free-angle">Rotasjon (grader)</label>
@@ -632,6 +633,15 @@
               <button id="kv2-free-commit" type="button" disabled>Bruk transformering</button>
               <button id="kv2-free-cancel" type="button">Avbryt</button>
             </div>
+          </div>
+          <div id="kv2-photo-detail-panel" class="kv2-free-transform" hidden>
+            <p class="kv2-tip">Trykk på oversiktsbildet for å velge et utsnitt. Før og etter vises med samme kildepiksler, uten nedskalering i selve filteret. Hele rålaget endres først ved bekreftelse. Dupliser laget hvis du vil beholde en egen original.</p>
+            <canvas id="kv2-photo-detail-overview" width="1" height="1" aria-label="Velg detaljutsnitt"></canvas>
+            <label>Støyreduksjon <input id="kv2-photo-detail-noise" type="range" min="0" max="100" value="0" aria-label="Støyreduksjon" /> <output id="kv2-photo-detail-noise-value">0%</output></label>
+            <label>Skarphet <input id="kv2-photo-detail-sharp" type="range" min="0" max="100" value="0" aria-label="Skarphet" /> <output id="kv2-photo-detail-sharp-value">0%</output></label>
+            <label>Detaljkontrast <input id="kv2-photo-detail-clarity" type="range" min="0" max="100" value="0" aria-label="Detaljkontrast" /> <output id="kv2-photo-detail-clarity-value">0%</output></label>
+            <div class="kv2-detail-comparison"><div><strong>Før</strong><canvas id="kv2-photo-detail-before" width="1" height="1" aria-label="Originalt detaljutsnitt"></canvas></div><div><strong>Etter</strong><canvas id="kv2-photo-detail-after" width="1" height="1" aria-label="Justert detaljutsnitt"></canvas></div></div>
+            <div class="kv2-transform-tools"><button id="kv2-photo-detail-apply" type="button" disabled>Bruk detaljjustering</button><button id="kv2-photo-detail-cancel" type="button">Avbryt</button></div>
           </div>
           <div id="kv2-photo-perspective-panel" class="kv2-free-transform" hidden>
             <p class="kv2-tip">Velg hjørne, trykk på bildet og fortsett med neste hjørne. Bare utsnittet innenfor de fire punktene beholdes. Dupliser laget først hvis du vil bevare en egen original.</p>

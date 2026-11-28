@@ -363,7 +363,7 @@
   let gradientFramePending = false;
   let textEditId = null;
   let freeTransform = null; // UI-only draft, never stored in a project.
-  let photoPerspective=null;
+  let photoPerspective=null,photoDetail=null;
   let textAnchor = null; // Local document coordinates; never persisted before commit.
   const TEXT_FONTS = Object.freeze({
     sans: "Arial, sans-serif", serif: "Georgia, serif",
@@ -1480,6 +1480,7 @@
     const layer = currentLayer();
     $("kv2-transform-free").disabled = !layer || layer.kind === "adjustment" || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
     $("kv2-photo-perspective").disabled=$("kv2-transform-free").disabled||project?.owner!==owner();
+    $("kv2-photo-detail").disabled=$("kv2-photo-perspective").disabled;
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
@@ -3253,6 +3254,94 @@
     return output;
   }
 
+  // Local detail adjustment. Edge-aware noise reduction, then two scales of
+  // luminance-only unsharp detail. Alpha stays bit-for-bit unchanged.
+  // Read neighbors from the original immutable raster, including preview halo.
+  function detailPixels(src,w,h,region,settings){
+    const {x:left,y:top,w:rw,h:rh}=region,out=new Uint8ClampedArray(rw*rh*4);
+    const n=settings.noise/100,s=settings.sharp/100,c=settings.clarity/100;
+    const luma=(i)=>.2126*src[i]+.7152*src[i+1]+.0722*src[i+2];
+    for(let y=0;y<rh;y++)for(let x=0;x<rw;x++){
+      const px=x+left,py=y+top,i=(py*w+px)*4,o=(y*rw+x)*4,alpha=src[i+3];
+      out.set(src.subarray(i,i+4),o);
+      if(!alpha||(!n&&!s&&!c))continue;
+      const center=luma(i);
+      let sum=0,r=0,g=0,b=0,near=0,nearW=0,far=0,farW=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const j=(clamp(py+dy,0,h-1)*w+clamp(px+dx,0,w-1))*4;
+        const a=src[j+3]/255;if(!a)continue;
+        const lum=luma(j),spatial=(dx===0?2:1)*(dy===0?2:1)*a;
+        const range=1/(1+Math.pow((lum-center)/18,2)),weight=spatial*range;
+        sum+=weight;r+=weight*src[j];g+=weight*src[j+1];b+=weight*src[j+2];
+        near+=spatial*lum;nearW+=spatial;
+        const k=(clamp(py+dy*4,0,h-1)*w+clamp(px+dx*4,0,w-1))*4;
+        const fw=(dx===0?2:1)*(dy===0?2:1)*src[k+3]/255;
+        far+=fw*luma(k);farW+=fw;
+      }
+      const rr=src[i]+n*(r/sum-src[i]),gg=src[i+1]+n*(g/sum-src[i+1]),bb=src[i+2]+n*(b/sum-src[i+2]);
+      const base=.2126*rr+.7152*gg+.0722*bb;
+      // Reduce sharpening of low-amplitude noise; clamp local contrast gain.
+      const fine=center-near/nearW,coarse=center-(farW?far/farW:center);
+      const boost=clamp(s*1.5*fine*(1-n*.8)+c*.65*coarse,-64,64);
+      out[o]=clamp(rr+boost,0,255);out[o+1]=clamp(gg+boost,0,255);out[o+2]=clamp(bb+boost,0,255);
+    }
+    return out;
+  }
+  function photoDetailValid(){
+    const p=photoDetail,layer=currentLayer();
+    return !!(p&&p.project===project&&p.owner===owner()&&project.owner===p.owner&&layer===p.layer&&p.rev===bitmapRevision&&p.bitmap===surfaces.get(layer.id)&&!busy&&!maskEditing&&pointerId===null&&layer.visible&&!layer.locked&&!layer.textData&&layer.kind!=="adjustment");
+  }
+  function cancelPhotoDetail(){
+    if(!photoDetail)return;
+    photoDetail=null;$("kv2-photo-detail-panel").hidden=true;
+    for(const id of ["kv2-photo-detail-overview","kv2-photo-detail-before","kv2-photo-detail-after"]){const c=$(id);c.width=1;c.height=1;}
+  }
+  function photoDetailSettings(){
+    return Object.fromEntries(["noise","sharp","clarity"].map(k=>[k,clamp(Number($("kv2-photo-detail-"+k).value)||0,0,100)]));
+  }
+  function renderPhotoDetail(){
+    if(!photoDetailValid()){cancelPhotoDetail();return;}
+    const p=photoDetail,settings=photoDetailSettings(),region=p.region;
+    for(const k of Object.keys(settings))$("kv2-photo-detail-"+k+"-value").textContent=settings[k]+"%";
+    const overview=$("kv2-photo-detail-overview"),ctx=overview.getContext("2d");
+    ctx.clearRect(0,0,overview.width,overview.height);ctx.drawImage(p.bitmap,0,0,overview.width,overview.height);
+    ctx.save();ctx.strokeStyle="#00d8ff";ctx.lineWidth=2;ctx.strokeRect(region.x/WIDTH*overview.width,region.y/HEIGHT*overview.height,region.w/WIDTH*overview.width,region.h/HEIGHT*overview.height);ctx.restore();
+    const a=$("kv2-photo-detail-before"),b=$("kv2-photo-detail-after");
+    a.width=b.width=region.w;a.height=b.height=region.h;
+    a.getContext("2d").drawImage(p.bitmap,region.x,region.y,region.w,region.h,0,0,region.w,region.h);
+    const dst=b.getContext("2d"),im=dst.createImageData(region.w,region.h);
+    im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,region,settings));dst.putImageData(im,0,0);
+    $("kv2-photo-detail-apply").disabled=!Object.values(settings).some(Boolean);
+  }
+  function openPhotoDetail(){
+    const layer=editableLayer();
+    if(!layer||requiresRaster(layer)||maskEditing||pointerId!==null||project.owner!==owner())return;
+    cancelFreeTransform();clearTextDraft();resetAiPoints();colorRegion=null;aiTool=false;tool="hand";refresh();
+    const bitmap=surfaces.get(layer.id),w=Math.min(320,WIDTH),h=Math.min(320,HEIGHT);
+    photoDetail={project,owner:owner(),layer,rev:bitmapRevision,bitmap,pixels:bitmap.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data,region:{x:Math.floor((WIDTH-w)/2),y:Math.floor((HEIGHT-h)/2),w,h}};
+    const overview=$("kv2-photo-detail-overview"),scale=Math.min(1,240/Math.max(WIDTH,HEIGHT));
+    overview.width=Math.max(1,Math.round(WIDTH*scale));overview.height=Math.max(1,Math.round(HEIGHT*scale));
+    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).value="0";
+    $("kv2-photo-detail-panel").hidden=false;renderPhotoDetail();
+  }
+  function photoDetailPoint(event){
+    if(!photoDetailValid()||(event.pointerType==="mouse"&&event.button!==0))return;
+    event.preventDefault();const r=$("kv2-photo-detail-overview").getBoundingClientRect(),q=photoDetail.region;
+    q.x=clamp(Math.round((event.clientX-r.left)/r.width*WIDTH-q.w/2),0,WIDTH-q.w);
+    q.y=clamp(Math.round((event.clientY-r.top)/r.height*HEIGHT-q.h/2),0,HEIGHT-q.h);renderPhotoDetail();
+  }
+  function applyPhotoDetail(){
+    if(!photoDetailValid())return;
+    const p=photoDetail,settings=photoDetailSettings();
+    if(!Object.values(settings).some(Boolean))return;
+    try{
+      const bitmap=imageCanvas(),ctx=bitmap.getContext("2d"),im=ctx.createImageData(WIDTH,HEIGHT);
+      im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,{x:0,y:0,w:WIDTH,h:HEIGHT},settings));ctx.putImageData(im,0,0);
+      applyTransform({id:p.layer.id,bitmap,mask:null});
+      status("Detaljjustering utført – kan angres.");
+    }catch(_){status("Kunne ikke justere detaljene. Originalen er uendret.");}
+  }
+
   // Photo rectification: inverse projective sampling from a convex quadrilateral.
   // UI points are normalized layer-local coordinates, not the visible composition.
   function perspectiveMap(p){
@@ -3377,7 +3466,7 @@
   }
 
   function cancelFreeTransform() {
-    cancelPhotoPerspective();
+    cancelPhotoPerspective();cancelPhotoDetail();
     if (!freeTransform) return;
     const drag = freeTransform.drag;
     freeTransform = null;
@@ -4320,6 +4409,11 @@
     });
     $("kv2-transform-free").addEventListener("click", () => openFreeTransform());
     $("kv2-photo-perspective").addEventListener("click",openPhotoPerspective);
+    $("kv2-photo-detail").addEventListener("click",openPhotoDetail);
+    $("kv2-photo-detail-overview").addEventListener("pointerdown",photoDetailPoint);
+    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).addEventListener("change",renderPhotoDetail);
+    $("kv2-photo-detail-apply").addEventListener("click",applyPhotoDetail);
+    $("kv2-photo-detail-cancel").addEventListener("click",cancelPhotoDetail);
     $("kv2-photo-perspective-source").addEventListener("pointerdown",photoPerspectivePoint);
     $("kv2-photo-perspective-corner").addEventListener("change",renderPhotoPerspective);
     $("kv2-photo-perspective-ratio").addEventListener("change",renderPhotoPerspective);
@@ -4597,6 +4691,7 @@
     canvas.addEventListener("pointercancel", end);
     canvas.addEventListener("lostpointercapture", end);
     global.addEventListener("keydown", (event) => {
+      if(event.key==="Escape"&&photoDetail){event.preventDefault();cancelPhotoDetail();return;}
       if(event.key==="Escape"&&photoPerspective){event.preventDefault();cancelPhotoPerspective();return;}
       if (event.key === "Escape" && freeTransform) {
         event.preventDefault();

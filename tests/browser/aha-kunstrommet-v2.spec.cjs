@@ -3865,3 +3865,35 @@ test("10.0d projective rectification previews a convex source crop, rejects cros
  await expect.poll(async()=> (await pxAt(page,50,50)).slice(0,3)).toEqual([255,255,255]);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+test("10.0e local detail preview is reversible, smooths noise and preserves alpha",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ // A synthetic opaque field with a slight center impulse, transparent outside.
+ const png=await page.evaluate(()=>{
+  const c=document.createElement("canvas");c.width=1200;c.height=800;
+  const ctx=c.getContext("2d");ctx.fillStyle="rgb(120,120,120)";ctx.fillRect(100,100,1000,600);
+  ctx.fillStyle="rgb(140,140,140)";ctx.fillRect(600,400,1,1);
+  return c.toDataURL("image/png").split(",")[1];
+ });
+ await page.locator("#kv2-photo").setInputFiles({name:"detail.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
+ await expect.poll(async()=> (await pxAt(page,600,400))[0]).toBe(140);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-photo-detail").click();
+ await expect(page.locator("#kv2-photo-detail-apply")).toBeDisabled();
+ await page.locator("#kv2-photo-detail-noise").evaluate(el=>{el.value="100";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ const preview=await page.locator("#kv2-photo-detail-after").evaluate(c=>c.getContext("2d").getImageData(160,160,1,1).data[0]);
+ expect(preview).toBeLessThan(140);expect(preview).toBeGreaterThan(120);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-detail-apply").click();
+ expect((await pxAt(page,600,400))[0]).toBe(preview);
+ expect((await pxAt(page,30,30)).slice(0,3)).toEqual([255,255,255]);
+ expect((await pxAt(page,300,300)).slice(0,3)).toEqual([120,120,120]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,600,400))[0]).toBe(140);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-detail").click();
+ await page.locator("#kv2-photo-detail-sharp").evaluate(el=>{el.value="100";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ expect(await page.locator("#kv2-photo-detail-after").evaluate(c=>c.getContext("2d").getImageData(160,160,1,1).data[0])).toBeGreaterThan(140);
+ await page.locator("#kv2-photo-detail-cancel").click();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});
