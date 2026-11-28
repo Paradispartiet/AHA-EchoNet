@@ -39,3 +39,8 @@ jobs:
           KR_PILOT_DIR: ${{ runner.temp }}/kr-model
           KR_IPAD_DIR: ${{ runner.temp }}/kr-ipad
         run: node tools/kunstrommet-sam-pilot/editor-smoke.mjs
+      - name: Collect exact runtime notice evidence
+        env:
+          KR_PILOT_DIR: ${{ runner.temp }}/kr-model
+          KR_NOTICE_DIR: ${{ runner.temp }}/kr-notice-review
+        run: node tools/kunstrommet-sam-pilot/audit-distribution-notices.mjs
