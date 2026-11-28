@@ -1,0 +1,29 @@
+name: Kunstrommet isolated iPad package preflight
+on:
+  pull_request:
+    paths:
+      - 'tools/kunstrommet-sam-pilot/build-ipad-package.mjs'
+      - '.github/workflows/aha-kunstrommet-ipad-package.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Stage pinned public test resources
+        env:
+          KR_PILOT_DIR: ${{ runner.temp }}/kr-model
+        run: bash tools/kunstrommet-sam-pilot/stage.sh
+      - name: Build isolated package and check asset sizes
+        env:
+          KR_PILOT_DIR: ${{ runner.temp }}/kr-model
+          KR_IPAD_DIR: ${{ runner.temp }}/kr-ipad
+        run: node tools/kunstrommet-sam-pilot/build-ipad-package.mjs
