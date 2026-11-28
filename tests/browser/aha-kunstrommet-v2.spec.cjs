@@ -3900,3 +3900,44 @@ test("10.0e local detail preview is reversible, smooths noise and preserves alph
  await page.locator("#kv2-photo-detail-cancel").click();
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+test("10.0f restoration preview restores faded range, reduces cast and isolated dust without inventing pixels",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ const png=await page.evaluate(()=>{
+  const c=document.createElement("canvas");c.width=1200;c.height=800;const ctx=c.getContext("2d");
+  ctx.fillStyle="rgb(110,90,70)";ctx.fillRect(100,100,500,600);
+  ctx.fillStyle="rgb(190,170,150)";ctx.fillRect(600,100,500,600);
+  ctx.fillStyle="rgb(250,250,250)";ctx.fillRect(550,400,1,1);
+  return c.toDataURL("image/png").split(",")[1];
+ });
+ await page.locator("#kv2-photo").setInputFiles({name:"restoration.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
+ await expect.poll(async()=> (await pxAt(page,550,400))[0]).toBe(250);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-photo-restore").click();
+ await expect(page.locator("#kv2-photo-restore-adjustments")).toBeVisible();
+ await expect(page.locator("#kv2-photo-detail-adjustments")).toBeHidden();
+ await expect(page.locator("#kv2-photo-detail-apply")).toBeDisabled();
+ const set=async(k,v)=>page.locator("#kv2-photo-detail-"+k).evaluate((el,value)=>{el.value=String(value);el.dispatchEvent(new Event("change",{bubbles:true}));},v);
+ const pixel=async(x,y)=>page.locator("#kv2-photo-detail-after").evaluate((c,p)=>Array.from(c.getContext("2d").getImageData(p.x,p.y,1,1).data),{x,y});
+ await set("dust",100);
+ expect(await pixel(110,160)).toEqual([110,90,70,255]);
+ // A true large-area transition must not be treated as a speck.
+ expect(await pixel(160,160)).toEqual([190,170,150,255]);
+ await set("fade",100);
+ const dark=await pixel(60,160),light=await pixel(220,160);
+ expect(light[1]-dark[1]).toBeGreaterThan(80);
+ await set("fade",0);await set("cast",100);
+ const neutral=await pixel(60,160);
+ expect(Math.max(...neutral.slice(0,3))-Math.min(...neutral.slice(0,3))).toBeLessThan(3);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-detail-apply").click();
+ expect((await pxAt(page,500,400)).slice(0,3)).toEqual(neutral.slice(0,3));
+ expect((await pxAt(page,550,400)).slice(0,3)).toEqual(neutral.slice(0,3));
+ expect((await pxAt(page,30,30)).slice(0,3)).toEqual([255,255,255]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,550,400))[0]).toBe(250);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-photo-restore").click();await set("fade",100);
+ await page.locator("#kv2-photo-detail-cancel").click();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

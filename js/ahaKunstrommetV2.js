@@ -1481,6 +1481,7 @@
     $("kv2-transform-free").disabled = !layer || layer.kind === "adjustment" || !layer.visible || layer.locked || !!layer.textData || busy || maskEditing;
     $("kv2-photo-perspective").disabled=$("kv2-transform-free").disabled||project?.owner!==owner();
     $("kv2-photo-detail").disabled=$("kv2-photo-perspective").disabled;
+    $("kv2-photo-restore").disabled=$("kv2-photo-detail").disabled;
     $("kv2-opacity").value = layer ? Math.round(layer.opacity * 100) : 100;
     $("kv2-opacity-value").textContent = $("kv2-opacity").value + "%";
     $("kv2-blend-mode").value = layer?.blendMode || "normal";
@@ -3287,6 +3288,70 @@
     }
     return out;
   }
+  // Robust global tonal endpoints and conservative isolated impulse removal.
+  // Histograms ignore transparent pixels and low-opacity edge pixels.
+  function restorationProfile(src){
+    const hist=Array.from({length:4},()=>new Uint32Array(256));
+    let count=0;
+    for(let i=0;i<src.length;i+=4){
+      if(src[i+3]<224)continue;
+      count++;
+      for(let ch=0;ch<3;ch++)hist[ch][src[i+ch]]++;
+      hist[3][Math.round(.2126*src[i]+.7152*src[i+1]+.0722*src[i+2])]++;
+    }
+    function quantile(bins,q){
+      const threshold=Math.max(1,Math.ceil(count*q));let sum=0;
+      for(let i=0;i<256;i++){sum+=bins[i];if(sum>=threshold)return i;}
+      return 255;
+    }
+    const low=quantile(hist[3],.02),high=quantile(hist[3],.98);
+    const middle=hist.slice(0,3).map(b=>quantile(b,.5));
+    const neutral=.2126*middle[0]+.7152*middle[1]+.0722*middle[2];
+    return {low,high,count,offset:middle.map(v=>clamp(neutral-v,-40,40))};
+  }
+  function restorationPixels(src,w,h,region,settings,profile){
+    const {x:left,y:top,w:rw,h:rh}=region,out=new Uint8ClampedArray(rw*rh*4);
+    const fade=settings.fade/100,cast=settings.cast/100,dust=settings.dust/100;
+    const gain=profile.count>=64&&profile.high-profile.low>=24?Math.min(2.5,225/(profile.high-profile.low)):1;
+    const tone=profile.count>=64&&profile.high-profile.low>=24;
+    const values=new Float64Array(8),neighbors=new Int32Array(8);
+    const luminance=i=>.2126*src[i]+.7152*src[i+1]+.0722*src[i+2];
+    for(let y=0;y<rh;y++)for(let x=0;x<rw;x++){
+      const px=left+x,py=top+y,i=(py*w+px)*4,o=(y*rw+x)*4;
+      out.set(src.subarray(i,i+4),o);
+      if(!src[i+3])continue;
+      let replacement=-1;
+      if(dust&&src[i+3]>=224&&px>0&&py>0&&px<w-1&&py<h-1){
+        let k=0,min=255,max=0;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+          if(!dx&&!dy)continue;
+          const j=((py+dy)*w+px+dx)*4;
+          if(src[j+3]<224)continue;
+          const v=luminance(j);values[k]=v;neighbors[k++]=j;min=Math.min(min,v);max=Math.max(max,v);
+        }
+        // Only isolated luminance impulses surrounded by eight similar pixels.
+        // Choose a real neighbor closest to the neighborhood mean; no invented texture.
+        if(k===8&&max-min<=18){
+          const lum=luminance(i),mean=values.reduce((a,b)=>a+b,0)/8;
+          if(Math.abs(lum-mean)>=45){
+            let best=Infinity;
+            for(let n=0;n<8;n++){const delta=Math.abs(values[n]-mean);if(delta<best){best=delta;replacement=neighbors[n];}}
+          }
+        }
+      }
+      for(let ch=0;ch<3;ch++){
+        let v=src[i+ch];
+        if(replacement>=0)v+=dust*(src[replacement+ch]-v);
+        if(tone&&fade)v+=fade*(clamp((v-profile.low)*gain+15,0,255)-v);
+        if(profile.count>=64&&cast)v+=cast*profile.offset[ch];
+        out[o+ch]=clamp(v,0,255);
+      }
+    }
+    return out;
+  }
+  function photoDetailOutput(p,region,settings){
+    return p.mode==="restore"?restorationPixels(p.pixels,WIDTH,HEIGHT,region,settings,p.profile):detailPixels(p.pixels,WIDTH,HEIGHT,region,settings);
+  }
   function photoDetailValid(){
     const p=photoDetail,layer=currentLayer();
     return !!(p&&p.project===project&&p.owner===owner()&&project.owner===p.owner&&layer===p.layer&&p.rev===bitmapRevision&&p.bitmap===surfaces.get(layer.id)&&!busy&&!maskEditing&&pointerId===null&&layer.visible&&!layer.locked&&!layer.textData&&layer.kind!=="adjustment");
@@ -3297,7 +3362,8 @@
     for(const id of ["kv2-photo-detail-overview","kv2-photo-detail-before","kv2-photo-detail-after"]){const c=$(id);c.width=1;c.height=1;}
   }
   function photoDetailSettings(){
-    return Object.fromEntries(["noise","sharp","clarity"].map(k=>[k,clamp(Number($("kv2-photo-detail-"+k).value)||0,0,100)]));
+    const keys=photoDetail?.mode==="restore"?["fade","cast","dust"]:["noise","sharp","clarity"];
+    return Object.fromEntries(keys.map(k=>[k,clamp(Number($("kv2-photo-detail-"+k).value)||0,0,100)]));
   }
   function renderPhotoDetail(){
     if(!photoDetailValid()){cancelPhotoDetail();return;}
@@ -3310,18 +3376,22 @@
     a.width=b.width=region.w;a.height=b.height=region.h;
     a.getContext("2d").drawImage(p.bitmap,region.x,region.y,region.w,region.h,0,0,region.w,region.h);
     const dst=b.getContext("2d"),im=dst.createImageData(region.w,region.h);
-    im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,region,settings));dst.putImageData(im,0,0);
+    im.data.set(photoDetailOutput(p,region,settings));dst.putImageData(im,0,0);
     $("kv2-photo-detail-apply").disabled=!Object.values(settings).some(Boolean);
   }
-  function openPhotoDetail(){
+  function openPhotoDetail(mode="detail"){
     const layer=editableLayer();
     if(!layer||requiresRaster(layer)||maskEditing||pointerId!==null||project.owner!==owner())return;
     cancelFreeTransform();clearTextDraft();resetAiPoints();colorRegion=null;aiTool=false;tool="hand";refresh();
     const bitmap=surfaces.get(layer.id),w=Math.min(320,WIDTH),h=Math.min(320,HEIGHT);
-    photoDetail={project,owner:owner(),layer,rev:bitmapRevision,bitmap,pixels:bitmap.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data,region:{x:Math.floor((WIDTH-w)/2),y:Math.floor((HEIGHT-h)/2),w,h}};
+    const pixels=bitmap.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    photoDetail={project,owner:owner(),layer,rev:bitmapRevision,bitmap,pixels,mode,profile:mode==="restore"?restorationProfile(pixels):null,region:{x:Math.floor((WIDTH-w)/2),y:Math.floor((HEIGHT-h)/2),w,h}};
     const overview=$("kv2-photo-detail-overview"),scale=Math.min(1,240/Math.max(WIDTH,HEIGHT));
     overview.width=Math.max(1,Math.round(WIDTH*scale));overview.height=Math.max(1,Math.round(HEIGHT*scale));
-    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).value="0";
+    for(const k of ["noise","sharp","clarity","fade","cast","dust"])$("kv2-photo-detail-"+k).value="0";
+    $("kv2-photo-detail-adjustments").hidden=mode==="restore";
+    $("kv2-photo-restore-adjustments").hidden=mode!=="restore";
+    $("kv2-photo-detail-apply").textContent=mode==="restore"?"Bruk restaurering":"Bruk detaljjustering";
     $("kv2-photo-detail-panel").hidden=false;renderPhotoDetail();
   }
   function photoDetailPoint(event){
@@ -3336,9 +3406,9 @@
     if(!Object.values(settings).some(Boolean))return;
     try{
       const bitmap=imageCanvas(),ctx=bitmap.getContext("2d"),im=ctx.createImageData(WIDTH,HEIGHT);
-      im.data.set(detailPixels(p.pixels,WIDTH,HEIGHT,{x:0,y:0,w:WIDTH,h:HEIGHT},settings));ctx.putImageData(im,0,0);
+      im.data.set(photoDetailOutput(p,{x:0,y:0,w:WIDTH,h:HEIGHT},settings));ctx.putImageData(im,0,0);
       applyTransform({id:p.layer.id,bitmap,mask:null});
-      status("Detaljjustering utført – kan angres.");
+      status(p.mode==="restore"?"Restaurering utført – kan angres.":"Detaljjustering utført – kan angres.");
     }catch(_){status("Kunne ikke justere detaljene. Originalen er uendret.");}
   }
 
@@ -4415,9 +4485,10 @@
     });
     $("kv2-transform-free").addEventListener("click", () => openFreeTransform());
     $("kv2-photo-perspective").addEventListener("click",openPhotoPerspective);
-    $("kv2-photo-detail").addEventListener("click",openPhotoDetail);
+    $("kv2-photo-detail").addEventListener("click",()=>openPhotoDetail());
+    $("kv2-photo-restore").addEventListener("click",()=>openPhotoDetail("restore"));
     $("kv2-photo-detail-overview").addEventListener("pointerdown",photoDetailPoint);
-    for(const k of ["noise","sharp","clarity"])$("kv2-photo-detail-"+k).addEventListener("change",renderPhotoDetail);
+    for(const k of ["noise","sharp","clarity","fade","cast","dust"])$("kv2-photo-detail-"+k).addEventListener("change",renderPhotoDetail);
     $("kv2-photo-detail-apply").addEventListener("click",applyPhotoDetail);
     $("kv2-photo-detail-cancel").addEventListener("click",cancelPhotoDetail);
     $("kv2-photo-perspective-source").addEventListener("pointerdown",photoPerspectivePoint);

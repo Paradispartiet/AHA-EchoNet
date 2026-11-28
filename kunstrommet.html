@@ -616,6 +616,7 @@
             <button id="kv2-transform-free" type="button">Fri transformering</button>
             <button id="kv2-photo-perspective" type="button">Perspektivkorrigering</button>
             <button id="kv2-photo-detail" type="button">Skarphet og støy</button>
+            <button id="kv2-photo-restore" type="button">Fotorestaurering</button>
           </div>
           <div id="kv2-free-transform-panel" class="kv2-free-transform" hidden>
             <label for="kv2-free-angle">Rotasjon (grader)</label>
@@ -637,9 +638,17 @@
           <div id="kv2-photo-detail-panel" class="kv2-free-transform" hidden>
             <p class="kv2-tip">Trykk på oversiktsbildet for å velge et utsnitt. Før og etter vises med samme kildepiksler, uten nedskalering i selve filteret. Hele rålaget endres først ved bekreftelse. Dupliser laget hvis du vil beholde en egen original.</p>
             <canvas id="kv2-photo-detail-overview" width="1" height="1" aria-label="Velg detaljutsnitt"></canvas>
+            <div id="kv2-photo-detail-adjustments">
             <label>Støyreduksjon <input id="kv2-photo-detail-noise" type="range" min="0" max="100" value="0" aria-label="Støyreduksjon" /> <output id="kv2-photo-detail-noise-value">0%</output></label>
             <label>Skarphet <input id="kv2-photo-detail-sharp" type="range" min="0" max="100" value="0" aria-label="Skarphet" /> <output id="kv2-photo-detail-sharp-value">0%</output></label>
             <label>Detaljkontrast <input id="kv2-photo-detail-clarity" type="range" min="0" max="100" value="0" aria-label="Detaljkontrast" /> <output id="kv2-photo-detail-clarity-value">0%</output></label>
+            </div>
+            <div id="kv2-photo-restore-adjustments" hidden>
+              <label>Gjenopprett toneomfang <input id="kv2-photo-detail-fade" type="range" min="0" max="100" value="0" aria-label="Gjenopprett toneomfang" /> <output id="kv2-photo-detail-fade-value">0%</output></label>
+              <label>Demp fargestikk <input id="kv2-photo-detail-cast" type="range" min="0" max="100" value="0" aria-label="Demp fargestikk" /> <output id="kv2-photo-detail-cast-value">0%</output></label>
+              <label>Små støvflekker <input id="kv2-photo-detail-dust" type="range" min="0" max="100" value="0" aria-label="Små støvflekker" /> <output id="kv2-photo-detail-dust-value">0%</output></label>
+              <p class="kv2-tip">Fargestikk estimeres fra bildets midttoner; behold ønsket sepia med lav styrke. Støvfjerning gjelder bare isolerte enkeltpiksler. Bruk reparasjonspenselen for større riper og skader.</p>
+            </div>
             <div class="kv2-detail-comparison"><div><strong>Før</strong><canvas id="kv2-photo-detail-before" width="1" height="1" aria-label="Originalt detaljutsnitt"></canvas></div><div><strong>Etter</strong><canvas id="kv2-photo-detail-after" width="1" height="1" aria-label="Justert detaljutsnitt"></canvas></div></div>
             <div class="kv2-transform-tools"><button id="kv2-photo-detail-apply" type="button" disabled>Bruk detaljjustering</button><button id="kv2-photo-detail-cancel" type="button">Avbryt</button></div>
           </div>
