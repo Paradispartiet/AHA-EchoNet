@@ -466,3 +466,8 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Tre uavhengige kontroller på aktivt rålag: lokal kantvektet 3×3 støyreduksjon, luminansbasert uskarp maske i liten skala og kontrast i større skala (avstand 4 px). Ingen KI, dekonvolusjon eller rekonstruksjon av tapt detalj. Effektene kan kombineres; skarphet dempes ved høy støyreduksjon.
 - Sammenligning før/etter av samme valgbare utsnitt opptil 320×320 kildepiksler; filteret leser fra full original med halo. Visuell størrelse kan begrenses av panelet. Oversiktsbilde for valg av utsnitt. Forhåndsvisning på avsluttet sliderbevegelse; full oppløsning ved eksplisitt bekreftelse. Eksisterende alpha, maske, lagforskyvning, justeringer og andre lag beholdes; angre/avbryt. Dupliser aktivt lag for separat original. Dette er ikke et nytt vedvarende justeringslag.
 - Syntetisk nettlesertest for støyimpuls, skarphet, preview/commit-samsvar, nøytrale områder, avbrudd og undo. Fysisk iPad, ytelse og realistiske foto gjenstår.
+
+## 10.0 – samlet ferdigstilling
+- #1165–#1169 utgjør fem sammenhengende commits. #1169 retargetes til main og brukes som samlet integrasjonskandidat. Behold underliggende PR-er som historikk frem til samlet merge. Ingen flere funksjoner før verifisering.
+- Før retarget er alle fem lokale kontrakttester og Engine-jobber grønne; full browser-regresjon er fortsatt uavklart. Ny separat fokusjobb kjører nøyaktig fem 10.0a–e tester i begge nettleserprosjektene (10 tilfeller). Den erstatter ikke den ordinære fulle regresjonen.
+- Ingen publisering/merge før samlet kandidat har grønne aktuelle arbeidsflyter og riktig main-base. Ingen aktivering av KI-pilot. Fysisk iPad, reelle foto og distribusjonsgodkjenning av KI er separate gjenstående kontroller.
