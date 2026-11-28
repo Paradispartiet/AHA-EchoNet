@@ -446,3 +446,8 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Alle tidligere ID-er, kontekstavhengige innstillinger og minst 44 px berøringsmål beholdes. Ingen ekstra menytrykk og ingen aktivering av KI. Test på 375/820/1180 CSS-pikslers bredde for grupper, mål, overflow og verktøyskifte.
 - Eksisterende bildejusteringer inkluderer lys, kontrast, metning, nivåer, histogram, RGB-kurver og justeringslag. Perspektivhjelp for tegning er ikke fotografisk perspektivkorrigering. Klonestempel/retusjering og fotografisk perspektivkorrigering er senere kandidater, ikke implementert her.
 - Fysisk iPad-test og 9.5-pilotens distribusjonsport er separate og uavklarte. Ikke bytt aktiv produksjonskonfig.
+
+## 10.0b – klonestempel (utviklingskandidat)
+- Velg kilde med finger/penn/mus, deretter mal på aktivt rasterlag. Kilden følger strøkets forskyvning, ny kilde velges eksplisitt. Størrelse, hardhet og styrke per avtrykk. Råpiksler fra aktivt lag, ikke sammensatt bilde eller justeringslag; eksisterende maske beholdes. Bruk duplisert lag for separat retusjkopi.
+- Én midlertidig rasterkopi per strøk, liten avtrykksflate, ingen selvkopiering fra live-preview. Eksisterende markeringsklipp, lagkomposisjon og undo; pointercancel/Escape forkaster strøket. Kildepunkt er visningsdata, ikke eksportert. Ingen KI eller ekstern behandling.
+- Test: kildetapp endrer ikke dokumentet, avbrutt strøk er uendret, riktig kopierte farger, andre områder uendret og undo. Fysisk iPad/ytelse ikke testet.

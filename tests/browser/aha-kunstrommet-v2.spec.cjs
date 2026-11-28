@@ -3774,11 +3774,36 @@ test("10.0a tool families keep direct access and touch targets on narrow and tab
    const buttons=[...el.querySelectorAll("button:not([hidden])")].map(b=>{const x=b.getBoundingClientRect();return {w:x.width,h:x.height,left:x.left,right:x.right};});
    return {left:r.left,right:r.right,buttons};
   });
-  expect(geometry.buttons).toHaveLength(14);
+  expect(geometry.buttons).toHaveLength(15);
   expect(geometry.buttons.every(b=>b.w>=44&&b.h>=44&&b.left>=geometry.left-1&&b.right<=geometry.right+1)).toBe(true);
   for(const id of ["brush","hand","lasso","rectangle","gradient","text"]){
    await page.locator("#kv2-"+id).click();
    await expect(page.locator("#kv2-"+id)).toHaveAttribute("aria-pressed","true");
   }
  }
+});
+
+test("10.0b clone stamp samples the active raw layer, cancels preview, commits and undoes",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();await shapeDrag(page,[100,100],[300,300],9601);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-clone").click();
+ await shapeDrag(page,[200,200],[200,200],9602);
+ await expect(page.locator("#kv2-clone-marker")).toBeVisible();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-clone-size").evaluate(el=>{el.value="100";});
+ await shapePointer(page,"pointerdown",600,400,9603);
+ await shapePointer(page,"pointermove",650,400,9603);
+ await expect(page.locator("#kv2-brush-live")).toBeVisible();
+ await shapePointer(page,"pointercancel",650,400,9603);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await shapeDrag(page,[600,400],[650,400],9604);
+ expect((await pxAt(page,620,400)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,200,200)).slice(0,3)).toEqual([176,48,64]);
+ expect((await pxAt(page,800,500)).slice(0,3)).toEqual([255,255,255]);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,620,400)).slice(0,3)).toEqual([255,255,255]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await expect(page.locator("#kv2-clone-marker")).toBeHidden();
 });

@@ -331,3 +331,9 @@
   .kv2-tool-strip {gap:7px 9px;}
   .kv2-tool-group-label {font-size:.68rem;}
 }
+
+/* 10.0b clone controls and view-only source crosshair. */
+#kv2-clone-panel:not([hidden]){display:flex;flex:1 0 100%;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;}
+#kv2-clone-info{flex-basis:100%;margin:3px 0;}
+#kv2-clone-marker{position:absolute;z-index:6;transform:translate(-50%,-50%);width:24px;height:24px;border:2px solid white;box-shadow:0 0 0 1px #222;box-sizing:border-box;border-radius:50%;background:#255b8c99;color:white;font:bold 18px/20px system-ui;text-align:center;pointer-events:none;}
+#kv2-clone-marker[hidden]{display:none!important;}
