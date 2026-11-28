@@ -373,6 +373,7 @@
   let pointerStart = null;
   let paintPrevious = null;
   let advancedStroke = null; // Disposable stroke, committed only on pointerup.
+  let cloneAnchor=null,cloneStroke=null,clonePicking=true;
   let dirty = false;
   let busy = false;
   let framePending = false;
@@ -488,6 +489,7 @@
     framePending = false;
     drawComposition(view);
     renderAdvancedStroke();
+    renderClonePreview();
     $("kv2-histogram-status").textContent = "Oppdater for å måle gjeldende bilde.";
     $("kv2-histogram").hidden = true;
   }
@@ -1731,7 +1733,7 @@
     draw();
     renderLayerList();
     updateLayerControls();
-    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text", "clone"].forEach((name) => {
       $("kv2-" + name).setAttribute("aria-pressed", String(tool === name));
     });
     canvas.style.cursor = tool === "hand" ? "grab" : tool === "move" ? "move" : "crosshair";
@@ -1760,6 +1762,7 @@
       : "Dra fra start til slutt. Se fargeovergangen direkte før du slipper. Bruk eget lag for å bevare originalen.";
     $("kv2-text-panel").hidden = tool !== "text";
     renderTextPreview();
+    renderCloneTool();
   }
 
   function point(event) {
@@ -2334,10 +2337,93 @@
     }
   }
 
+  // Clone stamp: a frozen source per gesture, editable preview, commit on pointerup.
+  function cloneLayer(){
+    const layer=currentLayer();
+    return project?.owner===owner()&&!maskEditing&&layer?.visible&&!layer.locked&&layer.kind!=="adjustment"&&!layer.textData&&surfaces.has(layer.id)?layer:null;
+  }
+  function cloneAnchorValid(){
+    const layer=cloneLayer();
+    return !!(cloneAnchor&&layer&&cloneAnchor.layer===layer&&cloneAnchor.project===project&&cloneAnchor.owner===owner()&&cloneAnchor.rev===bitmapRevision&&cloneAnchor.surface===surfaces.get(layer.id)&&cloneAnchor.ox===layer.x&&cloneAnchor.oy===layer.y);
+  }
+  function renderCloneTool(){
+    const active=tool==="clone";
+    if(!active||!cloneAnchorValid()){cloneAnchor=null;clonePicking=true;}
+    $("kv2-clone-panel").hidden=!active;
+    $("kv2-clone-source").setAttribute("aria-pressed",String(clonePicking));
+    $("kv2-clone-info").textContent=!cloneLayer()?"Velg et synlig, ulåst rasterlag.":clonePicking?"Trykk på ønsket kilde i aktivt lag.":"Kilde valgt. Mal over området som skal retusjeres.";
+    const mark=$("kv2-clone-marker");mark.hidden=!active||!cloneAnchor;
+    if(!mark.hidden){const rect=canvas.getBoundingClientRect();mark.style.left=((cloneAnchor.x+cloneAnchor.ox)*rect.width/WIDTH)+"px";mark.style.top=((cloneAnchor.y+cloneAnchor.oy)*rect.height/HEIGHT)+"px";}
+  }
+  function validCloneStroke(stroke){
+    return !!(stroke&&tool==="clone"&&cloneAnchorValid()&&stroke.layer===cloneLayer()&&!busy&&stroke.surface===surfaces.get(stroke.layer.id));
+  }
+  function cloneDab(stroke,x,y){
+    const r=stroke.radius,n=stroke.stamp.width,sx=x+stroke.dx,sy=y+stroke.dy;
+    if(sx+r<=0||sy+r<=0||sx-r>=WIDTH||sy-r>=HEIGHT)return;
+    const stamp=stroke.stamp.getContext("2d");
+    stamp.clearRect(0,0,n,n);stamp.save();
+    // Read only the unmodified original raster, never the accumulating preview.
+    stamp.drawImage(stroke.surface,r-sx,r-sy);
+    stamp.globalCompositeOperation="destination-in";
+    const g=stamp.createRadialGradient(r,r,0,r,r,r);
+    g.addColorStop(0,"#fff");g.addColorStop(stroke.hardness,"#fff");g.addColorStop(1,"rgba(255,255,255,0)");
+    stamp.fillStyle=g;stamp.fillRect(0,0,n,n);stamp.restore();
+    const ctx=stroke.preview.getContext("2d");ctx.save();
+    if(validSelection()){selectionPath(ctx,stroke.layer.x,stroke.layer.y);ctx.clip();}
+    ctx.globalAlpha=stroke.opacity;ctx.drawImage(stroke.stamp,x-r,y-r);ctx.restore();
+  }
+  function beginClone(event){
+    event.preventDefault();
+    const layer=cloneLayer();if(!layer){status("Velg et synlig, ulåst rasterlag.");return;}
+    const p=point(event),x=Math.floor(p.x-layer.x),y=Math.floor(p.y-layer.y);
+    if(x<0||y<0||x>=WIDTH||y>=HEIGHT)return;
+    const surface=surfaces.get(layer.id);
+    if(clonePicking||!cloneAnchorValid()){
+      if(!surface.getContext("2d").getImageData(x,y,1,1).data[3]){status("Velg et kildepunkt med bildepiksler.");return;}
+      cloneAnchor={project,owner:owner(),layer,surface,rev:bitmapRevision,ox:layer.x,oy:layer.y,x,y};clonePicking=false;
+      renderCloneTool();status("Kilde valgt – mal på området du vil reparere.");return;
+    }
+    const radius=clamp(Math.round(Number($("kv2-clone-size").value)||32),4,160)/2;
+    const opacity=clamp(Number($("kv2-clone-opacity").value)/100,0.01,1);
+    const hardness=clamp(Number($("kv2-clone-hardness").value)/100,0,.99);
+    const preview=imageCanvas();preview.getContext("2d").drawImage(surface,0,0);
+    cloneStroke={layer,surface,preview,stamp:imageCanvas(Math.ceil(radius*2),Math.ceil(radius*2)),radius,opacity,hardness,dx:cloneAnchor.x-x,dy:cloneAnchor.y-y,previous:{x,y}};
+    pointerId=event.pointerId;cloneDab(cloneStroke,x,y);drawSoon();
+    try{canvas.setPointerCapture(pointerId);}catch(_){}
+  }
+  function advanceClone(event){
+    const stroke=cloneStroke;if(!validCloneStroke(stroke))return;
+    const at=point(event),b={x:at.x-stroke.layer.x,y:at.y-stroke.layer.y},a=stroke.previous;
+    const distance=Math.hypot(b.x-a.x,b.y-a.y);if(!distance)return;
+    const steps=Math.ceil(distance/Math.max(1,stroke.radius*.35));
+    for(let i=1;i<=steps;i++)cloneDab(stroke,a.x+(b.x-a.x)*i/steps,a.y+(b.y-a.y)*i/steps);
+    stroke.previous=b;drawSoon();
+  }
+  function renderClonePreview(){
+    if(!cloneStroke)return;
+    const live=$("kv2-brush-live");if(!validCloneStroke(cloneStroke)){live.hidden=true;return;}
+    const {layer,preview}=cloneStroke;adjustedBitmaps.delete(layer.id);
+    drawComposition(live.getContext("2d"),{id:layer.id,bitmap:preview,mask:masks.get(layer.id)});
+    adjustedBitmaps.delete(layer.id);live.hidden=false;
+  }
+  function finishClone(event){
+    const stroke=cloneStroke,commit=event.type==="pointerup"&&validCloneStroke(stroke);
+    if(commit&&Number.isFinite(event.clientX)&&Number.isFinite(event.clientY))advanceClone(event);
+    cloneStroke=null;pointerId=null;pointerStart=null;paintPrevious=null;$("kv2-brush-live").hidden=true;
+    if(commit&&checkpoint()){
+      // Replace the raster only after confirmation; masks and other layers unchanged.
+      surfaces.set(stroke.layer.id,stroke.preview);changed();
+      cloneAnchor.surface=stroke.preview;cloneAnchor.rev=bitmapRevision;
+      refresh();status("Retusjering utført – kan angres.");
+    }else{draw();renderCloneTool();status("Kloning avbrutt – ingen endringer.");}
+  }
+
   function begin(event) {
     if (busy || !project || pointerId !== null ||
         (event.pointerType === "mouse" && event.button !== 0)) return;
     cancelFreeTransform();
+    if(tool==="clone"){beginClone(event);return;}
     if (tool === "color-region") {
       event.preventDefault();
       if(aiTool){addAiPoint(point(event));return;}
@@ -2446,6 +2532,7 @@
   function move(event) {
     if (pointerId === null || event.pointerId !== pointerId || busy) return;
     event.preventDefault();
+    if(cloneStroke){advanceClone(event);return;}
     if (advancedStroke) {
       if (validAdvancedStroke(advancedStroke)) {
         const samples = event.getCoalescedEvents?.() || [];
@@ -2515,6 +2602,7 @@
   function end(event) {
     if (pointerId === null || (event.pointerId != null && event.pointerId !== pointerId)) return;
     showSnapGuides();
+    if(cloneStroke){finishClone(event);return;}
     if (advancedStroke) { finishAdvancedStroke(event); return; }
     if (isShapeTool()) {
       const complete = event.type === "pointerup" && !!shapeDraft;
@@ -3996,6 +4084,8 @@
       $("kv2-guide-opacity").value="45";renderCompositionGuides();
     });
     $("kv2-focus-mode").addEventListener("click", toggleStudioFocus);
+    $("kv2-clone-source").addEventListener("click",()=>{if(pointerId!==null||busy)return;cloneAnchor=null;clonePicking=true;renderCloneTool();});
+    if(typeof ResizeObserver==="function")new ResizeObserver(renderCloneTool).observe(canvas);
     $("kv2-brush-settings-jump").addEventListener("click", () => {
       if (!advancedBrushEnabled() || pointerId !== null) return;
       $("kv2-brush-settings-detail").setAttribute("open","");
@@ -4297,10 +4387,10 @@
         checkpoint(); layer.opacity = next; changed(); refresh();
       }
     });
-    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text"].forEach((name) => {
+    ["brush", "eraser", "move", "hand", "select", "lasso", "color-region", "eyedropper", "rectangle", "ellipse", "line", "arrow", "gradient", "text", "clone"].forEach((name) => {
       $("kv2-" + name).addEventListener("click", () => {
         if (busy || pointerId !== null) return;
-        if (["rectangle", "ellipse", "line", "arrow", "text", "color-region"].includes(name) && maskEditing) {
+        if (["rectangle", "ellipse", "line", "arrow", "text", "color-region", "clone"].includes(name) && maskEditing) {
           status("Avslutt maskeredigering før du tegner figurer.");
           return;
         }
@@ -4370,6 +4460,7 @@
         status("Tekstplassering avbrutt – ingen endringer.");
         return;
       }
+      if(event.key==="Escape"&&cloneStroke){event.preventDefault();const captured=pointerId;finishClone({type:"pointercancel"});if(captured!==null&&canvas.hasPointerCapture?.(captured))canvas.releasePointerCapture(captured);return;}
       if (event.key === "Escape" && advancedStroke) {
         event.preventDefault();
         const captured = pointerId;
