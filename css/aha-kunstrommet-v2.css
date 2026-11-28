@@ -436,3 +436,63 @@ body.aha-product-shell main.aha-dashboard.kv2[data-studio-layout="compact"]{widt
  .kv2[data-studio-layout="compact"][data-studio-inspector-open="true"]:not([data-studio-focus="true"]) .kv2-sidebar{display:block;}
  .kv2[data-studio-layout="compact"] #kv2-studio-close{display:flex;min-width:44px;min-height:44px;align-items:center;justify-content:center;margin:0 0 4px auto;}
 }
+
+/* 10.1b — drawing-first polish; no change to the document or pixel engine. */
+.kv2-file-actions{display:contents;}
+#kv2-studio-view-actions:empty{display:none;}
+.kv2[data-studio-layout="compact"]{--studio-bg:#17191c;--studio-panel:#202327;--studio-line:#373c42;--studio-ink:#e9ecef;--studio-muted:#abb5bf;--studio-active:#314b43;--studio-accent:#9cd1b6;color:var(--studio-ink);}
+body.aha-product-shell main.aha-dashboard.kv2[data-studio-layout="compact"]{gap:3px;padding:3px 5px;background:var(--studio-bg);}
+.kv2[data-studio-layout="compact"] .kv2-heading,.kv2[data-studio-layout="compact"] .kv2-editor,.kv2[data-studio-layout="compact"] .kv2-sidebar>section{background:var(--studio-panel);color:var(--studio-ink);box-shadow:none;border:0;border-radius:4px;}
+.kv2[data-studio-layout="compact"] .kv2-heading{padding:0 5px;}
+.kv2[data-studio-layout="compact"] .kv2-studio-tabs{gap:1px;min-height:44px;}
+.kv2[data-studio-layout="compact"] .kv2-studio-tabs button,.kv2[data-studio-layout="compact"] .kv2-toolbar .kv2-icon-tool,.kv2[data-studio-layout="compact"] [data-studio-icon],.kv2[data-studio-layout="compact"] #kv2-studio-view-actions>.kv2-icon-tool,.kv2[data-studio-layout="compact"] #kv2-studio-layout,.kv2[data-studio-layout="compact"] #kv2-focus-mode,.kv2[data-studio-layout="compact"] #kv2-studio-close{color:var(--studio-ink);background:transparent;border:1px solid transparent;border-radius:5px;box-shadow:none;min-height:44px;}
+.kv2[data-studio-layout="compact"] :is(.kv2-studio-tabs button,.kv2-icon-tool,[data-studio-icon],#kv2-studio-layout,#kv2-focus-mode,#kv2-studio-close):hover{background:#343b40;}
+.kv2[data-studio-layout="compact"] :is(.kv2-studio-tabs button,.kv2-icon-tool,[data-studio-icon],#kv2-studio-layout,#kv2-focus-mode)[aria-pressed="true"]{background:var(--studio-active);color:var(--studio-accent);border-color:#608874;}
+.kv2[data-studio-layout="compact"] :is(.kv2-studio-tabs button,.kv2-icon-tool,[data-studio-icon],#kv2-studio-layout,#kv2-studio-close) svg{width:22px;height:22px;flex:none;}
+.kv2[data-studio-layout="compact"] .kv2-studio-tabs button{padding:3px 7px;}
+.kv2[data-studio-layout="compact"] .kv2-titlebar output{color:var(--studio-muted);}
+.kv2[data-studio-layout="compact"] .kv2-editor>.kv2-titlebar h2{font-size:.77rem;font-weight:500;color:var(--studio-muted);}
+.kv2[data-studio-layout="compact"] .kv2-tool-strip{padding:1px;gap:3px;border-color:var(--studio-line);}
+.kv2[data-studio-layout="compact"] .kv2-tool-group-buttons{gap:2px;}
+.kv2[data-studio-layout="compact"] .kv2-tool-group+.kv2-tool-group{border-color:var(--studio-line);padding-top:3px;}
+.kv2[data-studio-layout="compact"] .kv2-context-bar{gap:5px;padding:0 3px;align-content:flex-start;background:var(--studio-panel);border-top:1px solid var(--studio-line);border-bottom:1px solid var(--studio-line);}
+.kv2[data-studio-layout="compact"] .kv2-context-bar:not(:has(#kv2-clone-panel:not([hidden]),#kv2-color-region-panel:not([hidden]),#kv2-gradient-panel:not([hidden]),#kv2-text-panel:not([hidden]),.kv2-selection-tools button:not(:disabled))){flex-wrap:nowrap;max-height:52px;overflow-x:auto;overflow-y:hidden;align-items:center;}
+.kv2[data-studio-layout="compact"] .kv2-context-bar>label{flex-shrink:0;min-height:44px;}
+.kv2[data-studio-layout="compact"] .kv2-context-bar select,.kv2[data-studio-layout="compact"] .kv2-context-bar>button{min-height:44px;}
+.kv2[data-studio-layout="compact"] #kv2-studio-context-mount:not(:has(#kv2-text-panel:not([hidden]),.kv2-selection-tools button:not(:disabled))){display:none;}
+.kv2[data-studio-layout="compact"] .kv2-paper{background:#34383c;border:0;border-radius:3px;padding:2px;}
+.kv2[data-studio-layout="compact"] .kv2-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px;border-top:1px solid var(--studio-line);overflow:visible;}
+.kv2[data-studio-layout="compact"] .kv2-file-actions{display:flex;gap:1px;min-width:0;overflow-x:auto;align-items:center;}
+.kv2[data-studio-layout="compact"] #kv2-studio-view-actions{display:flex;gap:1px;align-items:center;justify-content:flex-end;border-left:1px solid var(--studio-line);min-width:0;}
+.kv2[data-studio-layout="compact"] #kv2-studio-view-actions>.kv2-icon-tool{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:4px;}
+.kv2[data-studio-layout="compact"] #kv2-studio-view-actions .kv2-zoom-controls{flex-wrap:nowrap;gap:1px;}
+.kv2[data-studio-layout="compact"] #kv2-studio-view-actions #kv2-zoom-value{font-size:.75rem;min-width:45px;}
+.kv2[data-studio-layout="compact"] #kv2-studio-view-actions #kv2-zoom-reset{min-width:44px;}
+.kv2[data-studio-layout="compact"] .kv2-sidebar{background:var(--studio-panel);border-left:1px solid var(--studio-line);}
+.kv2[data-studio-layout="compact"] .kv2-sidebar .kv2-tip,.kv2[data-studio-layout="compact"] .kv2-context-bar .kv2-tip{color:var(--studio-muted);}
+.kv2[data-studio-layout="compact"] .kv2-sidebar :is(.kv2-fold,.kv2-named-groups,.kv2-adjustments,.kv2-mask-panel,.kv2-project--saved),.kv2[data-studio-layout="compact"] .kv2-text-panel{background:#262a2e;border-color:var(--studio-line);color:var(--studio-ink);border-radius:5px;box-shadow:none;}
+.kv2[data-studio-layout="compact"] .kv2-sidebar .kv2-fold summary{color:var(--studio-ink);}
+.kv2[data-studio-layout="compact"] .kv2-layer{border:0;border-bottom:1px solid var(--studio-line);border-radius:3px;grid-template-columns:44px minmax(0,1fr) 48px 25px;}
+.kv2[data-studio-layout="compact"] .kv2-layer.kv2-selected{background:var(--studio-active);}
+.kv2[data-studio-layout="compact"] .kv2-layer button{background:transparent;color:var(--studio-ink);border-color:transparent;border-radius:4px;}
+.kv2[data-studio-layout="compact"] .kv2-layer button[aria-pressed="true"]{color:var(--studio-accent);}
+.kv2[data-studio-layout="compact"] .kv2-sidebar .kv2-palette{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:3px;padding:3px 0;}
+.kv2[data-studio-layout="compact"] .kv2-sidebar .kv2-swatch{background:var(--kv2-swatch);min-width:44px;min-height:44px;border:2px solid #adb7bf;border-radius:50%;padding:0;box-shadow:inset 0 0 0 2px #202327;}
+.kv2[data-studio-layout="compact"] .kv2-sidebar .kv2-swatch[aria-pressed="true"]{outline:2px solid var(--studio-accent);outline-offset:1px;}
+@media(min-width:760px){
+ body.aha-product-shell main.aha-dashboard.kv2[data-studio-layout="compact"]{grid-template-columns:auto minmax(0,1fr);grid-template-rows:44px minmax(0,1fr);}
+ .kv2[data-studio-layout="compact"] .kv2-heading{grid-area:1/1;}
+ .kv2[data-studio-layout="compact"] .kv2-studio-tabs{grid-area:1/2;flex-wrap:nowrap;overflow-x:auto;}
+ .kv2[data-studio-layout="compact"] .kv2-workspace{grid-area:2/1/3/3;grid-template-columns:minmax(0,1fr) minmax(212px,min(24vw,275px));}
+ .kv2[data-studio-layout="compact"] .kv2-editor{grid-template-columns:94px minmax(0,1fr);gap:2px;padding:2px;}
+ .kv2[data-studio-layout="compact"] .kv2-tool-group-buttons{grid-template-columns:repeat(2,44px);}
+}
+@media(max-width:759px){
+ .kv2[data-studio-layout="compact"] .kv2-tool-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:2px;max-height:140px;}
+ .kv2[data-studio-layout="compact"] .kv2-tool-group,.kv2[data-studio-layout="compact"] .kv2-tool-group-buttons{display:contents;}
+ .kv2[data-studio-layout="compact"] .kv2-actions{grid-template-columns:minmax(0,1fr);gap:1px;}
+ .kv2[data-studio-layout="compact"] #kv2-studio-view-actions{border-left:0;justify-content:center;border-top:1px solid var(--studio-line);}
+ .kv2[data-studio-layout="compact"] .kv2-sidebar{background:var(--studio-panel);color:var(--studio-ink);}
+}
+/* Keep focus mode spanning the whole workspace even after the desktop grid refinement. */
+.kv2[data-studio-layout="compact"][data-studio-focus="true"] .kv2-workspace{grid-template-columns:minmax(0,1fr);}
