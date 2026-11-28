@@ -3971,3 +3971,32 @@ test("10.1a compact workspace keeps canvas, tools and selected inspector on one 
   expect((await jsonBackup(page)).layers).toEqual(before.layers);
  }
 });
+
+test("10.1b compact studio keeps history and zoom fixed, palette accessible, and canvas prominent",async({page},testInfo)=>{
+ for(const [width,height] of [[390,844],[834,1180],[1180,820]]){
+  await page.setViewportSize({width,height});await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+  await expect(page.locator("#main")).toHaveAttribute("data-studio-layout","compact");
+  const info=await page.evaluate(()=>{
+   const rect=q=>document.querySelector(q).getBoundingClientRect();
+   const a=rect(".kv2-context-bar"),p=rect("#kv2-paper"),f=rect("#kv2-studio-view-actions"),h=rect(".kv2-heading"),n=rect(".kv2-studio-tabs"),m=rect("#main");
+   return {contextHeight:a.height,paperHeight:p.height,footerBottom:f.bottom,mainBottom:m.bottom,headTop:h.top,navTop:n.top};
+  });
+  expect(info.contextHeight).toBeLessThanOrEqual(53);
+  expect(info.paperHeight).toBeGreaterThan(200);
+  expect(info.footerBottom).toBeLessThanOrEqual(info.mainBottom+2);
+  if(width>=760)expect(Math.abs(info.headTop-info.navTop)).toBeLessThan(2);
+  for(const id of ["kv2-undo","kv2-redo","kv2-zoom-in","kv2-zoom-out","kv2-zoom-reset"]){
+   const button=page.locator("#"+id);await expect(button).toBeVisible();const box=await button.boundingBox();expect(box.width).toBeGreaterThanOrEqual(44);expect(box.height).toBeGreaterThanOrEqual(44);
+   expect(await button.evaluate(el=>!!el.closest("#kv2-studio-view-actions"))).toBe(true);
+  }
+  await expect(page.locator("#kv2-swatch-korall")).toBeHidden();
+  await page.locator("#kv2-studio-brush").click();await page.locator("#kv2-swatch-korall").click();await expect(page.locator("#kv2-color")).toHaveValue("#d15c4d");
+  if(width<760)await page.locator("#kv2-studio-close").click();else await page.locator("#kv2-studio-layers").click();
+  await stroke(page);expect((await pixel(page)).slice(0,3)).toEqual([209,92,77]);
+  await page.locator("#kv2-undo").click();await expect.poll(()=>pixel(page)).toEqual([255,255,255,255]);
+  await page.locator("#kv2-redo").click();await expect.poll(()=>pixel(page)).toEqual([209,92,77,255]);
+  await page.locator("#kv2-zoom-in").click();await page.locator("#kv2-zoom-reset").click();await expect(page.locator("#kv2-zoom-value")).toHaveText("100%");
+  await page.screenshot({path:testInfo.outputPath("studio-"+width+"x"+height+".png"),animations:"disabled"});
+  await page.locator("#kv2-studio-layout").click();await expect(page.locator("#kv2-swatch-korall")).toBeVisible();await expect(page.locator("#kv2-undo")).toBeVisible();
+ }
+});

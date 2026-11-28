@@ -4365,7 +4365,8 @@
     const groups={
       photo:["#kv2-adjustment-controls",'.kv2-transform-tools[aria-label="Transformer aktivt lag"]',"#kv2-free-transform-panel","#kv2-photo-detail-panel","#kv2-photo-perspective-panel"],
       mask:[".kv2-mask-panel"],
-      brush:["#kv2-brush-advanced","#kv2-color-library-panel"],
+      brush:[".kv2-palette","#kv2-brush-advanced","#kv2-color-library-panel"],
+      footer:["#kv2-undo","#kv2-redo",".kv2-zoom-controls"],
       guides:[".kv2-guide-panel",".kv2-symmetry-panel"],
       project:[".kv2-document-heading",".kv2-document-notes",".kv2-size-panel",'[aria-labelledby="kv2-library-title"]','[aria-labelledby="kv2-legacy-title"]','[aria-labelledby="kv2-gallery-title"]','[aria-labelledby="kv2-aha-title"]'],
       help:[".kv2-workspace-help"],
@@ -4374,7 +4375,7 @@
     for(const [group,selectors] of Object.entries(groups))for(const selector of selectors){
       for(const node of document.querySelectorAll(selector)){
         const mark=document.createComment("studio:"+selector);node.before(mark);
-        studioMoves.push({node,mark,target:$(group==="context"?"kv2-studio-context-mount":"kv2-studio-mount-"+group)});
+        studioMoves.push({node,mark,target:$(group==="context"?"kv2-studio-context-mount":group==="footer"?"kv2-studio-view-actions":"kv2-studio-mount-"+group)});
       }
     }
   }
