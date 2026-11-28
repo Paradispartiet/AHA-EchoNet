@@ -3706,7 +3706,7 @@ test("9.5b gated local model mask is preview-only, reversible and rejects stale 
 
 test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed mask",async({page})=>{
  await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
- await expect(page.locator("#kv2-ai-region")).toHaveCount(0);
+ await expect(page.locator("#kv2-ai-region")).toBeHidden();
  await page.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
  // Mock the worker transport, not the editor; real WASM inference is tested separately.
  await page.route("**/tools/kunstrommet-sam-pilot/editor-worker.mjs",route=>route.fulfill({contentType:"application/javascript",body:`
@@ -3725,6 +3725,7 @@ test("9.5c opt-in KI toolbar sends layer-local points and applies only confirmed
  await page.locator("#kv2-rectangle").click();
  await shapeDrag(page,[100,100],[900,650],9531);
  const before=await jsonBackup(page);
+ await expect(page.locator("#kv2-ai-region")).toBeVisible();
  await page.locator("#kv2-ai-region").click();
  await expect(page.locator("#kv2-ai-analyze")).toBeDisabled();
  await shapeDrag(page,[300,300],[300,300],9532);

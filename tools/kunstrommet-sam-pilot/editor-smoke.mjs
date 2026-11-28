@@ -66,25 +66,33 @@ try{
    const panel=page.locator("#kv2-ai-region-controls");
    assert.equal(await panel.getAttribute("data-cache"),"cold");
    assert.equal(await panel.getAttribute("data-encoder-runs"),"1");
-   await page.locator("#kv2-ai-undo-point").click();
-   await page.locator("#kv2-ai-point-mode").selectOption(String(GUIDED_POINTS.at(-1)[2]));
-   const [lx,ly]=GUIDED_POINTS.at(-1);
-   // Re-add the same valid point to exercise a genuine second decoder invocation.
-   await page.locator("#kv2-canvas").evaluate((c,p)=>{const r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerType:"pen",button:0,clientX:r.left+(p[0]+.25)/640*r.width,clientY:r.top+(p[1]+.25)/480*r.height}));},[lx*2,ly*2]);
-   const warmStart=performance.now();
-   await page.locator("#kv2-ai-analyze").click();
-   await page.waitForFunction(()=>!document.querySelector("#kv2-color-region-apply").disabled||/kunne ikke|Ingen gyldig|avbrutt etter|ikke tilgjengelig/.test(document.querySelector("#kv2-status").textContent),{},{timeout:255000});
-   assert.ok(await page.locator("#kv2-color-region-apply").isEnabled(),await page.locator("#kv2-status").innerText());
-   assert.equal(await panel.getAttribute("data-cache"),"warm");
-   assert.equal(await panel.getAttribute("data-encoder-runs"),"1");
-   const warmMs=Math.round(performance.now()-warmStart);
-   assert.deepEqual((await snapshot()).layers,before.layers);
+   const warmTimes=[];
+   for(let cycle=0;cycle<5;cycle++){
+    await page.locator("#kv2-ai-undo-point").click();
+    await page.locator("#kv2-ai-point-mode").selectOption(String(GUIDED_POINTS.at(-1)[2]));
+    const [lx,ly]=GUIDED_POINTS.at(-1);
+    // Alternate two nearby positions of the same negative prompt.
+    await page.locator("#kv2-canvas").evaluate((c,p)=>{const r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true,pointerType:"pen",button:0,clientX:r.left+(p[0]+.25)/640*r.width,clientY:r.top+(p[1]+.25)/480*r.height}));},[lx*2+(cycle%2),ly*2]);
+    const warmStart=performance.now();
+    await page.locator("#kv2-ai-analyze").click();
+    await page.waitForFunction(()=>!document.querySelector("#kv2-color-region-apply").disabled||/kunne ikke|Ingen gyldig|avbrutt etter|ikke tilgjengelig/.test(document.querySelector("#kv2-status").textContent),{},{timeout:255000});
+    assert.ok(await page.locator("#kv2-color-region-apply").isEnabled(),await page.locator("#kv2-status").innerText());
+    assert.equal(await panel.getAttribute("data-cache"),"warm");
+    assert.equal(await panel.getAttribute("data-encoder-runs"),"1");
+    warmTimes.push(Math.round(performance.now()-warmStart));
+    assert.deepEqual((await snapshot()).layers,before.layers);
+   }
+   const warmMs=warmTimes.reduce((sum,n)=>sum+n,0)/warmTimes.length;
+   assert.equal(page.workers().length,1,"exactly one editor worker");
+   let workerClosed=false;page.workers()[0].once("close",()=>{workerClosed=true;});
    await page.locator("#kv2-color-region-apply").click();
+   for(let i=0;i<100&&!workerClosed;i++)await new Promise(resolve=>setTimeout(resolve,100));
+   assert.equal(workerClosed,true,"worker closed after mask confirmation");assert.equal(page.workers().length,0,"worker released on mask confirmation");
    const after=await snapshot();assert.ok(after.layers[1].maskBitmap);assert.equal(after.layers[1].bitmap,before.layers[1].bitmap);
    await page.locator("#kv2-undo").click();
    await page.waitForFunction(()=>{try{return !window.AHAKunstrommetV2.cloudSnapshot("local").data.layers[1].maskBitmap;}catch{return false;}});
    assert.deepEqual((await snapshot()).layers,before.layers);
-   assert.deepEqual(blocked,[]);console.log(JSON.stringify({browser:name,coldMs,warmMs,encoderRuns:1,status:state}));
+   assert.deepEqual(blocked,[]);console.log(JSON.stringify({browser:name,coldMs,warmMs,warmTimes,encoderRuns:1,workerReleased:true,status:state}));
   }finally{await browser.close();}
  }
 }finally{await new Promise(resolve=>server.close(resolve));}

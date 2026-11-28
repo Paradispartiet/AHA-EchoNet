@@ -318,3 +318,6 @@
 #kv2-ai-region-controls:not([hidden]){display:flex;flex:1 0 100%;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;}
 .kv2-ai-point{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:22px;height:22px;box-sizing:border-box;border:2px solid #fff;border-radius:50%;background:#197647;color:#fff;font:bold 16px/1 system-ui;box-shadow:0 1px 4px #0008;pointer-events:none;}
 .kv2-ai-point[data-label="0"]{background:#b52935;}
+
+/* Hidden opt-in controls must win against the normal icon-toolbar display rule. */
+.kv2 #kv2-ai-region[hidden]{display:none!important;}

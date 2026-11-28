@@ -435,3 +435,8 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Én worker, én modell og ett aktivt rasterlag per KI-økt. Første analyse beregner SAM-bildeembedding; nye punkter gjenbruker den via modellens dokumenterte embedding-input. Punktnormalisering og maskeberegning gjentas. Ny pikselkopi sendes ikke ved justeringer.
 - Engangs forespørselstoken og sekvensnummer per maskesvar. Worker frigjøres ved kontekstendring, avbrudd, feil, skjult side, maskebekreftelse eller 60 sekunder uten ny analyse. Ingen persistens eller ekstern inferens.
 - Utvidet transporttest og reell editor-smoke krever kald/varm kjøring med nøyaktig én encoderkjøring, uendrede originaldata, korrekt maske/undo. Måler begge tider uten ubegrunnet hastighetskrav. Fysisk iPad og produksjonsdistribusjon fortsatt ikke godkjent.
+
+### 9.5f – regresjonsrettelse og gjentatte målinger (utkast)
+- 9.5e målt i CI på 640 × 480 syntetisk bilde: Chromium 11 356 ms kald / 512 ms varm; WebKit 14 240 ms kald / 940 ms varm. Én encoderkjøring i begge. Ikke fysisk iPad.
+- KI-kontroller og markørbeholder er nå statisk deklarert, skjult som standard; binding og worker-URL opprettes først ved begge opt-in-flagg. Eksisterende DOM-kontrakt beholdes uendret.
+- Reell editor-smoke utvidet til fem varme punktjusteringer, med målinger per justering, nøyaktig én worker, uendrede rasterdata og bekreftet worker-avslutning ved maskebekreftelse. Dette er livssyklustest, ikke måling av total WASM-heap eller fysisk enhetsminne.

@@ -358,7 +358,7 @@
   let localMaskRequest = null; // One in-memory, opt-in candidate; never saved.
   let aiTool = false, aiPoints = [], aiContext = null, aiWorker = null, aiTimer = null, aiIdleTimer = null, aiPending = null, aiSequence = 0;
   const AI_IDLE_MS=60000;
-  const aiWorkerUrl = new URL("../tools/kunstrommet-sam-pilot/editor-worker.mjs", document.currentScript?.src || new URL("js/ahaKunstrommetV2.js",document.baseURI)).href;
+  let aiWorkerUrl=null,aiUiBound=false;
   let shapeDraft = null; // Transient preview until pointerup.
   let gradientFramePending = false;
   let textEditId = null;
@@ -4415,10 +4415,11 @@
   function resetAiPoints(){
     releaseAiWorker();
     aiPoints=[];aiContext=null;renderAiMarkers();
-    const panel=$("kv2-ai-region-controls");if(panel)delete panel.dataset.cache;
+    if(aiUiBound){const panel=$("kv2-ai-region-controls");delete panel.dataset.cache;delete panel.dataset.encoderRuns;}
   }
   function aiContextMatches(layer){return aiContext&&layer&&aiContext.project===project&&aiContext.owner===owner()&&aiContext.id===layer.id&&aiContext.rev===bitmapRevision&&aiContext.x===layer.x&&aiContext.y===layer.y;}
   function renderAiMarkers(){
+    if(!aiUiBound)return;
     const overlay=$("kv2-ai-points-overlay");if(!overlay)return;
     overlay.replaceChildren();overlay.hidden=!aiTool||!aiPoints.length||!aiContext;
     if(overlay.hidden)return;
@@ -4431,6 +4432,7 @@
     }
   }
   function renderAiTool(layer){
+    if(!aiUiBound)return;
     const button=$("kv2-ai-region"),panel=$("kv2-ai-region-controls");if(!button||!panel)return;
     if(aiTool&&(!aiToolEnabled()||tool!=="color-region"||!layer||project.owner!==owner())){aiTool=false;resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
     else if(aiContext&&!aiContextMatches(layer)){resetAiPoints();if(colorRegion?.localModel)colorRegion=null;}
@@ -4494,20 +4496,9 @@
   }
   function bindAiTool(){
     if(!aiToolEnabled())return;
-    const button=document.createElement("button");button.type="button";button.id="kv2-ai-region";button.textContent="KI-markering";button.setAttribute("aria-pressed","false");
-    button.className=$("kv2-color-region").className;button.title="KI-markering";button.setAttribute("aria-label","KI-markering");
-    button.innerHTML=`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m4 20 11-11 2 2L6 22zM15 2v5M12.5 4.5h5M21 9v5M18.5 11.5h5"/></svg><span aria-hidden="true">KI-markering</span>`;
-    $("kv2-color-region").after(button);
-    const panel=document.createElement("div");panel.id="kv2-ai-region-controls";panel.hidden=true;
-    const mode=document.createElement("select");mode.id="kv2-ai-point-mode";mode.setAttribute("aria-label","KI-punkt: behold eller fjern");
-    for(const [value,label] of [["1","Behold motiv"],["0","Fjern område"]]){const opt=document.createElement("option");opt.value=value;opt.textContent=label;mode.append(opt);}
-    const count=document.createElement("span");count.id="kv2-ai-count";
-    const analyze=document.createElement("button");analyze.type="button";analyze.id="kv2-ai-analyze";analyze.textContent="Analyser";
-    const clear=document.createElement("button");clear.type="button";clear.id="kv2-ai-clear";clear.textContent="Nullstill / avbryt";
-    const undo=document.createElement("button");undo.type="button";undo.id="kv2-ai-undo-point";undo.textContent="Fjern siste punkt";
-    panel.append(mode,count,analyze,undo,clear);$("kv2-color-region-panel").prepend(panel);
-    const overlay=document.createElement("div");overlay.id="kv2-ai-points-overlay";overlay.hidden=true;overlay.setAttribute("aria-hidden","true");
-    $("kv2-color-region-overlay").after(overlay);
+    const button=$("kv2-ai-region"),analyze=$("kv2-ai-analyze"),clear=$("kv2-ai-clear"),undo=$("kv2-ai-undo-point");
+    aiWorkerUrl=new URL("../tools/kunstrommet-sam-pilot/editor-worker.mjs",document.currentScript?.src||new URL("js/ahaKunstrommetV2.js",document.baseURI)).href;
+    aiUiBound=true;
     if(typeof ResizeObserver==="function")new ResizeObserver(renderAiMarkers).observe(canvas);
     button.onclick=()=>{if(!aiToolEnabled()||busy||pointerId!==null||maskEditing)return;resetAiPoints();colorRegion=null;shapeDraft=null;clearTextDraft();tool="color-region";aiTool=true;refresh();status("Velg punkter på motivet og trykk Analyser.");};
     undo.onclick=()=>{if(aiPending||!aiPoints.length)return;aiPoints.pop();colorRegion=null;renderColorRegion();status("Siste KI-punkt fjernet. Analyser på nytt.");};
