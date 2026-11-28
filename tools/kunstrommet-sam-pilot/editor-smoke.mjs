@@ -6,7 +6,9 @@ import {chromium,webkit} from "@playwright/test";
 import {fixture,GUIDED_POINTS,WIDTH,HEIGHT} from "./core.mjs";
 assert.ok(process.env.KR_PILOT_DIR,"missing staged model");
 const root=path.resolve(process.env.KR_PILOT_DIR),repo=process.cwd(),prefix="/tools/kunstrommet-sam-pilot/";
-const mime={".html":"text/html; charset=utf-8",".js":"text/javascript",".mjs":"text/javascript",".css":"text/css",".json":"application/json",".wasm":"application/wasm",".onnx":"application/octet-stream"};
+const packageRoot=process.env.KR_IPAD_DIR?path.resolve(process.env.KR_IPAD_DIR):null;
+const packageHeaders=packageRoot?Object.fromEntries((await readFile(path.join(packageRoot,"_headers"),"utf8")).split("\n").filter(l=>/^  [A-Za-z-]+:/.test(l)).map(l=>{const i=l.indexOf(":");return [l.slice(2,i),l.slice(i+1).trim()];})):null;
+const mime={".png":"image/png",".txt":"text/plain; charset=utf-8",".html":"text/html; charset=utf-8",".js":"text/javascript",".mjs":"text/javascript",".css":"text/css",".json":"application/json",".wasm":"application/wasm",".onnx":"application/octet-stream"};
 const server=http.createServer(async(req,res)=>{
  try{
   res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self'; connect-src 'self'; img-src 'self' blob: data:; base-uri 'none'; frame-ancestors 'none'");
@@ -14,16 +16,22 @@ const server=http.createServer(async(req,res)=>{
   if(req.method!=="GET"&&req.method!=="HEAD"){res.writeHead(405).end();return;}
   const p=decodeURIComponent(new URL(req.url,"http://localhost").pathname);
   let file;
-  if(p==="/kunstrommet.html"){
+  if(packageRoot){
+   for(const [key,value] of Object.entries(packageHeaders))res.setHeader(key,value);
+   file=path.resolve(packageRoot,"."+(p==="/"?"/index.html":p));
+   if(!file.startsWith(packageRoot+path.sep))throw Error("path");
+  }else if(p==="/kunstrommet.html"){
    // Same production editor markup, with unrelated app bridges omitted in this isolated test.
    const html=(await readFile(path.join(repo,"kunstrommet.html"),"utf8")).replace(/<script src="([^"]+)"><\/script>/g,(tag,src)=>src==="js/ahaKunstrommetV2.js"?tag:"");
    res.setHeader("Content-Type",mime[".html"]);res.end(html);return;
   }
+  if(!packageRoot){
   if(p==="/js/ahaKunstrommetV2.js"||/^\/css\/[a-zA-Z0-9-]+\.css$/.test(p))file=path.join(repo,p);
   else if(p===prefix+"editor-worker.mjs"||p===prefix+"core.mjs")file=path.join(repo,p);
   else if(p.startsWith(prefix+"runtime/")||p.startsWith(prefix+"models/")){
    file=path.resolve(root,p.slice(prefix.length));if(!file.startsWith(root+path.sep))throw Error("path");
   }else{res.writeHead(404).end();return;}
+  }
   if(!mime[path.extname(file)]||!(await stat(file)).isFile())throw Error("missing");
   res.setHeader("Content-Type",mime[path.extname(file)]);res.end(req.method==="HEAD"?undefined:await readFile(file));
  }catch{res.writeHead(404).end();}
@@ -36,8 +44,18 @@ try{
   try{
    const context=await browser.newContext({viewport:{width:820,height:1180},serviceWorkers:"block"});
    const blocked=[];await context.route("**/*",route=>{if(new URL(route.request().url()).origin!==origin){blocked.push(route.request().url());return route.abort();}return route.continue();});
-   await context.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
-   const page=await context.newPage();await page.goto(origin+"/kunstrommet.html");
+   if(!packageRoot)await context.addInitScript(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;window.AHA_KUNSTROMMET_AI_TOOL_PILOT=true;});
+   const page=await context.newPage();
+   const response=await page.goto(origin+(packageRoot?"/":"/kunstrommet.html"));
+   if(packageRoot){
+    assert.equal(response.headers()["content-security-policy"],packageHeaders["Content-Security-Policy"]);
+    assert.equal(response.headers()["x-robots-tag"],"noindex, nofollow, noarchive");
+    assert.ok(await page.locator("#kv2-ai-region").isVisible(),"packaged flags activate editor without injected globals");
+    assert.equal(await page.locator("#kv2-cloud-backup").count(),0,"no cloud controls");
+    assert.equal(await page.locator('section[aria-labelledby="kv2-aha-title"]').count(),0);
+    const sample=await context.request.get(origin+"/sample.png");
+    assert.ok(sample.ok());assert.equal(sample.headers()["content-type"],"image/png");
+   }
    await page.locator(".kv2-size-panel summary").click();
    await page.locator("#kv2-canvas-width").fill("640");await page.locator("#kv2-canvas-height").fill("480");await page.locator("#kv2-new-sized").click();
    const image=await page.evaluate(({rgb,w,h})=>{
