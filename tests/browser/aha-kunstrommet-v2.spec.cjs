@@ -3660,3 +3660,46 @@ test("9.5a suggests multicolor foreground inside a rectangle without altering th
  await expect.poll(async()=>(await pxAt(page,350,300))[2]).toBeLessThan(200);
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
 });
+
+
+test("9.5b gated local model mask is preview-only, reversible and rejects stale replies",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ await page.locator("#kv2-color").evaluate(el=>{el.value="#b03040";el.dispatchEvent(new Event("input",{bubbles:true}));});
+ await page.locator("#kv2-rectangle").click();
+ await shapeDrag(page,[100,100],[900,650],9521);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-color-region").click();
+ expect(await page.evaluate(()=>window.AHAKunstrommetV2.localMaskPilot.begin()===null)).toBe(true);
+ await page.evaluate(()=>{window.AHA_KUNSTROMMET_LOCAL_MASK_PILOT=true;});
+ const result=await page.evaluate(()=>{
+   const api=window.AHAKunstrommetV2.localMaskPilot;
+   const a=api.begin();
+   if(!a)return {missing:true};
+   const bits=new Uint8Array(a.width*a.height);
+   for(let y=200;y<400;y++)for(let x=250;x<450;x++)bits[y*a.width+x]=1;
+   const bad=api.preview(a.token,new Uint8Array(1));
+   const reused=api.preview(a.token,bits);
+   const b=api.begin(),c=api.begin();
+   const stale=api.preview(b.token,bits);
+   const ok=api.preview(c.token,bits);
+   bits.fill(0); // accepted mask must own its own copy
+   return {bad,reused,stale,ok,rgba:a.rgba.length,expected:a.width*a.height*4};
+ });
+ expect(result).toEqual({bad:false,reused:false,stale:false,ok:true,rgba:result.expected,expected:result.expected});
+ await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ await expect(page.locator("#kv2-color-region-mode")).toHaveValue("keep");
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region-tolerance").evaluate(el=>{el.value="20";el.dispatchEvent(new Event("change",{bubbles:true}));});
+ await expect(page.locator("#kv2-color-region-apply")).toBeEnabled();
+ await page.locator("#kv2-color-region-apply").click();
+ expect((await jsonBackup(page)).layers[0].bitmap).toBe(before.layers[0].bitmap);
+ expect((await pxAt(page,300,300))[0]).toBeGreaterThan(100);
+ expect((await pxAt(page,700,500)).slice(0,3)).toEqual([255,255,255]);
+ await page.locator("#kv2-undo").click();
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+ await page.locator("#kv2-color-region").click();
+ await page.evaluate(()=>{window.__krPending=window.AHAKunstrommetV2.localMaskPilot.begin();});
+ await page.locator("#kv2-rectangle").click();await shapeDrag(page,[50,50],[80,80],9522);
+ await page.locator("#kv2-color-region").click();
+ expect(await page.evaluate(()=>{const a=window.__krPending;return window.AHAKunstrommetV2.localMaskPilot.preview(a.token,new Uint8Array(a.width*a.height));})).toBe(false);
+});

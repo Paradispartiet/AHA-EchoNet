@@ -1,0 +1,42 @@
+name: Kunstrommet SlimSAM synthetic inference
+on:
+  pull_request:
+    paths:
+      - 'tools/kunstrommet-sam-pilot/**'
+      - '.github/workflows/aha-kunstrommet-sam-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-inference:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Set isolated pilot directory
+        run: printf 'KR_PILOT_DIR=%s/kr-sam-pilot\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Synthetic tensor contracts
+        run: node tools/kunstrommet-sam-pilot/core.test.mjs
+      - name: Install existing locked browser test dependencies
+        run: npm ci --ignore-scripts
+      - name: Install test browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Stage pinned public model files and verify hashes
+        run: bash tools/kunstrommet-sam-pilot/stage.sh
+      - name: Real local WASM inference on synthetic image
+        env:
+          KR_PHOTO_REPORT_DIR: ${{ runner.temp }}/kr-sam-photo-reports
+        run: node tools/kunstrommet-sam-pilot/browser-smoke.mjs
+      - name: Visual review of public photograph masks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kunstrommet-public-photo-masks
+          path: ${{ runner.temp }}/kr-sam-photo-reports/*.png
+          if-no-files-found: ignore
+          retention-days: 7

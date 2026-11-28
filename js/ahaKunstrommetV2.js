@@ -355,6 +355,7 @@
   let tool = "brush";
   let selection = null; // Transient document-coordinate marquee, never saved as pixels.
   let colorRegion = null; // Preview only; invalidated by artwork changes.
+  let localMaskRequest = null; // One in-memory, opt-in candidate; never saved.
   let shapeDraft = null; // Transient preview until pointerup.
   let gradientFramePending = false;
   let textEditId = null;
@@ -396,6 +397,7 @@
   function changed() {
     cancelFreeTransform();
     bitmapRevision++;
+    localMaskRequest = null;
     colorRegion = null;
     renderColorRegion();
     dirty = true;
@@ -2642,8 +2644,10 @@
     const overlay = $("kv2-color-region-overlay");
     if (!overlay) return;
     const layer = colorRegionLayer();
+    if(localMaskRequest && (tool!=="color-region"||!layer||localMaskRequest.layerId!==layer.id||localMaskRequest.project!==project||localMaskRequest.revision!==bitmapRevision||localMaskRequest.owner!==owner()))localMaskRequest=null;
     if (tool !== "color-region" || !layer || colorRegion?.layerId !== layer.id ||
         colorRegion?.revision !== bitmapRevision || colorRegion?.project !== project ||
+        (colorRegion?.localModel && (!localMaskEnabled() || colorRegion.owner!==owner() || project.owner!==owner())) ||
         colorRegion?.x !== layer.x || colorRegion?.y !== layer.y) colorRegion = null;
     $("kv2-color-region-panel").hidden = tool !== "color-region";
     $("kv2-color-region-propose").disabled = !layer || !validSelection() || lassoActive();
@@ -2679,6 +2683,7 @@
   // Assisted foreground proposal, not semantic recognition. Estimate background
   // colors from the enclosing rectangle and flood only connected background.
   function proposeForeground(box=selection) {
+    localMaskRequest=null;
     renderColorRegion();
     const layer=colorRegionLayer();
     if(!layer||!box||box.type==="lasso"||box.w<8||box.h<8)return;
@@ -2737,6 +2742,7 @@
   }
 
   function sampleColorRegion(at, repeatLast = false) {
+    localMaskRequest=null;
     renderColorRegion(); // Invalidate stale preview before using its bitmap.
     const layer = colorRegionLayer();
     if (!layer) { renderColorRegion(); status("Fargemaske krever et synlig, ulåst rasterlag uten maske."); return; }
@@ -2778,7 +2784,8 @@
         count+=bits[i];
       }
     }
-    colorRegion={bits,count,baseline:op==="replace"?null:baseline,op,layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y,at};
+    colorRegion={bits,count,baseline:op==="replace"?null:baseline,op,layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y,at,
+      ...(op!=="replace"&&previous?.localModel?{localModel:true,owner:previous.owner}:{})};
     renderColorRegion();
   }
 
@@ -2800,7 +2807,7 @@
     if(!checkpoint())return;
     masks.set(layer.id,mask);layer.maskEnabled=true;
     colorRegion=null;tool="hand";changed();refresh();
-    status("Fargemaske opprettet – originalpikslene er bevart.");
+    status(region.localModel ? "KI-maske opprettet – originalpikslene er bevart." : "Fargemaske opprettet – originalpikslene er bevart.");
   }
 
   // Color correction deliberately creates a new raster layer with its own mask.
@@ -4046,9 +4053,9 @@
     $("kv2-merge-down").addEventListener("click", mergeRasterDown);
     $("kv2-clip-toggle").addEventListener("click", toggleClipping);
     $("kv2-color-region-apply").addEventListener("click",applyColorRegion);
-    $("kv2-color-region-cancel").addEventListener("click",()=>{colorRegion=null;renderColorRegion();});
+    $("kv2-color-region-cancel").addEventListener("click",()=>{localMaskRequest=null;colorRegion=null;renderColorRegion();});
     $("kv2-color-region-propose").addEventListener("click",()=>proposeForeground());
-    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion?.proposal)proposeForeground(colorRegion.proposal);else if(colorRegion)sampleColorRegion(colorRegion.at,true);});
+    $("kv2-color-region-tolerance").addEventListener("change",()=>{if(colorRegion?.proposal)proposeForeground(colorRegion.proposal);else if(colorRegion?.at)sampleColorRegion(colorRegion.at,true);});
     $("kv2-color-region-feather").addEventListener("input",()=>{$("kv2-color-region-feather-value").textContent=colorRegionRadius()+" px";});
     $("kv2-color-region-feather").addEventListener("change",renderColorRegion);
     $("kv2-color-region-shift").addEventListener("input",()=>{const n=colorRegionShift();$("kv2-color-region-shift-value").textContent=(n>0?"+":"")+n+" px";});
@@ -4386,6 +4393,55 @@
     });
   }
 
+  // Private local-model integration seam. Off unless an isolated development
+  // harness explicitly enables it; no worker, model download or network here.
+  const localMaskEnabled=()=>global.AHA_KUNSTROMMET_LOCAL_MASK_PILOT===true;
+  function localMaskTarget(){
+    if(!localMaskEnabled()||!project||project.owner!==owner()||tool!=="color-region"||
+       freeTransform||textEditId||textAnchor||shapeDraft)return null;
+    return colorRegionLayer();
+  }
+  function beginLocalMask(){
+    localMaskRequest=null;
+    const layer=localMaskTarget();
+    if(!layer)return null;
+    const token=Object.freeze({});
+    const rgba=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    localMaskRequest={token,project,owner:owner(),layerId:layer.id,revision:bitmapRevision,
+      width:WIDTH,height:HEIGHT,x:layer.x,y:layer.y};
+    // Transfer a copy of the active raster in layer-local coordinates, not the project or other layers.
+    return {token,width:WIDTH,height:HEIGHT,offsetX:layer.x,offsetY:layer.y,rgba};
+  }
+  function previewLocalMask(token,bits){
+    const request=localMaskRequest,layer=localMaskTarget();
+    if(!request||request.token!==token)return false;
+    localMaskRequest=null; // single use, even on invalid output
+    if(!layer||request.project!==project||request.owner!==owner()||request.layerId!==layer.id||
+       request.revision!==bitmapRevision||request.width!==WIDTH||request.height!==HEIGHT||
+       request.x!==layer.x||request.y!==layer.y)return false;
+    if(!(bits instanceof Uint8Array)||bits.length!==WIDTH*HEIGHT)return false;
+    const copied=new Uint8Array(bits.length);let count=0;
+    const rgba=surfaces.get(layer.id).getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data;
+    let opaque=0;
+    for(let i=0;i<bits.length;i++){
+      if(bits[i]!==0&&bits[i]!==1)return false;
+      if(rgba[i*4+3]){opaque++;if(bits[i]){copied[i]=1;count++;}}
+    }
+    if(!count||count===opaque)return false;
+    colorRegion={bits:copied,count,baseline:null,op:"replace",localModel:true,owner:request.owner,
+      layerId:layer.id,revision:bitmapRevision,project,x:layer.x,y:layer.y};
+    $("kv2-color-region-mode").value="keep";
+    $("kv2-color-region-shift").value="0";
+    $("kv2-color-region-feather").value="0";
+    renderColorRegion();
+    status("KI-forslag klart. Kontroller markeringen før Lag maske.");
+    return true;
+  }
+  function cancelLocalMask(token){
+    if(localMaskRequest?.token!==token)return false;
+    localMaskRequest=null;return true;
+  }
+
   // Stable interface for the gallery/collection bridge: one editor, no second canvas.
   global.AHAKunstrommetV2 = {
     format: "aha-kunstrommet-v2",
@@ -4399,6 +4455,7 @@
       };
     },
     savedProjects: getRecords,
+    localMaskPilot: Object.freeze({begin:beginLocalMask,preview:previewLocalMask,cancel:cancelLocalMask}),
     cloudSnapshot(expectedUserId) {
       if (busy || pointerId !== null || freeTransform || textAnchor ||
           !project || owner() !== expectedUserId || project.owner !== expectedUserId) {
