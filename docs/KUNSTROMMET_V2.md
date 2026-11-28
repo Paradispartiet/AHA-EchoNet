@@ -471,3 +471,5 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - #1165–#1169 utgjør fem sammenhengende commits. #1169 retargetes til main og brukes som samlet integrasjonskandidat. Behold underliggende PR-er som historikk frem til samlet merge. Ingen flere funksjoner før verifisering.
 - Før retarget er alle fem lokale kontrakttester og Engine-jobber grønne; full browser-regresjon er fortsatt uavklart. Ny separat fokusjobb kjører nøyaktig fem 10.0a–e tester i begge nettleserprosjektene (10 tilfeller). Den erstatter ikke den ordinære fulle regresjonen.
 - Ingen publisering/merge før samlet kandidat har grønne aktuelle arbeidsflyter og riktig main-base. Ingen aktivering av KI-pilot. Fysisk iPad, reelle foto og distribusjonsgodkjenning av KI er separate gjenstående kontroller.
+
+- Sluttkontroll: fotoimport oppdaterer lagkontrollene på nytt etter at busy er satt til false. 10.0e-testen verifiserer at fri transformering, perspektiv og detaljjustering er tilgjengelige rett etter import, uten å bytte verktøy først.

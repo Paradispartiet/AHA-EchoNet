@@ -3877,6 +3877,9 @@ test("10.0e local detail preview is reversible, smooths noise and preserves alph
  });
  await page.locator("#kv2-photo").setInputFiles({name:"detail.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
  await expect.poll(async()=> (await pxAt(page,600,400))[0]).toBe(140);
+ await expect(page.locator("#kv2-photo-detail")).toBeEnabled();
+ await expect(page.locator("#kv2-photo-perspective")).toBeEnabled();
+ await expect(page.locator("#kv2-transform-free")).toBeEnabled();
  const before=await jsonBackup(page);
  await page.locator("#kv2-photo-detail").click();
  await expect(page.locator("#kv2-photo-detail-apply")).toBeDisabled();

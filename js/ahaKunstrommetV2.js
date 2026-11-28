@@ -4264,7 +4264,13 @@
       changed();
       refresh();
     } catch (error) { status("Import feilet: " + error.message); }
-    finally { busy = false; URL.revokeObjectURL(url); $("kv2-photo").value = ""; }
+    finally {
+      busy = false; URL.revokeObjectURL(url); $("kv2-photo").value = "";
+      // refresh() ran while the import was busy. Restore editability on completion.
+      updateLayerControls();
+      renderTextPreview();
+      renderCloneTool();
+    }
   }
 
   async function importProject(file) {
