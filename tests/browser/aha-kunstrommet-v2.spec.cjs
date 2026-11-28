@@ -3807,3 +3807,35 @@ test("10.0b clone stamp samples the active raw layer, cancels preview, commits a
  expect((await jsonBackup(page)).layers).toEqual(before.layers);
  await expect(page.locator("#kv2-clone-marker")).toBeHidden();
 });
+
+test("10.0c healing transfers texture with local color correction and preserves transparency",async({page})=>{
+ await page.goto("/kunstrommet.html",{waitUntil:"domcontentloaded"});
+ const paint=async(color,start,end,id)=>{
+  await page.locator("#kv2-color").evaluate((el,value)=>{el.value=value;el.dispatchEvent(new Event("input",{bubbles:true}));},color);
+  await page.locator("#kv2-rectangle").click();await shapeDrag(page,start,end,id);
+ };
+ // Source: lighter field with a dark texture stripe. Destination: darker
+ // field with a black blemish at the center. Same opaque raster layer.
+ await paint("#c8aa8c",[100,100],[400,400],9651);
+ await paint("#b4987c",[196,180],[204,220],9652);
+ await paint("#8c7054",[500,100],[800,400],9653);
+ await paint("#000000",[646,196],[654,204],9654);
+ const before=await jsonBackup(page);
+ await page.locator("#kv2-clone").click();
+ await page.locator("#kv2-clone-mode").selectOption("heal");
+ await page.locator("#kv2-clone-size").evaluate(el=>{el.value="100";});
+ await shapeDrag(page,[200,200],[200,200],9655);
+ await shapeDrag(page,[650,200],[650,200],9656);
+ const repaired=(await pxAt(page,650,200)).slice(0,3);
+ // Source stripe [180,152,124], local difference [-60,-58,-56].
+ expect(repaired.every((v,i)=>Math.abs(v-[120,94,68][i])<=4)).toBe(true);
+ expect((await pxAt(page,675,200)).slice(0,3)).toEqual([140,112,84]);
+ expect((await pxAt(page,200,200)).slice(0,3)).toEqual([180,152,124]);
+ // No opaque destination ring: healing on blank canvas must not paint it.
+ const healed=await jsonBackup(page);
+ await shapeDrag(page,[950,500],[950,500],9657);
+ expect((await jsonBackup(page)).layers).toEqual(healed.layers);
+ await page.locator("#kv2-undo").click();
+ await expect.poll(async()=> (await pxAt(page,650,200)).slice(0,3)).toEqual([0,0,0]);
+ expect((await jsonBackup(page)).layers).toEqual(before.layers);
+});

@@ -2351,12 +2351,54 @@
     if(!active||!cloneAnchorValid()){cloneAnchor=null;clonePicking=true;}
     $("kv2-clone-panel").hidden=!active;
     $("kv2-clone-source").setAttribute("aria-pressed",String(clonePicking));
-    $("kv2-clone-info").textContent=!cloneLayer()?"Velg et synlig, ulåst rasterlag.":clonePicking?"Trykk på ønsket kilde i aktivt lag.":"Kilde valgt. Mal over området som skal retusjeres.";
+    $("kv2-clone-mode").disabled=!!cloneStroke;
+    const heal=$("kv2-clone-mode").value==="heal";
+    $("kv2-clone-info").textContent=!cloneLayer()?"Velg et synlig, ulåst rasterlag.":clonePicking?"Trykk på ønsket kilde i aktivt lag.":heal?"Kilde valgt. Mal på ugjennomsiktige bildepiksler for lokal fargetilpasning.":"Kilde valgt. Mal over området som skal retusjeres.";
     const mark=$("kv2-clone-marker");mark.hidden=!active||!cloneAnchor;
     if(!mark.hidden){const rect=canvas.getBoundingClientRect();mark.style.left=((cloneAnchor.x+cloneAnchor.ox)*rect.width/WIDTH)+"px";mark.style.top=((cloneAnchor.y+cloneAnchor.oy)*rect.height/HEIGHT)+"px";}
   }
   function validCloneStroke(stroke){
     return !!(stroke&&tool==="clone"&&cloneAnchorValid()&&stroke.layer===cloneLayer()&&!busy&&stroke.surface===surfaces.get(stroke.layer.id));
+  }
+  // Local healing: estimate RGB offset from paired peripheral samples,
+  // ignoring transparent pixels and the blemish in the center. The immutable
+  // stroke snapshot also prevents correction drift along overlapping dabs.
+  function healOffset(stroke,x,y,sx,sy){
+    const pixels=stroke.healPixels,delta=[[],[],[]],r=stroke.radius;
+    const offset=(px,py)=>{
+      const ix=Math.round(px),iy=Math.round(py);
+      return ix>=0&&iy>=0&&ix<WIDTH&&iy<HEIGHT?(iy*WIDTH+ix)*4:-1;
+    };
+    for(const ring of [.8,1.15]){
+      for(let i=0;i<24;i++){
+        const angle=i*Math.PI/12,dx=Math.cos(angle)*r*ring,dy=Math.sin(angle)*r*ring;
+        const a=offset(sx+dx,sy+dy),b=offset(x+dx,y+dy);
+        if(a<0||b<0||pixels[a+3]!==255||pixels[b+3]!==255)continue;
+        for(let ch=0;ch<3;ch++)delta[ch].push(pixels[b+ch]-pixels[a+ch]);
+      }
+    }
+    if(delta[0].length<12)return null;
+    return delta.map(values=>{
+      values.sort((a,b)=>a-b);const m=Math.floor(values.length/2);
+      return values.length%2?values[m]:(values[m-1]+values[m])/2;
+    });
+  }
+  function adaptHealStamp(stroke,stamp,x,y,sx,sy){
+    const correction=healOffset(stroke,x,y,sx,sy);
+    if(!correction)return false;
+    const n=stroke.stamp.width,r=stroke.radius,im=stamp.getImageData(0,0,n,n),data=im.data;
+    let eligible=false;
+    for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+      const k=(j*n+i)*4,dx=Math.floor(x-r+i+.5),dy=Math.floor(y-r+j+.5);
+      const target=dx>=0&&dy>=0&&dx<WIDTH&&dy<HEIGHT?(dy*WIDTH+dx)*4:-1;
+      // Healing cannot introduce opacity into empty or semitransparent pixels.
+      if(target<0||stroke.healPixels[target+3]!==255||data[k+3]!==255){data[k+3]=0;continue;}
+      if(Math.hypot(i+.5-r,j+.5-r)>=r){data[k+3]=0;continue;}
+      eligible=true;
+      for(let ch=0;ch<3;ch++)data[k+ch]=clamp(data[k+ch]+correction[ch],0,255);
+    }
+    if(eligible)stamp.putImageData(im,0,0);
+    return eligible;
   }
   function cloneDab(stroke,x,y){
     const r=stroke.radius,n=stroke.stamp.width,sx=x+stroke.dx,sy=y+stroke.dy;
@@ -2365,6 +2407,7 @@
     stamp.clearRect(0,0,n,n);stamp.save();
     // Read only the unmodified original raster, never the accumulating preview.
     stamp.drawImage(stroke.surface,r-sx,r-sy);
+    if(stroke.healPixels&&!adaptHealStamp(stroke,stamp,x,y,sx,sy)){stamp.restore();return;}
     stamp.globalCompositeOperation="destination-in";
     const g=stamp.createRadialGradient(r,r,0,r,r,r);
     g.addColorStop(0,"#fff");g.addColorStop(stroke.hardness,"#fff");g.addColorStop(1,"rgba(255,255,255,0)");
@@ -2372,6 +2415,7 @@
     const ctx=stroke.preview.getContext("2d");ctx.save();
     if(validSelection()){selectionPath(ctx,stroke.layer.x,stroke.layer.y);ctx.clip();}
     ctx.globalAlpha=stroke.opacity;ctx.drawImage(stroke.stamp,x-r,y-r);ctx.restore();
+    stroke.applied=true;
   }
   function beginClone(event){
     event.preventDefault();
@@ -2388,8 +2432,9 @@
     const opacity=clamp(Number($("kv2-clone-opacity").value)/100,0.01,1);
     const hardness=clamp(Number($("kv2-clone-hardness").value)/100,0,.99);
     const preview=imageCanvas();preview.getContext("2d").drawImage(surface,0,0);
-    cloneStroke={layer,surface,preview,stamp:imageCanvas(Math.ceil(radius*2),Math.ceil(radius*2)),radius,opacity,hardness,dx:cloneAnchor.x-x,dy:cloneAnchor.y-y,previous:{x,y}};
-    pointerId=event.pointerId;cloneDab(cloneStroke,x,y);drawSoon();
+    const heal=$("kv2-clone-mode").value==="heal";
+    cloneStroke={layer,surface,preview,stamp:imageCanvas(Math.ceil(radius*2),Math.ceil(radius*2)),radius,opacity,hardness,dx:cloneAnchor.x-x,dy:cloneAnchor.y-y,previous:{x,y},applied:false,healPixels:heal?surface.getContext("2d").getImageData(0,0,WIDTH,HEIGHT).data:null};
+    pointerId=event.pointerId;cloneDab(cloneStroke,x,y);renderCloneTool();drawSoon();
     try{canvas.setPointerCapture(pointerId);}catch(_){}
   }
   function advanceClone(event){
@@ -2411,12 +2456,12 @@
     const stroke=cloneStroke,commit=event.type==="pointerup"&&validCloneStroke(stroke);
     if(commit&&Number.isFinite(event.clientX)&&Number.isFinite(event.clientY))advanceClone(event);
     cloneStroke=null;pointerId=null;pointerStart=null;paintPrevious=null;$("kv2-brush-live").hidden=true;
-    if(commit&&checkpoint()){
+    if(commit&&stroke.applied&&checkpoint()){
       // Replace the raster only after confirmation; masks and other layers unchanged.
       surfaces.set(stroke.layer.id,stroke.preview);changed();
       cloneAnchor.surface=stroke.preview;cloneAnchor.rev=bitmapRevision;
       refresh();status("Retusjering utført – kan angres.");
-    }else{draw();renderCloneTool();status("Kloning avbrutt – ingen endringer.");}
+    }else{draw();renderCloneTool();status(commit&&stroke.healPixels?"Ingen egnede, ugjennomsiktige piksler å reparere – ingen endringer.":"Kloning avbrutt – ingen endringer.");}
   }
 
   function begin(event) {
@@ -4085,6 +4130,7 @@
     });
     $("kv2-focus-mode").addEventListener("click", toggleStudioFocus);
     $("kv2-clone-source").addEventListener("click",()=>{if(pointerId!==null||busy)return;cloneAnchor=null;clonePicking=true;renderCloneTool();});
+    $("kv2-clone-mode").addEventListener("change",()=>{if(pointerId===null&&!busy)renderCloneTool();});
     if(typeof ResizeObserver==="function")new ResizeObserver(renderCloneTool).observe(canvas);
     $("kv2-brush-settings-jump").addEventListener("click", () => {
       if (!advancedBrushEnabled() || pointerId !== null) return;

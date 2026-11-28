@@ -451,3 +451,8 @@ Utviklingsflagget AHA_KUNSTROMMET_LOCAL_MASK_PILOT er avslått som standard. Ing
 - Velg kilde med finger/penn/mus, deretter mal på aktivt rasterlag. Kilden følger strøkets forskyvning, ny kilde velges eksplisitt. Størrelse, hardhet og styrke per avtrykk. Råpiksler fra aktivt lag, ikke sammensatt bilde eller justeringslag; eksisterende maske beholdes. Bruk duplisert lag for separat retusjkopi.
 - Én midlertidig rasterkopi per strøk, liten avtrykksflate, ingen selvkopiering fra live-preview. Eksisterende markeringsklipp, lagkomposisjon og undo; pointercancel/Escape forkaster strøket. Kildepunkt er visningsdata, ikke eksportert. Ingen KI eller ekstern behandling.
 - Test: kildetapp endrer ikke dokumentet, avbrutt strøk er uendret, riktig kopierte farger, andre områder uendret og undo. Fysisk iPad/ytelse ikke testet.
+
+## 10.0c – lokal reparasjonspensel (utviklingskandidat)
+- Samme kildevalg, avtrykk og angreflyt som klonestempel, men egen metodevelger i retusjkontrollene. Median av parvise RGB-forskjeller fra to ringer med 24 prøver hver rundt kilde og mål (ikke sentrum). Minst 12 gyldige par; ellers hoppes avtrykket over. Bevarer lokal tekstur relativt til farge-/lysnivå, men er ikke Poisson-healing, frekvensseparasjon eller KI.
+- En ekstra RGBA-kopi av aktivt rålag per reparasjonsstrøk (maks 5,76 MB ved 1,44 Mpx), frigjøres ved bekreftelse/avbrudd. Ingen behandling av sammensatt bilde. Bare helt ugjennomsiktige kilde-/målpiksler deltar, så reparasjon fyller ikke transparent område. Eksisterende lagmaske og markeringsklipp beholdes. Ingen angresteg hvis alle avtrykk hoppes over.
+- Syntetisk nettlesertest kontrollerer korrigert RGB, bevart tekstur og kilde, transparent mål uten endring og undo. Fysisk iPad, fotografisk kvalitet og ytelse gjenstår.
